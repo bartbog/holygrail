@@ -109,7 +109,8 @@ solveAll :-
     maplist(solvep, [p1, p1b, p2, p3, p4, p5, p6, p7b, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20]).
 solvep(ProblemName) :-
     testp(ProblemName, _, Sols),
-    Sols = [Solution],
+	% THIS IS A HACK: in case of ambiguity we pick the first solution! 
+    Sols = [Solution | Rest],
     nl,
     problem(ProblemName, Problem),
     solution2idp(Solution, ProblemName, Problem).

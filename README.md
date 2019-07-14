@@ -33,6 +33,8 @@ To be able to run the code from Bos, one would need:
   - SWI Prolog
 
 ## Running the code
+*Be sure to be in the `bos/` directory!*
+
 To actually run a problem (this will parse everything and try to solve the puzzle as well):
 ```sh
 swipl -g "solvep(problem_name)" -g halt main.pl

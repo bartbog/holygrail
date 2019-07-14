@@ -33,6 +33,14 @@ To be able to run the code from Bos, one would need:
   - SWI Prolog
 
 ## Running the code
+### Setup
+Move into the `bos/` directory. If you don't want to answers any questions, use the example `cachedAnswers.pl` provided
+```sh
+cd bos
+cp output/cachedAnswers.pl.example output/cachedAnswers.pl
+```
+
+### Run
 *Be sure to be in the `bos/` directory!*
 
 To actually run a problem (this will parse everything and try to solve the puzzle as well):

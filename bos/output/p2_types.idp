@@ -1,0 +1,75 @@
+// Problem p2_types
+
+vocabulary V {
+    type person constructed from {ira, pedro, oscar, colin, bill}
+    type type1 constructed from {worthington, yorktown, lohrville, gillbertville, mount_union}
+    type type2 constructed from {the_white_darts, the_yellow_darts, the_red_darts, the_orange_darts, the_black_darts}
+    type point = {41; 48; 55; 62; 69} isa int
+    type type3 = {-7; 7; -14; 14; -21; 21; -28; 28} isa int // differences between values of type point
+
+    from(person, type1)
+    threw(person, type2)
+    scored(person, point)
+    finishes_with(person, point)
+}
+
+structure S : V {
+}
+
+theory T : V {
+    // Of the contestant who scored 41 points and the person who threw the white darts, one was from Worthington and the other was Ira
+    ?a [person] b [person]: scored(a,41) & threw(b,the_white_darts) & ~ (a = b) & (from(a,worthington) & ira = b | from(b,worthington) & ira = a).
+
+    // Bill was from Mount union
+    from(bill,mount_union).
+
+    // Ira scored 21 points higher than the contestant from Worthington
+    ?c [point] d [person] e [point]: from(d,worthington) & scored(d,c) & e = c+21 & scored(ira,e).
+
+    // Oscar scored somewhat higher than the player who threw the orange darts
+    ?f [type3] g [point] h [person] i [point]: f>0 & threw(h,the_orange_darts) & scored(h,g) & i = g+f & scored(oscar,i).
+
+    // The contestant from Mount union threw the black darts
+    ?j [person]: from(j,mount_union) & threw(j,the_black_darts).
+
+    // Pedro didn't finish with 55 points
+    ~ finishes_with(pedro,55).
+
+    // The player who threw the red darts was either Colin or the contestant who scored 48 points
+    ?k [person]: threw(k,the_red_darts) & (colin = k | (?l [person]: scored(l,48) & l = k)).
+
+    // Of the contestant who scored 41 points and the person who threw the orange darts, one was from Gillbertville and the other was from Worthington
+    ?m [person] n [person]: scored(m,41) & threw(n,the_orange_darts) & ~ (m = n) & (from(m,gillbertville) & from(n,worthington) | from(n,gillbertville) & from(m,worthington)).
+
+    // Ira scored 7 points lower than the player from Lohrville
+    ?o [point] p [person] q [point]: from(p,lohrville) & scored(p,o) & q = o-7 & scored(ira,q).
+
+
+    // Logigram bijection axioms:
+    ! x [person]: ?=1 y [type1]: from(x, y).
+    ! x [type1]: ?=1 y [person]: from(y, x).
+
+    ! x [person]: ?=1 y [type2]: threw(x, y).
+    ! x [type2]: ?=1 y [person]: threw(y, x).
+
+    ! x [person]: ?=1 y [point]: scored(x, y).
+    ! x [point]: ?=1 y [person]: scored(y, x).
+
+    ! x [person]: ?=1 y [point]: finishes_with(x, y).
+    ! x [point]: ?=1 y [person]: finishes_with(y, x).
+
+    // Logigram synonym axioms:
+    ! x [person] y [point]: scored(x, y) <=> finishes_with(x, y).
+
+    // Logigram transitive relation axioms:
+
+    // Logigram reflexive relation axioms:
+
+    // Logigram symmetry breaking axioms:
+}
+
+procedure main() {
+    stdoptions.nbmodels = 10;
+    printmodels(modelexpand(T,S))
+}
+

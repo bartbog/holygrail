@@ -47,6 +47,7 @@ simplify(X, Y) :-
     mergeDrs(X1, Y).
 
 :- use_module(types, [combineTypes/2, nameTypes/1, getRealBaseTypeCandidates/2]).
+:- use_module(typesLexicon, [lexicalTypes/1]).
 
 :- use_module(myGrammar, [s/3]).
 
@@ -214,7 +215,8 @@ test(String, DRSs, Types) :-
     printRepresentations(DRSs, Types).
 
 lambdaDRT(Discourse, Old, Sems, Types) :-
-     b_setval(types, []),
+     lexicalTypes(LexicalTypes),
+     b_setval(types, LexicalTypes),
      findall(Sem-Types, (
                      s([coord:no, sem:Drs], Discourse, []),
                      (

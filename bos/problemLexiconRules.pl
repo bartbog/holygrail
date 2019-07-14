@@ -5,6 +5,7 @@
 
 :- use_module(myLexicon, [lexEntry/2 as defaultLexicon]).
 :- use_module(types, [addType/2, addTypeAttribute/2]).
+:- use_module(typesLexicon, [addLexicalType/2]).
 
 :- dynamic pLexEntry/2.
 
@@ -29,9 +30,17 @@ symbol_syntax(Symbol, Syntax) :-
 addRule(pn(Syntax)) :-
     syntax_symbol(Syntax, Symbol),
     assertz((pLexEntry(pn, [symbol:Symbol, syntax:Syntax, num:sg, vType:Type]) :- addType(pn-Symbol, Type), addTypeAttribute(Type, qualified))).
+addRule(pn(Syntax, Type)) :-
+    syntax_symbol(Syntax, Symbol),
+    addLexicalType(pn-Symbol, Type),
+    addRule(pn(Syntax)).
 addRule(ppn(Syntax)) :-
     syntax_symbol(Syntax, Symbol),
     assertz((pLexEntry(pn, [symbol:Symbol, syntax:Syntax, num:_, vType:Type]) :- addType(pn-Symbol, Type), addTypeAttribute(Type, qualified))).
+addRule(ppn(Syntax, Type)) :-
+    syntax_symbol(Syntax, Symbol),
+    addLexicalType(pn-Symbol, Type),
+    addRule(ppn(Syntax)).
 addRule(pnn(Syntax, Number)) :-
     syntax_symbol(Syntax, Symbol),
     assertz((pLexEntry(pn, [symbol:Number, syntax:Syntax, num:sg, vType:Type]) :- addType(pn-Symbol, Type), addTypeAttribute(Type, countable))).

@@ -43,3 +43,39 @@ problem(tias, problem(4, 4, [
                         tvGap([was, prescribed], [for, their, heart, condition], [prescribe]),
                         tvPrep([lives], [in], [live], [lived])
                      ])).
+
+problem(p2_types, problem(4,5, [
+                        "Of the contestant who scored 41 points and the person who threw the white darts, one was from Worthington and the other was Ira",
+                        "Bill was from Mount union",
+                        "Ira scored 21 points higher than the contestant from Worthington",
+                        "Oscar scored somewhat higher than the player who threw the orange darts",
+                        "The contestant from Mount union threw the black darts",
+                        "Pedro didn't finish with 55 points",
+                        "The player who threw the red darts was either Colin or the contestant who scored 48 points",
+                        "Of the contestant who scored 41 points and the person who threw the orange darts, one was from Gillbertville and the other was from Worthington",
+                        "Ira scored 7 points lower than the player from Lohrville"
+        ], [
+                        noun([contestant], [contestants]),
+                        noun([person], [persons]),
+                        noun([player], [players]),
+                        noun([point], [points]),
+                        pn([bill], A),
+                        pn([colin], A),
+                        pn([ira], A),
+                        pn([oscar], A),
+                        pn([pedro], A),
+                        pn([mount, union], B),
+                        pn([gillbertville], B),
+                        pn([lohrville], B),
+                        pn([worthington], B),
+                        pn([yorktown], B),
+                        ppn([the, black, darts], C),
+                        ppn([the, orange, darts], C),
+                        ppn([the, red, darts], C),
+                        ppn([the, white, darts], C),
+                        ppn([the, yellow, darts], C),
+                        tv([threw], [throw]),
+                        tv([scored], [score]),
+                        tvPrep([finishes], [with], [finish], [finished]),
+                        prep([from])
+        ])).

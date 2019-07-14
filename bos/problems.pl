@@ -8,7 +8,7 @@ problem(X, Y) :-
 problem(tias, problem(4, 4, [
         % "The 4 people were Tatum, the patient who was prescribed enalapril, the employee with the $54,000 salary, and the owner of the purple house",
 % CHANGED TO: ( "with the salary")
-        "The 4 people were tatum, the patient who was prescribed enalapril, the person who earns 54000, and the person who owns the purple house",
+        "The 4 people were tatum, the patient who was prescribed enalapril, the employee who earns 54000, and the owner of the purple house",
 	"The patient who was prescribed enalapril is not heather",
 	"The patient who was prescribed ramipril is not annabelle",
 	"kassidy earns less than heather",
@@ -40,7 +40,6 @@ problem(tias, problem(4, 4, [
                         pn([ramipril]),
                         pn([fosinopril]),
                         prep([of]),
-                        prep([who]),
                         ppn([the, blue, house]),
                         ppn([the, lime, house]),
                         ppn([the, cyan, house]),

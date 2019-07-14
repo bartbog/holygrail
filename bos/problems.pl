@@ -30,7 +30,6 @@ problem(tias, problem(4, 4, [
                         noun([employee], [employees]),
                         noun([salary], [salaries]),
                         noun([owner], [owners]),
-                        noun([people], [people]),
                         pn([tatum]),
                         pn([annabelle]),
                         pn([heather]),

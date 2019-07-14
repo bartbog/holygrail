@@ -6,9 +6,9 @@ problem(X, Y) :-
     problemPosterEvaluation(X, Y).
 
 problem(tias, problem(4, 4, [
-%%	"The 4 people were Tatum, the patient who was prescribed enalapril, the employee with the $54,000 salary, and the owner of the purple house"
+        % "The 4 people were Tatum, the patient who was prescribed enalapril, the employee with the $54,000 salary, and the owner of the purple house",
 % CHANGED TO: ( "with the salary")
-	"The 4 people were tatum, the patient who was prescribed enalapril, the person who earns 54000, and the person who owns the purple house",
+        "The 4 people were tatum, the patient who was prescribed enalapril, the person who earns 54000, and the person who owns the purple house",
 	"The patient who was prescribed enalapril is not heather",
 	"The patient who was prescribed ramipril is not annabelle",
 	"kassidy earns less than heather",
@@ -35,24 +35,23 @@ problem(tias, problem(4, 4, [
                         pn([annabelle]),
                         pn([heather]),
                         pn([kassidy]),
-						pn([benazepril]),
+                        pn([benazepril]),
                         pn([enalapril]),
-						pn([ramipril]),
-						pn([fosinopril]),
-                        comp(lower, [less, than]),
-                        comp(higher, [more, than]),
-						prep([of]),
-						prep([who]),
+                        pn([ramipril]),
+                        pn([fosinopril]),
+                        prep([of]),
+                        prep([who]),
                         ppn([the, blue, house]),
                         ppn([the, lime, house]),
                         ppn([the, cyan, house]),
                         ppn([the, purple, house]),
+                        % This one still clashes a bit with tvGap([earns], [per, year], [earn]),
                         tv([earns], [earn]),
                         tv([owns], [own]),
                         tvGap([earns], [per, year], [earn]),
                         tvGap([was, prescribed], [for, their, heart, condition], [prescribe]),
-						tvPrep([lives], [in], [live], [lived]),
-                        prep([prescribed])
+                        tvPrep([lives], [in], [live], [lived]),
+                        tvPrep([prescribed], [], [prescribe], [prescribed])
                      ])).
 
 

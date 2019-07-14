@@ -1,0 +1,76 @@
+// Problem tias
+
+vocabulary V {
+    type type1 constructed from {the_purple_house, the_blue_house, the_cyan_house, the_lime_house}
+    type owner constructed from {tatum, heather, annabelle, kassidy}
+    type type2 = {54000; 128000; 144000; 158000} isa int
+    type type3 constructed from {the_other_type3, enalapril, ramipril, benazepril}
+    type type4 = {-74000; 74000; -90000; 90000; -104000; 104000; -16000; 16000; -30000; 30000; -14000; 14000} isa int // differences between values of type type2
+    type type5 = {-74000; 74000; -90000; 90000; -104000; 104000; -16000; 16000; -30000; 30000; -14000; 14000} isa int // differences between values of type type2
+
+    of(owner, type1)
+    earns_per_year(owner, type2)
+    was_prescribed_for_their_heart_condition(owner, type3)
+    lives_in(owner, type1)
+}
+
+structure S : V {
+}
+
+theory T : V {
+    // The 4 people were tatum, the patient who was prescribed enalapril, the employee who earns 54000, and the owner of the purple house
+    ?a [owner] b [owner] c [owner]: ~ (tatum = a) & ~ (tatum = b) & ~ (tatum = c) & ~ (a = b) & ~ (a = c) & ~ (b = c) & was_prescribed_for_their_heart_condition(a,enalapril) & earns_per_year(b,54000) & of(c,the_purple_house).
+
+    // The patient who was prescribed enalapril is not heather
+    ?d [owner]: was_prescribed_for_their_heart_condition(d,enalapril) & ~ (heather = d).
+
+    // The patient who was prescribed ramipril is not annabelle
+    ?e [owner]: was_prescribed_for_their_heart_condition(e,ramipril) & ~ (annabelle = e).
+
+    // kassidy earns less than heather
+    ?f [type4] g [type2] h [type2]: f>0 & earns_per_year(heather,g) & h = g-f & earns_per_year(kassidy,h).
+
+    // The owner of the blue house earns more than kassidy
+    ?i [owner] j [type5] k [type2] l [type2]: of(i,the_blue_house) & j>0 & earns_per_year(kassidy,k) & l = k+j & earns_per_year(i,l).
+
+    // Of tatum and annabelle, one earns 144000 per year and the other lives in the cyan house
+    ~ (tatum = annabelle) & (earns_per_year(tatum,144000) & lives_in(annabelle,the_cyan_house) | earns_per_year(annabelle,144000) & lives_in(tatum,the_cyan_house)).
+
+    // Either the employee who earns 144000  or the employee who earns 158000 lives in the blue house
+    (?m [owner]: earns_per_year(m,144000) & lives_in(m,the_blue_house)) | (?n [owner]: earns_per_year(n,158000) & lives_in(n,the_blue_house)).
+
+    // The owner of the lime house was prescribed enalapril for their heart condition
+    ?o [owner]: of(o,the_lime_house) & was_prescribed_for_their_heart_condition(o,enalapril).
+
+    // The employee who earns 144000 was prescribed benazepril for their heart condition
+    ?p [owner]: earns_per_year(p,144000) & was_prescribed_for_their_heart_condition(p,benazepril).
+
+
+    // Logigram bijection axioms:
+    ! x [owner]: ?=1 y [type1]: of(x, y).
+    ! x [type1]: ?=1 y [owner]: of(y, x).
+
+    ! x [owner]: ?=1 y [type2]: earns_per_year(x, y).
+    ! x [type2]: ?=1 y [owner]: earns_per_year(y, x).
+
+    ! x [owner]: ?=1 y [type3]: was_prescribed_for_their_heart_condition(x, y).
+    ! x [type3]: ?=1 y [owner]: was_prescribed_for_their_heart_condition(y, x).
+
+    ! x [owner]: ?=1 y [type1]: lives_in(x, y).
+    ! x [type1]: ?=1 y [owner]: lives_in(y, x).
+
+    // Logigram synonym axioms:
+    ! x [owner] y [type1]: of(x, y) <=> lives_in(x, y).
+
+    // Logigram transitive relation axioms:
+
+    // Logigram reflexive relation axioms:
+
+    // Logigram symmetry breaking axioms:
+}
+
+procedure main() {
+    stdoptions.nbmodels = 10;
+    printmodels(modelexpand(T,S))
+}
+

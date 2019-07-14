@@ -45,13 +45,10 @@ problem(tias, problem(4, 4, [
                         ppn([the, lime, house]),
                         ppn([the, cyan, house]),
                         ppn([the, purple, house]),
-                        % This one still clashes a bit with tvGap([earns], [per, year], [earn]),
-                        tv([earns], [earn]),
                         tv([owns], [own]),
                         tvGap([earns], [per, year], [earn]),
                         tvGap([was, prescribed], [for, their, heart, condition], [prescribe]),
-                        tvPrep([lives], [in], [live], [lived]),
-                        tvPrep([prescribed], [], [prescribe], [prescribed])
+                        tvPrep([lives], [in], [live], [lived])
                      ])).
 
 

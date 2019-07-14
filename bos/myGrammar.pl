@@ -341,11 +341,16 @@ rc([num:Num, sem:RC, vType:Type]) -->
 
 % For performance reasons only (could add [] as relpro as well)
 rc([num:Num, sem:RC, vType:TypeSubj]) -->
-  { semLex(relpro, [sem:RP]) },
-  tv([inf:part, num:Num, gap:GapBefore-GapAfter, sem:TV, vType:pred(TypeSubj, TypeObj)]),
+  (
+    relpro([sem:RP])
+  ;
+    { semLex(relpro, [sem:RP]) }
+  ),
+  { member(Inf, [part, fin]) },
+  tv([inf:Inf, num:Num, gap:GapBefore-GapAfter, sem:TV, vType:pred(TypeSubj, TypeObj)]),
   GapBefore,
   np([coord:no, num:_, gap:[], sem:NP, vType:TypeObj]),
-  GapAfter,
+  optional(GapAfter),
   { combine(rc:RC, [relpro:RP, vp:app(TV, NP)]) }.
 
 rc([num:Num, sem:RC, vType:TypeObj]) -->

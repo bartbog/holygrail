@@ -1,0 +1,141 @@
+include <table_utils>
+
+procedure removeFrom(table, truethings){
+
+        for tuple in tuples(truethings) do      
+                makeunknown(table,tuple)
+        end
+
+}
+
+procedure explainCoarse(S,Snew,T,clue){
+        d = diff(Snew,S)
+        print("Using the clue: " .. "\"" .. clue .. "\", we can derive that:")
+        print(d)
+        return Snew
+}
+
+procedure addExplanations(diff,Sorig,TClue,predlist,explanations){
+        for tuple in tuples(diff[predlist[1]].ct) do
+                STemp = clone(Sorig)
+                setvocabulary(STemp,VExtra)
+                makefalse(STemp[predlist[2]],tuple)
+
+                t = merge(TClue,bijections)
+                t = merge(t,forceSomethingWrongValue)
+                Sexpl = unsatstructure(t,STemp,V)
+                print("Explanation:")
+                print(Sexpl)
+        end
+}
+
+procedure copyForcedValues(d,STemp){
+
+        for i, pred in ipairs(getpredlist()) do
+                STemp[pred[2]].ct = d[pred[1]].ct
+                STemp[pred[2]].pt = d[pred[1]].ct
+                STemp[pred[3]].ct = d[pred[1]].cf
+                STemp[pred[3]].pt = d[pred[1]].cf
+        end
+}
+
+procedure explainSlightlyMoreThanSemiDetail(S,Snew,T,clue){     
+        //The idea is to explain predicate by predicate
+        preds = getpredlist()
+        
+        d = diff(Snew,S)
+
+        for i, pred in ipairs(preds) do
+                Stemp = clone(S)
+                //copy only this predicate to Stemp
+                Stemp[pred[1]] = Snew[pred[1]]
+                if not equal(Stemp, S) then
+                        explainSemiDetail(S,Stemp,T,clue)
+                end
+        end
+        return Snew
+}
+
+procedure explainSemiDetail(S,Snew,T,clue){     
+        preds = getpredlist()
+
+
+        //Idea: compute core for the diff... 
+        d = diff(Snew,S)
+        STemp = clone(S)
+        setvocabulary(STemp,VExtra)
+        
+        //Set everything in Stemp to be forced.
+        copyForcedValues(d,STemp)
+
+        // Create the theory for the unsatcore
+                t = merge(T,bijections)
+                t = merge(t,forceSomethingWrongValue)
+        
+        //Find minimally precise structure Sexpl that explains all the findings given the current clue.
+        Sexpl =         unsatstructure(t,STemp,V)
+
+        //Now, could we try to get it even smaller.  (NOT DONE YET)
+        // From Sexpl + T + bijections Snew follows. 
+        // We want to find a small subset D of diff, such that 
+        // S + bijections + D entails diff, i.e., such that 
+        // S + bijections + D & not diff is unsatisfiable, thereby only chainging things in diff. 
+                
+        // Forget about the temporary info:
+        setvocabulary(Sexpl,V)
+
+        mystring =      "Using the clue: " .. "\"" .. clue .. "\""
+        
+        for i, pred in ipairs(preds) do
+                for tuple in tuples(Sexpl[pred[1]].ct) do
+                        mystring = mystring .. ", and the fact that "
+                        mystring = mystring .. tostring(tuple[1]) .. " " .. name(pred[1]) .. " " .. tostring(tuple[2])
+                end
+                for tuple in tuples(Sexpl[pred[1]].cf) do
+                        mystring = mystring .. ", and the fact that "
+                        mystring = mystring .. tostring(tuple[1]) .. " not " .. name(pred[1]) .. " " .. tostring(tuple[2])
+                end
+        end
+
+        mystring = mystring .. ", we can derive that: "
+        
+        for i, pred in ipairs(preds) do
+                for tuple in tuples(d[pred[1]].ct) do
+                        mystring = mystring .. tostring(tuple[1]) .. " " .. name(pred[1]) .. " " .. tostring(tuple[2])..", "
+                end
+                for tuple in tuples(d[pred[1]].cf) do
+                        mystring = mystring .. tostring(tuple[1]) .. " not " .. name(pred[1]) .. " " .. tostring(tuple[2]).. ", "
+                end
+        end
+
+
+        print(mystring)
+        return Snew
+
+}
+
+procedure explainDetail(S,Snew,T,clue){ 
+        //TODO: this is unfinished code!
+        print("TODO REMOVE: current clue is " ..clue)
+        //The idea underlying this procedure is: 
+        // 1. If possible, for each derived literal, find a minimal explanation. (minimal number of crosses/dots used to derive it). This can be done using unsatstructure, but, due to limitations of the IDP procedure, I had to use an extra vocabulary and put the goal in there (that is Vextra; theory forceSomethingWrongValue only serves to fix these atoms -- is a bit of a workaround to fix something conceptually easy).
+        // 2. Compare the size of the explanations; take the smallest one and preferrably something positive. Maybe, if there are multiple things to derive with exactly the same assumptions, we can derive all of them at once?  -> Lots of options at this step, Ill just implement one...
+        // 3. Then, complete the propagation using only the bijection constraints (this means: filling in dots/crosses in a trivial way) 
+        d = diff(Snew,S)
+
+        preds = getpredlist()
+        
+        //Elements will be of the form:
+        // {pred, true/false, tuple, pstruct, size}
+        explanations = {} 
+        print("there")
+        for i, pred in ipairs(preds) do
+        print("where")
+                addExplanations(d,S,T,pred,explanations)
+        end
+
+                print("txhere")
+        print("Using the clue: " .. "\"" .. clue .. "\", we can derive that:")
+        print(d)
+        return Snew
+}

@@ -37,11 +37,8 @@ solution2idp(solution(Sentences, DRSs, TypesIn), ProblemName, Problem) :-
     \+ \+ printFile(ProblemName, SentencePairs, voc(BaseTypes, DerivedTypes, Predicates)),
     clearQuestionTopic,
     problemToFileName(ProblemName, FileName),
-    format(string(Command), "cat ~p | docker run -i --rm --name idp krrkul/idp3:latest idp | node parseOutput.js", [FileName]),
-    open(pipe(Command), read, Stream),
-    read(Stream, IDPOutput),
-    close(Stream),
-    handleIDPOutput(IDPOutput).
+    format(string(Command), "cat ~p | docker run -i --rm --name idp -v $(pwd)/output:/root/idp krrkul/idp3:latest idp", [FileName]),
+    process_create(path(sh), ["-c", Command], []).
 
 handleIDPOutput(models(0, [])) :-
     format("Couldn't find any models. Something went wrong~n", []),
@@ -77,11 +74,19 @@ printFile(ProblemName, SentencePairs, Vocabularium) :-
     nl,
     printVocabulary(Vocabularium),
     nl,
+    printExtraVocabulary(Vocabularium),
+    nl,
     printStructure(),
     nl,
     printTheory(SentencePairs, Vocabularium),
     nl,
-    printMain(),
+    printForceSomethingWrongValueTheory(Vocabularium),
+    nl,
+    printProcedureDiff(Vocabularium),
+    nl,
+    printProcedureGetPredList(Vocabularium),
+    nl,
+    printMain(SentencePairs),
     nl,
     told.
 problemToFileName(ProblemName, FileName) :-
@@ -119,14 +124,22 @@ printType(derivedType(Type, BaseType, int:Range)) :-
 printPredicate(predicate(Name, Type1, Type2)) :-
     format('    ~p(~p, ~p)~n', [Name, Type1, Type2]).
 
+printExtraVocabulary(voc(_BaseTypes, _DerivedTypes, Predicates)) :-
+    writeln('vocabulary VExtra {'),
+    writeln('    extern vocabulary V'),
+    maplist(printExtraPredicate, Predicates),
+    writeln('}').
+printExtraPredicate(predicate(Name, Type1, Type2)) :-
+    format('    ct_~p(~p, ~p)~n', [Name, Type1, Type2]),
+    format('    cf_~p(~p, ~p)~n', [Name, Type1, Type2]).
+
 printStructure() :-
     writeln('structure S : V {'),
     writeln('}').
 
 printTheory(SentencePairs, voc(BaseTypes, _, Predicates)) :-
-    writeln('theory T : V {'),
-    maplist(printSentence, SentencePairs),
-    nl,
+    maplist(printSentenceTheory(SentencePairs), SentencePairs),
+    writeln('theory bijections : V {'),
     format('    // Logigram bijection axioms:~n'),
     maplist(printLogigramAxiomsForPredicate, Predicates),
     format('    // Logigram synonym axioms:~n'),
@@ -142,8 +155,9 @@ printTheory(SentencePairs, voc(BaseTypes, _, Predicates)) :-
     include(=(baseType(_, fakeConstructed:_)), BaseTypes, FakeConstructedTypes),
     maplist(printSymmetryBreakersFakeConstructedTypes(Predicates, BaseTypes), FakeConstructedTypes),
     writeln('}').
-printSentence(Sentence-FOL) :-
-    format('    // ~w~n    ~@~n', [Sentence, printFol(idp, FOL)]).
+printSentenceTheory(SentencePairs, Sentence-FOL) :-
+    nth1(Index, SentencePairs, Sentence-FOL),
+    format('theory T~d: V {~n    // ~w~n    ~@}~n~n',[Index, Sentence, printFol(idp, FOL)]).
 printLogigramAxiomsForPredicate(predicate(Name, Type1, Type2)) :-
     format('    ! x [~p]: ?=1 y [~p]: ~p(x, y).~n', [Type1, Type2, Name]),
     format('    ! x [~p]: ?=1 y [~p]: ~p(y, x).~n~n', [Type2, Type1, Name]).
@@ -185,12 +199,68 @@ printSymmetryBreakersFakeConstructedTypes(Predicates, BaseTypes, baseType(FakeCo
 printPredicateFact(Name, Arg1, Arg2) :-
     format('    ~p(~p, ~p).~n', [Name, Arg1, Arg2]).
 
-
-printMain() :-
-    writeln('procedure main() {'),
-    writeln('    stdoptions.nbmodels = 10;'),
-    writeln('    printmodels(modelexpand(T,S))'),
+printForceSomethingWrongValueTheory(voc(_BaseTypes, _DerivedTypes, Predicates)) :-
+    writeln('theory forceSomethingWrongValue : VExtra {'),
+    writeln('    ~('),
+    maplist(printForceSomethingWrongPredicate, Predicates),
+    writeln('        true'),
+    writeln('    ).'),
     writeln('}').
+printForceSomethingWrongPredicate(predicate(Name, Type1, Type2)) :-
+  format('        (! x [~p] y [~p]: ct_~p(x,y) => ~p(x,y)) &~n', [Type1, Type2, Name, Name]),
+  format('        (! x [~p] y [~p]: cf_~p(x,y) => ~~~p(x,y)) &~n', [Type1, Type2, Name, Name]).
+
+printProcedureDiff(voc(_BaseTypes, _DerivedTypes, Predicates)) :-
+    writeln('procedure diff(S1, S2) {'),
+    writeln('    S3 = clone(S1)'),
+    maplist(printProcedureDiffPredicate, Predicates),
+    writeln('    return S3'),
+    writeln('}').
+printProcedureDiffPredicate(predicate(Name, _Type1, _Type2)) :-
+    format('    removeFrom(S3[V::~p], S2[V::~p].ct)~n', [Name, Name]),
+    format('    removeFrom(S3[V::~p], S2[V::~p].cf)~n', [Name, Name]).
+
+printProcedureGetPredList(voc(_BaseTypes, _DerivedTypes, Predicates)) :-
+    writeln('procedure getpredlist() {'),
+    writeln('    return {'),
+    maplist(printProcedureGetPredListPredicate, Predicates),
+    writeln('    }'),
+    writeln('}').
+printProcedureGetPredListPredicate(predicate(Name, _Type1, _Type2)) :-
+    format('        {V::~p, VExtra::ct_~p, VExtra::cf_~p},~n', [Name, Name, Name]).
+
+printMain(SentencePairs) :-
+    writeln('include "./generic_procedures.idp"'),
+    nl,
+    writeln('procedure main() {'),
+    writeln('    stdoptions.verbosity.solving = 0'),
+    writeln('    stdoptions.cpsupport = false'),
+    nl,
+    writeln('    theories = {'),
+    maplist(printMainTheoriesDict(SentencePairs), SentencePairs),
+    writeln('    }'),
+    nl,
+    writeln('    update = true'),
+    writeln('    while update do'),
+    writeln('        update = false'),
+    writeln('        for i, theory in ipairs(theories) do'),
+    writeln('            t = merge(theory[1],bijections)'),
+    writeln('            Snew = optimalpropagate(t,S)'),
+    writeln('            if not equal(S, Snew) then'),
+    writeln('                update = true'),
+    writeln('                Snew = explainSlightlyMoreThanSemiDetail(S,Snew,theory[1],theory[2])'),
+    writeln('                S = Snew'),
+    writeln('            end'),
+    writeln('        end'),
+    writeln('    end'),
+    nl,
+    writeln('    print("The final result is:")'),
+    writeln('    print(S)'),
+    writeln('}').
+printMainTheoriesDict(SentencePairs, Sentence-FOL) :-
+    nth1(Index, SentencePairs, Sentence-FOL),
+    % format('theory T~d: V {~n    // ~w~n    ~@}~n~n',[Index, Sentence, printFol(idp, FOL)]).
+    format('        {T~d, "~w"},~n', [Index, Sentence]).
 
 
 nameVariables(FOL) :-

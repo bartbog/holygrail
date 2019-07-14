@@ -37,7 +37,7 @@ solution2idp(solution(Sentences, DRSs, TypesIn), ProblemName, Problem) :-
     \+ \+ printFile(ProblemName, SentencePairs, voc(BaseTypes, DerivedTypes, Predicates)),
     clearQuestionTopic,
     problemToFileName(ProblemName, FileName),
-    format(string(Command), "idp ~p | node parseOutput.js", [FileName]),
+    format(string(Command), "cat ~p | docker run -i --rm --name idp krrkul/idp3:latest idp | node parseOutput.js", [FileName]),
     open(pipe(Command), read, Stream),
     read(Stream, IDPOutput),
     close(Stream),

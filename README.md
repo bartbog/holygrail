@@ -58,7 +58,7 @@ To just test the parsing of a puzzle:
 swipl -g "testAll([problem_name])" -g halt main.pl
 ```
 ## Adding a problem
-One can add a problem by adding a fact in `problems.pl`.
+One can add a problem by adding a fact in `problems.pl`, `problemPosterEvaluation.pl` or `problemsHolyGrail.pl` (last one is preferred).
 
 ```prolog
 problem(problem_name, problem(NbTypes, NbEntitiesPerType, Sentences, Lexicon)).

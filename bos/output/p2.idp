@@ -13,38 +13,67 @@ vocabulary V {
     finishes_with(person, point)
 }
 
+vocabulary VExtra {
+    extern vocabulary V
+    ct_from(person, type1)
+    cf_from(person, type1)
+    ct_threw(person, type2)
+    cf_threw(person, type2)
+    ct_scored(person, point)
+    cf_scored(person, point)
+    ct_finishes_with(person, point)
+    cf_finishes_with(person, point)
+}
+
 structure S : V {
 }
 
-theory T : V {
+theory T1: V {
     // Of the contestant who scored 41 points and the person who threw the white darts, one was from Worthington and the other was Ira
     ?a [person] b [person]: scored(a,41) & threw(b,the_white_darts) & ~ (a = b) & (from(a,worthington) & ira = b | from(b,worthington) & ira = a).
+}
 
+theory T2: V {
     // Bill was from Mount union
     from(bill,mount_union).
+}
 
+theory T3: V {
     // Ira scored 21 points higher than the contestant from Worthington
     ?c [point] d [person] e [point]: from(d,worthington) & scored(d,c) & e = c+21 & scored(ira,e).
+}
 
+theory T4: V {
     // Oscar scored somewhat higher than the player who threw the orange darts
     ?f [type3] g [point] h [person] i [point]: f>0 & threw(h,the_orange_darts) & scored(h,g) & i = g+f & scored(oscar,i).
+}
 
+theory T5: V {
     // The contestant from Mount union threw the black darts
     ?j [person]: from(j,mount_union) & threw(j,the_black_darts).
+}
 
+theory T6: V {
     // Pedro didn't finish with 55 points
     ~ finishes_with(pedro,55).
+}
 
+theory T7: V {
     // The player who threw the red darts was either Colin or the contestant who scored 48 points
     ?k [person]: threw(k,the_red_darts) & (colin = k | (?l [person]: scored(l,48) & l = k)).
+}
 
+theory T8: V {
     // Of the contestant who scored 41 points and the person who threw the orange darts, one was from Gillbertville and the other was from Worthington
     ?m [person] n [person]: scored(m,41) & threw(n,the_orange_darts) & ~ (m = n) & (from(m,gillbertville) & from(n,worthington) | from(n,gillbertville) & from(m,worthington)).
+}
 
+theory T9: V {
     // Ira scored 7 points lower than the player from Lohrville
     ?o [point] p [person] q [point]: from(p,lohrville) & scored(p,o) & q = o-7 & scored(ira,q).
+}
 
-
+theory bijections : V {
     // Logigram bijection axioms:
     ! x [person]: ?=1 y [type1]: from(x, y).
     ! x [type1]: ?=1 y [person]: from(y, x).
@@ -68,8 +97,75 @@ theory T : V {
     // Logigram symmetry breaking axioms:
 }
 
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [person] y [type1]: ct_from(x,y) => from(x,y)) &
+        (! x [person] y [type1]: cf_from(x,y) => ~from(x,y)) &
+        (! x [person] y [type2]: ct_threw(x,y) => threw(x,y)) &
+        (! x [person] y [type2]: cf_threw(x,y) => ~threw(x,y)) &
+        (! x [person] y [point]: ct_scored(x,y) => scored(x,y)) &
+        (! x [person] y [point]: cf_scored(x,y) => ~scored(x,y)) &
+        (! x [person] y [point]: ct_finishes_with(x,y) => finishes_with(x,y)) &
+        (! x [person] y [point]: cf_finishes_with(x,y) => ~finishes_with(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::from], S2[V::from].ct)
+    removeFrom(S3[V::from], S2[V::from].cf)
+    removeFrom(S3[V::threw], S2[V::threw].ct)
+    removeFrom(S3[V::threw], S2[V::threw].cf)
+    removeFrom(S3[V::scored], S2[V::scored].ct)
+    removeFrom(S3[V::scored], S2[V::scored].cf)
+    removeFrom(S3[V::finishes_with], S2[V::finishes_with].ct)
+    removeFrom(S3[V::finishes_with], S2[V::finishes_with].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::from, VExtra::ct_from, VExtra::cf_from},
+        {V::threw, VExtra::ct_threw, VExtra::cf_threw},
+        {V::scored, VExtra::ct_scored, VExtra::cf_scored},
+        {V::finishes_with, VExtra::ct_finishes_with, VExtra::cf_finishes_with},
+    }
+}
+
+include "./generic_procedures.idp"
+
 procedure main() {
-    stdoptions.nbmodels = 10;
-    printmodels(modelexpand(T,S))
+    stdoptions.verbosity.solving = 0
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "Of the contestant who scored 41 points and the person who threw the white darts, one was from Worthington and the other was Ira"},
+        {T2, "Bill was from Mount union"},
+        {T3, "Ira scored 21 points higher than the contestant from Worthington"},
+        {T4, "Oscar scored somewhat higher than the player who threw the orange darts"},
+        {T5, "The contestant from Mount union threw the black darts"},
+        {T6, "Pedro didn't finish with 55 points"},
+        {T7, "The player who threw the red darts was either Colin or the contestant who scored 48 points"},
+        {T8, "Of the contestant who scored 41 points and the person who threw the orange darts, one was from Gillbertville and the other was from Worthington"},
+        {T9, "Ira scored 7 points lower than the player from Lohrville"},
+    }
+
+    update = true
+    while update do
+        update = false
+        for i, theory in ipairs(theories) do
+            t = merge(theory[1],bijections)
+            Snew = optimalpropagate(t,S)
+            if not equal(S, Snew) then
+                update = true
+                Snew = explainSlightlyMoreThanSemiDetail(S,Snew,theory[1],theory[2])
+                S = Snew
+            end
+        end
+    end
+
+    print("The final result is:")
+    print(S)
 }
 

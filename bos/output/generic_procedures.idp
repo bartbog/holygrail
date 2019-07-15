@@ -1,3 +1,5 @@
+//This is a comment
+
 include <table_utils>
 
 procedure removeFrom(table, truethings){
@@ -114,6 +116,27 @@ procedure explainSemiDetail(S,Snew,T,clue){
 
 }
 
+procedure isTwoValued(S){
+	backup  = stdoptions.nbmodels
+	stdoptions.nbmodels = 2
+	nbfound = #nbModelsTwoValuedExtensions(S)
+	stdoptions.nbmodels = backup
+	return nbfound == 1
+}
+
+procedure combine(T1, T2){
+	newTheories = {}
+	for i,t1 in ipairs(T1) do
+		for j,t2 in ipairs(T2) do
+			newT = merge(t1[1],t2[1])
+			newClue = t1[2] .. "\" in combination with the clue \"" .. t2[2] 
+			table.insert(newTheories,{newT,newClue})
+		end
+	end
+	return newTheories
+
+}
+
 procedure explainDetail(S,Snew,T,clue){ 
         //TODO: this is unfinished code!
         print("TODO REMOVE: current clue is " ..clue)
@@ -138,4 +161,57 @@ procedure explainDetail(S,Snew,T,clue){
         print("Using the clue: " .. "\"" .. clue .. "\", we can derive that:")
         print(d)
         return Snew
+}
+
+//we do the explanation loop, looping over all theories and tyring to propagate something
+// If no propagation is found, we go into a propagation with a combination of two theories, if that does not yield anything three and so on. All these higher-level propagations break off after they do one propagation, to keep things simple. The boolean continueAfterPropagation informs us whether we are in the simple case where we do propagation until fixpoint or not. 
+procedure explanationLoop(theories, S, continueAfterPropagation, originalTheories){
+ update = true
+    while update do
+        update = false
+        for i, theory in ipairs(theories) do
+            t = merge(theory[1],bijections)
+            Snew = optimalpropagate(t,S)
+            if not equal(S, Snew) then
+                update = true
+                Snew = explainSlightlyMoreThanSemiDetail(S,Snew,theory[1],theory[2])
+                S = Snew
+				if not continueAfterPropagation then
+					return S
+				end
+            end
+        end
+		if not update and not isTwoValued(S) then
+			extTheories = combine(theories, originalTheories)
+			Snew = explanationLoop(extTheories, S, false, originalTheories)
+			if not equal(S, Snew) then
+				S = Snew
+                update = true
+				if not continueAfterPropagation then
+					return S
+				end
+			end
+		end
+    end
+
+
+
+  return S
+}
+
+
+procedure test(theories, S){
+	myT = bijections
+	for i,t in ipairs(theories) do
+		myT = merge(myT,t[1])
+	end
+	stdoptions.nbmodels = 10;
+	models = modelexpand(myT,S)
+	if #models > 1 then
+		print("Solution not unique!")
+		printmodels(models)
+		exit(10)
+	else
+		print("OK, this puzzle has a unique solution.")
+	end
 }

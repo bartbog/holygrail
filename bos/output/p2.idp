@@ -136,9 +136,6 @@ procedure getpredlist() {
 include "./generic_procedures.idp"
 
 procedure main() {
-    stdoptions.verbosity.solving = 0
-    stdoptions.cpsupport = false
-
     theories = {
         {T1, "Of the contestant who scored 41 points and the person who threw the white darts, one was from Worthington and the other was Ira"},
         {T2, "Bill was from Mount union"},
@@ -150,22 +147,12 @@ procedure main() {
         {T8, "Of the contestant who scored 41 points and the person who threw the orange darts, one was from Gillbertville and the other was from Worthington"},
         {T9, "Ira scored 7 points lower than the player from Lohrville"},
     }
-
-    update = true
-    while update do
-        update = false
-        for i, theory in ipairs(theories) do
-            t = merge(theory[1],bijections)
-            Snew = optimalpropagate(t,S)
-            if not equal(S, Snew) then
-                update = true
-                Snew = explainSlightlyMoreThanSemiDetail(S,Snew,theory[1],theory[2])
-                S = Snew
-            end
-        end
-    end
+	test(theories,S)
+	stdoptions.cpsupport=false
+   	S = explanationLoop(theories,S,true,theories)
 
     print("The final result is:")
     print(S)
+	exit(0)
 }
 

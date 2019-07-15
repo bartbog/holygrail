@@ -244,7 +244,7 @@ printMain(SentencePairs) :-
     nl,
     writeln('    print("The final result is:")'),
     writeln('    print(S)'),
-    writeln('    exit(0)'),
+    writeln('    os.exit(0)'),
     writeln('}').
 printMainTheoriesDict(SentencePairs, Sentence-FOL) :-
     nth1(Index, SentencePairs, Sentence-FOL),

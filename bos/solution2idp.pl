@@ -37,7 +37,7 @@ solution2idp(solution(Sentences, DRSs, TypesIn), ProblemName, Problem) :-
     \+ \+ printFile(ProblemName, SentencePairs, voc(BaseTypes, DerivedTypes, Predicates)),
     clearQuestionTopic,
     problemToFileName(ProblemName, FileName),
-    format(string(Command), "cat ~p | docker run -i --rm --name idp -v $(pwd)/output:/root/idp krrkul/idp3:latest idp", [FileName]),
+    format(string(Command), "cat ~p | docker run -i --rm --name idp -v $(pwd)/output:/root/idp krrkul/idp3:latest idp | grep -v '^>>>'", [FileName]),
     process_create(path(sh), ["-c", Command], []).
 
 handleIDPOutput(models(0, [])) :-

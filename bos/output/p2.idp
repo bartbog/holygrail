@@ -11,6 +11,9 @@ vocabulary V {
     threw(person, type2)
     scored(person, point)
     finishes_with(person, point)
+    is_linked_with_1(type1, type2)
+    is_linked_with_2(type1, point)
+    is_linked_with_3(type2, point)
 }
 
 vocabulary VExtra {
@@ -23,6 +26,12 @@ vocabulary VExtra {
     cf_scored(person, point)
     ct_finishes_with(person, point)
     cf_finishes_with(person, point)
+    ct_is_linked_with_1(type1, type2)
+    cf_is_linked_with_1(type1, type2)
+    ct_is_linked_with_2(type1, point)
+    cf_is_linked_with_2(type1, point)
+    ct_is_linked_with_3(type2, point)
+    cf_is_linked_with_3(type2, point)
 }
 
 structure S : V {
@@ -87,10 +96,25 @@ theory bijections : V {
     ! x [person]: ?=1 y [point]: finishes_with(x, y).
     ! x [point]: ?=1 y [person]: finishes_with(y, x).
 
+    ! x [type1]: ?=1 y [type2]: is_linked_with_1(x, y).
+    ! x [type2]: ?=1 y [type1]: is_linked_with_1(y, x).
+
+    ! x [type1]: ?=1 y [point]: is_linked_with_2(x, y).
+    ! x [point]: ?=1 y [type1]: is_linked_with_2(y, x).
+
+    ! x [type2]: ?=1 y [point]: is_linked_with_3(x, y).
+    ! x [point]: ?=1 y [type2]: is_linked_with_3(y, x).
+
     // Logigram synonym axioms:
     ! x [person] y [point]: scored(x, y) <=> finishes_with(x, y).
 
     // Logigram transitive relation axioms:
+    ! x [person] y [type1]: from(x, y) <=> ? z [type2]: threw(x, z) & is_linked_with_1(y, z).
+    ! x [person] y [type1]: from(x, y) <=> ? z [point]: scored(x, z) & is_linked_with_2(y, z).
+    ! x [person] y [type1]: from(x, y) <=> ? z [point]: finishes_with(x, z) & is_linked_with_2(y, z).
+    ! x [person] y [type2]: threw(x, y) <=> ? z [point]: scored(x, z) & is_linked_with_3(y, z).
+    ! x [person] y [type2]: threw(x, y) <=> ? z [point]: finishes_with(x, z) & is_linked_with_3(y, z).
+    ! x [type1] y [type2]: is_linked_with_1(x, y) <=> ? z [point]: is_linked_with_2(x, z) & is_linked_with_3(y, z).
 
     // Logigram reflexive relation axioms:
 
@@ -107,6 +131,12 @@ theory forceSomethingWrongValue : VExtra {
         (! x [person] y [point]: cf_scored(x,y) => ~scored(x,y)) &
         (! x [person] y [point]: ct_finishes_with(x,y) => finishes_with(x,y)) &
         (! x [person] y [point]: cf_finishes_with(x,y) => ~finishes_with(x,y)) &
+        (! x [type1] y [type2]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [type1] y [type2]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [type1] y [point]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [type1] y [point]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        (! x [type2] y [point]: ct_is_linked_with_3(x,y) => is_linked_with_3(x,y)) &
+        (! x [type2] y [point]: cf_is_linked_with_3(x,y) => ~is_linked_with_3(x,y)) &
         true
     ).
 }
@@ -121,6 +151,12 @@ procedure diff(S1, S2) {
     removeFrom(S3[V::scored], S2[V::scored].cf)
     removeFrom(S3[V::finishes_with], S2[V::finishes_with].ct)
     removeFrom(S3[V::finishes_with], S2[V::finishes_with].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
     return S3
 }
 
@@ -130,12 +166,17 @@ procedure getpredlist() {
         {V::threw, VExtra::ct_threw, VExtra::cf_threw},
         {V::scored, VExtra::ct_scored, VExtra::cf_scored},
         {V::finishes_with, VExtra::ct_finishes_with, VExtra::cf_finishes_with},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+        {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
     }
 }
 
 include "./generic_procedures.idp"
 
 procedure main() {
+    stdoptions.cpsupport = false
+
     theories = {
         {T1, "Of the contestant who scored 41 points and the person who threw the white darts, one was from Worthington and the other was Ira"},
         {T2, "Bill was from Mount union"},
@@ -147,12 +188,12 @@ procedure main() {
         {T8, "Of the contestant who scored 41 points and the person who threw the orange darts, one was from Gillbertville and the other was from Worthington"},
         {T9, "Ira scored 7 points lower than the player from Lohrville"},
     }
-	test(theories,S)
-	stdoptions.cpsupport=false
-   	S = explanationLoop(theories,S,true,theories)
+
+    test(theories,S)
+    S = explanationLoop(theories,S,true,theories)
 
     print("The final result is:")
     print(S)
-	exit(0)
+    os.exit(0)
 }
 

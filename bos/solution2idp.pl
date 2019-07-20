@@ -31,14 +31,34 @@ solution2idp(solution(Sentences, DRSs, TypesIn), ProblemName, Problem) :-
     pairs_keys_values(SentencePairs, Sentences, FOLs),
     nameTypes(Types),
     nameVariables(FOLs),
-    getPredicates(Types, Predicates),
+    getPredicates(Types, BasePredicates),
     getBaseTypes(Types, BaseTypes, NbBaseTypes, NbConceptsPerType),
     getDerivedTypes(Types, BaseTypes, DerivedTypes),
+    extendPredicates(BaseTypes, BasePredicates, Predicates),
     \+ \+ printFile(ProblemName, SentencePairs, voc(BaseTypes, DerivedTypes, Predicates)),
     clearQuestionTopic,
     problemToFileName(ProblemName, FileName),
     format(string(Command), "cat ~p | docker run -i --rm --name idp -v $(pwd)/output:/root/idp krrkul/idp3:latest idp | grep -v '^>>>'", [FileName]),
     process_create(path(sh), ["-c", Command], []).
+
+extendPredicates(BaseTypes, PredicatesIn, PredicatesOut) :-
+  findall(predicate(is_linked_with_, X, Y),
+    (
+      nth0(XIndex, BaseTypes, baseType(X, _)),
+      nth0(YIndex, BaseTypes, baseType(Y, _)),
+      XIndex < YIndex,
+      \+ member(predicate(_, X, Y), PredicatesIn),
+      \+ member(predicate(_, Y, X), PredicatesIn)
+    ),
+  ExtraPredicatesUnnamed),
+  maplist(nameExtraPredicate(ExtraPredicatesUnnamed), ExtraPredicatesUnnamed, ExtraPredicatesNamed),
+  append(PredicatesIn, ExtraPredicatesNamed, PredicatesOut).
+
+nameExtraPredicate(AllPredicates, predicate(NameIn, X, Y), predicate(NameOut, X, Y)) :-
+  nth1(Index, AllPredicates, predicate(NameIn, X, Y)),
+  atom_concat(NameIn, Index, NameOut).
+
+
 
 handleIDPOutput(models(0, [])) :-
     format("Couldn't find any models. Something went wrong~n", []),

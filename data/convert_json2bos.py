@@ -23,15 +23,15 @@ def convert(fname):
                 nr_types,
                 nr_domsize,
                 get_clues(data),
-                get_grammar(data)))
+                get_lexicon(data)))
 
 def get_clues(data):
     # pretty printing stuff
     clues = ["        \"{}\"".format(clue) for clue in data['clues']]
     return "[\n"+",\n".join(clues)+"\n                     ]"
 
-def get_grammar(data):
-    # person names (no values)
+def get_lexicon(data):
+    # proper nouns (no numbers)
     pns = set()
     for (category, names) in data['types'].items():
         for n in names:
@@ -43,11 +43,35 @@ def get_grammar(data):
     # http://www.nltk.org/book/ch07.html
     clues_token = [nltk.word_tokenize(clue) for clue in data['clues']]
     clues_pos = [nltk.pos_tag(clue) for clue in clues_token]
+    print("\n".join(map(str,clues_pos)))
+
+    # check for ppn's
+    # extract [DT pn NN] triples
+    pn_triples = dict((pn,[]) for pn in pns)
+    for clue_pos in clues_pos:
+        for (i,(word, pos)) in enumerate(clue_pos):
+            if word in pns and \
+               i != 0 and clue_pos[i-1][1] == 'DT' and \
+               i < len(clue_pos) and clue_pos[i+1][1] == 'NN':
+                pn_triples[word].append( (clue_pos[i-1][0],clue_pos[i+1][0]) )
+    # check for each type
+    for (category, names) in data['types'].items():
+        triples = []
+        for n in names:
+            if not isinstance(n, (int,float)):
+                n = n.lower()
+                if n in pn_triples:
+                    triples += pn_triples[n]
+        if len(triples) > 0:
+            print("SHOULD PROBABLY DO A PPN:")
+            print(category,triples)
+            # then make sure that all occurences of an 'category' object use that triplet...
+
 
     # check for double meanings
-    poscounts = nltk.ConditionalFreqDist([tag for tags in clues_pos for tag in tags])
-    poscounts_ambigu = [(x,poscounts[x]) for x in poscounts if len(poscounts[x]) > 1]
-    print("Ambiguous:",poscounts_ambigu)
+    #poscounts = nltk.ConditionalFreqDist([tag for tags in clues_pos for tag in tags])
+    #poscounts_ambigu = [(x,poscounts[x]) for x in poscounts if len(poscounts[x]) > 1]
+    #print("Ambiguous:",poscounts_ambigu)
 
     # extra nouns that are not our proper nouns
     nouns_tuple = set()

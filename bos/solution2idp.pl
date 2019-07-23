@@ -260,7 +260,7 @@ printMain(SentencePairs) :-
     writeln('    }'),
     nl,
     writeln('    test(theories,S)'),
-    writeln('    S = explanationLoop(theories,S,true,theories)'),
+    writeln('    S = explanationLoop(theories,S,true,theories,true)'),
     nl,
     writeln('    print("The final result is:")'),
     writeln('    print(S)'),

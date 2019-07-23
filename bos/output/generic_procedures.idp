@@ -41,7 +41,7 @@ procedure copyForcedValues(d,STemp){
         end
 }
 
-procedure explainSlightlyMoreThanSemiDetail(S,Snew,T,clue){     
+procedure explainSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON){     
         //The idea is to explain predicate by predicate
         preds = getpredlist()
         
@@ -52,13 +52,13 @@ procedure explainSlightlyMoreThanSemiDetail(S,Snew,T,clue){
                 //copy only this predicate to Stemp
                 Stemp[pred[1]] = Snew[pred[1]]
                 if not equal(Stemp, S) then
-                        explainSemiDetail(S,Stemp,T,clue)
+                        explainSemiDetail(S,Stemp,T,clue,printJSON)
                 end
         end
         return Snew
 }
 
-procedure explainSemiDetail(S,Snew,T,clue){     
+procedure explainSemiDetail(S,Snew,T,clue,printJSON){     
         preds = getpredlist()
 
 
@@ -85,32 +85,57 @@ procedure explainSemiDetail(S,Snew,T,clue){
                 
         // Forget about the temporary info:
         setvocabulary(Sexpl,V)
+		mystring = ""
+		if printJSON then
+			mystring = mystring .. "{\n\t\"clue\": \""..clue.."\",\n\t\"assumptions\": ["
+		else
+        	mystring =   mystring ..   "Using the clue: " .. "\"" .. clue .. "\""
+        end
 
-        mystring =      "Using the clue: " .. "\"" .. clue .. "\""
-        
         for i, pred in ipairs(preds) do
                 for tuple in tuples(Sexpl[pred[1]].ct) do
-                        mystring = mystring .. ", and the fact that "
-                        mystring = mystring .. tostring(tuple[1]) .. " " .. name(pred[1]) .. " " .. tostring(tuple[2])
+						if printJSON then
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
+                        else	
+							mystring = mystring .. ", and the fact that "
+                        	mystring = mystring .. tostring(tuple[1]) .. " " .. name(pred[1]) .. " " .. tostring(tuple[2])
+						end
                 end
                 for tuple in tuples(Sexpl[pred[1]].cf) do
+					if printJSON then
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
+                    else	
                         mystring = mystring .. ", and the fact that "
                         mystring = mystring .. tostring(tuple[1]) .. " not " .. name(pred[1]) .. " " .. tostring(tuple[2])
+					end
                 end
         end
-
-        mystring = mystring .. ", we can derive that: "
-        
+		if printJSON then
+			mystring = mystring:sub(1,-2)
+			mystring = mystring .. "\n\t],\n\t\"derivations\": ["
+		else
+        	mystring = mystring .. ", we can derive that: "
+        end
         for i, pred in ipairs(preds) do
                 for tuple in tuples(d[pred[1]].ct) do
+					if printJSON then
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
+                    else
                         mystring = mystring .. tostring(tuple[1]) .. " " .. name(pred[1]) .. " " .. tostring(tuple[2])..", "
+					end
                 end
                 for tuple in tuples(d[pred[1]].cf) do
+					if printJSON then
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
+                    else
                         mystring = mystring .. tostring(tuple[1]) .. " not " .. name(pred[1]) .. " " .. tostring(tuple[2]).. ", "
+					end
                 end
         end
-
-
+		if printJSON then
+			mystring = mystring:sub(1,-2)
+			mystring = mystring .. "\n\t]\n}"
+		end
         print(mystring)
         return Snew
 
@@ -165,7 +190,7 @@ procedure explainDetail(S,Snew,T,clue){
 
 //we do the explanation loop, looping over all theories and tyring to propagate something
 // If no propagation is found, we go into a propagation with a combination of two theories, if that does not yield anything three and so on. All these higher-level propagations break off after they do one propagation, to keep things simple. The boolean continueAfterPropagation informs us whether we are in the simple case where we do propagation until fixpoint or not. 
-procedure explanationLoop(theories, S, continueAfterPropagation, originalTheories){
+procedure explanationLoop(theories, S, continueAfterPropagation, originalTheories, printJSON){
  update = true
     while update do
         update = false
@@ -174,7 +199,7 @@ procedure explanationLoop(theories, S, continueAfterPropagation, originalTheorie
             Snew = optimalpropagate(t,S)
             if not equal(S, Snew) then
                 update = true
-                Snew = explainSlightlyMoreThanSemiDetail(S,Snew,theory[1],theory[2])
+                Snew = explainSlightlyMoreThanSemiDetail(S,Snew,theory[1],theory[2],printJSON)
                 S = Snew
 				if not continueAfterPropagation then
 					return S
@@ -183,7 +208,7 @@ procedure explanationLoop(theories, S, continueAfterPropagation, originalTheorie
         end
 		if not update and not isTwoValued(S) then
 			extTheories = combine(theories, originalTheories)
-			Snew = explanationLoop(extTheories, S, false, originalTheories)
+			Snew = explanationLoop(extTheories, S, false, originalTheories,printJSON)
 			if not equal(S, Snew) then
 				S = Snew
                 update = true

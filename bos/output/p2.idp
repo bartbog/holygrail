@@ -151,12 +151,6 @@ procedure diff(S1, S2) {
     removeFrom(S3[V::scored], S2[V::scored].cf)
     removeFrom(S3[V::finishes_with], S2[V::finishes_with].ct)
     removeFrom(S3[V::finishes_with], S2[V::finishes_with].cf)
-    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
-    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
-    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
-    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
-    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
-    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
     return S3
 }
 
@@ -171,6 +165,8 @@ procedure getpredlist() {
         {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
     }
 }
+
+
 
 include "./generic_procedures.idp"
 
@@ -190,7 +186,7 @@ procedure main() {
     }
 
     test(theories,S)
-    S = explanationLoop(theories,S,true,theories)
+    S = explanationLoop(theories,S,true,theories,true)
 
     print("The final result is:")
     print(S)

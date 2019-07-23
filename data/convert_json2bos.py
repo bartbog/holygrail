@@ -2,12 +2,14 @@
 # convert json file to BOS prolog input
 #
 # be sure to install 'python3-nltk'
+# and run: 'pip3 install pattern'
 # then run once: import nltk; nltk.download('punkt'); nltk.download('averaged_perceptron_tagger')
 
 import sys
 import json
 import os.path
 import nltk
+from pattern.en import pluralize, singularize
 
 def convert(fname):
     with open(fname, 'r') as ffile:
@@ -30,35 +32,44 @@ def get_clues(data):
 
 def get_grammar(data):
     # person names (no values)
-    pns = []
+    pns = set()
     for (category, names) in data['types'].items():
-        # TODO: add A/B/C/D... per type
         for n in names:
             if not isinstance(n, (int,float)):
-                pns.append(n.lower())
-    pns_str = ["    pn([{}])".format(pn) for pn in pns]
+                pns.add(n.lower())
+    # TODO, what with those that are 'ppn'?
 
-    # get all nouns from nltk
-    #https://stackoverflow.com/questions/33587667/extracting-all-nouns-from-a-text-file-using-nltk
-    # function to test if something is a noun
     # do the nlp stuff
-    cluetext = " ".join(data['clues']).lower()
-    tokenized = nltk.word_tokenize(cluetext)
-    pos_tags = nltk.pos_tag(tokenized)
-    # TODO: Fromt his, we can extract lots of things... like nouns
-    print(pos_tags)
-    def is_noun(pos): return pos[:2] == 'NN'
-    nouns = [word for (word, pos) in pos_tags if is_noun(pos)]
-    # remove the person names
-    nouns = set(nouns) - frozenset(pns)
-    nouns_str = ["    noun([{}])".format(noun) for noun in nouns]
+    # http://www.nltk.org/book/ch07.html
+    clues_token = [nltk.word_tokenize(clue) for clue in data['clues']]
+    clues_pos = [nltk.pos_tag(clue) for clue in clues_token]
 
+    # check for double meanings
+    poscounts = nltk.ConditionalFreqDist([tag for tags in clues_pos for tag in tags])
+    poscounts_ambigu = [(x,poscounts[x]) for x in poscounts if len(poscounts[x]) > 1]
+    print("Ambiguous:",poscounts_ambigu)
+
+    # extra nouns that are not our proper nouns
+    nouns_tuple = set()
+    for clue_pos in clues_pos:
+        for (word, pos) in clue_pos:
+            if word in pns:
+                continue # skip
+            if pos.startswith('NNS'):
+                # plural
+                nouns_tuple.add( (singularize(word),word) )
+            elif pos.startswith('NN'):
+                # singular
+                nouns_tuple.add( (word,pluralize(word)) )
+        
     # collect what is needed:
     # prep()
     # ppn() # ?
     # tv() # ?
     # tvGap() # ?
     # tvPrep() # ?
+    pns_str = ["    pn([{}])".format(pn) for pn in pns]
+    nouns_str = ["    noun([{},{}])".format(s,p) for (s,p) in nouns_tuple]
 
     return "[\n"+\
            ",\n".join(pns_str)+"\n"+\

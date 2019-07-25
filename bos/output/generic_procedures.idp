@@ -1,0 +1,242 @@
+//This is a comment
+
+include <table_utils>
+
+procedure removeFrom(table, truethings){
+
+        for tuple in tuples(truethings) do      
+                makeunknown(table,tuple)
+        end
+
+}
+
+procedure explainCoarse(S,Snew,T,clue){
+        d = diff(Snew,S)
+        print("Using the clue: " .. "\"" .. clue .. "\", we can derive that:")
+        print(d)
+        return Snew
+}
+
+procedure addExplanations(diff,Sorig,TClue,predlist,explanations){
+        for tuple in tuples(diff[predlist[1]].ct) do
+                STemp = clone(Sorig)
+                setvocabulary(STemp,VExtra)
+                makefalse(STemp[predlist[2]],tuple)
+
+                t = merge(TClue,bijections)
+                t = merge(t,forceSomethingWrongValue)
+                Sexpl = unsatstructure(t,STemp,V)
+                print("Explanation:")
+                print(Sexpl)
+        end
+}
+
+procedure copyForcedValues(d,STemp){
+
+        for i, pred in ipairs(getpredlist()) do
+                STemp[pred[2]].ct = d[pred[1]].ct
+                STemp[pred[2]].pt = d[pred[1]].ct
+                STemp[pred[3]].ct = d[pred[1]].cf
+                STemp[pred[3]].pt = d[pred[1]].cf
+        end
+}
+
+procedure explainSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON){     
+        //The idea is to explain predicate by predicate
+        preds = getpredlist()
+        
+        d = diff(Snew,S)
+
+        for i, pred in ipairs(preds) do
+                Stemp = clone(S)
+                //copy only this predicate to Stemp
+                Stemp[pred[1]] = Snew[pred[1]]
+                if not equal(Stemp, S) then
+                        explainSemiDetail(S,Stemp,T,clue,printJSON)
+                end
+        end
+        return Snew
+}
+
+procedure explainSemiDetail(S,Snew,T,clue,printJSON){     
+        preds = getpredlist()
+
+
+        //Idea: compute core for the diff... 
+        d = diff(Snew,S)
+        STemp = clone(S)
+        setvocabulary(STemp,VExtra)
+        
+        //Set everything in Stemp to be forced.
+        copyForcedValues(d,STemp)
+
+        // Create the theory for the unsatcore
+                t = merge(T,bijections)
+                t = merge(t,forceSomethingWrongValue)
+        
+        //Find minimally precise structure Sexpl that explains all the findings given the current clue.
+        Sexpl =         unsatstructure(t,STemp,V)
+
+        //Now, could we try to get it even smaller.  (NOT DONE YET)
+        // From Sexpl + T + bijections Snew follows. 
+        // We want to find a small subset D of diff, such that 
+        // S + bijections + D entails diff, i.e., such that 
+        // S + bijections + D & not diff is unsatisfiable, thereby only chainging things in diff. 
+                
+        // Forget about the temporary info:
+        setvocabulary(Sexpl,V)
+		mystring = ""
+		if printJSON then
+			mystring = mystring .. "{\n\t\"clue\": \""..clue.."\",\n\t\"assumptions\": ["
+		else
+        	mystring =   mystring ..   "Using the clue: " .. "\"" .. clue .. "\""
+        end
+
+        for i, pred in ipairs(preds) do
+                for tuple in tuples(Sexpl[pred[1]].ct) do
+						if printJSON then
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
+                        else	
+							mystring = mystring .. ", and the fact that "
+                        	mystring = mystring .. tostring(tuple[1]) .. " " .. name(pred[1]) .. " " .. tostring(tuple[2])
+						end
+                end
+                for tuple in tuples(Sexpl[pred[1]].cf) do
+					if printJSON then
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
+                    else	
+                        mystring = mystring .. ", and the fact that "
+                        mystring = mystring .. tostring(tuple[1]) .. " not " .. name(pred[1]) .. " " .. tostring(tuple[2])
+					end
+                end
+        end
+		if printJSON then
+			mystring = mystring:sub(1,-2)
+			mystring = mystring .. "\n\t],\n\t\"derivations\": ["
+		else
+        	mystring = mystring .. ", we can derive that: "
+        end
+        for i, pred in ipairs(preds) do
+                for tuple in tuples(d[pred[1]].ct) do
+					if printJSON then
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
+                    else
+                        mystring = mystring .. tostring(tuple[1]) .. " " .. name(pred[1]) .. " " .. tostring(tuple[2])..", "
+					end
+                end
+                for tuple in tuples(d[pred[1]].cf) do
+					if printJSON then
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
+                    else
+                        mystring = mystring .. tostring(tuple[1]) .. " not " .. name(pred[1]) .. " " .. tostring(tuple[2]).. ", "
+					end
+                end
+        end
+		if printJSON then
+			mystring = mystring:sub(1,-2)
+			mystring = mystring .. "\n\t]\n}"
+		end
+        print(mystring)
+        return Snew
+
+}
+
+procedure isTwoValued(S){
+	backup  = stdoptions.nbmodels
+	stdoptions.nbmodels = 2
+	nbfound = #nbModelsTwoValuedExtensions(S)
+	stdoptions.nbmodels = backup
+	return nbfound == 1
+}
+
+procedure combine(T1, T2){
+	newTheories = {}
+	for i,t1 in ipairs(T1) do
+		for j,t2 in ipairs(T2) do
+			newT = merge(t1[1],t2[1])
+			newClue = t1[2] .. "\" in combination with the clue \"" .. t2[2] 
+			table.insert(newTheories,{newT,newClue})
+		end
+	end
+	return newTheories
+
+}
+
+procedure explainDetail(S,Snew,T,clue){ 
+        //TODO: this is unfinished code!
+        print("TODO REMOVE: current clue is " ..clue)
+        //The idea underlying this procedure is: 
+        // 1. If possible, for each derived literal, find a minimal explanation. (minimal number of crosses/dots used to derive it). This can be done using unsatstructure, but, due to limitations of the IDP procedure, I had to use an extra vocabulary and put the goal in there (that is Vextra; theory forceSomethingWrongValue only serves to fix these atoms -- is a bit of a workaround to fix something conceptually easy).
+        // 2. Compare the size of the explanations; take the smallest one and preferrably something positive. Maybe, if there are multiple things to derive with exactly the same assumptions, we can derive all of them at once?  -> Lots of options at this step, Ill just implement one...
+        // 3. Then, complete the propagation using only the bijection constraints (this means: filling in dots/crosses in a trivial way) 
+        d = diff(Snew,S)
+
+        preds = getpredlist()
+        
+        //Elements will be of the form:
+        // {pred, true/false, tuple, pstruct, size}
+        explanations = {} 
+        print("there")
+        for i, pred in ipairs(preds) do
+        print("where")
+                addExplanations(d,S,T,pred,explanations)
+        end
+
+                print("txhere")
+        print("Using the clue: " .. "\"" .. clue .. "\", we can derive that:")
+        print(d)
+        return Snew
+}
+
+//we do the explanation loop, looping over all theories and tyring to propagate something
+// If no propagation is found, we go into a propagation with a combination of two theories, if that does not yield anything three and so on. All these higher-level propagations break off after they do one propagation, to keep things simple. The boolean continueAfterPropagation informs us whether we are in the simple case where we do propagation until fixpoint or not. 
+procedure explanationLoop(theories, S, continueAfterPropagation, originalTheories, printJSON){
+ update = true
+    while update do
+        update = false
+        for i, theory in ipairs(theories) do
+            t = merge(theory[1],bijections)
+            Snew = optimalpropagate(t,S)
+            if not equal(S, Snew) then
+                update = true
+                Snew = explainSlightlyMoreThanSemiDetail(S,Snew,theory[1],theory[2],printJSON)
+                S = Snew
+				if not continueAfterPropagation then
+					return S
+				end
+            end
+        end
+		if not update and not isTwoValued(S) then
+			extTheories = combine(theories, originalTheories)
+			Snew = explanationLoop(extTheories, S, false, originalTheories,printJSON)
+			if not equal(S, Snew) then
+				S = Snew
+                update = true
+				if not continueAfterPropagation then
+					return S
+				end
+			end
+		end
+    end
+
+
+
+  return S
+}
+
+
+procedure test(theories, S){
+	myT = bijections
+	for i,t in ipairs(theories) do
+		myT = merge(myT,t[1])
+	end
+	stdoptions.nbmodels = 10;
+	models = modelexpand(myT,S)
+	if #models > 1 then
+		print("Solution not unique!")
+		printmodels(models)
+		os.exit(10)
+	else
+		print("OK, this puzzle has a unique solution.")
+	end
+}

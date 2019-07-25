@@ -37,8 +37,9 @@ solution2idp(solution(Sentences, DRSs, TypesIn), ProblemName, Problem) :-
     extendPredicates(BaseTypes, BasePredicates, Predicates),
     \+ \+ printFile(ProblemName, SentencePairs, voc(BaseTypes, DerivedTypes, Predicates)),
     clearQuestionTopic,
-    problemToFileName(ProblemName, FileName),
-    format(string(Command), "cat ~p | docker run -i --rm --name idp -v $(pwd)/output:/root/idp krrkul/idp3:latest idp | grep -v '^>>>'", [FileName]),
+    problemToFileName(ProblemName, FileNameIdp, '.idp'),
+    problemToFileName(ProblemName, FileNameOutputJson, '.output.json'),
+    format(string(Command), "cat ~p | docker run -i --rm --name idp -v $(pwd)/output:/root/idp krrkul/idp3:latest idp | grep -v '^>>>' | ./outputToJson.sh > ~p", [FileNameIdp, FileNameOutputJson]),
     process_create(path(sh), ["-c", Command], []).
 
 extendPredicates(BaseTypes, PredicatesIn, PredicatesOut) :-
@@ -87,7 +88,10 @@ sortByColumn(I, Delta, R1, R2) :-
     compare(Delta, X1, X2).
 
 printFile(ProblemName, SentencePairs, Vocabularium) :-
-    problemToFileName(ProblemName, FileName),
+    printIdpFile(ProblemName, SentencePairs, Vocabularium),
+    printJsonVocFile(ProblemName, SentencePairs, Vocabularium).
+printIdpFile(ProblemName, SentencePairs, Vocabularium) :-
+    problemToFileName(ProblemName, FileName, '.idp'),
     tell(FileName),
     write('// Problem '),
     writeln(ProblemName),
@@ -109,9 +113,32 @@ printFile(ProblemName, SentencePairs, Vocabularium) :-
     printMain(SentencePairs),
     nl,
     told.
-problemToFileName(ProblemName, FileName) :-
+printJsonVocFile(ProblemName, _SentencePairs, voc(BaseTypes, _DerivedTypes, _Predicates)) :-
+    problemToFileName(ProblemName, FileName, '.voc.json'),
+    maplist(printTypeAsJsonArray, BaseTypes, JsonStrings),
+    atomic_list_concat(JsonStrings, '],[', InnerString),
+    tell(FileName),
+    write('[['),
+    write(InnerString),
+    write(']]'),
+    told.
+problemToFileName(ProblemName, FileName, Extension) :-
     atom_concat('output/', ProblemName, Temp1),
-    atom_concat(Temp1, '.idp', FileName).
+    atom_concat(Temp1, Extension, FileName).
+
+printTypeAsJsonArray(baseType(_, constructed:List), JsonString) :-
+    !,
+    atomic_list_concat(List, '","', ListString),
+    format(atom(JsonString), '"~w"', [ListString]).
+printTypeAsJsonArray(baseType(Type, fakeConstructed:List), JsonString) :-
+    !,
+    printTypeAsJsonArray(baseType(Type, constructed:List), JsonString).
+printTypeAsJsonArray(baseType(_Type, int:Range), JsonString) :-
+    !,
+    atomic_list_concat(Range, '","', RangeString),
+    format(atom(JsonString), '"~w"', [RangeString]).
+printTypeAsJsonArray(baseType(_Type, _X), '') :-
+    !.
 
 printVocabulary(voc(BaseTypes, DerivedTypes, Predicates)) :-
     writeln('vocabulary V {'),

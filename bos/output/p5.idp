@@ -10,43 +10,83 @@ vocabulary V {
     of(native, type1)
     lives_in(native, type2)
     from(native, type1)
+    is_linked_with_1(year, type1)
+    is_linked_with_2(year, type2)
+    is_linked_with_3(type1, type2)
+}
+
+vocabulary VExtra {
+    extern vocabulary V
+    ct_is_old(native, year)
+    cf_is_old(native, year)
+    ct_of(native, type1)
+    cf_of(native, type1)
+    ct_lives_in(native, type2)
+    cf_lives_in(native, type2)
+    ct_from(native, type1)
+    cf_from(native, type1)
+    ct_is_linked_with_1(year, type1)
+    cf_is_linked_with_1(year, type1)
+    ct_is_linked_with_2(year, type2)
+    cf_is_linked_with_2(year, type2)
+    ct_is_linked_with_3(type1, type2)
+    cf_is_linked_with_3(type1, type2)
 }
 
 structure S : V {
 }
 
-theory T : V {
+theory T1: V {
     // Mattie is 113 years old
     is_old(mattie,113).
+}
 
+theory T2: V {
     // The person who lives in Tehama is a native of either Kansas or Oregon
     ?a [native] b [native]: lives_in(a,tehama) & (of(b,kansas) | of(b,oregon)) & b = a.
+}
 
+theory T3: V {
     // The Washington native is 1 year older than Ernesto
     ?c [native] d [year] e [year]: is_old(ernesto,d) & e = d+1 & is_old(c,e) & of(c,washington).
+}
 
+theory T4: V {
     // Roxanne is 2 years younger than the Kansas native
     ?f [year] g [native] h [year]: is_old(g,f) & of(g,kansas) & h = f-2 & is_old(roxanne,h).
+}
 
+theory T5: V {
     // The person who lives in Zearing isn't a native of Alaska
     ?i [native]: lives_in(i,zearing) & ~ (?j [native]: of(j,alaska) & j = i).
+}
 
+theory T6: V {
     // The person who is 111 years old doesn't live in Plymouth
     ?k [native]: is_old(k,111) & ~ lives_in(k,plymouth).
+}
 
+theory T7: V {
     // The Oregon native is either Zachary or the person who lives in Tehama
     ?l [native]: (zachary = l | (?m [native]: lives_in(m,tehama) & m = l)) & of(l,oregon).
+}
 
+theory T8: V {
     // The person who lives in Shaver Lake is 1 year younger than Roxanne
     ?n [native] o [year] p [year]: lives_in(n,shaver_lake) & is_old(roxanne,o) & p = o-1 & is_old(n,p).
+}
 
+theory T9: V {
     // The centenarian who lives in Plymouth isn't a native of Alaska
     ?q [native]: lives_in(q,plymouth) & ~ (?r [native]: of(r,alaska) & r = q).
+}
 
+theory T10: V {
     // Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
     ?s [native]: lives_in(s,tehama) & ~ (s = mattie) & ((?t [native]: of(t,alaska) & t = s & from(mattie,kansas)) | (?u [native]: of(u,alaska) & u = mattie & from(s,kansas))).
+}
 
-
+theory bijections : V {
     // Logigram bijection axioms:
     ! x [native]: ?=1 y [year]: is_old(x, y).
     ! x [year]: ?=1 y [native]: is_old(y, x).
@@ -60,18 +100,104 @@ theory T : V {
     ! x [native]: ?=1 y [type1]: from(x, y).
     ! x [type1]: ?=1 y [native]: from(y, x).
 
+    ! x [year]: ?=1 y [type1]: is_linked_with_1(x, y).
+    ! x [type1]: ?=1 y [year]: is_linked_with_1(y, x).
+
+    ! x [year]: ?=1 y [type2]: is_linked_with_2(x, y).
+    ! x [type2]: ?=1 y [year]: is_linked_with_2(y, x).
+
+    ! x [type1]: ?=1 y [type2]: is_linked_with_3(x, y).
+    ! x [type2]: ?=1 y [type1]: is_linked_with_3(y, x).
+
     // Logigram synonym axioms:
     ! x [native] y [type1]: of(x, y) <=> from(x, y).
 
     // Logigram transitive relation axioms:
+    ! x [native] y [year]: is_old(x, y) <=> ? z [type1]: of(x, z) & is_linked_with_1(y, z).
+    ! x [native] y [year]: is_old(x, y) <=> ? z [type2]: lives_in(x, z) & is_linked_with_2(y, z).
+    ! x [native] y [year]: is_old(x, y) <=> ? z [type1]: from(x, z) & is_linked_with_1(y, z).
+    ! x [native] y [type1]: of(x, y) <=> ? z [type2]: lives_in(x, z) & is_linked_with_3(y, z).
+    ! x [year] y [type1]: is_linked_with_1(x, y) <=> ? z [type2]: is_linked_with_2(x, z) & is_linked_with_3(y, z).
 
     // Logigram reflexive relation axioms:
 
     // Logigram symmetry breaking axioms:
 }
 
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [native] y [year]: ct_is_old(x,y) => is_old(x,y)) &
+        (! x [native] y [year]: cf_is_old(x,y) => ~is_old(x,y)) &
+        (! x [native] y [type1]: ct_of(x,y) => of(x,y)) &
+        (! x [native] y [type1]: cf_of(x,y) => ~of(x,y)) &
+        (! x [native] y [type2]: ct_lives_in(x,y) => lives_in(x,y)) &
+        (! x [native] y [type2]: cf_lives_in(x,y) => ~lives_in(x,y)) &
+        (! x [native] y [type1]: ct_from(x,y) => from(x,y)) &
+        (! x [native] y [type1]: cf_from(x,y) => ~from(x,y)) &
+        (! x [year] y [type1]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [year] y [type1]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [year] y [type2]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [year] y [type2]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        (! x [type1] y [type2]: ct_is_linked_with_3(x,y) => is_linked_with_3(x,y)) &
+        (! x [type1] y [type2]: cf_is_linked_with_3(x,y) => ~is_linked_with_3(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::is_old], S2[V::is_old].ct)
+    removeFrom(S3[V::is_old], S2[V::is_old].cf)
+    removeFrom(S3[V::of], S2[V::of].ct)
+    removeFrom(S3[V::of], S2[V::of].cf)
+    removeFrom(S3[V::lives_in], S2[V::lives_in].ct)
+    removeFrom(S3[V::lives_in], S2[V::lives_in].cf)
+    removeFrom(S3[V::from], S2[V::from].ct)
+    removeFrom(S3[V::from], S2[V::from].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::is_old, VExtra::ct_is_old, VExtra::cf_is_old},
+        {V::of, VExtra::ct_of, VExtra::cf_of},
+        {V::lives_in, VExtra::ct_lives_in, VExtra::cf_lives_in},
+        {V::from, VExtra::ct_from, VExtra::cf_from},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+        {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
+    }
+}
+
+include "./generic_procedures.idp"
+
 procedure main() {
-    stdoptions.nbmodels = 10;
-    printmodels(modelexpand(T,S))
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "Mattie is 113 years old"},
+        {T2, "The person who lives in Tehama is a native of either Kansas or Oregon"},
+        {T3, "The Washington native is 1 year older than Ernesto"},
+        {T4, "Roxanne is 2 years younger than the Kansas native"},
+        {T5, "The person who lives in Zearing isn't a native of Alaska"},
+        {T6, "The person who is 111 years old doesn't live in Plymouth"},
+        {T7, "The Oregon native is either Zachary or the person who lives in Tehama"},
+        {T8, "The person who lives in Shaver Lake is 1 year younger than Roxanne"},
+        {T9, "The centenarian who lives in Plymouth isn't a native of Alaska"},
+        {T10, "Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas"},
+    }
+
+    test(theories,S)
+    S = explanationLoop(theories,S,true,theories,true)
+
+    print("The final result is:")
+    print(S)
+    os.exit(0)
 }
 

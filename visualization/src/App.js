@@ -2,8 +2,9 @@ import React from 'react';
 import './App.css';
 import * as R from 'ramda'
 
-import problem from './problem.json'
-import vocabulary from './vocabulary.json'
+const problemName = 'p5'
+const steps = require(`../../bos/output/${problemName}.output.json`)
+const vocabulary = require(`../../bos/output/${problemName}.voc.json`)
 
 const initialState = {
   clue: null,
@@ -19,8 +20,8 @@ function reducer(state, next) {
     assumptions: next.assumptions,
   }
 }
-function cleanedFacts(problem) {
-  const factsOverTime = R.scan(reducer, initialState, problem)
+function cleanedFacts(steps) {
+  const factsOverTime = R.scan(reducer, initialState, steps)
   return factsOverTime.filter(
     facts => facts.derived.some(
       knowledge => getKnowledgeFrom(facts.known, knowledge.subject, knowledge.object) == null
@@ -97,7 +98,7 @@ const styles = {
 function App() {
   const [index, setIndex] = React.useState(0)
   const factsOverTime = React.useMemo(() => {
-    return cleanedFacts(problem)
+    return cleanedFacts(steps)
   }, [])
 
   function setIndexClipped(newIndex) {

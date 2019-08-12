@@ -41,6 +41,89 @@ procedure copyForcedValues(d,STemp){
         end
 }
 
+procedure addTo(S, d){
+        for i, pred in ipairs(getpredlist()) do
+			for tuple in tuples(d[pred[1]].ct) do      
+				maketrue(S[pred[1]], tuple)
+			end
+			for tuple in tuples(d[pred[1]].cf) do      
+				makefalse(S[pred[1]], tuple)
+			end
+		end
+}
+
+procedure convertStructureToTupleList(d){
+	difftuples = {}
+
+	for i, pred in ipairs(preds) do
+		for tuple in tuples(d[pred[1]].ct) do
+			table.insert(difftuples, {pred[1], pred[2], tuple})
+		end
+		for tuple in tuples(d[pred[1]].cf) do
+			table.insert(difftuples, {pred[1], pred[3] , tuple})
+		end
+	end
+	return difftuples
+}
+
+//Please forgive me for the names of these procedures.
+procedure explainMoreThanSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON){   
+	preds = getpredlist()
+    d = diff(Snew,S)
+
+
+	difftuples = convertStructureToTupleList(d)
+	//These are all the derivable tuples. We will explain one by one and pick the smallest explanation.
+
+	minimalexplanationsize = 9999999
+	smallestExplainer = nil
+
+	for i,t in ipairs(difftuples) do
+		STemp = clone(S) 
+        setvocabulary(STemp,VExtra)
+		maketrue(STemp[t[2]],t[3])
+	
+	
+		for i, pred in ipairs(getpredlist()) do
+		        STemp[pred[2]].pt = STemp[pred[2]].ct
+		        STemp[pred[3]].pt = STemp[pred[3]].ct
+		end
+		//Now STemp is a structure in which one specific thing should be explained. We minimize its explanation:
+		t = merge(T,bijections)
+        t = merge(t,forceSomethingWrongValue)
+        
+        //Find minimally precise structure Sexpl that explains all the findings given the current clue.
+        Sexpl =         unsatstructure(t,STemp,V)
+		setvocabulary(Sexpl,V)
+			l =  convertStructureToTupleList(Sexpl)
+		explSize = #l
+		if explSize < minimalexplanationsize then
+			minimalexplanationsize = explSize
+			smallestExplainer = Sexpl
+		end
+	end	
+
+	Sexpl = smallestExplainer
+	//Compute everything to be derived from this explainer:
+	
+	t = merge(T,bijections)
+	result = optimalpropagate(t,Sexpl)
+	newdiff = diff(result,S)
+	
+	printExplanation(Sexpl,newdiff,clue,printJSON)
+	
+	if equal(d,newdiff) then
+		return Snew
+	end
+	addTo(S,newdiff)
+	Sopt = optimalpropagate(bijections,S)
+	if not equal(Sopt,S) then
+		S = explainMoreThanSlightlyMoreThanSemiDetail(S,Sopt,bijections,"Logigram constraints",printJSON)
+	end
+	
+	return explainMoreThanSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON)
+
+}
 procedure explainSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON){     
         //The idea is to explain predicate by predicate
         preds = getpredlist()
@@ -85,9 +168,14 @@ procedure explainSemiDetail(S,Snew,T,clue,printJSON){
                 
         // Forget about the temporary info:
         setvocabulary(Sexpl,V)
+		printExplanation(Sexpl,d,clue,printJSON)
+		return Snew
+}
+
+procedure printExplanation(Sexpl,d,clue,printJSON){
 		mystring = ""
 		if printJSON then
-			mystring = mystring .. "{\n\t\"clue\": \""..clue.."\",\n\t\"assumptions\": ["
+			mystring = mystring .. "{\n\t\"clue\": \""..clue.."\",\n\t\"assumptions\": [  "
 		else
         	mystring =   mystring ..   "Using the clue: " .. "\"" .. clue .. "\""
         end
@@ -137,8 +225,6 @@ procedure explainSemiDetail(S,Snew,T,clue,printJSON){
 			mystring = mystring .. "\n\t]\n}"
 		end
         print(mystring)
-        return Snew
-
 }
 
 procedure isTwoValued(S){
@@ -199,7 +285,7 @@ procedure explanationLoop(theories, S, continueAfterPropagation, originalTheorie
             Snew = optimalpropagate(t,S)
             if not equal(S, Snew) then
                 update = true
-                Snew = explainSlightlyMoreThanSemiDetail(S,Snew,theory[1],theory[2],printJSON)
+                Snew = explainMoreThanSlightlyMoreThanSemiDetail(S,Snew,theory[1],theory[2],printJSON)
                 S = Snew
 				if not continueAfterPropagation then
 					return S

@@ -108,10 +108,15 @@ theory bijections : V {
 
     ! x [type1]: ?=1 y [type2]: is_linked_with_3(x, y).
     ! x [type2]: ?=1 y [type1]: is_linked_with_3(y, x).
+}
+
+theory synonyms : V {
 
     // Logigram synonym axioms:
     ! x [native] y [type1]: of(x, y) <=> from(x, y).
+}
 
+theory transitivity: V {
     // Logigram transitive relation axioms:
     ! x [native] y [year]: is_old(x, y) <=> ? z [type1]: of(x, z) & is_linked_with_1(y, z).
     ! x [native] y [year]: is_old(x, y) <=> ? z [type2]: lives_in(x, z) & is_linked_with_2(y, z).
@@ -196,8 +201,6 @@ procedure main() {
     test(theories,S)
     S = explanationLoop(theories,S,true,theories,true)
 
-    print("The final result is:")
-    print(S)
     os.exit(0)
 }
 

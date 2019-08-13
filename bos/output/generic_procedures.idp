@@ -1,6 +1,35 @@
 //This is a comment
 
+// TO CHECK. 
+// soms lijkt enkel bijections prop mogelijk te zijn maar niet te gebeuren
+
+
 include <table_utils>
+
+
+//IDEA: if there is a T in the grid, we wish to avoid all the Fs as explanation. We make a less precise structure that suffices to propagate everything. 
+// Input structure S.
+// S' = Take only ct parts of S
+// S'' = everything obtainable from S' by only bijections and synonym propagation (possibly too much derived this way)
+// S''' = evertyhing in S' UNION everything in S that is not in S'' 
+// These assumptions guarantee (through bijection axioms) everything in S, and they are preferrably positive. 
+
+procedure prepareStructureForPropagation(S){
+	trueS = clone(S)
+    for i, pred in ipairs(getpredlist()) do
+        trueS[pred[1]].cf = {}
+	end
+	
+	t1 = merge(bijections, synonyms)
+	fromTrueS = optimalpropagate(t1, trueS)
+
+	result = trueS
+	d = diff(S,fromTrueS)
+	addTo(result,d)
+	return result
+
+
+}
 
 procedure removeFrom(table, truethings){
 
@@ -24,6 +53,8 @@ procedure addExplanations(diff,Sorig,TClue,predlist,explanations){
                 makefalse(STemp[predlist[2]],tuple)
 
                 t = merge(TClue,bijections)
+                t = merge(TClue,synonyms)
+                t = merge(TClue,transitivity)
                 t = merge(t,forceSomethingWrongValue)
                 Sexpl = unsatstructure(t,STemp,V)
                 print("Explanation:")
@@ -67,7 +98,8 @@ procedure convertStructureToTupleList(d){
 }
 
 //Please forgive me for the names of these procedures.
-procedure explainMoreThanSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON){   
+procedure explainMoreThanSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON,skipLogigram){ 
+	skipLogigram = skipLogigram or false
 	preds = getpredlist()
     d = diff(Snew,S)
 
@@ -75,11 +107,14 @@ procedure explainMoreThanSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON){
 	difftuples = convertStructureToTupleList(d)
 	//These are all the derivable tuples. We will explain one by one and pick the smallest explanation.
 
+	if #difftuples == 0 then
+		return Snew
+	end
+
 	minimalexplanationsize = 9999999
 	smallestExplainer = nil
-
 	for i,t in ipairs(difftuples) do
-		STemp = clone(S) 
+		STemp = prepareStructureForPropagation(S) 
         setvocabulary(STemp,VExtra)
 		maketrue(STemp[t[2]],t[3])
 	
@@ -89,7 +124,13 @@ procedure explainMoreThanSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON){
 		        STemp[pred[3]].pt = STemp[pred[3]].ct
 		end
 		//Now STemp is a structure in which one specific thing should be explained. We minimize its explanation:
-		t = merge(T,bijections)
+		t = T
+		if not skipLogigram then
+			t = merge(t,bijections)
+    	    t = merge(t,synonyms)
+        // NO TRANSITIVITY HERE. CAN SAFELY BE DONE SEPARATELY?????
+			t = merge(t,transitivity)
+		end
         t = merge(t,forceSomethingWrongValue)
         
         //Find minimally precise structure Sexpl that explains all the findings given the current clue.
@@ -105,23 +146,28 @@ procedure explainMoreThanSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON){
 
 	Sexpl = smallestExplainer
 	//Compute everything to be derived from this explainer:
-	
-	t = merge(T,bijections)
+	t = T
+	if not skipLogigram then
+		t = merge(T,bijections)
+    	t = merge(t,synonyms)
+	// NO TRANSITIVITY HERE. CAN SAFELY BE DONE SEPARATELY
+    	t = merge(t,transitivity)
+	end
+
 	result = optimalpropagate(t,Sexpl)
 	newdiff = diff(result,S)
-	
+	addTo(S,newdiff)
 	printExplanation(Sexpl,newdiff,clue,printJSON)
 	
-	if equal(d,newdiff) then
+	if equal(S,Snew) then
 		return Snew
 	end
-	addTo(S,newdiff)
-	Sopt = optimalpropagate(bijections,S)
-	if not equal(Sopt,S) then
-		S = explainMoreThanSlightlyMoreThanSemiDetail(S,Sopt,bijections,"Logigram constraints",printJSON)
+
+	if not skipLogigram then 
+		S = explainLogigramDerivations(S,printJSON)
 	end
 	
-	return explainMoreThanSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON)
+	return explainMoreThanSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON, skipLogigram)
 
 }
 procedure explainSlightlyMoreThanSemiDetail(S,Snew,T,clue,printJSON){     
@@ -155,6 +201,8 @@ procedure explainSemiDetail(S,Snew,T,clue,printJSON){
 
         // Create the theory for the unsatcore
                 t = merge(T,bijections)
+				t = merge(t,synonyms)
+				t = merge(t,transitivity)
                 t = merge(t,forceSomethingWrongValue)
         
         //Find minimally precise structure Sexpl that explains all the findings given the current clue.
@@ -222,7 +270,7 @@ procedure printExplanation(Sexpl,d,clue,printJSON){
         end
 		if printJSON then
 			mystring = mystring:sub(1,-2)
-			mystring = mystring .. "\n\t]\n}"
+			mystring = mystring .. "\n\t]\n},"
 		end
         print(mystring)
 }
@@ -262,13 +310,10 @@ procedure explainDetail(S,Snew,T,clue){
         //Elements will be of the form:
         // {pred, true/false, tuple, pstruct, size}
         explanations = {} 
-        print("there")
         for i, pred in ipairs(preds) do
-        print("where")
                 addExplanations(d,S,T,pred,explanations)
         end
 
-                print("txhere")
         print("Using the clue: " .. "\"" .. clue .. "\", we can derive that:")
         print(d)
         return Snew
@@ -276,12 +321,14 @@ procedure explainDetail(S,Snew,T,clue){
 
 //we do the explanation loop, looping over all theories and tyring to propagate something
 // If no propagation is found, we go into a propagation with a combination of two theories, if that does not yield anything three and so on. All these higher-level propagations break off after they do one propagation, to keep things simple. The boolean continueAfterPropagation informs us whether we are in the simple case where we do propagation until fixpoint or not. 
-procedure explanationLoop(theories, S, continueAfterPropagation, originalTheories, printJSON){
+procedure oldExplanationLoop(theories, S, continueAfterPropagation, originalTheories, printJSON){
  update = true
     while update do
         update = false
         for i, theory in ipairs(theories) do
             t = merge(theory[1],bijections)
+			t = merge(t,synonyms)
+			t = merge(t,transitivity)
             Snew = optimalpropagate(t,S)
             if not equal(S, Snew) then
                 update = true
@@ -311,8 +358,157 @@ procedure explanationLoop(theories, S, continueAfterPropagation, originalTheorie
 }
 
 
+
+//Please forgive me for the names of these procedures.
+procedure updateExplLengths(S,Snew,T,clue,   shortestExplanations,   explLength) { 
+	preds = getpredlist()
+    d = diff(Snew,S)
+
+
+	difftuples = convertStructureToTupleList(d)
+	//These are all the derivable tuples. We will explain one by one and pick the smallest explanation.
+
+
+	for i,t in ipairs(difftuples) do
+		STemp = prepareStructureForPropagation(S) 
+        setvocabulary(STemp,VExtra)
+		maketrue(STemp[t[2]],t[3])
+	
+	
+		for i, pred in ipairs(getpredlist()) do
+		        STemp[pred[2]].pt = STemp[pred[2]].ct
+		        STemp[pred[3]].pt = STemp[pred[3]].ct
+		end
+		//Now STemp is a structure in which one specific thing should be explained. We minimize its explanation:
+		t = merge(T,bijections)
+	    t = merge(t,synonyms)
+		// NO TRANSITIVITY HERE. CAN SAFELY BE DONE SEPARATELY???
+		t = merge(t,transitivity)	
+        t = merge(t,forceSomethingWrongValue)
+        
+        //Find minimally precise structure Sexpl that explains all the findings given the current clue.
+        Sexpl =         unsatstructure(t,STemp,V)
+		setvocabulary(Sexpl,V)
+		l =  convertStructureToTupleList(Sexpl)
+		explSize = #l
+		if explSize < explLength then
+			explLength = explSize
+			shortestExplanations = {}
+		end
+		if explSize == explLength then
+			table.insert(	shortestExplanations, {Sexpl,T,clue} ) 
+		end
+	end	
+	return shortestExplanations, explLength
+}
+
+procedure performAllExplanations(S,expls, printJSON){
+	for i, expl in ipairs(expls) do
+		Sexpl = expl[1]
+		T = expl[2]
+		clue = expl[3]
+		//Compute everything to be derived from this explainer:
+		t = merge(T,bijections)
+		t = merge(t,synonyms)
+		// NO TRANSITIVITY HERE. CAN SAFELY BE DONE SEPARATELY???
+    	t = merge(t,transitivity)
+		result = optimalpropagate(t,Sexpl)
+		newdiff = diff(result,S)
+		if #convertStructureToTupleList(newdiff) > 0 then
+			printExplanation(Sexpl,newdiff,clue,printJSON)
+			addTo(S,newdiff)
+			S = explainLogigramDerivations(S,printJSON)
+		end 
+	end
+	return S
+
+}
+
+procedure explainLogigramDerivations(S,printJSON){
+	first = merge(bijections,synonyms)
+	second = merge(transitivity,synonyms)
+	third = merge(first,second)
+		
+	SFirst = optimalpropagate(first,S)
+	if not equal(SFirst,S) then
+		S = explainMoreThanSlightlyMoreThanSemiDetail(S,SFirst,first,"Logigram constraints",printJSON,true)
+	end
+	
+/* Not done: does not work due to optimization of structure needing bijections
+	SSecond = optimalpropagate(second,S)
+	if not equal(SSecond,S) then
+		S = explainMoreThanSlightlyMoreThanSemiDetail(S,SSecond,second,"Logigram constraints",printJSON,true)
+	end
+*/
+ 
+	
+
+	SThird = optimalpropagate(third,S)
+	if not equal(SThird,S) then
+		S = explainMoreThanSlightlyMoreThanSemiDetail(S,SThird,third,"Logigram constraints",printJSON)
+	end
+
+	return S
+
+}
+
+
+//DID NOT IMPLEMENT THE continueAfterPropagation yet... (not neccesary on the examples, but... for the future might be needed)
+procedure explanationLoop(theories, S, continueAfterPropagation, originalTheories, printJSON){
+	if printJSON then
+		print("[")
+	end
+ 	update = true
+
+    while update do
+		shortestExplanations = {}
+		explLength = 999999 
+        update = false
+        for i, theory in ipairs(theories) do
+            t = merge(theory[1],bijections)
+            t = merge(t,synonyms)
+			// NO TRANSITIVITY HERE. CAN SAFELY BE DONE SEPARATELY???
+			t = merge(t,transitivity)
+            Snew = optimalpropagate(t,S)
+            if not equal(S, Snew) then
+                update = true
+				shortestExplanations, explLength = updateExplLengths(S,Snew,theory[1],theory[2],   shortestExplanations,   explLength)
+			end
+        end
+
+		//At this point, shortestExplanations contains all the propagations with the fewest assumptions. 
+		//We do these one by one (they might be overlapping)
+		// Between each two, we do some propagation based on only logigram axioms
+
+		Snew = performAllExplanations(S,shortestExplanations, printJSON)
+		if not equal(S, Snew) then
+            update = true
+			S = Snew
+		end
+		
+		//if not update and not isTwoValued(S) then
+		//	extTheories = combine(theories, originalTheories)
+		//	Snew = explanationLoop(extTheories, S, false, originalTheories,printJSON)
+		//	if not equal(S, Snew) then
+		//		S = Snew
+         //       update = true
+		//		if not continueAfterPropagation then
+		//			return S
+		//		end
+		//	end
+		//end
+    end
+
+	if printJSON then
+		print("{\n\t\"clue\": \"Solution!\",\n\t\"assumptions\": [],\n\t\"derivations\": []\n}]")
+	end
+  return S
+}
+
+
 procedure test(theories, S){
-	myT = bijections
+	myT = merge(bijections,synonyms)
+	myT = merge(myT,transitivity)
 	for i,t in ipairs(theories) do
 		myT = merge(myT,t[1])
 	end
@@ -322,7 +518,5 @@ procedure test(theories, S){
 		print("Solution not unique!")
 		printmodels(models)
 		os.exit(10)
-	else
-		print("OK, this puzzle has a unique solution.")
 	end
 }

@@ -189,9 +189,13 @@ printTheory(SentencePairs, voc(BaseTypes, _, Predicates)) :-
     writeln('theory bijections : V {'),
     format('    // Logigram bijection axioms:~n'),
     maplist(printLogigramAxiomsForPredicate, Predicates),
+    writeln('}'),
+    writeln('theory synonyms : V {'),
     format('    // Logigram synonym axioms:~n'),
     printSynonymAxioms(Predicates),
     nl,
+    writeln('}'),
+    writeln('theory transitivity : V {'),
     format('    // Logigram transitive relation axioms:~n'),
     printTransitiveRelationAxioms(Predicates),
     nl,
@@ -289,8 +293,6 @@ printMain(SentencePairs) :-
     writeln('    test(theories,S)'),
     writeln('    S = explanationLoop(theories,S,true,theories,true)'),
     nl,
-    writeln('    print("The final result is:")'),
-    writeln('    print(S)'),
     writeln('    os.exit(0)'),
     writeln('}').
 printMainTheoriesDict(SentencePairs, Sentence-FOL) :-

@@ -49,13 +49,11 @@ def get_lexicon(data):
     punctuations = list(string.punctuation)
     clues_token = [nltk.word_tokenize(clue) for clue in data['clues']]
     
-    # remove symbols
+    # remove symbols (why?)
     clues_token_clean = []
     for clue in clues_token:
         clues_token_clean.append([i for i in clue if i not in punctuations])
-    
     clues_pos = [nltk.pos_tag(clue) for clue in clues_token_clean]
-    print("\n".join(map(str,clues_pos)))
 
     # check for ppn's
     # extract [DT pn NN] triples
@@ -100,6 +98,7 @@ def get_lexicon(data):
                 nouns_tuple.add( (word,pluralize(word)) )
     # https://stackoverflow.com/questions/28033882/determining-whether-a-word-is-a-noun-or-not
     verbs = {x.name().split('.', 1)[0] for x in wn.all_synsets('v')}
+    print("VBS",verbs)
     
     verbs_with_prep = set()
     tr_verbs = set()
@@ -173,7 +172,7 @@ def get_lexicon(data):
                 
         clues_revised.append(target)
         
-    print("\n", clues_revised, "\n")
+    print("\n".join(map(str,clues_revised)))
 
     # reconstruct sentences from revised clues
     clues_new = []
@@ -223,7 +222,7 @@ def get_lexicon(data):
                     thelemma = v2
                 tr_verbs.remove( (v,v2) )
             for (v,v2,v3) in list(two_word_tr_verbs):
-                if v == tv:
+                if (v,v2) == tv:
                     thelemma = v3
                 two_word_tr_verbs.remove( (v,v2,v3) )
             tvGap_list.append( (tv,gapwords,thelemma) )
@@ -241,7 +240,7 @@ def get_lexicon(data):
     for (v,gap,v2) in tvGap_list:
         one = "[{}]".format(", ".join(v))
         two = "[{}]".format(", ".join(gap))
-        mystr = "    tvGap[{}, {}, [{}]]".format(one, two, v2)
+        mystr = "    tvGap({}, {}, [{}])".format(one, two, v2)
         tvgap_str.append(mystr)
             
     return (clues_new,

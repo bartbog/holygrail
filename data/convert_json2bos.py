@@ -118,13 +118,6 @@ def get_lexicon(data):
                 else:
                     two_word_tr_verbs.add( (word, clue_pos[i+1][0], lemma(clue_pos[i+1][0])) )
                     
-    pns_str = ["    pn([{}])".format(pn) for pn in pns]
-    nouns_str = ["    noun([{}], [{}])".format(s,p) for (s,p) in nouns_tuple]
-    ppns_str = ["    ppn([{}, {}, {}])".format(a,b,c) for (a,b,c) in ppns]
-    tvprep_str = ["    tvPrep([{}, {}], [{}])".format(v,p,v2) for (v,p,v2) in verbs_with_prep]
-    tv_str = ["    tv([{}], [{}])".format(v,v2) for (v,v2) in tr_verbs]
-    tv_str_two = ["    tv([{}, {}], [{}])".format(v1,v2,v3) for (v1,v2,v3) in two_word_tr_verbs]
-    
     clues_revised = []
     for clues in clues_pos:
         target = []
@@ -152,7 +145,7 @@ def get_lexicon(data):
             # verb
             elif lemma(word) in verbs or item[1].startswith('VB'):
                 if target[-1][1].startswith('VB'):
-                    target.append( (target[-1][0], word, 'tv') )
+                    target.append( ((target[-1][0], word), 'tv') )
                     del target[-2]
                 elif word in tr_verbs:
                     target.append( (word, 'tv') )
@@ -162,7 +155,7 @@ def get_lexicon(data):
             # prep
             elif item[1] == 'IN' and i > 1:
                 if target[-1][1].startswith('VB') or lemma(target[-1][0]) in verbs:
-                    target.append( (target[-1][0], word, 'tvPrep') )
+                    target.append( ((target[-1][0], word), 'tvPrep') )
                     del target[-2]
                 else:
                     target.append(item)
@@ -204,7 +197,7 @@ def get_lexicon(data):
     for k,v in d.items():
         if v>1:
             temp = []
-            temp.append( (k[0][:-1]) )
+            temp.append( k[0][0] ) # words part of tv
             for item in k[1:]:
                 for word in item[:-1]:
                     temp.append(word)

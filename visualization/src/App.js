@@ -180,13 +180,13 @@ function FillBlock ({type1, type2, facts}) {
             const knowledge = derivedKnowledge || assumedKnowledge || knownKnowledge
             let color = null
             if (derivedKnowledge != null) {
-              color = 'green'
+              color = knowledge.value ? 'darkgreen' : 'green'
             } else if (assumedKnowledge != null) {
-              color = 'blue'
+              color = 'blue' //Asymmetry true/false is not so important here... 
             }
 
             return (
-              <div style={styles.childFillGridItem(color)}>{knowledge == null ? ' ' : knowledge.value ? 'T' : 'F'}</div>
+              <div style={styles.childFillGridItem(color)}>{knowledge == null ? ' ' : knowledge.value ? '✔' : '-'}</div>
             )
           })}
         </>

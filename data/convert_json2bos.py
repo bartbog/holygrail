@@ -246,13 +246,7 @@ def get_lexicon(data):
             
     return (clues_new,
            "[\n"+\
-           ",\n".join(pns_str)+"\n"+\
-           ",\n".join(ppns_str)+"\n"+\
-           ",\n".join(nouns_str)+"\n"+\
-           ",\n".join(tv_str)+"\n"+\
-           ",\n".join(tv_str_two)+"\n"+\
-           ",\n".join(tvprep_str)+"\n"+\
-           ",\n".join(tvgap_str)+\
+           ",\n".join(pns_str + ppns_str + nouns_str + tv_str + tv_str_two + tvprep_str + tvgap_str)+\
            "\n                     ]")
 
 # https://stackoverflow.com/questions/47432632/flatten-multi-dimensional-array-in-python-3

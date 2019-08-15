@@ -3,7 +3,7 @@
 #
 # be sure to install 'python3-nltk'
 # and run: 'pip3 install pattern'
-# then run once: import nltk; nltk.download('punkt'); nltk.download('averaged_perceptron_tagger')
+# then run once: import nltk; nltk.download('punkt'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet')
 
 import sys
 import json
@@ -21,12 +21,13 @@ def convert(fname):
         name = data['title'].lower()
         nr_types = len(data['types'])
         nr_domsize = len( next(iter(data['types'].values())) ) # any element
-        print("problem({}, problem({}, {}, {}, {}))".format(
+
+        return "problem({}, problem({}, {}, {}, {})).".format(
                 name,
                 nr_types,
                 nr_domsize,
                 get_clues(data),
-                get_lexicon(data)))
+                get_lexicon(data))
 
 def get_clues(data):
     # pretty printing stuff
@@ -77,6 +78,7 @@ def get_lexicon(data):
             firstdist = nltk.FreqDist([phrase[0] for phrase in triples])
             lastdist = nltk.FreqDist([phrase[-1] for phrase in triples])
             for name in names:
+                pns.remove(name.lower())
                 ppns.add( (firstdist.max(),name.lower(),lastdist.max()) )
 
     # check for double meanings

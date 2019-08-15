@@ -24,8 +24,9 @@ To be able to run the code from Bos, one would need:
   - docker (to run [IDP](https://dtai.cs.kuleuven.be/software/idp), the constraint solver solving the puzzle)
   - NodeJS
   - SWI Prolog
+  - jq (command line json handler)
 
-On a debian-like system: sudo apt-get install docker.io nodejs swi-prolog
+On a debian-like system: sudo apt-get install docker.io nodejs swi-prolog jq
 
 Then, corresponding to the IDP readme: https://dtai.cs.kuleuven.be/krr/files/releases/idp/README-DOCKER.md
 ```

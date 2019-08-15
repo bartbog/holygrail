@@ -22,16 +22,17 @@ def convert(fname):
         nr_types = len(data['types'])
         nr_domsize = len( next(iter(data['types'].values())) ) # any element
 
+        (clues, lexicon) = get_lexicon(data)
         return "problem({}, problem({}, {}, {}, {})).".format(
                 name,
                 nr_types,
                 nr_domsize,
-                get_clues(data),
-                get_lexicon(data))
+                pp_clues(clues),
+                lexicon)
 
-def get_clues(data):
+def pp_clues(clues):
     # pretty printing stuff
-    clues = ["        \"{}\"".format(clue) for clue in data['clues']]
+    clues = ["        \"{}\"".format(clue) for clue in clues]
     return "[\n"+",\n".join(clues)+"\n                     ]"
 
 def get_lexicon(data):
@@ -173,35 +174,59 @@ def get_lexicon(data):
         clues_revised.append(target)
         
     print("\n", clues_revised, "\n")
+
+    # reconstruct sentences from revised clues
+    clues_new = []
+    for clue in clues_revised:
+        clue_str = ""
+        for (word, tag) in clue:
+            if isinstance(word, (list,tuple)):
+                # multiple words
+                clue_str += " ".join(word)
+            else:
+                clue_str += word
+            clue_str += " "
+        clues_new.append(clue_str)
+    print(clues_new)
     
     # finding tvGap
-    phrases = []
+    tvgap_phrases = []
     for clues in clues_revised:
         for i,item in enumerate(clues):
             if item[-1].startswith('tv') and (clues[i+1][-1] == 'pn' or clues[i+1][-1] == 'ppn'):
-                if clues[i+2:]: # following phrase is not empty
-                    temp_list = clues[i+2:]
-                    temp_list.insert(0, item)
-                    phrases.append(temp_list)
+                if clues[i+2:]: # rest of the phrase is not empty, add it
+                    # TODO: check for punctuation or conjunction or other end of subsentence?
+                    tvgap_phrases.append( [item] + clues[i+2:] )
     
     # dictionary to find phrase frequency
-    d = {}
-    for l in phrases:
-        t = tuple(l)
-        if t in d:
-            d[t] +=1
+    cnt = {}
+    for tvgap in tvgap_phrases:
+        t = tuple(tvgap) # for dict
+        if t in cnt:
+            cnt[t] +=1
         else:
-            d[t] = 1 
+            cnt[t] = 1 
             
     tvGap_list = []
-    for k,v in d.items():
-        if v>1:
-            temp = []
-            temp.append( k[0][0] ) # words part of tv
-            for item in k[1:]:
+    for tvgap,val in cnt.items():
+        # tvgap = [ (words, "TV"), (rest, tag), (of, tag), ([multi,part,sentence],tag) ]
+        if val>1:
+            tv = tvgap[0][0]
+            gapwords = []
+            for item in tvgap[1:]:
                 for word in item[:-1]:
-                    temp.append(word)
-            tvGap_list.append(temp)
+                    gapwords.append(word)
+            # find current tv and its lemma, remove from tv
+            thelemma = "noooone"
+            for (v,v2) in list(tr_verbs):
+                if v == tv:
+                    thelemma = v2
+                tr_verbs.remove( (v,v2) )
+            for (v,v2,v3) in list(two_word_tr_verbs):
+                if v == tv:
+                    thelemma = v3
+                two_word_tr_verbs.remove( (v,v2,v3) )
+            tvGap_list.append( (tv,gapwords,thelemma) )
     
     # for printing, remove ppns from pns
     for (pre,pn,post) in ppns:
@@ -213,13 +238,14 @@ def get_lexicon(data):
     tv_str = ["    tv([{}], [{}])".format(v,v2) for (v,v2) in tr_verbs]
     tv_str_two = ["    tv([{}, {}], [{}])".format(v1,v2,v3) for (v1,v2,v3) in two_word_tr_verbs]
     tvgap_str = []
-    for tvGap in tvGap_list:
-        first = "[{}]".format(",".join(tvGap[0]))
-        last = "[{}]".format(",".join(tvGap[1:]))
-        mystr = "    tvGap[{},{}]".format(first, last)
+    for (v,gap,v2) in tvGap_list:
+        one = "[{}]".format(", ".join(v))
+        two = "[{}]".format(", ".join(gap))
+        mystr = "    tvGap[{}, {}, [{}]]".format(one, two, v2)
         tvgap_str.append(mystr)
             
-    return "[\n"+\
+    return (clues_new,
+           "[\n"+\
            ",\n".join(pns_str)+"\n"+\
            ",\n".join(ppns_str)+"\n"+\
            ",\n".join(nouns_str)+"\n"+\
@@ -227,7 +253,7 @@ def get_lexicon(data):
            ",\n".join(tv_str_two)+"\n"+\
            ",\n".join(tvprep_str)+"\n"+\
            ",\n".join(tvgap_str)+\
-           "\n                     ]"
+           "\n                     ]")
 
 # https://stackoverflow.com/questions/47432632/flatten-multi-dimensional-array-in-python-3
 def flatten(something):

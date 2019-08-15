@@ -166,6 +166,13 @@ def get_lexicon(data):
                     del target[-2]
                 else:
                     target.append(item)
+            
+            # CD (cardinal number) -- remove comma or dot
+            elif item[1] == 'CD':
+                nr = item[0]
+                nr = nr.replace(".","")
+                nr = nr.replace(",","")
+                target.append( (nr, 'CD') )
 
             else:
                 target.append(item)    

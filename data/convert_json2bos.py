@@ -3,7 +3,7 @@
 #
 # be sure to install 'python3-nltk'
 # and run: 'pip3 install pattern'
-# then run once: import nltk; nltk.download('punkt'); nltk.download('averaged_perceptron_tagger')
+# then run once: import nltk; nltk.download('punkt'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet')
 
 import sys
 import json
@@ -21,12 +21,13 @@ def convert(fname):
         name = data['title'].lower()
         nr_types = len(data['types'])
         nr_domsize = len( next(iter(data['types'].values())) ) # any element
-        print("problem({}, problem({}, {}, {}, {}))".format(
+
+        return "problem({}, problem({}, {}, {}, {})).".format(
                 name,
                 nr_types,
                 nr_domsize,
                 get_clues(data),
-                get_lexicon(data)))
+                get_lexicon(data))
 
 def get_clues(data):
     # pretty printing stuff
@@ -77,6 +78,7 @@ def get_lexicon(data):
             firstdist = nltk.FreqDist([phrase[0] for phrase in triples])
             lastdist = nltk.FreqDist([phrase[-1] for phrase in triples])
             for name in names:
+                pns.remove(name.lower())
                 ppns.add( (firstdist.max(),name.lower(),lastdist.max()) )
 
     # check for double meanings
@@ -201,6 +203,13 @@ def get_lexicon(data):
                 for word in item[:-1]:
                     temp.append(word)
             tvGap_list.append(temp)
+    
+    tvgap_str = []
+    for tvGap in tvGap_list:
+        first = "[{}]".format(",".join(tvGap[0]))
+        last = "[{}]".format(",".join(tvGap[1:]))
+        mystr = "    tvGap[{},{}]".format(first, last)
+        tvgap_str.append(mystr)
             
     print("\ntvGap", tvGap_list, "\n")
     
@@ -210,7 +219,8 @@ def get_lexicon(data):
            ",\n".join(ppns_str)+"\n"+\
            ",\n".join(tv_str)+"\n"+\
            ",\n".join(tv_str_two)+"\n"+\
-           ",\n".join(tvprep_str)+\
+           ",\n".join(tvprep_str)+"\n"+\
+           ",\n".join(tvgap_str)+\
            "\n                     ]"
 
 # https://stackoverflow.com/questions/47432632/flatten-multi-dimensional-array-in-python-3

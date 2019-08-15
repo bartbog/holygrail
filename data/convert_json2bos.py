@@ -78,7 +78,6 @@ def get_lexicon(data):
             firstdist = nltk.FreqDist([phrase[0] for phrase in triples])
             lastdist = nltk.FreqDist([phrase[-1] for phrase in triples])
             for name in names:
-                pns.remove(name.lower())
                 ppns.add( (firstdist.max(),name.lower(),lastdist.max()) )
 
     # check for double meanings
@@ -204,6 +203,15 @@ def get_lexicon(data):
                     temp.append(word)
             tvGap_list.append(temp)
     
+    # for printing, remove ppns from pns
+    for (pre,pn,post) in ppns:
+        pns.remove(pn)
+    pns_str = ["    pn([{}])".format(pn) for pn in pns]
+    nouns_str = ["    noun([{}], [{}])".format(s,p) for (s,p) in nouns_tuple]
+    ppns_str = ["    ppn([{}, {}, {}])".format(a,b,c) for (a,b,c) in ppns]
+    tvprep_str = ["    tvPrep([{}], [{}], [{}], [todooo])".format(v,p,v2) for (v,p,v2) in verbs_with_prep]
+    tv_str = ["    tv([{}], [{}])".format(v,v2) for (v,v2) in tr_verbs]
+    tv_str_two = ["    tv([{}, {}], [{}])".format(v1,v2,v3) for (v1,v2,v3) in two_word_tr_verbs]
     tvgap_str = []
     for tvGap in tvGap_list:
         first = "[{}]".format(",".join(tvGap[0]))
@@ -211,12 +219,10 @@ def get_lexicon(data):
         mystr = "    tvGap[{},{}]".format(first, last)
         tvgap_str.append(mystr)
             
-    print("\ntvGap", tvGap_list, "\n")
-    
     return "[\n"+\
            ",\n".join(pns_str)+"\n"+\
-           ",\n".join(nouns_str)+"\n"+\
            ",\n".join(ppns_str)+"\n"+\
+           ",\n".join(nouns_str)+"\n"+\
            ",\n".join(tv_str)+"\n"+\
            ",\n".join(tv_str_two)+"\n"+\
            ",\n".join(tvprep_str)+"\n"+\

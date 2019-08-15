@@ -203,6 +203,13 @@ def get_lexicon(data):
                 for word in item[:-1]:
                     temp.append(word)
             tvGap_list.append(temp)
+    
+    tvgap_str = []
+    for tvGap in tvGap_list:
+        first = "[{}]".format(",".join(tvGap[0]))
+        last = "[{}]".format(",".join(tvGap[1:]))
+        mystr = "    tvGap[{},{}]".format(first, last)
+        tvgap_str.append(mystr)
             
     print("\ntvGap", tvGap_list, "\n")
     
@@ -212,7 +219,8 @@ def get_lexicon(data):
            ",\n".join(ppns_str)+"\n"+\
            ",\n".join(tv_str)+"\n"+\
            ",\n".join(tv_str_two)+"\n"+\
-           ",\n".join(tvprep_str)+\
+           ",\n".join(tvprep_str)+"\n"+\
+           ",\n".join(tvgap_str)+\
            "\n                     ]"
 
 # https://stackoverflow.com/questions/47432632/flatten-multi-dimensional-array-in-python-3

@@ -14,6 +14,12 @@ import glob
 from pattern.en import pluralize, singularize, lemma
 from nltk.corpus import wordnet as wn
 
+def mylemma(verb):
+    # to catch special cases...
+    if not isinstance(verb, str):
+        return verb
+    return lemma(verb) # pattern.en
+
 def convert(fname):
     with open(fname, 'r') as ffile:
         data = json.load(ffile)
@@ -151,16 +157,16 @@ def get_lexicon(data):
     #        if pos.startswith('VB'):
     #            # tvprep: verb with preposition
     #            if i+1 < len(clue_pos) and clue_pos[i+1][1] == 'IN':
-    #                tvprep_set.add( (word, clue_pos[i+1][0], lemma(word)) )
+    #                tvprep_set.add( (word, clue_pos[i+1][0], mylemma(word)) )
     #            # tv: transitive verb
     #            if i+1 < len(clue_pos) and clue_pos[i+1][1] == 'VBN':
     #                # tv-2-sized, e.g. 'was prescribed'
     #                word2 = clue_pos[i+1][0]
-    #                tv_set.add( ((word,word2), lemma(word2)) )
+    #                tv_set.add( ((word,word2), mylemma(word2)) )
     #            if pos == 'VBN' and i > 0 and clue_pos[i-1][1].startswith('VB'):
     #                # previous was also a verb, so this one already used as tv-2-sized
     #                continue
-    #            tv_set.add( (word, lemma(word)) )
+    #            tv_set.add( (word, mylemma(word)) )
     #print("tv",tv_set)
     #print("tvprep",tvprep_set)
 
@@ -176,18 +182,18 @@ def get_lexicon(data):
         for (i,(word, pos)) in enumerate(clue_pos):
             word = word.lower()
             # verbs with preposition
-            if lemma(word) in verbs and i < len(clue_pos)-1 \
-            and clue_pos[i+1][1] == 'IN': # lemma() converts verb to base form
-                verbs_with_prep.add( (clue_pos[i][0], clue_pos[i+1][0], lemma(clue_pos[i][0])) )
+            if mylemma(word) in verbs and i < len(clue_pos)-1 \
+            and clue_pos[i+1][1] == 'IN': # mylemma() converts verb to base form
+                verbs_with_prep.add( (clue_pos[i][0], clue_pos[i+1][0], mylemma(clue_pos[i][0])) )
             # tr verbs
-            if lemma(word) in verbs \
-               and lemma(clue_pos[i-1][0]) not in verbs \
+            if mylemma(word) in verbs \
+               and mylemma(clue_pos[i-1][0]) not in verbs \
                and i < len(clue_pos)-2 \
                and ( clue_pos[i+1][1] == "CD" or clue_pos[i+1][0] in pns or clue_pos[i+2][0] in pns ):
                 if clue_pos[i+1][1] != 'VBN':
-                    tr_verbs.add( (word, lemma(word)) )
+                    tr_verbs.add( (word, mylemma(word)) )
                 else:
-                    two_word_tr_verbs.add( (word, clue_pos[i+1][0], lemma(clue_pos[i+1][0])) )
+                    two_word_tr_verbs.add( (word, clue_pos[i+1][0], mylemma(clue_pos[i+1][0])) )
                     
     clues_revised = []
     for clues in clues_pos:
@@ -201,21 +207,21 @@ def get_lexicon(data):
             elif word in flatten(nouns_tuple) and word not in flatten(ppns):
                 target.append( (word, 'noun') )
             elif word in flatten(nouns_tuple) and word in flatten(ppns):
-                if target[-2][1] == 'DT':
+                if len(target) >= 2 and target[-2][1] == 'DT':
                     for ppn in ppns:
                         if target[-1][0] in ppn:
                             del target[-2:]
                             target.append( (ppn, 'ppn') )
                             break
-                elif target[-3][1] == 'DT':
+                elif len(target) >= 3 and target[-3][1] == 'DT':
                     for ppn in ppns:
                         if target[-1][0] in ppn or target[-2][0] in ppn:
                             del target[-3:]
                             target.append( (ppn, 'ppn') )
                             break
             # verb
-            elif lemma(word) in verbs or item[1].startswith('VB'):
-                if target[-1][1].startswith('VB'):
+            elif mylemma(word) in verbs or item[1].startswith('VB'):
+                if len(target) >= 2 and target[-1][1].startswith('VB'):
                     target.append( ((target[-1][0], word), 'tv') )
                     del target[-2]
                 elif word in tr_verbs:
@@ -225,7 +231,7 @@ def get_lexicon(data):
 
             # prep
             elif item[1] == 'IN' and i > 1:
-                if target[-1][1].startswith('VB') or lemma(target[-1][0]) in verbs:
+                if len(target) >= 2 and target[-1][1].startswith('VB') or mylemma(target[-1][0]) in verbs:
                     target.append( ((target[-1][0], word), 'tvPrep') )
                     del target[-2]
                 else:
@@ -255,7 +261,7 @@ def get_lexicon(data):
     tvgap_phrases = []
     for clues in clues_revised:
         for i,item in enumerate(clues):
-            if item[-1].startswith('tv') and (clues[i+1][-1] == 'pn' or clues[i+1][-1] == 'ppn'):
+            if item[-1].startswith('tv') and len(clues) > i+1 and (clues[i+1][-1] == 'pn' or clues[i+1][-1] == 'ppn'):
                 if clues[i+2:]: # rest of the phrase is not empty, add it
                     # TODO: check for punctuation or conjunction or other end of subsentence?
                     tvgap_phrases.append( [item] + clues[i+2:] )
@@ -320,5 +326,13 @@ def flatten(something):
         yield something
 
 if __name__ == "__main__":
-    assert (len(sys.argv) == 2), "Expecting 1 argument: the json file"
-    convert(sys.argv[1])
+    assert (len(sys.argv) == 2), "Expecting 1 argument: the json file or -a"
+
+    if sys.argv[1] != '-a':
+        print(convert(sys.argv[1]))
+    else:
+        # print all
+        allfiles = glob.glob('*.json')
+        for fname in allfiles:
+            print(convert(fname))
+            print("\n")

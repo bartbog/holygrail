@@ -18,23 +18,28 @@ def mylemma(verb):
     # to catch special cases...
     if not isinstance(verb, str):
         return verb
+    if verb == "'s": # Claudia's black coffee, TODO?
+        return verb
+    if verb == "n't": # wasn't from, TODO?
+        return verb
     return lemma(verb) # pattern.en
 
 def convert(fname):
     with open(fname, 'r') as ffile:
         data = json.load(ffile)
 
-        name = data['title'].lower()
+        name = data['title'].lower().replace(' ','_')
         nr_types = len(data['types'])
         nr_domsize = len( next(iter(data['types'].values())) ) # any element
 
         (clues, lexicon) = get_lexicon(data)
-        return "problem({}, problem({}, {}, {}, {})).".format(
-                name.replace(' ','_'),
+        out = "problem({}, problem({}, {}, {}, {})).".format(
+                name,
                 nr_types,
                 nr_domsize,
                 pp_clues(clues),
                 lexicon)
+        return (name, out)
 
 def pp_clues(clues):
     # pretty printing stuff
@@ -314,14 +319,14 @@ def get_lexicon(data):
         if pn in pns:
             pns.remove(pn)
         #else: a bug probably due to pn with a space hack (e.g. 'van wert')
-    pns_str = ["    pn([{}])".format(pn) for pn in pns]
-    nouns_str = ["    noun([{}], [{}])".format(s,p) for (s,p) in nouns_tuple]
-    ppns_str = ["    ppn([{}, {}, {}])".format(a,b,c) for (a,b,c) in ppns]
-    tv_str = ["    tv([{}], [{}])".format(v,v2) for (v,v2) in tr_verbs]
-    tv_str_two = ["    tv([{}, {}], [{}])".format(v1,v2,v3) for (v1,v2,v3) in two_word_tr_verbs]
-    tvprep_str = ["    tvPrep([{}], [{}], [{}], [todooo])".format(v,p,v2) for (v,p,v2) in verbs_with_prep]
+    pns_str = ["    pn([{}])".format(pn) for pn in sorted(pns)]
+    nouns_str = ["    noun([{}], [{}])".format(s,p) for (s,p) in sorted(nouns_tuple)]
+    ppns_str = ["    ppn([{}, {}, {}])".format(a,b,c) for (a,b,c) in sorted(ppns)]
+    tv_str = ["    tv([{}], [{}])".format(v,v2) for (v,v2) in sorted(tr_verbs)]
+    tv_str_two = ["    tv([{}, {}], [{}])".format(v1,v2,v3) for (v1,v2,v3) in sorted(two_word_tr_verbs)]
+    tvprep_str = ["    tvPrep([{}], [{}], [{}], [todooo])".format(v,p,v2) for (v,p,v2) in sorted(verbs_with_prep)]
     tvgap_str = []
-    for (v,gap,v2) in tvGap_list:
+    for (v,gap,v2) in sorted(tvGap_list):
         one = "[{}]".format(", ".join(v))
         two = "[{}]".format(", ".join(gap))
         mystr = "    tvGap({}, {}, [{}])".format(one, two, v2)
@@ -436,7 +441,11 @@ if __name__ == "__main__":
         # print all
         print(preamble())
         allfiles = glob.glob('*.json')
+        allnames = []
         for fname in allfiles:
-            print(convert(fname))
+            (name, out) = convert(fname)
+            allnames.append(name)
+            print(out)
             print("\n")
+        print("% "+", ".join(allnames))
 

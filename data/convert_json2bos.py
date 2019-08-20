@@ -30,7 +30,7 @@ def convert(fname):
 
         (clues, lexicon) = get_lexicon(data)
         return "problem({}, problem({}, {}, {}, {})).".format(
-                name,
+                name.replace(' ','_'),
                 nr_types,
                 nr_domsize,
                 pp_clues(clues),
@@ -50,19 +50,29 @@ def get_lexicon(data):
             if isinstance(n, (int,float)):
                 nns.add(n)
             else:
+                # HACK: 'school play' is a ppn (the school play),
+                # we keep only the first word and let the script detect the ppn later
+                if ' ' in n:
+                    n = n.split(' ')[0]
                 pns.add(n.lower())
     # ppns are discoved below
 
     # do the nlp stuff
     # http://www.nltk.org/book/ch07.html
-    clues_token = [nltk.word_tokenize(clue) for clue in data['clues']]
+    clues_token = [nltk.word_tokenize(clue.lower()) for clue in data['clues']]
     
-    # remove symbols (why?)
+    # remove punctuation (why?)
     punctuations = frozenset(string.punctuation)
     clues_token_clean = []
     for clue in clues_token:
         clues_token_clean.append([i for i in clue if i not in punctuations])
     clues_pos = [nltk.pos_tag(clue) for clue in clues_token_clean]
+
+    # cleaning, some nouns may still have a '.' in them, which is problematic for prolog
+    for clue_pos in clues_pos:
+        for (i,(word, pos)) in enumerate(clue_pos):
+            if pos.startswith('NN') and '.' in word:
+                clue_pos[i] = (word.replace('.',''), pos)
 
     # cleaning: make numbers integer
     for clue_pos in clues_pos:
@@ -117,6 +127,9 @@ def get_lexicon(data):
                 triple = ppns_dict[word]
                 start = i-1 # standard case
                 stop = i+1 # standard case
+                if stop >= len(clue_pos):
+                    # not sure... a bug probably?
+                    continue
                 if clue_pos[start][0] == triple[0] and clue_pos[stop][0] == triple[2]:
                     continue # all good
                 # special case: -1 is not a DT, but -2 is
@@ -298,7 +311,9 @@ def get_lexicon(data):
     
     # for printing, remove ppns from pns
     for (pre,pn,post) in ppns:
-        pns.remove(pn)
+        if pn in pns:
+            pns.remove(pn)
+        #else: a bug probably due to pn with a space hack (e.g. 'van wert')
     pns_str = ["    pn([{}])".format(pn) for pn in pns]
     nouns_str = ["    noun([{}], [{}])".format(s,p) for (s,p) in nouns_tuple]
     ppns_str = ["    ppn([{}, {}, {}])".format(a,b,c) for (a,b,c) in ppns]
@@ -325,6 +340,93 @@ def flatten(something):
     else:
         yield something
 
+
+def preamble():
+    return """
+:- module(problemHolyGrail, [problem/2]).
+
+problem(tias, problem(4, 4, [
+        % "The 4 people were Tatum, the patient who was prescribed enalapril, the employee with the $54,000 salary, and the owner of the purple house",
+% CHANGED TO: ( "with the salary")
+        "The 4 people were tatum, the patient who was prescribed enalapril, the employee who earns 54000, and the owner of the purple house",
+        "The patient who was prescribed enalapril is not heather",
+        "The patient who was prescribed ramipril is not annabelle",
+        "kassidy earns less than heather",
+        "The owner of the blue house earns more than kassidy",
+%%    "Of tatum and annabelle, one earns 144000 per year and the other lives in the cyan colored house",
+%% CHANGED TO: (drop: colored)
+        "Of tatum and annabelle, one earns 144000 per year and the other lives in the cyan house",
+%%        "Either the employee with the 144000 salary or the employee with the 158000 salary lives in the blue colored house",
+%% CHANGED TO: (drop colored, change the ...salara) 
+        "Either the employee who earns 144000  or the employee who earns 158000 lives in the blue house",
+        "The owner of the lime house was prescribed enalapril for their heart condition",
+%%        "The employee with the 144000 salary was prescribed benazepril for their heart condition"
+%% CHANGED TO:
+        "The employee who earns 144000 was prescribed benazepril for their heart condition"
+                     ], [
+                        noun([patient], [patients]),
+                        noun([person], [people]),
+                        noun([year], [years]),
+                        noun([employee], [employees]),
+                        noun([salary], [salaries]),
+                        noun([owner], [owners]),
+                        pn([tatum]),
+                        pn([annabelle]),
+                        pn([heather]),
+                        pn([kassidy]),
+                        pn([benazepril]),
+                        pn([enalapril]),
+                        pn([ramipril]),
+                        pn([fosinopril]),
+                        prep([of]),
+                        ppn([the, blue, house]),
+                        ppn([the, lime, house]),
+                        ppn([the, cyan, house]),
+                        ppn([the, purple, house]),
+                        tv([owns], [own]),
+                        tvGap([earns], [per, year], [earn]),
+                        tvGap([was, prescribed], [for, their, heart, condition], [prescribe]),
+                        tvPrep([lives], [in], [live], [lived])
+                     ])).
+
+problem(p2_types, problem(4,5, [
+                        "Of the contestant who scored 41 points and the person who threw the white darts, one was from Worthington and the other was Ira",
+                        "Bill was from Mount union",
+                        "Ira scored 21 points higher than the contestant from Worthington",
+                        "Oscar scored somewhat higher than the player who threw the orange darts",
+                        "The contestant from Mount union threw the black darts",
+                        "Pedro didn't finish with 55 points",
+                        "The player who threw the red darts was either Colin or the contestant who scored 48 points",
+                        "Of the contestant who scored 41 points and the person who threw the orange darts, one was from Gillbertville and the other was from Worthington",
+                        "Ira scored 7 points lower than the player from Lohrville"
+        ], [
+                        noun([contestant], [contestants]),
+                        noun([person], [persons]),
+                        noun([player], [players]),
+                        noun([point], [points]),
+                        pn([bill], A),
+                        pn([colin], A),
+                        pn([ira], A),
+                        pn([oscar], A),
+                        pn([pedro], A),
+                        pn([mount, union], B),
+                        pn([gillbertville], B),
+                        pn([lohrville], B),
+                        pn([worthington], B),
+                        pn([yorktown], B),
+                        ppn([the, black, darts], C),
+                        ppn([the, orange, darts], C),
+                        ppn([the, red, darts], C),
+                        ppn([the, white, darts], C),
+                        ppn([the, yellow, darts], C),
+                        tv([threw], [throw]),
+                        tv([scored], [score]),
+                        tvPrep([finishes], [with], [finish], [finished]),
+                        prep([from])
+        ])).
+    """
+
+
 if __name__ == "__main__":
     assert (len(sys.argv) == 2), "Expecting 1 argument: the json file or -a"
 
@@ -332,7 +434,9 @@ if __name__ == "__main__":
         print(convert(sys.argv[1]))
     else:
         # print all
+        print(preamble())
         allfiles = glob.glob('*.json')
         for fname in allfiles:
             print(convert(fname))
             print("\n")
+

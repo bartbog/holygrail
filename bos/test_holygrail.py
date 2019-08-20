@@ -22,8 +22,13 @@ def pl_test(probname):
 
     result = subprocess.run(cmd.split(' '), stdout = subprocess.PIPE)
     out = result.stdout
-    lastline = out.splitlines()[-1]
-    print(lastline)
+    if result.returncode != 0:
+        print(f"Problem {probname}: [] --> error {result.returncode}")
+    if not len(out):
+        print(f"Problem {probname}: [] --> no output")
+    else:
+        lastline = out.splitlines()[-1]
+        print(lastline.decode())
 
 if __name__ == "__main__":
     plname = "problemsHolyGrail.pl"

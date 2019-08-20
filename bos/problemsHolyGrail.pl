@@ -721,16 +721,16 @@ problem(dragon_slayer, problem(4, 5, [
 
 problem(kids_at_play, problem(4, 3, [
         "tommy was always upset to be called in for dinner before the other 2 boys ",
-        "the jones boy had dinner ready later than 6:00pm ",
-        "of dickey and the jackson boy one loved playing red light green light and the other 's dinner was at 6:00pm sharp ",
+        "the jones boy had dinner ready later than 600pm ",
+        "of dickey and the jackson boy one loved playing red light green light and the other 's dinner was at 600pm sharp ",
         "the jackson boy did n't like hide and seek as much as tommy ",
         "harry always had 15 alone once the others were called in ",
-        "the smith boy have 15 minutes to read the newspaper after work before dinner was on the table at 5:30pm ",
+        "the smith boy have 15 minutes to read the newspaper after work before dinner was on the table at 530pm ",
         "the jones boy playing tag "
                      ], [
-    pn([5:30]),
-    pn([6:00]),
-    pn([6:15]),
+    pn([530]),
+    pn([600]),
+    pn([615]),
     pn([dickey]),
     pn([harry]),
     pn([hide/seek]),
@@ -947,9 +947,9 @@ problem(breakfast_time, problem(4, 3, [
         "cereal was eaten 20 minutes after the person who watched the breakfast news on tv ",
         "claudia 's black coffee was not the breakfast taken last "
                      ], [
-    pn([6:30]),
-    pn([6:50]),
-    pn([7:15]),
+    pn([630]),
+    pn([650]),
+    pn([715]),
     pn([cereal]),
     pn([claudia]),
     pn([coffee]),

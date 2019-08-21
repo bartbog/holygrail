@@ -57,6 +57,15 @@ def clean_clues(clues_pos):
                 clue_pos[i] = ("not", pos)
     return clues_pos
 
+def clean_clues_pns(clues_pos, pns):
+    whitelist = frozenset(flatten(pns)) # do not repeat words part of a pn
+    # make sure al pns are tagged as 'NN'
+    for clue_pos in clues_pos:
+        for (i,(word, pos)) in enumerate(clue_pos):
+            if word in whitelist and not pos.startswith('NN'):
+                clue_pos[i] = (word, 'NNPN')
+    return clues_pos
+
 def clean_clues_nns(clues_pos, nns):
     # cleaning: make numbers integer
     for clue_pos in clues_pos:
@@ -169,57 +178,38 @@ def get_nouns(clues_pos, pns):
     return nouns
 
 def get_verbs(clues_pos, pns):
-    # verbs WORK IN PROGRESS
-    #tv_set = set()
-    #tvprep_set = set()
-    #for clue_pos in clues_pos:
-    #    for (i,(word, pos)) in enumerate(clue_pos):
-    #        if pos.startswith('VB'):
-    #            # tvprep: verb with preposition
-    #            if i+1 < len(clue_pos) and clue_pos[i+1][1] == 'IN':
-    #                tvprep_set.add( (word, clue_pos[i+1][0], mylemma(word)) )
-    #            # tv: transitive verb
-    #            if i+1 < len(clue_pos) and clue_pos[i+1][1] == 'VBN':
-    #                # tv-2-sized, e.g. 'was prescribed'
-    #                word2 = clue_pos[i+1][0]
-    #                tv_set.add( ((word,word2), mylemma(word2)) )
-    #            if pos == 'VBN' and i > 0 and clue_pos[i-1][1].startswith('VB'):
-    #                # previous was also a verb, so this one already used as tv-2-sized
-    #                continue
-    #            tv_set.add( (word, mylemma(word)) )
-    #print("tv",tv_set)
-    #print("tvprep",tvprep_set)
-
-
     # fix pos tags with wordnet's verb list
     # this is a hack and due to an insufficient POS tagger...
     # https://stackoverflow.com/questions/28033882/determining-whether-a-word-is-a-noun-or-not
+    #
+    # I think we should be more careful, e.g. when a sentence does not have a VB only?
     wordnet_verbs = frozenset(x.name().split('.', 1)[0] for x in wn.all_synsets('v'))
     for clue_pos in clues_pos:
-        for (i,(word, pos)) in enumerate(clue_pos):
-            if not pos.startswith('VB') and mylemma(word) in wordnet_verbs:
-                clue_pos[i] = (word, 'VBWN')
-    
-    verbs_with_prep = set()
-    tr_verbs = set()
-    two_word_tr_verbs = set()
+        if not any(pos.startswith('VB') for (word, pos) in clue_pos):
+            for (i,(word, pos)) in enumerate(clue_pos):
+                if not pos.startswith('VB') and mylemma(word) in wordnet_verbs:
+                    clue_pos[i] = (word, 'VBWN')
+
+    tv_set = set()
+    tvprep_set = set()
     for clue_pos in clues_pos:
         for (i,(word, pos)) in enumerate(clue_pos):
-            # verbs with preposition
-            if pos.startswith('VB') and i < len(clue_pos)-1 \
-            and clue_pos[i+1][1] == 'IN': # mylemma() converts verb to base form
-                verbs_with_prep.add( (clue_pos[i][0], clue_pos[i+1][0], mylemma(clue_pos[i][0])) )
-            # tr verbs
-            if pos.startswith('VB') \
-               and not clue_pos[i-1][1].startswith('VB') \
-               and i < len(clue_pos)-2 \
-               and ( clue_pos[i+1][1] == "CD" or clue_pos[i+1][0] in pns or clue_pos[i+2][0] in pns ):
-                if clue_pos[i+1][1] != 'VBN':
-                    tr_verbs.add( (word, mylemma(word)) )
+            if pos.startswith('VB'):
+                if i+1 < len(clue_pos) and clue_pos[i+1][1] == 'IN':
+                    # tvprep: verb with preposition
+                    tvprep_set.add( (word, clue_pos[i+1][0], mylemma(word)) )
+                elif i+1 < len(clue_pos) and clue_pos[i+1][1] == 'VBN':
+                    # tv-2-sized, e.g. 'was prescribed'
+                    word2 = clue_pos[i+1][0]
+                    tv_set.add( ((word,word2), mylemma(word2)) )
+                elif pos == 'VBN' and i > 0 and clue_pos[i-1][1].startswith('VB'):
+                    # previous was also a verb, so this one already used as tv-2-sized
+                    pass
                 else:
-                    two_word_tr_verbs.add( (word, clue_pos[i+1][0], mylemma(clue_pos[i+1][0])) )
+                    # tv: transitive verb
+                    tv_set.add( (word, mylemma(word)) )
 
-    return (verbs_with_prep, tr_verbs, two_word_tr_verbs)
+    return (tv_set, tvprep_set)
 
 
 def get_lexicon(data):
@@ -233,14 +223,18 @@ def get_lexicon(data):
 
     # get proper nouns and number nouns
     (pns, nns) = get_pn_nn(data['types'])
+    clues_pos = clean_clues_pns(clues_pos, pns)
     clues_pos = clean_clues_nns(clues_pos, nns)
 
     ppns = get_ppns(clues_pos, data['types'], pns)
 
     nouns = get_nouns(clues_pos, pns)
 
-    (verbs_with_prep, tr_verbs, two_word_tr_verbs) = get_verbs(clues_pos, pns)
+    (tr_verbs, two_word_tr_verbs) = get_verbs(clues_pos, pns)
+    (tvs, tvpreps) = get_verbs(clues_pos, pns)
                     
+    
+    # refactored up to here
     clues_revised = []
     for clues in clues_pos:
         target = []
@@ -270,7 +264,7 @@ def get_lexicon(data):
                 if len(target) >= 2 and target[-1][1].startswith('VB'):
                     target.append( ((target[-1][0], word), 'tv') )
                     del target[-2]
-                elif word in tr_verbs:
+                elif word in flatten(tvs):
                     target.append( (word, 'tv') )
                 else:
                     target.append(item)
@@ -332,14 +326,10 @@ def get_lexicon(data):
                     gapwords.append(word)
             # find current tv and its lemma, remove from tv
             thelemma = "noooone"
-            for (v,v2) in list(tr_verbs):
+            for (v,v2) in tvs:
                 if v == tv:
                     thelemma = v2
-                    tr_verbs.remove( (v,v2) )
-            for (v,v2,v3) in list(two_word_tr_verbs):
-                if (v,v2) == tv:
-                    thelemma = v3
-                    two_word_tr_verbs.remove( (v,v2,v3) )
+                    tvs.remove( (v,v2) )
             tvGap_list.append( (tv,gapwords,thelemma) )
     
     # for printing, remove ppns from pns
@@ -356,9 +346,12 @@ def get_lexicon(data):
     pns_str = sorted(pns_str)
     nouns_str = ["    noun([{}], [{}])".format(s,p) for (s,p) in sorted(nouns)]
     ppns_str = ["    ppn([{}, {}, {}])".format(a,b,c) for (a,b,c) in sorted(ppns)]
-    tv_str = ["    tv([{}], [{}])".format(v,v2) for (v,v2) in sorted(tr_verbs)]
-    tv_str_two = ["    tv([{}, {}], [{}])".format(v1,v2,v3) for (v1,v2,v3) in sorted(two_word_tr_verbs)]
-    tvprep_str = ["    tvPrep([{}], [{}], [{}], [todooo])".format(v,p,v2) for (v,p,v2) in sorted(verbs_with_prep)]
+    tv_str = []
+    for (v,v2) in tvs:
+        if isinstance(v, (tuple,list)):
+            v = ", ".join(v)
+        tv_str.append( f"    tv([{v}], [{v2}])" )
+    tvprep_str = ["    tvPrep([{}], [{}], [{}], [todooo])".format(v,p,v2) for (v,p,v2) in sorted(tvpreps)]
     tvgap_str = []
     for (v,gap,v2) in sorted(tvGap_list):
         one = "[{}]".format(", ".join(v))
@@ -368,7 +361,7 @@ def get_lexicon(data):
             
     return (clues_new,
            "[\n"+\
-           ",\n".join(pns_str + ppns_str + nouns_str + tv_str + tv_str_two + tvprep_str + tvgap_str)+\
+           ",\n".join(pns_str + ppns_str + nouns_str + tv_str + tvprep_str + tvgap_str)+\
            "\n                     ]")
 
 # https://stackoverflow.com/questions/47432632/flatten-multi-dimensional-array-in-python-3

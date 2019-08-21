@@ -55,6 +55,8 @@ def clean_clues(clues_pos):
                 clue_pos[i] = (word.replace('.',''), pos)
             if word == "n't":
                 clue_pos[i] = ("not", pos)
+            if word != "." and "." in word: # words with . like 'mrs.'
+                clue_pos[i] = (word.replace(".", ""), pos)
     return clues_pos
 
 def clean_clues_pns(clues_pos, pns):
@@ -213,7 +215,8 @@ def get_verbs(clues_pos, pns):
                     tvs.add( (word, lemm) )
 
     # do not output builtin tvs
-    blacklist = ['do', 'have']
+    blacklist = ["do", "have"]
+    blacklist += ["'s"] # weird weird
     # do not output if it has a tvprep either
     blacklist += [lemm for (word, prep, lemm) in tvpreps]
     # remove blacklisted
@@ -252,7 +255,7 @@ def get_lexicon(data):
     clues_pos = clean_clues_pns(clues_pos, pns)
     clues_pos = clean_clues_nns(clues_pos, nns)
 
-    ppns = get_ppns(clues_pos, data['types'], pns)
+    ppns = {} #get_ppns(clues_pos, data['types'], pns)
 
     nouns = get_nouns(clues_pos, pns)
 
@@ -324,14 +327,22 @@ def get_lexicon(data):
     #print(clues_new)
     
     # finding tvGap
+    punctuations = frozenset(string.punctuation)
     tvgap_phrases = []
     for clues in clues_revised:
         for i,item in enumerate(clues):
             if item[-1].startswith('tv') and len(clues) > i+1 and (clues[i+1][-1] == 'pn' or clues[i+1][-1] == 'ppn'):
-                if clues[i+2:]: # rest of the phrase is not empty, add it
-                    # TODO: check for punctuation or conjunction or other end of subsentence?
-                    tvgap_phrases.append( [item] + clues[i+2:] )
+                # till end of sentence, check for punctuation
+                start = i+1
+                stop = len(clues)
+                for j in range(start,stop):
+                    if clues[j][0] in punctuations:
+                        stop = j
+                        break
+                if clues[start:stop]: # rest of the phrase is not empty, add it
+                    tvgap_phrases.append( [item] + clues[start:stop] )
     
+    # TODO, I broke tvgap detection in tutorial...
     # dictionary to find phrase frequency
     cnt = {}
     for tvgap in tvgap_phrases:
@@ -352,7 +363,7 @@ def get_lexicon(data):
                     gapwords.append(word)
             # find current tv and its lemma, remove from tv
             thelemma = "noooone"
-            for (v,v2) in tvs:
+            for (v,v2) in list(tvs): # list() because we modify it
                 if v == tv:
                     thelemma = v2
                     tvs.remove( (v,v2) )
@@ -379,11 +390,14 @@ def get_lexicon(data):
         tv_str.append( f"    tv([{v}], [{v2}])" )
     tvprep_str = ["    tvPrep([{}], [{}], [{}], [todooo])".format(v,p,v2) for (v,p,v2) in sorted(tvpreps)]
     tvgap_str = []
-    for (v,gap,v2) in sorted(tvGap_list):
-        one = "[{}]".format(", ".join(v))
-        two = "[{}]".format(", ".join(gap))
+    for (v,gap,v2) in tvGap_list:
+        if isinstance(v, (tuple, list)):
+            v = ", ".join(v)
+        one = "[{}]".format(v) # this too may hide bug...
+        two = "[{}]".format(", ".join(flatten(gap))) # XXX, the flatten may hide a bug
         mystr = "    tvGap({}, {}, [{}])".format(one, two, v2)
         tvgap_str.append(mystr)
+    tvgap_str = sorted(tvgap_str)
             
     return (clues_new,
            "[\n"+\

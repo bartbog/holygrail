@@ -190,26 +190,52 @@ def get_verbs(clues_pos, pns):
                 if not pos.startswith('VB') and mylemma(word) in wordnet_verbs:
                     clue_pos[i] = (word, 'VBWN')
 
-    tv_set = set()
-    tvprep_set = set()
+    tvs = set()
+    tvpreps = set()
     for clue_pos in clues_pos:
         for (i,(word, pos)) in enumerate(clue_pos):
             if pos.startswith('VB'):
                 if i+1 < len(clue_pos) and clue_pos[i+1][1] == 'IN':
                     # tvprep: verb with preposition
-                    tvprep_set.add( (word, clue_pos[i+1][0], mylemma(word)) )
+                    lemm = mylemma(word)
+                    tvpreps.add( (word, clue_pos[i+1][0], lemm) )
                 elif i+1 < len(clue_pos) and clue_pos[i+1][1] == 'VBN':
                     # tv-2-sized, e.g. 'was prescribed'
+                    lemm = mylemma(word)
                     word2 = clue_pos[i+1][0]
-                    tv_set.add( ((word,word2), mylemma(word2)) )
+                    tvs.add( ((word,word2), lemm) )
                 elif pos == 'VBN' and i > 0 and clue_pos[i-1][1].startswith('VB'):
                     # previous was also a verb, so this one already used as tv-2-sized
                     pass
                 else:
                     # tv: transitive verb
-                    tv_set.add( (word, mylemma(word)) )
+                    lemm = mylemma(word)
+                    tvs.add( (word, lemm) )
 
-    return (tv_set, tvprep_set)
+    # do not output builtin tvs
+    blacklist = ['do', 'have']
+    # do not output if it has a tvprep either
+    blacklist += [lemm for (word, prep, lemm) in tvpreps]
+    # remove blacklisted
+    for (word, lemm) in list(tvs):
+        if lemm in blacklist:
+            tvs.remove( (word, lemm) )
+
+    # check for duplicates in tvprep, try to resolve
+    tvprep_dict = dict()
+    for (word, prep, lemm) in tvpreps:
+        key = (lemm, prep)
+        if not key in tvprep_dict:
+            tvprep_dict[key] = [word]
+        else:
+            tvprep_dict[key].append(word)
+    for ((lemm,prep), lst) in tvprep_dict.items():
+        if len(lst) > 1:
+            # if duplicate and lemm is also as a first one, remove that one
+            if lemm in lst:
+                tvpreps.remove( (lemm, prep, lemm) )
+
+    return (tvs, tvpreps)
 
 
 def get_lexicon(data):

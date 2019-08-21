@@ -168,24 +168,7 @@ def get_nouns(clues_pos, pns):
                 nouns.add( (word,pluralize(word)) )
     return nouns
 
-
-def get_lexicon(data):
-    # do the nlp stuff
-    # http://www.nltk.org/book/ch07.html
-    clues_token = [nltk.word_tokenize(clue.lower()) for clue in data['clues']]
-    clues_pos = [nltk.pos_tag(clue) for clue in clues_token]
-
-    # some cleaning
-    clues_pos = clean_clues(clues_pos)
-
-    # get proper nouns and number nouns
-    (pns, nns) = get_pn_nn(data['types'])
-    clues_pos = clean_clues_nns(clues_pos, nns)
-
-    ppns = get_ppns(clues_pos, data['types'], pns)
-
-    nouns = get_nouns(clues_pos, pns)
-
+def get_verbs(clues_pos, pns):
     # verbs WORK IN PROGRESS
     #tv_set = set()
     #tvprep_set = set()
@@ -208,29 +191,55 @@ def get_lexicon(data):
     #print("tvprep",tvprep_set)
 
 
+    # fix pos tags with wordnet's verb list
+    # this is a hack and due to an insufficient POS tagger...
     # https://stackoverflow.com/questions/28033882/determining-whether-a-word-is-a-noun-or-not
-    # this is really slow and due to an insufficient POS tagger...
-    verbs = frozenset(x.name().split('.', 1)[0] for x in wn.all_synsets('v'))
+    wordnet_verbs = frozenset(x.name().split('.', 1)[0] for x in wn.all_synsets('v'))
+    for clue_pos in clues_pos:
+        for (i,(word, pos)) in enumerate(clue_pos):
+            if not pos.startswith('VB') and mylemma(word) in wordnet_verbs:
+                clue_pos[i] = (word, 'VBWN')
     
     verbs_with_prep = set()
     tr_verbs = set()
     two_word_tr_verbs = set()
     for clue_pos in clues_pos:
         for (i,(word, pos)) in enumerate(clue_pos):
-            word = word.lower()
             # verbs with preposition
-            if mylemma(word) in verbs and i < len(clue_pos)-1 \
+            if pos.startswith('VB') and i < len(clue_pos)-1 \
             and clue_pos[i+1][1] == 'IN': # mylemma() converts verb to base form
                 verbs_with_prep.add( (clue_pos[i][0], clue_pos[i+1][0], mylemma(clue_pos[i][0])) )
             # tr verbs
-            if mylemma(word) in verbs \
-               and mylemma(clue_pos[i-1][0]) not in verbs \
+            if pos.startswith('VB') \
+               and not clue_pos[i-1][1].startswith('VB') \
                and i < len(clue_pos)-2 \
                and ( clue_pos[i+1][1] == "CD" or clue_pos[i+1][0] in pns or clue_pos[i+2][0] in pns ):
                 if clue_pos[i+1][1] != 'VBN':
                     tr_verbs.add( (word, mylemma(word)) )
                 else:
                     two_word_tr_verbs.add( (word, clue_pos[i+1][0], mylemma(clue_pos[i+1][0])) )
+
+    return (verbs_with_prep, tr_verbs, two_word_tr_verbs)
+
+
+def get_lexicon(data):
+    # do the nlp stuff on lowercase sentences
+    # http://www.nltk.org/book/ch07.html
+    clues_token = [nltk.word_tokenize(clue.lower()) for clue in data['clues']]
+    clues_pos = [nltk.pos_tag(clue) for clue in clues_token]
+
+    # some cleaning
+    clues_pos = clean_clues(clues_pos)
+
+    # get proper nouns and number nouns
+    (pns, nns) = get_pn_nn(data['types'])
+    clues_pos = clean_clues_nns(clues_pos, nns)
+
+    ppns = get_ppns(clues_pos, data['types'], pns)
+
+    nouns = get_nouns(clues_pos, pns)
+
+    (verbs_with_prep, tr_verbs, two_word_tr_verbs) = get_verbs(clues_pos, pns)
                     
     clues_revised = []
     for clues in clues_pos:
@@ -257,7 +266,7 @@ def get_lexicon(data):
                             target.append( (ppn, 'ppn') )
                             break
             # verb
-            elif mylemma(word) in verbs or item[1].startswith('VB'):
+            elif item[1].startswith('VB'):
                 if len(target) >= 2 and target[-1][1].startswith('VB'):
                     target.append( ((target[-1][0], word), 'tv') )
                     del target[-2]
@@ -268,7 +277,7 @@ def get_lexicon(data):
 
             # prep
             elif item[1] == 'IN' and i > 1:
-                if len(target) >= 2 and target[-1][1].startswith('VB') or mylemma(target[-1][0]) in verbs:
+                if len(target) >= 2 and target[-1][1].startswith('VB'):
                     target.append( ((target[-1][0], word), 'tvPrep') )
                     del target[-2]
                 else:

@@ -46,39 +46,18 @@ def pp_clues(clues):
     clues = ["        \"{}\"".format(clue) for clue in clues]
     return "[\n"+",\n".join(clues)+"\n                     ]"
 
-def get_lexicon(data):
-    # proper nouns (no numbers)
-    pns = set()
-    nns = set() # numeric ones
-    for (category, names) in data['types'].items():
-        for n in names:
-            if isinstance(n, (int,float)):
-                nns.add(n)
-            else:
-                # HACK: 'school play' is a ppn (the school play),
-                # we keep only the first word and let the script detect the ppn later
-                if ' ' in n:
-                    n = n.split(' ')[0]
-                pns.add(n.lower())
-    # ppns are discoved below
-
-    # do the nlp stuff
-    # http://www.nltk.org/book/ch07.html
-    clues_token = [nltk.word_tokenize(clue.lower()) for clue in data['clues']]
-    
-    # remove punctuation (why?)
-    punctuations = frozenset(string.punctuation)
-    clues_token_clean = []
-    for clue in clues_token:
-        clues_token_clean.append([i for i in clue if i not in punctuations])
-    clues_pos = [nltk.pos_tag(clue) for clue in clues_token_clean]
-
+def clean_clues(clues_pos):
     # cleaning, some nouns may still have a '.' in them, which is problematic for prolog
+    # cleaning, replace "n't" by "not"
     for clue_pos in clues_pos:
         for (i,(word, pos)) in enumerate(clue_pos):
             if pos.startswith('NN') and '.' in word:
                 clue_pos[i] = (word.replace('.',''), pos)
+            if word == "n't":
+                clue_pos[i] = ("not", pos)
+    return clues_pos
 
+def clean_clues_nns(clues_pos, nns):
     # cleaning: make numbers integer
     for clue_pos in clues_pos:
         for (i,(word, pos)) in enumerate(clue_pos):
@@ -92,7 +71,24 @@ def get_lexicon(data):
                     clue_pos[i] = (word, 'NNN')
                 else:
                     clue_pos[i] = (word, pos)
+    return clues_pos
 
+def get_pn_nn(data_types):
+    # proper nouns (numbers separately)
+    pns = set()
+    nns = set() # numeric ones
+    for (category, names) in data_types.items():
+        for n in names:
+            if isinstance(n, (int,float)):
+                nns.add(n)
+            else:
+                pn = n.lower()
+                if ' ' in pn:
+                    pn = tuple(pn.split(' ')) # must be hashable
+                pns.add(pn)
+    return (pns, nns)
+
+def get_ppns(clues_pos, data_types, pns):
     # check for ppn's
     # extract [DT pn NN] triples
     pn_triples = dict((pn,[]) for pn in pns)
@@ -110,7 +106,7 @@ def get_lexicon(data):
     # check for each type, use most common triple
     ppns = set() # XXX deprecated, remove later
     ppns_dict = dict() # pn -> triple
-    for (category, names) in data['types'].items():
+    for (category, names) in data_types.items():
         triples = []
         for name in names:
             if not isinstance(name, (int,float)):
@@ -152,20 +148,43 @@ def get_lexicon(data):
     #poscounts = nltk.ConditionalFreqDist([tag for tags in clues_pos for tag in tags])
     #poscounts_ambigu = [(x,poscounts[x]) for x in poscounts if len(poscounts[x]) > 1]
     #print("Ambiguous:",poscounts_ambigu)
+    return ppns
 
+def get_nouns(clues_pos, pns):
+    blacklist = frozenset(flatten(pns)) # do not repeat words part of a pn
+    
     # extra nouns that are not our proper nouns
-    nouns_tuple = set()
+    nouns = set()
     for clue_pos in clues_pos:
         for (word, pos) in clue_pos:
             word = word.lower()
-            if word in pns:
+            if word in blacklist:
                 continue # skip
             if pos.startswith('NNS'):
                 # plural
-                nouns_tuple.add( (singularize(word),word) )
+                nouns.add( (singularize(word),word) )
             elif pos.startswith('NN'):
                 # singular
-                nouns_tuple.add( (word,pluralize(word)) )
+                nouns.add( (word,pluralize(word)) )
+    return nouns
+
+
+def get_lexicon(data):
+    # do the nlp stuff
+    # http://www.nltk.org/book/ch07.html
+    clues_token = [nltk.word_tokenize(clue.lower()) for clue in data['clues']]
+    clues_pos = [nltk.pos_tag(clue) for clue in clues_token]
+
+    # some cleaning
+    clues_pos = clean_clues(clues_pos)
+
+    # get proper nouns and number nouns
+    (pns, nns) = get_pn_nn(data['types'])
+    clues_pos = clean_clues_nns(clues_pos, nns)
+
+    ppns = get_ppns(clues_pos, data['types'], pns)
+
+    nouns = get_nouns(clues_pos, pns)
 
     # verbs WORK IN PROGRESS
     #tv_set = set()
@@ -222,9 +241,9 @@ def get_lexicon(data):
             # noun
             if word in pns:
                 target.append( (word, 'pn') )
-            elif word in flatten(nouns_tuple) and word not in flatten(ppns):
+            elif word in flatten(nouns) and word not in flatten(ppns):
                 target.append( (word, 'noun') )
-            elif word in flatten(nouns_tuple) and word in flatten(ppns):
+            elif word in flatten(nouns) and word in flatten(ppns):
                 if len(target) >= 2 and target[-2][1] == 'DT':
                     for ppn in ppns:
                         if target[-1][0] in ppn:
@@ -319,8 +338,14 @@ def get_lexicon(data):
         if pn in pns:
             pns.remove(pn)
         #else: a bug probably due to pn with a space hack (e.g. 'van wert')
-    pns_str = ["    pn([{}])".format(pn) for pn in sorted(pns)]
-    nouns_str = ["    noun([{}], [{}])".format(s,p) for (s,p) in sorted(nouns_tuple)]
+    
+    pns_str = []
+    for pn in pns:
+        if isinstance(pn, tuple):
+            pn = ", ".join(pn)
+        pns_str.append( f"    pn([{pn}])" )
+    pns_str = sorted(pns_str)
+    nouns_str = ["    noun([{}], [{}])".format(s,p) for (s,p) in sorted(nouns)]
     ppns_str = ["    ppn([{}, {}, {}])".format(a,b,c) for (a,b,c) in sorted(ppns)]
     tv_str = ["    tv([{}], [{}])".format(v,v2) for (v,v2) in sorted(tr_verbs)]
     tv_str_two = ["    tv([{}, {}], [{}])".format(v1,v2,v3) for (v1,v2,v3) in sorted(two_word_tr_verbs)]
@@ -436,7 +461,8 @@ if __name__ == "__main__":
     assert (len(sys.argv) == 2), "Expecting 1 argument: the json file or -a"
 
     if sys.argv[1] != '-a':
-        print(convert(sys.argv[1]))
+        (name, out) = convert(sys.argv[1])
+        print(out)
     else:
         # print all
         print(preamble())

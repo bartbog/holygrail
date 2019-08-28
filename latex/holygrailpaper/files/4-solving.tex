@@ -1,13 +1,32 @@
-\paragraph{Translation} 
+Before detailing how we construct a complete specification, we give a very brief introduction to the \idp system. More information can be found in \mycite{idp}. 
+\subsection{Preliminaries: the \idp system} 
+The \idp system \mycite{idp} is a knowledge base system \mycite{KBS} for a rich extension of first-order logic. 
+In practice, when problem-solving with \idp, one typically makes use of the following components: vocabularies, theories, structures, inference methods, and procedures.
+A vocabulary is (as in standard first-order logic) a set of symbols. In \idp these symbols are furthermore \emph{typed}. 
+A (complete) structure over a vocabulary is an assignment of values (of the right type) to symbols (for instance, a set of tuples to a predicate symbol). A \emph{partial} structure may in addition contain partial information, such as $(1,1)$ is an element of the interpretation of $P$ and $(2,1)$ is not without fully specifying the interpretation of $P$. 
+Partial structured are ordered according to \emph{precision}. Intuitively, $S_1$ is more precise than $S_2$ if $S_1$ contains at least all information $S_2$ contains. 
+A \emph{theory} in \idp is an expression in an extension of first-order logic. It represents a piece of information (for instance, a clue) but does not represent a problem. 
+In order to solve a problem using this knowledge, we make use of \emph{inference methods}, which are generic algorithms that tackle a task given some of the aforementioned components. Some commonly used inference methods are:
+\begin{itemize}
+ \item \textbf{modelexpand(T,S)} This method tkes as input a theory and a partial structure $S$, it returns one or more (depending on options) structures that are more precise than $S$ and that satisfy $T$
+%  \item \textbf{entails(T1,T2)} This procedure takes as input two theories and checks whether the first one logically entails the second. 
+ \item \textbf{optimalpropagate(T,S)} This inference method takes as input a theory $T$ and a partial structure $S$, it returns the most precise partial structure $S$ that approximates all models of $T$ that expand $S$
+ \item \textbf{unsatstructure(T,S,V)} This inference methods takes as input a theory $T$ and a structure $S$ such that $T$ has no models that expand $S$ (and optionally a vocabulary $V$). It returns structure $S'$ less precise than $S$, but equal to $S$ outside $V$ such that $T$ still has no models more precise than $S'$; furthermore the returned structured is minimally precise among such structures. Intuitively, this inference methods finds the reason for an inconsistency: it explains why there are no models of $T$ expanding $S$ by identifying a minimal set of assumptions in $S$ that cause the lack of models. 
+ Internally, this is implemented using unsatisfiable core extraction \cite{conf/sat/LynceM04}. 
+\end{itemize}
+Finally, \idp provides built-in support for the lua scripting language, where all above components are first-class citizens. Lua is then typically used to glue together different calls to different inference methods.
 
-The framework presented in the previous section translates each clue into (typed) discourse representation theory (DRT) \cite{}. 
-In order to build a complete specification of the puzzle, we compute the interpretation of the different types. If the grid is given, nothing needs to be done here. Otherwise we compute an equivalence relation on the set of proper nouns occurring in the clues (two proper nouns are equivalent if they occur in the same position of a verb/preposition; for instance if ``the Englishman smokes cigarettes'' and ``the person who owns a dog does not smoke cigars'' we derive that cigars and cigarettes are of the same type). It might happen that this does not contain enough information to completely determine the types for two reasons. 
+\subsection{D. From logic to a complete IDP specification} 
+
+The framework presented in the previous section translates each clue into (a typed variant of) discourse representation theory. 
+In order to build a complete specification of the puzzle, we compute the interpretation of the different types. If the grid is given, nothing needs to be done here. Otherwise we use \textbf{type inference} to compute an equivalence relation on the set of proper nouns occurring in the clues (two proper nouns are equivalent if they occur in the same position of a verb/preposition; for instance if ``the Englishman smokes cigarettes'' and ``the person who owns a dog does not smoke cigars'' we derive that cigars and cigarettes are of the same type). It might happen that this does not yield enough information to completely determine the types for two reasons. 
 First of all, not all proper nouns might occur in the clues (see for instance the zebra in Einsteins famous zebra puzzle). 
 However, since the solution of a logic grid puzzle is always unique, there can at most be one such missing entity per type (otherwise by symmetry there would be multiple solutions) and hence, we can then simply add an anonymous element. 
-Secondly, there might be a large variation in the verbs used to denote the same relation. In that case, we query the user to ask which verb are -- for the purpose of the puzzle -- synonyms. 
+Secondly, there might be a large variation in the verbs used to denote the same relation. In that case, without using additional background information, we cannot decide which entities belong to the same type. Our system then queries the user to ask which verb are -- for the purpose of the puzzle -- synonyms. 
 
 Once the types are completed, we construct a logical vocabulary containing: all the types and a relation for each transitive verb or preposition.
-Additionally, we ensure that there is at least one relation between each two types, even if this relation does not occur in the clues. This is not important for solving the puzzle, but it is for explaining it; more on that follows in the next section. 
+Additionally, we ensure that there is at least one relation between each two types, even if this relation does not occur in the clues. This is not important for solving the puzzle, but it plays an important role in explaining (more on that follows in the next section). 
+% Essentially, by including these relations, we change the \emph{language of learning}, which is known to sometimes allow for much more efficient inference \cite{???} ,
 The interpretation of the types is encoded in \idp by means of a \emph{constructed type}.  A constructed type consist of a set of constants with two extra axioms implied: Domain Closure Axiom (DCA) and Unique Names Axiom (UNA). DCA states that the set of constants are the only possible elements of the domain. UNA states that all constants are different from each other.
 
 % A type that corresponds to a numerical domain is translated to a subset of the natural numbers. In that case, the system asks the user the exact subset as it often cannot be automatically inferred from the clues.
@@ -18,21 +37,22 @@ After the vocabulary, we construct logical theories:
  \item we translate each clue into the \idp language (an extension of typed first-order logic), and
  \item we add implicit constraints present in logic grid puzzles.
 \end{itemize}
-The translation of DRT into first-order logic is well-known. What we added to this is:  \todo{overlap with previous part}
-\begin{itemize}
- \item using the type information as a sanity check: if a verb (which is translated into a relation) is used twice, then the two occurrences must have the same typing
- \item type inference: if the grid (the interpretation of the logical types underlying the puzzle) is not given as input, we derive they based on occurrences in the puzzle, e.g., using the fact that if two different entities are used as the subject of the same verb, then they must have the same type,
-%  \item 
-\end{itemize}
+The translation of DRT into first-order logic is well-known. What we added to this is. We slightly extended it to take types into account and translate into typed first-order logic. 
+% \todo{overlap with previous part}
+% \begin{itemize}
+%  \item using the type information as a sanity check: if a verb (which is translated into a relation) is used twice, then the two occurrences must have the same typing
+%  \item type inference: if the grid (the interpretation of the logical types underlying the puzzle) is not given as input, we derive it based on occurrences in the puzzle, e.g., using the fact that if two different entities are used as the subject of the same verb, then they must have the same type,
+% %  \item 
+% \end{itemize}
 
-The, there are some implicit constraints stemming from the fact that this is a logic grid puzzle. 
+Next, there are some implicit constraints stemming from the fact that this is a logic grid puzzle. 
 First of all, our translation might generate multiple relations between two types. For instance if there are clues ``The tea drinker is from France'' and ``The person who owns a dog lives in England'', then the translation will create two relations $\mathit{from}$ and $\mathit{livesIn}$ between persons and countries. This happens regularly since logigram designers tend to vary their vocabulary to keep the puzzles interesting. However, we know that there is only one relation between two types, hence we add a theory containing \emph{synonymy} axioms; for this case concretely: 
-\[\forall x \forall y \cdot livesIn(x, y) \Leftrightarrow from(x, y).\]
+\[\forall x \forall y : livesIn(x, y) \Leftrightarrow from(x, y).\]
 Similarly, if two relations have an inverse signature, they represent the inverse functions (for instance $\mathit{isOwnedBy}$ and $\mathit{likes}$) in the clues ``The Englishman likes cats'' and ``The dog is owned by the Belgian''). In this case we add constraints of the form
-\[\forall x \forall y \cdot likes(x, y) \Leftrightarrow isOwnedBy(y,x).\]
+\[\forall x \forall y : likes(x, y) \Leftrightarrow isOwnedBy(y,x).\]
 Next, we add axioms that state that each relation between two types is actually a \emph{bijection}, e.g. 
-\[(\forall x \cdot \exists y \cdot from(x, y)) \land (\forall y \cdot \exists x \cdot from(x, y)).\]
-Finally, we add \emph{transitivity} axioms that state how the different relations relate. For instance is the dog is kept in the red house and the Englishman lives in the red house, then the Englishman keeps a dog. This kind of axioms is expressed as:
+\[(\forall x : \exists y : from(x, y)) \land (\forall y : \exists x : from(x, y)).\]
+Finally, we add \emph{transitivity} axioms that state how the different relations relate. For instance if the dog is kept in the red house and the Englishman lives in the red house, then the Englishman keeps a dog. This kind of axioms is expressed as:
 \[
  \forall x \forall y \forall z: keptIn(x,y) \land livesIn(z,y) \limplies keeps(z,x).
 \]
@@ -41,8 +61,8 @@ Finally, we add \emph{transitivity} axioms that state how the different relation
 \todo{More on the Usage of types?}
 
 
-\paragraph{Solving}
-The conjunction of all the logical theories created in the previous paragraph completely characterize the constraints underlying a logic grid puzzle.
+\paragraph{Solving the puzzle}
+The conjunction of all the logical theories created in the previous paragraph completely characterizes the constraints underlying a logic grid puzzle.
 In order to solve the puzzle, we use \idp's built-in \emph{model expansion} inference, which searches for a model in a given finite domain. Under the hood, \idp uses \minisatid \mycite{minisatid}, a solver using SAT \mycite{SAT} and CP \mycite{CP} technology, in particular lazy clause generation \mycite{lcg} and conflict-driven clause learning \mycite{cdcl}. In our experience, the solving part is often quite trivial since the puzzles are usually crafted in such a way that they are actually easy to solve by a human. However, it deserves to be mentioned that theoretically, logic grid puzzles are NP hard.
 
 \todo{do we wish to say something about this: if there does not have to be a solution and it does not have to be unique, then we can get NP hardness. However, if there has to be a unique solution proving hardness is harder}

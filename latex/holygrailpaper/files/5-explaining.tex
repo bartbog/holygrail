@@ -1,3 +1,4 @@
+\subsection{E. Explanation-generating search in IDP} 
 A part of the holy grail challenge was not to just solve the puzzle, but also to \emph{explain} how the solution was obtained, or rather, to explain how a human could obtain this solution as well. 
 The idea under our is that we will gradually fill the logigram grid with more and more information. At each point in time, information is added that can be obtained by reasoning on the clues and by using the partial solution obtained this far. 
 
@@ -19,15 +20,16 @@ From these two clues, it follows that the Russian does not smoke Marlboro, but t
 \end{example}
 
 \paragraph{Implementation}
-In order to implement this, we ensured that our automatic translation produces a different logical theory for each clue and we made use of \idp's procedural interface (based on the lua scripting language) in which theories and structures are first-order citizens. 
-We furthermore used the following built-in inference mechanisms: 
-\begin{itemize}
- \item \textbf{optimalpropagate(T,S)} This inference method takes as input a theory $T$ and a partial structure $S$, it returns the most precise partial structure $S$ that approximates all models of $T$ that expand $S$
- \item \textbf{unsatstructure(T,S,V)} This inference methods takes as input a theory $T$ and a structure $S$ such that $T$ has no models that expand $S$ (and optionally a vocabulary $V$). It returns structure $S'$ less precise than $S$, but equal to $S$ outside $V$ such that $T$ still has no models more precise than $S'$; furthermore the returned structured is minimally precise among such structures. Intuitively, this inference methods finds the reason for an inconsistency: it explains why there are no models of $T$ expanding $S$ by identifying a minimal set of assumptions in $S$ that cause the lack of models. 
- Internally, this is implemented using unsatisfiable core extraction \cite{conf/sat/LynceM04}. 
-\end{itemize}
-
-These two methods are used as follows. Our procedure maintains a structure $S$ representing the current state of the grid. 
+% \todo{remove}
+In order to implement this, we ensured that our automatic translation produces a different logical theory for each clue and we made use of \idp's procedural interface (based on the lua scripting language) in which theories and structures are first-order citizens and of the built-in inference methods \idp provides. 
+% We furthermore used the following built-in inference mechanisms: 
+% \begin{itemize}
+%  \item \textbf{optimalpropagate(T,S)} This inference method takes as input a theory $T$ and a partial structure $S$, it returns the most precise partial structure $S$ that approximates all models of $T$ that expand $S$
+%  \item \textbf{unsatstructure(T,S,V)} This inference methods takes as input a theory $T$ and a structure $S$ such that $T$ has no models that expand $S$ (and optionally a vocabulary $V$). It returns structure $S'$ less precise than $S$, but equal to $S$ outside $V$ such that $T$ still has no models more precise than $S'$; furthermore the returned structured is minimally precise among such structures. Intuitively, this inference methods finds the reason for an inconsistency: it explains why there are no models of $T$ expanding $S$ by identifying a minimal set of assumptions in $S$ that cause the lack of models. 
+%  Internally, this is implemented using unsatisfiable core extraction \cite{conf/sat/LynceM04}. 
+% \end{itemize}
+% 
+These methods are used as follows. Our procedure maintains a partial structure $S$ representing the current state of the grid. 
 At each point in time, for all sets of clues of a given size $n$ (starting with $n=0$), all consequences of the conjunction of this set of clues are computed with \textbf{optimalpropagate}. 
 If there are no consequences, the same is repeated for a greater $n$. 
 For each of the consequences, a minimal set of assumptions that entail this consequence is computed using \textbf{unsatstructure} (this is done by making the consequence false in $S$ and using $V$ to disallow changing this consequence in the outcome of the unsatstructure-call. 
@@ -41,7 +43,7 @@ Afterwards, the procedure starts over with $n=0$.
 
 \paragraph{Propagation Strength}
 One important thing to note here is that when we apply propagation, we do not do it on a theory that \emph{only} contains the clues in question. Instead, that theory always also contains all logigram axioms (bijections, transitivity, etcetera). 
-The reason is that clues by themselves rarely propagate. Let us consider some examples. 
+The reason is that clues by themselves rarely propagate. To illustrate this, let us consider some examples. 
 \begin{example}
  Consider the clue ``The patient who was prescribed enalapril is not Heather''. If one were to manually translate this clue into first-order logic over the given vocabulary, one would probably come up with: 
  \begin{align}\lnot \mathit{prescribed}(heather,enalapril).\label{eq:heather:easy}\end{align}
@@ -65,7 +67,7 @@ Equations \eqref{eq:heather:easy} and \eqref{eq:heather:produced} are not equiva
  \[\lnot used\_in(enalapril,lime).\qedhere\]
 \end{example}
 
-\paragraph{Presentation}
+\subsection{F. Visualisation of the explanation}
 We explored two different possibilities to present this explanation to humans. 
 The first was generating natural language sentences of the form 
 ``From the clue(s) $\langle$clue$\rangle$ and the fact that $\langle$assumptions$\rangle$, it follows that $\langle$conclusions$\rangle$.''

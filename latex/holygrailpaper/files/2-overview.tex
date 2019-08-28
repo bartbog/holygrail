@@ -1,50 +1,120 @@
-\todo{Einstein puzzle as a running example? [T] if we call it holy zebra, makes sense to use Zebra as running example}
+\bart{Einstein puzzle as a running example?} \tias{ if we call it holy zebra, makes sense to use Zebra as running example}
 
-The \textbf{input} to \ourtool is a set of natural language sentences (from hereon referred to as ``clues''), and the names of the \textit{entities} that make up the puzzle, e.g. Englishman, red house, Zebra, etc.
+The \textbf{input} to \ourtool is a set of natural language sentences (from hereon referred to as ``clues''), and the names of the \textit{entities} that make up the puzzle, e.g. Englishman, red house, Zebra, etc. \bart{No more mention of the fact that this is optional for the system?}
 
 In typical logic grid puzzles, this domain information is present in the grid that is supplied with the puzzle. For some puzzles, domain information is not required; a prototypical example is Einstein's Zebra puzzle, which ends with the question ``Who owns the zebra?'', while the clues do not name the Zebra entity, and the puzzle can be solved without knowledge of the fact that there is a zebra in the first place. 
 
 %Figure \ref{fig:overview} contains an overview of the different components of the system.
 %
-%\begin{figure*}
-%\centering
-%\includegraphics[width=\textwidth]{../../poster/graphviz/tree.jpg}
-% Can someone replace this by a picture/schematic overview of the pipeline
+
+\tikzset{%
+  block/.style    = {draw, thick, rectangle, minimum height = 3em,
+    minimum width = 3em,anchor=west},
+  sum/.style      = {draw, circle, node distance = 2cm}, % Adder
+  input/.style    = {draw, ellipse, node distance = 2cm,anchor=west}, % Input
+  output/.style   = {coordinate} % Output
+}
+
+
+% \begin{figure*}
+% \centering
+% \begin{tikzpicture}[auto, thick, node distance=2cm, >=triangle 45]
+% \draw 
+% %INPUT
+% node [input] at (0,0) (clues){(English) clues}
+% node [input] at (0,-2)  (grid) {Entities}
+% %NLP
+% node [block] at (4,0) (pos)  {POS tagger}
+% node [block] at (4,-2)  (bos) {BOS}
+% %IDP
+% node [block] at (8,0) (tra) {Translator}
+% node [block] at (12,0) (idp) {\idp}
+% node [block] at (12,-2) (vis) {visualizer}
+% ;\end{tikzpicture}
 % \caption{An overview of the pipeline of \ourtool.}
 % \label{fig:overview}
-%\end{figure*}
+% \end{figure*}
 
 Our framework consists of the following steps, starting from the input:
-\begin{enumerate}
-\item Part-Of-Speech tagging
-\item Chunking and lexicon building
-\item From chunked sentences to logic
-\item From logic to an IDP specification
-\item Explanation-generating search in IDP
-\item Visualisation of the explanation steps
+\begin{enumerate}[A]
+%  \item Natural language procesing: 
+% \begin{enumerate}
+\item Part-Of-Speech tagging: with each word a part-of-speech tag is associated
+\item Chunking and lexicon building: a problem-specific lexicon is developed
+\item From chunked sentences to logic: using a custom grammar and semantics a logical representation of the clues is constructed
+% \end{enumerate}
+% \item Reasoning: 
+% \begin{enumerate}
+%   \setcounter{enumi}{3}
+ \item From logic to a complete IDP specification: the logical representation is translated into the \idp language and augmented with logic-grid-specific information \label{step:toidp}
+\item Explanation-generating search in IDP: we exploit the \idp representation of the clues to search for simple explanatoins as to how the puzzle can be solved
+% \end{enumerate}
+\item Visualisation of the explanation: the step-by-step explanation is visualized.
 \end{enumerate}
+% 
+% 
+% \item Visualisation of the explanation steps
+% \end{enumerate}
 
-We now discuss each of these steps in turn.
+The first three of these steps are related to natural language processing and are discussed in detail in the next section. Step \ref{step:toidp} is explain in detail in Section \ref{sec:solving}; there we also briefly explain how the representation obtained at that point can be used to automatically solve the puzzle. 
+The last two steps are related to explanations and are presented in Section \ref{sec:expl}. 
 
-\subsection{1. Part-Of-Speech tagging}
-The standard procedure in Natural Language Processing is to start with tagging each word with its estimated Part-Of-Speech tag (POS tag). Standard tagsets exists, as do POS taggers.
+\section{Natural Language Processing}\label{sec:nlp}
 
-We use the standard English Penn Treebank II POS tagset. As POS tagger we use NLTK's built-in Perceptron tagger~\footnote{http://www.nltk.org}. It uses a statistical inference mechanism, trained on a standard training set from the Wall Street Journal. As any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are either tagged as \textit{noun} or \textit{adjective} depending on its use.
+\paragraph{A. Part-Of-Speech tagging}
+The standard procedure in Natural Language Processing is to start by tagging each word with its estimated Part-Of-Speech tag (POS tag). Standard tagsets exists, as do POS taggers.
 
-\subsection{2. Chunking and lexicon building}
+We use the standard English Penn Treebank II POS tagset \cite{DBLP:journals/coling/MarcusSM94}. As POS tagger we use NLTK's built-in Perceptron tagger~\footnote{http://www.nltk.org}. It uses a statistical inference mechanism, trained on a standard training set from the Wall Street Journal. 
+Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are either tagged as \textit{noun} or \textit{adjective} depending on their use.
+\bart{Do we check whetehr this is the case or do we enforce it somehow?}
+
+\paragraph{B. Chunking and lexicon building}
 To use the Blackburn \& Bos framework, a problem-specific \textit{lexicon} has to be provided, which assigns a role to different sets of words, and a problem-agnostic \textit{grammar} that reasons over these roles.
 
-In prior work \todo{THESIS}, we identified a small set of primitives that covered the word usage in typical clues. The three central ones are: \textit{proper nouns}, namely the individual \textit{entities} that are central to the puzzle, \textit{other nouns} that refer to certain entities and \textit{transitive verbs} that refer to one or more entities.
+In prior work \cite{msc/Claes17}, we identified a small set of primitives that covered the word usage in typical clues. The three central ones are: \textit{proper nouns}, namely the individual \textit{entities} that are central to the puzzle, \textit{other nouns} \bart{what are these?} that refer to certain entities and \textit{transitive verbs} that refer to one or more entities \bart{I would say that transitive verbs ``link'' different entities}.
 
 Other primitives are \todo{For jens}. The \textit{transitive verb} category further contains \todo{For jens, tvPrep and tvGap}.
 
-The goal of this second step is hence to group POS-tagged words into \textit{chunks} that are tagged with one of the above lexicon primitives. This process is known in the NLP community as \textit{chunking}. We use NLTK and a custom set of regular expressions for chunking the proper nouns and the different types of transitive verbs. \todo{PRIVATE NOTE: I did not actually implement this (yet?), but found out that this would be the right thing to do ; )}
+The goal of this second step is hence to group POS-tagged words into \textit{chunks} that are tagged with one of the above lexicon primitives. This process is known in the NLP community as \textit{chunking}. We use NLTK and a custom set of regular expressions for chunking the proper nouns and the different types of transitive verbs. \tias{PRIVATE NOTE: I did not actually implement this (yet?), but found out that this would be the right thing to do ; )}
 
-The result is a lexicon, which is needed as input to the subsequent step in our framework. However, the POS tagging may be inaccurate and the chunking may also miss certain cases. Furthermore, logic puzzle authors are keen to use word play or seemingly ambiguous sentences to make the puzzle more interesting, and that require general world knowledge. For example, using 'in the morning' to refer to a timeslot at 11:00 when all other timeslots are after 13:00.
+The result is a lexicon, which is needed as input to the subsequent step in our framework. However, the POS tagging may be inaccurate and the chunking may also miss certain cases. Furthermore, logic puzzle authors are keen to use word play or seemingly ambiguous sentences to make the puzzle more interesting, but that require general world knowledge. For example, using `in the morning' to refer to a timeslot at 11:00 when all other timeslots are after 13:00.
 
-The automatically generated lexicon is hence tested as described in the next step, and if some clues can not be transformed into logic the user is asked to update the lexicon or rewrite a clue. For example, to replace 'in the morning' by 'at 11:00' in the earlier example.
+The automatically generated lexicon is hence tested as described in the next step, and if some clues can not be transformed into logic, the user is asked to update the lexicon or rewrite a clue. For example, to replace `in the morning' by `at 11:00' in the earlier example.
 
-\subsection{3. From chunked sentences to logic}
+\bart{FROM JENS THESIS:
+To use the framework for translating logic grid puzzles into logic, we constructed a set of 12 lexical categories. These categories are determiner, number, noun, proper noun, preposition, relative pronoun, transitive verb, auxiliary verb, copular verb, comparative, \textit{some}-words (somewhat, sometime, ...) and conjunction. Because of space constraints, we refer the reader to the full master thesis for the $\lambda$-expression of these categories.
+
+The determiners in logic grid puzzles we studied are simple in that only existential quantifiers are necessary. Universal quantification is not needed as the puzzles always fully classify their noun phrases. This is a consequence of the fact that all relations described in these puzzles are bijections between the different domains. There is always exactly one person who, for example, drinks tea. For the same reason there is also no negative quantifier. Sentences like ``No person drinks tea'' do not occur in the puzzles we studied.
+
+Proper nouns play an important role in our translation of logic grid puzzles into logic. We assume that every domain element (of a non-numeric) domain is represented by a proper noun (and only one). Even when the words are adjectives, they must be declared as proper nouns to the system.
+Proper nouns can also be numeric, e.g. ``March''. In that case the user has to encode it into a number.
+
+There are three words that introduce a predicate in their translation in logic. These predicates express a relation between two entities. A transitive verb links its subject and its object. A preposition (in a prepositional phrase) links the noun phrase of the prepositional phrase to the noun phrase to which it is attached. Finally, an adjective phrase as object of a copular verb, links the subject with the noun phrase that is part of the adjective phrase. This is the only place an adjective can occur in our grammar.
+
+% An auxiliary verb can negate the verb phrase (without negating the restrictions of the subject). This is again an example of following the order of the sentence in natural language.
+
+% A copular verb has three main uses in logic grid puzzles: with a noun phrase (in which it implicates equality), with an adjective phrase (this is the only place an adjective can occur in our grammar and it will also introduce a new predicate)
+
+Finally there are two lexical categories which can be considered special to logic grid puzzles: comparatives and \textit{some}-words. The latter are, in the puzzles we studied, only used as an unspecified integer and always appear as a quantity in a comparison (e.g. ``somewhat more than John'').
+}
+
+\paragraph{C. From chunked sentences to logic}
+
+Blackburn and Bos constructed a framework~\cite{Blackburn2005,Blackburn2006} to capture the meaning of natural language by translating it into a logic. It consists of four parts: the lexicon, the grammar, the semantics of the lexicon and the semantics of the grammar. The framework is based on the $\lambda$-calculus and Frege's compositionality principle. Every word has a $\lambda$-expression as its meaning. The meaning of a group of words is a combination of the meaning of the words that are part of the group. In this framework, $\lambda$-application is used to combine the meaning of words.
+
+In natural language, it is possible to construct sentences that are grammatically correct but without meaning. E.g. ``The grass is drinking the house''. The grass is not something that can drink and a house is not something that can be drunk. We say the sentence is badly typed. Based on grammar alone, we can never exclude these sentences. Therefore, we added types to the framework of Blackburn and Bos.
+
+We then constructed a grammar constructed based on the first ten logic grid puzzles from Puzzle Baron's Logic Puzzles Volume 3 \cite{logigrammen}.
+Since it would distract us from the core message of this paper, we do not detail the actual grammar rules here but refer the the Master thesis this paper builds on \cite{msc/Claes17} for more information . 
+Most grammar rules are quite general. They can be used outside logic grid puzzles as well. Others, like the grammar rule for a sentence with template ``Of ... and ..., one ... and the other ...'', are specific for these types of puzzles. The introduction to \cite{logigrammen} explicitly mentions this template and explains how this template should be interpreted. This interpretation is incorporated in the semantics of the grammar rule covering this template.
+
+Some other more specific rules include an \textit{alldifferent} constraint (``A, B, and C are three different persons'') and a numerical comparison (``John scored 3 points higher than Mary'') which introduces an addition or subtraction.
+
+The semantics of most rules consists only of $\lambda$-applications. Some rules are more complex. Those exceptions are either because the scope of variables and negations would otherwise be incorrect or because the grammar rule is specific to logic grid puzzles and can not be easily explained linguistically. This linguistic shortcut is then visible in the semantics.
+
+% There are two type of noun phrases which relate two entities without a reference to this relation. Namely ``the 2008 graduate'' and ``John's dog''. In the current framework, it is impossible to derive which relation holds between ``the graduate'' and ``2008''. In Section \ref{sec:vocabulary}, we discuss a solution to this problem.
+
+\ignore{
 
 \todo{How does this relate to the next section? I might have screwed up the structure...}
 
@@ -60,7 +130,7 @@ Blackburn \& Bos is a general framework with 4 inputs: lexicon, grammar, semanti
 
 Because I adapted the framework, we also get a type for every word. E.g. for "Bart works in Brussels", it knows the subject of "works in" needs to be of the same type as "Bart" and the object of the same type as "Brussels". 
 
-\subsection{4. From logic to an IDP specification}
+\paragraph{4. From logic to an IDP specification}
 
 \todo{How does this relate to the next section? I might have screwed up the structure...}
 
@@ -82,7 +152,7 @@ A lot of this step is just glue to translate the FOL to IDP syntax. This step al
 This step still requires the range of values for the numeric types, all other questions can be eliminated in case the problem-specific lexicon mentions which ppn's are of the same type.
 
 
-\subsection{5. Explanation-generating search in IDP}
+\paragraph{5. Explanation-generating search in IDP}
 
 \todo{How does this relate to the next-next section? I might have screwed up the structure...}
 
@@ -99,7 +169,7 @@ This just transforms the json from Bart a bit and saves it somewhere: \url{https
 There is also a json from step 4 that lists all instances of all the types (grouped by type): \url{https://github.com/bartbog/holygrail/blob/master/bos/output/p2_types.voc.json}
 -> It used the types for the latter but this could probably also be generated based on the input json
 
-\subsection{6. Visualisation of the explanation steps}
+\paragraph{6. Visualisation of the explanation steps}
 
 \todo{How does this relate to the next-next section? I might have screwed up the structure...}
 
@@ -107,3 +177,4 @@ There is also a json from step 4 that lists all instances of all the types (grou
 Input: The 2 json's from above
 Output: A step-wise visualization
 % \end{verbatim}
+}

@@ -63,30 +63,36 @@ The last two steps are related to explanations and are presented in Section \ref
 \section{Natural Language Processing}\label{sec:nlp}
 
 \paragraph{A. Part-Of-Speech tagging}
-The standard procedure in Natural Language Processing is to start by tagging each word with its estimated Part-Of-Speech tag (POS tag). Standard tagsets exists, as do POS taggers.
+The standard procedure in Natural Language Processing is to start by tagging each word with its estimated Part-Of-Speech tag (POS tag). %Standard tagsets exists, as do POS taggers.
 
 We use the standard English Penn Treebank II POS tagset \cite{DBLP:journals/coling/MarcusSM94}. As POS tagger we use NLTK's built-in Perceptron tagger~\footnote{http://www.nltk.org}. It uses a statistical inference mechanism, trained on a standard training set from the Wall Street Journal. 
-Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are either tagged as \textit{noun} or \textit{adjective} depending on their use.
-\bart{Do we check whetehr this is the case or do we enforce it somehow?}
+Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are tagged as \textit{noun}.
+%\bart{Do we check whetehr this is the case or do we enforce it somehow?}
 
 \paragraph{B. Chunking and lexicon building}
-To use the Blackburn \& Bos framework, a problem-specific \textit{lexicon} has to be provided, which assigns a role to different sets of words, and a problem-agnostic \textit{grammar} that reasons over these roles.
+To use the Blackburn \& Bos framework, a \textit{lexicon} and a \textit{grammar} have to be provided, where the lexicon assigns a role to different sets of words, and the grammar reasons over these roles. The grammar is constructed for logic grid puzzles in general and not puzzle specific; the lexicon is partly problem agnostic and partly specific to each puzzle.
 
-In prior work \cite{msc/Claes17}, we identified a small set of primitives that covered the word usage in typical clues. The three central ones are: \textit{proper nouns}, namely the individual \textit{entities} that are central to the puzzle, \textit{other nouns} \bart{what are these?} that refer to certain entities and \textit{transitive verbs} that refer to one or more entities \bart{I would say that transitive verbs ``link'' different entities}.
+We constructed a set of 12 lexical categories \cite{msc/Claes17}. The 3 puzzle-specific categories are: \textit{proper nouns}, namely the individual \textit{entities} that are central to the puzzle, \textit{other nouns} that refer to groups of entities (like house, animal) and \textit{transitive verbs} that links two entities to each other.
 
-Other primitives are \todo{For jens}. The \textit{transitive verb} category further contains \todo{For jens, tvPrep and tvGap}.
+The other categories are general and contain a built-in list of possible members. The categories are determiner, number, preposition, auxiliary verb, copular verb, comparative and \textit{some*}-words (somewhat, sometime, ...), and conjunction. Because of space constraints, we refer the reader to the full master thesis for the full details on these categories.
 
-The goal of this second step is hence to group POS-tagged words into \textit{chunks} that are tagged with one of the above lexicon primitives. This process is known in the NLP community as \textit{chunking}. We use NLTK and a custom set of regular expressions for chunking the proper nouns and the different types of transitive verbs. \tias{PRIVATE NOTE: I did not actually implement this (yet?), but found out that this would be the right thing to do ; )}
+
+The goal of this second step is hence to group the POS-tagged words of the clues into \textit{chunks} that are tagged with one of the above lexicon categories. This process is known in the NLP community as \textit{chunking}. We use NLTK and a custom set of regular expressions for chunking the proper nouns and different types of transitive verbs. %\tias{PRIVATE NOTE: I did not actually implement this (yet?), but found out that this would be the right thing to do ; )}
 
 The result is a lexicon, which is needed as input to the subsequent step in our framework. However, the POS tagging may be inaccurate and the chunking may also miss certain cases. Furthermore, logic puzzle authors are keen to use word play or seemingly ambiguous sentences to make the puzzle more interesting, but that require general world knowledge. For example, using `in the morning' to refer to a timeslot at 11:00 when all other timeslots are after 13:00.
 
 The automatically generated lexicon is hence tested as described in the next step, and if some clues can not be transformed into logic, the user is asked to update the lexicon or rewrite a clue. For example, to replace `in the morning' by `at 11:00' in the earlier example.
 
-\bart{FROM JENS THESIS:
-To use the framework for translating logic grid puzzles into logic, we constructed a set of 12 lexical categories. These categories are determiner, number, noun, proper noun, preposition, relative pronoun, transitive verb, auxiliary verb, copular verb, comparative, \textit{some}-words (somewhat, sometime, ...) and conjunction. Because of space constraints, we refer the reader to the full master thesis for the $\lambda$-expression of these categories.
 
-The determiners in logic grid puzzles we studied are simple in that only existential quantifiers are necessary. Universal quantification is not needed as the puzzles always fully classify their noun phrases. This is a consequence of the fact that all relations described in these puzzles are bijections between the different domains. There is always exactly one person who, for example, drinks tea. For the same reason there is also no negative quantifier. Sentences like ``No person drinks tea'' do not occur in the puzzles we studied.
+\paragraph{C. From chunked sentences to logic}
 
+Blackburn and Bos constructed a framework~\cite{Blackburn2005,Blackburn2006} to capture the meaning of natural language by translating it into a logic. It consists of four parts: the lexicon, the grammar, the semantics of the lexicon and the semantics of the grammar. The framework is based on the $\lambda$-calculus and Frege's compositionality principle. Every word has a $\lambda$-expression as its meaning. The meaning of a group of words is a combination of the meaning of the words that are part of the group. In this framework, $\lambda$-application is used to combine the meaning of words.
+
+We then constructed a grammar based on the first ten logic grid puzzles from Puzzle Baron's Logic Puzzles Volume 3 \cite{logigrammen}. We observe that the determiners in the logic grid puzzles we studied are simple in that only existential quantifiers are necessary. Universal quantification is not needed as the puzzles always fully classify their entities. This is a consequence of the fact that all relations described in these puzzles are bijections between the different domains. There is always exactly one person who, for example, drinks tea. For the same reason there is also no negative quantifier. Sentences like ``No person drinks tea'' do not occur in the puzzles we studied.
+
+Since it would distract us from the core message of this paper, we do not detail the actual grammar rules here but refer the the Master thesis this paper builds on \cite{msc/Claes17} for more information. 
+
+\ignore{
 Proper nouns play an important role in our translation of logic grid puzzles into logic. We assume that every domain element (of a non-numeric) domain is represented by a proper noun (and only one). Even when the words are adjectives, they must be declared as proper nouns to the system.
 Proper nouns can also be numeric, e.g. ``March''. In that case the user has to encode it into a number.
 
@@ -99,19 +105,17 @@ There are three words that introduce a predicate in their translation in logic. 
 Finally there are two lexical categories which can be considered special to logic grid puzzles: comparatives and \textit{some}-words. The latter are, in the puzzles we studied, only used as an unspecified integer and always appear as a quantity in a comparison (e.g. ``somewhat more than John'').
 }
 
-\paragraph{C. From chunked sentences to logic}
 
-Blackburn and Bos constructed a framework~\cite{Blackburn2005,Blackburn2006} to capture the meaning of natural language by translating it into a logic. It consists of four parts: the lexicon, the grammar, the semantics of the lexicon and the semantics of the grammar. The framework is based on the $\lambda$-calculus and Frege's compositionality principle. Every word has a $\lambda$-expression as its meaning. The meaning of a group of words is a combination of the meaning of the words that are part of the group. In this framework, $\lambda$-application is used to combine the meaning of words.
-
-In natural language, it is possible to construct sentences that are grammatically correct but without meaning. E.g. ``The grass is drinking the house''. The grass is not something that can drink and a house is not something that can be drunk. We say the sentence is badly typed. Based on grammar alone, we can never exclude these sentences. Therefore, we added types to the framework of Blackburn and Bos.
-
-We then constructed a grammar based on the first ten logic grid puzzles from Puzzle Baron's Logic Puzzles Volume 3 \cite{logigrammen}.
-Since it would distract us from the core message of this paper, we do not detail the actual grammar rules here but refer the the Master thesis this paper builds on \cite{msc/Claes17} for more information . 
-Most grammar rules are quite general. They can be used outside logic grid puzzles as well. Others, like the grammar rule for a sentence with template ``Of ... and ..., one ... and the other ...'', are specific for these types of puzzles. The introduction to \cite{logigrammen} explicitly mentions this template and explains how this template should be interpreted. This interpretation is incorporated in the semantics of the grammar rule covering this template.
+Most grammar rules are quite general. They can be used outside logic grid puzzles as well. Others, like the grammar rule for a sentence with template ``Of ... and ..., one ... and the other ...'', are specific for these types of puzzles. The introduction to the logigram booklet \cite{logigrammen} explicitly mentions this template and explains how this template should be interpreted. This interpretation is incorporated in the semantics of the grammar rule covering this template.
 
 Some other more specific rules include an \textit{alldifferent} constraint (``A, B, and C are three different persons'') and a numerical comparison (``John scored 3 points higher than Mary'') which introduces an addition or subtraction.
 
 The semantics of most rules consists only of $\lambda$-applications. Some rules are more complex. Those exceptions are either because the scope of variables and negations would otherwise be incorrect or because the grammar rule is specific to logic grid puzzles and can not be easily explained linguistically. This linguistic shortcut is then visible in the semantics.
+
+Compared to the original Blackburn and Bos framework~\cite{Blackburn2005,Blackburn2006}, we added type information. In natural language, it is possible to construct sentences that are grammatically correct but without meaning. E.g. ``The grass is drinking the house''. The grass is not something that can drink and a house is not something that can be drunk. We say the sentence is badly typed. Based on grammar alone, we can never exclude these sentences. Thanks to adding the types, entities must not be grouped per type in advance (this is automatically detected), and verbs that are synonyms are also automatically detected.
+
+
+The output of the framework is a (typed variant of) discourse representation theory.
 
 % There are two type of noun phrases which relate two entities without a reference to this relation. Namely ``the 2008 graduate'' and ``John's dog''. In the current framework, it is impossible to derive which relation holds between ``the graduate'' and ``2008''. In Section \ref{sec:vocabulary}, we discuss a solution to this problem.
 

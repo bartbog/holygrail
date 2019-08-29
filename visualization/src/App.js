@@ -60,7 +60,7 @@ const styles = {
   }),
   parentGridItemVoc: (nbEntities, vertical) => ({
     ...styles.parentGridItem(nbEntities),
-    'background-color': 'red',
+    'background-color': 'lightgrey',
     display: 'grid',
     "grid-template-columns": `auto `.repeat(vertical ? nbEntities : 1),
     'flex-direction': vertical ? 'row' : 'column',
@@ -180,10 +180,12 @@ function FillBlock ({type1, type2, facts}) {
             const knowledge = derivedKnowledge || assumedKnowledge || knownKnowledge
             let color = null
             if (derivedKnowledge != null) {
-              color = knowledge.value ? 'darkgreen' : 'green'
+              color = knowledge.value ? 'green' : 'lightgreen'
             } else if (assumedKnowledge != null) {
-              color = 'blue' //Asymmetry true/false is not so important here... 
-            }
+              color = 'lightblue' //Asymmetry true/false is not so important here... 
+            } else if (knowledge != null) {
+				color = 'whitesmoke'
+			}
 
             return (
               <div style={styles.childFillGridItem(color)}>{knowledge == null ? ' ' : knowledge.value ? '✔' : '-'}</div>

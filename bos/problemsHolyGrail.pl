@@ -1,7 +1,7 @@
 
 :- module(problemHolyGrail, [problem/2]).
 
-problem(tias, problem(4, 4, [
+problem(tutorial, problem(4, 4, [
         % "The 4 people were Tatum, the patient who was prescribed enalapril, the employee with the $54,000 salary, and the owner of the purple house",
 % CHANGED TO: ( "with the salary")
         "The 4 people were tatum, the patient who was prescribed enalapril, the employee who earns 54000, and the owner of the purple house",

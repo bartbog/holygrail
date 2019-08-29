@@ -1,8 +1,8 @@
-\bart{Einstein puzzle as a running example?} \tias{ if we call it holy zebra, makes sense to use Zebra as running example}
+%\bart{Einstein puzzle as a running example?} \tias{ if we call it holy zebra, makes sense to use Zebra as running example}
 
-The \textbf{input} to \ourtool is a set of natural language sentences (from hereon referred to as ``clues''), and the names of the \textit{entities} that make up the puzzle, e.g. Englishman, red house, Zebra, etc. \bart{No more mention of the fact that this is optional for the system?}
+The \textbf{input} to \ourtool is a set of natural language sentences (from hereon referred to as ``clues''), and the names of the \textit{entities} that make up the puzzle, e.g. Englishman, red house, Zebra, etc. %\bart{No more mention of the fact that this is optional for the system?}
 
-In typical logic grid puzzles, this domain information is present in the grid that is supplied with the puzzle. For some puzzles, domain information is not required; a prototypical example is Einstein's Zebra puzzle, which ends with the question ``Who owns the zebra?'', while the clues do not name the Zebra entity, and the puzzle can be solved without knowledge of the fact that there is a zebra in the first place. 
+In typical logic grid puzzles, the entity names are present in the grid that is supplied with the puzzle. For some puzzles, not all entities are named or required to know in advance; a prototypical example is Einstein's Zebra puzzle, which ends with the question ``Who owns the zebra?'', while the clues do not name the Zebra entity, and the puzzle can be solved without knowledge of the fact that there is a zebra in the first place. 
 
 %Figure \ref{fig:overview} contains an overview of the different components of the system.
 %
@@ -35,6 +35,7 @@ In typical logic grid puzzles, this domain information is present in the grid th
 % \label{fig:overview}
 % \end{figure*}
 
+\paragraph{Steps}
 Our framework consists of the following steps, starting from the input:
 \begin{enumerate}[A]
 %  \item Natural language procesing: 
@@ -56,7 +57,7 @@ Our framework consists of the following steps, starting from the input:
 % \item Visualisation of the explanation steps
 % \end{enumerate}
 
-The first three of these steps are related to natural language processing and are discussed in detail in the next section. Step \ref{step:toidp} is explain in detail in Section \ref{sec:solving}; there we also briefly explain how the representation obtained at that point can be used to automatically solve the puzzle. 
+The first three of these steps are related to natural language processing and are discussed in detail in the next section. Step \ref{step:toidp} is explained in detail in Section \ref{sec:solving}; there we also briefly explain how the representation obtained at that point can be used to automatically solve the puzzle. 
 The last two steps are related to explanations and are presented in Section \ref{sec:expl}. 
 
 \section{Natural Language Processing}\label{sec:nlp}
@@ -104,7 +105,7 @@ Blackburn and Bos constructed a framework~\cite{Blackburn2005,Blackburn2006} to 
 
 In natural language, it is possible to construct sentences that are grammatically correct but without meaning. E.g. ``The grass is drinking the house''. The grass is not something that can drink and a house is not something that can be drunk. We say the sentence is badly typed. Based on grammar alone, we can never exclude these sentences. Therefore, we added types to the framework of Blackburn and Bos.
 
-We then constructed a grammar constructed based on the first ten logic grid puzzles from Puzzle Baron's Logic Puzzles Volume 3 \cite{logigrammen}.
+We then constructed a grammar based on the first ten logic grid puzzles from Puzzle Baron's Logic Puzzles Volume 3 \cite{logigrammen}.
 Since it would distract us from the core message of this paper, we do not detail the actual grammar rules here but refer the the Master thesis this paper builds on \cite{msc/Claes17} for more information . 
 Most grammar rules are quite general. They can be used outside logic grid puzzles as well. Others, like the grammar rule for a sentence with template ``Of ... and ..., one ... and the other ...'', are specific for these types of puzzles. The introduction to \cite{logigrammen} explicitly mentions this template and explains how this template should be interpreted. This interpretation is incorporated in the semantics of the grammar rule covering this template.
 

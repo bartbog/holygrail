@@ -1,11 +1,12 @@
 \subsection{E. Explanation-generating search in IDP} 
-A part of the holy grail challenge was not to just solve the puzzle, but also to \emph{explain} how the solution was obtained, or rather, to explain how a human could obtain this solution as well. 
-The idea under our is that we will gradually fill the logigram grid with more and more information. At each point in time, information is added that can be obtained by reasoning on the clues and by using the partial solution obtained this far. 
+A part of the holy grail challenge was not to just solve the puzzle from the natural language specification, but also to \emph{explain} how the solution was obtained, or rather, to explain how a human could obtain this solution as well. 
+
+The idea of our explanation approach is that we will gradually fill the logigram grid with more and more information. The explanation is hence a series of reasoning steps, and at each step, information is added that can be obtained by reasoning on the clues and by using the partial solution obtained so far. 
 
 \paragraph{Simple Explanations}
-In order to make the explanations as simple as possible we prioritize the derivations in the following way: 
+In order to make the explanations as simple as possible we order the reasoning steps (derivations) in the following way: 
 \begin{itemize}
- \item Derivations that can be made without using any clues are always prioritized. These derivations are made solely using logigram axioms, such as the fact that all involved predicates are bijections (for instance, from the fact that the Englishman lives in the blue house, we can derive that he does not live in the red house, or from the fact that the Russian lives neither in the blue,red nor the green house, we can derive that he lives in the black house). 
+ \item Derivations that can be made without using any clues are always prioritized. These derivations are made solely using logigram axioms, such as the fact that all involved predicates are bijections as explained above. % (for instance, from the fact that the Englishman lives in the blue house, we can derive that he does not live in the red house, or from the fact that the Russian lives neither in the blue,red nor the green house, we can derive that he lives in the black house). 
  \item Next, derivations that require one or more clues are executed, where fewer clues are preferred. 
  \item Within both of the above classes, we always prioritize derivations that can be made by as little as possible information, that is, using as few as possible of the fields in the grid that have been filled already (see below for details on how to compute this).
 \end{itemize}
@@ -14,14 +15,15 @@ It deserves to be noted that in the examples we encountered, it sufficed to only
  Consider the following two clues of a logic puzzle. 
  \begin{quote}
   ``Either the Englishman lives in the red house with the fish, or he lives in the green house with the dog. '' \\
-  ``If the Russian smokes Marlboro, then the Englishman keeps a dog in the red house.'' 
+  ``If the Russian is a tea drinker, then the Englishman keeps a dog in the red house.'' 
  \end{quote}
-From these two clues, it follows that the Russian does not smoke Marlboro, but this can not be obtained by isolated reasoning over the two clues and at each step only deriving information that is present in a logic puzzle grid.
+%XXX \tias{No sigarette advertisement in our paper please...}
+From these two clues, it follows that the Russian is not a tea drinker, but this can not be obtained by isolated reasoning over the two clues and at each step only deriving information that is present in a logic puzzle grid.
 \end{example}
 
 \paragraph{Implementation}
 % \todo{remove}
-In order to implement this, we ensured that our automatic translation produces a different logical theory for each clue and we made use of \idp's procedural interface (based on the lua scripting language) in which theories and structures are first-order citizens and of the built-in inference methods \idp provides. 
+In order to implement this, we ensured that our automatic translation contains a separate logical theory for each clue, so that we can reason over the clues separately. For this, we made use of \idp's procedural interface (based on the lua scripting language) in which theories and structures are first-order citizens, and of the built-in inference methods described above. 
 % We furthermore used the following built-in inference mechanisms: 
 % \begin{itemize}
 %  \item \textbf{optimalpropagate(T,S)} This inference method takes as input a theory $T$ and a partial structure $S$, it returns the most precise partial structure $S$ that approximates all models of $T$ that expand $S$
@@ -29,17 +31,16 @@ In order to implement this, we ensured that our automatic translation produces a
 %  Internally, this is implemented using unsatisfiable core extraction \cite{conf/sat/LynceM04}. 
 % \end{itemize}
 % 
+
 These methods are used as follows. Our procedure maintains a partial structure $S$ representing the current state of the grid. 
-At each point in time, for all sets of clues of a given size $n$ (starting with $n=0$), all consequences of the conjunction of this set of clues are computed with \textbf{optimalpropagate}. 
+At each point in time, for all sets of clues of a given size $n$ (starting with $n=0$), all consequences (value assignments) of the conjunction of this set of clues are computed with \textbf{optimalpropagate}. 
 If there are no consequences, the same is repeated for a greater $n$. 
-For each of the consequences, a minimal set of assumptions that entail this consequence is computed using \textbf{unsatstructure} (this is done by making the consequence false in $S$ and using $V$ to disallow changing this consequence in the outcome of the unsatstructure-call. 
-The result is a set of pairs $(S',\mathit{clues},\mathit{fact})$ where $S'$ is a substructure of $S$ such that from the set of clues $\mathit{clues}$ and $S'$ a new fact $\mathit{fact}$ follows. Among those, a cardinality-minimal set $S'$ is selected and its propagation is executed. 
+For each of the consequences, a minimal set of facts from the partial structure $S$ that entail this consequence is computed using \textbf{unsatstructure} (this is done by making the consequence false in $S$ and using $V$ to disallow changing this consequence in the outcome of the unsatstructure-call). 
+The result is a set of pairs $(S',\mathit{clues},\mathit{fact})$ where $S'$ is a substructure of $S$ such that from the set of clues $\mathit{clues}$ and $S'$ a new fact $\mathit{fact}$ follows \tias{can be multiple?}. Among those, a cardinality-minimal set $S'$ is selected and its propagation is executed and added to the list of derivations that make up the explanation.
 Afterwards, the procedure starts over with $n=0$. 
 
-\todo{discuss variants? We have quite some implemented... } 
-
-
-\todo{discuss optimizations}
+%\todo{discuss variants? We have quite some implemented... } 
+%\todo{discuss optimizations}
 
 \paragraph{Propagation Strength}
 One important thing to note here is that when we apply propagation, we do not do it on a theory that \emph{only} contains the clues in question. Instead, that theory always also contains all logigram axioms (bijections, transitivity, etcetera). 
@@ -74,13 +75,15 @@ The first was generating natural language sentences of the form
 However, in our experience, as soon as there are a couple of assumptions involved, this kind of sentences easily becomes hard to read. Furthermore, it is not always easy to create these sentences: if the input does not mention a name for the relation between medication and houses, how can we express that enalapril is \emph{not used in} the lime house? 
 There are two possibilities to do that, the first is using a generic verb such as ``associated with'' (rendering boring sentences); the second is avoiding the relation and for instance writing ``the user of enalapril does not live in the lime house''. 
 
-Overall, we were not satisfied with the outcome of this first approach, which is why we also implemented a second way to present the explanation process to the user, namely by means of a visualisation. To represent our derivations, we make use of the standard grid in logic puzzles. In each step, we indicate which clue(s) are used, highlight all cells used for the propagation in blue and all conclusions in green. 
+Overall, we were not satisfied with the outcome of this first approach, which is why we implemented a different way to present the explanation process to the user, namely by means of a visualisation. To represent our derivations, we make use of the standard grid in logic puzzles. In each step, we indicate which clue(s) are used, highlight all cells used for the propagation in blue and all conclusions in green. 
 The user can then navigate through the reasoning process by means of ``next'' and ``previous'' buttons. 
+
 Figure \ref{fig:screenshot} contains a screenshot of this explanation process. 
-In this specific frame, we can see that the clue ``The Oregon native is either Zachary or the person who lives in Tehama'' is used, together with the previously derived knowledge that the Kansas native lives in Tehama to derive that:
+In this specific frame, we can see that the clue ``The Oregon native is either Zachary or the person who lives in Tehama'' is used, together with the previously derived knowledge that the "the person who lives in Tehama is the Kansas native" (highlighted in blue) to derive that:
 \begin{itemize}
- \item Zachary is the Oregon native (and hence he is not a native of another state, and no-one else is the Oregon native), and
- \item Zachary does not live in Tehama (since the Kansas native lives in Tehama and this is not Zachary)
+ \item The Oregon native has to be Zachary  (dark green)
+ \item and hence he is not a native of another state, and no-one else is the Oregon native (light green), and
+ \item the person who lives in Tehama is not Zachary \tias{This last one can be derived from the clue alone as it is a xor?}
 \end{itemize}
 
 \begin{figure}

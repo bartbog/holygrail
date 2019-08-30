@@ -45,7 +45,7 @@ function matches(entity1, entity2) {
   }
 }
 
-const size = 30
+const size = 35
 const styles = {
   parentGrid: (nbEntities, nbTypes) => ({
     display: 'grid',
@@ -60,13 +60,17 @@ const styles = {
   }),
   parentGridItemVoc: (nbEntities, vertical) => ({
     ...styles.parentGridItem(nbEntities),
-    'background-color': 'lightgrey',
+    'background-color': 'whitesmoke',
+	color:'black',
     display: 'grid',
     "grid-template-columns": `auto `.repeat(vertical ? nbEntities : 1),
     'flex-direction': vertical ? 'row' : 'column',
   }),
-  childVocGridItem: (nbEntities, vertical) => ({
+  childVocGridItem: (nbEntities, vertical) => ({ 
     border: '1px dashed black',
+	display: 'flex', 
+	'align-items': 'center', 
+	'justify-content': 'center',
     ...(vertical ? {
       'writing-mode': 'vertical-lr',
       width: size - 2,
@@ -85,7 +89,7 @@ const styles = {
     display: 'grid',
     "grid-template-columns": `auto `.repeat(nbEntities),
   }),
-  childFillGridItem: (color) => ({
+  childFillGridItem: (color,frontcolor) => ({
     width: size - 2,
     height: size - 2,
     border: '1px dashed black',
@@ -93,6 +97,7 @@ const styles = {
     'align-items': 'center',
     'justify-content': 'center',
     'background-color': color,
+	'color': frontcolor,
   })
 }
 function App() {
@@ -114,7 +119,7 @@ function App() {
 
   return (
     <div className="App">
-        <h1>{facts.clue}</h1>
+        <h2>{facts.clue}</h2>
         <div>
           <button onClick={() => setIndexClipped(index - 1)}>Prev</button>
           <button onClick={() => setIndexClipped(index + 1)}>Next</button>
@@ -179,16 +184,18 @@ function FillBlock ({type1, type2, facts}) {
 
             const knowledge = derivedKnowledge || assumedKnowledge || knownKnowledge
             let color = null
+			let frontcolor = '#000'
             if (derivedKnowledge != null) {
-              color = knowledge.value ? 'green' : 'lightgreen'
+              color = knowledge.value ? '#FF6600' : '#FF6600'
             } else if (assumedKnowledge != null) {
-              color = 'lightblue' //Asymmetry true/false is not so important here... 
+              color = '#003399' //Asymmetry true/false is not so important here... 
+				frontcolor ='white'
             } else if (knowledge != null) {
 				color = 'whitesmoke'
 			}
 
             return (
-              <div style={styles.childFillGridItem(color)}>{knowledge == null ? ' ' : knowledge.value ? '✔' : '-'}</div>
+              <div style={styles.childFillGridItem(color,frontcolor)}>{knowledge == null ? ' ' : knowledge.value ? '✔' : '-'}</div>
             )
           })}
         </>

@@ -18,7 +18,7 @@ It deserves to be noted that in the examples we encountered, it sufficed to only
   ``If the Russian is a tea drinker, then the Englishman keeps a dog in the red house.'' 
  \end{quote}
 %XXX \tias{No sigarette advertisement in our paper please...}
-From these two clues, it follows that the Russian is not a tea drinker, but this can not be obtained by isolated reasoning over the two clues and at each step only deriving information that is present in a logic puzzle grid.
+From these two clues, it follows that the Russian is not a tea drinker, but this can not be obtained by isolated reasoning over the two clues separately and at each step only deriving information that is present in a logic puzzle grid.  
 \end{example}
 
 \paragraph{Implementation}
@@ -32,11 +32,11 @@ In order to implement this, we ensured that our automatic translation contains a
 % \end{itemize}
 % 
 
-These methods are used as follows. Our procedure maintains a partial structure $S$ representing the current state of the grid. 
+These methods are used as follows. Our procedure maintains a partial structure $S$ representing the current state of the grid.\footnote{Since such a structure interprets all the predicates, which are binary relations between two types, a partial structure indeed corresponds nicely to a partially filled grid.} 
 At each point in time, for all sets of clues of a given size $n$ (starting with $n=0$), all consequences (value assignments) of the conjunction of this set of clues are computed with \textbf{optimalpropagate}. 
 If there are no consequences, the same is repeated for a greater $n$. 
 For each of the consequences, a minimal set of facts from the partial structure $S$ that entail this consequence is computed using \textbf{unsatstructure} (this is done by making the consequence false in $S$ and using $V$ to disallow changing this consequence in the outcome of the unsatstructure-call). 
-The result is a set of pairs $(S',\mathit{clues},\mathit{fact})$ where $S'$ is a substructure of $S$ such that from the set of clues $\mathit{clues}$ and $S'$ a new fact $\mathit{fact}$ follows \tias{can be multiple?}. Among those, a cardinality-minimal set $S'$ is selected and its propagation is executed and added to the list of derivations that make up the explanation.
+The result is a set of pairs $(S',\mathit{clues},\mathit{fact})$ where $S'$ is a substructure of $S$ such that from the set of clues $\mathit{clues}$ and $S'$ a new fact $\mathit{fact}$ follows \tias{can be multiple?} \bart{Multiple what? Multiple clues? facts? To be precise about facts: yes, multiple facts can follow from the same clue and S'. What I actually do is: for each fact, compute a different $S'$ (this S' is only guaranteed to be subset-minimal, not cardinality minimal, and is determined based on the search path followed by the solver, hence, a different S' might be detected for  different facts... I then pick a smallest S' from which \emph{some fact} can be propagated and simply compute \emph{everything} that can be propagated from that S' and propagate it at once. Should I detail this a bit more? } . Among those, a cardinality-minimal set $S'$ is selected and its propagation is executed and added to the list of derivations that make up the explanation.
 Afterwards, the procedure starts over with $n=0$. 
 
 %\todo{discuss variants? We have quite some implemented... } 
@@ -52,6 +52,7 @@ The reason is that clues by themselves rarely propagate. To illustrate this, let
  \begin{align}
   \exists p: prescribed(p,enalapril) \land p \neq heather.\label{eq:heather:produced}
 \end{align}
+If the system were given the clue ``Heather was not prescribed enalapril'', the system would find \eqref{eq:heather:easy}.
 Equations \eqref{eq:heather:easy} and \eqref{eq:heather:produced} are not equivalent and in fact from \eqref{eq:heather:produced} it does not follow that heather is not prescribed enalapril. That is... unless the fact that there is exactly one person who is prescribed enalapril is taken into account. In conjunction with the theory stating that all predicates are bijections, these two equations are equivalent. 
 % 
 % This sentence is not equivalent to the first 
@@ -61,10 +62,10 @@ Equations \eqref{eq:heather:easy} and \eqref{eq:heather:produced} are not equiva
 \begin{example}
  Consider the clue ``The owner of the lime house was prescribed enalapril'', which is translated into first-order logic as:
  \begin{align}
-\exists o: lives\_in(o,lime) \land \lnot prescribed(o,enalapril).   \label{eq:lime}
+\exists o: lives\_in(o,lime) \land prescribed(o,enalapril).   \label{eq:lime}
  \end{align}
  This clue actually gives information about the relation between houses and medication. However, it is clear that from \eqref{eq:lime} alone we cannot propagate such information: it does not even mention the predicate that links houses and medications. 
- However, in combination with the transitivity and bijection axioms, we can from this clue propagate that 
+ However, in combination with the transitivity and bijection axioms, we can propagate that 
  \[\lnot used\_in(enalapril,lime).\qedhere\]
 \end{example}
 
@@ -72,19 +73,15 @@ Equations \eqref{eq:heather:easy} and \eqref{eq:heather:produced} are not equiva
 We explored two different possibilities to present this explanation to humans. 
 The first was generating natural language sentences of the form 
 ``From the clue(s) $\langle$clue$\rangle$ and the fact that $\langle$assumptions$\rangle$, it follows that $\langle$conclusions$\rangle$.''
-However, in our experience, as soon as there are a couple of assumptions involved, this kind of sentences easily becomes hard to read. Furthermore, it is not always easy to create these sentences: if the input does not mention a name for the relation between medication and houses, how can we express that enalapril is \emph{not used in} the lime house? 
+However, in our experience, as soon as there are a couple of assumptions involved, this kind of sentence easily becomes hard to read and understand. Furthermore, it is not always easy to create these sentences: if the input does not mention a name for the relation between medication and houses, how can we express that enalapril is \emph{not used in} the lime house? 
 There are two possibilities to do that, the first is using a generic verb such as ``associated with'' (rendering boring sentences); the second is avoiding the relation and for instance writing ``the user of enalapril does not live in the lime house''. 
 
 Overall, we were not satisfied with the outcome of this first approach, which is why we implemented a different way to present the explanation process to the user, namely by means of a visualisation. To represent our derivations, we make use of the standard grid in logic puzzles. In each step, we indicate which clue(s) are used, highlight all cells used for the propagation in blue and all conclusions in green. 
 The user can then navigate through the reasoning process by means of ``next'' and ``previous'' buttons. 
 
 Figure \ref{fig:screenshot} contains a screenshot of this explanation process. 
-In this specific frame, we can see that the clue ``The Oregon native is either Zachary or the person who lives in Tehama'' is used, together with the previously derived knowledge that the "the person who lives in Tehama is the Kansas native" (highlighted in blue) to derive that:
-\begin{itemize}
- \item The Oregon native has to be Zachary  (dark green)
- \item and hence he is not a native of another state, and no-one else is the Oregon native (light green), and
- \item the person who lives in Tehama is not Zachary \tias{This last one can be derived from the clue alone as it is a xor?}
-\end{itemize}
+It displays a partially filled grid, in which checkmarks represent that something is derived to be true and minus signs that it is false. 
+In this specific frame, we can see that the clue ``Roxanne is 2 years younger than the Kansas native'' is used, together with the previously derived knowledge (highlighted in orange) that the Kansas native is not 111 years old, we can derive (highlighted in blue) that Roxanne is not 109 years old.
 
 \begin{figure}
  \includegraphics[width=\columnwidth]{fig/screenshot.png}

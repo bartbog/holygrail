@@ -62,14 +62,14 @@ The last two steps are related to explanations and are presented in Section \ref
 
 \section{Natural Language Processing}\label{sec:nlp}
 
-\subsection{A. Part-Of-Speech tagging}
+\subsection{Step A. Part-Of-Speech tagging}
 The standard procedure in Natural Language Processing is to start by tagging each word with its estimated Part-Of-Speech tag (POS tag). %Standard tagsets exists, as do POS taggers.
 
 We use the standard English Penn Treebank II POS tagset \cite{DBLP:journals/coling/MarcusSM94}. As POS tagger we use NLTK's built-in Perceptron tagger\footnote{http://www.nltk.org}. It uses a statistical inference mechanism, trained on a standard training set from the Wall Street Journal. 
 Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are tagged as \textit{noun}.
 %\bart{Do we check whetehr this is the case or do we enforce it somehow?}
 
-\subsection{B. Chunking and lexicon building}
+\subsection{Step B. Chunking and lexicon building}
 To use the Blackburn \& Bos framework \cite{Blackburn2005,Blackburn2006}, a \textit{lexicon} and a \textit{grammar} have to be provided, where the lexicon assigns a role to different sets of words, and the grammar is a set of rules describing how words can be combined into sentences. The grammar is constructed for logic grid puzzles in general and not puzzle specific; the lexicon is partly problem agnostic and partly puzzle-specific.
 
 We constructed a set of 12 lexical categories \cite{msc/Claes17}. The 3 puzzle-specific categories are: \textit{proper nouns}, namely the individual \textit{entities} that are central to the puzzle, \textit{other nouns} that refer to groups of entities (like house, animal) and \textit{transitive verbs} that link two entities to each other.
@@ -84,7 +84,7 @@ The result is a lexicon, which is needed as input to the subsequent step in our 
 The automatically generated lexicon is hence tested as described in the next step, and if some clues can not be transformed into logic, the user is asked to update the lexicon or rewrite a clue. For example, to replace `in the morning' by `at 11:00' in the earlier example.
 
 
-\subsection{C. From chunked sentences to logic}
+\subsection{Step C. From chunked sentences to logic}
 The 
 Blackburn and Bos framework requires a lexicon (discussed in the previous paragraph) and a grammar, each equipped with a suitable semantics.  The framework is based on the $\lambda$-calculus and Frege's compositionality principle. Every word has a $\lambda$-expression as its meaning. The meaning of a group of words is a combination of the meaning of the words that are part of the group. In this framework, $\lambda$-application is used to combine the meaning of words.
 
@@ -113,8 +113,8 @@ Some other more specific rules include an \textit{alldifferent} constraint (``A,
 The semantics of most rules consists only of $\lambda$-applications. Some rules are more complex. Those exceptions are either because the scope of variables and negations would otherwise be incorrect or because the grammar rule is specific to logic grid puzzles and can not be easily explained linguistically. This linguistic shortcut is then visible in the semantics.
 
 Compared to the original Blackburn and Bos framework~\cite{Blackburn2005,Blackburn2006}, we added type information. In natural language, it is possible to construct sentences that are grammatically correct but without meaning. E.g. ``The grass is drinking the house''. The grass is not something that can drink and a house is not something that can be drunk. We say the sentence is badly typed. Based on grammar alone, we can never exclude these sentences. 
-\bart{remove what follows since it is described in more detail in the next section?} 
-Thanks to adding the types, entities must not be grouped per type in advance (this is automatically detected), and verbs that are synonyms are also automatically detected.
+%\bart{remove what follows since it is described in more detail in the next section?} 
+%Thanks to adding the types, entities must not be grouped per type in advance (this is automatically detected), and verbs that are synonyms are also automatically detected.
 
 
 The output of the framework is a (typed variant of) discourse representation theory \cite{DRT}.

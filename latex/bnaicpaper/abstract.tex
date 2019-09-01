@@ -1,0 +1,130 @@
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.20 of 2017/10/04
+%
+\documentclass[runningheads]{llncs}
+%
+\usepackage{graphicx}
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
+%
+% If you use the hyperref package, please uncomment the following line
+% to display URLs in blue roman font according to Springer's eBook style:
+% \renewcommand\UrlFont{\color{blue}\rmfamily}
+\usepackage{xspace}
+\newcommand{\zebratutor}{ZebraTutor\xspace}
+\newcommand{\ourtool}{\zebratutor}
+\newcommand{\idp}{IDP\xspace}
+
+\newcommand{\minisatid}{MiniSAT(ID)\xspace}
+% \include{../
+\newcommand{\mycite}[1]{\cite{#1}}
+
+\usepackage{paralist}
+\begin{document}
+%
+\title{\zebratutor: Explaining How to Solve Logic Grid Puzzles}
+%
+%\titlerunning{Abbreviated paper title}
+% If the paper title is too long for the running head, you can set
+% an abbreviated paper title here
+%
+\author{Jens Claes\inst{1} \and
+Bart Bogaerts\inst{2} \and
+Rocslides Canoy\inst{2} \and 
+Emilio Gamba\inst{2} \and 
+Tias Guns\inst{2} }
+%
+\authorrunning{J. Claes et al.}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+%
+\institute{
+\email{jensclaes33@gmail.com} \and
+Vrije Universiteit Brussel
+\email{firstname.lastname@vub.be}}
+%
+\maketitle              % typeset the header of the contribution
+%
+% \begin{abstract}
+% The abstract should briefly summarize the contents of the paper in
+% 150--250 words.
+% 
+% \keywords{First keyword  \and Second keyword \and Another keyword.}
+% \end{abstract}
+%
+%
+%
+\section{Introduction}
+% Inspired by the 2019 Holy Grail Challenge, we present \ourtool (a first version of this tool was presented at that challenge \cite{zebratutor}; \ourtool is an extension of a tool developed in the Master thesis of the first author of this paper \cite{msc/Claes17}), a mostly automated tool that solves a logic grid puzzle (also known as a Zebra puzzle) given the clues in natural language clues and a list of the entities in the puzzle. The challenge is to both handle the natural language input, and to produce a human-understandable explanation of how the solution is obtained.
+% We achieve this by translating the natural language clues into logic using a typed version of the semantical framework of Blackburn and Bos. The logical representation is then used in a novel explanation-based reasoning procedure, on top of the \idp knowledge base system. A novel aspect of the explanation is that it is ordered by mental effort required to understand the reasoning step, which is estimated by the number of previously derived facts needed to derive new facts. The outcome is a stepwise visualisation of the clue(s) used and the resulting changes on the grid.
+% This can be used both to solve a puzzle, or as a step-wise `help' function for people stuck while solving a puzzle.
+% 
+% ============================
+
+In this demonstration, we present \ourtool,  an end-to-end solution for solving logic grid puzzles (also known as Zebra puzzles) and for explaining, in a human-understandable way, how this solution can be obtained from the clues. 
+
+\ourtool\footnote{\ourtool is an extension of software originally developed in the context of a Master's thesis \cite{msc/Claes17}.} starts from a plain English language representation of the clues and a list of all the entities present in the puzzle. It then applies NLP techniques to build a puzzle-specific \textit{lexicon}. This lexicon is fed into a type-aware variant of the semantical framework of Blackburn and Bos~(\cite{Blackburn2005,Blackburn2006}), which translates the clues into discourse representation theory \cite{DRT}. This logic is further transformed to a specification in the \idp language \mycite{WarrenBook/DeCatBBD14}, an extension of first-order logic. 
+% The  solver underlying \idp (called \minisatid) is a lazy-clause generation solver supporting among others recursive definitions~\mycite{minisatid}.
+
+It then uses this formal representation of the clues both to solve the puzzle and to explain how to a user can find this solution. 
+% There are many different ways in which such a system could explain itself. For instance, after finding a solution, it can explain \begin{inparaenum}\item \emph{why that is a solution} or \item \emph{why there are no other solutions}; additionally, it can explain \item \emph{how the system found this solution}, and \item \emph{how a human could find this solution}. \end{inparaenum}
+The focus of our explanation is on simplicity: 
+in generating explanations and choosing the \textit{order} in which the reasoning steps are explained, we chose to order by an estimate of mental effort required to follow the reasoning step. Each reasoning step is visualised as the clue(s) involved and the resulting changes on the grid.
+
+When solving such puzzles, it can either be used for explaining how to obtain an entire solution, or for providing help to users who are stuck during the solving process. Indeed, our explanation method will, given a partial solution, find the easiest next derivation to make. 
+
+
+\section{System Overview}
+%\bart{Einstein puzzle as a running example?} \tias{ if we call it holy zebra, makes sense to use Zebra as running example}
+
+The \textbf{input} to \ourtool is a set of natural language sentences (from hereon referred to as ``clues''), and the names of the \textit{entities} that make up the puzzle, e.g. Englishman, red house, Zebra, etc. %\bart{No more mention of the fact that this is optional for the system?}
+
+In typical logic grid puzzles, the entity names are present in the grid that is supplied with the puzzle. For some puzzles, not all entities are named or required to know in advance; a prototypical example is Einstein's Zebra puzzle, which ends with the question ``Who owns the zebra?'', while the clues do not name the Zebra entity, and the puzzle can be solved without knowledge of the fact that there is a zebra in the first place. 
+
+%Figure \ref{fig:overview} contains an overview of the different components of the system.
+%
+
+
+
+\paragraph{Steps}
+Our framework consists of the following steps, starting from the input:
+\begin{compactenum}
+%  \item Natural language procesing: 
+% \begin{enumerate}
+\item Part-Of-Speech tagging: with each word a part-of-speech tag is associated.
+\item Chunking and lexicon building: a problem-specific lexicon is developed.
+\item From chunked sentences to logic: using a custom grammar and semantics a logical representation of the clues is constructed.
+% \end{enumerate}
+% \item Reasoning: 
+% \begin{enumerate}
+%   \setcounter{enumi}{3}
+ \item From logic to a complete IDP specification: the logical representation is translated into the \idp language and augmented with logic-grid-specific information. \label{step:toidp}
+\item Explanation-generating search in IDP: we exploit the \idp representation of the clues to search for simple explanations as to how the puzzle can be solved.
+% \end{enumerate}
+\item Visualisation of the explanation: the step-by-step explanation is visualized.
+\end{compactenum}
+% 
+% 
+% \item Visualisation of the explanation steps
+% \end{enumerate}
+
+% The first three of these steps are related to natural language processing. Step \ref{step:toidp} is explained in Section \ref{sec:solving}; there we also briefly explain how the representation obtained at that point can be used to automatically solve the puzzle. 
+% The last two steps are related to explanations and are presented in Section \ref{sec:expl}. 
+
+\subsection{Demonstration}
+
+The working of our system is demonstrated on \url{http://bartbog.github.io/zebra}. This webpage contains for some puzzles: 
+\begin{compactitem}
+ \item All the the clues, and which (minor) modifications to the natural language formulation we implemented. 
+ \item The lexicon that is required to parse the puzzles (semi-automatically generated).
+ \item The resulting idp theory associated to each of the clues.
+ \item Runnable \idp files to either solve the puzzle, or generate the explanations. 
+ \item The visualization of the explanation by derivation steps. 
+\end{compactitem}
+The website is still under construction and will be updated with more puzzles in the near future. 
+
+\bibliographystyle{splncs04}
+\bibliography{../holygrailpaper/extrarefs,../holygrailpaper/idp-latex/krrlib}
+
+\end{document}

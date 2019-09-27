@@ -230,7 +230,7 @@ problem(p5, problem(4, 5, [
                         "The person who lives in Shaver Lake is 1 year younger than Roxanne",
                         "The centenarian who lives in Plymouth isn't a native of Alaska",
                         "Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas"
-<pre>
+                  ], [
                         noun([year], [years]),
                         noun([person], [persons]),
                         noun([native], [natives]),
@@ -253,7 +253,7 @@ problem(p5, problem(4, 5, [
                         prep([from]),
                         comp(higher, [older, than]),
                         comp(lower, [younger, than])
-     </pre>
+                  ])).
 
 % ADAPTED
 % clue 4: of the two dogs who graduated in March and April -> of the dog who graduated in March and the dog who graduated in April, ...

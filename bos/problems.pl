@@ -484,3 +484,39 @@ problem(p10, problem(4, 5, [
                         tv([paid], [pay]),
                         tvPrep([came], [to], [come], [come])
         ])).
+
+problem(niels, problem(4, 4, [
+        "The man who holds a tablet waits on less than the man who travels with kwik",
+        "The man who travels with kwik holds a flag",
+        "The man who holds a banner waits on less than the man from allfouru",
+        "The man who holds a banner waits on more than dolores chan",
+        "jasper kwakman waits on 8 tourists more than the man who holds a plastic or waits on 8 tourists less than the man who holds a plastic",
+        "rudi zondervan is not from noorman",
+        "The man who holds a tablet is either jasper kwakman or rudi zondervan",
+        "The man from kwik is either dolores chan or marlies olijkan"
+                     ], [
+                        noun([man], [men]),
+                        noun([tourist], [tourists]),
+
+                        ppn([a, tablet]),
+                        ppn([a, plastic]),
+                        ppn([a, banner]),
+                        ppn([a, flag]),
+
+                        pn([kwik]),
+                        pn([allfouru]),
+                        pn([noorman]),
+                        pn([intertravel]),
+
+                        pn([dolores, chan]),
+                        pn([jasper, kwakman]),
+                        pn([rudi, zondervan]),
+                        pn([marlies, olijkan]),
+
+                        prep([from]),
+
+                        % tv([expects], [expect]),
+                        tv([holds], [hold]),
+                        tvPrep([travels], [with], [travel], [travelled]),
+                        tvPrep([waits], [on], [wait], [waited])
+                     ])).

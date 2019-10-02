@@ -1,0 +1,74 @@
+// Problem niels
+
+vocabulary V {
+    type type1 constructed from {the_other_type1, kwik, allfouru, noorman}
+    type man constructed from {dolores_chan, jasper_kwakman, rudi_zondervan, marlies_olijkan}
+    type tourist = {4; 8; 12; 16} isa int
+    type type2 constructed from {a_tablet, a_flag, a_banner, a_plastic}
+    type type3 = {-4; 4; -8; 8; -12; 12} isa int // differences between values of type tourist
+    type type4 = {-4; 4; -8; 8; -12; 12} isa int // differences between values of type tourist
+    type type5 = {-4; 4; -8; 8; -12; 12} isa int // differences between values of type tourist
+
+    travels_with(man, type1)
+    waits_on(man, tourist)
+    holds(man, type2)
+    from(man, type1)
+}
+
+structure S : V {
+}
+
+theory T : V {
+    // The man who holds a tablet waits on less than the man who travels with kwik
+    ?a [man] b [type3] c [tourist] d [man] e [tourist]: holds(a,a_tablet) & b>0 & travels_with(d,kwik) & waits_on(d,c) & e = c-b & waits_on(a,e).
+
+    // The man who travels with kwik holds a flag
+    ?f [man]: travels_with(f,kwik) & holds(f,a_flag).
+
+    // The man who holds a banner waits on less than the man from allfouru
+    ?g [man] h [type4] i [tourist] j [man] k [tourist]: holds(g,a_banner) & h>0 & from(j,allfouru) & waits_on(j,i) & k = i-h & waits_on(g,k).
+
+    // The man who holds a banner waits on more than dolores chan
+    ?l [man] m [type5] n [tourist] o [tourist]: holds(l,a_banner) & m>0 & waits_on(dolores_chan,n) & o = n+m & waits_on(l,o).
+
+    // jasper kwakman waits on 8 tourists more than the man who holds a plastic or waits on 8 tourists less than the man who holds a plastic
+    (?p [tourist] q [man] r [tourist]: holds(q,a_plastic) & waits_on(q,p) & r = p+8 & waits_on(jasper_kwakman,r)) | (?s [tourist] t [man] u [tourist]: holds(t,a_plastic) & waits_on(t,s) & u = s-8 & waits_on(jasper_kwakman,u)).
+
+    // rudi zondervan is not from noorman
+    ~ from(rudi_zondervan,noorman).
+
+    // The man who holds a tablet is either jasper kwakman or rudi zondervan
+    ?v [man]: holds(v,a_tablet) & (jasper_kwakman = v | rudi_zondervan = v).
+
+    // The man from kwik is either dolores chan or marlies olijkan
+    ?w [man]: from(w,kwik) & (dolores_chan = w | marlies_olijkan = w).
+
+
+    // Logigram bijection axioms:
+    ! x [man]: ?=1 y [type1]: travels_with(x, y).
+    ! x [type1]: ?=1 y [man]: travels_with(y, x).
+
+    ! x [man]: ?=1 y [tourist]: waits_on(x, y).
+    ! x [tourist]: ?=1 y [man]: waits_on(y, x).
+
+    ! x [man]: ?=1 y [type2]: holds(x, y).
+    ! x [type2]: ?=1 y [man]: holds(y, x).
+
+    ! x [man]: ?=1 y [type1]: from(x, y).
+    ! x [type1]: ?=1 y [man]: from(y, x).
+
+    // Logigram synonym axioms:
+    ! x [man] y [type1]: travels_with(x, y) <=> from(x, y).
+
+    // Logigram transitive relation axioms:
+
+    // Logigram reflexive relation axioms:
+
+    // Logigram symmetry breaking axioms:
+}
+
+procedure main() {
+    stdoptions.nbmodels = 10;
+    printmodels(modelexpand(T,S))
+}
+

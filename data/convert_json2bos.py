@@ -241,7 +241,7 @@ def get_verbs(clues_pos, pns):
     return (tvs, tvpreps)
 
 
-def get_lexicon(data):
+def get_lexicon(data, jsondemo=False):
     # do the nlp stuff on lowercase sentences
     # http://www.nltk.org/book/ch07.html
     clues_token = [nltk.word_tokenize(clue.lower()) for clue in data['clues']]
@@ -254,6 +254,10 @@ def get_lexicon(data):
     (pns, nns) = get_pn_nn(data['types'])
     clues_pos = clean_clues_pns(clues_pos, pns)
     clues_pos = clean_clues_nns(clues_pos, nns)
+
+    if jsondemo:
+        # POS tag printing for demo
+        print(json.dumps(clues_pos))
 
     ppns = {} #get_ppns(clues_pos, data['types'], pns)
 
@@ -374,21 +378,53 @@ def get_lexicon(data):
         if pn in pns:
             pns.remove(pn)
         #else: a bug probably due to pn with a space hack (e.g. 'van wert')
+
+
+    # dictionary from word to lexicon element (for printing)
+    lexdict = dict()
     
+    # pn's
     pns_str = []
     for pn in pns:
         if isinstance(pn, tuple):
             pn = ", ".join(pn)
-        pns_str.append( f"    pn([{pn}])" )
+        pn_str = f"    pn([{pn}])"
+        lexdict[pn] = pn_str
+        pns_str.append( pn_str )
     pns_str = sorted(pns_str)
-    nouns_str = ["    noun([{}], [{}])".format(s,p) for (s,p) in sorted(nouns)]
-    ppns_str = ["    ppn([{}, {}, {}])".format(a,b,c) for (a,b,c) in sorted(ppns)]
+
+    # ppn's
+    ppns_str = []
+    for (a,b,c) in sorted(ppns):
+        ppn_str = "    ppn([{}, {}, {}])".format(a,b,c)
+        for e in (a,b,c):
+            lexdict[e] = ppn_str
+        ppns_str.append(ppn_str)
+
+    # noun's
+    nouns_str = []
+    for (s,p) in sorted(nouns):
+        noun_str = "    noun([{}], [{}])".format(s,p)
+        lexdict[s] = noun_str
+        lexdict[p] = noun_str
+        nouns_str.append(noun_str)
+
+    # tv's and variants
     tv_str = []
     for (v,v2) in tvs:
         if isinstance(v, (tuple,list)):
             v = ", ".join(v)
-        tv_str.append( f"    tv([{v}], [{v2}])" )
-    tvprep_str = ["    tvPrep([{}], [{}], [{}], [todooo])".format(v,p,v2) for (v,p,v2) in sorted(tvpreps)]
+        tv_s = f"    tv([{v}], [{v2}])"
+        lexdict[v] = tv_s
+        lexdict[v2] = tv_s
+        tv_str.append( tv_s )
+    
+    tvprep_str = []
+    for (v,p,v2) in sorted(tvpreps):
+        tvprep_s = "    tvPrep([{}], [{}], [{}], [todooo])".format(v,p,v2)
+        for e in (v,p,v2):
+            lexdict[e] = tvprep_s
+        tvprep_str.append(tvprep_s)
     tvgap_str = []
     for (v,gap,v2) in tvGap_list:
         if isinstance(v, (tuple, list)):
@@ -396,8 +432,29 @@ def get_lexicon(data):
         one = "[{}]".format(v) # this too may hide bug...
         two = "[{}]".format(", ".join(flatten(gap))) # XXX, the flatten may hide a bug
         mystr = "    tvGap({}, {}, [{}])".format(one, two, v2)
+        for e in (one,two,v2):
+            lexdict[e] = mystr
         tvgap_str.append(mystr)
     tvgap_str = sorted(tvgap_str)
+
+    if jsondemo:
+        # per-sentence lexicon printing for demo
+        lexclues = []
+        print(lexdict)
+        for clue in clues_new:
+            lexclue = []
+            for word in clue.split(' '):
+                if word in lexdict:
+                    lexclue.append(lexdict[word].strip())
+                else:
+                    # special case for numbers
+                    try:
+                        v = int(word)
+                        lexclue.append(f"number({v})")
+                    except ValueError:
+                        pass
+            lexclues.append(lexclue)
+        print(json.dumps(lexclues))
             
     return (clues_new,
            "[\n"+\

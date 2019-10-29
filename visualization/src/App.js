@@ -6,6 +6,10 @@ import ReactDOM from 'react-dom';
 const problemName = 'p5'
 const steps = require(`../../bos/output/${problemName}.output.json`)
 const vocabulary = require(`../../bos/output/${problemName}.voc.json`)
+const demo_tags = require(`../../bos/output/${problemName}.tags.json`)
+
+
+
 const sol = "Solution!"
 const logicon = "Logigram constraints"
 
@@ -142,23 +146,22 @@ function App() {
     <div className="Clues">
       <h2>Clues</h2>
       <UsedClue clues={clues} clue={facts.clue}/>
-      {/* {JSON.stringify(uniqueclues)} */}
-      {/* <div>{facts.clue}</div> */}
       <p></p>
-      <h2>Facts</h2>
-      <div>
-        <p></p>
-        <p></p>
-      </div>
+      <MyLegend />
       <p></p>
-      <DerivedFacts facts={facts.derived} />
     </div>,
     document.getElementById('clues')
+  );
+  
+
+
+  ReactDOM.render(
+    <Tags tags={demo_tags}/>,
+    document.getElementById('box-clues')
   );
 
   return (
     <div className="App">
-      {/* <h2>{facts.clue}</h2> */}
       <h2>Puzzle</h2>
       <div>
         <button onClick={() => setIndexClipped(index - 1)}>Prev</button>
@@ -170,13 +173,59 @@ function App() {
   );
 }
 
+function Tags({tags}){
+  
+  return <div>a</div>
+}
+
+
+function MyLegend(){
+  return (
+  <div>
+    <h2>Legend</h2>
+    <table>
+  <tr>
+    <td><div className="red-full-rectangle"></div></td>
+    <td>&nbsp;&nbsp;&nbsp;New fact</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+  <td><div className="blue-full-rectangle"></div></td>
+    <td>&nbsp;&nbsp;&nbsp;Derived fact</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+  <td><div className="black-empty-rectangle"> ✔</div></td>
+    <td>&nbsp;&nbsp;&nbsp;True</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+  <td><div className="black-empty-rectangle"> - </div></td>
+    <td>&nbsp;&nbsp;&nbsp;False</td>
+  </tr>
+</table> 
+  </div>)
+}
+
+
 function UsedClue({ clues, clue }) {
 
-  const listFacts = clues.map(function(element) {
+  const listClues = clues.map(function(element) {
       if(element === logicon){
         if(clue === logicon){
           return (<div>
-                    <li><font color="red">{logicon}</font></li>
+                    <li  className="clue-used">
+                      {logicon}
+                      </li>
                     <ul>
                       <li>Transitity</li>
                       <li>Bijection</li>
@@ -184,17 +233,24 @@ function UsedClue({ clues, clue }) {
                     </ul> 
                   </div>)
         }else{
-          return (<div><li>{logicon}</li><ul><li>Transitity</li><li>Bijection</li><li>Inverse relation</li></ul> </div>)
+          return (<div>
+                    <li className="clue-unused">{logicon}</li>
+                    <ul>
+                      <li>Transitity</li>
+                      <li>Bijection</li>
+                      <li>Inverse relation</li>
+                    </ul> 
+                  </div>)
         }
         
       } else if(element === clue){
-        return <li> <font color="red">{element}</font> </li>
+        return <li className="clue-used">{element}</li>
       }else{
-        return <li>{element}</li>
+        return <li className="clue-unused">{element}</li>
       }
     }
   );
-  return (<ol>{listFacts}</ol>)
+  return (<ol>{listClues}</ol>)
 }
 
 function DerivedFacts({ facts }) {

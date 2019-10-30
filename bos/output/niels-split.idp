@@ -1,0 +1,367 @@
+// Problem niels
+
+vocabulary V {
+	
+	type assumptiontype = {0..40} isa int
+	assumption_satisfied(assumptiontype)
+
+    type type1 constructed from {the_other_type1, kwik, allfouru, noorman}
+    type man constructed from {dolores_chan, jasper_kwakman, rudi_zondervan, marlies_olijkan}
+    type tourist = {4; 8; 12; 16} isa int
+    type type2 constructed from {a_tablet, a_flag, a_banner, a_plastic}
+    type type3 = {-4; 4; -8; 8; -12; 12} isa int // differences between values of type tourist
+    type type4 = {-4; 4; -8; 8; -12; 12} isa int // differences between values of type tourist
+    type type5 = {-4; 4; -8; 8; -12; 12} isa int // differences between values of type tourist
+
+    from(man, type1)
+    waits_on(man, tourist)
+    holds(man, type2)
+    is_linked_with_1(type1, tourist)
+    is_linked_with_2(type1, type2)
+    is_linked_with_3(tourist, type2)
+}
+
+vocabulary VExtra {
+    extern vocabulary V
+    ct_from(man, type1)
+    cf_from(man, type1)
+    ct_waits_on(man, tourist)
+    cf_waits_on(man, tourist)
+    ct_holds(man, type2)
+    cf_holds(man, type2)
+    ct_is_linked_with_1(type1, tourist)
+    cf_is_linked_with_1(type1, tourist)
+    ct_is_linked_with_2(type1, type2)
+    cf_is_linked_with_2(type1, type2)
+    ct_is_linked_with_3(tourist, type2)
+    cf_is_linked_with_3(tourist, type2)
+}
+
+structure S : V {
+	assumption_satisfied<cf>={}
+		assumption_satisfied<u>={}
+}
+
+theory T1: V {
+    // The man who holds a tablet waits on less than the man who travels with kwik
+    assumption_satisfied( 0  ) => ?a [man] b [type3] c [tourist] d [man] e [tourist]: holds(a,a_tablet) & b>0 & from(d,kwik) & waits_on(d,c) & e = c-b & waits_on(a,e).
+}
+
+theory T2: V {
+    // The man who travels with kwik holds a flag
+    assumption_satisfied( 0  ) => ?f [man]: from(f,kwik) & holds(f,a_flag).
+}
+
+theory T3: V {
+    // The man who holds a banner waits on less than the man from allfouru
+    assumption_satisfied( 0  ) => ?g [man] h [type4] i [tourist] j [man] k [tourist]: holds(g,a_banner) & h>0 & from(j,allfouru) & waits_on(j,i) & k = i-h & waits_on(g,k).
+}
+
+theory T4: V {
+    // The man who holds a banner waits on more than dolores chan
+    assumption_satisfied( 0  ) => ?l [man] m [type5] n [tourist] o [tourist]: holds(l,a_banner) & m>0 & waits_on(dolores_chan,n) & o = n+m & waits_on(l,o).
+}
+
+theory T5: V {
+    // jasper kwakman waits on 8 tourists more than the man who holds a plastic or waits on 8 tourists less than the man who holds a plastic
+    assumption_satisfied( 0  ) => (?p [tourist] q [man] r [tourist]: holds(q,a_plastic) & waits_on(q,p) & r = p+8 & waits_on(jasper_kwakman,r)) | (?s [tourist] t [man] u [tourist]: holds(t,a_plastic) & waits_on(t,s) & u = s-8 & waits_on(jasper_kwakman,u)).
+}
+
+theory T6: V {
+    // rudi zondervan is not from noorman
+    assumption_satisfied( 0  ) => ~ from(rudi_zondervan,noorman).
+}
+
+theory T7: V {
+    // The man who holds a tablet is either jasper kwakman or rudi zondervan
+    assumption_satisfied( 0  ) => ?v [man]: holds(v,a_tablet) & (jasper_kwakman = v | rudi_zondervan = v).
+}
+
+theory T8: V {
+    // The man from kwik is either dolores chan or marlies olijkan
+    assumption_satisfied( 0  ) => ?w [man]: from(w,kwik) & (dolores_chan = w | marlies_olijkan = w).
+}
+
+
+theory bijections1 : V {
+     assumption_satisfied( 1  ) => ! x [man]: ?>=1 y [type1]: from(x, y).
+}
+
+theory bijections2 : V {
+     assumption_satisfied( 2  ) =>  ! x [type1]: ?>=1 y [man]: from(y, x).
+
+}
+
+theory bijections3 : V {
+     assumption_satisfied( 3  ) =>  ! x [man]: ?>=1 y [tourist]: waits_on(x, y).
+}
+
+theory bijections4 : V {
+     assumption_satisfied( 4  ) =>  ! x [tourist]: ?>=1 y [man]: waits_on(y, x).
+
+}
+
+theory bijections5 : V {
+     assumption_satisfied( 5  ) =>  ! x [man]: ?>=1 y [type2]: holds(x, y).
+}
+
+theory bijections6 : V {
+    assumption_satisfied(6  ) =>   ! x [type2]: ?>=1 y [man]: holds(y, x).
+
+}
+
+theory bijections9 : V {
+     assumption_satisfied( 9  ) =>  ! x [type1]: ?>=1 y [tourist]: is_linked_with_1(x, y).
+}
+
+theory bijections10 : V {
+     assumption_satisfied( 10  ) =>  ! x [tourist]: ?>=1 y [type1]: is_linked_with_1(y, x).
+
+}
+
+theory bijections11 : V {
+    assumption_satisfied( 11  ) =>   ! x [type1]: ?>=1 y [type2]: is_linked_with_2(x, y).
+}
+
+theory bijections12 : V {
+     assumption_satisfied( 12  ) =>  ! x [type2]: ?>=1 y [type1]: is_linked_with_2(y, x).
+
+}
+
+theory bijections13 : V {
+    assumption_satisfied( 13  ) =>   ! x [tourist]: ?>=1 y [type2]: is_linked_with_3(x, y).
+}
+
+theory bijections14 : V {
+    assumption_satisfied( 14  ) =>   ! x [type2]: ?>=1 y [tourist]: is_linked_with_3(y, x).
+}
+
+theory bijections15 : V {
+     assumption_satisfied( 15  ) =>  ! x [man]: ?=<1 y [type1]: from(x, y).
+}
+
+theory bijections16 : V {
+     assumption_satisfied( 16  ) =>  ! x [type1]: ?=<1 y [man]: from(y, x).
+
+}
+
+theory bijections17 : V {
+     assumption_satisfied(17  ) =>  ! x [man]: ?=<1 y [tourist]: waits_on(x, y).
+}
+
+theory bijections18 : V {
+     assumption_satisfied( 18  ) =>  ! x [tourist]: ?=<1 y [man]: waits_on(y, x).
+
+}
+
+theory bijections19 : V {
+     assumption_satisfied( 19  ) =>  ! x [man]: ?=<1 y [type2]: holds(x, y).
+}
+
+theory bijections20 : V {
+     assumption_satisfied( 20  ) =>  ! x [type2]: ?=<1 y [man]: holds(y, x).
+
+}
+
+theory bijections23 : V {
+     assumption_satisfied( 23  ) =>  ! x [type1]: ?=<1 y [tourist]: is_linked_with_1(x, y).
+}
+
+theory bijections24 : V {
+    assumption_satisfied( 24  ) =>   ! x [tourist]: ?=<1 y [type1]: is_linked_with_1(y, x).
+
+}
+
+theory bijections25 : V {
+     assumption_satisfied( 25  ) =>  ! x [type1]: ?=<1 y [type2]: is_linked_with_2(x, y).
+}
+
+theory bijections26 : V {
+     assumption_satisfied( 26  ) =>  ! x [type2]: ?=<1 y [type1]: is_linked_with_2(y, x).
+
+}
+
+theory bijections27 : V {
+    assumption_satisfied( 27  ) =>   ! x [tourist]: ?=<1 y [type2]: is_linked_with_3(x, y).
+}
+
+theory bijections28 : V {
+     assumption_satisfied( 28  ) =>  ! x [type2]: ?=<1 y [tourist]: is_linked_with_3(y, x).
+
+}
+
+//I CHEATED AND DID A REPLACE-ALL: travels_with -> from to keep things smaller. 
+theory synonyms : V {
+    // Logigram synonym axioms:
+//    ! x [man] y [type1]: from(x, y) <=> from(x, y).
+
+}
+
+theory transitivity1 : V {
+    assumption_satisfied( 29  ) =>   ! x y z: from(x, y) & waits_on(x, z) => is_linked_with_1(y, z).
+}
+theory transitivity2 : V {
+     assumption_satisfied( 30  ) =>  ! x y z: from(x, y) & ~waits_on(x, z) => ~is_linked_with_1(y, z).
+}
+theory transitivity3 : V {
+    assumption_satisfied( 31  ) =>   ! x y z:~ from(x, y) & waits_on(x, z) => ~is_linked_with_1(y, z).
+}
+theory transitivity4 : V {
+    assumption_satisfied(32  ) =>   ! x y w: from(x, y)  & holds(x, w) => is_linked_with_2(y, w).
+}
+
+theory transitivity5 : V {
+    assumption_satisfied( 33 ) =>   ! x y w: from(x, y)  & ~holds(x, w) => ~is_linked_with_2(y, w).
+}
+
+theory transitivity6 : V {
+    assumption_satisfied( 34  ) =>   ! x y w: ~from(x, y)  & holds(x, w) => ~is_linked_with_2(y, w).
+}
+theory transitivity7 : V {
+   assumption_satisfied( 35 ) =>    ! x z w : waits_on(x, z) & ~holds(x, w) =>  ~is_linked_with_3(z, w).
+}
+theory transitivity8 : V {
+    assumption_satisfied( 36  ) =>   ! x z w :~ waits_on(x, z) & holds(x, w) =>  ~is_linked_with_3(z, w).
+}
+theory transitivity9 : V {
+     assumption_satisfied( 37  ) =>  ! x z w : waits_on(x, z) & holds(x, w) =>  is_linked_with_3(z, w).
+}
+theory transitivity10 : V {
+    assumption_satisfied( 38 ) =>   ! x y z: is_linked_with_1(x, y) & is_linked_with_2(x, z) => is_linked_with_3(y, z).
+}
+theory transitivity11 : V {
+    assumption_satisfied( 39 ) =>   ! x y z: is_linked_with_1(x, y) & ~is_linked_with_2(x, z) => ~is_linked_with_3(y, z).
+}
+theory transitivity12 : V {
+ assumption_satisfied( 40 ) =>      ! x y z: ~is_linked_with_1(x, y) & is_linked_with_2(x, z) => ~is_linked_with_3(y, z).
+}
+
+
+
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [man] y [type1]: ct_from(x,y) => from(x,y)) &
+        (! x [man] y [type1]: cf_from(x,y) => ~from(x,y)) &
+        (! x [man] y [tourist]: ct_waits_on(x,y) => waits_on(x,y)) &
+        (! x [man] y [tourist]: cf_waits_on(x,y) => ~waits_on(x,y)) &
+        (! x [man] y [type2]: ct_holds(x,y) => holds(x,y)) &
+        (! x [man] y [type2]: cf_holds(x,y) => ~holds(x,y)) &
+   //     (! x [man] y [type1]: ct_from(x,y) => from(x,y)) &
+   //     (! x [man] y [type1]: cf_from(x,y) => ~from(x,y)) &
+        (! x [type1] y [tourist]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [type1] y [tourist]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [type1] y [type2]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [type1] y [type2]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        (! x [tourist] y [type2]: ct_is_linked_with_3(x,y) => is_linked_with_3(x,y)) &
+        (! x [tourist] y [type2]: cf_is_linked_with_3(x,y) => ~is_linked_with_3(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::from], S2[V::from].ct)
+    removeFrom(S3[V::from], S2[V::from].cf)
+    removeFrom(S3[V::waits_on], S2[V::waits_on].ct)
+    removeFrom(S3[V::waits_on], S2[V::waits_on].cf)
+    removeFrom(S3[V::holds], S2[V::holds].ct)
+    removeFrom(S3[V::holds], S2[V::holds].cf)
+ //   removeFrom(S3[V::from], S2[V::from].ct)
+ //   removeFrom(S3[V::from], S2[V::from].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::from, VExtra::ct_from, VExtra::cf_from},
+        {V::waits_on, VExtra::ct_waits_on, VExtra::cf_waits_on},
+        {V::holds, VExtra::ct_holds, VExtra::cf_holds},
+     //   {V::from, VExtra::ct_from, VExtra::cf_from},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+        {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
+    }
+}
+
+include "./generic_procedures-split.idp"
+
+procedure main() {
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "The man who holds a tablet waits on less than the man who travels with kwik"},
+        {T2, "The man who travels with kwik holds a flag"},
+        {T3, "The man who holds a banner waits on less than the man from allfouru"},
+        {T4, "The man who holds a banner waits on more than dolores chan"},
+        {T5, "jasper kwakman waits on 8 tourists more than the man who holds a plastic or waits on 8 tourists less than the man who holds a plastic"},
+        {T6, "rudi zondervan is not from noorman"},
+        {T7, "The man who holds a tablet is either jasper kwakman or rudi zondervan"},
+        {T8, "The man from kwik is either dolores chan or marlies olijkan"},
+    }
+
+    S = compute_explanations(theories,S)
+
+    os.exit(0)
+}
+
+procedure get_trans_theories(){
+
+	transitivity_theories = {
+		{transitivity1, "Transitivity constraint"}, 
+		{transitivity2, "Transitivity constraint"}, 
+		{transitivity3, "Transitivity constraint"}, 
+		{transitivity4, "Transitivity constraint"}, 
+		{transitivity5, "Transitivity constraint"}, 
+		{transitivity6, "Transitivity constraint"}, 
+		{transitivity7, "Transitivity constraint"}, 
+		{transitivity8, "Transitivity constraint"}, 
+		{transitivity9, "Transitivity constraint"}, 
+		{transitivity10, "Transitivity constraint"}, 
+		{transitivity11, "Transitivity constraint"}, 
+		{transitivity12, "Transitivity constraint"}, 
+	}
+	return transitivity_theories
+}
+procedure get_bij_theories(){
+	bijection_theories = {
+		{bijections1, "Bijectivity"}, 
+		{bijections2, "Bijectivity"}, 
+		{bijections3, "Bijectivity"}, 
+		{bijections4, "Bijectivity"}, 
+		{bijections5, "Bijectivity"}, 
+		{bijections6, "Bijectivity"}, 
+	//	{bijections7, "Bijectivity"}, 
+	//	{bijections8, "Bijectivity"}, 
+		{bijections9, "Bijectivity"}, 
+		{bijections10, "Bijectivity"}, 
+		{bijections11, "Bijectivity"}, 
+		{bijections12, "Bijectivity"}, 
+		{bijections13, "Bijectivity"}, 
+		{bijections14, "Bijectivity"}, 
+		{bijections15, "Bijectivity"}, 
+		{bijections16, "Bijectivity"}, 
+		{bijections17, "Bijectivity"}, 
+		{bijections18, "Bijectivity"}, 
+		{bijections19, "Bijectivity"}, 
+		{bijections20, "Bijectivity"}, 
+	//	{bijections21, "Bijectivity"}, 
+	//	{bijections22, "Bijectivity"}, 
+		{bijections23, "Bijectivity"}, 
+		{bijections24, "Bijectivity"}, 
+		{bijections25, "Bijectivity"}, 
+		{bijections26, "Bijectivity"}, 
+		{bijections27, "Bijectivity"}, 
+		{bijections28, "Bijectivity"}, 
+	}
+	return	bijection_theories
+}
+
+
+
+

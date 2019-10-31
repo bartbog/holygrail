@@ -29,29 +29,81 @@ function setBoxInfoDisplayTo(displayType) {
     selectedBox = displayType
   }
 
-  if (displayType === 1) {
-    ReactDOM.render(
-     <Clues clues={cluesTags["clues"]} />,
-      document.getElementById('BoxInfoText')
-    );
-  } else if (displayType === 2) {
-    ReactDOM.render(
-      <Tags tags={cluesTags["tags"]} />,
-      document.getElementById('BoxInfoText')
-    );
+
+  switch (displayType) {
+    case displayTypes.clues:
+      ReactDOM.render(
+        <Clues clues={cluesTags["clues"]} />,
+        document.getElementById('BoxInfoText')
+      );
+      break;
+    case displayTypes.postags:
+      ReactDOM.render(
+        <Tags tags={cluesTags["tags"]} />,
+        document.getElementById('BoxInfoText')
+      );
+      break;
+    case displayTypes.chunking_lexicon:
+      ReactDOM.render(
+        <Clues clues={cluesTags["clues"]} />,
+        document.getElementById('BoxInfoText')
+      );
+      break;
+    case displayTypes.fol:
+      ReactDOM.render(
+        <Clues clues={cluesTags["clues"]} />,
+        document.getElementById('BoxInfoText')
+      );
+      break;
+    case displayTypes.idp:
+      ReactDOM.render(
+        <Clues clues={cluesTags["clues"]} />,
+        document.getElementById('BoxInfoText')
+      );
+      break;
+    case displayTypes.expl:
+      ReactDOM.render(
+        <Clues clues={cluesTags["clues"]} />,
+        document.getElementById('BoxInfoText')
+      );
+      break;
+    default:
+
   }
+
+
 }
 
 function Clues({ clues }) {
+
+
   const listItems = clues.map((elem) =>
-    <li>{elem.charAt(0).toUpperCase() + elem.slice(1)}</li>
+    <div>
+      <tr>
+        <td>{elem.charAt(0).toUpperCase() + elem.slice(1)}</td>
+      </tr>
+      <br></br>
+    </div>
   );
-  return (<ul>{listItems}</ul>)
+  return (<table>{listItems}</table>)
 }
 
 
 function Tags({ tags }) {
-  return {tags}
+
+
+  const listItems = tags.map((clue) =>
+    <div>
+      <table>
+        <tr>{clue.map((elem) => <td className="td-clues-tags">{elem[0]}</td>)}</tr>
+        <tr>{clue.map((elem) => <td className="td-clues-tags">|</td>)}</tr>
+        <tr >{clue.map((elem) => <td className="td-clues-tags">{elem[1]}</td>)}</tr>
+      </table>
+      <br></br>
+      <br></br>
+    </div>
+  );
+  return (<ul>{listItems}</ul>)
 }
 
 function InfoText() {

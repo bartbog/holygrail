@@ -6,9 +6,6 @@ import ReactDOM from 'react-dom';
 const problemName = 'p5'
 const steps = require(`../../bos/output/${problemName}.output.json`)
 const vocabulary = require(`../../bos/output/${problemName}.voc.json`)
-const demo_tags = require(`../../bos/output/${problemName}.tags.json`)
-
-
 
 const sol = "Solution!"
 const logicon = "Logigram constraints"
@@ -155,11 +152,6 @@ function App() {
   
 
 
-  ReactDOM.render(
-    <Tags tags={demo_tags}/>,
-    document.getElementById('box-clues')
-  );
-
   return (
     <div className="App">
       <h2>Puzzle</h2>
@@ -172,12 +164,6 @@ function App() {
     </div>
   );
 }
-
-function Tags({tags}){
-  
-  return <div>a</div>
-}
-
 
 function MyLegend(){
   return (
@@ -251,14 +237,6 @@ function UsedClue({ clues, clue }) {
     }
   );
   return (<ol>{listClues}</ol>)
-}
-
-function DerivedFacts({ facts }) {
-
-  const listFacts = facts.map((element) =>
-    <li>{JSON.stringify(element)}</li>
-  );
-  return (<ul>{listFacts}</ul>)
 }
 
 function Grid({ vocabulary, facts }) {

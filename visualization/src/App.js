@@ -3,11 +3,15 @@ import './App.css';
 import * as R from 'ramda'
 import ReactDOM from 'react-dom';
 
-const problemName = 'p5'
+const problemName = 'niels-split'
 const steps = require(`../../bos/output/${problemName}.output.json`)
 const vocabulary = require(`../../bos/output/${problemName}.voc.json`)
 
 const sol = "Solution!"
+const bijectivity = "Bijectivity"
+const logigramConstraint = "Logigram Constraint"
+const transitivity = "Transitivity constraint"
+const combinationConstraints = "Combination of logigram constraints"
 const logicon = "Logigram constraints"
 
 const initialState = {
@@ -105,18 +109,18 @@ const styles = {
   })
 }
 
-function cleanClues(steps){
+function cleanClues(steps) {
   const clues = steps.map(element => element.clue);
-  const uniqueclues = clues.filter(function(item, pos) {
+  const uniqueclues = clues.filter(function (item, pos) {
     return clues.indexOf(item) === pos;
   })
 
-  for(var i = uniqueclues.length - 1; i >= 0; i--) {
-    if(uniqueclues[i] === logicon || uniqueclues[i] === sol) {
+  for (var i = uniqueclues.length - 1; i >= 0; i--) {
+    if (uniqueclues[i] === logicon || uniqueclues[i] === sol) {
       uniqueclues.splice(i, 1);
     }
-}
-uniqueclues.push(logicon)
+  }
+  // uniqueclues.push(logicon)
   return uniqueclues
 }
 
@@ -142,14 +146,14 @@ function App() {
   ReactDOM.render(
     <div className="Clues">
       <h2>Clues</h2>
-      <UsedClue clues={clues} clue={facts.clue}/>
+      <UsedClue clues={clues} clue={facts.clue} />
       <p></p>
       <MyLegend />
       <p></p>
     </div>,
     document.getElementById('clues')
   );
-  
+
 
 
   return (
@@ -165,76 +169,113 @@ function App() {
   );
 }
 
-function MyLegend(){
+function MyLegend() {
   return (
-  <div>
-    <h2>Legend</h2>
-    <table>
-  <tr>
-    <td><div className="red-full-rectangle"></div></td>
-    <td>&nbsp;&nbsp;&nbsp;New fact</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr>
-  <td><div className="blue-full-rectangle"></div></td>
-    <td>&nbsp;&nbsp;&nbsp;Derived fact</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr>
-  <td><div className="black-empty-rectangle"> ✔</div></td>
-    <td>&nbsp;&nbsp;&nbsp;True</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td></td>
-  </tr>
-  <tr>
-  <td><div className="black-empty-rectangle"> - </div></td>
-    <td>&nbsp;&nbsp;&nbsp;False</td>
-  </tr>
-</table> 
-  </div>)
+    <div>
+      <h2>Legend</h2>
+      <table>
+        <tr>
+          <td><div className="red-full-rectangle"></div></td>
+          <td>&nbsp;&nbsp;&nbsp;New fact</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><div className="blue-full-rectangle"></div></td>
+          <td>&nbsp;&nbsp;&nbsp;Derived fact</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><div className="black-empty-rectangle"> ✔</div></td>
+          <td>&nbsp;&nbsp;&nbsp;True</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><div className="black-empty-rectangle"> - </div></td>
+          <td>&nbsp;&nbsp;&nbsp;False</td>
+        </tr>
+      </table>
+    </div>)
 }
 
 
 function UsedClue({ clues, clue }) {
 
-  const listClues = clues.map(function(element) {
-      if(element === logicon){
-        if(clue === logicon){
-          return (<div>
-                    <li  className="clue-used">
-                      {logicon}
-                      </li>
-                    <ul>
-                      <li>Transitity</li>
-                      <li>Bijection</li>
-                      <li>Inverse relation</li>
-                    </ul> 
-                  </div>)
-        }else{
-          return (<div>
-                    <li className="clue-unused">{logicon}</li>
-                    <ul>
-                      <li>Transitity</li>
-                      <li>Bijection</li>
-                      <li>Inverse relation</li>
-                    </ul> 
-                  </div>)
-        }
-        
-      } else if(element === clue){
-        return <li className="clue-used">{element}</li>
-      }else{
-        return <li className="clue-unused">{element}</li>
+  var unique = 0;
+
+  const filteredClues = clues
+  .filter(function (el) {
+    return [ bijectivity ,logigramConstraint,transitivity,combinationConstraints,logicon].indexOf(el) < 0 ;
+  });
+  filteredClues.push(bijectivity);
+  filteredClues.push(transitivity);
+  filteredClues.push(combinationConstraints);
+  const listClues= filteredClues.map(function (element) {
+    if((element === transitivity || element === bijectivity || element === combinationConstraints)){
+      if (clue === transitivity  && unique === 0) {
+        unique = 1
+        return (<div>
+          <li >
+            {logigramConstraint}
+          </li>
+          <ul>
+            <li className="clue-used">{transitivity}</li>
+            <li className="clue-unused">{bijectivity}</li>
+            <li className="clue-unused">{combinationConstraints}</li>
+          </ul>
+        </div>)
+      } else if (clue === bijectivity  && unique === 0) {
+        unique = 1
+        return (<div>
+          <li >
+            {logigramConstraint}
+          </li>
+          <ul>
+            <li className="clue-unused">{transitivity}</li>
+            <li className="clue-used">{bijectivity}</li>
+            <li className="clue-unused">{combinationConstraints}</li>
+          </ul>
+        </div>)
+      } else if (clue === combinationConstraints  && unique === 0) {
+        unique = 1
+        return (<div>
+          <li >
+            {logigramConstraint}
+          </li>
+          <ul>
+            <li className="clue-unused">{transitivity}</li>
+            <li className="clue-unused">{bijectivity}</li>
+            <li className="clue-used">{combinationConstraints}</li>
+          </ul>
+        </div>)
+      }else if(unique === 0){
+        unique = 1
+        return (<div>
+          <li >
+            {logigramConstraint}
+          </li>
+          <ul>
+            <li className="clue-unused">{transitivity}</li>
+            <li className="clue-unused">{bijectivity}</li>
+            <li className="clue-unused">{combinationConstraints}</li>
+          </ul>
+        </div>)
       }
     }
+     else if (element === clue) {
+      return <li className="clue-used">{element}</li>
+    } else {
+      return <li className="clue-unused">{element}</li>
+    }
+  }
   );
   return (<ol>{listClues}</ol>)
 }

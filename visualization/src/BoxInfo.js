@@ -1,22 +1,20 @@
-import React from 'react';
 import './App.css';
+import React from 'react';
 import './BoxInfo.css';
 // import * as R from 'ramda'
 import ReactDOM from 'react-dom';
 
-const problemName = 'p5';
+const problemName = 'niels-split';
 
 const cluesTags = require(`../../bos/output/${problemName}.tags.json`);
 
 var selectedBox = 0;
 
-const cluesIntroText = "The clues are considered input together with puzzle problem statement:"
-const tagsIntroText = "Each word from each setence is tagged using the NTLK perceptron tagger:"
+const cluesIntroText = "ZebraTutor starts from a plain English language representation of the clues (and a list of all the entities present in the puzzle) :"
+const tagsIntroText = "Each word from each natural language clue is tagged using the NTLK perceptron tagger. The output of the POS-tagging process are Part-Of-Speech tagged words:"
 const lexiconIntroText = "The input of our system consists of these clues, combined with the following lexicon (the automated lexicon building does not yet work fully automatically):"
-const maxActiveClue = cluesTags["tags"].length
-var activeCLue = 0;
 
-
+var activeClue = 0;
 
 var displayTypes = {
   clues: 1,
@@ -26,6 +24,29 @@ var displayTypes = {
   idp: 5,
   expl: 6
 };
+
+function setToClue(clueNr) {
+
+  if (clueNr >= cluesTags["tags"].length) {
+    activeClue = cluesTags["tags"].length - 1;
+  } else if (clueNr <= 0) {
+    activeClue = 0;
+  } else {
+    activeClue = clueNr;
+  }
+
+
+  for (let index = 0; index < cluesTags["tags"].length; index++) {
+    const tagName = `tag${index}`
+    var tagChild = document.getElementById(tagName);
+    if (activeClue === index) {
+      tagChild.style.display = 'block';
+    } else {
+      tagChild.style.display = 'none';
+    }
+  }
+}
+
 
 function setBoxInfoDisplayTo(displayType) {
 
@@ -97,11 +118,11 @@ function Clues({ clues }) {
   const lexiconTable = <table>{listItems}</table>
   return (
     <div>
-    {introText}
-    <div className="BoxInfoText3">
-      {lexiconTable}
-    </div>
-  </div>)
+      {introText}
+      <div className="BoxInfoText3">
+        {lexiconTable}
+      </div>
+    </div>)
 }
 
 
@@ -110,44 +131,69 @@ function Tags({ tags }) {
 
   const introText = <div className="grey-text"> {tagsIntroText}</div>
 
-  
-  const listItems = tags.map((clue) =>
-    <div>
-      <table>
-        <tr>{clue.map((elem) => <td className="td-clues-tags thick-text">{elem[0]}</td>)}</tr>
-        <tr>{clue.map((elem) => <td className="td-clues-tags">|</td>)}</tr>
-        <tr >{clue.map((elem) => <td className="td-clues-tags thick-text">{elem[1]}</td>)}</tr>
-      </table>
-      <br></br>
-      <br></br>
+  var listItems = [];
+
+  for (let index = 0; index < tags.length; index++) {
+    const element = tags[index];
+    const keyElem = `tag${index}`
+    if (index === activeClue) {
+      listItems.push(
+      <div id={keyElem}>
+        <table>
+          <tr>{element.map((elem) => <td className="td-clues-tags thick-text">{elem[0]}</td>)}</tr>
+          <tr>{element.map((elem) => <td className="td-clues-tags">|</td>)}</tr>
+          <tr >{element.map((elem) => <td className="td-clues-tags thick-text">{elem[1]}</td>)}</tr>
+        </table>
+      </div>)
+    } else {
+      listItems.push(
+      <div className="HiddenBox" id={keyElem}>
+        <table>
+          <tr>{element.map((elem) => <td className="td-clues-tags thick-text">{elem[0]}</td>)}</tr>
+          <tr>{element.map((elem) => <td className="td-clues-tags">|</td>)}</tr>
+          <tr >{element.map((elem) => <td className="td-clues-tags thick-text">{elem[1]}</td>)}</tr>
+        </table>
+      </div>)
+    }
+  }
+
+  var clueBox = <div>    {introText}
+    <div className="container">
+      <div className="row">
+        <div className="col" ></div>
+        <div id="prev-clue" ><button className="col" onClick={() => setToClue(activeClue - 1)}>Previous Clue</button></div>
+        <div id="next-clue"><button className="col" onClick={() => setToClue(activeClue + 1)}>Next Clue</button></div>
+        <div className="col" ></div>
+      </div>
+      <div className="row padding-before-clue">
+        
+      <div className="col" ></div>
+        <div >
+          {listItems}
+        </div>
+        <div className="col" ></div>
+      </div>
     </div>
-  );
+    <br></br>
 
-  // function setActiveClue(clueNr){
-  //   if(0 <= clueNr && clueNr < maxActiveClue ){
-  //     activeCLue = clueNr;
-  //   }
-  // }
-
-  // const listItems2 = 
+  </div>
+  // const listItems = tags.map((clue) =>
   //   <div>
-  //       <button onClick={() => setActiveClue(activeCLue - 1)}>Prev</button>
-  //       <button onClick={() => setActiveClue(activeCLue + 1)}>Next</button>
   //     <table>
-  //       <tr>{tags[activeCLue].map((elem) => <td className="td-clues-tags thick-text">{elem[0]}</td>)}</tr>
-  //       <tr>{tags[activeCLue].map((elem) => <td className="td-clues-tags">|</td>)}</tr>
-  //       <tr >{tags[activeCLue].map((elem) => <td className="td-clues-tags thick-text">{elem[1]}</td>)}</tr>
+  //       <tr>{clue.map((elem) => <td className="td-clues-tags thick-text">{elem[0]}</td>)}</tr>
+  //       <tr>{clue.map((elem) => <td className="td-clues-tags">|</td>)}</tr>
+  //       <tr >{clue.map((elem) => <td className="td-clues-tags thick-text">{elem[1]}</td>)}</tr>
   //     </table>
   //     <br></br>
   //     <br></br>
   //   </div>
+  // );
 
-  return (<div>
-    {introText}
-    <div className="BoxInfoText3">
-      {listItems}
-    </div>
-  </div>)
+
+
+
+
+  return clueBox
 }
 
 function Lexicon({ lexicon }) {
@@ -173,8 +219,8 @@ function Lexicon({ lexicon }) {
 
 function InfoText() {
   return (<div className="BoxInfoText">
-    <div class="row">
-      <div id="BoxInfoText" class="col-12" className="BoxInfoText2">
+    <div className="row">
+      <div id="BoxInfoText" className="BoxInfoText2 col-12">
       </div>
     </div>
   </div>)
@@ -182,13 +228,13 @@ function InfoText() {
 
 function InfoButtons() {
   return (<div className="BoxInfo">
-    <div class="row">
-      <div id="clue-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.clues)}>Clues</button></div>
-      <div id="pos-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.postags)}>Pos Tagging</button></div>
-      <div id="chun-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.chunking_lexicon)}>Chunking & Lexicon Building</button></div>
-      <div id="fol-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.fol)}>First-Order Logic</button></div>
-      <div id="idp-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.idp)}>IDP</button></div>
-      <div id="expl-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>Explanation Generation</button></div>
+    <div className="row">
+      <div id="clue-button" className="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.clues)}>1. Input</button></div>
+      <div id="pos-button" className="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.postags)}>2. Pos Tagging</button></div>
+      <div id="chun-button" className="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.chunking_lexicon)}>3. Chunking & Lexicon Building</button></div>
+      <div id="fol-button" className="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.fol)}>4. First-Order Logic</button></div>
+      <div id="idp-button" className="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.idp)}>5. IDP</button></div>
+      <div id="expl-button" className="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>6. Explanation Generation</button></div>
     </div>
   </div>)
 }

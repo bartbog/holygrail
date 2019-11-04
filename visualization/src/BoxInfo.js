@@ -4,11 +4,19 @@ import './BoxInfo.css';
 // import * as R from 'ramda'
 import ReactDOM from 'react-dom';
 
-const problemName = 'p5'
+const problemName = 'p5';
 
-const cluesTags = require(`../../bos/output/${problemName}.tags.json`)
+const cluesTags = require(`../../bos/output/${problemName}.tags.json`);
 
-var selectedBox = 0
+var selectedBox = 0;
+
+const cluesIntroText = "The clues are considered input together with puzzle problem statement:"
+const tagsIntroText = "Each word from each setence is tagged using the NTLK perceptron tagger:"
+const lexiconIntroText = "The input of our system consists of these clues, combined with the following lexicon (the automated lexicon building does not yet work fully automatically):"
+const maxActiveClue = cluesTags["tags"].length
+var activeCLue = 0;
+
+
 
 var displayTypes = {
   clues: 1,
@@ -45,7 +53,7 @@ function setBoxInfoDisplayTo(displayType) {
       break;
     case displayTypes.chunking_lexicon:
       ReactDOM.render(
-        <Clues clues={cluesTags["clues"]} />,
+        <Lexicon lexicon={cluesTags["lexicon"]} />,
         document.getElementById('BoxInfoText')
       );
       break;
@@ -75,35 +83,92 @@ function setBoxInfoDisplayTo(displayType) {
 }
 
 function Clues({ clues }) {
-
-
   const listItems = clues.map((elem) =>
     <div>
       <tr>
-        <td>{elem.charAt(0).toUpperCase() + elem.slice(1)}</td>
+        <td className="thick-text">{elem.charAt(0).toUpperCase() + elem.slice(1)}</td>
       </tr>
       <br></br>
     </div>
   );
-  return (<table>{listItems}</table>)
+
+  const introText = <div className="grey-text"> {cluesIntroText}
+  </div>
+  const lexiconTable = <table>{listItems}</table>
+  return (
+    <div>
+    {introText}
+    <div className="BoxInfoText3">
+      {lexiconTable}
+    </div>
+  </div>)
 }
+
 
 
 function Tags({ tags }) {
 
+  const introText = <div className="grey-text"> {tagsIntroText}</div>
 
+  
   const listItems = tags.map((clue) =>
     <div>
       <table>
-        <tr>{clue.map((elem) => <td className="td-clues-tags">{elem[0]}</td>)}</tr>
+        <tr>{clue.map((elem) => <td className="td-clues-tags thick-text">{elem[0]}</td>)}</tr>
         <tr>{clue.map((elem) => <td className="td-clues-tags">|</td>)}</tr>
-        <tr >{clue.map((elem) => <td className="td-clues-tags">{elem[1]}</td>)}</tr>
+        <tr >{clue.map((elem) => <td className="td-clues-tags thick-text">{elem[1]}</td>)}</tr>
       </table>
       <br></br>
       <br></br>
     </div>
   );
-  return (<ul>{listItems}</ul>)
+
+  // function setActiveClue(clueNr){
+  //   if(0 <= clueNr && clueNr < maxActiveClue ){
+  //     activeCLue = clueNr;
+  //   }
+  // }
+
+  // const listItems2 = 
+  //   <div>
+  //       <button onClick={() => setActiveClue(activeCLue - 1)}>Prev</button>
+  //       <button onClick={() => setActiveClue(activeCLue + 1)}>Next</button>
+  //     <table>
+  //       <tr>{tags[activeCLue].map((elem) => <td className="td-clues-tags thick-text">{elem[0]}</td>)}</tr>
+  //       <tr>{tags[activeCLue].map((elem) => <td className="td-clues-tags">|</td>)}</tr>
+  //       <tr >{tags[activeCLue].map((elem) => <td className="td-clues-tags thick-text">{elem[1]}</td>)}</tr>
+  //     </table>
+  //     <br></br>
+  //     <br></br>
+  //   </div>
+
+  return (<div>
+    {introText}
+    <div className="BoxInfoText3">
+      {listItems}
+    </div>
+  </div>)
+}
+
+function Lexicon({ lexicon }) {
+  const lexiconitems = Object.keys(lexicon).map((lex) =>
+    <tr>
+      <td className="thick-text">{lex}</td>
+      <td className="td-clues-tags"></td>
+      <td className="thick-text">{lexicon[lex]}</td>
+    </tr>
+
+  );
+  const lexiconTable = <table>{lexiconitems}</table>
+  const introText = <div className="grey-text"> {lexiconIntroText}  </div>
+
+  return (
+    <div>
+      {introText}
+      <div className="BoxInfoText3">
+        {lexiconTable}
+      </div>
+    </div>)
 }
 
 function InfoText() {
@@ -123,7 +188,7 @@ function InfoButtons() {
       <div id="chun-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.chunking_lexicon)}>Chunking & Lexicon Building</button></div>
       <div id="fol-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.fol)}>First-Order Logic</button></div>
       <div id="idp-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.idp)}>IDP</button></div>
-      <div id="expl-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>Explanation generation</button></div>
+      <div id="expl-button" class="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>Explanation Generation</button></div>
     </div>
   </div>)
 }

@@ -12,7 +12,7 @@ const blockQuoteIntroText = <div className="puzzle-text"><i>{tagsIntroText} </i>
 function PuzzleInfo() {
   return (
     <div >
-      <h2 className="centered-text">Zebra Tutor: a Holy Grail</h2>
+      <h1 className="centered-text padding-top">Zebra Tutor: a Holy Grail</h1>
       <div>
         {blockQuoteIntroText}
       </div>

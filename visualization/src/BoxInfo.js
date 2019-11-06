@@ -14,7 +14,7 @@ var selectedBox = 0;
 const cluesIntroText = "ZebraTutor starts from a plain English language representation of the clues (and a list of all the entities present in the puzzle):"
 const tagsIntroText = "Each word from each natural language clue is tagged using the NTLK perceptron tagger. The output of the POS-tagging process are Part-Of-Speech tagged words:"
 const lexiconIntroText = "The input of our system consists of these clues, combined with the following lexicon (the automated lexicon building does not yet work fully automatically):"
-const folIntroText = "The system outputs the first-order logic representation of the clues."
+const folIntroText = "The system outputs the first-order logic representation of the clues in the form of discourse representation theory."
 const idpIntroText = "Our tool then generates the following translation of each of the clues in the IDP language (where ! is a universal quantifier, ? is an existential quantifier, & is conjunction, | is disjunction and ~ is negation )"
 
 var activeClue = 0;
@@ -430,9 +430,9 @@ function InfoButtons() {
       <div className="div-centered-hv col-sm">----></div>
       <div id="chun-button" className="col-sm"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.chunking_lexicon)}>Chunking & Lexicon Building</button></div>
       <div className=" div-centered-hv col-sm">----></div>
-      <div id="fol-button" className="col-sm"><button className="button-step2" onClick={() => setBoxInfoDisplayTo(displayTypes.fol)}>First-Order Logic</button></div>
+      <div id="fol-button" className="col-sm"><button className="button-step4" onClick={() => setBoxInfoDisplayTo(displayTypes.fol)}>Discourse representation theory</button></div>
       <div className=" div-centered-hv col-sm">----></div>
-      <div id="idp-button" className="col-sm"><button className="button-step3" onClick={() => setBoxInfoDisplayTo(displayTypes.idp)}>IDP</button></div>
+      <div id="idp-button" className="col-sm"><button className="button-step2" onClick={() => setBoxInfoDisplayTo(displayTypes.idp)}>IDP (first-order logic)</button></div>
       <div className=" div-centered-hv col-sm">----></div>
       {/* <div id="expl-button" className="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>6. Explanation Generation</button></div> */}
       {/* <div id="expl-button" className="col-sm"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>6. Explanation Generation</button></div> */}

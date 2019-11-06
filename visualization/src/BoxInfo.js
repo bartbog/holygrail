@@ -4,7 +4,7 @@ import './BoxInfo.css';
 // import * as R from 'ramda'
 import ReactDOM from 'react-dom';
 
-const problemName = 'P5-split';
+const problemName = 'p5-split';
 
 const cluesTags = require(`../../bos/output/${problemName}.tags.json`);
 

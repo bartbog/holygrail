@@ -183,6 +183,7 @@ function FOL({fol}){
         <div id={keyElem}>
           {logicRepresentation}
           <div >
+          <div className="centered-div">{key}</div>
           <table className="centered-div myFont">
           {element["logic_representation"].map(
             function(elem) {
@@ -212,6 +213,7 @@ function FOL({fol}){
         <div className="HiddenBox" id={keyElem}>
           {logicRepresentation}
           <div >
+          <div className="centered-div">{key}</div>
           <table className="centered-div myFont">
           {element["logic_representation"].map(
             function(elem) {
@@ -229,6 +231,7 @@ function FOL({fol}){
             </div>
           {types}
           <div className="td-entities myFont">
+            
           {element["types"].replace(/,/g, ', ')}
           {/* {element["types"]} */}
           </div>

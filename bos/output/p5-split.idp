@@ -1,0 +1,358 @@
+// Problem p5
+
+vocabulary V {
+
+    type assumptiontype = {0..36} isa int
+	assumption_satisfied(assumptiontype)
+
+    type year = {109; 110; 111; 112; 113} isa int
+    type native constructed from {the_other_native, mattie, ernesto, roxanne, zachary}
+    type type1 constructed from {the_other_type1, oregon, kansas, washington, alaska}
+    type type2 constructed from {the_other_type2, tehama, zearing, plymouth, shaver_lake}
+
+    is_old(native, year)
+    lives_in(native, type2)
+    from(native, type1)
+    is_linked_with_1(year, type1)
+    is_linked_with_2(year, type2)
+    is_linked_with_3(type1, type2)
+}
+
+vocabulary VExtra {
+    extern vocabulary V
+    ct_is_old(native, year)
+    cf_is_old(native, year)
+    ct_from(native, type1)
+    cf_from(native, type1)
+    ct_lives_in(native, type2)
+    cf_lives_in(native, type2)
+    ct_is_linked_with_1(year, type1)
+    cf_is_linked_with_1(year, type1)
+    ct_is_linked_with_2(year, type2)
+    cf_is_linked_with_2(year, type2)
+    ct_is_linked_with_3(type1, type2)
+    cf_is_linked_with_3(type1, type2)
+}
+
+structure S : V {
+	assumption_satisfied<cf>={}
+		assumption_satisfied<u>={}
+}
+
+theory T1: V {
+    // Mattie is 113 years old
+    assumption_satisfied( 0  ) => is_old(mattie,113).
+}
+
+theory T2: V {
+    // The person who lives in Tehama is a native of either Kansas or Oregon
+    assumption_satisfied( 0  ) => ?a [native] b [native]: lives_in(a,tehama) & (from(b,kansas) | from(b,oregon)) & b = a.
+}
+
+theory T3: V {
+    // The Washington native is 1 year older than Ernesto
+    assumption_satisfied( 0  ) => ?c [native] d [year] e [year]: is_old(ernesto,d) & e = d+1 & is_old(c,e) & from(c,washington).
+}
+
+theory T4: V {
+    // Roxanne is 2 years younger than the Kansas native
+    assumption_satisfied( 0  ) => ?f [year] g [native] h [year]: is_old(g,f) & from(g,kansas) & h = f-2 & is_old(roxanne,h).
+}
+
+theory T5: V {
+    // The person who lives in Zearing isn't a native of Alaska
+    assumption_satisfied( 0  ) => ?i [native]: lives_in(i,zearing) & ~ (?j [native]: from(j,alaska) & j = i).
+}
+
+theory T6: V {
+    // The person who is 111 years old doesn't live in Plymouth
+    assumption_satisfied( 0  ) => ?k [native]: is_old(k,111) & ~ lives_in(k,plymouth).
+}
+
+theory T7: V {
+    // The Oregon native is either Zachary or the person who lives in Tehama
+    assumption_satisfied( 0  ) => ?l [native]: (zachary = l | (?m [native]: lives_in(m,tehama) & m = l)) & from(l,oregon).
+}
+
+theory T8: V {
+    // The person who lives in Shaver Lake is 1 year younger than Roxanne
+    assumption_satisfied( 0  ) => ?n [native] o [year] p [year]: lives_in(n,shaver_lake) & is_old(roxanne,o) & p = o-1 & is_old(n,p).
+}
+
+theory T9: V {
+    // The centenarian who lives in Plymouth isn't a native of Alaska
+    assumption_satisfied( 0  ) => ?q [native]: lives_in(q,plymouth) & ~ (?r [native]: from(r,alaska) & r = q).
+}
+
+theory T10: V {
+    // Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
+    assumption_satisfied( 0  ) => ?s [native]: lives_in(s,tehama) & ~ (s = mattie) & ((?t [native]: from(t,alaska) & t = s & from(mattie,kansas)) | (?u [native]: from(u,alaska) & u = mattie & from(s,kansas))).
+}
+
+theory bijections1 : V {
+     assumption_satisfied( 1  ) => ! x [native]: ?>=1 y [year]: is_old(x, y).
+}
+
+theory bijections2 : V {
+     assumption_satisfied( 2  ) => ! x [year]: ?>=1 y [native]: is_old(y, x).
+}
+
+theory bijections3 : V {
+     assumption_satisfied( 3  ) => ! x [native]: ?>=1 y [type1]: from(x, y).
+}
+
+theory bijections4 : V {
+     assumption_satisfied( 4  ) => ! x [type1]: ?>=1 y [native]: from(y, x).
+}
+
+theory bijections5 : V {
+     assumption_satisfied( 5  ) => ! x [native]: ?>=1 y [type2]: lives_in(x, y).
+}
+
+theory bijections6 : V {
+     assumption_satisfied( 6  ) => ! x [type2]: ?>=1 y [native]: lives_in(y, x).
+}
+
+
+theory bijections7 : V {
+     assumption_satisfied( 7  ) => ! x [year]: ?>=1 y [type1]: is_linked_with_1(x, y).
+}
+
+theory bijections8 : V {
+     assumption_satisfied( 8  ) =>  ! x [type1]: ?>=1 y [year]: is_linked_with_1(y, x).
+}
+
+theory bijections9 : V {
+     assumption_satisfied( 9  ) => ! x [year]: ?>=1 y [type2]: is_linked_with_2(x, y).
+}
+
+theory bijections10 : V {
+     assumption_satisfied( 10  ) => ! x [type2]: ?>=1 y [year]: is_linked_with_2(y, x).
+}
+
+theory bijections11 : V {
+     assumption_satisfied( 11  ) => ! x [type1]: ?>=1 y [type2]: is_linked_with_3(x, y).
+}
+
+theory bijections12 : V {
+     assumption_satisfied( 12  ) => ! x [type2]: ?>=1 y [type1]: is_linked_with_3(y, x).
+}
+
+theory bijections13 : V {
+     assumption_satisfied( 13  ) => ! x [native]: ?=<1 y [year]: is_old(x, y).
+}
+
+theory bijections14 : V {
+     assumption_satisfied( 14  ) => ! x [year]: ?=<1 y [native]: is_old(y, x).
+}
+
+theory bijections15 : V {
+     assumption_satisfied( 15  ) => ! x [native]: ?=<1 y [type1]: from(x, y).
+}
+
+theory bijections16 : V {
+     assumption_satisfied( 16  ) => ! x [type1]: ?=<1 y [native]: from(y, x).
+}
+
+theory bijections17 : V {
+     assumption_satisfied( 17  ) => ! x [native]: ?=<1 y [type2]: lives_in(x, y).
+}
+
+theory bijections18 : V {
+     assumption_satisfied( 18  ) => ! x [type2]: ?=<1 y [native]: lives_in(y, x).
+}
+
+theory bijections19 : V {
+     assumption_satisfied( 19  ) => ! x [year]: ?=<1 y [type1]: is_linked_with_1(x, y).
+}
+
+theory bijections20 : V {
+     assumption_satisfied( 20  ) =>  ! x [type1]: ?=<1 y [year]: is_linked_with_1(y, x).
+}
+
+theory bijections21 : V {
+     assumption_satisfied( 21  ) => ! x [year]: ?=<1 y [type2]: is_linked_with_2(x, y).
+}
+
+theory bijections22 : V {
+     assumption_satisfied( 22  ) => ! x [type2]: ?=<1 y [year]: is_linked_with_2(y, x).
+}
+
+theory bijections23 : V {
+     assumption_satisfied( 23  ) => ! x [type1]: ?=<1 y [type2]: is_linked_with_3(x, y).
+}
+
+theory bijections24 : V {
+     assumption_satisfied( 24  ) => ! x [type2]: ?=<1 y [type1]: is_linked_with_3(y, x).
+}
+
+theory synonyms : V {
+
+    // Logigram synonym axioms:
+    //! x [native] y [type1]: from(x, y) <=> from(x, y).
+}
+
+
+theory transitivity1 : V {
+    assumption_satisfied( 25  ) =>   ! x y z:  from(x, z) & is_linked_with_1(y, z) => is_old(x, y).
+}
+
+theory transitivity2 : V {
+    assumption_satisfied( 26  ) =>   ! x y z:  ~from(x, z) & is_linked_with_1(y, z) => ~is_old(x, y).
+}
+theory transitivity3 : V {
+    assumption_satisfied( 27  ) =>   ! x y z:  from(x, z) & ~is_linked_with_1(y, z) => ~is_old(x, y).
+}
+
+theory transitivity4 : V {
+    assumption_satisfied( 28  ) =>   ! x y z:  lives_in(x, z) & is_linked_with_2(y, z) => is_old(x, y).
+}
+
+theory transitivity5 : V {
+    assumption_satisfied( 29  ) =>   ! x y z:  ~lives_in(x, z) & is_linked_with_2(y, z) => ~is_old(x, y).
+}
+theory transitivity6 : V {
+    assumption_satisfied( 30  ) =>   ! x y z:  lives_in(x, z) & ~is_linked_with_2(y, z) => ~is_old(x, y).
+}
+
+theory transitivity7 : V {
+    assumption_satisfied( 31  ) =>   ! x y z:  lives_in(x, z) & is_linked_with_3(y, z) => from(x, y).
+}
+
+theory transitivity8 : V {
+    assumption_satisfied( 32  ) =>   ! x y z:  ~lives_in(x, z) & is_linked_with_3(y, z) => ~from(x, y).
+}
+theory transitivity9 : V {
+    assumption_satisfied( 33  ) =>   ! x y z:  lives_in(x, z) & ~is_linked_with_3(y, z) => ~from(x, y).
+}
+
+theory transitivity10 : V {
+    assumption_satisfied( 34  ) =>   ! x y z:  is_linked_with_2(x, z) & is_linked_with_3(y, z) => is_linked_with_1(x, y).
+}
+
+theory transitivity11 : V {
+    assumption_satisfied( 35  ) =>   ! x y z:  ~is_linked_with_2(x, z) & is_linked_with_3(y, z) => ~is_linked_with_1(x, y).
+}
+theory transitivity12 : V {
+    assumption_satisfied( 36  ) =>   ! x y z:  is_linked_with_2(x, z) & ~is_linked_with_3(y, z) => ~is_linked_with_1(x, y).
+}
+
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [native] y [year]: ct_is_old(x,y) => is_old(x,y)) &
+        (! x [native] y [year]: cf_is_old(x,y) => ~is_old(x,y)) &
+        (! x [native] y [type1]: ct_from(x,y) => from(x,y)) &
+        (! x [native] y [type1]: cf_from(x,y) => ~from(x,y)) &
+        (! x [native] y [type2]: ct_lives_in(x,y) => lives_in(x,y)) &
+        (! x [native] y [type2]: cf_lives_in(x,y) => ~lives_in(x,y)) &
+        (! x [year] y [type1]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [year] y [type1]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [year] y [type2]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [year] y [type2]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        (! x [type1] y [type2]: ct_is_linked_with_3(x,y) => is_linked_with_3(x,y)) &
+        (! x [type1] y [type2]: cf_is_linked_with_3(x,y) => ~is_linked_with_3(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::is_old], S2[V::is_old].ct)
+    removeFrom(S3[V::is_old], S2[V::is_old].cf)
+    removeFrom(S3[V::lives_in], S2[V::lives_in].ct)
+    removeFrom(S3[V::lives_in], S2[V::lives_in].cf)
+    removeFrom(S3[V::from], S2[V::from].ct)
+    removeFrom(S3[V::from], S2[V::from].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::is_old, VExtra::ct_is_old, VExtra::cf_is_old},
+        {V::lives_in, VExtra::ct_lives_in, VExtra::cf_lives_in},
+        {V::from, VExtra::ct_from, VExtra::cf_from},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+        {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
+    }
+}
+
+include "./generic_procedures-split.idp"
+
+procedure main() {
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "Mattie is 113 years old"},
+        {T2, "The person who lives in Tehama is a native of either Kansas or Oregon"},
+        {T3, "The Washington native is 1 year older than Ernesto"},
+        {T4, "Roxanne is 2 years younger than the Kansas native"},
+        {T5, "The person who lives in Zearing isn't a native of Alaska"},
+        {T6, "The person who is 111 years old doesn't live in Plymouth"},
+        {T7, "The Oregon native is either Zachary or the person who lives in Tehama"},
+        {T8, "The person who lives in Shaver Lake is 1 year younger than Roxanne"},
+        {T9, "The centenarian who lives in Plymouth isn't a native of Alaska"},
+        {T10, "Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas"},
+    }
+
+    test(theories,S)
+    S = compute_explanations(theories,S)
+
+    os.exit(0)
+
+}
+
+procedure get_trans_theories(){
+
+	transitivity_theories = {
+		{transitivity1, "Transitivity constraint"}, 
+		{transitivity2, "Transitivity constraint"}, 
+		{transitivity3, "Transitivity constraint"}, 
+		{transitivity4, "Transitivity constraint"}, 
+		{transitivity5, "Transitivity constraint"}, 
+		{transitivity6, "Transitivity constraint"}, 
+		{transitivity7, "Transitivity constraint"}, 
+		{transitivity8, "Transitivity constraint"}, 
+		{transitivity9, "Transitivity constraint"}, 
+		{transitivity10, "Transitivity constraint"}, 
+		{transitivity11, "Transitivity constraint"}, 
+		{transitivity12, "Transitivity constraint"}, 
+	}
+	return transitivity_theories
+}
+
+procedure get_bij_theories(){
+	bijection_theories = {
+		{bijections1, "Bijectivity"}, 
+		{bijections2, "Bijectivity"}, 
+		{bijections3, "Bijectivity"}, 
+		{bijections4, "Bijectivity"}, 
+		{bijections5, "Bijectivity"}, 
+		{bijections6, "Bijectivity"}, 
+	 	{bijections7, "Bijectivity"}, 
+		{bijections8, "Bijectivity"}, 
+		{bijections9, "Bijectivity"}, 
+		{bijections10, "Bijectivity"}, 
+		{bijections11, "Bijectivity"}, 
+		{bijections12, "Bijectivity"}, 
+		{bijections13, "Bijectivity"}, 
+		{bijections14, "Bijectivity"}, 
+		{bijections15, "Bijectivity"}, 
+		{bijections16, "Bijectivity"}, 
+		{bijections17, "Bijectivity"}, 
+		{bijections18, "Bijectivity"}, 
+		{bijections19, "Bijectivity"}, 
+		{bijections20, "Bijectivity"}, 
+		{bijections21, "Bijectivity"}, 
+		{bijections22, "Bijectivity"}, 
+		{bijections23, "Bijectivity"}, 
+		{bijections24, "Bijectivity"}
+	}
+	return	bijection_theories
+}

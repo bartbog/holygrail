@@ -4,9 +4,10 @@ import './BoxInfo.css';
 // import * as R from 'ramda'
 import ReactDOM from 'react-dom';
 
-const problemName = 'p5-split';
+// const problemName = 'p5-split';
 
-const cluesTags = require(`../../bos/output/${problemName}.tags.json`);
+// const cluesTags = require(`../../bos/output/${problemName}.tags.json`);
+var cluesTags;
 
 var selectedBox = 0;
 
@@ -439,7 +440,10 @@ function InfoButtons() {
     </div>)
 }
 
-function BoxInfo() {
+function BoxInfo({problemName}) {
+
+  cluesTags  = require(`../../bos/output/${problemName}.tags.json`);
+
   return (
     <div>
       {/* <h2>The process</h2> */}

@@ -3,9 +3,16 @@ import './App.css';
 import * as R from 'ramda'
 import ReactDOM from 'react-dom';
 
-const problemName = 'p5-split'
-const steps = require(`../../bos/output/${problemName}.output.json`)
-const vocabulary = require(`../../bos/output/${problemName}.voc.json`)
+
+// const problemName = 'niels-split';
+
+// const cluesTags = require(`../../bos/output/${problemName}.tags.json`);
+// const steps = require(`../../bos/output/${problemName}.output.json`)
+
+// var steps = require(`../../bos/output/${problemName}.output.json`)
+var steps
+// var vocabulary; = require(`../../bos/output/${problemName}.voc.json`)
+var vocabulary 
 
 // String constants used in the file 
 const sol = "Solution!"
@@ -140,7 +147,12 @@ function cleanClues(steps) {
   return uniqueclues
 }
 
-function App() {
+function App({problemName}) {
+  // steps=stepFile
+   steps = require(`../../bos/output/${problemName}.output.json`)
+   vocabulary = require(`../../bos/output/${problemName}.voc.json`)
+  //  steps = require(stepFile)
+  //  vocabulary=require(vocFile)
   const clues = cleanClues(steps)
 
   const [index, setIndex] = React.useState(0)

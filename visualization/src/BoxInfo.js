@@ -4,7 +4,7 @@ import './BoxInfo.css';
 // import * as R from 'ramda'
 import ReactDOM from 'react-dom';
 
-const problemName = 'niels-split';
+const problemName = 'p5-split';
 
 const cluesTags = require(`../../bos/output/${problemName}.tags.json`);
 
@@ -56,15 +56,15 @@ function setToClue(clueNr) {
 
 function setToClueFol(clueNr) {
 
-  if (clueNr >= cluesTags["tags"].length) {
-    activeClueFol = cluesTags["tags"].length - 1;
+  if (clueNr >= Object.keys(cluesTags["fol-logic"]).length) {
+    activeClueFol = Object.keys(cluesTags["fol-logic"]).length - 1;
   } else if (clueNr <= 0) {
     activeClueFol = 0;
   } else {
     activeClueFol = clueNr;
   }
 
-  for (let index = 0; index < cluesTags["tags"].length; index++) {
+  for (let index = 0; index < Object.keys(cluesTags["fol-logic"]).length; index++) {
 
     const folName = `fol${index}`
     var folChild = document.getElementById(folName);

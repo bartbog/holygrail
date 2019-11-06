@@ -13,16 +13,19 @@ var selectedBox = 0;
 const cluesIntroText = "ZebraTutor starts from a plain English language representation of the clues (and a list of all the entities present in the puzzle):"
 const tagsIntroText = "Each word from each natural language clue is tagged using the NTLK perceptron tagger. The output of the POS-tagging process are Part-Of-Speech tagged words:"
 const lexiconIntroText = "The input of our system consists of these clues, combined with the following lexicon (the automated lexicon building does not yet work fully automatically):"
+const folIntroText = "The system outputs the first-order logic representation of the clues."
+const idpIntroText = "Our tool then generates the following translation of each of the clues in the IDP language (where ! is a universal quantifier, ? is an existential quantifier, & is conjunction, | is disjunction and ~ is negation )"
 
 var activeClue = 0;
+var activeClueFol = 0;
 
 var displayTypes = {
   clues: 1,
   postags: 2,
   chunking_lexicon: 3,
   fol: 4,
-  idp: 5,
-  expl: 6
+  idp: 5//,
+  // expl: 6
 };
 
 function setToClue(clueNr) {
@@ -35,14 +38,47 @@ function setToClue(clueNr) {
     activeClue = clueNr;
   }
 
-
   for (let index = 0; index < cluesTags["tags"].length; index++) {
     const tagName = `tag${index}`
     var tagChild = document.getElementById(tagName);
+
+    // const idpName = `idp${index}`
+    // var idpChild = document.getElementById(idpName);
     if (activeClue === index) {
       tagChild.style.display = 'block';
+      // idpChild.style.display = 'block';
     } else {
       tagChild.style.display = 'none';
+      // idpChild.style.display = 'none';
+    }
+  }
+}
+
+function setToClueFol(clueNr) {
+
+  if (clueNr >= cluesTags["tags"].length) {
+    activeClueFol = cluesTags["tags"].length - 1;
+  } else if (clueNr <= 0) {
+    activeClueFol = 0;
+  } else {
+    activeClueFol = clueNr;
+  }
+
+  for (let index = 0; index < cluesTags["tags"].length; index++) {
+
+    const folName = `fol${index}`
+    var folChild = document.getElementById(folName);
+
+    // const idpName = `idp${index}`
+    // var idpChild = document.getElementById(idpName);
+    if (activeClueFol === index) {
+
+      folChild.style.display = 'block';
+      // idpChild.style.display = 'block';
+    } else {
+
+      folChild.style.display = 'none';
+      // idpChild.style.display = 'none';
     }
   }
 }
@@ -80,38 +116,164 @@ function setBoxInfoDisplayTo(displayType) {
       break;
     case displayTypes.fol:
       ReactDOM.render(
-        <Clues clues={cluesTags["clues"]} />,
+        <FOL fol={cluesTags["fol-logic"]} />,
         document.getElementById('BoxInfoText')
       );
       break;
     case displayTypes.idp:
       ReactDOM.render(
-        <Clues clues={cluesTags["clues"]} />,
+        <IDP idp={cluesTags["idp"]} />,
         document.getElementById('BoxInfoText')
       );
       break;
-    case displayTypes.expl:
-      ReactDOM.render(
-        <Clues clues={cluesTags["clues"]} />,
-        document.getElementById('BoxInfoText')
-      );
-      break;
+    // case displayTypes.expl:
+    //   ReactDOM.render(
+    //     <Clues clues={cluesTags["clues"]} />,
+    //     document.getElementById('BoxInfoText')
+    //   );
+    //   break;
     default:
 
   }
 }
 
+function IDP({idp}){
+
+  
+  const listIdpItems = Object.keys(idp).map((elem) => 
+  <div className="padding-top">
+    <tr >
+      <td>// {elem}</td>
+    </tr>
+    <tr>
+      <td>{idp[elem]}</td>
+    </tr>
+    </div>)
+  const idpTable = <table>{listIdpItems}</table>
+  const introText = <div className="grey-text"> {idpIntroText}</div>
+  var clueBox = <div>{introText}
+  <div className="BoxInfoText3 myFont">
+    
+        {idpTable}
+     
+  </div>
+</div>
+
+return clueBox
+}
+
+
+function FOL({fol}){
+  const introText = <div className="grey-text"> {folIntroText}</div>
+  const logicRepresentation = <h3>Logic representation</h3>
+  const types = <h3>Types</h3>
+  const CombTypes = <h3>CombTypes</h3>
+
+  const fol_keys = Object.keys(fol);
+  var listItems = []
+
+  for (let index = 0; index < fol_keys.length; index++) {
+    const key = fol_keys[index];
+    const element = fol[key];
+    const keyElem = `fol${index}`
+
+    if (index === activeClue) {
+      listItems.push(
+        <div id={keyElem}>
+          {logicRepresentation}
+          <div >
+          <table className="centered-div myFont">
+          {element["logic_representation"].map(
+            function(elem) {
+              var listvals = []
+              elem.split("").map(function(letter) {
+                if(letter === " "){
+                  listvals.push(" ")
+                }else{
+                  listvals.push(letter)
+                }
+              })
+              return <tr className="removed-space"><td><pre>{listvals}</pre></td></tr>
+            }) }
+            </table>
+            </div>
+          {types}
+          <div className="td-entities myFont">
+          {element["types"].replace(/,/g, ', ') }
+          </div>
+          {CombTypes}
+          <div className="td-entities myFont">
+        {element["CombTypes"].replace(/,/g, ', ')}
+        </div>
+        </div>)
+    } else {
+      listItems.push(
+        <div className="HiddenBox" id={keyElem}>
+          {logicRepresentation}
+          <div >
+          <table className="centered-div myFont">
+          {element["logic_representation"].map(
+            function(elem) {
+              var listvals = []
+              elem.split("").map(function(letter) {
+                if(letter === " "){
+                  listvals.push(" ")
+                }else{
+                  listvals.push(letter)
+                }
+              })
+              return <tr className="removed-space"><td><pre>{listvals}</pre></td></tr>
+            }) }
+            </table>
+            </div>
+          {types}
+          <div className="td-entities myFont">
+          {element["types"].replace(/,/g, ', ')}
+          {/* {element["types"]} */}
+          </div>
+          {CombTypes}
+          <div className="td-entities myFont">
+        {element["CombTypes"].replace(/,/g, ', ')}
+        {/* {element["CombTypes"]} */}
+        </div>
+        </div>)
+    }
+  }
+
+  var clueBox = <div>    {introText}
+    <div className="container">
+      <div className="row">
+        <div className="col" ></div>
+        <div id="prev-clue" ><button className="col" onClick={() => setToClueFol(activeClueFol - 1)}>Previous Clue</button></div>
+        <div id="next-clue"><button className="col" onClick={() => setToClueFol(activeClueFol + 1)}>Next Clue</button></div>
+        <div className="col" ></div>
+      </div>
+      <div className="row padding-before-clue">
+
+        <div className="col" ></div>
+        <div >
+          {listItems}
+        </div>
+        <div className="col" ></div>
+      </div>
+    </div>
+    <br></br>
+
+  </div>
+
+  return clueBox
+
+
+}
+
+
 function cleanEntities(entities){
   const types = Object.keys(entities).map((elem)=> elem.toLowerCase());
-  const cleanedEntities = Object.keys(entities)
-                                .map((elem)=> entities[elem]
-                                .map((entity) => entity.replace("a_", "").split('_')
-                                .map((splitelem) => types.push(splitelem))))
-                                
-                                
-                                
-                                
-                                // types.push(entity.toLowerCase().replace("a_", "").replace('_', ' '))))
+  Object.keys(entities)
+        .map((elem)=> entities[elem]
+        .map((entity) => entity.replace("a_", "").split('_')
+        .map((splitelem) => types.push(splitelem))))
+
   return types;
 }
 
@@ -125,10 +287,9 @@ function highlightEntities(clue, entities){
       return elem + " "
     }
     });
-  const joinedClues= cleanedClues
 
   // return <td className="thick-text">{clue.charAt(0).toUpperCase() + clue.slice(1)}.</td>
-  return <td><div>{joinedClues}</div></td>
+  return <td><div>{cleanedClues}</div></td>
 }
 
 function Clues({ clues, entities }) {
@@ -159,21 +320,17 @@ function Clues({ clues, entities }) {
   return (
     <div >
       {introText}
-      <h2 className="BoxInfoText3-Header">Entities</h2>
-      <div className="BoxInfoText3">
+      <h2 className="BoxInfoText3-Header"><span className="line-center" >Entities</span></h2>
+      <div className="BoxInfoText3 myFont">
         {entitiesTable}
       </div>
-      <h2 className="BoxInfoText3-Header">Clues</h2>
-      <div className="BoxInfoText3">
+      <h2 className="BoxInfoText3-Header"><span className="line-center" >Clues</span></h2>
+      <div className="BoxInfoText3 myFont">
         {cluesTable}
       </div>
 
     </div>)
 }
-
-
-
-
 
 function Tags({ tags }) {
 
@@ -186,16 +343,16 @@ function Tags({ tags }) {
     const keyElem = `tag${index}`
     if (index === activeClue) {
       listItems.push(
-        <div id={keyElem}>
+        <div id={keyElem} className="myFont">
           <table>
-            <tr>{element.map((elem) => <td className="td-clues-tags thick-text">{elem[0]}</td>)}</tr>
+            <tr>{element.map((elem) => <td className="td-clues-tags thick-text ">{elem[0]}</td>)}</tr>
             <tr>{element.map((elem) => <td className="td-clues-tags">|</td>)}</tr>
             <tr >{element.map((elem) => <td className="td-clues-tags thick-text">{elem[1]}</td>)}</tr>
           </table>
         </div>)
     } else {
       listItems.push(
-        <div className="HiddenBox" id={keyElem}>
+        <div className="HiddenBox myFont" id={keyElem}>
           <table>
             <tr>{element.map((elem) => <td className="td-clues-tags thick-text">{elem[0]}</td>)}</tr>
             <tr>{element.map((elem) => <td className="td-clues-tags">|</td>)}</tr>
@@ -244,7 +401,7 @@ function Lexicon({ lexicon }) {
   return (
     <div>
       {introText}
-      <div className="BoxInfoText3">
+      <div className="BoxInfoText3 myFont">
         {lexiconTable}
       </div>
     </div>)

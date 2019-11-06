@@ -520,3 +520,47 @@ problem(niels, problem(4, 4, [
                         tvPrep([travels], [with], [travel], [travelled]),
                         tvPrep([waits], [on], [wait], [waited])
                      ])).
+
+
+problem(nielspasta, problem(4, 4, [
+		 %"The man who holds a tablet waits on less than the man who travels with kwik",
+		"The person who ordered capellini paid less than the person who chose arrabiata sauce",
+           %"The man who travels with kwik holds a flag",
+		"The person who chose arrabiata sauce ordered farfalle",
+        %"The man who holds a banner waits on less than the man from allfouru",
+		"The person who ordered tagliolini paid less than the person who chose marinara sauce",
+        %"The man who holds a banner waits on more than dolores chan",
+		"The person who ordered tagliolini paid more than Angie",
+		%"jasper kwakman waits on 8 tourists more than the man who holds a plastic or waits on 8 tourists less than the man who holds a plastic",
+		"The person who ordered rotini is either the person who paid $8 more than Damon or the person who paid $8 less than Damon",
+		%"Damon is either the person who paid $8 more than the person who ordered rotini or the person who paid $8 less than the person who ordered rotini",
+        %"rudi zondervan is not from noorman",
+		"Claudia did not choose puttanesca sauce",
+        %"The man who holds a tablet is either jasper kwakman or rudi zondervan",
+		"The person who ordered capellini is either Damon or Claudia",
+        %"The man from kwik is either dolores chan or marlies olijkan"
+		"The person who chose arrabiata sauce is either Angie or Elisa"
+                     ], [
+                        noun([person], [people]),
+                        noun([runner], [runners]),
+                        noun([diner], [diners]),
+                        noun([competitor], [competitors]),
+                        noun([bill], [bills]),
+                        pn([angie]),
+                        pn([capellini]),
+                        pn([damon]),
+                        pn([claudia]),
+                        pn([arrabiata, sauce]),
+                        pn([rotini]),
+                        pn([marinara, sauce]),
+                        pn([tagliolini]),
+                        pn([puttanesca, sauce]),
+                        pn([bolognese, sauce]),
+                        pn([farfalle]),
+                        pn([elisa]),
+                        tv([ordered], [order]),
+                        tv([chose], [choose]),
+                        tv([had], [have]),
+                        tv([paid], [pay]),
+                        tvPrep([came], [to], [come], [come])
+                     ])).

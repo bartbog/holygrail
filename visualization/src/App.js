@@ -1,10 +1,26 @@
 import React from 'react';
 import './App.css';
 import * as R from 'ramda'
+import ReactDOM from 'react-dom';
 
-const problemName = 'p5'
+const problemName = 'p5-split'
 const steps = require(`../../bos/output/${problemName}.output.json`)
 const vocabulary = require(`../../bos/output/${problemName}.voc.json`)
+
+// String constants used in the file 
+const sol = "Solution!"
+const bijectivity = "Bijectivity"
+const logigramConstraint = "Logigram Constraint"
+const transitivity = "Transitivity constraint"
+const combinationConstraints = "Combination of logigram constraints"
+const logicon = "Logigram constraints"
+
+
+const legend = "Legend"
+const legend_new_fact = "New fact"
+const legend_derived_fact = "Derived fact"
+const legend_false = "False"
+const legend_true = "True"
 
 const initialState = {
   clue: null,
@@ -35,17 +51,17 @@ function getKnowledgeFrom(inArray, entity1, entity2) {
 
 function matches(entity1, entity2) {
   return fact => {
-    if(fact.subject === entity1 && fact.object === entity2) {
+    if (fact.subject === entity1 && fact.object === entity2) {
       return true
     }
-    if(fact.object === entity1 && fact.subject === entity2) {
+    if (fact.object === entity1 && fact.subject === entity2) {
       return true
     }
     return false
   }
 }
 
-const size = 35
+const size = 32
 const styles = {
   parentGrid: (nbEntities, nbTypes) => ({
     display: 'grid',
@@ -61,24 +77,24 @@ const styles = {
   parentGridItemVoc: (nbEntities, vertical) => ({
     ...styles.parentGridItem(nbEntities),
     'background-color': 'whitesmoke',
-	color:'black',
+    color: 'black',
     display: 'grid',
     "grid-template-columns": `auto `.repeat(vertical ? nbEntities : 1),
     'flex-direction': vertical ? 'row' : 'column',
   }),
-  childVocGridItem: (nbEntities, vertical) => ({ 
+  childVocGridItem: (nbEntities, vertical) => ({
     border: '1px dashed black',
-	display: 'flex', 
-	'align-items': 'center', 
-	'justify-content': 'center',
+    display: 'flex',
+    'align-items': 'center',
+    'justify-content': 'center',
     ...(vertical ? {
       'writing-mode': 'vertical-lr',
       width: size - 2,
       height: size * nbEntities - 2,
     } : {
-      width: size * nbEntities - 2,
-      height: size - 2,
-    })
+        width: size * nbEntities - 2,
+        height: size - 2,
+      })
   }),
   parentGridItemEmpty: (nbEntities) => ({
     width: nbEntities * size,
@@ -89,7 +105,7 @@ const styles = {
     display: 'grid',
     "grid-template-columns": `auto `.repeat(nbEntities),
   }),
-  childFillGridItem: (color,frontcolor) => ({
+  childFillGridItem: (color, frontcolor) => ({
     width: size - 2,
     height: size - 2,
     border: '1px dashed black',
@@ -97,10 +113,36 @@ const styles = {
     'align-items': 'center',
     'justify-content': 'center',
     'background-color': color,
-	'color': frontcolor,
+    'color': frontcolor,
   })
 }
+
+function cleanClues(steps) {
+  const clues = steps.map(element => element.clue);
+  const uniqueclues = clues.filter(function (item, pos) {
+    return clues.indexOf(item) === pos;
+  }).filter(function (el) {
+    return [bijectivity, logigramConstraint, transitivity, combinationConstraints, logicon].indexOf(el) < 0;
+  });
+
+  for (var i = uniqueclues.length - 1; i >= 0; i--) {
+    if (uniqueclues[i] === logicon || uniqueclues[i] === sol) {
+      uniqueclues.splice(i, 1);
+    }
+  }
+  // uniqueclues.push(logicon)
+
+  // var filteredClues = uniqueclues
+  uniqueclues.push(bijectivity);
+  uniqueclues.push(transitivity);
+  uniqueclues.push(combinationConstraints);
+
+  return uniqueclues
+}
+
 function App() {
+  const clues = cleanClues(steps)
+
   const [index, setIndex] = React.useState(0)
   const factsOverTime = React.useMemo(() => {
     return cleanedFacts(steps)
@@ -117,20 +159,124 @@ function App() {
   }
   const facts = factsOverTime[index]
 
+  ReactDOM.render(
+    <div className="Clues">
+      {/* <h2>Clues</h2> */}
+      <h2><span  class="line-center">Clues</span></h2>
+
+      <UsedClue clues={clues} clue={facts.clue} />
+      <MyLegend />
+      <p></p>
+    </div>,
+    document.getElementById('clues')
+  );
+
+    const header =       <h2><span  class="line-center">Puzzle</span></h2>
+
   return (
     <div className="App">
-        <h2>{facts.clue}</h2>
-        <div>
-          <button onClick={() => setIndexClipped(index - 1)}>Prev</button>
-          <button onClick={() => setIndexClipped(index + 1)}>Next</button>
-        </div>
-        {/*JSON.stringify(facts)*/}
-        <Grid vocabulary={vocabulary} facts={facts}/>
+      {/* <h2>Puzzle</h2> */}
+    {header}
+      <div>
+        <button onClick={() => setIndexClipped(index - 1)}>Prev</button>
+        <button onClick={() => setIndexClipped(index + 1)}>Next</button>
+      </div>
+      <p />
+      <Grid vocabulary={vocabulary} facts={facts} />
     </div>
   );
 }
 
-function Grid ({vocabulary, facts}) {
+function MyLegend() {
+  return (
+    <div>
+
+<h2><span  class="line-center">{legend}</span></h2>
+      {/* <h2>{legend}</h2> */}
+      <table>
+        <tr className="legend-tr">
+          <td className="legend-td2"><div className="red-full-rectangle"></div></td>
+          <td className="legend-td">{legend_new_fact}</td>
+          <td className="legend-td2"><div className="blue-full-rectangle"></div></td>
+          <td className="legend-td">{legend_derived_fact}</td>
+          <td className="legend-td2"><div className="black-empty-rectangle"> ✔ </div></td>
+          <td className="legend-td">{legend_true}</td>
+          <td className="legend-td2"><div className="black-empty-rectangle"> - </div></td>
+          <td className="legend-td">{legend_false}</td>
+        </tr>
+
+      </table>
+    </div>)
+}
+
+
+function UsedClue({ clues, clue }) {
+
+  var unique = 0;
+
+  const listClues = clues.map(function (element) {
+    if ((element === transitivity || element === bijectivity || element === combinationConstraints)) {
+      if (clue === transitivity && unique === 0) {
+        unique = 1
+        return (<div>
+          <li >
+            {logigramConstraint}
+          </li>
+          <ul>
+            <li className="clue-used">{transitivity}</li>
+            <li className="clue-unused">{bijectivity}</li>
+            <li className="clue-unused">{combinationConstraints}</li>
+          </ul>
+        </div>)
+      } else if (clue === bijectivity && unique === 0) {
+        unique = 1
+        return (<div>
+          <li >
+            {logigramConstraint}
+          </li>
+          <ul>
+            <li className="clue-unused">{transitivity}</li>
+            <li className="clue-used">{bijectivity}</li>
+            <li className="clue-unused">{combinationConstraints}</li>
+          </ul>
+        </div>)
+      } else if (clue === combinationConstraints && unique === 0) {
+        unique = 1
+        return (<div>
+          <li >
+            {logigramConstraint}
+          </li>
+          <ul>
+            <li className="clue-unused">{transitivity}</li>
+            <li className="clue-unused">{bijectivity}</li>
+            <li className="clue-used">{combinationConstraints}</li>
+          </ul>
+        </div>)
+      } else if (unique === 0) {
+        unique = 1
+        return (<div>
+          <li >
+            {logigramConstraint}
+          </li>
+          <ul>
+            <li className="clue-unused">{transitivity}</li>
+            <li className="clue-unused">{bijectivity}</li>
+            <li className="clue-unused">{combinationConstraints}</li>
+          </ul>
+        </div>)
+      }
+    }
+    else if (element === clue) {
+      return <li className="clue-used">{element.charAt(0).toUpperCase() + element.slice(1)}</li>
+    } else {
+      return <li className="clue-unused">{element.charAt(0).toUpperCase() + element.slice(1)}</li>
+    }
+  }
+  );
+  return (<ol>{listClues}</ol>)
+}
+
+function Grid({ vocabulary, facts }) {
   const nbTypes = vocabulary.length
   const nbEntities = vocabulary[0].length
 
@@ -151,8 +297,8 @@ function Grid ({vocabulary, facts}) {
               return (<div style={styles.parentGridItemEmpty(nbEntities)} />)
             }
             return (
-            <FillBlock type1={type} type2={type2} facts={facts} />
-          )
+              <FillBlock type1={type} type2={type2} facts={facts} />
+            )
           })}
         </>
       ))}
@@ -160,7 +306,7 @@ function Grid ({vocabulary, facts}) {
   )
 }
 
-function VocBlock ({type, vertical = false}) {
+function VocBlock({ type, vertical = false }) {
   const nbEntities = type.length
   return (
     <div style={styles.parentGridItemVoc(nbEntities, vertical)}>
@@ -171,7 +317,7 @@ function VocBlock ({type, vertical = false}) {
   )
 }
 
-function FillBlock ({type1, type2, facts}) {
+function FillBlock({ type1, type2, facts }) {
   const nbEntities = type1.length
   return (
     <div style={styles.parentGridItemFill(nbEntities)}>
@@ -184,18 +330,18 @@ function FillBlock ({type1, type2, facts}) {
 
             const knowledge = derivedKnowledge || assumedKnowledge || knownKnowledge
             let color = null
-			let frontcolor = '#000'
+            let frontcolor = '#000'
             if (derivedKnowledge != null) {
               color = knowledge.value ? '#FF6600' : '#FF6600'
             } else if (assumedKnowledge != null) {
               color = '#003399' //Asymmetry true/false is not so important here... 
-				frontcolor ='white'
+              frontcolor = 'white'
             } else if (knowledge != null) {
-				color = 'whitesmoke'
-			}
+              color = 'whitesmoke'
+            }
 
             return (
-              <div style={styles.childFillGridItem(color,frontcolor)}>{knowledge == null ? ' ' : knowledge.value ? '✔' : '-'}</div>
+              <div style={styles.childFillGridItem(color, frontcolor)}>{knowledge == null ? ' ' : knowledge.value ? '✔' : '-'}</div>
             )
           })}
         </>

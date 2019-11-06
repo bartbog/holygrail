@@ -10,10 +10,6 @@ import 'bootstrap/dist/js/bootstrap.js';
 
 const problemName = 'p5-split';
 
-// const cluesTags = require(`../../bos/output/${problemName}.tags.json`);
-// const steps = require(`../../bos/output/${problemName}.output.json`)
-// const vocabulary = require(`../../bos/output/${problemName}.voc.json`)
-
 ReactDOM.render( <PuzzleInfo /> , document.getElementById('problemIntro'));
 ReactDOM.render( <App problemName={problemName} /> , document.getElementById('root'));
 ReactDOM.render( <BoxInfo problemName={problemName}  />, document.getElementById('box-info'));

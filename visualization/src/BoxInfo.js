@@ -433,10 +433,11 @@ function InfoButtons() {
       <div id="fol-button" className="col-sm"><button className="button-step4" onClick={() => setBoxInfoDisplayTo(displayTypes.fol)}>Discourse representation theory</button></div>
       <div className=" div-centered-hv col-sm">----></div>
       <div id="idp-button" className="col-sm"><button className="button-step2" onClick={() => setBoxInfoDisplayTo(displayTypes.idp)}>IDP (first-order logic)</button></div>
-      <div className=" div-centered-hv col-sm">----></div>
+      <div className=" div-centered-hv">----></div>
+      <div className=" div-centered-hv col-sm">Explanation Generation</div>
       {/* <div id="expl-button" className="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>6. Explanation Generation</button></div> */}
       {/* <div id="expl-button" className="col-sm"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>6. Explanation Generation</button></div> */}
-      <div className="div-centered-hv col-sm">Explanation Generation</div>
+      {/* <div id="idp-button" className=""><button className="button-step2">Explanation Generation</button></div> */}
     </div>)
 }
 

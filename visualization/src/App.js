@@ -3,7 +3,7 @@ import './App.css';
 import * as R from 'ramda'
 import ReactDOM from 'react-dom';
 
-const problemName = 'niels-split'
+const problemName = 'p5-split'
 const steps = require(`../../bos/output/${problemName}.output.json`)
 const vocabulary = require(`../../bos/output/${problemName}.voc.json`)
 

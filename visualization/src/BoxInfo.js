@@ -84,7 +84,6 @@ function setToClueFol(clueNr) {
   }
 }
 
-
 function setBoxInfoDisplayTo(displayType) {
 
   if (selectedBox === displayType) {
@@ -102,6 +101,7 @@ function setBoxInfoDisplayTo(displayType) {
         <Clues clues={cluesTags["clues"]} entities={cluesTags["types"]} />,
         document.getElementById('BoxInfoText')
       );
+      
       break;
     case displayTypes.postags:
       ReactDOM.render(
@@ -322,7 +322,7 @@ function Clues({ clues, entities }) {
   const cluesTable = <table>{listClues}</table>
   // const entitiesTable = <table>{listEntities}</table>
   return (
-    <div >
+    <div>
       {introText}
       <h2 className="BoxInfoText3-Header"><span className="line-center" >Entities</span></h2>
       <div className="BoxInfoText3 myFont">

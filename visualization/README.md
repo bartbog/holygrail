@@ -1,5 +1,14 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Installing the packages
+
+Before starting the project, install the following packages. The `--save` argument is optional.
+
+    npm install bootstrap --save
+    npm install jquery --save
+    npm install popper.js --save
+    npm install typescript --save
+
 ## Available Scripts
 
 In the project directory, you can run:

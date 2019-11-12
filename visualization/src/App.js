@@ -25,7 +25,7 @@ const logicon = "Logigram constraints"
 
 const legend = "Legend"
 const legend_new_fact = "New fact"
-const legend_derived_fact = "Derived fact"
+const legend_derived_fact = "Known fact"
 const legend_false = "False"
 const legend_true = "True"
 

@@ -1,0 +1,289 @@
+{
+    "tags": [
+        [
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["ordered", "VBD"],
+            ["capellini", "NN"],
+            ["paid", "NN"],
+            ["less", "JJR"],
+            ["than", "IN"],
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["chose", "VBD"],
+            ["arrabiata", "NNS"],
+            ["sauce", "NN"]
+        ],
+        [
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["chose", "VBD"],
+            ["arrabiata", "NNS"],
+            ["sauce", "NN"],
+            ["ordered", "VBD"],
+            ["farfalle", "NNS"]
+        ],
+        [
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["ordered", "VBD"],
+            ["tagliolini", "NN"],
+            ["paid", "NN"],
+            ["less", "JJR"],
+            ["than", "IN"],
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["chose", "VBD"],
+            ["marinara", "NN"],
+            ["sauce", "NN"]
+        ],
+        [
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["ordered", "VBD"],
+            ["tagliolini", "NN"],
+            ["paid", "VBD"],
+            ["more", "JJR"],
+            ["than", "IN"],
+            ["angie", "NN"]
+        ],
+        [
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["ordered", "VBD"],
+            ["rotini", "NN"],
+            ["is", "VBZ"],
+            ["either", "CC"],
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["paid", "VBD"],
+            ["$", "$"],
+            ["8", "NNPN"],
+            ["more", "JJR"],
+            ["than", "IN"],
+            ["damon", "NN"],
+            ["or", "CC"],
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["paid", "VBD"],
+            ["$", "$"],
+            ["8", "NNPN"],
+            ["less", "JJR"],
+            ["than", "IN"],
+            ["damon", "NN"]
+        ],
+        [
+            ["claudia", "NN"],
+            ["did", "VBD"],
+            ["not", "RB"],
+            ["choose", "VB"],
+            ["puttanesca", "NNS"],
+            ["sauce", "VB"]
+        ],
+        [
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["ordered", "VBD"],
+            ["capellini", "NN"],
+            ["is", "VBZ"],
+            ["either", "DT"],
+            ["damon", "NN"],
+            ["or", "CC"],
+            ["claudia", "NN"]
+        ],
+        [
+            ["the", "DT"],
+            ["person", "NN"],
+            ["who", "WP"],
+            ["chose", "VBD"],
+            ["arrabiata", "NNS"],
+            ["sauce", "NN"],
+            ["is", "VBZ"],
+            ["either", "DT"],
+            ["angie", "NN"],
+            ["or", "CC"],
+            ["elisa", "NN"]
+        ]
+    ],
+    "clues": [
+        "The person who ordered capellini paid less than the person who chose arrabiata sauce",
+        "The person who chose arrabiata sauce ordered farfalle",
+        "The person who ordered tagliolini paid less than the person who chose marinara sauce",
+        "The person who ordered tagliolini paid more than Angie",
+        "The person who ordered rotini is either the person who paid $8 more than Damon or the person who paid $8 less than Damon",
+        "Claudia did not choose puttanesca sauce",
+        "The person who ordered capellini is either Damon or Claudia",
+        "The person who chose arrabiata sauce is either Angie or Elisa"
+    ],
+    "lexicon": {
+
+        "person": "noun([person], [people])",
+        "runner": "noun([runner], [runners])",
+        "diner": "noun([diner], [diners])",
+        "competitor": "noun([competitor], [competitors])",
+        "bill": "noun([bill], [bills])",
+        "angie": "pn([angie])",
+        "capellini": "pn([capellini])",
+        "damon": "pn([damon])",
+        "claudia": "pn([claudia])",
+        "arrabiata_sauce": "pn([arrabiata, sauce])",
+        "rotini": "pn([rotini])",
+        "marinara_sauce": "pn([marinara, sauce])",
+        "tagliolini": "pn([tagliolini])",
+        "puttanesca_sauce": "pn([puttanesca, sauce])",
+        "bolognese_sauce": "pn([bolognese, sauce])",
+        "farfalle": "pn([farfalle])",
+        "elisa": "pn([elisa])",
+        "ordered": "tv([ordered], [order])",
+        "chose": "tv([chose], [choose])",
+        "had": "tv([had], [have])",
+        "paid": "tv([paid], [pay])",
+        "come to": "tvPrep([came], [to], [come], [come])"
+    },
+    "types": {
+        "type1": ["the_other_type1", "arrabiata_sauce", "marinara_sauce", "puttanesca_sauce"],
+        "person": ["angie", "damon", "claudia", "elisa"],
+        "dollar": ["4", "8", "12", "16"],
+        "type2": ["capellini", "farfalle", "tagliolini", "rotini"]
+    },
+
+    "fol-logic": {
+        "The person who ordered capellini paid less than the person who chose arrabiata sauce": {
+            "logic_representation": ["┌───────────────────────────────┐",
+                "│ x0:x1 x2:x3 x4:x5 x6:x1 x7:x5 │",
+                "├───────────────────────────────┤",
+                "│ ordered(x0, capellini)        │",
+                "│ x2 > 0                        │",
+                "│ chose(x6, arrabiata_sauce)    │",
+                "│ paid(x6, x4)                  │",
+                "│ x7 = x4 - x2                  │",
+                "│ paid(x0, x7)                  │",
+                "└───────────────────────────────┘"
+            ],
+            "types": "[type(pn-arrabiata_sauce,A),type(tv-chose,pred(B,A)),type(noun-person,B),type(tv-paid,pred(B,C)),type(pn-capellini,D),type(tv-ordered,pred(B,D)),attr(C,countable),attr(A,qualified),attr(E,derivedCountable(C)),attr(D,qualified)]",
+            "CombTypes": "[type(pn-arrabiata_sauce,A),type(tv-chose,pred(B,A)),type(noun-person,B),type(tv-paid,pred(B,C)),type(pn-capellini,D),type(tv-ordered,pred(B,D)),attr(C,countable),attr(A,qualified),attr(E,derivedCountable(C)),attr(D,qualified)]"
+        },
+        "The person who chose arrabiata sauce ordered farfalle": {
+            "logic_representation": ["┌────────────────────────────┐",
+                "│ x0:x1                      │",
+                "├────────────────────────────┤",
+                "│ chose(x0, arrabiata_sauce) │",
+                "│ ordered(x0, farfalle)      │",
+                "└────────────────────────────┘"
+            ],
+            "types": "[type(pn-farfalle,A),type(tv-ordered,pred(B,A)),type(pn-arrabiata_sauce,C),type(tv-chose,pred(B,C)),type(noun-person,B),attr(A,qualified),attr(C,qualified)]",
+            "CombTypes": "[type(pn-farfalle,A),type(tv-ordered,pred(B,A)),type(pn-arrabiata_sauce,C),type(tv-chose,pred(B,C)),type(noun-person,B),attr(A,qualified),attr(C,qualified)]"
+        },
+        "The person who ordered tagliolini paid less than the person who chose marinara sauce": {
+            "logic_representation": ["┌───────────────────────────────┐",
+                "│ x0:x1 x2:x3 x4:x5 x6:x1 x7:x5 │",
+                "├───────────────────────────────┤",
+                "│ ordered(x0, tagliolini)       │",
+                "│ x2 > 0                        │",
+                "│ chose(x6, marinara_sauce)     │",
+                "│ paid(x6, x4)                  │",
+                "│ x7 = x4 - x2                  │",
+                "│ paid(x0, x7)                  │",
+                "└───────────────────────────────┘"
+            ],
+            "types": "[type(pn-marinara_sauce,A),type(tv-chose,pred(B,A)),type(noun-person,B),type(tv-paid,pred(B,C)),type(pn-tagliolini,D),type(tv-ordered,pred(B,D)),attr(C,countable),attr(A,qualified),attr(E,derivedCountable(C)),attr(D,qualified)]",
+            "CombTypes": "[type(pn-marinara_sauce,A),type(tv-chose,pred(B,A)),type(noun-person,B),type(tv-paid,pred(B,C)),type(pn-tagliolini,D),type(tv-ordered,pred(B,D)),attr(C,countable),attr(A,qualified),attr(E,derivedCountable(C)),attr(D,qualified)]"
+        },
+        "The person who ordered tagliolini paid more than Angie": {
+            "logic_representation": ["┌─────────────────────────┐",
+                "│ x0:x1 x2:x3 x4:x5 x6:x5 │",
+                "├─────────────────────────┤",
+                "│ ordered(x0, tagliolini) │",
+                "│ x2 > 0                  │",
+                "│ paid(angie, x4)         │",
+                "│ x6 = x4 + x2            │",
+                "│ paid(x0, x6)            │",
+                "└─────────────────────────┘"
+            ],
+            "types": "[type(pn-angie,A),type(tv-paid,pred(A,B)),type(pn-tagliolini,C),type(tv-ordered,pred(A,C)),type(noun-person,A),attr(B,countable),attr(A,qualified),attr(D,derivedCountable(B)),attr(C,qualified)]",
+            "CombTypes": "[type(pn-angie,A),type(tv-paid,pred(A,B)),type(pn-tagliolini,C),type(tv-ordered,pred(A,C)),type(noun-person,A),attr(B,countable),attr(A,qualified),attr(D,derivedCountable(B)),attr(C,qualified)]"
+        },
+        "The person who ordered rotini is either the person who paid $8 more than Damon or the person who paid $8 less than Damon": {
+            "logic_representation": ["┌───────────────────────────────────────────────────────────────┐",
+                "│ x0:x1                                                         │",
+                "├───────────────────────────────────────────────────────────────┤",
+                "│ ordered(x0, rotini)                                           │",
+                "│ ┌───────────────────────────┐   ┌───────────────────────────┐ │",
+                "│ │ x2:x1 x3:dollar x4:dollar │   │ x5:x1 x6:dollar x7:dollar │ │",
+                "│ ├───────────────────────────┤   ├───────────────────────────┤ │",
+                "│ │ paid(damon, x3)           │ V │ paid(damon, x6)           │ │",
+                "│ │ x4 = x3 + 8               │   │ x7 = x6 - 8               │ │",
+                "│ │ paid(x2, x4)              │   │ paid(x5, x7)              │ │",
+                "│ │ x2 = x0                   │   │ x5 = x0                   │ │",
+                "│ └───────────────────────────┘   └───────────────────────────┘ │",
+                "└───────────────────────────────────────────────────────────────┘"
+            ],
+            "types": "[type(pn-damon,A),type(number-8,dollar),type(tv-paid,pred(A,dollar)),type(noun-person,A),type(number-8,dollar),type(pn-rotini,B),type(tv-ordered,pred(A,B)),attr(dollar,countable),attr(A,qualified),attr(B,qualified)]",
+            "CombTypes": "[type(pn-damon,A),type(number-8,dollar),type(tv-paid,pred(A,dollar)),type(noun-person,A),type(number-8,dollar),type(pn-rotini,B),type(tv-ordered,pred(A,B)),attr(dollar,countable),attr(A,qualified),attr(B,qualified)]"
+        },
+        "Claudia did not choose puttanesca sauce": {
+            "logic_representation": ["┌──────────────────────────────────────────┐",
+                "│                                          │",
+                "├──────────────────────────────────────────┤",
+                "│    ┌──────────────────────────────────┐  │",
+                "│    │                                  │  │",
+                "│ ─┐ ├──────────────────────────────────┤  │",
+                "│    │ chose(claudia, puttanesca_sauce) │  │",
+                "│    └──────────────────────────────────┘  │",
+                "└──────────────────────────────────────────┘"
+            ],
+            "types": "[type(pn-puttanesca_sauce,A),type(tv-chose,pred(B,A)),type(pn-claudia,B),attr(A,qualified),attr(B,qualified)]",
+            "CombTypes": "[type(pn-puttanesca_sauce,A),type(tv-chose,pred(B,A)),type(pn-claudia,B),attr(A,qualified),attr(B,qualified)]"
+        },
+        "The person who ordered capellini is either Damon or Claudia": {
+            "logic_representation": ["┌───────────────────────────────────┐",
+                "│ x0:x1                             │",
+                "├───────────────────────────────────┤",
+                "│ ordered(x0, capellini)            │",
+                "│ ┌────────────┐   ┌──────────────┐ │",
+                "│ │            │   │              │ │",
+                "│ ├────────────┤   ├──────────────┤ │",
+                "│ │ damon = x0 │ V │ claudia = x0 │ │",
+                "│ └────────────┘   └──────────────┘ │",
+                "└───────────────────────────────────┘"
+            ],
+            "types": "[type(pn-claudia,A),type(pn-damon,A),type(pn-capellini,B),type(tv-ordered,pred(A,B)),type(noun-person,A),attr(A,qualified),attr(B,qualified)]",
+            "CombTypes": "[type(pn-claudia,A),type(pn-damon,A),type(pn-capellini,B),type(tv-ordered,pred(A,B)),type(noun-person,A),attr(A,qualified),attr(B,qualified)]"
+        },
+        "The person who chose arrabiata sauce is either Angie or Elisa": {
+            "logic_representation": ["┌─────────────────────────────────┐",
+                "│ x0:x1                           │",
+                "├─────────────────────────────────┤",
+                "│ chose(x0, arrabiata_sauce)      │",
+                "│ ┌────────────┐   ┌────────────┐ │",
+                "│ │            │   │            │ │",
+                "│ ├────────────┤   ├────────────┤ │",
+                "│ │ angie = x0 │ V │ elisa = x0 │ │",
+                "│ └────────────┘   └────────────┘ │",
+                "└─────────────────────────────────┘"
+            ],
+            "types": "[type(pn-elisa,A),type(pn-angie,A),type(pn-arrabiata_sauce,B),type(tv-chose,pred(A,B)),type(noun-person,A),attr(A,qualified),attr(B,qualified)]",
+            "CombTypes": "[type(pn-elisa,A),type(pn-angie,A),type(pn-arrabiata_sauce,B),type(tv-chose,pred(A,B)),type(noun-person,A),attr(A,qualified),attr(B,qualified)]"
+        }
+    },
+    "idp": {
+        "The person who ordered capellini paid less than the person who chose arrabiata sauce": "?a [person] b [type3] c [dollar] d [person] e [dollar]: ordered(a,capellini) & b>0 & chose(d,arrabiata_sauce) & paid(d,c) & e = c-b & paid(a,e).",
+        "The person who chose arrabiata sauce ordered farfalle": "?f [person]: chose(f,arrabiata_sauce) & ordered(f,farfalle).",
+        "The person who ordered tagliolini paid less than the person who chose marinara sauce": "?g [person] h [type4] i [dollar] j [person] k [dollar]: ordered(g,tagliolini) & h>0 & chose(j,marinara_sauce) & paid(j,i) & k = i-h & paid(g,k).",
+        "The person who ordered tagliolini paid more than Angie": "?l [person] m [type5] n [dollar] o [dollar]: ordered(l,tagliolini) & m>0 & paid(angie,n) & o = n+m & paid(l,o).",
+        "The person who ordered rotini is either the person who paid $8 more than Damon or the person who paid $8 less than Damon": "?p [person]: ordered(p,rotini) & ((?q [person] r [dollar] s [dollar]: paid(damon,r) & s = r+8 & paid(q,s) & q = p) | (?t [person] u [dollar] v [dollar]: paid(damon,u) & v = u-8 & paid(t,v) & t = p)).",
+        "Claudia did not choose puttanesca sauce": "~ chose(claudia,puttanesca_sauce).",
+        "The person who ordered capellini is either Damon or Claudia": "?w [person]: ordered(w,capellini) & (damon = w | claudia = w).",
+        "The person who chose arrabiata sauce is either Angie or Elisa": "?x [person]: chose(x,arrabiata_sauce) & (angie = x | elisa = x)."
+    }
+}

@@ -77,12 +77,12 @@ procedure inner_explanation_loop(theories,S){
 			if #propagations > 0 then
 				shortestExpl = propagations[1][5]
 				//Optimization: next round, anything of length at most the shortest thing found+1 now will be accepted (speed optimization -- Don't know how helpful...)
-				exception = shortestExpl + 2
+				exception = shortestExpl - 4	
 				debug("Shortest explanation size")
 				debug(shortestExpl)
 				newpropagations = {}
 				for i,prop in ipairs(propagations) do
-					if prop[5] < shortestExpl +2 then
+					if prop[5] < shortestExpl + 1 then
 						S = doPropagation(S, prop[1],prop[2],prop[3],prop[4],false, prop[5])
 					else
 						table.insert(newpropagations,prop)

@@ -1,0 +1,47 @@
+% Description of our pipeline, including the NLP part (though not fully automated):
+% Can include Jens' table on challenges for BOS even with fully correct lexicon (from his poster).
+% TODO : add ZebraTutor in Latex logic Mode
+ZebraTutor is an end-to-end solution for solving logic grid puzzles (also known as Zebra puzzles) and for explaining in a human-understandable way, how this solution can be obtained from the clues. 
+
+The input to ZebraTutor is a plain English language representation of the sentences (from hereon referred to as "clues") and a list of all the \textit{entities} present in the puzzle, e.g. Englishman, red house, Zebra, etc. It then applies NLP techniques to build a puzzle-specific lexicon. This lexicon is fed into a type-aware variant of the semantical framework of Blackburn \& Bos, which translates the clues into Discourse Representation Theory). This logic is further transformed to a specification in the IDP language, an extension of first-order logic. 
+
+The underlying solver,IDP (called
+% TODO : add MINISAT in Latex logic Mode
+ MINISAT(ID) ) uses this formal representation of the clues both to  solve the puzzle and to explain the solution. 
+ 
+% Pipeline description of the steps form start to end
+\paragraph{Steps} Our framework consists of the following steps, starting from the input:
+\begin{enumerate}
+	\item[A] \label{steps_A} Part-Of-Speech (POS) tagging: a tag is associated with each word.
+	\item[B] \label{steps_B} Chunking and lexicon building: a problem-specific lexicon is developed. 
+	\item[C] \label{steps_C} From chunked sentences to logic: using a custom grammar and semantics a logical representation of the clues is constructed.
+	\item[D] \label{steps_D} From logic to a complete IDP specification: the logical representation is translated into IDP language and augmented with logic-grid-specific information.
+	\item[E] \label{steps_E} Explanation-generating search in IDP: We exploit the IDP representation of the clues to search for simple explanations as to how the puzzle can be solved
+	\item[F] \label{steps_F} Visualisation of the explanation: the step-by-step explanation is visualized
+\end{enumerate}
+The first three steps are related to Natural Language Processing and are discussed in subsection \ref{nlp}. Step D is explained in subsection \ref{idp_spec}. Subsection \ref{explaining_puzzles} briefly summarizes the previous 
+
+\subsection{Natural Language Processing} \label{nlp}
+The standard procedure in Natural Language Processing is to start by tagging each word with its estimated Part-Of-Speech tag (POS tag). 
+
+\subsubsection*{Step A. Part-Of-Speech (POS) tagging} \label{pos_tagging}
+We use the standard English Penn Treebank II POS tagset \cite{marcus1993building}. As POS tagger we use NLTK's built-in Perceptron tagger \footnote{\url{http://www.nltk.org}}. It uses a statistical inference mechanism, trained on a standard training set from the Wall Street Journal. Since any POS-tagger can make mistakes, we make sure that all of the puzzle’s entities are tagged as noun.
+
+\subsubsection*{Step B. Chunking and lexicon building} \label{chunking_lexicon}
+
+
+\subsubsection*{Step C. From chunked sentences to logic} \label{chunked_to_logic}
+
+
+\subsection{Defining an IDP specification} \label{idp_spec}
+
+\subsubsection*{Step D. From logic to a complete IDP specification} \label{logic_to_idp}
+
+
+\subsection{Explaining Logic Grid Puzzles} \label{explaining_puzzles}
+
+\subsubsection*{Step E. Explanation-generating search in IDP} \label{idp_search}
+
+
+\subsubsection*{Step F. Visualisation of the explanation} \label{visualisation_explanation}
+

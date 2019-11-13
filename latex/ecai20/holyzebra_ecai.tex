@@ -2,9 +2,21 @@
 \usepackage{times}
 \usepackage{graphicx}
 \usepackage{latexsym}
+\usepackage{xcolor}
+\usepackage{paralist}
+
+\usepackage{xspace}
+\newcommand\m[1]{\ensuremath{#1}\xspace}
+\newcommand\ltrue{\m{\mathbf{t}}}
+\newcommand\lunkn{\m{\mathbf{u}}}
+\newcommand\lfalse{\m{\mathbf{f}}}
+\newcommand\leqp{\m{\leq_p}}
+\newcommand\geqp{\m{\geq_p}}
 
 %%\ecaisubmission   % inserts page numbers. Use only for submission of paper.
                   % Do NOT use for camera-ready version of paper.
+                  
+                  \newcommand\bart[1]{{\color{red}\textsc{BB}: #1}}
 
 \begin{document}
 
@@ -48,7 +60,84 @@ Contributions: (eerste aanzet!!!)
 \section{Related work}
 TODO
 
-\section{Problem definition}
+\section{Background}
+We will assume familiarity with \emph{typed first-order logic} and \emph{typed second-order logic}.  
+A logical vocabulary consists of a set of type symbols, typed constant symbols, and relation symbols with associated type signature (i.e., each relation symbol is typed $T_1\times \dots \times T_n$ with $T_i$ types).\footnote{We here omit function symbols since they are not used in this paper.}
+Given a logical vocabulary $V$, a \emph{\textbf{partial} interpretation} $I$ assigns to each type symbol $T$ a finite set $I(T)$ and to each 
+relation symbol $P$ with type signature $T_1\times \dots \times T_n$ a function 
+\[I(P): I(T_1)\times \dots \times I(T_n)\to \{\ltrue,\lunkn,\lfalse\},\] 
+where $\ltrue$ stands for true, $\lunkn$ for unknown, and $\lfalse$ for false. In case nothing is mapped to $\lunkn$, we call this an \emph{interpretation}.
+A \emph{first-order theory} is a set of sentences (well-formed free-variable-free FO formulas in which each quantified variable has an associated type). 
+In a second-order theory also quantifiers over relations have an associated type signature. 
+A partial interpretation $I_1$ is \emph{more precise} than partial interpretation $I_2$ (notation $I_1\geqp I_2$) if $I_1$ and $I_2$ agree on everything no unknown in $I_2$.
+\bart{Clear or do I make it more formal}
+
+
+\section{Problem Definition}
+A logic grid puzzle  (also known as a Zebra puzzle or Einstein puzzle after Einstein's famous example of this type of puzzle) consists of a set of natural language sentences (from hereon referred to as ``clues'') and (optionally) a set of \emph{entities} occurring in those sentences. 
+For instance, our running example contains a clue ``The person who chose arrabiata sauce is either Angie or Elisa'' and (among others) entities ``arrabiata sauce'', ``Angie'' and ``Elisa''. 
+The set of entities is sometimes left implicit if it can be derived from the clues, but often it is given in the form of a grid. 
+Furthermore, in such a puzzle the set of entities is partitioned into equally sized groups (corresponding to \emph{types}); in our example, at least ``person'' and ``sauce'' are such types. 
+The goal of the puzzle is to find relations between each two types such that
+\begin{compactitem}
+\item each clue is respected, 
+\item each object of one type is linked to exactly one object of the second type, e.g., each person ordered exactly one sauce (this type of constraint will be referred to as \emph{bijectivity}), and 
+\item the relations are logically linked, e.g., if Angie ordered arrabiata sauce and arrabiata sauce was paired with farfalle, then Angie must also have eaten farfalle (from now on called \emph{transitivity}). 
+\end{compactitem}
+
+For now, we assume that a vocabulary with types corresponding to the groups of entities in the clues and binary relations between each two types is given.
+We furthermore assume that the interpretation of the types is fixed (and hence all interpretations agree on this). 
+Finally, we assume that the clues, as well as the bijectivity and transitivity constraints are given as first-order sentences and that $T_P$ is a theory containing all of these sentences for a given puzzle $P$; we discuss how to obtain this logical form in Section \ref{sec:holistic}. 
+The grand goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with a 
+\emph{justification} (see below) of why each of the steps is correct that is ``as easy to understand as possible''. 
+Of course the latter is a subjective matter and quite hard to quantify. Therefore, in this paper, we will use a reasonable approximation thereof. 
+
+
+\paragraph{Justification of Reasoning Steps.}
+As mentioned above, we are searching for a sequence $I_1,\dots, I_n$ of partial interpretations such that each reasoning step $I_i\to I_{i+1}$ has an associated justification. By that we mean a tuple $(I_i',S)$ such that  
+\begin{compactitem}
+ \item $I_i'$ is a partial interpretation less precise than $I_i$ (i.e., $I_i'$ consists of a subset of the previously derived knowledge), 
+ \item $S$ is a subset of $T_P$ (i.e., only some of the clues and implicit constraints are used), and 
+ \item all fact $(\lnot) R(d_1,d_2)$ in which $I_i$ and $I_{i+1}$ differ, are consequences of $S$ and $I_i'$; or more formally, in each model of $S$ more precise than $I_i'$, $(\lnot) R(d_1,d_2)$ holds (i.e., all knowledge that is new in $I_{i+1}$ follows from the selected subsets).
+\end{compactitem}
+A first observation is that the problem of finding a justification for the derivation of a certain fact $(\lnot) R(d_1,d_2)$ can easily be cast as a second-order model expansion problem. \bart{todo define MX}. 
+To do this, we introduce for each clue, for each implicit constraint, and for each possible fact $R(d_1,d_2)$ a new propositional symbol $p_i$ (where $i$ ranges over a sufficently large set of numbers). 
+The task can then be formulated as: replace in T each sentence $s_i$ by $p_i\Rightarrow s_i$ ... : 
+\[\exists p_i... \]
+\bart{BUT; I Don't know if we shoul REALLY give all the details. It starts to take up a lot of space. Alternatively, I would say something of the form : 
+\[\exists I_i'\leqp I_i, S\subseteq T: \forall models M of (S+I_i'): (\lnot) R(d_1,d_2) \]
+And then argue that this can be transformed with auxiliary symbols in to a real SO theory but the important thing is the quantifier alternation! Simply checking whether there exists a justification, not even an optimal one yet, si already phrased as an $\exists\forall SO$ problem. It can then be argued in the next paragraph that the optimization variant there of is a $\exists\forall\exists SO$ problem bringing us essentially to the third level of PH. 
+}
+
+
+
+
+\paragraph{Simplicity of reasoning steps.}
+To approximate of how easy to understand a certain reasoning step is (i.e., a single transition in the above described sequence), we start from the simple cognitive idea \bart{can we cite this somewhere? } that (in general) the fewer things a human needs to have in memory simultaneously, the easier the task at hand is. 
+Hence, as a measure of difficulty we propose to use \textbf{the total number of clues, bijectivity and transitivity constraints, and previously derived facts} needed to derive a new fact. \bart{In fact ,we do not exactly use this measure, since we do not allow combining two clues if there exists some explanation that only uses one}
+The reader should be advised that this is quite a rough approximation; for instance certain clues can be easier than others to reason about (e.g., compare ``Claudia did not choose puttanesca sauce'' with ``The person who ordered rotini is either the person who paid \$8 more than Damon or the person who paid \$8 less than Damon'') or it might be that humans perceive reasoning about clues in general as easier or harder than reasoning about the implicit (bijectivity and transitivity) constraints presents in logic grid puzzles. While researching better measures is an interesting topic, it falls out of the scope of the current paper. Moreover, many ideas of the current work remain valid when the actual measure is changed. 
+A first observation is that irrespective of the measure of complexity, the task of finding an explanation  
+
+
+A first observation is that once this measure is fixed, the problem of finding, given a partial interpretation $I$, the problem of searching a next reasoning step with a minimal cost can be cast as a second-order logic problem as follows: 
+% \[\exists 
+
+
+
+... reduction to QBF \cite{kr/BogaertsTS16,kr/vanderHallenJ18}
+
+
+
+\paragraph{Simple sequence vs simple steps}
+In its most general form, we would like to optimize the sequence 
+
+
+
+
+
+
+The grand goal underlying our tool is to find, given a logic grid puzzle (of which we assume it is given in some logical form for now; we revisit this in Section \ref{sec:holistic}), to find a sequence of partial assignments of variables (e.g., where it is already determined that certain entities are linked (or not linked) to which other entities) that is ``as easy to understand'' as possible.  
+Of course the latter is quite a vague concept and hard to find an objective measure for. However, we 
 The larger problem
 
 \section{Decomposition, propagation and unsat cores}
@@ -63,7 +152,7 @@ Improved algo
 
 Post-processing steps
 
-\section{Logic Grid Puzzles: a holistic approach}
+\section{Logic Grid Puzzles: a holistic approach}\label{sec:holistic}
 Description of our pipeline, including the NLP part (though not fully automated)
 
 Can include Jens' table on challenges for BOS even with fully correct lexicon (from his poster).

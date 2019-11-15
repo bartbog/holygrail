@@ -1,19 +1,6 @@
-A logic grid puzzle  (also known as a Zebra puzzle or Einstein puzzle after Einstein's famous example of this type of puzzle) consists of a set of natural language sentences (from hereon referred to as ``clues'') and (optionally) a set of \emph{entities} occurring in those sentences. 
-For instance, our running example contains a clue ``The person who chose arrabiata sauce is either Angie or Elisa'' and (among others) entities ``arrabiata sauce'', ``Angie'' and ``Elisa''. 
-The set of entities is sometimes left implicit if it can be derived from the clues, but often it is given in the form of a grid. 
-Furthermore, in such a puzzle the set of entities is partitioned into equally sized groups (corresponding to \emph{types}); in our example, at least ``person'' and ``sauce'' are such types. 
-The goal of the puzzle is to find relations between each two types such that
-\begin{compactitem}
-	\item each clue is respected, 
-	\item each object of one type is linked to exactly one object of the second type, e.g., each person ordered exactly one sauce (this type of constraint will be referred to as \emph{bijectivity}), and 
-	\item the relations are logically linked, e.g., if Angie ordered arrabiata sauce and arrabiata sauce was paired with farfalle, then Angie must also have eaten farfalle (from now on called \emph{transitivity}). 
-\end{compactitem}
 
-For now, we assume that a vocabulary with types corresponding to the groups of entities in the clues and binary relations between each two types is given.
-We furthermore assume that the interpretation of the types is fixed (and hence all interpretations agree on this). 
-Finally, we assume that the clues, as well as the bijectivity and transitivity constraints are given as first-order sentences and that $T_P$ is a theory containing all of these sentences for a given puzzle $P$; we discuss how to obtain this logical form in Section \ref{sec:holistic}.
 When a human solves a logic grid puzzle, they typically maintain a grid with all the information obtained so far and use it in combination with the clues to derive new conclusions. In logic terminology, the user maintains a partial interpretation.  
-With this in min, the goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with a 
+With this in mind, the goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with a 
 \emph{justification} (see below) of why each of the steps is correct that is ``as easy to understand as possible''. 
 Of course the latter is a subjective matter and quite hard to quantify. Therefore, in this paper, we will use a reasonable approximation thereof. 
 

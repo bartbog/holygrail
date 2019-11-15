@@ -1,1 +1,102 @@
 The connections, for a given set of facts and rules
+
+\textbf{TIAS: THIS SECTION IS BRAINDUMP!}
+
+\begin{verbatim}
+given: partial interpretation I, set of constraints C
+output: list of implications I', C', A with I' subseteq I, C' subseteq C, A set of facts \notin I, I' /\ C' -> A
+def cand_steps(I, C):
+  candidates <- {}
+  II <- optimal_propagate(I /\ C)
+  AA <- II \setminus I
+  # split AA into smaller chunks A
+  while |AA| > 0:
+  	a <- an element of AA
+  	# find _a_ minimal subset of I and C needed to derive a
+  	X <- MUS(not a /\ I /\ reify(C))
+  	I' <- I \intersect X
+  	C' <- C \intersect X
+  	# find other implicants of I' /\ C', merge together
+  	A <- optimal_propagate(I' /\ C')
+  	# XXX what is more costly, the above optimalprop, or few extra MUS's if we would do a MUS for every a in A and merge later?
+  	candidates.add( (I', C', A) )
+  	AA <- AA \setminus A
+\end{verbatim}
+
+Issue with this: X is 'a MUS' not the absolute minimal MUS.
+
+If we want to find the best ordering (TODO), we need the absolute minimal MUS, which is typically only a few constraints.
+
+This relates to the objective function...
+
+What is the quality of one (I', C', A)?
+
+Any cost function will be used. In practice, we will use an additive weighted cost function, and we will use the additive property to improve the explanation search later.
+
+We assume every constraint $c \in C$ has a weight $w(c)$, and we assume every literal has a weight when used as previously derived fact $w_l(f)$, and when it is a newly derived fact $w_r(f)$. The total cost of an explanation is then:
+$$ cost(I', C', A) = w_1*(\sum_{i \in I'} w(i)) + w_2*(\sum_{c \in C'} w(c)) + w_3*(\sum_{a \in A} w(a))$$
+
+The $w_1, w_2, w_3$ can be used to trade-off weights of constraints and facts globally, e.g. to mimic a lexicographic ordering.
+
+In this work, we assume that the weights are manually set based on domain knowledge. For the logic grid puzzles, we prefer small numbers of constraints primarily, so $w_2$ has a high value ($w_2=100$). Among constraints, clues get a weight of $1$ + $0.01$ times their index in the list, such that clues higher in the list get preference. Implicit constraints are even more preferred with a weight of $0.5$ for transitivity constraints and $-1$ for bijection constraints, as users typically complete the latter immediately.
+Previously used facts are uniformily weighted $w_1=1$ and $w(i)=1, \forall i$. The number of newly derived facts matter less, hence $w_3=0.1$ though with a slight preference for positive literals which get a weight of $w(a)=0.1$ when $a$ is positive, else $w(a)=1$.
+
+Based on this cost function, it is clear that small $C'$ sets should be preferred, but the MUS search does not ensure to find the smallest possible MUS, just that the MUS is minimal. Hence, we will do a 'level-wise' search for increasing constraint set cost $w_2*(\sum_{c \in C'} w(c))$.
+
+\textbf{Should we do something with checking whether a (set of) constraints is implied, so that we never have to check it again?}
+
+\begin{verbatim}
+def find_next_smallest(I, C):
+	sorted_candidates = []
+	for s in 1 to |C|:
+		Cs <- all subsets of C of size s
+		sort Cs by val(C' \in Cs) = $w_2*(\sum_{c \in C'} w(c))$
+		for C' in sorted Cs:
+			candidates = cand_steps(I, C')
+			sort candidates by score
+			add to sorted_candidates
+	return smallest element of sorted_candidates
+\end{verbatim}
+
+It should be clear that testing all subsets before returning the smallest is a waste of effort.
+
+\textbf{For me, using an 'optimistic estimate', e.g. computing a lower-bound on the score is the most elegant here: if val(C') > min(sorted-candidates): break. This means we have to change the level-wise to be level-wise by score rather than by |C'| as val(C1) with |C1|=3 can be smaller than val(C2) with |C2|=2.}
+
+
+
+%
+%
+%	
+%
+%\begin{verbatim}
+%C /\ B -> A
+%
+%given(I facts, C cons, D impl cons):
+%
+%store = {}
+%for c in Cons:
+%  I' <- optimal_propagate(I, c /\ D) # is this needed, with D added?
+%  let A = I \setminus I'
+%  if |A| != 0:
+%    # refine 'c'... because?
+%    forall a in A:
+%      X = MUS(not a /\ I /\ c /\ D)
+%      if c \notin X:
+%        # some special case...? should be avoided
+%      else:
+%        let B' is I \intersect X
+%        let D' is D \intersect X
+%        # find other implications of D' /\ c
+%        A' = optimal_propagate(B', c /\ D')
+%        add to store (c /\ D', B', A') as candidate explanation
+%
+%if |store| == 0:
+%  # TODO: more constraints at same time.
+%  # perhaps binary search makes sense?
+%  cut C in C1 and C2
+%  I'1 <- optimal_propagate(I, C1 /\ D)
+%  if not empty, recursively refine
+%  if recursive children were empty:
+%    no... can not recursively split, may be combination across split
+%\end{verbatim}
+

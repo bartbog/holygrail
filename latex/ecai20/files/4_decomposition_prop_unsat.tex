@@ -1,44 +1,68 @@
-The goal is to search for a sequence of $I' /wedge C' \rightarrow A$ explanations, such that each explanation is as simple to grasp as possible and the sequence explains the steps to a full solution/interpretation. \textbf{TODO: adapt to formalism/language used in previous section}
+In this section, we tackle the goal of searching for a sequence of $I' \wedge C' \rightarrow A$ explanations that is as simple to understand as possible and such that the sequence explains the steps to a complete solution (a two-valued interpretation). \textbf{TODO: adapt to formalism/language used in previous section} 
+% 
+\tias{Tias: Perhaps, I should explain the scoring first...} \bart{partly done in previous section... Enough to understand what is going on I think}
+% 
+Our general approach is to iteratively find the reasoning step with the best scoring explanation, and to apply that. This is a greedy approach to the problem of finding the best scoring \textit{sequence} of explanations, formalized in Algorithm \ref{alg:main}.
 
-\textbf{Tias: Perhaps, I should explain the scoring first...}
-
-Our general approach is to iteratively find the reasoning step with the best scoring explanation, and to apply that. This is a greedy approach to the problem of finding the best scoring \textit{sequence} of explanations:
-
-\textbf{TODO: check that 'full interpretation' is valid wording}
-\begin{algorithmic}
-\Require{$C = $ all constraints}
-\State{Seq $\Leftarrow$ empty sequence}
-\State{$I \Leftarrow \{\}$}
-\While{$I$ not a full interpretation}
-  \State{$(I', C', A) \Leftarrow $smallest-explanation$(I, C)$}
-  \State{append $(I', C', A)$ to Seq}
-  \State{$I \Leftarrow I \cup A$}
-\EndWhile
-\end{algorithmic}
+\tias{TODO: check that 'full interpretation' is valid wording}\bart{I would use two-valued or total} 
+\bart{I removed ``all constraints'' I propose we give that set of constraints a name; here I used \allconstraints but other proposals are fine;}
+\begin{algorithm}
+%  \begin{algorithmic}
+$C \gets \allconstraints$\;
+Seq $\gets$ empty sequence\;
+$I \gets \{\}$\;
+\While{$I$ not two-valued}{
+  $(I', C', A) \gets $smallest-explanation$(I, C)$\;
+  append $(I', C', A)$ to Seq\;
+  $I \gets I \cup A$
+}
+% \end{algorithmic}
+\caption{High-level greedy sequence-generating algorithm.}
+\label{alg:main}
+\end{algorithm}
 
 The main challenge is finding the best scoring explanation, among all reasoning steps that can be applied for a given partial interpretation $I$.
 
 We use propagation to get the set of new facts derived from a given partial interpretation $I$ and a set of constraints $C$. Each new fact can be obtained through a reasoning step, and we seek to find a small explanation for each of these reasoning steps.
 
-The code below shows our proposed algorithm. The key part of the algorithm is on line \textbf{I should have chosen my psuedocode package more carefully} where we find an explanation of a single new fact $a$ by searching for a \textit{minimal unsatisfiable core} that includes $\neg a$. We do this over the literals of $I$ as well as over newly introduced \textit{reified} literals for every constraint in $C$. The result will be a minimal unsatisfiable core $\neg a \wedge I' \wedge C'$ where $I' \subseteq I$ and $C' \subseteq C$. The latter can in fact be extracted by observing which of the reified literals are set to \textit{true} in the MUS. From $\neg a \wedge I' \wedge C'$ we know that $I' \wedge C' \rightarrow a$. As $I' \wedge C'$ may imply more than just $a$, we also compute the other literals on line \textbf{...}. Note that those other derived facts in $A \setminus \{a\}$ may have simpler explanations hence our for loop searches for each fact regardless if it is also derived in another explanation.
+\bart{Terminology: 
+* I would replace optimal-propagate by propagate (abstractly it does not matter WHICH propagation mechanism we use. 
+* MUS by core? or unsat-core (to be a bit more verbose?)}
+
+The code below shows our proposed algorithm. The key part of the algorithm is on line \ref{line:mus} where we find an explanation of a single new fact $a$ by searching for a \textit{minimal unsatisfiable core} that includes $\neg a$. We do this over the literals of $I$ as well as over newly introduced \textit{reified} literals for every constraint in $C$. The result will be a minimal unsatisfiable core $\neg a \wedge I' \wedge C'$ where $I' \subseteq I$ and $C' \subseteq C$. The latter can in fact be extracted by observing which of the reified literals are set to \textit{true} in the MUS. From $\neg a \wedge I' \wedge C'$ we know that $I' \wedge C' \rightarrow a$. As $I' \wedge C'$ may imply more than just $a$, we also compute the other literals on line \textbf{...}. Note that those other derived facts in $A \setminus \{a\}$ may have simpler explanations hence our for loop searches for each fact regardless if it is also derived in another explanation.
 
 
+\bart{TODO PUT ALGO BAKC}
+% % \comment{
+\begin{algorithm}
+% 
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+\SetKwComment{command}{/*}{*/}
 
-\begin{algorithmic}
-\Require{$I = $ partial interpretation, $C =$ a set of constraints}
-\Function{candidate-explanations}{I, C}
-  \State{Candidates $\Leftarrow \{\}$}
-  \State{$J \Leftarrow$ optimal-propagate$(I \wedge C)$}
-  \For{$a \in J \setminus I$} \Comment{Find a minimal expl. for each new fact}
-    \State{$X \Leftarrow MUS(\neg a \wedge I \wedge reify(C))$}
-    \State{$I' \Leftarrow I \cap X$}
-    \State{$C' \Leftarrow C \cap X$}
-    \State{$A \Leftarrow$ optimal-propagate$(I' \wedge C')$} \Comment{All implied facts}
-    \State{add $(I', C', A)$ to Candidates}
-  \EndFor
-\EndFunction
-\end{algorithmic}
+ \Input{A partial interpretation $I$ and a set of constraints $C$}
+% \end{algorithm}
+% 
+% \Require{$I = $ partial interpretation, $C =$ a set of constraints}
+% \Fn(\tcc*[h]{algorithm as a recursive function}){BLA{some args}}{
 
+% \Function{candidate-explanations}{I, C}
+  Candidates $\gets \{\}$\;
+  $J \gets$ optimal-propagate$(I \wedge C)$\;
+  \For{$a \in J \setminus I$}{ 
+  \tcp{Find minimal expl. for each new fact}
+    $X \gets MUS(\neg a \wedge I \wedge reify(C))$ \label{line:mus}\;
+    $I' \gets I \cap X$\;
+    $C' \gets C \cap X$\;
+    $A \gets$ optimal-propagate$(I' \wedge C')$\;
+    \tcp{Compute implied facts:}
+    add $(I', C', A)$ to Candidates
+  }
+% \EndFunction
+\caption{candidate-explanations$(I,C)$}
+\label{alg:cand}
+\end{algorithm}
+
+% }
 An important observation is that Minimal Unsatisfiable Core extraction methods extract \textit{an} unsatisfiable core that is \textit{minimal}, but not \textit{minimum}. That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller. Finding a MUS can be computationally extensive, hence finding the minimum one even more so as it will need to search the space of all possible MUS's.
 
 
@@ -52,20 +76,21 @@ In the following, we assume that we have a cost function $f(I', C', A)$ that ret
 
 We can then search for the smallest explanation among the candidates found, by searching among increasingly worse scoring $C'$ as shown in the code below, which makes use of the candidate-explanations function defined above.
 
-\begin{algorithmic}
-\Require{$I = $ partial interpretation, $C =$ all constraints}
-\Function{smallest-explanations}{I, C}
-  \State{Candidates $\Leftarrow$ empty stack}
-  \For{$C' \subseteq C$ ordered by $g(C')$}
-    \If{ $g(C') < min($Candidates$)$}
-      \State{Break}
-    \EndIf
-    \State{cand $\Leftarrow$ candidate-explanations$(I, C')$}
-    \State{add to Candidates all cand$_i$ with corresp. value $f($cand$_i)$}
-  \EndFor
-  \State{Return smallest scoring candidate of Candidates}
-\EndFunction
-\end{algorithmic}
+\bart{TODO PUT ALGO BACK}
+% \begin{algorithmic}
+% \Require{$I = $ partial interpretation, $C =$ all constraints}
+% \Function{smallest-explanations}{I, C}
+%   \State{Candidates $\gets$ empty stack}
+%   \For{$C' \subseteq C$ ordered by $g(C')$}
+%     \If{ $g(C') < min($Candidates$)$}
+%       \State{Break}
+%     \EndIf
+%     \State{cand $\gets$ candidate-explanations$(I, C')$}
+%     \State{add to Candidates all cand$_i$ with corresp. value $f($cand$_i)$}
+%   \EndFor
+%   \State{Return smallest scoring candidate of Candidates}
+% \EndFunction
+% \end{algorithmic}
 
 \textbf{That is it for now... more optimisations are possible, basically in the way we search over the C', like, cache Candidates so that its minimum value is maintained (and do an 'update' to it before starting to potentially clean it); do not search for $C'' \supset C'$ where C' has some explanations; perhaps we can find out that at some point we no longer need to optimalprop some $C'$? (e.g. a 'fully used' clue?)}
 

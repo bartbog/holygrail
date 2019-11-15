@@ -5,7 +5,7 @@ ZebraTutor is an end-to-end solution for solving logic grid puzzles (also known 
 
 The input to ZebraTutor is a plain English language representation of the clues and a list of all the \textit{entities} present in the puzzle. It then applies NLP techniques to build a puzzle-specific lexicon. This lexicon is fed into a type-aware variant of the semantical framework of Blackburn \& Bos, which translates the clues into Discourse Representation Theory). This logic is further transformed to a specification in the IDP language, an extension of first-order logic. 
 
-The underlying solver,IDP (called
+The underlying solver, IDP\cite{de2018predicate} (called
 % TODO : add MINISAT in Latex logic Mode
  MINISAT(ID) ) uses this formal representation of the clues both to  solve the puzzle and to explain the solution. 
  
@@ -14,19 +14,13 @@ The underlying solver,IDP (called
 \begin{enumerate}
 	\item[A] \label{steps_A} Part-Of-Speech (POS) tagging: a tag is associated with each word.\\
 	\item[B] \label{steps_B} Chunking and lexicon building: a problem-specific lexicon is developed. \\
-%	\item[C] \label{steps_C} From chunked sentences to logic: using a custom grammar and semantics a logical representation of the clues is constructed.\\
-%	\item[D] \label{steps_D} From logic to a complete IDP specification: the logical representation is translated into IDP language and augmented with logic-grid-specific information.\\
-	
-		\item[C] \label{steps_C} From chunked sentences to logic to a a complete IDP specification: using a custom grammar and semantics a logical representation of the clues is constructed and further translated into IDP language and augmented with logic-grid-specific information.\\
-	
-		\item[D] \label{steps_D} Explanation-generating search in IDP: We exploit the IDP representation of the clues to search for simple explanations as to how the puzzle can be solved\\
+	\item[C] \label{steps_C} From chunked sentences to logic to a a complete IDP specification: using a custom grammar and semantics a logical representation of the clues is constructed and further translated into IDP language and augmented with logic-grid-specific information.\\
+	\item[D] \label{steps_D} Explanation-generating search in IDP: We exploit the IDP representation of the clues to search for simple explanations as to how the puzzle can be solved\\
 	\item[E] \label{steps_E} Visualisation of the explanation: the step-by-step explanation is visualized
-	
-%	\item[E] \label{steps_E} Explanation-generating search in IDP: We exploit the IDP representation of the clues to search for simple explanations as to how the puzzle can be solved\\
-%	\item[F] \label{steps_F} Visualisation of the explanation: the step-by-step explanation is visualized
+
 \end{enumerate}
 The first three steps are related to Natural Language Processing and are discussed in subsection \ref{nlp}.%Step C is explained in subsection \ref{idp_spec}.
-% Subsection \ref{explaining_puzzles} briefly summarizes the previous 
+
 Steps D and E describe the explanation-generating search for solving the puzzle imitating the human train-of-thought.
 
 \subsection{Natural Language Processing} \label{nlp}
@@ -44,19 +38,15 @@ The automatically generated lexicon is verified in order to make sure that the c
 
 \subsubsection*{Step C. From chunked sentences to a complete IDP specification} \label{chunked_to_logic}
 
-The output of the framework is a (typed variant of) discourse representation theory \cite{DRT}. 
-
-%\subsection{Defining an IDP specification} \label{idp_spec}
-%The 
-
-%\subsubsection*{Step D. From logic to a complete IDP specification} \label{logic_to_idp}
-
 
 \subsection{Explaining Logic Grid Puzzles} \label{explaining_puzzles}
-Based on the previously built idp specification of a puzzle, we can start solving the problem using an (human-like) explanation-generating search.
+Based on the previously built idp specification of a puzzle, we use the idp system to solve the problem using an (human-like) explanation-generating search.
 
 \subsubsection*{Step D. Explanation-generating search in IDP} \label{idp_search}
 
 
 \subsubsection*{Step E. Visualisation of the explanation} \label{visualisation_explanation}
-A visualisation of the logic grid puzzle with the generated explanations can be found at ...
+We have explored two different possibilities to present the explanations to humans. The first was generating natural language sentences of the form "From the clue(s) $\langle$clue$\rangle$, and the fact that $\langle$assumptions$\rangle$, it follows that $\langle$conclusions$\rangle$." Overall we were not satisfied with the outcome of the generated sentences. As soon as there are a couple assumptions, this kind of sentence easily becomes hard to read and understand. As a result, we have decided to use of the standard grid in logic puzzles. For each step, we highlight which clue(s) are used, all cells used for the propagation in blue and all conclusions in orange.
+
+\section{Demonstration}
+Figure 1 contains a screenshot of this explanation process. It displays a partially filled grid, in which check-marks represent that something is derived to be true and minus signs that it is false. The working of our system is demonstrated on http://bartbog.github.io/zebra. The information pipeline for each puzzle is also demonstrated at the bottom of the puzzle visualisation page.

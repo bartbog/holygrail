@@ -60,6 +60,17 @@ swipl -g "testAll([problem_name])" -g halt main.pl
 ## Adding a problem
 One can add a problem by adding a fact in `problems.pl`.
 
+
+### Executing the IDP solver
+Download the [IDP solver](https://dtai.cs.kuleuven.be/krr/files/releases/idp/idp-linux-latest.tar.gz) and put it in your `home` folder
+
+Move into the `bos/Output/` directory. 
+
+```sh
+ /path/to/idp/executable problem_idp_file.idp   | grep -v "reduce" > name_of_output_file.output.json
+```
+
+
 ```prolog
 problem(problem_name, problem(NbTypes, NbEntitiesPerType, Sentences, Lexicon)).
 ```

@@ -1,52 +1,52 @@
 % Description of our pipeline, including the NLP part (though not fully automated):
 % Can include Jens' table on challenges for BOS even with fully correct lexicon (from his poster).
 % TODO : add ZebraTutor in Latex logic Mode
-ZebraTutor is an end-to-end solution for solving logic grid puzzles (also known as Zebra puzzles) and for explaining in a human-understandable way, how this solution can be obtained from the clues. 
+ZebraTutor is an end-to-end solution for solving logic grid puzzles and for explaining in a human-understandable way, how this solution can be obtained from the clues. 
 
 The input to ZebraTutor is a plain English language representation of the clues and a list of all the \textit{entities} present in the puzzle. It then applies NLP techniques to build a puzzle-specific lexicon. This lexicon is fed into a type-aware variant of the semantical framework of Blackburn \& Bos, which translates the clues into Discourse Representation Theory). This logic is further transformed to a specification in the IDP language, an extension of first-order logic. 
 
-The underlying solver, IDP\cite{de2018predicate} (called
-% TODO : add MINISAT in Latex logic Mode
- MINISAT(ID) ) uses this formal representation of the clues both to  solve the puzzle and to explain the solution. 
+The underlying solver, IDP\cite{pip:de2018predicate} uses this formal representation of the clues both to solve the puzzle and to explain the solution. 
  
 % Pipeline description of the steps form start to end
 \paragraph{Steps} Our framework consists of the following steps, starting from the input:
 \begin{enumerate}
-	\item[A] \label{steps_A} Part-Of-Speech (POS) tagging: a tag is associated with each word.\\
-	\item[B] \label{steps_B} Chunking and lexicon building: a problem-specific lexicon is developed. \\
-	\item[C] \label{steps_C} From chunked sentences to logic to a a complete IDP specification: using a custom grammar and semantics a logical representation of the clues is constructed and further translated into IDP language and augmented with logic-grid-specific information.\\
-	\item[D] \label{steps_D} Explanation-generating search in IDP: We exploit the IDP representation of the clues to search for simple explanations as to how the puzzle can be solved\\
-	\item[E] \label{steps_E} Visualisation of the explanation: the step-by-step explanation is visualized
-
+	\item[A] Part-Of-Speech (POS) tagging: A part-of-speech tag is associated with each word.\\
+	\item[B] Chunking and lexicon building: A problem-specific lexicon and a grammar are developed. The lexicon assigns a role to different sets of words (chunks) and the grammar is a set of rules describing how words can be combined into sentences.\\
+	\item[C] From chunked sentences to logic to a a complete IDP specification: using a custom grammar and lexicon, a logical representation of the clues is constructed. This logical representation further translated into IDP language and augmented with logic-grid-specific information. \\
+	\item[D] Explanation-generating search in IDP: We exploit the IDP representation of the clues to search for simple explanations as to how the puzzle can be solved. The explanation-generating search is detailed in section \ref{sec:expl-gen-prod}.\\
+	\item[E] Visualisation of the explanation: The step-by-step explanation is visualized by means of a standard logic puzzle grid. For each explanation step, we highlight the clues and all cells used for the propagation in blue and all the conclusions in orange. The working of our system is demonstrated on \url{http://bartbog.github.io/zebra}.
 \end{enumerate}
-The first three steps are related to Natural Language Processing and are discussed in subsection \ref{nlp}.%Step C is explained in subsection \ref{idp_spec}.
 
-Steps D and E describe the explanation-generating search for solving the puzzle imitating the human train-of-thought.
+The first 3 steps relate to Natural Language Processing, while the 2 remaining steps, steps D and E, are related to explainable constraint solving and explainable AI. A more detailed explanation on the information pipeline can be found \cite{pip:claesuser}.
 
-\subsection{Natural Language Processing} \label{nlp}
-The standard procedure in Natural Language Processing is to start by tagging each word with its estimated Part-Of-Speech tag (POS tag). 
-
-\subsubsection*{Step A. Part-Of-Speech (POS) tagging} \label{pos_tagging}
-We use the standard English Penn Treebank II POS tagset \cite{marcus1993building}. As POS tagger we use NLTK's built-in Perceptron tagger \footnote{\url{http://www.nltk.org}}. It uses a statistical inference mechanism, trained on a standard training set from the Wall Street Journal. Since any POS-tagger can make mistakes, we ensure that all of the puzzle’s entities are tagged as noun.
-
-\subsubsection*{Step B. Chunking and lexicon building} \label{chunking_lexicon}
-To use the extended Blackburn \& Bos framework, a lexicon and grammar have to be provided, where the lexicon assigns a role to different sets of words and the grammar is a set of rules describing how words can be combined into sentences. The grammar is constructed for logic grid puzzles in general and not puzzle specific; the lexicon is partly problem-specific and partly problem-agnostic.\\
-
-Thus, the goal of this second step, called chunking, is to group POS-tagged words into chunks to form a lexicon. Each chunk is associated with a (puzzle-specific or general) lexical category\footnote{The 3 \textbf{puzzle specific} lexical categories are \textit{proper nouns}, namely the individual entities that are central to the puzzle, \textit{other nouns} that refer to groups of entities (like house, animal) and \textit{transitive verbs} that link two entities to each other; the other categories are general and contain a built-in list of possible members. The categories are \textit{determiner},\textit{ number, preposition, auxiliary verb, copular verb, comparative} and \textit{some*}-words (somewhat, sometime, ...), and \textit{conjunction}.} introduced by Claes \cite{msc/Claes17}. We use NLTK and a custom set of regular expressions for chunking the proper nouns and different types of transitive verbs.\\ 
-
-The automatically generated lexicon is verified in order to make sure that the clues can be transformed into a complete IDP specification of the puzzle problem in the subsequent step.
-
-\subsubsection*{Step C. From chunked sentences to a complete IDP specification} \label{chunked_to_logic}
-
-
-\subsection{Explaining Logic Grid Puzzles} \label{explaining_puzzles}
-Based on the previously built idp specification of a puzzle, we use the idp system to solve the problem using an (human-like) explanation-generating search.
-
-\subsubsection*{Step D. Explanation-generating search in IDP} \label{idp_search}
-
-
-\subsubsection*{Step E. Visualisation of the explanation} \label{visualisation_explanation}
-We have explored two different possibilities to present the explanations to humans. The first was generating natural language sentences of the form "From the clue(s) $\langle$clue$\rangle$, and the fact that $\langle$assumptions$\rangle$, it follows that $\langle$conclusions$\rangle$." Overall we were not satisfied with the outcome of the generated sentences. As soon as there are a couple assumptions, this kind of sentence easily becomes hard to read and understand. As a result, we have decided to use of the standard grid in logic puzzles. For each step, we highlight which clue(s) are used, all cells used for the propagation in blue and all conclusions in orange.
-
-\section{Demonstration}
-Figure 1 contains a screenshot of this explanation process. It displays a partially filled grid, in which check-marks represent that something is derived to be true and minus signs that it is false. The working of our system is demonstrated on http://bartbog.github.io/zebra. The information pipeline for each puzzle is also demonstrated at the bottom of the puzzle visualisation page.
+%The first three steps are related to Natural Language Processing and are discussed in subsection \ref{nlp}.%Step C is explained in subsection \ref{idp_spec}.
+%
+%Steps D and E describe the explanation-generating search for solving the puzzle imitating the human train-of-thought.
+%
+%\subsection{Natural Language Processing} \label{nlp}
+%The standard procedure in Natural Language Processing is to start by tagging each word with its estimated Part-Of-Speech tag (POS tag). 
+%
+%\subsubsection*{Step A. Part-Of-Speech (POS) tagging} \label{pos_tagging}
+%We use the standard English Penn Treebank II POS tagset \cite{marcus1993building}. As POS tagger we use NLTK's built-in Perceptron tagger \footnote{\url{http://www.nltk.org}}. It uses a statistical inference mechanism, trained on a standard training set from the Wall Street Journal. Since any POS-tagger can make mistakes, we ensure that all of the puzzle’s entities are tagged as noun.
+%
+%\subsubsection*{Step B. Chunking and lexicon building} \label{chunking_lexicon}
+%To use the extended Blackburn \& Bos framework, a lexicon and grammar have to be provided, where the lexicon assigns a role to different sets of words and the grammar is a set of rules describing how words can be combined into sentences. The grammar is constructed for logic grid puzzles in general and not puzzle specific; the lexicon is partly problem-specific and partly problem-agnostic.\\
+%
+%Thus, the goal of this second step, called chunking, is to group POS-tagged words into chunks to form a lexicon. Each chunk is associated with a (puzzle-specific or general) lexical category\footnote{The 3 \textbf{puzzle specific} lexical categories are \textit{proper nouns}, namely the individual entities that are central to the puzzle, \textit{other nouns} that refer to groups of entities (like house, animal) and \textit{transitive verbs} that link two entities to each other; the other categories are general and contain a built-in list of possible members. The categories are \textit{determiner},\textit{ number, preposition, auxiliary verb, copular verb, comparative} and \textit{some*}-words (somewhat, sometime, ...), and \textit{conjunction}.} introduced by Claes \cite{msc/Claes17}. We use NLTK and a custom set of regular expressions for chunking the proper nouns and different types of transitive verbs.\\ 
+%
+%The automatically generated lexicon is verified in order to make sure that the clues can be transformed into a complete IDP specification of the puzzle problem in the subsequent step.
+%
+%\subsubsection*{Step C. From chunked sentences to a complete IDP specification} \label{chunked_to_logic}
+%
+%
+%\subsection{Explaining Logic Grid Puzzles} \label{explaining_puzzles}
+%Based on the previously built idp specification of a puzzle, we use the idp system to solve the problem using an (human-like) explanation-generating search.
+%
+%\subsubsection*{Step D. Explanation-generating search in IDP} \label{idp_search}
+%
+%
+%\subsubsection*{Step E. Visualisation of the explanation} \label{visualisation_explanation}
+%We have explored two different possibilities to present the explanations to humans. The first was generating natural language sentences of the form "From the clue(s) $\langle$clue$\rangle$, and the fact that $\langle$assumptions$\rangle$, it follows that $\langle$conclusions$\rangle$." Overall we were not satisfied with the outcome of the generated sentences. As soon as there are a couple assumptions, this kind of sentence easily becomes hard to read and understand. As a result, we have decided to use of the standard grid in logic puzzles. For each step, we highlight which clue(s) are used, all cells used for the propagation in blue and all conclusions in orange.
+%
+%\section{Demonstration}
+%Figure 1 contains a screenshot of this explanation process. It displays a partially filled grid, in which check-marks represent that something is derived to be true and minus signs that it is false. The working of our system is demonstrated on http://bartbog.github.io/zebra. The information pipeline for each puzzle is also demonstrated at the bottom of the puzzle visualisation page.

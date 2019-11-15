@@ -1,0 +1,47 @@
+% Based on 'explaining explanations' paper: interpretable and complete; interpr: understandable to humans, simple enough using voca that is meaningful to user; explanation-producing systems;
+
+%Compute explanation of form C /\ B -> A. By find B = MUS(not A, C) so not a and C and B so a <- B and C; BnC may generate more, so apply BnC to obtain A and B and C -> A. (This is why 'B' and nr of constraints C have to be small);
+%Simplicity: size of B, C and A as small as possible, 
+
+%Need for explanations of reasoning systems
+Explainable AI research aims to answer the need for trustworthy AI systems that can explain their reasoning in a human-understandable way. As these systems employ more advanced reasoning mechanisms and computation power, it becomes increasingly difficult to understand why it makes certain decisions. Understanding the decisions is important for verifying the correctness of the system, as well as to control for biased or systematically unfair decisions.
+
+Explainable AI is often studied in the context of (black box) machine learning systems such as neural networks, and the ability to provide insight into what part of the (potentially large) input was most important to infer the predicted label. Another domain is explainable planning, which looks among others at answering user queries regarding a computed plan and model reconciliation.
+
+%Difference automated reasoning and human reasoning, measuring cognitive load
+We here investigate the problem of explainable constraint solving. More specifically, we aim to develop an explanation-producing system that is complete and interpretable. With complete we mean that it finds a \textit{sequence} of reasoning steps that, starting from the given problem specification, leads to a solution of the problem. An explanation of one reasoning step is an implication of the form $C \wedge B \rightarrow A$, where $C$ is a set of constraints, $B$ is a set of previously derived facts and $A$ is a set of newly derived facts that follow from $C$ and $B$. Measuring the interpretability of a reasoning step is difficult, but our guiding principle is that of simplicity, where smaller and simpler $C \wedge B \rightarrow A$ explanations are better.
+
+%Shallow related work on quickxplain, 'explanations' in search, etc.
+Explanations have been investigated as part of constraint solving before, but within different contexts. In lazy clause generation solvers, an explanation of a constraint is an implication of low-level Boolean literals that encode the result of a propagation step. They are not meant to be human-interpretable but rather to propagate efficiently. Also related but different is QuickXplain and related methods, which...
+
+An interpretable explanation is summarized in [] as "descriptions that are simple enough for a person to understand, using a vocabulary that is meaningful to the user". For the constraints $C$, we choose to represent them in natural language. In the case of logic grid puzzles this is an obvious choice as the constraints are \textit{clues} that are given in natural language. For the previously and newly derived facts $B$ and $A$, we choose a visual representation of those facts in the solution structure. For logic grid puzzles this is the logic grid (see Figure ...).
+
+%HolyGrail challenge and related work
+Our work is motivated by Eugene Freuder's "Holy Grail Challenge" to develop... An earlier version of this system was the challenge winner at the workshop. The challenge has its roots in ...the 2 papers of eugene... With respect to automatically solving logic grid puzzles, earlier work has looked at solving the puzzles starting from the natural language clues. Our system also has this capability, see section ..., but the focus of this paper is on the novel explanation-producing part of the system.
+
+The purpose of such a system is multiple; it can explain the entire sequence of reasoning, such that a user can debug either the reasoning system or the set of constraints that are given as problem specification. As our approach starts from an arbitrary set of facts, it can also be used as a virtual assistant when a user is stuck in solving a problem, where the system will explain the simplest possible next move, or in an interactive setting where the user interactively assigns facts himself or by the system. Finally, our measure of simplicity of reasoning steps can be used to estimate the difficulty of solving a problem for a human, and hence order problems by difficulty for training purposes.
+
+%challenge 1: abstraction in self-contained reasoning step
+%challenge 2: ordering
+%challenge 3: computation efficiency
+The challenge in making an explanation-producing constraint solving method is choosing the right level of abstraction for the constraints and explanations, defining what a good ordering of the explanations is, and extracting a complete sequence of good explanations in a computationally efficient way. The search for a sequence of small explanations is much more computationally intensive than searching for a satisfying solution as it requires repeatedly solving subparts of the problem.
+
+%Contributions: (eerste aanzet!!!)
+Our contributions are the following:
+\begin{itemize}
+<<<<<<< HEAD
+	\item Formalize the problem of finding good ordering of self-contained reasoning steps
+	\item Investigate different interpretations of good ordering and self-contained
+	\item Propose algorithms to approximate the ???some hardness result??? problem of finding the best ordering
+	\item Experimentally demonstrate the quality and feasibility of the approach
+\end{itemize}
+
+
+\bart{Mention running example? Mention that this is a very hard puzzle (80 people at an AI conference received it; 4 solved it; many more tried)? }
+=======
+	\item We formalize the problem of finding a good ordering of interpretable reasoning reasoning steps
+	\item We investigate different measures of interpretability and quality of ordering
+	\item We propose algorithms to approximate the ???some hardness result??? problem of finding the best ordering
+	\item We experimentally demonstrate the quality and feasibility of the approach in the domain of logic grid puzzle solving
+\end{itemize}
+>>>>>>> ecbf962b8ebba46760e6a72daf70265950462a80

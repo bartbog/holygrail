@@ -4,40 +4,47 @@ With this in mind, the goal underlying our tool is to find a sequence of partial
 \emph{justification} (see below) of why each of the steps is correct that is ``as easy to understand as possible''. 
 Of course the latter is a subjective matter and quite hard to quantify. Therefore, in this paper, we will use a reasonable approximation thereof. 
 
+\tias{I guess you don't like 'explanation' (anymore)?}
 
 \paragraph{Justification of Reasoning Steps.}
-As mentioned above, we are searching for a sequence 
-\[ I_0 = \emptyset, I_1 = I_0 \cup N_1, \dots , I_n = I_{n-1}\cup N_n\]
-where $I_i$ represents the state of the grid at each point in time and $N_i$ represents the newly derived information. 
-Furthermore, it is important that each reasoning step be accompanied with a \emph{justification}. By that we mean a tuple $(E_i,S_i)$ such that: 
+The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ where $\forall i>0, I_{i-1} \geqp I_{i}$ and $I_n$ is a (full) interpretation, and typically $I_0 = \emptyset$.
+%\[ I_0 = \emptyset, I_1 = I_0 \cup N_1, \dots , I_n = I_{n-1}\cup N_n\]
+%where $I_i$ represents the state of the grid at each point in time and $N_i$ represents the newly derived information. 
+Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation or \textit{justification} $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. That is, a tuple $(E_i,S_i)$ such that: 
 \begin{compactitem}
 	\item $E_i\subseteq I_i$ (i.e., the explaining facts are a subset of what was previously derived),
-	\item $S_i \subseteq T_P$ (i.e., only some of the clues and implicit constraints are used), and 
+	\item $S_i \subseteq T_P$ (i.e., a subset of the clues and implicit constraints are used), and 
 	\item $S_i \cup E_i \entails N_i$ (i.e., all newly derived information indeed follows from this justification).
 \end{compactitem}
-A first observation related to this definition is that it nowhere specifies \emph{quality} of the justifications, this manifests at least in two forms already. First of all, any superset of a justification is a justification itself (it seems clear that a bare minimal demand on our justifications should be that they are subset-minimal), and secondly, since since logic grid puzzles have a unique solution, say $Sol$ the sequence 
-\[I_0, Sol\]
-with justification $(\emptyset,T_P)$ always satisfies this definition. That justification simply states ``this is the solution because, well, it is'' and is of course extremely uninformative. However, the current definition only establishes what constitutes a correct justification, quality of justifications is studied later on. 
 
-Another observation is that the problem checking whether $(E_i,S_i)$ explains $N_i$ is definitely in co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$ and hence is an instance of the negation of a model expansion problem \cite{ternovskaMXcomplexity}. 
-Furthermore, the task of finding a \emph{subset-minimal} justification can easily be cast, after reifying the involved constraints as a second-order problem of the form
+The problem of simply checking whether $(E_i,S_i)$ explains\tias{explains or justifies?} $N_i$ is co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{ternovskaMXcomplexity}.
+
+Any incremental step $\langle I_{i-1}, I_i \rangle$ as a trivial justification in the form of $(I_i, T_P)$. However, our goal is to find interpretable justifications that a person can understand. We hence wish to remove redundant information from the justification and instead find a \emph{subset-minimal} justification. After reifying the involved constraints of $T_P$ this can be cast as a second-order problem of the form
 \[\exists S_i\subseteq T_P, E_i\subseteq I_i: (\forall I: I\models S_i\land E_i \Rightarrow N_i) \land \lnot \exists S_i'\subseteq S_i, E_i'\subseteq E_i: \forall ... \]
-\bart{Not sure how valuable it is to put this here.}
-In principle our problem of finding subset-minimal (or even, see the next paragarph, cost-optimal) justifications could be solved by specifying it in such a way in second-order logic and subsequently finding models for it, e.g. by a reduction to QBF \cite{kr/BogaertsTS16,kr/vanderHallenJ18}. 
-However, since this is already an $\exists\forall\exists SO$ specification, we expect this approach not be feasible (this expectation remains to be verified in future work). 
+This problem is known as the problem of extracting a Minimal Unsatisfiable Cores (MUS) \tias{Is it Bart? suitable reference? we need to mention MUS's}
 
+%Our goal is not to derive any sequence of justifications, but a sequence of easy to interpret justifications. Indeed, while the step from the input to a full solution $\langle I_0, I \rangle$ is easily justified by $(I_0, T_P)$, this will not be interpretable for a user.
 
+\paragraph{Interpretability of reasoning steps.}
+While subset-minimality ensures that a justification is non-redundant, it does not quantify how \textit{interpretable} a justification is. 
+This quantification is a problem-specific and often subjective manner. In line with Occam's Razor, one would expect that smaller justifications are easier to interpret that justifications that use a larger number of facts or constraints. For example, from a cognitive point of view, the more things a person needs to have in memory simultaneously, the more difficult the task will become. \tias{The cognitive statement is idd risky without scientific support...}
+%To approximate of how easy to understand a justification is (i.e., a single transition in the above described sequence), we start from the simple cognitive idea \bart{can we cite this somewhere? } that (in general) the fewer things a human needs to have in memory simultaneously, the easier the task at hand is. 
 
-\paragraph{Simplicity of reasoning steps.}
-While subset-minimality appears to be a necessary condition for acceptable justifications, it certainly is not a sufficient condition. 
-Indeed, at a certain point in the explanation sequence, many different subset-minimal justifications can exist and not all of them are equally simple. 
-Compare for instance using a single clue to derive a new fact with using the combination of two clues and five previously derived facts to find a new fact. 
-To approximate of how easy to understand a justification is (i.e., a single transition in the above described sequence), we start from the simple cognitive idea \bart{can we cite this somewhere? } that (in general) the fewer things a human needs to have in memory simultaneously, the easier the task at hand is. 
+We assume a cost-function $f(E_i,S_i,N_i)$ that measures the interpretability of a justification $(E_i,S_i)$ of a reasoning step $\langle I_{i-1}, I_i \rangle$ with $N_i = I_i \setminus I_{i-1}$. The goal is to find the sequence $\langle I_0, I_1, \ldots, I_n \rangle$ with minimal $\sum_{i=0}^n f(E_i,S_i,N_i)$ among all sequences for which $I_n$ is a solution of $T_P$.
+
+As finding a single minimal $f(E_i,S_i,N_i)$ is ..., the entire search problem is obviously ...
+
+\tias{Everything below (except the SO remark) is too logic grid puzzle focussed imho, it could come after the general problem description, or perhaps after the algo. Ideally we have: problem, algo, logic-grid case}.
+
+\paragraph{Example} 
 Hence, as a measure of difficulty we propose to use a weight function in terms of \textbf{the total number of clues, bijectivity and transitivity constraints, and previously derived facts} needed to derive a new fact. \bart{In fact ,we do not exactly use this measure, since we do not allow combining two clues if there exists some explanation that only uses one}
 The reader should be advised that this is quite a rough approximation; for instance certain clues can be easier than others to reason about (e.g., compare ``Claudia did not choose puttanesca sauce'' with ``The person who ordered rotini is either the person who paid \$8 more than Damon or the person who paid \$8 less than Damon'') or it might be that humans perceive reasoning about clues in general as easier or harder than reasoning about the implicit (bijectivity and transitivity) constraints presents in logic grid puzzles. While researching better measures is an interesting topic, it falls out of the scope of the current paper. Moreover, many ideas of the current work remain valid when the actual measure is changed. 
 Our observatoin from below, that using second-order logic tools such as e.g. \cite{proB,kr/BogaertsTS16} to find cost-optimal justifications is an option remains valid as long as the cost-functoin is expressible in (a sufficient extension of SO). Yet, due the high complexity, is not a direction we explored. 
 \bart{Actually, I would really like to try this sometimes. The complexity argument is valid. But since we have small domains it is actually not so relevant... Maybe it works well. In that case it would yield good explanations!  }
 
+\tias{Moved the below paragraph here, should be part of the cost-optimal imho}
+In principle our problem of finding subset-minimal (or even, see the next paragarph, cost-optimal) justifications could be solved by specifying it in such a way in second-order logic and subsequently finding models for it, e.g. by a reduction to QBF \cite{kr/BogaertsTS16,kr/vanderHallenJ18}. 
+However, since this is already an $\exists\forall\exists SO$ specification, we expect this approach not be feasible (this expectation remains to be verified in future work). 
 
 \paragraph{Simple sequence vs simple steps}
 In the above, we focused on generating and defining understandability of a single step in the reasoning process. 

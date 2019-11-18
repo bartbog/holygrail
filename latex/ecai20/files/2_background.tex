@@ -1,25 +1,5 @@
-\paragraph{Typed first-order logic}
-
-Our reasoning method is based on \emph{typed first-order logic}. %, with links to \emph{typed second-order logic}.
-Part of the input is a logical vocabulary consisting of a set of type symbols, typed constant symbols, and relation symbols with associated type signature (i.e., each relation symbol is typed $T_1\times \dots \times T_n$ with $T_i$ types).\footnote{We here omit function symbols since they are not used in this paper.} For example, type \textit{person} with constant symbol \textit{Angie} of type \textit{person} and a relation \textit{choseSauce(.,.)} with signature \textit{person $\times$ sauce}.
-
-
-A \emph{first-order theory} is a set of sentences (well-formed variable-free first-order formulas in which each quantified variable has an associated type). 
-Given a logical vocabulary $V$, a \emph{\textbf{partial} interpretation} $I$ assigns to each type symbol $T$ (e.g. \textit{person}) a finite set $I(T)$ and to each 
-relation symbol $P$ with type signature $T_1\times \dots \times T_n$ a function 
-\[I(P): I(T_1)\times \dots \times I(T_n)\to \{\ltrue,\lunkn,\lfalse\},\] 
-where $\ltrue$ stands for true, $\lunkn$ for unknown, and $\lfalse$ for false. In case nothing \tias{nothing of what?} is mapped to $\lunkn$, we call this an \emph{interpretation}. \tias{'full' interpretation to discriminate with partial? I need that distinction in a later section...}
-A partial interpretation $I_1$ is \emph{more precise} than partial interpretation $I_2$ (notation $I_1\geqp I_2$) if $I_1$ and $I_2$ agree on everything not unknown in $I_2$.
-
-Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_1\geqp I_2$ iff $I_1\supseteq I_2$.
-With this view (partial) interpretations can also be seen as a theory (having each such literal as a sentence), which will allow us to make claims of the form 
-$T\cup I \entails I'$ with $T$ a theory and  $I,I'$ (partial) interpretations, meaning that all literals in $I'$ follow from $T$ and $I$, or stated precisely, that all models of $T$ more precise than $I$ are also more precise than $I'$. 
-% 
-% In a second-order theory also quantifiers over relations have an associated type signature. 
-% \bart{Clear or do I make it more formal}
-
 \paragraph{Logic grid puzzles}
-While the proposed method is applicable to any typed first order logic problem, we will use \textit{logic grid puzzles} as example domain, as it requires no expert knowledge to understand.
+Our proposed method is applicable to constraint satisfaction problem \tias{with a unique solution?}. We will use \textit{logic grid puzzles} as example domain, as it requires no expert knowledge to understand.
 
 A logic grid puzzle (also known as a Zebra puzzle or Einstein puzzle) consists of a set of natural language sentences (from hereon referred to as ``clues'') and (optionally) a set of \emph{entities} occurring in those sentences. 
 For instance, our running example contains a clue ``The person who chose arrabiata sauce is either Angie or Elisa'' and (among others) entities ``arrabiata sauce'', ``Angie'' and ``Elisa''. 
@@ -35,3 +15,19 @@ The goal of the puzzle is to find relations between each two types such that
 In section Sec~\ref{sec:holistic} we explain how we obtain a vocabulary and first-order theory in a mostly automated way from the clues. The result is a vocabulary with types corresponding to the groups of entities in the clues, and the names and types of the binary relations to find (e.g \textit{chose(person, sauce)}, \textit{paired(sauce, pasta)}, \textit{eaten(person, pasta)});
 %We furthermore assume that the interpretation of the types is fixed (and hence all interpretations agree on this). 
 as well as first-order sentences corresponding to the clues, and the bijectivity and transitivity constraints. Let $T_P$ be a theory containing all of these sentences for a given puzzle $P$.
+
+\paragraph{Typed first-order logic}
+Our reasoning method is based on \emph{typed first-order logic}. %, with links to \emph{typed second-order logic}.
+Part of the input is a logical vocabulary consisting of a set of type symbols, typed constant symbols, and relation symbols with associated type signature (i.e., each relation symbol is typed $T_1\times \dots \times T_n$ with $T_i$ types).\footnote{We here omit function symbols since they are not used in this paper.} For example, type \textit{person} with constant symbol \textit{Angie} of type \textit{person} and a relation \textit{choseSauce(.,.)} with signature \textit{person $\times$ sauce}.
+
+
+A \emph{first-order theory} is a set of sentences (well-formed variable-free first-order formulas in which each quantified variable has an associated type). 
+Given a logical vocabulary $V$, a \emph{\textbf{partial} interpretation} $I$ assigns to each type symbol $T$ (e.g. \textit{person}) a finite set $I(T)$ and to each 
+relation symbol $P$ with type signature $T_1\times \dots \times T_n$ a function 
+\[I(P): I(T_1)\times \dots \times I(T_n)\to \{\ltrue,\lunkn,\lfalse\},\] 
+where $\ltrue$ stands for true, $\lunkn$ for unknown, and $\lfalse$ for false. In case nothing \tias{nothing of what?} is mapped to $\lunkn$, we call this an \emph{interpretation}. \tias{'full' interpretation to discriminate with partial? I need that distinction in a later section...}
+A partial interpretation $I_1$ is \emph{more precise} than partial interpretation $I_2$ (notation $I_1\geqp I_2$) if $I_1$ and $I_2$ agree on everything not unknown in $I_2$.
+
+% 
+% In a second-order theory also quantifiers over relations have an associated type signature. 
+% \bart{Clear or do I make it more formal}

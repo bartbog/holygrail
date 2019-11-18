@@ -10,7 +10,13 @@ Of course the latter is a subjective matter and quite hard to quantify. Therefor
 The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ where $\forall i>0, I_{i-1} \geqp I_{i}$ and $I_n$ is a (full) interpretation, and typically $I_0 = \emptyset$.
 %\[ I_0 = \emptyset, I_1 = I_0 \cup N_1, \dots , I_n = I_{n-1}\cup N_n\]
 %where $I_i$ represents the state of the grid at each point in time and $N_i$ represents the newly derived information. 
-Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation or \textit{justification} $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. That is, a tuple $(E_i,S_i)$ such that: 
+Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation or \textit{justification} $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$.
+
+Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_1\geqp I_2$ iff $I_1\supseteq I_2$.
+With this view (partial) interpretations can also be seen as a theory (having each such literal as a sentence), which will allow us to make claims of the form 
+$T\cup I \entails I'$ with $T$ a theory and  $I,I'$ (partial) interpretations, meaning that all literals in $I'$ follow from $T$ and $I$, or stated precisely, that all models of $T$ more precise than $I$ are also more precise than $I'$. 
+
+That is, a tuple $(E_i,S_i)$ such that: 
 \begin{compactitem}
 	\item $E_i\subseteq I_i$ (i.e., the explaining facts are a subset of what was previously derived),
 	\item $S_i \subseteq T_P$ (i.e., a subset of the clues and implicit constraints are used), and 

@@ -5,6 +5,9 @@ With this in mind, the goal underlying our tool is to find a sequence of partial
 Of course the latter is a subjective matter and quite hard to quantify. Therefore, in this paper, we will use a reasonable approximation thereof. 
 
 \tias{I guess you don't like 'explanation' (anymore)?}
+\bart{Don't have anything against it. 
+I would call $C\land B\limplies A$ plus a visualisatoin thereof an explanation, but the pure mathematic object $(C,B)$ is not really an explanation yet. (not sure if we have to make this distinction in the text)
+}
 
 \paragraph{Justification of Reasoning Steps.}
 The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ where $\forall i>0, I_{i-1} \geqp I_{i}$ and $I_n$ is a (full) interpretation, and typically $I_0 = \emptyset$.
@@ -23,11 +26,14 @@ That is, a tuple $(E_i,S_i)$ such that:
 	\item $S_i \cup E_i \entails N_i$ (i.e., all newly derived information indeed follows from this justification).
 \end{compactitem}
 
-The problem of simply checking whether $(E_i,S_i)$ explains\tias{explains or justifies?} $N_i$ is co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{ternovskaMXcomplexity}.
+The problem of simply checking whether $(E_i,S_i)$ explains\tias{explains or justifies?} $N_i$ is in co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{ternovskaMXcomplexity}.
+
 
 Any incremental step $\langle I_{i-1}, I_i \rangle$ as a trivial justification in the form of $(I_i, T_P)$. However, our goal is to find interpretable justifications that a person can understand. We hence wish to remove redundant information from the justification and instead find a \emph{subset-minimal} justification. After reifying the involved constraints of $T_P$ this can be cast as a second-order problem of the form
 \[\exists S_i\subseteq T_P, E_i\subseteq I_i: (\forall I: I\models S_i\land E_i \Rightarrow N_i) \land \lnot \exists S_i'\subseteq S_i, E_i'\subseteq E_i: \forall ... \]
 This problem is known as the problem of extracting a Minimal Unsatisfiable Cores (MUS) \tias{Is it Bart? suitable reference? we need to mention MUS's}
+\bart{Rather,
+Alternatively, this problem can be cast as the problem of finding a MUS of the formula $I_i\land S\land \lnot N_i$. (we need the negation for something to become UNSAT)}
 
 %Our goal is not to derive any sequence of justifications, but a sequence of easy to interpret justifications. Indeed, while the step from the input to a full solution $\langle I_0, I \rangle$ is easily justified by $(I_0, T_P)$, this will not be interpretable for a user.
 

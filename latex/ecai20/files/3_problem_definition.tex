@@ -1,22 +1,24 @@
 
 When a human solves a logic grid puzzle, they typically maintain a grid with all the information obtained so far and use it in combination with the clues to derive new conclusions. In logic terminology, the user maintains a partial interpretation.  
 With this in mind, the goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with a 
-\emph{justification} (see below) of why each of the steps is correct that is ``as easy to understand as possible''. 
-Of course the latter is a subjective matter and quite hard to quantify. Therefore, in this paper, we will use a reasonable approximation thereof. 
+\emph{justification} (see below) of why each of the steps is correct that is ``simple enough for a person to understand''. 
+%Of course the latter is a subjective matter and quite hard to quantify. Therefore, in this paper, we will use a reasonable approximation thereof. 
 
 \tias{I guess you don't like 'explanation' (anymore)?}
 
 \paragraph{Justification of Reasoning Steps.}
-The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ where $\forall i>0, I_{i-1} \geqp I_{i}$ and $I_n$ is a (full) interpretation, and typically $I_0 = \emptyset$.
+The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ where $I_0$ is an initial partial interpretation (potentially empty), and $\forall i>0, I_{i-1} \geqp I_{i}$ with $I_n$ a (full) interpretation.
 %\[ I_0 = \emptyset, I_1 = I_0 \cup N_1, \dots , I_n = I_{n-1}\cup N_n\]
 %where $I_i$ represents the state of the grid at each point in time and $N_i$ represents the newly derived information. 
 Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation or \textit{justification} $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$.
 
-Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_1\geqp I_2$ iff $I_1\supseteq I_2$.
+\tias{the thing below needs a definition to be referred to later again}
+Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_i\geqp I_{i-1}$ iff $I_i\supseteq I_{i-1}$.
 With this view (partial) interpretations can also be seen as a theory (having each such literal as a sentence), which will allow us to make claims of the form 
 $T\cup I \entails I'$ with $T$ a theory and  $I,I'$ (partial) interpretations, meaning that all literals in $I'$ follow from $T$ and $I$, or stated precisely, that all models of $T$ more precise than $I$ are also more precise than $I'$. 
 
-That is, a tuple $(E_i,S_i)$ such that: 
+\tias{Definition using the above? but below E/N are not more precise of eachother?}
+We hence define a justification as a tuple $(E_i,S_i)$ such that: 
 \begin{compactitem}
 	\item $E_i\subseteq I_i$ (i.e., the explaining facts are a subset of what was previously derived),
 	\item $S_i \subseteq T_P$ (i.e., a subset of the clues and implicit constraints are used), and 
@@ -25,9 +27,11 @@ That is, a tuple $(E_i,S_i)$ such that:
 
 The problem of simply checking whether $(E_i,S_i)$ explains\tias{explains or justifies?} $N_i$ is co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{ternovskaMXcomplexity}.
 
-Any incremental step $\langle I_{i-1}, I_i \rangle$ as a trivial justification in the form of $(I_i, T_P)$. However, our goal is to find interpretable justifications that a person can understand. We hence wish to remove redundant information from the justification and instead find a \emph{subset-minimal} justification. After reifying the involved constraints of $T_P$ this can be cast as a second-order problem of the form
+Part of our goal of finding easy to interpret explanations is to avoid redundant information in the explanation. That is, we want a non-redundent explanation $(E_i,S_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed or else the implication $S_i \wedge E_i \rightarrow N_i$ would no longer hold. We will use the concept of Minimal Unsat Cores here (or Minimal Unsat Subset, MUS). A MUS over a set of constraints $C$ is a subset $C' \subseteq C$ such that $C' is UNSAT$ and $\forall c \in C': C' \setminus \{c\} is SAT$. If we know that $N_i$ follows from $S_i$ and $E_i$ then $\neg N_i \wedge S_i \wedge E_i$ must be UNSAT. A Minimal Unsat Subset (MUS) hereof will be a non-redundant subset of $N'_i \subseteq N_i$, $S'_i \subseteq S_I$ and $E'_i \subseteq E_i$ for which we know (because it is UNSAT): $\neg (\neg N'_i \wedge S'_i \wedge E'_i)$ hence through substitution $N'_i \vee \neg (S'_I \wedge E'_i)$ and hence $(S'_I \wedge E'_i) \rightarrow N'_I$. In other words, $(S'_I \wedge E'_i)$ is the smallest explanation of $N'_I$ for which this relation holds, for any smaller explanation it will no longer hold.
+
+%Any incremental step $\langle I_{i-1}, I_i \rangle$ has a trivial justification in the form of $(I_i, T_P)$. However, our goal is to find interpretable justifications that a person can understand. We hence wish to remove redundant information from the justification and instead find a \emph{subset-minimal} justification.
+After reifying the involved constraints of $T_P$ this can also be cast as a second-order problem of the form
 \[\exists S_i\subseteq T_P, E_i\subseteq I_i: (\forall I: I\models S_i\land E_i \Rightarrow N_i) \land \lnot \exists S_i'\subseteq S_i, E_i'\subseteq E_i: \forall ... \]
-This problem is known as the problem of extracting a Minimal Unsatisfiable Cores (MUS) \tias{Is it Bart? suitable reference? we need to mention MUS's}
 
 %Our goal is not to derive any sequence of justifications, but a sequence of easy to interpret justifications. Indeed, while the step from the input to a full solution $\langle I_0, I \rangle$ is easily justified by $(I_0, T_P)$, this will not be interpretable for a user.
 

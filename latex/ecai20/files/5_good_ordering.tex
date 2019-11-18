@@ -1,7 +1,19 @@
-Some propositions of ordering measures: set of measures
 
-Naive algo
 
-Improved algo
+\tias{Everything below (except the SO remark) is too logic grid puzzle focussed imho, it could come after the general problem description, or perhaps after the algo. Ideally we have: problem, algo, logic-grid case}.
 
-Post-processing steps
+\paragraph{Example} 
+Hence, as a measure of difficulty we propose to use a weight function in terms of \textbf{the total number of clues, bijectivity and transitivity constraints, and previously derived facts} needed to derive a new fact. \bart{In fact ,we do not exactly use this measure, since we do not allow combining two clues if there exists some explanation that only uses one}
+The reader should be advised that this is quite a rough approximation; for instance certain clues can be easier than others to reason about (e.g., compare ``Claudia did not choose puttanesca sauce'' with ``The person who ordered rotini is either the person who paid \$8 more than Damon or the person who paid \$8 less than Damon'') or it might be that humans perceive reasoning about clues in general as easier or harder than reasoning about the implicit (bijectivity and transitivity) constraints presents in logic grid puzzles. While researching better measures is an interesting topic, it falls out of the scope of the current paper. Moreover, many ideas of the current work remain valid when the actual measure is changed. 
+Our observatoin from below, that using second-order logic tools such as e.g. \cite{proB,kr/BogaertsTS16} to find cost-optimal justifications is an option remains valid as long as the cost-functoin is expressible in (a sufficient extension of SO). Yet, due the high complexity, is not a direction we explored. 
+\bart{Actually, I would really like to try this sometimes. The complexity argument is valid. But since we have small domains it is actually not so relevant... Maybe it works well. In that case it would yield good explanations!  }
+
+
+\paragraph{Simple sequence vs simple steps}
+In the above, we focused on generating and defining understandability of a single step in the reasoning process. 
+However, in its most general form, we would like to optimize the understandability of the entire sequence of explanations. 
+For this, even defining a measure seems to be a very hard task (for instance, is the understandability of a sequence related to its most difficult step or to its average difficulty? Sometimes even the ordering of the steps might make a difference for humans, even though the actual steps are the same, ...). 
+Furthermore, even if we fix a measure, the problem of holistically optimizing a sequence of explanation steps is much harder than optimizing a single step since there are exponentially more sequences. 
+Therefore, in the current paper, we take a greedy approach where at each step, the best next possible explanation is chosen, without taking global optimality of the sequence in mind. The results we obtain this way are satisfying. 
+\bart{And already say something about postprocessing?}
+

@@ -57,38 +57,64 @@ The code below shows our proposed algorithm. The key part of the algorithm is on
     \tcp{Compute implied facts:}
     add $(I', C', A)$ to Candidates
   }
+  \Return{Candidates}
 % \EndFunction
 \caption{candidate-explanations$(I,C)$}
+
 \label{alg:cand}
 \end{algorithm}
 
 % }
-An important observation is that Minimal Unsatisfiable Core extraction methods extract \textit{an} unsatisfiable core that is \textit{minimal}, but not \textit{minimum}. That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller. Finding a MUS can be computationally extensive, hence finding the minimum one even more so as it will need to search the space of all possible MUS's.
+
+\bart{Instead of ``minimal'' vs minimum, I would go for ``subset-minimal'', ``size-minimal'', ``cost-minimal'', ...  I.e., make the criteria explicit.} 
+An important observation is that Minimal Unsatisfiable Core extraction methods extract \textit{an} unsatisfiable core that is \textit{minimal}, but not \textit{minimum}. That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller. Finding a MUS can be computationally expensive, hence finding the minimum one even more so as it will need to search the space of all possible MUS's.
 
 
 %If we want to find the best ordering (TODO), we need the absolute minimal MUS, which is typically only a few constraints.
 %This relates to the objective function...
 
-Instead, we use the observation that typically a small (1 to a few) number of constraints is sufficient, and also preferred in terms of easy to understand explanations. We will hence not call \textit{candidate-explanations} with the full set of constraints, but will iteratively grow the number of constraints used.
+\bart{I like the way the algorithm is built-up here.} 
+Instead, we use the observation that typically a small (1 to a few) number of constraints is sufficient, and also preferred in terms of easy to understand explanations. We will hence not call \textit{candidate-explanations} with the full set of constraints, but will iteratively grow the number of constraints used. 
+%\bart{ In practice this means that we are doing some form of prioritized explanatoin. 
+%First priority: keep the number of constraints small. Second priority, size (which also takes structure into acccount}
 
 \paragraph{Smallest explanations and cost functions}
+\bart{Do we have examples where $A$ is to be taken into account for the size! } 
 In the following, we assume that we have a cost function $f(I', C', A)$ that returns a score for every possible explanation. The goal will be to find the lowest scoring explanation. We make one further assumption, namely that we have an optimistic estimate $g(C')$ computed on only the constraint part of the explanation, and that $\forall I', A, g(C') \leq f(I', C', A)$. This is for example the case if $f$ is an additive function, such as $f(I', C', A) = f_1(I') + f_2(C') + f_3(A)$ where $g(C') = f_2(C')$ assuming $f_1$ and $f_3$ are always positive.
 
 We can then search for the smallest explanation among the candidates found, by searching among increasingly worse scoring $C'$ as shown in the code below, which makes use of the candidate-explanations function defined above.
 
-\bart{TODO PUT ALGO BACK}
-% \begin{algorithmic}
-% \Require{$I = $ partial interpretation, $C =$ all constraints}
-% \Function{smallest-explanations}{I, C}
+% \bart{TODO PUT ALGO BACK}
+\begin{algorithm}
+\SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+\SetKwComment{command}{/*}{*/}
+\SetKw{Break}{break}
+
+
+ \Input{A partial interpretation $I$ and a set of constraints $C$}
+  Candidates $\gets \{\}$\;
+  $J \gets$ optimal-propagate$(I \wedge C)$\;
+  \For{$C' \subseteq C$ ordered by $g(C')$}{ 
+    \If{$g(C') < min(f($Candidates$))$}{
+        \Break\;}
+     cand $\gets$ candidate-explanations$(I, C')$\; 
+     add to Candidates all cand$_i$ with corresp. value $f($cand$_i)$\;
+     }  
+          \Return{smallest scoring candidate of Candidates}
+ % \EndFunction
+\caption{smallest-explanations$(I,C)$}
+\label{alg:cand}
+\end{algorithm}
+
 %   \State{Candidates $\gets$ empty stack}
-%   \For{$C' \subseteq C$ ordered by $g(C')$}
-%     \If{ $g(C') < min($Candidates$)$}
+%   \For{}
+%     \If{ }
 %       \State{Break}
 %     \EndIf
-%     \State{cand $\gets$ candidate-explanations$(I, C')$}
-%     \State{add to Candidates all cand$_i$ with corresp. value $f($cand$_i)$}
+%     \State{}
+%     \State{}
 %   \EndFor
-%   \State{Return smallest scoring candidate of Candidates}
+%   \State{Return }
 % \EndFunction
 % \end{algorithmic}
 

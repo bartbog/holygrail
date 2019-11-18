@@ -1,21 +1,15 @@
 
 When a human solves a logic grid puzzle, they typically maintain a grid with all the information obtained so far and use it in combination with the clues to derive new conclusions. In logic terminology, the user maintains a partial interpretation.  
-With this in mind, the goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with a 
-\emph{justification} (see below) of why each of the steps is correct that is ``simple enough for a person to understand''. 
-%Of course the latter is a subjective matter and quite hard to quantify. Therefore, in this paper, we will use a reasonable approximation thereof. 
+With this in mind, the goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with an 
+\emph{explanation} (see below) of why each of the steps is correct that is ``simple enough for a person to understand''. 
 
-\tias{I guess you don't like 'explanation' (anymore)?}
-\bart{Don't have anything against it. 
-I would call $C\land B \rightarrow A$ plus a visualisatoin thereof an explanation, but the pure mathematic object $(C,B)$ is not really an explanation yet. (not sure if we have to make this distinction in the text)
-}
-
-\paragraph{Justification of Reasoning Steps.}
+\paragraph{Explanation of reasoning steps.}
 The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ where $I_0$ is an initial partial interpretation (potentially empty), and $\forall i>0, I_{i-1} \geqp I_{i}$ with $I_n$ a (full) interpretation.
 %\[ I_0 = \emptyset, I_1 = I_0 \cup N_1, \dots , I_n = I_{n-1}\cup N_n\]
 %where $I_i$ represents the state of the grid at each point in time and $N_i$ represents the newly derived information. 
-Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation or \textit{justification} $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$.
+Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized (see e.g. figure \tias{todo}), it will show to the user precisely what information and constraints were used to derive a new piece of information.
 
-\tias{the thing below needs a definition to be referred to later again}
+\tias{the 'all models more precise' needs a definition to be referred to later again}
 Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_i\geqp I_{i-1}$ iff $I_i\supseteq I_{i-1}$.
 With this view (partial) interpretations can also be seen as a theory (having each such literal as a sentence), which will allow us to make claims of the form 
 $T\cup I \entails I'$ with $T$ a theory and  $I,I'$ (partial) interpretations, meaning that all literals in $I'$ follow from $T$ and $I$, or stated precisely, that all models of $T$ more precise than $I$ are also more precise than $I'$. 
@@ -28,7 +22,7 @@ We hence define a justification as a tuple $(E_i,S_i)$ such that:
 	\item $S_i \cup E_i \entails N_i$ (i.e., all newly derived information indeed follows from this justification).
 \end{compactitem}
 
-The problem of simply checking whether $(E_i,S_i)$ explains\tias{explains or justifies?} $N_i$ is in co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{ternovskaMXcomplexity}.
+The problem of simply checking whether $(E_i,S_i)$ explains $N_i$ is in co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{ternovskaMXcomplexity}.
 
 
 Part of our goal of finding easy to interpret explanations is to avoid redundant information in the explanation. That is, we want a non-redundent explanation $(E_i,S_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed or else the implication $S_i \wedge E_i \rightarrow N_i$ would no longer hold. We will use the concept of Minimal Unsat Cores here (or Minimal Unsat Subset, MUS). A MUS over a set of constraints $C$ is a subset $C' \subseteq C$ such that $C' is UNSAT$ and $\forall c \in C': C' \setminus \{c\} is SAT$. If we know that $N_i$ follows from $S_i$ and $E_i$ then $\neg N_i \wedge S_i \wedge E_i$ must be UNSAT. A Minimal Unsat Subset (MUS) hereof will be a non-redundant subset of $N'_i \subseteq N_i$, $S'_i \subseteq S_I$ and $E'_i \subseteq E_i$ for which we know (because it is UNSAT): $\neg (\neg N'_i \wedge S'_i \wedge E'_i)$ hence through substitution $N'_i \vee \neg (S'_I \wedge E'_i)$ and hence $(S'_I \wedge E'_i) \rightarrow N'_I$. In other words, $(S'_I \wedge E'_i)$ is the smallest explanation of $N'_I$ for which this relation holds, for any smaller explanation it will no longer hold.
@@ -63,7 +57,3 @@ As finding a single minimal $f(E_i,S_i,N_i)$ is ..., the entire search problem i
 
 
 
-
-\tias{Moved the below paragraph here, should be part of the cost-optimal imho}
-In principle our problem of finding subset-minimal (or even, see the next paragarph, cost-optimal) justifications could be solved by specifying it in such a way in second-order logic and subsequently finding models for it, e.g. by a reduction to QBF \cite{kr/BogaertsTS16,kr/vanderHallenJ18}. 
-However, since this is already an $\exists\forall\exists SO$ specification, we expect this approach not be feasible (this expectation remains to be verified in future work). 

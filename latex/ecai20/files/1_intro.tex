@@ -9,16 +9,19 @@ As these systems employ more advanced reasoning mechanisms and computation power
 Understanding the decisions is important for verifying the correctness of the system, as well as to control for biased or systematically unfair decisions.
 
 Explainable AI is often studied in the context of (black box) machine learning systems such as neural networks, where the ability to provide insight into what part of the (potentially large) input was most important to infer the predicted label is often crucial. 
-Another domain is explainable planning, which looks among others at answering user queries regarding a computed plan and model reconciliation.\bart{Beetje kort. Kan je daar meer over zeggen? }
-
-%Difference automated reasoning and human reasoning, measuring cognitive load
-We here investigate the problem of explainable constraint solving. More specifically, we aim to develop an explanation-producing system that is complete and interpretable. By complete we mean that it finds a \textit{sequence} of reasoning steps that, starting from the given problem specification, leads to a solution of the problem. An explanation of one reasoning step is an implication of the form $C \wedge B \rightarrow A$, where $C$ is a set of constraints, $B$ is a set of previously derived facts and $A$ is a set of newly derived facts that follow from $C$ and $B$. Measuring the interpretability of a reasoning step is difficult, but our guiding principle is that of simplicity, where smaller and simpler $C \wedge B \rightarrow A$ explanations are better. 
-\bart{The above is phrased very generic. That is good. However, sequences such as the ones we consider here need no always exist, e.g., in case a logic problem does not ahve a unique solutoin...}
+%Another domain is explainable planning, which looks among others at answering user queries regarding a computed plan and model reconciliation.\bart{Beetje kort. Kan je daar meer over zeggen? }
 
 %Shallow related work on quickxplain, 'explanations' in search, etc.
-Explanations have been investigated as part of constraint solving before, but within different contexts. In lazy clause generation solvers, an explanation of a constraint is an implication of low-level Boolean literals that encode the result of a propagation step. They are not meant to be human-interpretable but rather to propagate efficiently. Also related but different is QuickXplain and related methods, which...
+Explanations have been investigated as part of constraint solving before. Most notably, for explaining over-constrained problems~\cite{junker2001quickxplain} to a user. In our case we are looking at satisfiable problems with a unique solution. Also at the solving level, in lazy clause generation solvers, an explanation of a constraint is an implication of low-level Boolean literals that encode the result of a propagation step~\cite{feydy2009lazy}. Also, nogoods (unsat cores) in SAT solvers can be seen as explanations of failure during search~\cite{marques2009conflict}. These are not meant to be human-interpretable but rather to propagate efficiently.
 
-Gilpin et al.~\cite{DBLP:conf/dsaa/GilpinBYBSK18} define interpretable explanations as ``descriptions that are simple enough for a person to understand, using a vocabulary that is meaningful to the user''. For the constraints $C$, we choose to represent them in natural language. In the case of logic grid puzzles this is an obvious choice as the constraints are \textit{clues} that are given in natural language. For the previously and newly derived facts $B$ and $A$, we choose a visual representation of those facts in the solution structure. For logic grid puzzles this is the logic grid (see Figure ...).
+
+%Difference automated reasoning and human reasoning, measuring cognitive load
+We here investigate the problem of explainable constraint solving. More specifically, we aim to develop an explanation-producing system that is complete and interpretable. By complete we mean that it finds a \textit{sequence} of reasoning steps that, starting from the given problem specification, leads to the unique solution of the problem\tias{added assumption of uniqueness, though not very explicit}. An explanation of one reasoning step is an implication of the form $E \wedge S \rightarrow N$, where $E$ is \textit{evidence} namely a set of previously derived facts, $S$ is a (sub)set of constraints, and $N$ is a set of newly derived facts that follow from $E$ and $S$. Measuring the interpretability of a reasoning step is difficult, but our guiding principle is that of simplicity, where smaller and simpler $E \wedge S \rightarrow N$ explanations are better. 
+\bart{The above is phrased very generic. That is good. However, sequences such as the ones we consider here need no always exist, e.g., in case a logic problem does not ahve a unique solutoin...}
+\tias{If it has NO solution OK, but if where does problem arise for above statement for multiple solutions? We need to make our assumputions stronger: that there is a unique solution?}
+
+
+Gilpin et al.~\cite{DBLP:conf/dsaa/GilpinBYBSK18} define interpretable explanations as ``descriptions that are simple enough for a person to understand, using a vocabulary that is meaningful to the user''. For the constraints $C$, we choose to represent them in natural language. In the case of logic grid puzzles this is an obvious choice as the constraints are \textit{clues} that are given in natural language. For the previously and newly derived facts $E$ and $N$, we choose a visual representation of those facts in the solution structure. For logic grid puzzles this is the logic grid (see Figure ...).
 
 %HolyGrail challenge and related work
 Our work is motivated by Eugene Freuder's ``Holy Grail Challenge'' which had as objective  to provide automated processing of a simple, restricted class of problems, logic grid puzzles specifically, ranging from natural language processing, to solving, and explanining \cite{}. 
@@ -34,7 +37,7 @@ Finally, our measures of simplicity of reasoning steps can be used to estimate t
 %challenge 1: abstraction in self-contained reasoning step
 %challenge 2: ordering
 %challenge 3: computation efficiency
-The challenge in making an explanation-producing constraint solving method is choosing the right level of abstraction for the constraints and explanations, defining what a good ordering of the explanations is, and extracting a complete sequence of good explanations in a computationally efficient way. The search for a sequence of small explanations is much more computationally intensive than searching for a satisfying solution as it requires repeatedly solving subparts of the problem.
+%The challenge in making an explanation-producing constraint solving method is choosing the right level of abstraction for the constraints and explanations, defining what a good ordering of the explanations is, and extracting a complete sequence of good explanations in a computationally efficient way. The search for a sequence of small explanations is much more computationally intensive than searching for a satisfying solution as it requires repeatedly solving subparts of the problem.
 
 %Contributions: (eerste aanzet!!!)
 Our contributions are the following:
@@ -46,4 +49,4 @@ Our contributions are the following:
 \end{itemize}
 
 
-\bart{Mention running example? Mention that this is a very hard puzzle (80 people at an AI conference received it; 4 solved it; many more tried)? }
+\bart{Mention running example? Mention that this is a very hard puzzle (80 people at an AI conference received it; 4 solved it; many more tried)? } \tias{go ahead... somewhere small ; )}

@@ -1,22 +1,22 @@
 We instantiated the above described algorithm in the context of logic grid puzzles. 
-In that setting there are basically three types of constraints in $C$: transitivity constraints, bijectivity constraints and clues, where the clues themselves are obtained automatically (see Section \ref{sec:holistic}). 
-Before defining a cost-function, and the estimation for $g$ used in our implementation, we provide some observation that drove our implementation. 
+In that setting there are basically three types of constraints in $C$: transitivity constraints, bijectivity constraints and clues, where the clues themselves are obtained in a mostly automatic way (see Section \ref{sec:holistic}). 
+Before defining a cost-function, and the estimation for $g$ used in our implementation, we provide some observation that drove our design decision. 
 
 \textbf{Observation 1: propagations from a single implicit constraint are very easy to understand} Contrary to the clues, the implicit constraints (transitivity/bijectivity) are very limited in form and propagations over them follow well-specified patterns. 
 For instance in the case of bijectivity, a typical pattern that occurs is that when $X-1$ out of $X$ possible values for a given function have been derived not to be possible, it is propagated that the last value should be true. 
-Since such propagations are always prioritized, we ensured in our implementation that they are always performed first. Stated differently, $g$ and $f$ are desigend in such a way that $g(C)\geq f(I,C')$ whenever $C$ contains more than just a single implicit constraint while $C'$ only consists of one implicit constraint.  
+Hence, in our implementation, we ensure that they are always performed first. Stated differently, $g$ and $f$ are desigend in such a way that $g(C)\geq f(I,C')$ whenever $C$ contains more than just a single implicit constraint while $C'$ only consists of one implicit constraint.  
 
 \textbf{Observation 2: clues propagate rarely by themselves}
-We observed that the automatically obtained logic representation of clues usually has quite weak propagation strength in isolation. 
-This is not a property of the clues themselves, but rather of the final obtained translation. As an example, consider the following sentence: 
-``The person who ordered capellini is either Damon or Claudia''. From this, a human reasoner might conclude that Angie did not capellini. 
+We observed that the automatically obtained logic representation of clues usually has quite weak (unit) propagation strength in isolation. 
+This is not a property of the clues, but rather of the final obtained translation. As an example, consider the following sentence: 
+``The person who ordered capellini is either Damon or Claudia''. From this, a human reasoner might conclude that Angie did not order capellini. 
 However, the obtained logical representation is 
 \[\exists p: ordered(p,capellini)\land (p = Damon\lor p = Claudia).\]
 This logic sentence only entails that Angie did not order capellini \emph{in conjunction with the bijectivity constraint on $ordered$}. 
 
-Since we observed that there is rarely any propagation from sole clues, we immediately paired each constraints will all the implicit constraints. 
+We observed that there is rarely any propagation from sole clues, and that only few implicit constraints are active together with a clue at any time. Hence, when pairing clues to other constraints we always pair it with the set of all implicit (bijectivity, transitivity) constraints.
 
-\textbf{Observation 3: clues can be used independently from one another} 
+\textbf{Observation 3: clues are typically used independently from other clues} 
 A final observation is that in the puzzles we considered, a human reasoner never needs to combine two clues in order to derive new information and that even when such propagations are possible, they are quite hard to explain. 
 
 With these three observations in mind, we devised $f$ and $g$ as follows (where $nc(C)$ denotes the number of clues in $C$): 
@@ -31,23 +31,24 @@ The effect of this is that we can generate our subsets $C'$ in Algorithm \ref{al
 \begin{compactitem}
  \item First all $C'$ containing exactly one implicit constraint
  \item Next, all $C'$ containing exactly one clue and all implicit constraints
- \item Finally, all 
+ \item Finally, all clue pairs, triples etc. though in practice this is never reached.
 \end{compactitem}
+\tias{We could add a value for the order of the clues, e.g. 0.01*index, to favor higher displayed rules. Also, we could favor 'positive' literals in $N$ by giving these a lower weight, e.g. 0.01 vs 0.1 or smth...}
 
-\tias{Below from before a merge, potentially redundant by the above}
-\paragraph{Holy Zebra cost function}
-We assume every constraint $c \in C$ has a weight $w(c)$, and we assume every literal has a weight when used as previously derived fact $w_l(f)$, and when it is a newly derived fact $w_r(f)$. The total cost of an explanation is then:
-$$ cost(I', C', A) = w_1*(\sum_{i \in I'} w(i)) + w_2*(\sum_{c \in C'} w(c)) + w_3*(\sum_{a \in A} w(a))$$
 
-The $w_1, w_2, w_3$ can be used to trade-off weights of constraints and facts globally, e.g. to mimic a lexicographic ordering.
+%\paragraph{Holy Zebra cost function}
+%We assume every constraint $c \in C$ has a weight $w(c)$, and we assume every literal has a weight when used as previously derived fact $w_l(f)$, and when it is a newly derived fact $w_r(f)$. The total cost of an explanation is then:
+%$$ cost(I', C', A) = w_1*(\sum_{i \in I'} w(i)) + w_2*(\sum_{c \in C'} w(c)) + w_3*(\sum_{a \in A} w(a))$$
+%
+%The $w_1, w_2, w_3$ can be used to trade-off weights of constraints and facts globally, e.g. to mimic a lexicographic ordering.
+%
+%In this work, we assume that the weights are manually set based on domain knowledge. For the logic grid puzzles, we prefer small numbers of constraints primarily, so $w_2$ has a high value ($w_2=100$). Among constraints, clues get a weight of $1$ + $0.01$ times their index in the list, such that clues higher in the list get preference. Implicit constraints are even more preferred with a weight of $0.5$ for transitivity constraints and $0.01$ for bijection constraints, as users typically complete the latter immediately.
+%Previously used facts are uniformily weighted $w_1=1$ and $w(i)=1, \forall i$. The number of newly derived facts matter less, hence $w_3=0.1$ though with a slight preference for positive literals which get a weight of $w(a)=0.1$ when $a$ is positive, else $w(a)=1$.
+%
+%Based on this cost function, it is clear that small $C'$ sets should be preferred, but the MUS search does not ensure to find the smallest possible MUS, just that the MUS is minimal. Hence, we will do a 'level-wise' search for increasing constraint set cost $w_2*(\sum_{c \in C'} w(c))$.
 
-In this work, we assume that the weights are manually set based on domain knowledge. For the logic grid puzzles, we prefer small numbers of constraints primarily, so $w_2$ has a high value ($w_2=100$). Among constraints, clues get a weight of $1$ + $0.01$ times their index in the list, such that clues higher in the list get preference. Implicit constraints are even more preferred with a weight of $0.5$ for transitivity constraints and $0.01$ for bijection constraints, as users typically complete the latter immediately.
-Previously used facts are uniformily weighted $w_1=1$ and $w(i)=1, \forall i$. The number of newly derived facts matter less, hence $w_3=0.1$ though with a slight preference for positive literals which get a weight of $w(a)=0.1$ when $a$ is positive, else $w(a)=1$.
-
-Based on this cost function, it is clear that small $C'$ sets should be preferred, but the MUS search does not ensure to find the smallest possible MUS, just that the MUS is minimal. Hence, we will do a 'level-wise' search for increasing constraint set cost $w_2*(\sum_{c \in C'} w(c))$.
-
-\paragraph{Algorithm modifications}
-\tias{TODO for Bart}
+%\paragraph{Algorithm modifications}
+%\tias{TODO for Bart}
 
 
 

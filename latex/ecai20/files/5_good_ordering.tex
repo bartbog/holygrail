@@ -18,6 +18,7 @@ We observed that there is rarely any propagation from sole clues, and that only 
 
 \textbf{Observation 3: clues are typically used independently from other clues} 
 A final observation is that in the puzzles we considered, a human reasoner never needs to combine two clues in order to derive new information and that even when such propagations are possible, they are quite hard to explain. 
+\tias{smth contrast with 2, e.g. multiple clues WITH impl}
 
 With these three observations in mind, we devised $f$ and $g$ as follows (where $nc(C)$ denotes the number of clues in $C$): 
 \[f(I,C) = basecost(C) + |I| + |C|\] with 
@@ -27,11 +28,11 @@ With these three observations in mind, we devised $f$ and $g$ as follows (where 
                                20\cdot nc(C) & \text{otherwise}
                               \end{array}\right.
                               \]
-The effect of this is that we can generate our subsets $C'$ in Algorithm \ref{alg:something} in the following order:
+The effect of this \tias{'this' refers to f(I,C), 20 is a lot, |I|+|C| < 20} is that we can generate our subsets $C'$ in Algorithm \ref{alg:something} in the following order:
 \begin{compactitem}
  \item First all $C'$ containing exactly one implicit constraint
- \item Next, all $C'$ containing exactly one clue and all implicit constraints
- \item Finally, all clue pairs, triples etc. though in practice this is never reached.
+ \item Next, all $C'$ containing exactly one clue and all implicit constraints  ... multiple implicit constraints as well as one clue with all impl
+ \item Finally, all clue pairs, triples etc. though in practice this is never reached. 
 \end{compactitem}
 Summarized, our instantiation for logic grid puzzles differs from the generic methods developed in the previous section in:
 \begin{compactitem}
@@ -40,6 +41,7 @@ Summarized, our instantiation for logic grid puzzles differs from the generic me
  \item 
 \end{compactitem}
 
+\tias{consider using running example here}
 
 \tias{We could add a value for the order of the clues, e.g. 0.01*index, to favor higher displayed rules. Also, we could favor 'positive' literals in $N$ by giving these a lower weight, e.g. 0.01 vs 0.1 or smth...}
 \bart{Not so convinced of this... 

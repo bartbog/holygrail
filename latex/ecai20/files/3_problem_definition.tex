@@ -1,22 +1,19 @@
 
-When a human solves a logic grid puzzle, they typically maintain a grid with all the information obtained so far and use it in combination with the clues to derive new conclusions. In logic terminology, the user maintains a partial interpretation.  
+When a person solves a logic grid puzzle, they typically maintain a grid with all the information obtained so far and use it in combination with the clues to derive new conclusions. In logic terminology, the user maintains a partial interpretation.  
 With this in mind, the goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with an 
 \emph{explanation} (see below) of why each of the steps is correct that is ``simple enough for a person to understand''. 
 
 \paragraph{Explanation of reasoning steps.}
-The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ where $I_0$ is an initial partial interpretation (potentially empty), and $\forall i>0, I_{i-1} \geqp I_{i}$ with $I_n$ a (full) interpretation.
+The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ where $I_0$ is an initial partial interpretation (potentially empty), and $\forall i>0, I_{i-1} \geqp I_{i}$ with $I_n$ the interpretation obtained when propagating all constraints until fixpoint.
 %\[ I_0 = \emptyset, I_1 = I_0 \cup N_1, \dots , I_n = I_{n-1}\cup N_n\]
 %where $I_i$ represents the state of the grid at each point in time and $N_i$ represents the newly derived information. 
-Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized (see e.g. figure \tias{todo}), it will show to the user precisely what information and constraints were used to derive a new piece of information.
+Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized, such as in Figure~\ref{fig:zebrascreen}, it will show to the user precisely what information and constraints were used to derive a new piece of information.
 
-\tias{the 'all models more precise' needs a definition to be referred to later again}
 Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_i\geqp I_{i-1}$ iff $I_i\supseteq I_{i-1}$.
 With this view (partial) interpretations can also be seen as a theory (having each such literal as a sentence), which will allow us to make claims of the form 
 $T\cup I \entails I'$ with $T$ a theory and  $I,I'$ (partial) interpretations, meaning that all literals in $I'$ follow from $T$ and $I$, or stated precisely, that all models of $T$ more precise than $I$ are also more precise than $I'$. 
 
-\tias{Definition using the above? but below E/N are not more precise of eachother?}
-\bart{No, $N$ is only the newly derived facts. $E$ is the assumptions that lead to it. The $I_i$ are $\leqp$-increasing}
-\tias{OK. What I though, Bart adds definitions?}
+\tias{Bart adds definitions?}
 We hence define a justification as a tuple $(E_i,S_i)$ such that: 
 \begin{compactitem}
 	\item $E_i\subseteq I_i$ (i.e., the explaining facts are a subset of what was previously derived),

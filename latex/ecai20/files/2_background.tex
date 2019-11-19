@@ -1,5 +1,4 @@
-
-\paragraph{Logic grid puzzles}
+\textbf{Logic grid puzzles\ \ }
 While our proposed method is applicable to constraint satisfaction problems in general, we will use \textit{logic grid puzzles} as example domain, as it requires no expert knowledge to understand.
 
 A logic grid puzzle (also known as Zebra puzzle or Einstein puzzle) consists of natural language sentences (from hereon referred to as ``clues'') over a set of \emph{entities} occurring in those sentences. 
@@ -13,7 +12,7 @@ The goal of the puzzle is to find relations between each two types such that
 	\item each entity of one type is matched with exactly one entity of the second type, e.g., each person chose exactly one sauce and each sauce is linked to one person (this type of constraint will be referred to as \emph{bijectivity}), and 
 	\item the relations are logically linked, e.g., if Angie chose arrabiata sauce and arrabiata sauce was paired with farfalle, then Angie must also have eaten farfalle (from now on called \emph{transitivity}). 
 \end{compactitem}
-In section Sec~\ref{sec:holistic} we explain how we obtain a vocabulary and first-order theory in a mostly automated way from the clues. The result is a vocabulary with types corresponding to the groups of entities in the clues, and the names and types of the binary relations to find (e.g \textit{chose(person, sauce)}, \textit{paired(sauce, pasta)}, \textit{eaten(person, pasta)});
+In Section \ref{sec:holistic} we explain how we obtain a vocabulary and first-order theory in a mostly automated way from the clues. The result is a vocabulary with types corresponding to the groups of entities in the clues, and the names and types of the binary relations to find (e.g \textit{chose(person, sauce)}, \textit{paired(sauce, pasta)}, \textit{eaten(person, pasta)});
 %We furthermore assume that the interpretation of the types is fixed (and hence all interpretations agree on this). 
 as well as constraints (first-order sentences) corresponding to the clues, and the bijectivity and transitivity constraints. Let $T_P$ be a theory containing all of these constraints for a given puzzle $P$.
 
@@ -21,17 +20,24 @@ Our running example is a puzzle about people having dinner in a restaurant and o
 The entire puzzle can be seen in Figure \ref{fig:zebrascreen}; the full final explanation generated for it can be found at \url{http://bartbog.github.io/zebra/pasta}.
 % Dout of  and its final produced explanation still contains some challenging steps. 
 
-\paragraph{Typed first-order logic}
+\noindent\textbf{Typed first-order logic\ \ }
 Our reasoning method is based on \emph{typed first-order logic}. %, with links to \emph{typed second-order logic}.
 Part of the input is a logical vocabulary consisting of a set of type symbols, typed constant symbols, and relation symbols with associated type signature (i.e., each relation symbol is typed $T_1\times \dots \times T_n$ with $T_i$ types).\footnote{We here omit function symbols since they are not used in this paper.} For example, type \textit{person} with constant symbol \textit{Angie} of type \textit{person} and a relation \textit{choseSauce(.,.)} with signature \textit{person $\times$ sauce}.
 
 
-A \emph{first-order theory} is a set of sentences (well-formed variable-free first-order formulas in which each quantified variable has an associated type). 
-Given a logical vocabulary $V$, a \emph{\textbf{partial} interpretation} $I$ assigns to each type symbol $T$ (e.g. \textit{person}) a finite set $I(T)$ and to each 
-relation symbol $P$ with type signature $T_1\times \dots \times T_n$ a function 
-\[I(P): I(T_1)\times \dots \times I(T_n)\to \{\ltrue,\lunkn,\lfalse\},\] 
-where $\ltrue$ stands for true, $\lunkn$ for unknown, and $\lfalse$ for false. In case all functions $I(P)$ map all tuples into $\{\ltrue,\lfalse\}$ (i.e., no more tuples are unknown), we call $I$ a \emph{full interpretation} (this is sometimes also called a \emph{total} or \emph{two-valued} interpretation, or simply \emph{an interpretation}). 
-A partial interpretation $I_1$ is \emph{more precise} than partial interpretation $I_2$ (notation $I_1\geqp I_2$) if $I_1$ and $I_2$ agree on everything not unknown in $I_2$.
+A \emph{first-order theory} is a set of sentences (well-formed variable-free first-order formulas in which each quantified variable has an associated type).
+In all our applications, the vocabulary, the interpretation of the types (the domains) and the constants will be fixed. 
+This justifies the following definition. 
+\begin{definition}
+ A \emph{(partial) interpretation} is a set of literals, i.e., expressions of the form $P(\ddd)$ or $\lnot P(\ddd)$ where $P$ is a predicate symbols and $\ddd$ is a tuple of domain elements of the types prescribed by the signature of $P$. A partial interpretation is \emph{consistent} if it does not contain both an atom and its negation, it is called a \emph{full} interpretation if it either contains $P(\ddd)$ or $\lnot P(\ddd)$ for each well-typed atom $P(\ddd)$. 
+\end{definition}
+% 
+% Given a logical vocabulary $V$, a \emph{\textbf{partial} interpretation} $I$ assigns to each type symbol $T$ (e.g. \textit{person}) a finite set $I(T)$ and to each 
+% relation symbol $P$ with type signature $T_1\times \dots \times T_n$ a function 
+% \[I(P): I(T_1)\times \dots \times I(T_n)\to \{\ltrue,\lunkn,\lfalse\},\] 
+% where $\ltrue$ stands for true, $\lunkn$ for unknown, and $\lfalse$ for false. In case all functions $I(P)$ map all tuples into $\{\ltrue,\lfalse\}$ (i.e., no more tuples are unknown), we call $I$ a \emph{full interpretation} (this is sometimes also called a \emph{total} or \emph{two-valued} interpretation, or simply \emph{an interpretation}). 
+A partial interpretation $I_1$ is \emph{more precise} than partial interpretation $I_2$ (notation $I_1\geqp I_2$) if $I_1\supseteq I_2$.
+Viewing (partial) interpretations as sets of literals allows us to also use them interchangeably as a theory; we will make use of this in our algorithms.
 
 % 
 % In a second-order theory also quantifiers over relations have an associated type signature. 

@@ -1,21 +1,22 @@
-
-We presented... it is awesome.
-
-Future work:
-\begin{compactitem}
- \item QBF or SO encoding
- \item Dedicated unsat core optimization algorithm
-  \item Sequence vs steps
-  \item learning the cost-function based on traces of users
-  \item 
-\end{compactitem}
-\bart{there is enough material in future work already to fill an FWO aspirant, or FWO project. To be discussed after the deadline}
-
-% \end{itemize }
-% 
-Higher order? How to deal with search; optimisation? .
+In this paper, we formally defined the problem of step-wise explanation generation and presented a generic algorithm for solving this problem. 
+We implemented this algorithm in the context of logic grid puzzles, where we start from natural language clues and provide a human-friendly explanation in the form of a visualisation.
+Our experiments \bart{Emilio? something}
 
 
-\tias{Should this paragraph be here? It seems to undermine our proposed approach... maybe to future work?}
-In principle our problem of finding subset-minimal (or even, see the next paragarph, cost-optimal) justifications could be solved by specifying it in such a way in second-order logic and subsequently finding models for it, e.g. by a reduction to QBF \cite{kr/BogaertsTS16,kr/vanderHallenJ18}. 
-However, since this is already an $\exists\forall\exists SO$ specification, we expect this approach not be feasible (this expectation remains to be verified in future work). 
+The main bottleneck of the current algorithm is the immense amounts of calls to MUS, which is a hard problem by itself. 
+Therefore, in future work we want to study the problem of unsat-core \emph{optimization} with respect to a cost-function , either by  developing custom algorithms or, potentially by reduction to QBF \cite{QBF}.
+Our hope here is that the entire for loop in Line \ref{line:for} of Algorithm\ref{alg:cand} can be translated to a single solver call that simultaneously searches for the best $a$ and its best explanation. 
+
+Secondly, we want to dig deeper into the question \emph{what constitutes an understandable explanations for humans}, either by optimizing the entire sequence instead of step by step, by learning the cost function based on user traces, or by reusing our developed algorithms to explain reasoning steps in more detail and as such develop an explanation mechanism that operates at different levels of abstraction. 
+To illustrate this last point: in the setting of very difficult puzzles, some of the explanation steps still require some effort to understand. 
+When explained by a human, this is often done using some form of proof by contradiction using an explanation of the form ``suppose this [the derived fact] would not hold, then ...., which is not possible''. 
+This explanation process is of \emph{exactly the same form} as what we generate now. The only difference is that $I_0$ is not the empty interpretation, but one in which a wrong value is assigned. 
+
+A final direction for future work is to make our demo more interactive, essentially allowing the zebratutor to be called \emph{while} a user is solving the puzzle and to implement in more serious domains such as for instance interactive configuration in which a human and a search engine cooperate to solve some configuration problem and the human can often be interested in understanding \emph{why} the system did certain derivations \cite{DBLP:journals/tplp/HertumDJD17,DBLP:conf/bnaic/CarbonnelleADVD19}. 
+
+
+% \tias{Should this paragraph be here? It seems to undermine our proposed approach... maybe to future work?}
+% In principle our problem of finding subset-minimal (or even, see the next paragarph, cost-optimal) justifications could be solved by specifying it in such a way in second-order logic and subsequently finding models for it, e.g. by a reduction to QBF \cite{kr/BogaertsTS16,kr/vanderHallenJ18}. 
+% However, since this is already an $\exists\forall\exists SO$ specification, we expect this approach not be feasible (this expectation remains to be verified in future work). 
+
+

@@ -14,6 +14,7 @@ There are two options:
  \item There are no mdoels, in that case $I_n$ should be maximally inconsistent. In that case, individual constraints can never do something wrong.
 \end{itemize}
 }
+\tias{OK: so only in one node of search tree...}
 
 
 Algorithm \ref{alg:main} formalizes the greedy construction of the sequence. We assume that the \textit{propagate} function is optimal in that it computes the intersection of all valid solutions, but our approach is also valid for propagation with other levels of consistency.
@@ -33,12 +34,14 @@ $I \gets \{\}$\;
 \caption{High-level greedy sequence-generating algorithm.}
 \label{alg:main}
 \end{algorithm}
+\tias{In enkel hier, niet lager}
 
 \paragraph{Candidate generation}
 \bart{Structural remark. I would like to see MUS disappear from the main part of this section. 
 Instead of calling MUS, we call $find-best-explanation(C,I,a)$. 
 which explains why $a$ follows from $C$ and $I$. 
 We then explain that MUS is *one* way to find a good explanation (an implementation technique) . But there might be other ways... }
+\tias{OK, but this makes the algorithm trivial.... and the explanation too. Keep but add remark.}
 
 The main challenge is finding the best scoring explanation, among all reasoning steps that can be applied for a given partial interpretation $I$. We first look at how to enumerate a set of candidate explanations given a set of constraints.
 
@@ -48,7 +51,7 @@ The code below shows our proposed algorithm. The key part of the algorithm is on
 
 We search for minimal unsat cores to avoid redundancy in the explanations. To avoid redundancy at the sequence level, we wish to avoid generating multiple $E \wedge S \rightarrow a, E \wedge S \rightarrow b$ explanations with the same $(E, S)$. Hence, we choose to generate candidate explanations at once for all implicants of $(E, S)$ on line~\ref{line:implicants}. Note that the other implicants $A \setminus \{a\}$ may have simpler explanations that may be found later in the for loop, hence we do not remove them from $J$.
 
-\bart{What is this ``reify'' still doing in the algorithm? }
+\bart{What is this ``reify'' still doing in the algorithm? } \tias{OK, to remove}
 % % \comment{
 \begin{algorithm}
 % 
@@ -81,6 +84,8 @@ We search for minimal unsat cores to avoid redundancy in the explanations. To av
 \end{algorithm}
 
 % }
+
+\tias{Maak duidelijk dat MUS een keuze is}
 
 We assume the use of a standard MUS algorithm, e.g. that searches for a satisfying solution and if a failure is encountered, the resulting Unsat Core is shrunk to a Minimal Unsat Core~\cite{}. While computing a MUS in this way may be computationally demanding, it is far less demanding than enumerating all MUS's (of arbitrary size) as candidates. 
 Hence, the result of the MUS call on line~\ref{line:mus} is \textit{an} unsatisfiable core that is \textit{subset-minimal}, but not \textit{size-minimal}. That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller.
@@ -124,10 +129,12 @@ Caching of \textit{candidate-explanations()} calls across iterations is not advi
 \bart{Somewehere (here or in the next section?) we should say something about hte fact that MUS gives us ``just'' a subset-minimal. Without guarantee that it is a good one.
 In practice we *do* keep old results...  Becuase they might ``acccidentally'' be  better than new calls... 
 I think it fits better in the next section (since it is not conceptual but rather about implementation with the tools we have available}
+\tias{OK, will add here}
 
 \textit{Optimization: MARCO map} We identify an additional improvement to the above algorithm, inspired by the MARCO algorithm~\cite{liffiton2013enumerating}. There, they make the observation that given a MUS $M$ involving constraint set $C$, any superset $C''$ of $C$ will also be UNSAT where we already have a corresponding MUS. In our case, given that we search candidate explanations for an increasingly costly constraint set $C$, if we have a candidate explanation involving $C'$ on line \ref{alg:min:gets} we can omit searching for explanations of $C'' \supset C'$ in the for loop on line \ref{alg:min:for}, as an explanation involving $C''$ would have $g(C'') > g(C')$. \tias{actually, there could be a smaller one than $C'$ which is found when searching for a MUS of $C''$ but we leave that detail open here}.
 \tias{Future idea: if a constraint is fully satisfied, no need to include it in future calls. I guess because the 'propagate' will return empty the overhead is quite limited anyway}
 \bart{There might be some overhead. THe reason is that in that theory also all the implicit constraints are. In practice they propagate the same for every satisfied clue... } 
+\tias{OK, so we should try empirically but don't have the time now}
 
 
 

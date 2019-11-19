@@ -16,6 +16,7 @@ $T\cup I \entails I'$ with $T$ a theory and  $I,I'$ (partial) interpretations, m
 
 \tias{Definition using the above? but below E/N are not more precise of eachother?}
 \bart{No, $N$ is only the newly derived facts. $E$ is the assumptions that lead to it. The $I_i$ are $\leqp$-increasing}
+\tias{OK. What I though, Bart adds definitions?}
 We hence define a justification as a tuple $(E_i,S_i)$ such that: 
 \begin{compactitem}
 	\item $E_i\subseteq I_i$ (i.e., the explaining facts are a subset of what was previously derived),
@@ -27,6 +28,8 @@ The problem of simply checking whether $(E_i,S_i)$ explains $N_i$ is in co-NP si
 
 
 Part of our goal of finding easy to interpret explanations is to avoid redundant information in the explanation. That is, we want a non-redundent explanation $(E_i,S_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed or else the implication $S_i \wedge E_i \rightarrow N_i$ would no longer hold. We will use the concept of Minimal Unsat Cores here (or Minimal Unsat Subset, MUS). A MUS over a set of constraints $C$ is a subset $C' \subseteq C$ such that $C' is UNSAT$ and $\forall c \in C': C' \setminus \{c\} is SAT$. If we know that $N_i$ follows from $S_i$ and $E_i$ then $\neg N_i \wedge S_i \wedge E_i$ must be UNSAT. A Minimal Unsat Subset (MUS) hereof will be a non-redundant subset of $N'_i \subseteq N_i$, $S'_i \subseteq S_I$ and $E'_i \subseteq E_i$ for which we know (because it is UNSAT): $\neg (\neg N'_i \wedge S'_i \wedge E'_i)$ hence through substitution $N'_i \vee \neg (S'_I \wedge E'_i)$ and hence $(S'_I \wedge E'_i) \rightarrow N'_I$. In other words, $(S'_I \wedge E'_i)$ is the smallest explanation of $N'_I$ for which this relation holds, for any smaller explanation it will no longer hold.
+\tias{MUS naar lager, non-redundant is subset-minimal laten}
+
 
 %Any incremental step $\langle I_{i-1}, I_i \rangle$ has a trivial justification in the form of $(I_i, T_P)$. However, our goal is to find interpretable justifications that a person can understand. We hence wish to remove redundant information from the justification and instead find a \emph{subset-minimal} justification.
 After reifying the involved constraints of $T_P$ this can also be cast as a second-order problem of the form

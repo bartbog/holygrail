@@ -5,7 +5,17 @@
 The overarching goal is to generate a sequence of small reasoning steps, each with an interpretable explanation. We first introduce the concept of an explanation of a reasoning step, after which we define a cost function for a reasoning step and the cost of a sequence of reasoning steps. 
 
 \paragraph{Explanation of reasoning steps.}
-We assume given a theory $\allconstraints$ and initial partial interpretation $I_0$. We denote by $I_n$ the partial interpretation that is consistent with $\allconstraints$ and $I_0$, e.g. $I_0 \wedge \allconstraints \entails I_n$. \tias{or that results from propagating $T_p$? That are a logical consequence, but any subset of $I_n$ will be a logical consequence? that is maximally consistent?}
+We assume given a theory $\allconstraints$ and initial partial interpretation $I_0$.
+
+\begin{definition}
+We define the \textbf{maximally consistent partial interpretation} of a theory $\allconstraints$ and partial interpretation $I_0$ as the partial interpretation $I_n$ obtained by propagating all constraints constraints in $\allconstraints$, with $I_0 \wedge \allconstraints \entails I_n$
+\end{definition}
+\tias{or that results from propagating $T_p$? That are a logical consequence, but any subset of $I_n$ will be a logical consequence? that is maximally consistent? 'the most complete' (used lower)? Feel free to change, and search/replace for 'maximally consistent partial interpr'}
+From now on we will always denote by $I_n$ the maximally consistent partial interpretation of $\allconstraints$ and $I_0$. Note that by definition, there are no \textit{choices} to be made to reach $I_n$ and all reasoning steps that derive a fact of $I_n$ inherently do not lead to failure.
+
+This definition does not depend on the level of consistency used. Stronger levels of consistency will typically lead to more precise maximally consistent interpretations. In our experiments, we will use global consistency, that is, $I_n$ is the intersection of all valid solutions of \allconstraints. These can be computed reasonably efficiently for ... by ... \tias{TODO for Bart, some indication of feasibility as for CP people this is quite crazy as it would require full enumeration}
+
+
 
 \begin{definition}
 A \textbf{sequence of incremental partial interpretations} of a theory $\allconstraints$ with initial partial interpretation $I_0$ is a sequence $\langle I_0, I_1, \ldots, I_n \rangle$ where $\forall i>0, I_{i-1} \geqp I_{i}$ and $I_n$ is maximally consistent, e.g. $I_0 \wedge \allconstraints \entails I_n$
@@ -66,7 +76,7 @@ While quantifying the interpretability of a single step can be hard, doing so fo
 As a starting point, we here consider the total cost to be an aggregation of the costs of the individual explanations, e.g. the average or maximum cost.
 
 \begin{definition}
-Given a theory $\allconstraints$ and initial partial interpretation $I_0$ such that $I_0 \wedge \allconstraints \entails I_n$, the \textbf{explanation-production problem} consist of finding a sequence of interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ with corresponding subset minimal explanations $(E_i,S_i,N_i)$ where $N_i =  I_i \setminus I_{i-1}$ such that an aggregate over the vector $f(E_i,S_i,N_i) \forall_i$ is minimized.
+Given a theory $\allconstraints$ and initial partial interpretation $I_0$ such that $I_0 \wedge \allconstraints \entails I_n$, the \textbf{explanation-production problem} consist of finding a sequence of interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ with corresponding subset minimal explanations $(E_i,S_i,N_i)$ where $N_i =  I_i \setminus I_{i-1}$ such that a predefined aggregate over the vector $f(E_i,S_i,N_i) \forall_i$ is minimised.
 \end{definition} 
 \tias{check that $I_n$ etc definition matches the one defined higher up}
 

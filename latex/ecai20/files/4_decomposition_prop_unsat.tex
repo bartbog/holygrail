@@ -1,35 +1,22 @@
-In this section, we tackle the goal of searching for a sequence of $E_i \wedge S_i \rightarrow N_i$ explanations that is as simple to understand as possible, and that ends in the the most complete interpretation $I_n$ achievable with the constraints, e.g. a total interpretation.
+In this section, we tackle the goal of searching for a sequence of $E_i \wedge S_i \rightarrow N_i$ explanations that is as simple to understand as possible, and that ends in the most complete interpretation $I_n$ achievable with the constraints. \tias{terminology of $I_n$, the most complete?} %, e.g. a total interpretation.
 
-Ideally, we would generate all explanations of each fact in $I_n$, and search for the lowest scoring combination among those. However, the number of explanations for each fact quickly explodes with the number of constraints, and is hence not feasibly to compute. Instead, we will iteratively construct the sequence, by generating candidates for a given partial interpretation and searching for the smallest one among those.
-
-\tias{Cost function, say something about it already, or fwd pointer}
+Ideally, we could generate all explanations of each fact in $I_n$, and search for the lowest scoring sequence among those explanations. However, the number of explanations for each fact quickly explodes with the number of constraints, and is hence not feasibly to compute. Instead, we will iteratively construct the sequence, by generating candidates for a given partial interpretation and searching for the smallest one among those.
 
 \paragraph{Sequence construction}
-We aim to minimize the total cost of the explanations of the sequence, measured with an aggregate over explanation costs $f(E_i, S_i, N_i)$ for some aggregate like $max()$ or $average()$. Instead of trying to globally optimize it, we will greedily and incrementally build the sequence, each time searching for the cheapest next explanation given the current partial interpretation. 
+We aim to minimize the cost of the explanations of the sequence, measured with an aggregate over individual explanation costs $f(E_i, S_i, N_i)$ for some aggregate like $max()$ or $average()$. The cost function $f$ could for example be a weighted sum of the cardinalities of $E_i$, $S_i$ and $N_i$; see Section~\ref{sec:cost} for the cost function we will use for logic grid puzzles.
 
+Instead of trying to globally optimize the aggregated sequence cost, we encode the knowledge that we are seeking a sequence of small explanations in our algorithm. Namely, we will greedily and incrementally build the sequence, each time searching for the lowest scoring next explanation, given the current partial interpretation. Such an explanation always exist as all facts in the maximally consistent partial interpretation $I_n$ can by definition be derived without search or failure.
+%Note that this greedy approach may not find the optimal sequence. 
 
-Note that this greedy approach may not find the optimal sequence \tias{Bart, did you say that it does for max? Do we know for sure that there might not be a case where 2,4 are costs, while 3,3 are also costs and greedy will choose the first?}\bart{In theory: yes. If greedy chooses $2$ first, then one of the $3$-costs will still be possible when it considers $4$. Every option always remains an option unless its results have been propagated.
-In practice of course we do not find all the optimal candidates in every single step (i.E., we only approximate greedy) }. Also note that as by definition $I_n$ is the intersection of all valid solutions of \allconstraints, there are no \textit{choices} to be made to reach $I_n$ and all reasoning steps that derive a fact of $I_n$ inherently do not lead to failure and can hence be greedily added. \tias{New realization: in the 'intersection' setting, we must filter such that $N_i = N_i \cap I_n$ with $I_n$ computed at the beginning in order not to greedily add something 'else' that leads to failure (which it can not see yet for a small $C$)}
-\bart{I don't get this.
-There are two options:
-\begin{itemize}
- \item There is at least one model, and $I_n$ is the intersection fo all of them. In that case, individual constraints can never do something wrong. Nothing can ever be derived that ``leads to failure''.
- \item There are no mdoels, in that case $I_n$ should be maximally inconsistent. In that case, individual constraints can never do something wrong.
-\end{itemize}
-}
-\tias{OK: so only in one node of search tree...}
-
-
-Algorithm \ref{alg:main} formalizes the greedy construction of the sequence. We assume that the \textit{propagate} function is optimal in that it computes the intersection of all valid solutions, but our approach is also valid for propagation with other levels of consistency.
+Algorithm \ref{alg:main} formalizes the greedy construction of the sequence, which determines $I_n$ through propagation and relies on a \textit{min-explanation$(I,C)$} function to find the next cost-minimal explanation. %We assume that the \textit{propagate} function is optimal in that it computes the intersection of all valid solutions, but our approach is also valid for propagation with other levels of consistency.
 
 \begin{algorithm}
 %  \begin{algorithmic}
-$C \gets \allconstraints$\;
-$I_n \gets$ propagate$(C)$\;
+$I_n \gets$ propagate$(\allconstraints)$\;
 Seq $\gets$ empty sequence\;
 $I \gets \{\}$\;
 \While{$I \neq I_n$}{
-  $(E, S, N) \gets $min-explanation$(I, C, I_n)$; \textit{\footnotesize // has $N \subseteq I_n$} \\
+  $(E, S, N) \gets $min-explanation$(I, \allconstraints)$\;
   append $(E, S, N)$ to Seq\;
   $I \gets I \cup N$
 }
@@ -37,18 +24,16 @@ $I \gets \{\}$\;
 \caption{High-level greedy sequence-generating algorithm.}
 \label{alg:main}
 \end{algorithm}
-\tias{In enkel hier, niet lager}
 
 \paragraph{Candidate generation}
-\bart{Structural remark. I would like to see MUS disappear from the main part of this section. 
-Instead of calling MUS, we call $find-best-explanation(C,I,a)$. 
-which explains why $a$ follows from $C$ and $I$. 
-We then explain that MUS is *one* way to find a good explanation (an implementation technique) . But there might be other ways... }
-\tias{OK, but this makes the algorithm trivial.... and the explanation too. Keep but add remark.}
+$ $\tias{Bart, you had a comment on making this part MUS free. I've made the problem definition MUS free so that a future paper can solve the same problem with non-MUS method}
 
-The main challenge is finding the best scoring explanation, among all reasoning steps that can be applied for a given partial interpretation $I$. We first look at how to enumerate a set of candidate explanations given a set of constraints.
+The main challenge is finding the lowest scoring explanation, among all reasoning steps that can be applied for a given partial interpretation $I$. We first look at how to \textit{enumerate} a set of candidate subset-minimal explanations given a set of constraints.
 
-For a set of constraints $C$, we can first use propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints $C$. For each new fact $a$ that is also in $I_n$, we wish to find a minimal explanation $(E \subseteq I, S \subseteq C)$ that explains $a$. We hence first find all new facts, and then refine for each fact what a minimal explanation is.
+For a set of constraints $C$, we can first use propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints $C$. For each new fact $a$ not in $I$, we wish to find a subset-minimal explanation $(E \subseteq I, S \subseteq C)$ that explains $a$.
+
+
+We hence first find all new facts, and then refine for each fact what a minimal explanation is.
 
 The code below shows our proposed algorithm. The key part of the algorithm is on line \ref{line:mus} where we find an explanation of a single new fact $a$ by searching for a \textit{minimal unsatisfiable core} that includes $\neg a$. We do this over the literals of $I$ as well as over newly introduced \textit{reified} literals for every constraint in $C$. The result will be a minimal unsatisfiable core $\neg a \wedge E \wedge S$ where $E \subseteq I$ and $S \subseteq C$. The latter can in fact be extracted by observing which of the reified literals are set to \textit{true} in the MUS. From $UNSAT(\neg a \wedge E \wedge S)$ we know that $SAT(E \wedge S \rightarrow a)$.
 
@@ -64,7 +49,7 @@ We search for minimal unsat cores to avoid redundancy in the explanations. To av
 \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
 \SetKwComment{command}{/*}{*/}
 
- \Input{A partial interpretation $I$, a set of constraints $C$ and a set of relevant facts $I_n$}
+ \Input{A partial interpretation $I$ and a set of constraints $C$}
 % \end{algorithm}
 % 
 % \Require{$I = $ partial interpretation, $C =$ a set of constraints}
@@ -76,7 +61,7 @@ We search for minimal unsat cores to avoid redundancy in the explanations. To av
   $J \gets J \cap I_n$; \textit{\small // only relevant new facts}\\
   \For{$a \in J \setminus I$\label{line:for}}{ 
   \tcp{Minimal expl. of each new fact}
-    $X \gets MUS(\neg a \wedge I \wedge reify(C))$ \label{line:mus}\;
+    $X \gets MUS(\neg a \wedge I \wedge C)$ \label{line:mus}\;
     $I' \gets I \cap X$\;
     $C' \gets C \cap X$\;
     $A \gets$ propagate$(I' \wedge C')$; \textit{\small // all implied facts}\label{line:implicants}\\
@@ -84,7 +69,7 @@ We search for minimal unsat cores to avoid redundancy in the explanations. To av
   }
   \Return{Candidates}
 % \EndFunction
-\caption{candidate-explanations$(I,C,I_n)$}
+\caption{candidate-explanations$(I,C)$}
 
 \label{alg:cand}
 \end{algorithm}
@@ -115,18 +100,18 @@ We can then search for the smallest explanation among the candidates found, by s
 \SetKw{Break}{break}
 
 
- \Input{A partial interpretation $I$, a set of constraints $C$ and a set of relevant facts $I_n$}
+ \Input{A partial interpretation $I$ and a set of constraints $C$}
   Candidates $\gets \{\}$\;
   $J \gets$ optimal-propagate$(I \wedge C)$\;
   \For{$C' \subseteq C$ ordered by $g(C')$}{ \label{alg:min:for}
     \If{$g(C') < min(\{f(cand_i) | cand_i \in $Candidates$\})$}{
         \Break\;}
-     cand $\gets$ candidate-explanations$(I, C', I_n)$\; \label{alg:min:gets}
+     cand $\gets$ candidate-explanations$(I, C')$\; \label{alg:min:gets}
      add to Candidates all cand$_i$ with corresp. value $f(cand_i)$\;
      }  
           \Return{$cand_i \in$ Candidates with minimal $f(cand_i)$}
  % \EndFunction
-\caption{min-explanation$(I,C,I_n)$}
+\caption{min-explanation$(I,C)$}
 \label{alg:minexpl}
 \end{algorithm}
 

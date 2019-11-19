@@ -18,35 +18,3 @@ The underlying solver, IDP\cite{pip:de2018predicate} uses this formal representa
 \end{enumerate}
 
 A more detailed explanation of steps B and C of the information pipeline can be found in \cite{mcs:claesuser}. From a natural language processing point of view, the most difficult part is step B: automatically deriving the right lexicon. In our current system, this is a semi-automated method that suggests a lexicon and lets a user modify and approve it once. The reason is two fold: 1) the current approach assumes the clues are written in controlled natural language that abides to the (generic) grammar rules. However, puzzle developers are often keen to craft seeming ambiguities (reusing a verb for two relations, name ambiguations, use of gender to discriminate names), or add unnecessary words or contextual synonyms (in the morning, when there is only one timeslot before 12:00). In those case, the user has to reformulate those sentences into the unambiguous controlled natural language. Reason 2) is that our explanation generation step assumes a consistent theory. If one of the clues is missing or wrong, it would be unable to completely solve the puzzle as the resulting $I_n$ would not match the intended puzzle solution.
-
-%The first three steps are related to Natural Language Processing and are discussed in subsection \ref{nlp}.%Step C is explained in subsection \ref{idp_spec}.
-%
-%Steps D and E describe the explanation-generating search for solving the puzzle imitating the human train-of-thought.
-%
-%\subsection{Natural Language Processing} \label{nlp}
-%The standard procedure in Natural Language Processing is to start by tagging each word with its estimated Part-Of-Speech tag (POS tag). 
-%
-%\subsubsection*{Step A. Part-Of-Speech (POS) tagging} \label{pos_tagging}
-%We use the standard English Penn Treebank II POS tagset \cite{marcus1993building}. As POS tagger we use NLTK's built-in Perceptron tagger \footnote{\url{http://www.nltk.org}}. It uses a statistical inference mechanism, trained on a standard training set from the Wall Street Journal. Since any POS-tagger can make mistakes, we ensure that all of the puzzle’s entities are tagged as noun.
-%
-%\subsubsection*{Step B. Chunking and lexicon building} \label{chunking_lexicon}
-%To use the extended Blackburn \& Bos framework, a lexicon and grammar have to be provided, where the lexicon assigns a role to different sets of words and the grammar is a set of rules describing how words can be combined into sentences. The grammar is constructed for logic grid puzzles in general and not puzzle specific; the lexicon is partly problem-specific and partly problem-agnostic.\\
-%
-%Thus, the goal of this second step, called chunking, is to group POS-tagged words into chunks to form a lexicon. Each chunk is associated with a (puzzle-specific or general) lexical category\footnote{The 3 \textbf{puzzle specific} lexical categories are \textit{proper nouns}, namely the individual entities that are central to the puzzle, \textit{other nouns} that refer to groups of entities (like house, animal) and \textit{transitive verbs} that link two entities to each other; the other categories are general and contain a built-in list of possible members. The categories are \textit{determiner},\textit{ number, preposition, auxiliary verb, copular verb, comparative} and \textit{some*}-words (somewhat, sometime, ...), and \textit{conjunction}.} introduced by Claes \cite{msc/Claes17}. We use NLTK and a custom set of regular expressions for chunking the proper nouns and different types of transitive verbs.\\ 
-%
-%The automatically generated lexicon is verified in order to make sure that the clues can be transformed into a complete IDP specification of the puzzle problem in the subsequent step.
-%
-%\subsubsection*{Step C. From chunked sentences to a complete IDP specification} \label{chunked_to_logic}
-%
-%
-%\subsection{Explaining Logic Grid Puzzles} \label{explaining_puzzles}
-%Based on the previously built idp specification of a puzzle, we use the idp system to solve the problem using an (human-like) explanation-generating search.
-%
-%\subsubsection*{Step D. Explanation-generating search in IDP} \label{idp_search}
-%
-%
-%\subsubsection*{Step E. Visualisation of the explanation} \label{visualisation_explanation}
-%We have explored two different possibilities to present the explanations to humans. The first was generating natural language sentences of the form "From the clue(s) $\langle$clue$\rangle$, and the fact that $\langle$assumptions$\rangle$, it follows that $\langle$conclusions$\rangle$." Overall we were not satisfied with the outcome of the generated sentences. As soon as there are a couple assumptions, this kind of sentence easily becomes hard to read and understand. As a result, we have decided to use of the standard grid in logic puzzles. For each step, we highlight which clue(s) are used, all cells used for the propagation in blue and all conclusions in orange.
-%
-%\section{Demonstration}
-%Figure 1 contains a screenshot of this explanation process. It displays a partially filled grid, in which check-marks represent that something is derived to be true and minus signs that it is false. The working of our system is demonstrated on http://bartbog.github.io/ze

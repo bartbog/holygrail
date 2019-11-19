@@ -12,7 +12,8 @@ Explainable AI is often studied in the context of (black box) machine learning s
 %Another domain is explainable planning, which looks among others at answering user queries regarding a computed plan and model reconciliation.\bart{Beetje kort. Kan je daar meer over zeggen? }
 
 %Shallow related work on quickxplain, 'explanations' in search, etc.
-Explanations have been investigated as part of constraint solving before. Most notably, for explaining over-constrained, and hence unsatisfiable, problems to a user~\cite{junker2001quickxplain}. Our case is more general in that it also works for satisfiable problems. At the solving level, in lazy clause generation solvers, explanations of a constraint are studied in the form of an implication of low-level Boolean literals that encode the result of a propagation step of an individual constraint~\cite{feydy2009lazy}. Also, nogoods (unsat cores) in SAT solvers can be seen as explanations of failure during search~\cite{marques2009conflict}. These are not meant to be human-interpretable but rather to propagate efficiently.
+Explanations have been investigated as part of constraint solving before, most notably for explaining over-constrained, and hence unsatisfiable, problems to a user~\cite{junker2001quickxplain}. Our case is more general in that it also works for satisfiable problems. At the solving level, in lazy clause generation solvers, explanations of a constraint are studied in the form of an implication of low-level Boolean literals that encode the result of a propagation step of an individual constraint~\cite{feydy2009lazy}. Also, nogoods (learned clauses) in SAT solvers can be seen as explanations of failure during search~\cite{marques2009conflict}. These are not meant to be human-interpretable but rather to propagate efficiently.
+%BART: replaced nogoods (unsat cores) by nogoods (learned clauses) 
 
 
 We aim to explain the process of propagation in a constraint solver, independent of the consistency level of the propagation and without augmenting the propagators with explanation capabilities.
@@ -47,7 +48,7 @@ Finally, our measures of simplicity of reasoning steps can be used to estimate t
 	\item Given a cost function quantifying interpretability, our method uses an optimistic estimate of this function to guide the search to low-cost explanations that are Minimal Unsatisfiable Subsets of constraints and previously derived facts;
 	\item We experimentally demonstrate the quality and feasibility of the approach in the domain of logic grid puzzles
 \end{compactitem}
-$ $
+\ 
 
 The paper is organized as follows: we first discuss related work and background knowledge on logic grid puzzles and first-order logic based constraint solving. We then define the problem, after which we explain our proposed algorithm. We then explain the instantiation of our algorithm for logic grid puzzles and how we go from natural language clues to the constraint specification, followed by experiments and conclusions.
 %\bart{if space permits :p I don't find this neccesary for a 7page paper}

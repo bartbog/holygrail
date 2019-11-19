@@ -22,24 +22,32 @@ The entire puzzle can be seen in Figure \ref{fig:zebrascreen}; the full final ex
 
 \noindent\textbf{Typed first-order logic\ \ }
 Our constraint solving method is based on \emph{typed first-order logic}. %, with links to \emph{typed second-order logic}.
-Part of the input is a logical vocabulary consisting of a set of type symbols, typed constant symbols, and relation symbols with associated type signature (i.e., each relation symbol is typed $T_1\times \dots \times T_n$ with $T_i$ types).\footnote{We here omit function symbols since they are not used in this paper.} For example, type \textit{person} with constant symbol \textit{Angie} of type \textit{person} and a relation \textit{chose(.,.)} with signature \textit{person $\times$ sauce}.
+Part of the input is a logical vocabulary consisting of a set of type symbols, (typed) constant symbols, and (typed) relation symbols with associated type signature (i.e., each relation symbol is typed $T_1\times \dots \times T_n$ with $T_i$ types).\footnote{We here omit function symbols since they are not used in this paper.} For example, type \textit{person} with constant symbol \textit{Angie} of type \textit{person} and a relation \textit{chose(.,.)} with signature \textit{person $\times$ sauce}.
 
 
 A \emph{first-order theory} is a set of sentences (well-formed variable-free first-order formulas in which each quantified variable has an associated type), also referred to as constraints.
-In the finite domain setting, the vocabulary, the interpretation of the types (the domains) and the constants are be fixed.\tias{Bart, please check that this sentence is still correct, e.g. it is fixed because FD}
+Since we work in a fixed and finite domain, the vocabulary, the interpretation of the types (the domains) and the constants are fixed.
 This justifies the following definition. 
 \begin{definition}
- A \emph{(partial) interpretation} is a set of literals, i.e., expressions of the form $P(\ddd)$ or $\lnot P(\ddd)$ where $P$ is a predicate symbol\tias{inconsistent terminology: a type symbol, a typed constant symbol or a relation symbol?} and $\ddd$ is a tuple of domain elements\tias{is?} of the types prescribed by the signature of $P$. A partial interpretation is \emph{consistent} if it does not contain both an atom and its negation, it is called a \emph{full} interpretation if it either contains $P(\ddd)$ or $\lnot P(\ddd)$ for each well-typed atom $P(\ddd)$. 
+ A \emph{(partial) interpretation} is a finite set of literals, i.e., expressions of the form $P(\ddd)$ or $\lnot P(\ddd)$ where $P$ is a relation symbol typed $T_1\times\dots \times T_n$ and $\ddd$ is a tuple of domain elements where each $d_i$ is of type $T_i$. 
+
+ A partial interpretation is \emph{consistent} if it does not contain both an atom and its negation, it is called a \emph{full} interpretation if it either contains $P(\ddd)$ or $\lnot P(\ddd)$ for each well-typed atom $P(\ddd)$. 
 \end{definition}
-\tias{This needs a running example example}
+For instance in the partial interpretation $I_{Ang-Ar}=\{chose(Angie,arrabiata),$ $\lnot chose(Elisa,arrabiata)\}$ it is known that $Angia$ had arrabiata sauce and Elisa did not. 
+% \tias{This needs a running example example}
 % 
 % Given a logical vocabulary $V$, a \emph{\textbf{partial} interpretation} $I$ assigns to each type symbol $T$ (e.g. \textit{person}) a finite set $I(T)$ and to each 
 % relation symbol $P$ with type signature $T_1\times \dots \times T_n$ a function 
 % \[I(P): I(T_1)\times \dots \times I(T_n)\to \{\ltrue,\lunkn,\lfalse\},\] 
 % where $\ltrue$ stands for true, $\lunkn$ for unknown, and $\lfalse$ for false. In case all functions $I(P)$ map all tuples into $\{\ltrue,\lfalse\}$ (i.e., no more tuples are unknown), we call $I$ a \emph{full interpretation} (this is sometimes also called a \emph{total} or \emph{two-valued} interpretation, or simply \emph{an interpretation}). 
 A partial interpretation $I_1$ is \emph{more precise} than partial interpretation $I_2$ (notation $I_1\geqp I_2$) if $I_1\supseteq I_2$.
-Viewing (partial) interpretations as sets of literals allows us to also use them interchangeably as a theory\tias{a theory is a set of sentences reads the above, so this is weird... instead, 'use them as part of a theory when solving'? For me there is only one theory, the CSP, but for you there can be multiple, a reader like me may not see that or be confused}; we will make use of this in our algorithms.
+The partial interpretation $\{chose(Angie,arrabiata),$ $\lnot chose(Elisa,arrabiata),$ $ \lnot chose(damon,arrabiata)\}$ is more precise than $I_{Ang-Ar}$. 
 
+Since variable-free literals are also sentences, we will freely use a partial interpretation as (a part of) a theory in solver calls. 
+% Viewing (partial) interpretations as sets of literals allows us to also use them interchangeably as a theory; we will make use of this in our algorithms.
+
+
+\tias{a theory is a set of sentences reads the above, so this is weird... instead, 'use them as part of a theory when solving'? For me there is only one theory, the CSP, but for you there can be multiple, a reader like me may not see that or be confused} \bart{Hmm... And taking the union of two CSPs to obtain a third one for solving the combination, would that also sound strange. In the context of a single solver call, there is usually only one CSP. But in general there can be more for me... I rewrote the above in an attempt to clarify... }
 % 
 % In a second-order theory also quantifiers over relations have an associated type signature. 
 % \bart{Clear or do I make it more formal}

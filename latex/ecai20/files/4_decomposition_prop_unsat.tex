@@ -5,7 +5,16 @@ Ideally, we would generate all explanations of each fact in $I_n$, and search fo
 \paragraph{Sequence construction}
 We aim to minimize the total cost of the explanations of the sequence, measured with an aggregate over explanation costs $f(E_i, S_i, N_i)$ for some aggregate like $max()$ or $average()$. Instead of trying to globally optimize it, we will greedily and incrementally build the sequence, each time searching for the cheapest next explanation given the current partial interpretation. 
 
-Note that this greedy approach may not find the optimal sequence \tias{Bart, did you say that it does for max? Do we know for sure that there might not be a case where 2,4 are costs, while 3,3 are also costs and greedy will choose the first?}. Also note that as by definition $I_n$ is the intersection of all valid solutions of \allconstraints, there are no \textit{choices} to be made to reach $I_n$ and all reasoning steps that derive a fact of $I_n$ inherently do not lead to failure and can hence be greedily added. \tias{New realization: in the 'intersection' setting, we must filter such that $N_i = N_i \cap I_n$ with $I_n$ computed at the beginning in order not to greedily add something 'else' that leads to failure (which it can not see yet for a small $C$)}
+Note that this greedy approach may not find the optimal sequence \tias{Bart, did you say that it does for max? Do we know for sure that there might not be a case where 2,4 are costs, while 3,3 are also costs and greedy will choose the first?}\bart{In theory: yes. If greedy chooses $2$ first, then one of the $3$-costs will still be possible when it considers $4$. Every option always remains an option unless its results have been propagated.
+In practice of course we do not find all the optimal candidates in every single step (i.E., we only approximate greedy) }. Also note that as by definition $I_n$ is the intersection of all valid solutions of \allconstraints, there are no \textit{choices} to be made to reach $I_n$ and all reasoning steps that derive a fact of $I_n$ inherently do not lead to failure and can hence be greedily added. \tias{New realization: in the 'intersection' setting, we must filter such that $N_i = N_i \cap I_n$ with $I_n$ computed at the beginning in order not to greedily add something 'else' that leads to failure (which it can not see yet for a small $C$)}
+\bart{I don't get this.
+There are two options:
+\begin{itemize}
+ \item There is at least one model, and $I_n$ is the intersection fo all of them. In that case, individual constraints can never do something wrong. Nothing can ever be derived that ``leads to failure''.
+ \item There are no mdoels, in that case $I_n$ should be maximally inconsistent. In that case, individual constraints can never do something wrong.
+\end{itemize}
+}
+
 
 Algorithm \ref{alg:main} formalizes the greedy construction of the sequence. We assume that the \textit{propagate} function is optimal in that it computes the intersection of all valid solutions, but our approach is also valid for propagation with other levels of consistency.
 
@@ -109,6 +118,7 @@ Caching of \textit{candidate-explanations()} calls across iterations is not advi
 
 \textit{Optimization: MARCO map} We identify an additional improvement to the above algorithm, inspired by the MARCO algorithm~\cite{liffiton2013enumerating}. There, they make the observation that given a MUS $M$ involving constraint set $C$, any superset $C''$ of $C$ will also be UNSAT where we already have a corresponding MUS. In our case, given that we search candidate explanations for an increasingly costly constraint set $C$, if we have a candidate explanation involving $C'$ on line \ref{alg:min:gets} we can omit searching for explanations of $C'' \supset C'$ in the for loop on line \ref{alg:min:for}, as an explanation involving $C''$ would have $g(C'') > g(C')$. \tias{actually, there could be a smaller one than $C'$ which is found when searching for a MUS of $C''$ but we leave that detail open here}.
 \tias{Future idea: if a constraint is fully satisfied, no need to include it in future calls. I guess because the 'propagate' will return empty the overhead is quite limited anyway}
+\bart{There might be some overhead. THe reason is that in that theory also all the implicit constraints are. In practice they propagate the same for every satisfied clue... } 
 
 
 

@@ -34,6 +34,14 @@ The effect of this is that we can generate our subsets $C'$ in Algorithm \ref{al
  \item Finally, all clue pairs, triples etc. though in practice this is never reached.
 \end{compactitem}
 \tias{We could add a value for the order of the clues, e.g. 0.01*index, to favor higher displayed rules. Also, we could favor 'positive' literals in $N$ by giving these a lower weight, e.g. 0.01 vs 0.1 or smth...}
+\bart{Not so convinced of this... 
+\begin{itemize}
+ \item Higher-ranked rules seems quite ad-hoc. Why would they be preferred? This feels more like something we might want to do when we optimize the sequence: ``favour using the same clue twice in a row over switching''. 
+ \item  Positive vs negative: no need! This is taken care of automatically!
+ The thing is: it not so that positive is ``more natural'' than negative. That really depends on the clue (wehtehr some statement is positive / negative). 
+ With the current definitions, you cannot derive the pos from the neg (or the other way round) anymore \textbf{unless} you include the bijectivity csontraint. Hence... using ``the wrong'' of the two costs you $1$. 
+\end{itemize}
+}
 
 
 %\paragraph{Holy Zebra cost function}

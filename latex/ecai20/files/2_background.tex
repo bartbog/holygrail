@@ -1,23 +1,23 @@
 
 \paragraph{Logic grid puzzles}
-Our proposed method is applicable to constraint satisfaction problem \tias{with a unique solution?}. We will use \textit{logic grid puzzles} as example domain, as it requires no expert knowledge to understand.
+Our proposed method is applicable to finite-domain constraint satisfaction problems. We use \textit{logic grid puzzles} as example domain, as it requires no expert knowledge to understand.
 
-A logic grid puzzle (also known as a Zebra puzzle or Einstein puzzle) consists of a set of natural language sentences (from hereon referred to as ``clues'') and (optionally) a set of \emph{entities} occurring in those sentences. 
-For instance, our running example contains a clue ``The person who chose arrabiata sauce is either Angie or Elisa'' and (among others) entities ``arrabiata sauce'', ``Angie'' and ``Elisa''. 
+A logic grid puzzle (also known as Zebra puzzle or Einstein puzzle) consists of natural language sentences (from hereon referred to as ``clues'') over a set of \emph{entities} occurring in those sentences. 
+For instance, our running example in Figure~\ref{fig:zebrascreen} contains as second clue ``The person who chose arrabiata sauce is either Angie or Elisa'' and (among others) entities ``arrabiata sauce'', ``Angie'' and ``Elisa''. 
 
-The set of entities is sometimes left implicit if it can be derived from the clues, but often it is given in the form of a grid. Furthermore, in such a puzzle the set of entities is partitioned into equally sized groups (corresponding to \emph{types}); in our example, at least ``person'' and ``sauce'' are such types. 
+The set of entities is sometimes left implicit if it can be derived from the clues, but often it is given in the form of a grid. Furthermore, in such a puzzle the set of entities is partitioned into equally sized groups (corresponding to \emph{types}); in our example, ``person'' and ``sauce'' are two such types. 
 
 The goal of the puzzle is to find relations between each two types such that
 \begin{compactitem}
 	\item each clue is respected, 
-	\item each entity of one type is matched with exactly one entity of the second type, e.g., each person chose exactly one sauce (this type of constraint will be referred to as \emph{bijectivity}), and 
+	\item each entity of one type is matched with exactly one entity of the second type, e.g., each person chose exactly one sauce and each sauce is linked to one person (this type of constraint will be referred to as \emph{bijectivity}), and 
 	\item the relations are logically linked, e.g., if Angie chose arrabiata sauce and arrabiata sauce was paired with farfalle, then Angie must also have eaten farfalle (from now on called \emph{transitivity}). 
 \end{compactitem}
 In section Sec~\ref{sec:holistic} we explain how we obtain a vocabulary and first-order theory in a mostly automated way from the clues. The result is a vocabulary with types corresponding to the groups of entities in the clues, and the names and types of the binary relations to find (e.g \textit{chose(person, sauce)}, \textit{paired(sauce, pasta)}, \textit{eaten(person, pasta)});
 %We furthermore assume that the interpretation of the types is fixed (and hence all interpretations agree on this). 
-as well as first-order sentences corresponding to the clues, and the bijectivity and transitivity constraints. Let $T_P$ be a theory containing all of these sentences for a given puzzle $P$.
+as well as constraints (first-order sentences) corresponding to the clues, and the bijectivity and transitivity constraints. Let $T_P$ be a theory containing all of these constraints for a given puzzle $P$.
 
-Our running example is a puzzle about people having dinner in a restaurant and ordering different types of pasta. It is the harderst logic grid puzzle we encountered (as a reference, at a recent AI conference, when presenting our tool \cite{DBLP:conf/bnaic/ClaesBCGG19}, only four out of 80 researchers who tried managed to solve it).    
+Our running example is a puzzle about people having dinner in a restaurant and ordering different types of pasta. It is the hardest logic grid puzzle we encountered (as a reference, at a recent AI conference, when presenting our tool \cite{DBLP:conf/bnaic/ClaesBCGG19}, only four out of 80 researchers who tried managed to solve it).    
 The entire puzzle can be seen in Figure \ref{fig:zebrascreen}; the full final explanation generated for it can be found at \url{http://bartbog.github.io/zebra/pasta}.
 % Dout of  and its final produced explanation still contains some challenging steps. 
 

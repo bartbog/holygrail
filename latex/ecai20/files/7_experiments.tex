@@ -2,7 +2,7 @@ Using logic grid puzzles as a use-case, we will validate the feasibility of find
 
 As data we use puzzles from Puzzle Baron’s Logic Puzzles Volume 3~\cite{logigrammen}. The first 10 puzzles were used to construct the grammar. Using this grammar, and a semi-automatically problem-specific lexicon, we are able to parse and solve all puzzles in the booklet, including those not used to construct the grammar. Our experiments below are on test puzzles not used to construct the grammar; we also report results on the \textit{pasta} puzzle, which was emailed to us by a person that did not manage to solve it himself.\tias{do we know the source of the original puzzle?}
 
-As constraint solving engine, we use IDP~\cite{idp}. It is a knowledge representation and reasoning system that supports multiple queries on a first order logic theory. We will use the 'optimalpropagate()' query, which efficiently finds the maximally consistent (partial) interpretation of a theory, which in our case is a full interpretation, e.g. the solution to the logic grid puzzle. We also use the 'findMUS()'\tias{Bart, how is it really name?} query that searches for a subset-minimal unsatisfiable core.
+As constraint solving engine, we use IDP~\cite{IDP}. It is a knowledge representation and reasoning system that supports multiple queries on a first order logic theory. We will use the 'optimalpropagate()' query, which efficiently finds the maximally consistent (partial) interpretation of a theory, which in our case is a full interpretation, e.g. the solution to the logic grid puzzle. We also use the 'findMUS()'\tias{Bart, how is it really name?} query that searches for a subset-minimal unsatisfiable core.
 
 The algorithm itself is written in embedded LUA, which is provided as en imperative environment inside the otherwise declarative IDP system. The code was not optimized for efficiency and can at this point not be used in an interactive setting, as it takes between 15 minutes to a few hours to fully explain a logic grid puzzle. Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0 and IDP version 3.7.1.
 
@@ -18,69 +18,37 @@ In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints 
 Figure \ref{fig:steps} shows a visualisation the type of explanation used at every step of the sequence, for four different puzzles. The red line is the pasta puzzle. We can see that typically at the beginning of the sequence, clues (4th line) and bijectivity (2nd line) are used, e.g. the trivial ones. This is then followed by a round of clues and some bijectivity/transitivity, after which a large fraction of the table can be completed with bijectivity/transitivty, followed by a few last clues and another round of completion.
 
 The exception to this is the paste puzzle. We can see that after around 20 steps where mostly clues have been used, twice a combination of implicit logigram constraints must be used to derive a new fact, after which the table can be easily completed with bijectivity/transitivity and twice the use of a clue.
-\tias{Ideally, the 0th row is start/end and the line both starts and ends there (e.g. no 'solution' top line), will also help in readability/space usage}
 
-\begin{figure}
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_p12}
 \includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_p18}
 \includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_p25}
 \includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_nielspasta}
-\caption{}
+\caption{Type of constraints used in each step}
 \label{fig:steps}
 \end{figure}
 
+\paragraph{3. Explanation size}
+Our cost-function is constructed as to favor few (if any) clues and constraints in the explanations, and as few previously derived facts $|E|$. Table~\ref{table:sequence_leve} shows the average nr of facts use per explanation. We also show the average number of facts used when using only bijectivity or transitivity, or when a clue is used.
 
+We can observe that the average number of facts used is indeed low, less than two. Further more, the breakdown shows that bijectivity typically uses more facts, e.g. it uses three 'negative' facts in one row to infer a 'positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one 'positive' fact to infer three negative facts. Note that for such an intuitive constraint, the number of facts used does not matter much. Transitivity, by nature, always uses two previously derived facts. Finally, when looking at the number of facts used together with a clue we can see that our approach succesfully finds small explanations: a number of clues (the trivial ones) use no facts, while most use 1 fact and rarely 2 facts are needed. \tias{Check when new table arrives}. The exception is again the difficult pasta puzzle, which \tias{check when new table arrives}.
 
-While the first part of the table \ref{table:sequence_leve} only analyzes the difficulty of a puzzle, the second part focuses on the explanations. 
-Most of the explanations are either generated using bijectivity (bij.) or Transitivity (trans.). The rest are found using the 1 or more clues, or by combining (comb.) transitivity with bijectivity. This is due to the way puzzles are formulated in natural language for logic grid puzzles.
-
-\paragraph{Q2. How does the level of difficulty progress throughout the explanation?} Out of the problems in table \ref{table:sequence_leve}, 3 puzzle instances were selected: \textit{p12}, \textit{p18} and \textit{p25}. These puzzles present a similar number of explanation steps and total costs.
-
-\begin{figure}
-	\centering
-	\includegraphics[width=0.7\linewidth]{figures/plot_cost_steps.png}
-		\caption{Explanation cost for puzzle instances p12, p18, p25}
-			\label{fig:plotcoststeps}
-\end{figure}
+\tias{Ideal table:}
 
 \begin{table}
 	\centering
 	\resizebox{\columnwidth}{!}{%
-		\begin{tabular}{|l||c|c|c|c|c|c|c|} 
-			\hline
-			\textbf{puzzle} & \textbf{tot exec time} & avg clue time  & avg bij. & avg trans. & avg time/cost of clue & avg time/cost of bij. & avg time/cost of bij. \\ 
+		\begin{tabular}{l|c|ccc|cccc} 
+		    & \multicolumn{4}{c|}{avg. facts} & \multicolumn{4}{c}{\% of clue expl. with facts} \\
+			\textbf{p} & \textbf{all} & \textbf{Bij.} & \textbf{Trans.} & \textbf{Clues} & \textbf{0 facts} & \textbf{1 fact} & \textbf{2 facts} & \textbf{$>$2 facts}\\ 
 			\hline 
-			p5 & 386.0 & 129.29 & 226.27 & 204.23 & 6.13 & 145.18 & 102.11 \\ 
-			\hline 
-			p16 & 576.0 & 192.97 & 370.55 & 426.41 & 9.22 & 213.63 & 213.21 \\ 
-			\hline 
-			p93 & 946.0 & 213.13 & 604.13 & 425.58 & 10.44 & 340.27 & 212.79 \\ 
-			\hline 
-			p12 & 1103.0 & 271.13 & 744.93 & 799.79 & 12.87 & 432.21 & 399.89 \\ 
-			\hline 
-			p18 & 1924.0 & 323.82 & 856.52 & 881.44 & 15.14 & 421.34 & 440.72 \\ 
-			\hline 
-			p20 & 411.0 & 117.57 & 235.34 & 235.29 & 5.69 & 147.65 & 117.64 \\ 
-			\hline 
-			p25 & 886.0 & 291.12 & 659.88 & 623.77 & 13.42 & 404.61 & 311.89 \\ 
-			\hline 
-			p19 & 1207.0 & 265.82 & 538.64 & 602.01 & 12.77 & 293.38 & 301.0 \\ 
-			\hline 
+			1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
 		\end{tabular} 
 	}
 	\caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
 	\label{table:sequence_leve}
 \end{table}
-
-
-\paragraph{Q3. How is the performance and the level of difficulty affected by removing parts of the algorithm ? } bla bla bla
-
-% TODO table : Leaving some parts of the algo out, to see step-wise improvements of the components?  Some experiment with different levels of abstraction (e.g. all constraints at once, clues separate but all implicit at once, 2 groups of implicits, full split of implicits) with 'set of measures', so probably a table
-
-\paragraph{Bonus. How well does it compare to human solving process ?} 
-
-% TODO Compare with the tutorial puzzle of logicgridpuzzles.com? Ideally, a small human evaluation (e.g. ask people to solve a 3-with-3 puzzle and note the order of derivations and clues used, compare this 'ranking' to our ranking, discuss some differences.
 
 \begin{table}
 	\centering
@@ -115,8 +83,6 @@ Most of the explanations are either generated using bijectivity (bij.) or Transi
 
 
 
-
-
 \begin{table}
 	\centering
 	\resizebox{\columnwidth}{!}{%
@@ -146,3 +112,8 @@ Most of the explanations are either generated using bijectivity (bij.) or Transi
 	\caption{Composition of puzzle explanations}
 	\label{table:composition}
 \end{table}
+
+%\paragraph{Bonus. How well does it compare to human solving process ?} 
+
+% TODO Compare with the tutorial puzzle of logicgridpuzzles.com? Ideally, a small human evaluation (e.g. ask people to solve a 3-with-3 puzzle and note the order of derivations and clues used, compare this 'ranking' to our ranking, discuss some differences.
+

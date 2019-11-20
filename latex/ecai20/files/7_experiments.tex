@@ -14,7 +14,7 @@ The algorithm itself is written in embedded LUA, which provides an imperative en
 % The algorithm itself is written in embedded LUA, which is provided as en imperative environment inside the otherwise declarative IDP system. The code was not optimized for efficiency and can at this point not be used in an interactive setting, as it takes between 15 minutes to a few hours to fully explain a logic grid puzzle. Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0 and IDP version 3.7.1.
 
 \myparagraph{1. Sequence composition}
-We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. Puzzle \tias{XXX} is the pasta puzzle. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, e.g. the number of literals in the maximal consequence interpretation $I_n=max(I_0,\allconstraints)$.
+We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The puzzle identified as pasta is our running example. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, e.g. the number of literals in the maximal consequence interpretation $I_n=max(I_0,\allconstraints)$.
 
 
 \myparagraph{2. Sequence progression.}
@@ -37,7 +37,8 @@ The exception to this is the paste puzzle, where after around 20 steps where mos
 \myparagraph{3. Explanation size.}
 Our cost-function is constructed to favor few (if any) clues and constraints in the explanations, and few previously derived facts $|E|$. Table~\ref{table:sequence_leve} shows the average number of facts used per explanation. We also show the average number of facts used when using only bijectivity or transitivity, or when a clue is used.
 
-We can observe that the average number of facts used is indeed low, less than two. Further more, the breakdown shows that bijectivity typically uses more facts, e.g. it uses three 'negative' facts in one row to infer a 'positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one 'positive' fact to infer three negative facts. Note that for such an intuitive constraint, the number of facts used does not matter much. Transitivity, by nature, always uses two previously derived facts. Finally, when looking at the number of facts used together with a clue we can see that our approach succesfully finds small explanations: a number of clues (the trivial ones) use no facts, while most use 1 fact and rarely 2 facts are needed. \tias{Check when new table arrives}. The exception is again the difficult pasta puzzle, which \tias{check when new table arrives}.
+We can observe that the average number of facts used is indeed low, less than two. Further more, the breakdown shows that bijectivity typically uses more facts, e.g. it uses three 'negative' facts in one row to infer a 'positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one 'positive' fact to infer three negative facts. Note that for such an intuitive constraint, the number of facts used does not matter much. Transitivity, by nature, always uses two previously derived facts. Finally, when looking at the number of facts used together with a clue we can see that our approach succesfully finds small explanations: a number of clues (the trivial ones) use no facts, while most use 1 fact and rarely 2 facts are needed. %\tias{Check when new table arrives}.
+The exception is again the difficult pasta puzzle, in which 25\% of the time more than 2 facts are used.
 
 \tias{Ideal table:}
 
@@ -64,7 +65,7 @@ We can observe that the average number of facts used is indeed low, less than tw
 	7 & 1.937 & 0.737 & 2.0 & 2.463 &57.8\% &26.3\% &5.2\% &10.5\% \\ 
 	%p93
 	8 & 1.84 & 0.182 & 2.0 & 2.575 &81.8\% &18.1\% &0.0\% &0.0\% \\ 
-	%nielspasta
+	%pasta
 	p & 1.768 & 1.05 & 2.0 & 2.071 &60.0\% &15.0\% &0.0\% &25.0\% \\ 
 		\end{tabular} 
 	}
@@ -92,7 +93,7 @@ We can observe that the average number of facts used is indeed low, less than tw
 			\hline 
 			p20 & 4 & 5 & 150 & 116 & 26.72 & 57.76 & 14.66 & 0.0 & 0\\ 
 			\hline 
-			nielspasta & 4 & 5 & 150 & 82 & 34.15 & 40.24 & 21.95 & 2.44 & 0\\ 
+			pasta & 4 & 5 & 150 & 82 & 34.15 & 40.24 & 21.95 & 2.44 & 0\\ 
 			\hline 
 			p25 & 4 & 5 & 150 & 111 & 36.94 & 45.05 & 17.12 & 0.0 & 0\\ 
 			\hline 

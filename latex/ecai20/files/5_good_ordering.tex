@@ -24,13 +24,13 @@ Our algorithms are built to handle this case as well, but it turned out to be no
 % \tias{smth contrast with 2, e.g. multiple clues WITH impl} 
 
 With these three observations in mind, we devised $f$ and $g$ as follows (where $nc(C)$ denotes the number of clues in $C$): \label{sec:cost}
-\[f(I,C) = basecost(C) + |I| + |C|,\] where  
-\[g(C) = basecost(C) = \left\{\begin{array}{ll}
+\begin{align*}&f(I,C) = basecost(C) + |I| + |C|\\
+&g(C) = basecost(C) = \left\{\begin{array}{ll}
                                0 & \text{if $|C|=1$ and $nc(C) = 0$}\\
                                20 & \text{if $|C|>1$ and $nc(C)=0$}\\
                                20\cdot nc(C) & \text{otherwise}
                               \end{array}\right.
-                              \]
+                              \end{align*}
 The number $20$ is taken here to be larger than any reasonable explanation size. 
 The effect of this,  is that we can generate our subsets $C'$ in Line \ref{alg:min:for}
  of Algorithm \ref{alg:minexpl} in the following order:

@@ -1,19 +1,11 @@
-The explanation-generating search has been tested against unseen puzzles on a computer with the following specifications:
+Using logic grid puzzles as a use-case, we will validate the feasibility of finding a sequence of small explanations.
 
-\begin{table}
-	\centering
-	\resizebox{0.8\columnwidth}{!}{%
-		\begin{tabular}{|l|l|l|l|}
-			\hline 
-			CPU & CPU Freq. & cores & RAM Size \\ 
-			\hline 
-			Intel(R) Xeon(R) CPU E3-1225 & 3.30 GHz & 4 & 32 Gb \\ 
-			\hline 
-		\end{tabular} 
-	}
-\caption{Computer system specifications}
-\label{table:system_specifications}
-\end{table}
+As data we use puzzles from Puzzle Baron’s Logic Puzzles Volume 3~\cite{logigrammen}. The first 10 puzzles were used to construct the grammar. Using this grammar, and a semi-automatically problem-specific lexicon, we are able to parse and solve all puzzles in the booklet, including those not used to construct the grammar. Our experiments below are on test puzzles not used to construct the grammar; we also report results on the \textit{pasta} puzzle, which was emailed to us by a person that did not manage to solve it himself.\tias{do we know the source of the original puzzle?}
+
+As constraint solving engine, we use IDP~\cite{idp}. It is a knowledge representation and reasoning system that supports multiple queries on a first order logic theory. We will use the 'optimalpropagate()' query, which efficiently finds the maximally consistent (partial) interpretation of a theory, which in our case is a full interpretation, e.g. the solution to the logic grid puzzle. We also use the 'findMUS()'\tias{Bart, how is it really name?} query that searches for a subset-minimal unsatisfiable core.
+
+The algorithm itself is written in embedded LUA, which is provided as en imperative environment inside the otherwise declarative IDP system. The code was not optimized for efficiency and can at this point not be used in an interactive setting, as it takes between 15 minutes to a few hours to fully explain a logic grid puzzle. Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0 and IDP version 3.7.1.
+
 
 We analyze the results in 3 directions :
 

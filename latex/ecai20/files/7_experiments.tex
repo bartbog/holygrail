@@ -1,16 +1,65 @@
-data, machines
+The explanation-generating search has been tested against unseen puzzles on a computer with the following specifications:
 
-\subsection{Q1: Abstraction level}
-Some experiment with different levels of abstraction (e.g. all constraints at once, clues separate but all implicit at once, 2 groups of implicits, full split of implicits)
-with 'set of measures', so probably a table
+\begin{table}
+	\centering
+	\resizebox{0.8\columnwidth}{!}{%
+		\begin{tabular}{|l|l|l|l|}
+			\hline 
+			CPU & CPU Freq. & cores & RAM Size \\ 
+			\hline 
+			Intel(R) Xeon(R) CPU E3-1225 & 3.30 GHz & 4 & 32 Gb \\ 
+			\hline 
+		\end{tabular} 
+	}
+\caption{Computer system specifications}
+\label{table:system_specifications}
+\end{table}
 
-\subsection{Q2: Algorithmic comparison}
-Both with the 'set of measures' table and computationally
+We analyze the results in 3 directions :
 
-\subsection{Q3: ablation analysis}
-Leaving some parts of the algo out, to see step-wise improvements of the components?
+\paragraph{Q1. How do different puzzles compare with respect to the generated explanations ?} For future reference, we denote \textbf{c} = $c_1, c2, ...c_n$ the costs, where $c_i$ is the cost, based on the cost function $f(I, C)$, at reasoning step $i$ and n the number of reasoning steps to solve a problem. Table \ref{table:sequence_leve} shows how difficult the puzzles are by means of the total cost and how the expensive a new conclusion is based on the current state of the grid.
 
-\subsection{Q4: perceived quality}
-Compare with the tutorial puzzle of logicgridpuzzles.com?
+\begin{table}
+	\centering
+	\resizebox{\columnwidth}{!}{%
+\begin{tabular}{|c||c|c|c|c|c||c|c|c|c|c|c|} 
+\hline 
+\textbf{Puzzle} & \textbf{n} & $\sum_{i = 1}^{n} c_i$  & max(\textbf{c}) & $\overline{\text{\textbf{c}}}$ & \textbf{5 Highest costs} & \textbf{\% bij.} & \textbf{\% trans.} & \textbf{\% comb.} & \textbf{\% clue} & \textbf{\% multi. clues} \\ 
+\hline 
+p5 & 113 & 626 & 25 & 5.59 & [25, 21, 21, 21, 21] & 31.0 & 50.0 & 0 & 19.0 & 0 \\ 
+\hline 
+p16 & 122 & 680 & 23 & 5.62 & [23, 21, 21, 21, 21] & 21.0 & 60.0 & 0 & 19.0 & 0 \\ 
+\hline 
+p93 & 119 & 659 & 21 & 5.58 & [21, 21, 21, 21, 20] & 34.0 & 47.0 & 0 & 19.0 & 0 \\ 
+\hline 
+p12 & 115 & 591 & 23 & 5.18 & [23, 21, 21, 21, 20] & 29.0 & 54.0 & 0 & 17.0 & 0 \\ 
+\hline 
+p18 & 116 & 615 & 22 & 5.35 & [22, 22, 22, 21, 21] & 28.0 & 55.0 & 0 & 17.0 & 0 \\ 
+\hline 
+p20 & 116 & 552 & 22 & 4.8 & [22, 21, 21, 21, 20] & 27.0 & 58.0 & 0 & 15.0 & 0 \\ 
+\hline 
+p25 & 111 & 595 & 24 & 5.41 & [24, 23, 22, 21, 21] & 37.0 & 45.0 & 0 & 17.0 & 0 \\ 
+\hline 
+p19 & 123 & 630 & 22 & 5.16 & [22, 21, 21, 21, 21] & 25.0 & 59.0 & 0 & 16.0 & 0 \\ 
+\hline
+\end{tabular} 
+	}
+\caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
+\label{table:sequence_leve}
+\end{table}
 
-Ideally, a small human evaluation (e.g. ask people to solve a 3-with-3 puzzle and note the order of derivations and clues used, compare this 'ranking' to our ranking, discuss some differences.
+While the first part of the table \ref{table:sequence_leve} only analyzes the difficulty of a puzzle, the second part focuses on the explanations. 
+Most of the explanations are either generated using bijectivity (bij.) or Transitivity (trans.). The rest are found using the 1 or more clues, or by combining (comb.) transitivity with bijectivity. This is due to the way puzzles are formulated in natural language for logic grid puzzles.
+
+\paragraph{Q2. How does the level of difficulty progress throughout the explanation?} bla bla bla
+
+% TODO graph : 
+
+\paragraph{Q3. How is the performance and the level of difficulty affected by removing parts of the algorithm ? } bla bla bla
+
+% TODO table : Leaving some parts of the algo out, to see step-wise improvements of the components?  Some experiment with different levels of abstraction (e.g. all constraints at once, clues separate but all implicit at once, 2 groups of implicits, full split of implicits) with 'set of measures', so probably a table
+
+\paragraph{Bonus. How well does it compare to human solving process ?} 
+
+% TODO Compare with the tutorial puzzle of logicgridpuzzles.com? Ideally, a small human evaluation (e.g. ask people to solve a 3-with-3 puzzle and note the order of derivations and clues used, compare this 'ranking' to our ranking, discuss some differences.
+

@@ -1,11 +1,11 @@
-\textbf{Logic grid puzzles\ \ }
-While our proposed method is applicable to constraint satisfaction problems in general, we will use \textit{logic grid puzzles} as example domain, as it requires no expert knowledge to understand.
+\myparagraph{Logic grid puzzles.}
+While our proposed method is applicable to constraint satisfaction problems in general, we use \textit{logic grid puzzles} as example domain, as it requires no expert knowledge to understand.
 
 A logic grid puzzle (also known as Zebra puzzle or Einstein puzzle) consists of natural language sentences (from hereon referred to as ``clues'') over a set of \emph{entities} occurring in those sentences. 
 For instance, our running example in Figure~\ref{fig:zebrascreen} contains as second clue ``The person who chose arrabiata sauce is either Angie or Elisa'' and (among others) entities ``arrabiata sauce'', ``Angie'' and ``Elisa''. 
 
-The set of entities is sometimes left implicit if it can be derived from the clues, but often it is given in the form of a grid. Furthermore, in such a puzzle the set of entities is partitioned into equally sized groups (corresponding to \emph{types}); in our example, ``person'' and ``sauce'' are two such types. 
-
+The set of entities is sometimes left implicit if it can be derived from the clues, but often it is given in the form of a grid. Furthermore, in such a puzzle the set of entities is partitioned into equally-sized groups (corresponding to \emph{types}); in our example, ``person'' and ``sauce'' are two such types. 
+% 
 The goal of the puzzle is to find relations between each two types such that
 \begin{compactitem}
 	\item each clue is respected, 
@@ -20,7 +20,7 @@ Our running example is a puzzle about people having dinner in a restaurant and o
 The entire puzzle can be seen in Figure \ref{fig:zebrascreen}; the full final explanation generated for it can be found at \url{http://bartbog.github.io/zebra/pasta}.
 % Dout of  and its final produced explanation still contains some challenging steps. 
 
-\noindent\textbf{Typed first-order logic\ \ }
+\myparagraph{Typed first-order logic.}
 Our constraint solving method is based on \emph{typed first-order logic}. %, with links to \emph{typed second-order logic}.
 Part of the input is a logical vocabulary consisting of a set of type symbols, (typed) constant symbols, and (typed) relation symbols with associated type signature (i.e., each relation symbol is typed $T_1\times \dots \times T_n$ with $T_i$ types).\footnote{We here omit function symbols since they are not used in this paper.} For example, type \textit{person} with constant symbol \textit{Angie} of type \textit{person} and a relation \textit{chose(.,.)} with signature \textit{person $\times$ sauce}.
 
@@ -44,6 +44,9 @@ A partial interpretation $I_1$ is \emph{more precise} than partial interpretatio
 The partial interpretation $\{chose(Angie,arrabiata),$ $\lnot chose(Elisa,arrabiata),$ $ \lnot chose(damon,arrabiata)\}$ is more precise than $I_{Ang-Ar}$. 
 
 Since variable-free literals are also sentences, we will freely use a partial interpretation as (a part of) a theory in solver calls. 
+
+In the context of first-order logic, the task of finite-domain constraint solving is better known as \emph{model expansion} \cite{MitchellTHM06}: given a logical theory $T$ (corresponding to the constraint model) and a partial interpretation $I$ with a finite domain (corresponding to the instance), find a model $M$ (a partial interpretation that satisfies $T$) more precise than $I$ ($M$ corresponds to solutions in CSP terminology).
+\bart{TIAS: can you read the above paragraph. It makes the link between ``FO'' and ``CSP'' a bit more explicit}
 % Viewing (partial) interpretations as sets of literals allows us to also use them interchangeably as a theory; we will make use of this in our algorithms.
 
 % 

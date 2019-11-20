@@ -11,38 +11,11 @@ The algorithm itself is written in embedded LUA, which provides an imperative en
 \myparagraph{1. Sequence composition.}
 We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The bottom puzzle is the pasta puzzle. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, e.g. the number of literals in the $max(I_0,\allconstraints)$.
 
-Coincidentally, the puzzles all have 4 types with domain size 5, and hence 150 cells. We see that the number of inference steps is around 120 for all but the pasta puzzle. When looking at the proportion of the inference steps that use bijections (only), transitivity (only) or a clue, we notice that around 50\% the explanations typically use a transitivity constraint, around 25\% typically a trivial bijectivity constraint (e.g. completing a row or column in one relation), and less then $1/5$th of the explanations actually need to use a clue.
-In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints and multiple clues respectively. We can see that it is never necessary to combine multiple constraints in one inference step. Also, notably, the puzzles from the booklet never require combining implicit constraints, while the anecdotically hard pasta puzzle is the only one that does: it can not be solved by focussing on the clues but one must combine facts and knowledge in the table alone to crack it.
+The algorithm itself is written in embedded LUA, which is provided as en imperative environment inside the otherwise declarative IDP system. The code was not optimized for efficiency and can at this point not be used in an interactive setting, as it takes between 15 minutes to a few hours to fully explain a logic grid puzzle. Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0 and IDP version 3.7.1.
 
-\begin{table}
-	\centering
-	\resizebox{\columnwidth}{!}{%
-\begin{tabular}{c|ccc|c|cccccc} 
-	\textbf{puzzle} & \textbf{$|$type$|$} & \textbf{$|$dom$|$} & \textbf{$|$grid$|$} & \textbf{steps} & \textbf{\% Bij.} & \textbf{\% Trans.} & \textbf{\% 1 Clue} & \textbf{\% m-i} & \textbf{\% m-c} \\ 
-				\hline 
-				%p5.output.json
-				1 & 4 & 5 & 150 & 113 & 31.0 & 31.0 & 18.6 & 0.0 & 0\\ 
-				%p16.output.json
-				2 & 4 & 5 & 150 & 122 & 21.3 & 21.3 & 18.9 & 0.0 & 0\\ 
-				%p12.output.json
-				3 & 4 & 5 & 150 & 115 & 28.7 & 28.7 & 16.5 & 0.0 & 0\\ 
-				%p18.output.json
-				4 & 4 & 5 & 150 & 116 & 27.6 & 27.6 & 17.2 & 0.0 & 0\\ 
-				%p19.output.json
-				5 & 4 & 5 & 150 & 123 & 24.4 & 24.4 & 16.3 & 0.0 & 0\\ 
-				%p20.output.json
-				6 & 4 & 5 & 150 & 116 & 26.7 & 26.7 & 14.7 & 0.0 & 0\\ 
-				%p25.output.json
-				7 & 4 & 5 & 150 & 111 & 36.9 & 36.9 & 17.1 & 0.0 & 0\\ 
-				%p93.output.json
-				8 & 4 & 5 & 150 & 119 & 33.6 & 33.6 & 18.5 & 0.0 & 0\\ 
-				%nielspasta.output.json
-				p & 4 & 5 & 150 & 82 & 34.2 & 34.2 & 22.0 & 2.44 & 0\\ 
-\end{tabular}  
-	}
-\caption{Composition of puzzle explanations}
-\label{table:composition}
-\end{table}
+\paragraph{1. Sequence composition}
+We first look at the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. Puzzle nr \tias{XXX} is the pasta puzzle. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, e.g. the number of literals in the maximal consequence interpretation $I_n=max(I_0,\allconstraints)$.
+
 
 \myparagraph{2. Sequence progression.}
 Figure \ref{fig:steps} shows a visualisation the type of explanation used at every step of the sequence, for four different puzzles. The red line is the pasta puzzle. We can see that typically at the beginning of the sequence, clues (4th line)  are used very often to bootstrap the solving process, while more to the end the usage of clues is interleaved intensively with many very simple (bijectivity (2nd line) and transitivity (3rd line) derivations).
@@ -74,45 +47,62 @@ We can observe that the average number of facts used is indeed low, less than tw
 		\begin{tabular}{l|c|ccc|cccc} 
 		    & \multicolumn{4}{c|}{\bf avg. facts} & \multicolumn{4}{c}{\bf \% of clue expl. with facts} \\
 			\textbf{p} & \textbf{all} & \textbf{Bij.} & \textbf{Trans.} & \textbf{Clues} & \textbf{0 facts} & \textbf{1 fact} & \textbf{2 facts} & \textbf{$>$2 facts}\\ 
-			\hline 
-			1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+\hline
+	%p5
+	1 & 1.823 & 0.524 & 2.0 & 2.371 &66.6\% &28.5\% &0.0\% &4.7\% \\ 
+	%p16
+	2 & 1.803 & 0.609 & 2.0 & 2.385 &47.8\% &47.8\% &0.0\% &4.3\% \\ 
+	%p12
+	3 & 1.835 & 0.316 & 2.0 & 2.455 &78.9\% &15.7\% &0.0\% &5.2\% \\ 
+	%p18
+	4 & 1.853 & 0.45 & 2.0 & 2.5 &70.0\% &15.0\% &15.0\% &0.0\% \\ 
+	%p19
+	5 & 1.87 & 0.4 & 2.0 & 2.6 &65.0\% &30.0\% &5.0\% &0.0\% \\ 
+	%p20
+	6 & 1.828 & 0.294 & 2.0 & 2.355 &76.4\% &17.6\% &5.8\% &0.0\% \\ 
+	%p25
+	7 & 1.937 & 0.737 & 2.0 & 2.463 &57.8\% &26.3\% &5.2\% &10.5\% \\ 
+	%p93
+	8 & 1.84 & 0.182 & 2.0 & 2.575 &81.8\% &18.1\% &0.0\% &0.0\% \\ 
+	%nielspasta
+	p & 1.768 & 1.05 & 2.0 & 2.071 &60.0\% &15.0\% &0.0\% &25.0\% \\ 
 		\end{tabular} 
 	}
 	\caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
 	\label{table:sequence_leve}
 \end{table}
+
+
 
 \begin{table}
 	\centering
 	\resizebox{\columnwidth}{!}{%
-		\begin{tabular}{|l||c|c|c|c|} 
+		\begin{tabular}{c|cccc|cccccc} 
+			n & $|type|$ & $|dom|$ & $|grid|$ & steps & \% bij & \% trans & \%clue & \%m-i & \%m-c \\ 
 			\hline 
-			\textbf{puzzle} & \textbf{avg. fact used} & \textbf{avg. facts used with a clue} & \textbf{avg. facts used with trans.} & \textbf{avg. facts used together with bij.}\\ 
+			p5 & 4 & 5 & 150 & 113 & 30.97 & 49.56 & 18.58 & 0.0 & 0\\ 
 			\hline 
-			p5 & 1.823 & 0.524 & 2.371 & 2.0 \\ 
+			p16 & 4 & 5 & 150 & 122 & 21.31 & 59.02 & 18.85 & 0.0 & 0\\ 
 			\hline 
-			p16 & 1.803 & 0.609 & 2.385 & 2.0 \\ 
+			p93 & 4 & 5 & 150 & 119 & 33.61 & 47.06 & 18.49 & 0.0 & 0\\ 
 			\hline 
-			p93 & 1.84 & 0.182 & 2.575 & 2.0 \\ 
+			p12 & 4 & 5 & 150 & 115 & 28.7 & 53.91 & 16.52 & 0.0 & 0\\ 
 			\hline 
-			p12 & 1.835 & 0.316 & 2.455 & 2.0 \\ 
+			p18 & 4 & 5 & 150 & 116 & 27.59 & 54.31 & 17.24 & 0.0 & 0\\ 
 			\hline 
-			p18 & 1.853 & 0.45 & 2.5 & 2.0 \\ 
+			p20 & 4 & 5 & 150 & 116 & 26.72 & 57.76 & 14.66 & 0.0 & 0\\ 
 			\hline 
-			p20 & 1.828 & 0.294 & 2.355 & 2.0 \\ 
+			nielspasta & 4 & 5 & 150 & 82 & 34.15 & 40.24 & 21.95 & 2.44 & 0\\ 
 			\hline 
-			nielspasta & 1.768 & 1.05 & 2.071 & 2.0 \\ 
+			p25 & 4 & 5 & 150 & 111 & 36.94 & 45.05 & 17.12 & 0.0 & 0\\ 
 			\hline 
-			p25 & 1.937 & 0.737 & 2.463 & 2.0 \\ 
-			\hline 
-			p19 & 1.87 & 0.4 & 2.6 & 2.0 \\ 
-			\hline 
+			p19 & 4 & 5 & 150 & 123 & 24.39 & 58.54 & 16.26 & 0.0 & 0\\ 
 		\end{tabular} 
+		
 	}
-	\caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
-	\label{table:sequence_leve}
+	\caption{Composition of puzzle explanations}
+	\label{table:composition}
 \end{table}
-
 
 %\myparagraph{Bonus. How well does it compare to human solving process ?} 
 

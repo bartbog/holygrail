@@ -62,9 +62,9 @@ That means that if size is taken as a measure of simplicity of explanations, we 
 % We will search for a MUS for each possibly derived fact separately to find the simplest ones. Indeed, when two facts are derivable, the second might need the derivation of the first. 
 % In such cases we are interested in fining the derivation for the first one first. 
 % As such, we search for a MUS for each new fact separately, and return these MUS's as candidates from which to choose the cost-minimal one.
-\tias{Vvvvreemd, ik zou verwachten dat $N'$ altijd subset minimal gaat zijn en dus enkel de individuele new facts die gepropageerd kunnen worden; maar dat had je eens geprobeerd; mis ik iets of deden we het toen anders?}
-\bart{Bedoel je: volledige $N$ ineens pakken vs apart voor elke $a$? 
-Hoe encodeer je dan $\lnot N$? Er is er een die mis is? (disjucntie)? Werkt niet -> elke uitleg op zich is niet goed aangezien er nog een andere fout kan zijn (ik weet het vaag... maar ... to be discussed later}
+%\tias{Vvvvreemd, ik zou verwachten dat $N'$ altijd subset minimal gaat zijn en dus enkel de individuele new facts die gepropageerd kunnen worden; maar dat had je eens geprobeerd; mis ik iets of deden we het toen anders?}
+%\bart{Bedoel je: volledige $N$ ineens pakken vs apart voor elke $a$? 
+%Hoe encodeer je dan $\lnot N$? Er is er een die mis is? (disjucntie)? Werkt niet -> elke uitleg op zich is niet goed aangezien er nog een andere fout kan zijn (ik weet het vaag... maar ... to be discussed later} OK
 
 The code below shows our proposed algorithm. The key part of the algorithm is on line \ref{line:mus} where we find an explanation of a single new fact $a$ by searching for a MUS that includes $\neg a$.
 We search for subset-minimal unsat cores to avoid redundancy in the explanations. To avoid redundancy at the sequence level, we wish to avoid generating multiple explanation for the same $E$ and $S$ since they will probably require the same types of reasoning anyway. Hence, we choose to generate candidate explanations at once for all implicants of $(E, S)$ on line~\ref{line:implicants}. Note that the other implicants $A \setminus \{a\}$ may have simpler explanations that may be found later in the for loop, hence we do not remove them from $J$.

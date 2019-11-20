@@ -2,30 +2,40 @@
 %When a person solves a logic grid puzzle, they typically maintain a grid with all the information obtained so far and use it in combination with the clues to derive new conclusions. In logic terminology, the user maintains a partial interpretation.  
 %With this in mind, the goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with an 
 %\emph{explanation} (see below) of why each of the steps is correct that is ``simple enough for a person to understand''. 
-The overarching goal is to generate a sequence of small reasoning steps, each with an interpretable explanation. We first introduce the concept of an explanation of a reasoning step, after which we define a cost function for a reasoning step and the cost of a sequence of reasoning steps. 
+The overarching goal of this paper is to generate a sequence of small reasoning steps, each with an interpretable explanation. We first introduce the concept of an explanation of a reasoning step, after which we introduce a cost function for a reasoning step and the cost of a sequence of reasoning steps. 
 
 \paragraph{Explanation of reasoning steps.}
-We assume given a theory $\allconstraints$ and initial partial interpretation $I_0$.
+We assume that a theory $\allconstraints$ and an initial partial interpretation $I_0$ are given and fixed. 
 
 \begin{definition}
-We define the \textbf{maximally consistent partial interpretation} of a theory $\allconstraints$ and partial interpretation $I_0$ as the partial interpretation $I_n$ obtained by propagating all constraints constraints in $\allconstraints$, with $I_0 \wedge \allconstraints \entails I_n$
+We define the \textbf{maximal consequence} of a theory $\allconstraints$ and partial interpretation $I$ (denoted $max(I,T)$) as the precision-maximal partial interpretation $J$ such that  $I \wedge \allconstraints \entails J$. 
 \end{definition}
 \tias{or that results from propagating $T_p$? That are a logical consequence, but any subset of $I_n$ will be a logical consequence? that is maximally consistent? 'the most complete' (used lower)? Feel free to change, and search/replace for 'maximally consistent partial interpr'}
-From now on we will always denote by $I_n$ the maximally consistent partial interpretation of $\allconstraints$ and $I_0$. Note that by definition, there are no \textit{choices} to be made to reach $I_n$ and all reasoning steps that derive a fact of $I_n$ inherently do not lead to failure.
+\bart{I don't like seeing the word ``propagating'' in there since it is too operational. Replaced it and removed the word ``consistent'' from the name since it also works if $I_n$ is inconsistent}
+Phrased differently, $max(I,T)$ is the intersection of all the models of $T$ more precise than $I$; this is also known as the set of \emph{cautious consequences} of $T$ and $I$ and corresponds to ensuring \emph{global consistency} in constraint solving. 
+Quite some algorithms for computing cautious consequences without explicitly enumerating all models exist such as for instance the ones implemented in clasp \cite{DBLP:conf/lpnmr/GebserKS09} or \idp \cite{de2018predicate} (in the latter system the task of computing all cautious consequences is called \emph{optimal-propagate} since it performs the strongest propagation possible). 
 
-This definition does not depend on the level of consistency used. Stronger levels of consistency will typically lead to more precise maximally consistent interpretations. In our experiments, we will use global consistency, that is, $I_n$ is the intersection of all valid solutions of \allconstraints. These can be computed reasonably efficiently for ... by ... \tias{TODO for Bart, some indication of feasibility as for CP people this is quite crazy as it would require full enumeration}
+The rest of this paper assumes we want to construct a sequence that starts at $I_0$ and ends at $max(I_0,\allconstraints)$, i.e., that can explain all cautious consequences of $\allconstraints$ and $I_0$. However, all of our algorithms remain to work if a different (weaker) notion of propagation or consistency level is used. In fact, the only changes needed to our algorithms is to replace the implementation of the ``propagate'' method by a different propagation method. 
+
+\bart{Tias, kijk jij eens met CP bril naar bovenstaande stukje?}
+
+% 
+% From now on we will always denote by $I_n$ the maximally consistent partial interpretation of $\allconstraints$ and $I_0$. Note that by definition, there are no \textit{choices} to be made to reach $I_n$ and all reasoning steps that derive a fact of $I_n$ inherently do not lead to failure.
+
+% This definition does not depend on the level of consistency used. Stronger levels of consistency will typically lead to more precise maximally consistent interpretations. In our experiments, we will use global consistency, that is, $I_n$ is the intersection of all valid solutions of \allconstraints. These can be computed reasonably efficiently for ... by ... \tias{TODO for Bart, some indication of feasibility as for CP people this is quite crazy as it would require full enumeration}
 
 
 
 \begin{definition}
-A \textbf{sequence of incremental partial interpretations} of a theory $\allconstraints$ with initial partial interpretation $I_0$ is a sequence $\langle I_0, I_1, \ldots, I_n \rangle$ where $\forall i>0, I_{i-1} \geqp I_{i}$ and $I_n$ is maximally consistent, e.g. $I_0 \wedge \allconstraints \entails I_n$
+A \textbf{sequence of incremental partial interpretations} of a theory $\allconstraints$ with initial partial interpretation $I_0$ is a sequence $\langle I_0, I_1, \ldots, I_n  = max(I_0,\allconstraints)\rangle$ where $\forall i>0, I_{i-1} \leqp I_{i}$ (i.e., the sequence is precision-increasing).
 \end{definition} 
 
-The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ from initial partial interpretation $I_0$ to the globally consistent partial interpretation $I_n$:
-
+The goal of work is not just to obtain a sequence of incremental partial interpretations, but also 
+% 
 %\[ I_0 = \emptyset, I_1 = I_0 \cup N_1, \dots , I_n = I_{n-1}\cup N_n\]
 %where $I_i$ represents the state of the grid at each point in time and $N_i$ represents the newly derived information. 
-Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized, such as in Figure~\ref{fig:zebrascreen}, it will show to the user precisely what information and constraints were used to derive a new piece of information.
+% Additionally, 
+for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized, such as in Figure~\ref{fig:zebrascreen}, it will show to the user precisely which information and constraints were used to derive a new piece of information.
 
 \tias{This needs removal/trimming by Bart}
 Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_i\geqp I_{i-1}$ iff $I_i\supseteq I_{i-1}$.

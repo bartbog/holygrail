@@ -4,15 +4,15 @@ Our experiments \bart{Emilio? something}
 
 
 The main bottleneck of the current algorithm is the immense amounts of calls to MUS, which is a hard problem by itself. 
-Therefore, in future work we want to study the problem of unsat-core \emph{optimization} with respect to a cost-function , either by  developing custom algorithms, taking inspiration for instance from the MARCO algorithm~\cite{liffiton2013enumerating} but adapting it to prune based on cost-functions instead of subset-minimality, potentially by reduction to QBF \cite{QBF}.
+Therefore, in future work we want to study the problem of unsat-core \emph{optimization} with respect to a cost-function, either by  developing custom algorithms, taking inspiration for instance from the MARCO algorithm~\cite{liffiton2013enumerating} but adapting it to prune based on cost-functions instead of subset-minimality, or alternatively by reduction to QBF \cite{QBF}.
 Our hope here is that the entire for loop in Line \ref{line:for} of Algorithm\ref{alg:cand} can be translated to a single solver call that simultaneously searches for the best $a$ and its best explanation. 
 
 Secondly, we want to dig deeper into the question \emph{what constitutes an understandable explanations for humans}, either by optimizing the entire sequence instead of step by step, by learning the cost function based on user traces, or by reusing our developed algorithms to explain reasoning steps in more detail and as such develop an explanation mechanism that operates at different levels of abstraction. 
 To illustrate this last point: in the setting of very difficult puzzles, some of the explanation steps still require some effort to understand. 
-When explained by a human, this is often done using some form of proof by contradiction using an explanation of the form ``suppose this [the derived fact] would not hold, then ...., which is not possible''. 
+When explained by a human, this is often done using some form of proof by contradiction using an explanation of the form ``suppose this [the derived fact] would not hold, then [some simpler reasoning steps], which is not possible''. This is also how we explained Figure \ref{fig:screen2} at the end of Section \ref{sec:zebra}.
 This explanation process is of \emph{exactly the same form} as what we generate now. The only difference is that $I_0$ is not the empty interpretation, but one in which a wrong value is assigned. 
 
-A final direction for future work is to make our demo more interactive, essentially allowing the zebratutor to be called \emph{while} a user is solving the puzzle and to implement in more serious domains such as for instance interactive configuration in which a human and a search engine cooperate to solve some configuration problem and the human can often be interested in understanding \emph{why} the system did certain derivations \cite{DBLP:journals/tplp/HertumDJD17,DBLP:conf/bnaic/CarbonnelleADVD19}. 
+A final direction for future work is to make our demo more interactive, essentially allowing \ourtool to be called \emph{while} a user is solving the puzzle and to implement in more serious domains such as for instance interactive configuration in which a human and a search engine cooperate to solve some configuration problem and the human can often be interested in understanding \emph{why} the system did certain derivations \cite{DBLP:journals/tplp/HertumDJD17,DBLP:conf/bnaic/CarbonnelleADVD19}. 
 
 
 % \tias{Should this paragraph be here? It seems to undermine our proposed approach... maybe to future work?}

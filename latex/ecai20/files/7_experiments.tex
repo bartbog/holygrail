@@ -6,11 +6,11 @@ As constraint solving engine, we use IDP~\cite{idp}. It is a knowledge represent
 
 The algorithm itself is written in embedded LUA, which is provided as en imperative environment inside the otherwise declarative IDP system. The code was not optimized for efficiency and can at this point not be used in an interactive setting, as it takes between 15 minutes to a few hours to fully explain a logic grid puzzle. Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0 and IDP version 3.7.1.
 
+\paragraph{1. Sequence composition}
+We first look at the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. Puzzle nr \tias{XXX} is the pasta puzzle. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, e.g. the number of literals in the maximal consequence interpretation $I_n=max(I_0,\allconstraints)$.
 
-We analyze the results in 3 directions :
-
-\paragraph{Q1. How do different puzzles compare with respect to the generated explanations ?} For future reference, we denote \textbf{c} = $c_1, c2, ...c_n$ the costs, where $c_i$ is the cost, based on the cost function $f(I, C)$, at reasoning step $i$ and n the number of reasoning steps to solve a problem. Table \ref{table:sequence_leve} shows how difficult the puzzles are by means of the total cost and how the expensive a new conclusion is based on the current state of the grid.
-
+We can see that the number of steps is typically ... When looking at the proportion of the inference steps that use bijections (only), transitivity (only) or a clue, we can see that around 50\% the explanations typically use a transitivity constraint, around 25\% typically a trivial bijectivity constraint (e.g. completing a row or column in one relation), and less then $1/5$th of the explanations actually need to use a clue.
+In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints and multiple clues respectively. We can see that it is never necessary to combine multiple constraints in one inference step. Also, notably, the puzzles from the booklet never require combining implicit constraints, while the anecdotically hard pasta puzzle is the only one that does, e.g. it can not be solved by focussing on the clues but one must combine facts and knowledge in the table alone to crack it.
 
 \begin{table}
 	\centering
@@ -40,6 +40,10 @@ $|type|$ = nr types
 $|dom|$ = nr doms
 $|grid|$ = $|dom|^2 * (|type|*(|type|-1)/2)$
 
+
+\paragraph{Q1. How do different puzzles compare with respect to the generated explanations ?} For future reference, we denote \textbf{c} = $c_1, c2, ...c_n$ the costs, where $c_i$ is the cost, based on the cost function $f(I, C)$, at reasoning step $i$ and n the number of reasoning steps to solve a problem. Table \ref{table:sequence_leve} shows how difficult the puzzles are by means of the total cost and how the expensive a new conclusion is based on the current state of the grid.
+
+
 \begin{table}
 	\centering
 	\resizebox{\columnwidth}{!}{%
@@ -68,6 +72,24 @@ p19 & 123 & 630 & 22 & 5.16 & [22, 21, 21, 21, 21] & 25.0 & 59.0 & 0 & 16.0 & 0 
 \caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
 \label{table:sequence_leve}
 \end{table}
+
+\paragraph{2. Sequence progression}
+Figure ... shows a visualisation the type of explanation used at every step of the sequence, for four different puzzles. The red line is the pasta puzzle. We can see that typically at the beginning of the sequence, clues (4th line) and bijectivity (2nd line) are used, e.g. the trivial ones. This is then followed by a round of clues and some bijectivity/transitivity, after which a large fraction of the table can be completed with bijectivity/transitivty, followed by a few last clues and another round of completion.
+
+The exception to this is the paste puzzle. We can see that after around 20 steps where mostly clues have been used, twice a combination of implicit logigram constraints must be used to derive a new fact, after which the table can be easily completed with bijectivity/transitivity and twice the use of a clue.
+\tias{Ideally, the 0th row is start/end and the line both starts and ends there (e.g. no 'solution' top line), will also help in readability/space usage}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_p12}
+\includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_p18}
+\includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_p25}
+\includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_nielspasta}
+\caption{}
+\label{fig:plotcoststepsp12}
+\end{figure}
+
+
 
 While the first part of the table \ref{table:sequence_leve} only analyzes the difficulty of a puzzle, the second part focuses on the explanations. 
 Most of the explanations are either generated using bijectivity (bij.) or Transitivity (trans.). The rest are found using the 1 or more clues, or by combining (comb.) transitivity with bijectivity. This is due to the way puzzles are formulated in natural language for logic grid puzzles.

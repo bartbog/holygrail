@@ -6,7 +6,7 @@ Ideally, we could generate all explanations of each fact in $I_n$, and search fo
 \myparagraph{Sequence construction.}
 We aim to minimize the cost of the explanations of the sequence, measured with an aggregate over individual explanation costs $f(E_i, S_i, N_i)$ for some aggregate like $max()$ or $average()$. The cost function $f$ could for example be a weighted sum of the cardinalities of $E_i$, $S_i$ and $N_i$; see Section~\ref{sec:cost} for the cost function we will use for logic grid puzzles.
 
-Instead of trying to globally optimize the aggregated sequence cost, we encode the knowledge that we are seeking a sequence of small explanations in our algorithm. Namely, we will greedily and incrementally build the sequence, each time searching for the lowest scoring next explanation, given the current partial interpretation. Such an explanation always exists since the end point of the explanation process $max(I_0,\allconstraints)$ only contains consequences of $I_0$ and \allconstraints. 
+Instead of globally optimizing the aggregated sequence cost, we encode the knowledge that we are seeking a sequence of small explanations in our algorithm. Namely, we will greedily and incrementally build the sequence, each time searching for the lowest scoring next explanation, given the current partial interpretation. Such an explanation always exists since the end point of the explanation process $max(I_0,\allconstraints)$ only contains consequences of $I_0$ and \allconstraints. 
 % as all facts in the maximally consistent partial interpretation $I_n$ can by definition be derived without search or failure.
 % BART: typically it cannot be derived without search./ You need search to find it. 
 %Note that this greedy approach may not find the optimal sequence. 
@@ -103,7 +103,7 @@ We search for subset-minimal unsat cores to avoid redundancy in the explanations
 
 % }
 
-We assume the use of a standard MUS algorithm, e.g. that searches for a satisfying solution and if a failure is encountered, the resulting Unsat Core is shrunk to a Minimal Unsat Core~\cite{} \todo{REFERENCE!}. While computing a MUS in this way may be computationally demanding, it is far less demanding than enumerating all MUS's (of arbitrary size) as candidates. 
+We assume the use of a standard MUS algorithm, e.g. one that searches for a satisfying solution and if a failure is encountered, the resulting Unsat Core is shrunk to a Minimal one~\cite{marques2010minimal}. While computing a MUS may be computationally demanding, it is far less demanding than enumerating all MUS's (of arbitrary size) as candidates. 
 %Hence, the result of the MUS call on line~\ref{line:mus} is \textit{an} unsatisfiable core that is \textit{subset-minimal}, but not \textit{size-minimal}. That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller.
 
 

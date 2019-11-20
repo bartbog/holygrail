@@ -1,22 +1,42 @@
 
-When a human solves a logic grid puzzle, they typically maintain a grid with all the information obtained so far and use it in combination with the clues to derive new conclusions. In logic terminology, the user maintains a partial interpretation.  
-With this in mind, the goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with an 
-\emph{explanation} (see below) of why each of the steps is correct that is ``simple enough for a person to understand''. 
+%When a person solves a logic grid puzzle, they typically maintain a grid with all the information obtained so far and use it in combination with the clues to derive new conclusions. In logic terminology, the user maintains a partial interpretation.  
+%With this in mind, the goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with an 
+%\emph{explanation} (see below) of why each of the steps is correct that is ``simple enough for a person to understand''. 
+The overarching goal is to generate a sequence of small reasoning steps, each with an interpretable explanation. We first introduce the concept of an explanation of a reasoning step, after which we define a cost function for a reasoning step and the cost of a sequence of reasoning steps. 
 
 \paragraph{Explanation of reasoning steps.}
-The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ where $I_0$ is an initial partial interpretation (potentially empty), and $\forall i>0, I_{i-1} \geqp I_{i}$ with $I_n$ a (full) interpretation.
+We assume given a theory $\allconstraints$ and initial partial interpretation $I_0$.
+
+\begin{definition}
+We define the \textbf{maximally consistent partial interpretation} of a theory $\allconstraints$ and partial interpretation $I_0$ as the partial interpretation $I_n$ obtained by propagating all constraints constraints in $\allconstraints$, with $I_0 \wedge \allconstraints \entails I_n$
+\end{definition}
+\tias{or that results from propagating $T_p$? That are a logical consequence, but any subset of $I_n$ will be a logical consequence? that is maximally consistent? 'the most complete' (used lower)? Feel free to change, and search/replace for 'maximally consistent partial interpr'}
+From now on we will always denote by $I_n$ the maximally consistent partial interpretation of $\allconstraints$ and $I_0$. Note that by definition, there are no \textit{choices} to be made to reach $I_n$ and all reasoning steps that derive a fact of $I_n$ inherently do not lead to failure.
+
+This definition does not depend on the level of consistency used. Stronger levels of consistency will typically lead to more precise maximally consistent interpretations. In our experiments, we will use global consistency, that is, $I_n$ is the intersection of all valid solutions of \allconstraints. These can be computed reasonably efficiently for ... by ... \tias{TODO for Bart, some indication of feasibility as for CP people this is quite crazy as it would require full enumeration}
+
+
+
+\begin{definition}
+A \textbf{sequence of incremental partial interpretations} of a theory $\allconstraints$ with initial partial interpretation $I_0$ is a sequence $\langle I_0, I_1, \ldots, I_n \rangle$ where $\forall i>0, I_{i-1} \geqp I_{i}$ and $I_n$ is maximally consistent, e.g. $I_0 \wedge \allconstraints \entails I_n$
+\end{definition} 
+
+The goal is to obtain a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ from initial partial interpretation $I_0$ to the globally consistent partial interpretation $I_n$:
+
 %\[ I_0 = \emptyset, I_1 = I_0 \cup N_1, \dots , I_n = I_{n-1}\cup N_n\]
 %where $I_i$ represents the state of the grid at each point in time and $N_i$ represents the newly derived information. 
-Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized (see e.g. figure \tias{todo}), it will show to the user precisely what information and constraints were used to derive a new piece of information.
+Additionally, for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized, such as in Figure~\ref{fig:zebrascreen}, it will show to the user precisely what information and constraints were used to derive a new piece of information.
 
-\tias{the 'all models more precise' needs a definition to be referred to later again}
+\tias{This needs removal/trimming by Bart}
 Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_i\geqp I_{i-1}$ iff $I_i\supseteq I_{i-1}$.
 With this view (partial) interpretations can also be seen as a theory (having each such literal as a sentence), which will allow us to make claims of the form 
 $T\cup I \entails I'$ with $T$ a theory and  $I,I'$ (partial) interpretations, meaning that all literals in $I'$ follow from $T$ and $I$, or stated precisely, that all models of $T$ more precise than $I$ are also more precise than $I'$. 
 
-\tias{Definition using the above? but below E/N are not more precise of eachother?}
-\bart{No, $N$ is only the newly derived facts. $E$ is the assumptions that lead to it. The $I_i$ are $\leqp$-increasing}
-\tias{OK. What I though, Bart adds definitions?}
+\tias{Bart adds definitions?}
+
+%\begin{definition}
+%An \textbf{explained sequence of interpretations} is a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ with corresponding explanations $(E_i,S_i)$ such that $E_i \wedge S_i \entails N_i$ with $N_i = I_i \setminus I_{i-1}$ and ...
+%\end{definition} 
 We hence define a justification as a tuple $(E_i,S_i)$ such that: 
 \begin{compactitem}
 	\item $E_i\subseteq I_i$ (i.e., the explaining facts are a subset of what was previously derived),
@@ -26,15 +46,19 @@ We hence define a justification as a tuple $(E_i,S_i)$ such that:
 
 The problem of simply checking whether $(E_i,S_i)$ explains $N_i$ is in co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{ternovskaMXcomplexity}.
 
+Part of our goal of finding easy to interpret explanations is to avoid redundant information in the explanation. That is, we want a non-redundent explanation $(E_i,S_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed or else the implication $S_i \wedge E_i \rightarrow N_i$ would no longer hold, that is, the must be \textit{subset-minimal}:
+$S_i \wedge E_i \rightarrow N_i$ and $\forall s \in S_i: S_i \setminus \{s\} \wedge E_i \nrightarrow N_i, \forall e \in E_i: S_i \wedge E_i \setminus \{e\} \nrightarrow N_i$
 
-Part of our goal of finding easy to interpret explanations is to avoid redundant information in the explanation. That is, we want a non-redundent explanation $(E_i,S_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed or else the implication $S_i \wedge E_i \rightarrow N_i$ would no longer hold. We will use the concept of Minimal Unsat Cores here (or Minimal Unsat Subset, MUS). A MUS over a set of constraints $C$ is a subset $C' \subseteq C$ such that $C' is UNSAT$ and $\forall c \in C': C' \setminus \{c\} is SAT$. If we know that $N_i$ follows from $S_i$ and $E_i$ then $\neg N_i \wedge S_i \wedge E_i$ must be UNSAT. A Minimal Unsat Subset (MUS) hereof will be a non-redundant subset of $N'_i \subseteq N_i$, $S'_i \subseteq S_I$ and $E'_i \subseteq E_i$ for which we know (because it is UNSAT): $\neg (\neg N'_i \wedge S'_i \wedge E'_i)$ hence through substitution $N'_i \vee \neg (S'_I \wedge E'_i)$ and hence $(S'_I \wedge E'_i) \rightarrow N'_I$. In other words, $(S'_I \wedge E'_i)$ is the smallest explanation of $N'_I$ for which this relation holds, for any smaller explanation it will no longer hold.
-\tias{MUS naar lager, non-redundant is subset-minimal laten}
+\begin{definition} \label{def:nonred}
+A \textbf{non-redundent explained sequence of interpretations} is ...? Sync with the eventual definition of above
+\end{definition} 
+%\tias{Perhaps the above warants its own definition of 'subset minimal explanation'? Then we can more formalite translate the use of MUS's to it later}
 
 
 %Any incremental step $\langle I_{i-1}, I_i \rangle$ has a trivial justification in the form of $(I_i, T_P)$. However, our goal is to find interpretable justifications that a person can understand. We hence wish to remove redundant information from the justification and instead find a \emph{subset-minimal} justification.
-After reifying the involved constraints of $T_P$ this can also be cast as a second-order problem of the form
-\[\exists S_i\subseteq T_P, E_i\subseteq I_i: (\forall I: I\models S_i\land E_i \Rightarrow N_i) \land \lnot \exists S_i'\subseteq S_i, E_i'\subseteq E_i: \forall ... \]
-\tias{TODO bart, extend/explain, e.g. the ...}
+%After reifying the involved constraints of $T_P$ this can also be cast as a second-order problem of the form
+%\[\exists S_i\subseteq T_P, E_i\subseteq I_i: (\forall I: I\models S_i\land E_i \Rightarrow N_i) \land \lnot \exists S_i'\subseteq S_i, E_i'\subseteq E_i: \forall ... \]
+%\tias{TODO bart, should this stay? if so expand a bit. For me, not necessary as the minimal subset definition may intend to cover the same?}
 
 
 %Our goal is not to derive any sequence of justifications, but a sequence of easy to interpret justifications. Indeed, while the step from the input to a full solution $\langle I_0, I \rangle$ is easily justified by $(I_0, T_P)$, this will not be interpretable for a user.
@@ -44,24 +68,30 @@ While subset-minimality ensures that a justification is non-redundant, it does n
 This quantification is a problem-specific and often subjective manner. In line with the goal of "simple enough for a person to understand" and Occam's Razor, we reason that smaller justifications are easier to interpret than justifications that use a larger number of facts or constraints. %For example, from a cognitive point of view, the more things a person needs to have in memory simultaneously, the more difficult the task will become. \tias{The cognitive statement is idd risky without scientific support...}
 %To approximate of how easy to understand a justification is (i.e., a single transition in the above described sequence), we start from the simple cognitive idea \bart{can we cite this somewhere? } that (in general) the fewer things a human needs to have in memory simultaneously, the easier the task at hand is. 
 
-We assume the existence of a cost-function $f(E_i,S_i,N_i)$ that measures the interpretability of a justification $(E_i,S_i)$ of a reasoning step $\langle I_{i-1}, I_i \rangle$ with $N_i = I_i \setminus I_{i-1}$. This is typically specific to the family of problems addressed, e.g. logic grid puzzels and its clues and bijectivity/transitivity constraints.
+We will assume the existence of a cost-function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation $S_i \wedge E_i \rightarrow N_i$ of a reasoning step $\langle I_{i-1}, I_i \rangle$ with $N_i = I_i \setminus I_{i-1}$. This is typically specific to the family of problems considered (see Section~\ref{sec:cost} for the size-based cost we use in our logic grid puzzle experiments).
 
 \paragraph{Interpretability of a sequence of reasoning steps.}
 In its most general form, we would like to optimize the understandability of the entire sequence of explanations. 
-For this, even defining a measure seems to be a very hard task (for instance, is the understandability of a sequence related to its most difficult step or to its average difficulty? Sometimes even the ordering of the steps might make a difference for humans, even though the actual steps are the same, ...). 
+While quantifying the interpretability of a single step can be hard, doing so for a sequence of explanations is even harder. For example, is it related to the most difficult step or the average difficulty, and how important is the ordering within the sequence?.
+As a starting point, we here consider the total cost to be an aggregation of the costs of the individual explanations, e.g. the average or maximum cost.
 
-We choose to define \textbf{the explanation-production problem} as that of finding a sequence $\langle I_0, I_1, \ldots, I_n \rangle$ that minimizes an aggregate of the cost vector $f(E_i,S_i,N_i) \forall_i$ and where $I_n$ is the intersection of all total interpretations (solutions) of $T_P$. \tias{TODO: ook hoger naar intersection definitie gaan (mss formele def hier?)}
+\begin{definition}
+Given a theory $\allconstraints$ and initial partial interpretation $I_0$ such that $I_0 \wedge \allconstraints \entails I_n$, the \textbf{explanation-production problem} consist of finding a sequence of interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ with corresponding subset minimal explanations $(E_i,S_i,N_i)$ where $N_i =  I_i \setminus I_{i-1}$ such that a predefined aggregate over the vector $f(E_i,S_i,N_i) \forall_i$ is minimised.
+\end{definition} 
+\tias{check that $I_n$ etc definition matches the one defined higher up}
+
+Example aggregation operators are $max()$ and $average()$, which each have their peculiarities: the $max()$ aggregation operator will minimize the cost of the most complicated reasoning step, but does not capture whether there is one such step used, or multiple. Likewise, the $average()$ aggregation operator will favor many simple steps, including splitting up trivial steps into many small components if the constraint abstraction allows this.
+
+Even for a fixed aggregation operator, the problem of holistically optimizing a sequence of explanation steps is much harder than optimizing the cost of a single reasoning step, since there are exponentially more sequences. 
 
 
-Both the cost function and the aggregation operator has to be defined, which may be problem specific. For example, the $max()$ aggregation operator will minimize the cost of the most complicated reasoning step, but does not capture whether there is one such step used, or multiple. Likewise, the $average()$ aggregation operator will favor many simple steps, including splitting up trivial steps into many small components if the constraint abstraction allows this.
 
+%\bart{And already say something about postprocessing?} \tias{I think post-processing is out of the picture, unless we bring it back in an experiment}
+%\bart{Agree: That would also make it a bit easier for us to say: ``here we just focus on the single step. Greedy works quite fine there. Sequence is for later. }
 
-Even for a fixed measure, the problem of holistically optimizing a sequence of explanation steps is much harder than optimizing a single step since there are exponentially more sequences. 
-\bart{And already say something about postprocessing?} \tias{I think post-processing is out of the picture, unless we bring it back in an experiment}
-\bart{Agree: That would also make it a bit easier for us to say: ``here we just focus on the single step. Greedy works quite fine there. Sequence is for later. }
+%\tias{Removed this, should be in sec:cost but not in prob def}
+%\paragraph{Logic Grid Puzzles} In the context of Logic Grid Puzzles, every puzzle has one unique solution. Hence $I_n$ is that total interpretation, and the goal is to find a sequence of simple and interpretable reasoning steps towards that solution. For example, reasoning steps that combine multiple clues can be consider more difficult than reasoning steps over individual clues, and reasoning steps that use few known facts are to be preferred over those using many known facts.
 
-
-\paragraph{Logic Grid Puzzles} In the context of Logic Grid Puzzles, every puzzle has one unique solution. Hence $I_n$ is that total interpretation, and the goal is to find a sequence of simple and interpretable reasoning steps towards that solution. For example, reasoning steps that combine multiple clues can be consider more difficult than reasoning steps over individual clues, and reasoning steps that use few known facts are to be preferred over those using many known facts.
 
 % The grand goal underlying our tool is to find, given a logic grid puzzle (of which we assume it is given in some logical form for now; we revisit this in Section \ref{sec:holistic}), to find a sequence of partial assignments of variables (e.g., where it is already determined that certain entities are linked (or not linked) to which other entities) that is ``as easy to understand'' as possible.  
 % Of course the latter is quite a vague concept and hard to find an objective measure for. However, we 

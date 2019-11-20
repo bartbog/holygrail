@@ -1,35 +1,22 @@
-In this section, we tackle the goal of searching for a sequence of $E_i \wedge S_i \rightarrow N_i$ explanations that is as simple to understand as possible, and that ends in the the most complete interpretation $I_n$ achievable with the constraints, e.g. a total interpretation.
+In this section, we tackle the goal of searching for a sequence of $E_i \wedge S_i \rightarrow N_i$ explanations that is as simple to understand as possible, and that ends in the most complete interpretation $I_n$ achievable with the constraints. \tias{terminology of $I_n$, the most complete?} %, e.g. a total interpretation.
 
-Ideally, we would generate all explanations of each fact in $I_n$, and search for the lowest scoring combination among those. However, the number of explanations for each fact quickly explodes with the number of constraints, and is hence not feasibly to compute. Instead, we will iteratively construct the sequence, by generating candidates for a given partial interpretation and searching for the smallest one among those.
-
-\tias{Cost function, say something about it already, or fwd pointer}
+Ideally, we could generate all explanations of each fact in $I_n$, and search for the lowest scoring sequence among those explanations. However, the number of explanations for each fact quickly explodes with the number of constraints, and is hence not feasibly to compute. Instead, we will iteratively construct the sequence, by generating candidates for a given partial interpretation and searching for the smallest one among those.
 
 \paragraph{Sequence construction}
-We aim to minimize the total cost of the explanations of the sequence, measured with an aggregate over explanation costs $f(E_i, S_i, N_i)$ for some aggregate like $max()$ or $average()$. Instead of trying to globally optimize it, we will greedily and incrementally build the sequence, each time searching for the cheapest next explanation given the current partial interpretation. 
+We aim to minimize the cost of the explanations of the sequence, measured with an aggregate over individual explanation costs $f(E_i, S_i, N_i)$ for some aggregate like $max()$ or $average()$. The cost function $f$ could for example be a weighted sum of the cardinalities of $E_i$, $S_i$ and $N_i$; see Section~\ref{sec:cost} for the cost function we will use for logic grid puzzles.
 
+Instead of trying to globally optimize the aggregated sequence cost, we encode the knowledge that we are seeking a sequence of small explanations in our algorithm. Namely, we will greedily and incrementally build the sequence, each time searching for the lowest scoring next explanation, given the current partial interpretation. Such an explanation always exist as all facts in the maximally consistent partial interpretation $I_n$ can by definition be derived without search or failure.
+%Note that this greedy approach may not find the optimal sequence. 
 
-Note that this greedy approach may not find the optimal sequence \tias{Bart, did you say that it does for max? Do we know for sure that there might not be a case where 2,4 are costs, while 3,3 are also costs and greedy will choose the first?}\bart{In theory: yes. If greedy chooses $2$ first, then one of the $3$-costs will still be possible when it considers $4$. Every option always remains an option unless its results have been propagated.
-In practice of course we do not find all the optimal candidates in every single step (i.E., we only approximate greedy) }. Also note that as by definition $I_n$ is the intersection of all valid solutions of \allconstraints, there are no \textit{choices} to be made to reach $I_n$ and all reasoning steps that derive a fact of $I_n$ inherently do not lead to failure and can hence be greedily added. \tias{New realization: in the 'intersection' setting, we must filter such that $N_i = N_i \cap I_n$ with $I_n$ computed at the beginning in order not to greedily add something 'else' that leads to failure (which it can not see yet for a small $C$)}
-\bart{I don't get this.
-There are two options:
-\begin{itemize}
- \item There is at least one model, and $I_n$ is the intersection fo all of them. In that case, individual constraints can never do something wrong. Nothing can ever be derived that ``leads to failure''.
- \item There are no mdoels, in that case $I_n$ should be maximally inconsistent. In that case, individual constraints can never do something wrong.
-\end{itemize}
-}
-\tias{OK: so only in one node of search tree...}
-
-
-Algorithm \ref{alg:main} formalizes the greedy construction of the sequence. We assume that the \textit{propagate} function is optimal in that it computes the intersection of all valid solutions, but our approach is also valid for propagation with other levels of consistency.
+Algorithm \ref{alg:main} formalizes the greedy construction of the sequence, which determines $I_n$ through propagation and relies on a \textit{min-explanation$(I,C)$} function to find the next cost-minimal explanation. %We assume that the \textit{propagate} function is optimal in that it computes the intersection of all valid solutions, but our approach is also valid for propagation with other levels of consistency.
 
 \begin{algorithm}
 %  \begin{algorithmic}
-$C \gets \allconstraints$\;
-$I_n \gets$ propagate$(C)$\;
+$I_n \gets$ propagate$(\allconstraints)$\;
 Seq $\gets$ empty sequence\;
 $I \gets \{\}$\;
 \While{$I \neq I_n$}{
-  $(E, S, N) \gets $min-explanation$(I, C, I_n)$; \textit{\footnotesize // has $N \subseteq I_n$} \\
+  $(E, S, N) \gets $min-explanation$(I, \allconstraints)$\;
   append $(E, S, N)$ to Seq\;
   $I \gets I \cup N$
 }
@@ -37,31 +24,36 @@ $I \gets \{\}$\;
 \caption{High-level greedy sequence-generating algorithm.}
 \label{alg:main}
 \end{algorithm}
-\tias{In enkel hier, niet lager}
 
 \paragraph{Candidate generation}
-\bart{Structural remark. I would like to see MUS disappear from the main part of this section. 
-Instead of calling MUS, we call $find-best-explanation(C,I,a)$. 
-which explains why $a$ follows from $C$ and $I$. 
-We then explain that MUS is *one* way to find a good explanation (an implementation technique) . But there might be other ways... }
-\tias{OK, but this makes the algorithm trivial.... and the explanation too. Keep but add remark.}
+$ $\tias{Bart, you had a comment on making this part MUS free. I've made the problem definition MUS free so that a future paper can solve the same problem with non-MUS method}
 
-The main challenge is finding the best scoring explanation, among all reasoning steps that can be applied for a given partial interpretation $I$. We first look at how to enumerate a set of candidate explanations given a set of constraints.
+The main challenge is finding the lowest scoring explanation, among all reasoning steps that can be applied for a given partial interpretation $I$. We first look at how to \textit{enumerate} a set of candidate subset-minimal explanations given a set of constraints.
 
-For a set of constraints $C$, we can first use propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints $C$. For each new fact $a$ that is also in $I_n$, we wish to find a minimal explanation $(E \subseteq I, S \subseteq C)$ that explains $a$. We hence first find all new facts, and then refine for each fact what a minimal explanation is.
+For a set of constraints $C$, we can first use propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints $C$. For each new fact $a$ not in $I$, we wish to find a subset-minimal explanation $(E \subseteq I, S \subseteq C)$ that explains $a$.
 
-The code below shows our proposed algorithm. The key part of the algorithm is on line \ref{line:mus} where we find an explanation of a single new fact $a$ by searching for a \textit{minimal unsatisfiable core} that includes $\neg a$. We do this over the literals of $I$ as well as over newly introduced \textit{reified} literals for every constraint in $C$. The result will be a minimal unsatisfiable core $\neg a \wedge E \wedge S$ where $E \subseteq I$ and $S \subseteq C$. The latter can in fact be extracted by observing which of the reified literals are set to \textit{true} in the MUS. From $UNSAT(\neg a \wedge E \wedge S)$ we know that $SAT(E \wedge S \rightarrow a)$.
+Recall from Definition~\ref{def:nonred} that a non-redundant, subset-minimal, explanation $(E, S, N)$ satisfies $S \wedge E \rightarrow N$ with $S \subseteq C$ and $E \subseteq I$ and $\forall s \in S: S \setminus \{s\} \wedge E \nrightarrow N, \forall e \in E: S \wedge E \setminus \{e\} \nrightarrow N$. We now show that this is equivalent to a Minimal Unsat Core (or Minimal Unsat Subset, MUS).
 
-We search for minimal unsat cores to avoid redundancy in the explanations. To avoid redundancy at the sequence level, we wish to avoid generating multiple $E \wedge S \rightarrow a, E \wedge S \rightarrow b$ explanations with the same $(E, S)$. Hence, we choose to generate candidate explanations at once for all implicants of $(E, S)$ on line~\ref{line:implicants}. Note that the other implicants $A \setminus \{a\}$ may have simpler explanations that may be found later in the for loop, hence we do not remove them from $J$.
+Let us substitute $(S \wedge E \rightarrow N)$ by $X$ resulting in $X$ is \textit{true} and $\forall x \in X: (X \setminus \{x\}$ is false$)$. In comparison, a MUS over a set of constraints $C$ is a subset $C' \subseteq C$ such that $C'$ is UNSAT and $\forall c \in C': (C' \setminus \{c\}$ is SAT$)$. Hence, if we set $C$ to $\neg X$ then, iff $X$ is a subset-minimal explanation, $\neg X$ is a MUS.
 
-\bart{What is this ``reify'' still doing in the algorithm? } \tias{OK, to remove}
+Hence, to find a subset-minimal explanation of $I \wedge C \rightarrow N$ we can search for a MUS of $\neg(I \wedge C \rightarrow N)$. Again through substitution we can rewrite this as $\neg(\neg(I \wedge C) \vee N)$ which is equivalent to $(I \wedge C) \wedge \neg N$. In other words, we search for the smallest subset of $(E \subseteq I, S \subseteq C)$ for which $\neg N$ can not be false, e.g. for which $N$ must be true. Note that because $I \wedge C \rightarrow N$, it will never be the case that the unsat core contains no elements of $\neg N$, as this implies that $I \wedge C$ would be UNSAT but it is not.
+
+%If we know that $N_i$ follows from $S_i$ and $E_i$ then $\neg N_i \wedge S_i \wedge E_i$ must be UNSAT. A Minimal Unsat Subset (MUS) hereof will be a non-redundant subset of $N'_i \subseteq N_i$, $S'_i \subseteq S_I$ and $E'_i \subseteq E_i$ for which we know (because it is UNSAT): $\neg (\neg N'_i \wedge S'_i \wedge E'_i)$ hence through substitution $N'_i \vee \neg (S'_I \wedge E'_i)$ and hence $(S'_I \wedge E'_i) \rightarrow N'_I$. In other words, $(S'_I \wedge E'_i)$ is the smallest explanation of $N'_I$ for which this relation holds, for any smaller explanation it will no longer hold.
+
+We must point out that MUS algorithms typically find \textit{an} unsatisfiable core that is \textit{subset-minimal}, but not \textit{size-minimal}. That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller.
+We will hence search for a MUS for each new fact separately, and return these MUS's as candidates from which to choose the cost-minimal one.
+\tias{Vvvvreemd, ik zou verwachten dat $N'$ altijd subset minimal gaat zijn en dus enkel de individuele new facts die gepropageerd kunnen worden; maar dat had je eens geprobeerd; mis ik iets of deden we het toen anders?}
+
+The code below shows our proposed algorithm. The key part of the algorithm is on line \ref{line:mus} where we find an explanation of a single new fact $a$ by searching for a MUS that includes $\neg a$.
+We search for subset-minimal unsat cores to avoid redundancy in the explanations. To avoid redundancy at the sequence level, we wish to avoid generating multiple $E \wedge S \rightarrow a, E \wedge S \rightarrow b$ explanations with the same $(E, S)$. Hence, we choose to generate candidate explanations at once for all implicants of $(E, S)$ on line~\ref{line:implicants}. Note that the other implicants $A \setminus \{a\}$ may have simpler explanations that may be found later in the for loop, hence we do not remove them from $J$.\tias{is 'implicants' correct word use?}
+
 % % \comment{
 \begin{algorithm}
 % 
 \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
 \SetKwComment{command}{/*}{*/}
 
- \Input{A partial interpretation $I$, a set of constraints $C$ and a set of relevant facts $I_n$}
+ \Input{A partial interpretation $I$ and a set of constraints $C$}
 % \end{algorithm}
 % 
 % \Require{$I = $ partial interpretation, $C =$ a set of constraints}
@@ -73,7 +65,7 @@ We search for minimal unsat cores to avoid redundancy in the explanations. To av
   $J \gets J \cap I_n$; \textit{\small // only relevant new facts}\\
   \For{$a \in J \setminus I$\label{line:for}}{ 
   \tcp{Minimal expl. of each new fact}
-    $X \gets MUS(\neg a \wedge I \wedge reify(C))$ \label{line:mus}\;
+    $X \gets MUS(\neg a \wedge I \wedge C)$ \label{line:mus}\;
     $I' \gets I \cap X$\;
     $C' \gets C \cap X$\;
     $A \gets$ propagate$(I' \wedge C')$; \textit{\small // all implied facts}\label{line:implicants}\\
@@ -81,30 +73,29 @@ We search for minimal unsat cores to avoid redundancy in the explanations. To av
   }
   \Return{Candidates}
 % \EndFunction
-\caption{candidate-explanations$(I,C,I_n)$}
+\caption{candidate-explanations$(I,C)$}
 
 \label{alg:cand}
 \end{algorithm}
 
 % }
 
-\tias{Maak duidelijk dat MUS een keuze is}
-
 We assume the use of a standard MUS algorithm, e.g. that searches for a satisfying solution and if a failure is encountered, the resulting Unsat Core is shrunk to a Minimal Unsat Core~\cite{}. While computing a MUS in this way may be computationally demanding, it is far less demanding than enumerating all MUS's (of arbitrary size) as candidates. 
-Hence, the result of the MUS call on line~\ref{line:mus} is \textit{an} unsatisfiable core that is \textit{subset-minimal}, but not \textit{size-minimal}. That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller.
+%Hence, the result of the MUS call on line~\ref{line:mus} is \textit{an} unsatisfiable core that is \textit{subset-minimal}, but not \textit{size-minimal}. That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller.
+
+
+\paragraph{Cost functions and cost-minimal explanations}
+Our goal is to find the cost-minimal explanation, where we can use Algorithm~\ref{alg:cand} to generate candidate explanations. In the following, we assume that we have a cost function $f(E, S, N)$ that returns a score for every possible explanation $(E, S, N)$. 
 
 %If we want to find the best ordering (TODO), we need the absolute minimal MUS, which is typically only a few constraints.
 %This relates to the objective function...
-
-To avoid having te search for all MUS's for each new fact, we use the observation that typically a small (1 to a few) number of constraints is sufficient to explain the reasoning. A small number of constraints is also preferred in terms of easy to understand explanations. We will hence not call \textit{candidate-explanations} with the full set of constraints \allconstraints, but we will iteratively grow the number of constraints used. 
+To guide the search to cost-minimal MUS's, we use the observation that typically a small (1 to a few) number of constraints is sufficient to explain the reasoning. A small number of constraints is also preferred in terms of easy to understand explanations, and hence have a lower cost. For this reason, we will hence not call \textit{candidate-explanations} with the full set of constraints \allconstraints, but we will iteratively grow the number of constraints used. 
 %\bart{ In practice this means that we are doing some form of prioritized explanatoin. 
 %First priority: keep the number of constraints small. Second priority, size (which also takes structure into acccount}
 
-\paragraph{Cost functions and cost-minimal explanations}
-$ $ \bart{Do we have examples where $A$ is to be taken into account for the size!}  \tias{Not here, but that is the most generic formulation...}
-In the following, we assume that we have a cost function $f(I', C', A)$ that returns a score for every possible explanation. The goal will be to find the lowest scoring explanation. We make one further assumption, namely that we have an optimistic estimate $g(C')$ computed on only the constraint part of the explanation, and that $\forall I', A, g(C') \leq f(I', C', A)$. This is for example the case if $f$ is an additive function, such as $f(I', C', A) = f_1(I') + f_2(C') + f_3(A)$ where $g(C') = f_2(C')$ assuming $f_1$ and $f_3$ are always positive.
+We make one further assumption to ensure that we do not have to search candidates for all possible subsets of constraints. The assumption is that we have an optimistic estimate $g(C')$ computed on only the constraint part of the explanation, and that $\forall E, N, g(S) \leq f(E, S, N)$. This is for example the case if $f$ is an additive function, such as $f(E, S, N) = f_1(E) + f_2(S) + f_3(N)$ where $g(S) = f_2(S)$ assuming $f_1$ and $f_3$ are always positive.
 
-We can then search for the smallest explanation among the candidates found, by searching among increasingly worse scoring $C'$ as shown in the code below (Algorithm~\ref{alg:minexpl}). This is the algorithm called by the iterative sequence generation (Algorithm \ref{alg:main}).
+We can then search for the smallest explanation among the candidates found, by searching among increasingly worse scoring $S$ as shown in the code below (Algorithm~\ref{alg:minexpl}). This is the algorithm called by the iterative sequence generation (Algorithm \ref{alg:main}).
 
 \begin{algorithm}
 \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
@@ -112,32 +103,37 @@ We can then search for the smallest explanation among the candidates found, by s
 \SetKw{Break}{break}
 
 
- \Input{A partial interpretation $I$, a set of constraints $C$ and a set of relevant facts $I_n$}
+ \Input{A partial interpretation $I$ and a set of constraints $C$}
   Candidates $\gets \{\}$\;
   $J \gets$ optimal-propagate$(I \wedge C)$\;
   \For{$C' \subseteq C$ ordered by $g(C')$}{ \label{alg:min:for}
     \If{$g(C') < min(\{f(cand_i) | cand_i \in $Candidates$\})$}{
         \Break\;}
-     cand $\gets$ candidate-explanations$(I, C', I_n)$\; \label{alg:min:gets}
+     cand $\gets$ candidate-explanations$(I, C')$\; \label{alg:min:gets}
      add to Candidates all cand$_i$ with corresp. value $f(cand_i)$\;
      }  
           \Return{$cand_i \in$ Candidates with minimal $f(cand_i)$}
  % \EndFunction
-\caption{min-explanation$(I,C,I_n)$}
+\caption{min-explanation$(I,C)$}
 \label{alg:minexpl}
 \end{algorithm}
 
-Without the optimistic estimate $g()$, we would have to search in the worst case for all possible subsets of constraints. Note that we can cache the \textit{Candidates} set, and in the next iteration we can update the next best candidate $(E, S, N)$ to $(E, S, N \setminus I)$ where $N \setminus I \neq \emptyset$. This candidate now determines a lowerbound to start from \tias{The effect of this could be tried in experimentation}.
-Caching of \textit{candidate-explanations()} calls across iterations is not advised as new facts can be used to derive other even newer facts, as well as to provide much simpler explanations for facts that already had an explanation before. These can only be generated by recomputing the explanations again. %are possible, but because the found MUS's need not be cost-minimal, we found that in practice it is better to search for explanations from scratch each time in the hope of finding a cheaper one. \tias{This surely has to be evaluated! It feels naive to me; if no new facts are derived, why do we recompute MUS's for each 'old' fact again and again...} 
-\bart{Somewehere (here or in the next section?) we should say something about hte fact that MUS gives us ``just'' a subset-minimal. Without guarantee that it is a good one.
-In practice we *do* keep old results...  Becuase they might ``acccidentally'' be  better than new calls... 
-I think it fits better in the next section (since it is not conceptual but rather about implementation with the tools we have available}
-\tias{OK, will add here}
+Every time \textit{min-explanation$(I,C)$} is called with an updated partial interpretation $I$ the explanations should be regenerated. The reason is that for some derivable facts $a$, there may now be a much easier and cost-effective explanation of that fact.
+There is one benefit in caching the \textit{Candidates} across the different iterations, and that is that in a subsequent call, the cost of the most cost-effective explanation that is still applicable can be used as a lowerbound to start from.
+Furthermore, in practice, we cache all candidates and when we (re)compute a MUS for a fact $a$, we only store it if it is more cost-effective than the best one we have previously found for that fact, across the different iterations.
 
-\textit{Optimization: MARCO map} We identify an additional improvement to the above algorithm, inspired by the MARCO algorithm~\cite{liffiton2013enumerating}. There, they make the observation that given a MUS $M$ involving constraint set $C$, any superset $C''$ of $C$ will also be UNSAT where we already have a corresponding MUS. In our case, given that we search candidate explanations for an increasingly costly constraint set $C$, if we have a candidate explanation involving $C'$ on line \ref{alg:min:gets} we can omit searching for explanations of $C'' \supset C'$ in the for loop on line \ref{alg:min:for}, as an explanation involving $C''$ would have $g(C'') > g(C')$. \tias{actually, there could be a smaller one than $C'$ which is found when searching for a MUS of $C''$ but we leave that detail open here}.
-\tias{Future idea: if a constraint is fully satisfied, no need to include it in future calls. I guess because the 'propagate' will return empty the overhead is quite limited anyway}
-\bart{There might be some overhead. THe reason is that in that theory also all the implicit constraints are. In practice they propagate the same for every satisfied clue... } 
-\tias{OK, so we should try empirically but don't have the time now}
+%Without the optimistic estimate $g()$, we would have to search in the worst case for all possible subsets of constraints.
+%Note that we can cache the \textit{Candidates} set, and in the next iteration we can update the next best candidate $(E, S, N)$ to $(E, S, N \setminus I)$ where $N \setminus I \neq \emptyset$. This candidate now determines a lowerbound to start from \tias{The effect of this could be tried in experimentation}.
+%Caching of \textit{candidate-explanations()} calls across iterations is not advised as new facts can be used to derive other even newer facts, as well as to provide much simpler explanations for facts that already had an explanation before. These can only be generated by recomputing the explanations again. %are possible, but because the found MUS's need not be cost-minimal, we found that in practice it is better to search for explanations from scratch each time in the hope of finding a cheaper one. \tias{This surely has to be evaluated! It feels naive to me; if no new facts are derived, why do we recompute MUS's for each 'old' fact again and again...} 
+%\bart{Somewehere (here or in the next section?) we should say something about hte fact that MUS gives us ``just'' a subset-minimal. Without guarantee that it is a good one.
+%In practice we *do* keep old results...  Becuase they might ``acccidentally'' be  better than new calls... 
+%I think it fits better in the next section (since it is not conceptual but rather about implementation with the tools we have available}
+%\tias{OK, will add here}
+
+\textit{Optimization: MARCO map.} We identify an additional improvement to the above algorithm, inspired by the MARCO algorithm~\cite{liffiton2013enumerating}. There, they make the observation that given a MUS $M$ involving constraint set $C$, any superset $C''$ of $C$ will also be UNSAT where we already have a corresponding MUS. In our case, given that we search candidate explanations for an increasingly costly constraint set $C$, if we have a candidate explanation involving $C'$ on line \ref{alg:min:gets} we can omit searching for explanations of $C'' \supset C'$ in the for loop on line \ref{alg:min:for}, as an explanation involving $C''$ would have $g(C'') > g(C')$. %\tias{actually, there could be a smaller one than $C'$ which is found when searching for a MUS of $C''$ but we leave that detail open here}.
+%\tias{Future idea: if a constraint is fully satisfied, no need to include it in future calls. I guess because the 'propagate' will return empty the overhead is quite limited anyway}
+%\bart{There might be some overhead. THe reason is that in that theory also all the implicit constraints are. In practice they propagate the same for every satisfied clue... } 
+%\tias{OK, so we should try empirically but don't have the time now}
 
 
 

@@ -50,16 +50,17 @@ for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation 
 
 
 \begin{definition}
- Let $I_{i-1}$ and $I_i$ be partial interpretations such that $I_{i-1}\land \allconstraints \models I_i$ and define $N_i= I_i \setminus I_{i-1}$. 
- We say that $(E_i,S_i)$ \emph{explains} the derivation of $N_i$ from $I_i$ if the following hold:
+ Let $I_{i-1}$ and $I_i$ be partial interpretations such that $I_{i-1}\land \allconstraints \models I_i$.
+ We say that $(E_i,S_i,N_i)$ \emph{explains} the derivation of $I_{i}$ from $I_{i-1}$ if the following hold:
 \begin{compactitem}
+    \item $N_i= I_i \setminus I_{i-1}$ (i.e., $N_i$ consists of all newly defined facts), 
 	\item $E_i\subseteq I_i$ (i.e., the explaining facts are a subset of what was previously derived),
 	\item $S_i \subseteq T_P$ (i.e., a subset of the clues and implicit constraints are used), and 
 	\item $S_i \cup E_i \entails N_i$ (i.e., all newly derived information indeed follows from this explanation).
 \end{compactitem}
 \end{definition}
 
-The problem of simply checking whether $(E_i,S_i)$ explains $N_i$ is in co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{DBLP:conf/lpar/KolokolovaLMT10}.
+The problem of simply checking whether $(E_i,S_i,N_i)$ explains the derivation of $I_{i}$ from $I_{i-1}$ is in co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{DBLP:conf/lpar/KolokolovaLMT10}.
 
 Part of our goal of finding easy to interpret explanations is to avoid redundancy. 
 That is, we want a non-redundent explanation $(E_i,S_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed while still explaining the derivation of $N_i$ from $I_i$; that is: the explanation must be \textit{subset-minimal}. 

@@ -11,6 +11,35 @@ We analyze the results in 3 directions :
 
 \paragraph{Q1. How do different puzzles compare with respect to the generated explanations ?} For future reference, we denote \textbf{c} = $c_1, c2, ...c_n$ the costs, where $c_i$ is the cost, based on the cost function $f(I, C)$, at reasoning step $i$ and n the number of reasoning steps to solve a problem. Table \ref{table:sequence_leve} shows how difficult the puzzles are by means of the total cost and how the expensive a new conclusion is based on the current state of the grid.
 
+
+\begin{table}
+	\centering
+	\resizebox{\columnwidth}{!}{%
+\begin{tabular}{cccc|cccccc}
+n & $|type|$ & $|dom|$ & $|grid|$ & steps & \#bij & \#trans & \#clue & \#m-i & \#m-c \\ 
+\hline 
+%p5 & 113 & 626 & 25 & 5.59 & [25, 21, 21, 21, 21] & 31.0 & 50.0 & 0 & 19.0 & 0 \\ 
+1 &  &  &  	& 113 & 31\% & 50\% & 19\% & 0 & 0 \\ 
+%p16 & 122 & 680 & 23 & 5.62 & [23, 21, 21, 21, 21] & 21.0 & 60.0 & 0 & 19.0 & 0 \\ 
+%p93 & 119 & 659 & 21 & 5.58 & [21, 21, 21, 21, 20] & 34.0 & 47.0 & 0 & 19.0 & 0 \\ 
+%\textbf{p12} & \textbf{115} & \textbf{591} & \textbf{23} & \textbf{5.18} & \textbf{[23, 21, 21, 21, 20]} & \textbf{29.0} & \textbf{54.0} & \textbf{0} & \textbf{17.0} & \textbf{0} \\ 
+%\textbf{p18} & \textbf{116} & \textbf{615} & \textbf{22} & \textbf{5.35} & \textbf{[22, 22, 22, 21, 21]} & \textbf{28.0} & \textbf{55.0 }& \textbf{0 }& \textbf{17.0} & \textbf{0 }\\ 
+%p20 & 116 & 552 & 22 & 4.8 & [22, 21, 21, 21, 20] & 27.0 & 58.0 & 0 & 15.0 & 0 \\ 
+%\textbf{p25} & \textbf{111} & \textbf{595} & \textbf{24} & \textbf{5.41} & \textbf{[24, 23, 22, 21, 21]} & \textbf{37.0} & \textbf{45.0} & \textbf{0} &\textbf{ 17.0} & \textbf{0} \\ 
+%p19 & 123 & 630 & 22 & 5.16 & [22, 21, 21, 21, 21] & 25.0 & 59.0 & 0 & 16.0 & 0 \\ 
+\hline
+
+\end{tabular} 
+	}
+\caption{smth}
+\label{table:smth}
+\end{table}
+
+
+$|type|$ = nr types
+$|dom|$ = nr doms
+$|grid|$ = $|dom|^2 * (|type|*(|type|-1)/2)$
+
 \begin{table}
 	\centering
 	\resizebox{\columnwidth}{!}{%
@@ -89,4 +118,35 @@ Most of the explanations are either generated using bijectivity (bij.) or Transi
 \paragraph{Bonus. How well does it compare to human solving process ?} 
 
 % TODO Compare with the tutorial puzzle of logicgridpuzzles.com? Ideally, a small human evaluation (e.g. ask people to solve a 3-with-3 puzzle and note the order of derivations and clues used, compare this 'ranking' to our ranking, discuss some differences.
+
+\begin{table}
+	\centering
+	\resizebox{\columnwidth}{!}{%
+		\begin{tabular}{|l||c|c|c|c|} 
+			\hline 
+			\textbf{puzzle} & \textbf{avg. fact used} & \textbf{avg. facts used with a clue} & \textbf{avg. facts used with trans.} & \textbf{avg. facts used together with bij.}\\ 
+			\hline 
+			p5.output.json & 1.823 & 0.524 & 2.371 & 2.0 \\ 
+			\hline 
+			p16.output.json & 1.803 & 0.609 & 2.385 & 2.0 \\ 
+			\hline 
+			p93.output.json & 1.84 & 0.182 & 2.575 & 2.0 \\ 
+			\hline 
+			p12.output.json & 1.835 & 0.316 & 2.455 & 2.0 \\ 
+			\hline 
+			p18.output.json & 1.853 & 0.45 & 2.5 & 2.0 \\ 
+			\hline 
+			p20.output.json & 1.828 & 0.294 & 2.355 & 2.0 \\ 
+			\hline 
+			nielspasta.output.json & 1.768 & 1.05 & 2.071 & 2.0 \\ 
+			\hline 
+			p25.output.json & 1.937 & 0.737 & 2.463 & 2.0 \\ 
+			\hline 
+			p19.output.json & 1.87 & 0.4 & 2.6 & 2.0 \\ 
+			\hline 
+		\end{tabular} 
+	}
+	\caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
+	\label{table:sequence_leve}
+\end{table}
 

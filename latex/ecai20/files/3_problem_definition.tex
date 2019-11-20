@@ -4,7 +4,7 @@
 %\emph{explanation} (see below) of why each of the steps is correct that is ``simple enough for a person to understand''. 
 The overarching goal of this paper is to generate a sequence of small reasoning steps, each with an interpretable explanation. We first introduce the concept of an explanation of a reasoning step, after which we introduce a cost function for a reasoning step and the cost of a sequence of reasoning steps. 
 
-\paragraph{Explanation of reasoning steps.}
+\myparagraph{Explanation of reasoning steps.}
 We assume that a theory $\allconstraints$ and an initial partial interpretation $I_0$ are given and fixed. 
 
 \begin{definition}
@@ -37,50 +37,62 @@ The goal of work is not just to obtain a sequence of incremental partial interpr
 % Additionally, 
 for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized, such as in Figure~\ref{fig:zebrascreen}, it will show to the user precisely which information and constraints were used to derive a new piece of information.
 
-\tias{This needs removal/trimming by Bart}
-Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_i\geqp I_{i-1}$ iff $I_i\supseteq I_{i-1}$.
-With this view (partial) interpretations can also be seen as a theory (having each such literal as a sentence), which will allow us to make claims of the form 
-$T\cup I \entails I'$ with $T$ a theory and  $I,I'$ (partial) interpretations, meaning that all literals in $I'$ follow from $T$ and $I$, or stated precisely, that all models of $T$ more precise than $I$ are also more precise than $I'$. 
-
-\tias{Bart adds definitions?}
+% \tias{This needs removal/trimming by Bart}
+% Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_i\geqp I_{i-1}$ iff $I_i\supseteq I_{i-1}$.
+% With this view (partial) interpretations can also be seen as a theory (having each such literal as a sentence), which will allow us to make claims of the form 
+% $T\cup I \entails I'$ with $T$ a theory and  $I,I'$ (partial) interpretations, meaning that all literals in $I'$ follow from $T$ and $I$, or stated precisely, that all models of $T$ more precise than $I$ are also more precise than $I'$. 
+% 
+% \tias{Bart adds definitions?}
 
 %\begin{definition}
 %An \textbf{explained sequence of interpretations} is a sequence of incremental partial interpretations $\langle I_0, I_1, \ldots, I_n \rangle$ with corresponding explanations $(E_i,S_i)$ such that $E_i \wedge S_i \entails N_i$ with $N_i = I_i \setminus I_{i-1}$ and ...
 %\end{definition} 
-We hence define a justification as a tuple $(E_i,S_i)$ such that: 
+
+
+\begin{definition}
+ Let $I_{i-1}$ and $I_i$ be partial interpretations such that $I_{i-1}\land \allconstraints \models I_i$ and define $N_i= I_i \setminus I_{i-1}$. 
+ We say that $(E_i,S_i)$ \emph{explains} the derivation of $N_i$ from $I_i$ if the following hold:
 \begin{compactitem}
 	\item $E_i\subseteq I_i$ (i.e., the explaining facts are a subset of what was previously derived),
 	\item $S_i \subseteq T_P$ (i.e., a subset of the clues and implicit constraints are used), and 
-	\item $S_i \cup E_i \entails N_i$ (i.e., all newly derived information indeed follows from this justification).
+	\item $S_i \cup E_i \entails N_i$ (i.e., all newly derived information indeed follows from this explanation).
 \end{compactitem}
+\end{definition}
 
-The problem of simply checking whether $(E_i,S_i)$ explains $N_i$ is in co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{ternovskaMXcomplexity}.
+The problem of simply checking whether $(E_i,S_i)$ explains $N_i$ is in co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{DBLP:conf/lpar/KolokolovaLMT10}.
 
-Part of our goal of finding easy to interpret explanations is to avoid redundant information in the explanation. That is, we want a non-redundent explanation $(E_i,S_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed or else the implication $S_i \wedge E_i \rightarrow N_i$ would no longer hold, that is, the must be \textit{subset-minimal}:
-$S_i \wedge E_i \rightarrow N_i$ and $\forall s \in S_i: S_i \setminus \{s\} \wedge E_i \nrightarrow N_i, \forall e \in E_i: S_i \wedge E_i \setminus \{e\} \nrightarrow N_i$
+Part of our goal of finding easy to interpret explanations is to avoid redundancy. 
+That is, we want a non-redundent explanation $(E_i,S_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed while still explaining the derivation of $N_i$ from $I_i$; that is: the explanation must be \textit{subset-minimal}. 
+\begin{definition}
+ We call $(E_i,S_i)$ a \emph{non-redundant explanation of  the derivation of $N_i$ from $I_i$} if it explains this derivation and whenever $E'\subseteq E_i; S'\subseteq S_i$ while $(E',S')$ also explains this derivation, it must be that $E_i=E', S_i=S'$. 
+\end{definition}
+% $S_i \wedge E_i \rightarrow N_i$ and $\forall s \in S_i: S_i \setminus \{s\} \wedge E_i \nrightarrow N_i, \forall e \in E_i: S_i \wedge E_i \setminus \{e\} \nrightarrow N_i$
 
 \begin{definition} \label{def:nonred}
-A \textbf{non-redundent explained sequence of interpretations} is ...? Sync with the eventual definition of above
+A \textbf{non-redundent explanation sequence} is a sequence 
+\[(I_0,\emptyset,\emptyset), (I_1,E_1,S_1), \dots ,(I_n,E_n,S_n)\]
+such that $(I_i)_{i\leq n}$ is sequence of incremental partial interpretations and each $(E_i,S_i)$ explains the derivation of $I_i\setminus I_{i-1}$ from $I_{i-1}$.
 \end{definition} 
 %\tias{Perhaps the above warants its own definition of 'subset minimal explanation'? Then we can more formalite translate the use of MUS's to it later}
 
 
-%Any incremental step $\langle I_{i-1}, I_i \rangle$ has a trivial justification in the form of $(I_i, T_P)$. However, our goal is to find interpretable justifications that a person can understand. We hence wish to remove redundant information from the justification and instead find a \emph{subset-minimal} justification.
+%Any incremental step $\langle I_{i-1}, I_i \rangle$ has a trivial explanation in the form of $(I_i, T_P)$. However, our goal is to find interpretable explanations that a person can understand. We hence wish to remove redundant information from the explanation and instead find a \emph{subset-minimal} explanation.
 %After reifying the involved constraints of $T_P$ this can also be cast as a second-order problem of the form
 %\[\exists S_i\subseteq T_P, E_i\subseteq I_i: (\forall I: I\models S_i\land E_i \Rightarrow N_i) \land \lnot \exists S_i'\subseteq S_i, E_i'\subseteq E_i: \forall ... \]
 %\tias{TODO bart, should this stay? if so expand a bit. For me, not necessary as the minimal subset definition may intend to cover the same?}
 
 
-%Our goal is not to derive any sequence of justifications, but a sequence of easy to interpret justifications. Indeed, while the step from the input to a full solution $\langle I_0, I \rangle$ is easily justified by $(I_0, T_P)$, this will not be interpretable for a user.
+%Our goal is not to derive any sequence of explanations, but a sequence of easy to interpret explanations. Indeed, while the step from the input to a full solution $\langle I_0, I \rangle$ is easily justified by $(I_0, T_P)$, this will not be interpretable for a user.
 
-\paragraph{Interpretability of a reasoning steps.}
-While subset-minimality ensures that a justification is non-redundant, it does not quantify how \textit{interpretable} a justification is. 
-This quantification is a problem-specific and often subjective manner. In line with the goal of "simple enough for a person to understand" and Occam's Razor, we reason that smaller justifications are easier to interpret than justifications that use a larger number of facts or constraints. %For example, from a cognitive point of view, the more things a person needs to have in memory simultaneously, the more difficult the task will become. \tias{The cognitive statement is idd risky without scientific support...}
-%To approximate of how easy to understand a justification is (i.e., a single transition in the above described sequence), we start from the simple cognitive idea \bart{can we cite this somewhere? } that (in general) the fewer things a human needs to have in memory simultaneously, the easier the task at hand is. 
+\myparagraph{Interpretability of a reasoning steps.}
+While subset-minimality ensures that an explanation is non-redundant, it does not quantify how \textit{interpretable} a explanation is. 
+This quantification is a problem-specific and often subjective manner. In line with the goal of ``simple enough for a person to understand'' and Occam's Razor, we reason that smaller explanations are easier to interpret than explanations that use a larger number of facts or constraints. %For example, from a cognitive point of view, the more things a person needs to have in memory simultaneously, the more difficult the task will become. \tias{The cognitive statement is idd risky without scientific support...}
+%To approximate of how easy to understand a explanation is (i.e., a single transition in the above described sequence), we start from the simple cognitive idea \bart{can we cite this somewhere? } that (in general) the fewer things a human needs to have in memory simultaneously, the easier the task at hand is. 
 
-We will assume the existence of a cost-function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation $S_i \wedge E_i \rightarrow N_i$ of a reasoning step $\langle I_{i-1}, I_i \rangle$ with $N_i = I_i \setminus I_{i-1}$. This is typically specific to the family of problems considered (see Section~\ref{sec:cost} for the size-based cost we use in our logic grid puzzle experiments).
+We will assume the existence of a cost-function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation $S_i \wedge E_i \entails N_i$ of a reasoning step. 
+This is typically specific to the family of problems considered; in Section~\ref{sec:cost} we provide a size-based cost function for use in our logic grid puzzle tool.
 
-\paragraph{Interpretability of a sequence of reasoning steps.}
+\myparagraph{Interpretability of a sequence of reasoning steps.}
 In its most general form, we would like to optimize the understandability of the entire sequence of explanations. 
 While quantifying the interpretability of a single step can be hard, doing so for a sequence of explanations is even harder. For example, is it related to the most difficult step or the average difficulty, and how important is the ordering within the sequence?.
 As a starting point, we here consider the total cost to be an aggregation of the costs of the individual explanations, e.g. the average or maximum cost.
@@ -100,7 +112,7 @@ Even for a fixed aggregation operator, the problem of holistically optimizing a 
 %\bart{Agree: That would also make it a bit easier for us to say: ``here we just focus on the single step. Greedy works quite fine there. Sequence is for later. }
 
 %\tias{Removed this, should be in sec:cost but not in prob def}
-%\paragraph{Logic Grid Puzzles} In the context of Logic Grid Puzzles, every puzzle has one unique solution. Hence $I_n$ is that total interpretation, and the goal is to find a sequence of simple and interpretable reasoning steps towards that solution. For example, reasoning steps that combine multiple clues can be consider more difficult than reasoning steps over individual clues, and reasoning steps that use few known facts are to be preferred over those using many known facts.
+%\myparagraph{Logic Grid Puzzles} In the context of Logic Grid Puzzles, every puzzle has one unique solution. Hence $I_n$ is that total interpretation, and the goal is to find a sequence of simple and interpretable reasoning steps towards that solution. For example, reasoning steps that combine multiple clues can be consider more difficult than reasoning steps over individual clues, and reasoning steps that use few known facts are to be preferred over those using many known facts.
 
 
 % The grand goal underlying our tool is to find, given a logic grid puzzle (of which we assume it is given in some logical form for now; we revisit this in Section \ref{sec:holistic}), to find a sequence of partial assignments of variables (e.g., where it is already determined that certain entities are linked (or not linked) to which other entities) that is ``as easy to understand'' as possible.  

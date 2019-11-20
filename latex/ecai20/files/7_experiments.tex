@@ -12,6 +12,35 @@ We first look at the properties of the puzzles and the composition of the result
 Coincidentally, the puzzles all have 4 types with a domain of size 5, and hence 150 cells. We can see that the number of inference steps is around 120 for all but the pasta puzzle. When looking at the proportion of the inference steps that use bijections (only), transitivity (only) or a clue, we can see that around 50\% the explanations typically use a transitivity constraint, around 25\% typically a trivial bijectivity constraint (e.g. completing a row or column in one relation), and less then $1/5$th of the explanations actually need to use a clue.
 In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints and multiple clues respectively. We can see that it is never necessary to combine multiple constraints in one inference step. Also, notably, the puzzles from the booklet never require combining implicit constraints, while the anecdotically hard pasta puzzle is the only one that does, e.g. it can not be solved by focussing on the clues but one must combine facts and knowledge in the table alone to crack it.
 
+\begin{table}
+	\centering
+	\resizebox{\columnwidth}{!}{%
+\begin{tabular}{c|ccc|c|cccccc} 
+	\textbf{puzzle} & \textbf{$|$type$|$} & \textbf{$|$dom$|$} & \textbf{$|$grid$|$} & \textbf{steps} & \textbf{\% Bij.} & \textbf{\% Trans.} & \textbf{\% 1 Clue} & \textbf{\% m-i} & \textbf{\% m-c} \\ 
+				\hline 
+				%p5.output.json
+				1 & 4 & 5 & 150 & 113 & 30.97 & 49.56 & 18.58 & 0.0 & 0\\ 
+				%p16.output.json
+				2 & 4 & 5 & 150 & 122 & 21.31 & 59.02 & 18.85 & 0.0 & 0\\ 
+				%p12.output.json
+				3 & 4 & 5 & 150 & 115 & 28.7 & 53.91 & 16.52 & 0.0 & 0\\ 
+				%p18.output.json
+				4 & 4 & 5 & 150 & 116 & 27.59 & 54.31 & 17.24 & 0.0 & 0\\ 
+				%p19.output.json
+				5 & 4 & 5 & 150 & 123 & 24.39 & 58.54 & 16.26 & 0.0 & 0\\ 
+				%p20.output.json
+				6 & 4 & 5 & 150 & 116 & 26.72 & 57.76 & 14.66 & 0.0 & 0\\ 
+				%p25.output.json
+				7 & 4 & 5 & 150 & 111 & 36.94 & 45.05 & 17.12 & 0.0 & 0\\ 
+				%p93.output.json
+				8 & 4 & 5 & 150 & 119 & 33.61 & 47.06 & 18.49 & 0.0 & 0\\ 
+				%nielspasta.output.json
+				p & 4 & 5 & 150 & 82 & 34.15 & 40.24 & 21.95 & 2.44 & 0\\ 
+\end{tabular}  
+	}
+\caption{Composition of puzzle explanations}
+\label{table:composition}
+\end{table}
 
 \paragraph{2. Sequence progression}
 Figure \ref{fig:steps} shows a visualisation the type of explanation used at every step of the sequence, for four different puzzles. The red line is the pasta puzzle. We can see that typically at the beginning of the sequence, clues (4th line) and bijectivity (2nd line) are used, e.g. the trivial ones. This is then followed by a round of clues and some bijectivity/transitivity, after which a large fraction of the table can be completed with bijectivity/transitivty, followed by a few last clues and another round of completion.
@@ -68,35 +97,7 @@ We can observe that the average number of facts used is indeed low, less than tw
 
 
 
-\begin{table}
-	\centering
-	\resizebox{\columnwidth}{!}{%
-		\begin{tabular}{c|cccc|cccccc} 
-			n & $|type|$ & $|dom|$ & $|grid|$ & steps & \% bij & \% trans & \%clue & \%m-i & \%m-c \\ 
-			\hline 
-			p5 & 4 & 5 & 150 & 113 & 30.97 & 49.56 & 18.58 & 0.0 & 0\\ 
-			\hline 
-			p16 & 4 & 5 & 150 & 122 & 21.31 & 59.02 & 18.85 & 0.0 & 0\\ 
-			\hline 
-			p93 & 4 & 5 & 150 & 119 & 33.61 & 47.06 & 18.49 & 0.0 & 0\\ 
-			\hline 
-			p12 & 4 & 5 & 150 & 115 & 28.7 & 53.91 & 16.52 & 0.0 & 0\\ 
-			\hline 
-			p18 & 4 & 5 & 150 & 116 & 27.59 & 54.31 & 17.24 & 0.0 & 0\\ 
-			\hline 
-			p20 & 4 & 5 & 150 & 116 & 26.72 & 57.76 & 14.66 & 0.0 & 0\\ 
-			\hline 
-			nielspasta & 4 & 5 & 150 & 82 & 34.15 & 40.24 & 21.95 & 2.44 & 0\\ 
-			\hline 
-			p25 & 4 & 5 & 150 & 111 & 36.94 & 45.05 & 17.12 & 0.0 & 0\\ 
-			\hline 
-			p19 & 4 & 5 & 150 & 123 & 24.39 & 58.54 & 16.26 & 0.0 & 0\\ 
-		\end{tabular} 
-		
-	}
-	\caption{Composition of puzzle explanations}
-	\label{table:composition}
-\end{table}
+
 
 %\paragraph{Bonus. How well does it compare to human solving process ?} 
 

@@ -8,7 +8,7 @@ import * as serviceWorker from './serviceWorker';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.js';
 
-const problemName = 'nielspasta-split';
+const problemName = 'p5-split';
 
 ReactDOM.render( <PuzzleInfo /> , document.getElementById('problemIntro'));
 ReactDOM.render( <App problemName={problemName} /> , document.getElementById('root'));

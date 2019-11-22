@@ -1,6 +1,9 @@
 // Problem p20
 
-vocabulary V {
+vocabulary V {    
+    type assumptiontype = {0..36} isa int
+    assumption_satisfied(assumptiontype)
+    
     type month = {1; 2; 3; 4; 5} isa int
     type home constructed from {the_other_home, hughenden, wolfenden, markmanor, barnhill}
     type type1 constructed from {the_other_type1, circle_drive, bird_road, grant_place, fifth_avenue}
@@ -9,78 +12,318 @@ vocabulary V {
 
     investigated_in(home, month)
     on(home, type1)
-    visited_in(home, month)
     haunted_by(home, type2)
-    located_on(home, type1)
+    is_linked_with_1(month, type1)
+    is_linked_with_2(month, type2)
+    is_linked_with_3(type1, type2)
+}
+
+vocabulary VExtra {
+    extern vocabulary V
+    ct_investigated_in(home, month)
+    cf_investigated_in(home, month)
+    ct_on(home, type1)
+    cf_on(home, type1)
+    ct_haunted_by(home, type2)
+    cf_haunted_by(home, type2)
+    ct_is_linked_with_1(month, type1)
+    cf_is_linked_with_1(month, type1)
+    ct_is_linked_with_2(month, type2)
+    cf_is_linked_with_2(month, type2)
+    ct_is_linked_with_3(type1, type2)
+    cf_is_linked_with_3(type1, type2)
 }
 
 structure S : V {
+        assumption_satisfied<cf>={}
+        assumption_satisfied<u>={}
 }
 
-theory T : V {
+theory T1: V {
     // Hughenden wasn't investigated in march
-    ~ investigated_in(hughenden,3).
-
-    // The home on Circle Drive was investigated sometime before Wolfenden
-    ?a [home] b [type3] c [month] d [month]: on(a,circle_drive) & b>0 & investigated_in(wolfenden,c) & d = c-b & investigated_in(a,d).
-
-    // Of the building haunted by Lady Grey and the building haunted by Victor, one was Markmanor and the other was visited in January
-    ?e [home] f [home]: haunted_by(e,lady_grey) & haunted_by(f,victor) & ~ (e = f) & (markmanor = e & visited_in(f,1) | markmanor = f & visited_in(e,1)).
-
-    // The house haunted by Victor was visited 1 month after the house haunted by Lady Grey
-    ?g [home] h [month] i [home] j [month]: haunted_by(g,victor) & haunted_by(i,lady_grey) & visited_in(i,h) & j = h+1 & visited_in(g,j).
-
-    // Of the home on Bird Road and Barnhill, one was visited in January and the other was haunted by Brunhilde
-    ?k [home]: on(k,bird_road) & ~ (k = barnhill) & (visited_in(k,1) & haunted_by(barnhill,brunhilde) | visited_in(barnhill,1) & haunted_by(k,brunhilde)).
-
-    // Markmanor was visited 1 month after the home on Grant Place
-    ?l [month] m [home] n [month]: on(m,grant_place) & visited_in(m,l) & n = l+1 & visited_in(markmanor,n).
-
-    // The house visited in march wasn't located on Circle Drive
-    ?o [home]: visited_in(o,3) & ~ located_on(o,circle_drive).
-
-    // Hughenden wasn't haunted by Abigail
-    ~ haunted_by(hughenden,abigail).
-
-    // Wolfenden was haunted by Brunhilde
-    haunted_by(wolfenden,brunhilde).
-
-    // The building visited in May wasn't located on Fifth Avenue
-    ?p [home]: visited_in(p,5) & ~ located_on(p,fifth_avenue).
-
-    // The home visited in April was either Markmanor or the home haunted by Brunhilde
-    ?q [home]: visited_in(q,4) & (markmanor = q | (?r [home]: haunted_by(r,brunhilde) & r = q)).
-
-
-    // Logigram bijection axioms:
-    ! x [home]: ?=1 y [month]: investigated_in(x, y).
-    ! x [month]: ?=1 y [home]: investigated_in(y, x).
-
-    ! x [home]: ?=1 y [type1]: on(x, y).
-    ! x [type1]: ?=1 y [home]: on(y, x).
-
-    ! x [home]: ?=1 y [month]: visited_in(x, y).
-    ! x [month]: ?=1 y [home]: visited_in(y, x).
-
-    ! x [home]: ?=1 y [type2]: haunted_by(x, y).
-    ! x [type2]: ?=1 y [home]: haunted_by(y, x).
-
-    ! x [home]: ?=1 y [type1]: located_on(x, y).
-    ! x [type1]: ?=1 y [home]: located_on(y, x).
-
-    // Logigram synonym axioms:
-    ! x [home] y [month]: investigated_in(x, y) <=> visited_in(x, y).
-    ! x [home] y [type1]: on(x, y) <=> located_on(x, y).
-
-    // Logigram transitive relation axioms:
-
-    // Logigram reflexive relation axioms:
-
-    // Logigram symmetry breaking axioms:
+    assumption_satisfied( 0  ) => ~ investigated_in(hughenden,3).
 }
+
+theory T2: V {
+    // The home on Circle Drive was investigated sometime before Wolfenden
+    assumption_satisfied( 0  ) => ?a [home] b [type3] c [month] d [month]: on(a,circle_drive) & b>0 & investigated_in(wolfenden,c) & d = c-b & investigated_in(a,d).
+}
+
+theory T3: V {
+    // Of the building haunted by Lady Grey and the building haunted by Victor, one was Markmanor and the other was visited in January
+    assumption_satisfied( 0  ) => ?e [home] f [home]: haunted_by(e,lady_grey) & haunted_by(f,victor) & ~ (e = f) & (markmanor = e & investigated_in(f,1) | markmanor = f & investigated_in(e,1)).
+}
+
+theory T4: V {
+    // The house haunted by Victor was visited 1 month after the house haunted by Lady Grey
+    assumption_satisfied( 0  ) => ?g [home] h [month] i [home] j [month]: haunted_by(g,victor) & haunted_by(i,lady_grey) & investigated_in(i,h) & j = h+1 & investigated_in(g,j).
+}
+
+theory T5: V {
+    // Of the home on Bird Road and Barnhill, one was visited in January and the other was haunted by Brunhilde
+    assumption_satisfied( 0  ) => ?k [home]: on(k,bird_road) & ~ (k = barnhill) & (investigated_in(k,1) & haunted_by(barnhill,brunhilde) | investigated_in(barnhill,1) & haunted_by(k,brunhilde)).
+}
+
+theory T6: V {
+    // Markmanor was visited 1 month after the home on Grant Place
+    assumption_satisfied( 0  ) => ?l [month] m [home] n [month]: on(m,grant_place) & investigated_in(m,l) & n = l+1 & investigated_in(markmanor,n).
+}
+
+theory T7: V {
+    // The house visited in march wasn't located on Circle Drive
+    assumption_satisfied( 0  ) => ?o [home]: investigated_in(o,3) & ~ on(o,circle_drive).
+}
+
+theory T8: V {
+    // Hughenden wasn't haunted by Abigail
+    assumption_satisfied( 0  ) => ~ haunted_by(hughenden,abigail).
+}
+
+theory T9: V {
+    // Wolfenden was haunted by Brunhilde
+    assumption_satisfied( 0  ) => haunted_by(wolfenden,brunhilde).
+}
+
+theory T10: V {
+    // The building visited in May wasn't located on Fifth Avenue
+    assumption_satisfied( 0  ) => ?p [home]: investigated_in(p,5) & ~ on(p,fifth_avenue).
+}
+
+theory T11: V {
+    // The home visited in April was either Markmanor or the home haunted by Brunhilde
+    assumption_satisfied( 0  ) => ?q [home]: investigated_in(q,4) & (markmanor = q | (?r [home]: haunted_by(r,brunhilde) & r = q)).
+}
+
+theory bijections1 : V {
+     assumption_satisfied( 1  ) => ! x [home]: ?>=1 y [month]: investigated_in(x, y).
+}
+theory bijections2 : V {
+     assumption_satisfied( 2  ) => ! x [home]: ?=<1 y [month]: investigated_in(x, y).
+}
+theory bijections3 : V {
+     assumption_satisfied( 3  ) => ! x [month]: ?>=1 y [home]: investigated_in(y, x).
+}
+theory bijections4 : V {
+     assumption_satisfied( 4  ) => ! x [month]: ?=<1 y [home]: investigated_in(y, x).
+}
+theory bijections5 : V {
+     assumption_satisfied( 5  ) => ! x [home]: ?>=1 y [type1]: on(x, y).
+}
+theory bijections6 : V {
+     assumption_satisfied( 6  ) => ! x [home]: ?=<1 y [type1]: on(x, y).
+}
+theory bijections7 : V {
+     assumption_satisfied( 7  ) => ! x [type1]: ?>=1 y [home]: on(y, x).
+}
+theory bijections8 : V {
+     assumption_satisfied( 8  ) => ! x [type1]: ?=<1 y [home]: on(y, x).
+}
+theory bijections9 : V {
+     assumption_satisfied( 9  ) => ! x [home]: ?>=1 y [type2]: haunted_by(x, y).
+}
+theory bijections10 : V {
+     assumption_satisfied( 10  ) => ! x [home]: ?=<1 y [type2]: haunted_by(x, y).
+}
+theory bijections11 : V {
+     assumption_satisfied( 11  ) => ! x [type2]: ?>=1 y [home]: haunted_by(y, x).
+}
+theory bijections12 : V {
+     assumption_satisfied( 12  ) => ! x [type2]: ?=<1 y [home]: haunted_by(y, x).
+}
+theory bijections13 : V {
+     assumption_satisfied( 13  ) => ! x [month]: ?>=1 y [type1]: is_linked_with_1(x, y).
+}
+theory bijections14 : V {
+     assumption_satisfied( 14  ) => ! x [month]: ?=<1 y [type1]: is_linked_with_1(x, y).
+}
+theory bijections15 : V {
+     assumption_satisfied( 15  ) => ! x [type1]: ?>=1 y [month]: is_linked_with_1(y, x).
+}
+theory bijections16 : V {
+     assumption_satisfied( 16  ) => ! x [type1]: ?=<1 y [month]: is_linked_with_1(y, x).
+}
+theory bijections17 : V {
+     assumption_satisfied( 17  ) => ! x [month]: ?>=1 y [type2]: is_linked_with_2(x, y).
+}
+theory bijections18 : V {
+     assumption_satisfied( 18  ) => ! x [month]: ?=<1 y [type2]: is_linked_with_2(x, y).
+}
+theory bijections19 : V {
+     assumption_satisfied( 19  ) => ! x [type2]: ?>=1 y [month]: is_linked_with_2(y, x).
+}
+theory bijections20 : V {
+     assumption_satisfied( 20  ) => ! x [type2]: ?=<1 y [month]: is_linked_with_2(y, x).
+}
+theory bijections21 : V {
+     assumption_satisfied( 21  ) => ! x [type1]: ?>=1 y [type2]: is_linked_with_3(x, y).
+}
+theory bijections22 : V {
+     assumption_satisfied( 22  ) => ! x [type1]: ?=<1 y [type2]: is_linked_with_3(x, y).
+}
+theory bijections23 : V {
+     assumption_satisfied( 23  ) => ! x [type2]: ?>=1 y [type1]: is_linked_with_3(y, x).
+}
+theory bijections24 : V {
+     assumption_satisfied( 24  ) => ! x [type2]: ?=<1 y [type1]: is_linked_with_3(y, x).
+}
+theory synonyms : V {
+    // Logigram synonym axioms:
+    //! x [home] y [month]: investigated_in(x, y) <=> investigated_in(x, y).
+    //! x [home] y [type1]: on(x, y) <=> on(x, y).
+
+}
+
+theory transitivity1 : V {
+     assumption_satisfied( 25  ) => ! x y z: on(x, z) & is_linked_with_1(y, z) =>  investigated_in(x, y).
+}
+theory transitivity2 : V {
+     assumption_satisfied( 26  ) => ! x y z: ~ on(x, z) & is_linked_with_1(y, z) => ~ investigated_in(x, y).
+}
+theory transitivity3 : V {
+     assumption_satisfied( 27  ) => ! x y z: on(x, z) & ~ is_linked_with_1(y, z) => ~ investigated_in(x, y).
+}
+theory transitivity4 : V {
+     assumption_satisfied( 28  ) => ! x y z: haunted_by(x, z) & is_linked_with_2(y, z) =>  investigated_in(x, y).
+}
+theory transitivity5 : V {
+     assumption_satisfied( 29  ) => ! x y z: ~ haunted_by(x, z) & is_linked_with_2(y, z)=> ~ investigated_in(x, y).
+}
+theory transitivity6 : V {
+     assumption_satisfied( 30  ) => ! x y z:  haunted_by(x, z) & ~ is_linked_with_2(y, z) => ~ investigated_in(x, y).
+}
+theory transitivity7 : V {
+     assumption_satisfied( 31  ) => ! x y z: haunted_by(x, z) & is_linked_with_3(y, z) =>  on(x, y).
+}
+theory transitivity8 : V {
+     assumption_satisfied( 32  ) => ! x y z: ~ haunted_by(x, z) & is_linked_with_3(y, z) => ~ on(x, y).
+}
+theory transitivity9 : V {
+     assumption_satisfied( 33  ) => ! x y z: haunted_by(x, z) & ~ is_linked_with_3(y, z) => ~ on(x, y).
+}
+theory transitivity10 : V {
+     assumption_satisfied( 34  ) => ! x y z: is_linked_with_2(x, z) & is_linked_with_3(y, z) =>  is_linked_with_1(x, y).
+}
+theory transitivity11 : V {
+     assumption_satisfied( 35  ) => ! x y z: is_linked_with_2(x, z) & ~ is_linked_with_3(y, z) => ~ is_linked_with_1(x, y).
+}
+theory transitivity12 : V {
+     assumption_satisfied( 36  ) => ! x y z: ~ is_linked_with_2(x, z) & is_linked_with_3(y, z) => ~ is_linked_with_1(x, y).
+}
+
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [home] y [month]: ct_investigated_in(x,y) => investigated_in(x,y)) &
+        (! x [home] y [month]: cf_investigated_in(x,y) => ~investigated_in(x,y)) &
+        (! x [home] y [type1]: ct_on(x,y) => on(x,y)) &
+        (! x [home] y [type1]: cf_on(x,y) => ~on(x,y)) &
+        (! x [home] y [type2]: ct_haunted_by(x,y) => haunted_by(x,y)) &
+        (! x [home] y [type2]: cf_haunted_by(x,y) => ~haunted_by(x,y)) &
+        (! x [month] y [type1]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [month] y [type1]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [month] y [type2]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [month] y [type2]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        (! x [type1] y [type2]: ct_is_linked_with_3(x,y) => is_linked_with_3(x,y)) &
+        (! x [type1] y [type2]: cf_is_linked_with_3(x,y) => ~is_linked_with_3(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::investigated_in], S2[V::investigated_in].ct)
+    removeFrom(S3[V::investigated_in], S2[V::investigated_in].cf)
+    removeFrom(S3[V::on], S2[V::on].ct)
+    removeFrom(S3[V::on], S2[V::on].cf)
+    removeFrom(S3[V::haunted_by], S2[V::haunted_by].ct)
+    removeFrom(S3[V::haunted_by], S2[V::haunted_by].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::investigated_in, VExtra::ct_investigated_in, VExtra::cf_investigated_in},
+        {V::on, VExtra::ct_on, VExtra::cf_on},
+        {V::haunted_by, VExtra::ct_haunted_by, VExtra::cf_haunted_by},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+        {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
+    }
+}
+
+include "./generic_procedures-split.idp"
 
 procedure main() {
-    stdoptions.nbmodels = 10;
-    printmodels(modelexpand(T,S))
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "Hughenden wasn't investigated in march"},
+        {T2, "The home on Circle Drive was investigated sometime before Wolfenden"},
+        {T3, "Of the building haunted by Lady Grey and the building haunted by Victor, one was Markmanor and the other was visited in January"},
+        {T4, "The house haunted by Victor was visited 1 month after the house haunted by Lady Grey"},
+        {T5, "Of the home on Bird Road and Barnhill, one was visited in January and the other was haunted by Brunhilde"},
+        {T6, "Markmanor was visited 1 month after the home on Grant Place"},
+        {T7, "The house visited in march wasn't located on Circle Drive"},
+        {T8, "Hughenden wasn't haunted by Abigail"},
+        {T9, "Wolfenden was haunted by Brunhilde"},
+        {T10, "The building visited in May wasn't located on Fifth Avenue"},
+        {T11, "The home visited in April was either Markmanor or the home haunted by Brunhilde"},
+    }
+
+    S = compute_explanations(theories,S)
+
+    os.exit(0)
 }
 
+procedure get_bij_theories(){
+    bijection_theories = {
+        {bijections1}, "Bijectivity"}, 
+        {bijections2}, "Bijectivity"}, 
+        {bijections3}, "Bijectivity"}, 
+        {bijections4}, "Bijectivity"}, 
+        {bijections5}, "Bijectivity"}, 
+        {bijections6}, "Bijectivity"}, 
+        {bijections7}, "Bijectivity"}, 
+        {bijections8}, "Bijectivity"}, 
+        {bijections9}, "Bijectivity"}, 
+        {bijections10}, "Bijectivity"}, 
+        {bijections11}, "Bijectivity"}, 
+        {bijections12}, "Bijectivity"}, 
+        {bijections13}, "Bijectivity"}, 
+        {bijections14}, "Bijectivity"}, 
+        {bijections15}, "Bijectivity"}, 
+        {bijections16}, "Bijectivity"}, 
+        {bijections17}, "Bijectivity"}, 
+        {bijections18}, "Bijectivity"}, 
+        {bijections19}, "Bijectivity"}, 
+        {bijections20}, "Bijectivity"}, 
+        {bijections21}, "Bijectivity"}, 
+        {bijections22}, "Bijectivity"}, 
+        {bijections23}, "Bijectivity"}, 
+        {bijections24}, "Bijectivity"}, 
+    }
+    return  bijection_theories
+}
+
+procedure get_trans_theories(){
+    transitivity_theories = {
+        {transitivity1}, "Transitivity constraint"}, 
+        {transitivity2}, "Transitivity constraint"}, 
+        {transitivity3}, "Transitivity constraint"}, 
+        {transitivity4}, "Transitivity constraint"}, 
+        {transitivity5}, "Transitivity constraint"}, 
+        {transitivity6}, "Transitivity constraint"}, 
+        {transitivity7}, "Transitivity constraint"}, 
+        {transitivity8}, "Transitivity constraint"}, 
+        {transitivity9}, "Transitivity constraint"}, 
+        {transitivity10}, "Transitivity constraint"}, 
+        {transitivity11}, "Transitivity constraint"}, 
+        {transitivity12}, "Transitivity constraint"}, 
+    }
+    return transitivity_theories
+}

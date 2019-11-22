@@ -1,6 +1,9 @@
 // Problem p18
 
 vocabulary V {
+    type assumptiontype = {0..36} isa int
+    assumption_satisfied(assumptiontype)
+
     type type1 constructed from {the_other_type1, glendale, olema, evansdale, lakota}
     type person constructed from {the_other_person, al_allen, kelly_kirby, bev_baird, ed_ewing}
     type candidate constructed from {the_other_candidate, academic, teacher, writer, doctor}
@@ -11,80 +14,323 @@ vocabulary V {
     acts_as(person, candidate)
     finished_with(person, vote)
     received(candidate, vote)
-    ended_up_with(person, vote)
+    is_linked_with_1(type1, candidate)
+    is_linked_with_2(type1, vote)
+}
+
+vocabulary VExtra {
+    extern vocabulary V
+    ct_from(person, type1)
+    cf_from(person, type1)
+    ct_acts_as(person, candidate)
+    cf_acts_as(person, candidate)
+    ct_finished_with(person, vote)
+    cf_finished_with(person, vote)
+    ct_received(candidate, vote)
+    cf_received(candidate, vote)
+    ct_is_linked_with_1(type1, candidate)
+    cf_is_linked_with_1(type1, candidate)
+    ct_is_linked_with_2(type1, vote)
+    cf_is_linked_with_2(type1, vote)
 }
 
 structure S : V {
+        assumption_satisfied<cf>={}
+        assumption_satisfied<u>={}
 }
 
-theory T : V {
+theory T1: V {
     // Al allen is from glendale
-    from(al_allen,glendale).
-
-    // Kelly Kirby finished 1000 votes ahead of the person who acts as the academic
-    ?a [vote] b [person] c [vote]: acts_as(b,academic) & finished_with(b,a) & c = a+1000 & finished_with(kelly_kirby,c).
-
-    // The academic received 500 votes less than the teacher
-    ?d [vote] e [vote]: received(teacher,d) & e = d-500 & received(academic,e).
-
-    // The candidate who received 10500 votes isn't the writer
-    ?f [candidate]: received(f,10500) & ~ (writer = f).
-
-    // Kelly Kirby isn't from Olema
-    ~ from(kelly_kirby,olema).
-
-    // The glendale native finished somewhat ahead of the Olema native
-    ?g [person] h [type2] i [vote] j [person] k [vote]: h>0 & finished_with(j,i) & from(j,olema) & k = i+h & finished_with(g,k) & from(g,glendale).
-
-    // Bev Baird ended up with 8500 votes
-    ended_up_with(bev_baird,8500).
-
-    // Ed Ewing finished 500 votes ahead of the Evansdale native
-    ?l [vote] m [person] n [vote]: finished_with(m,l) & from(m,evansdale) & n = l+500 & finished_with(ed_ewing,n).
-
-    // The man who received 9500 votes isn't the doctor
-    ?o [candidate]: received(o,9500) & ~ (doctor = o).
-
-    // Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes
-    ?p [person]: acts_as(p,academic) & ~ (p = al_allen) & (ended_up_with(p,10000) & ended_up_with(al_allen,8500) | ended_up_with(al_allen,10000) & ended_up_with(p,8500)).
-
-    // The politician who finished with 10500 votes isn't from Lakota
-    ?q [person]: finished_with(q,10500) & ~ from(q,lakota).
-
-    // The person acting as doctor was either the politician who finished with 10000 votes or Kelly Kirby
-    ?r [person]: acts_as(r,doctor) & ((?s [person]: finished_with(s,10000) & s = r) | kelly_kirby = r).
-
-
-    // Logigram bijection axioms:
-    ! x [person]: ?=1 y [type1]: from(x, y).
-    ! x [type1]: ?=1 y [person]: from(y, x).
-
-    ! x [person]: ?=1 y [candidate]: acts_as(x, y).
-    ! x [candidate]: ?=1 y [person]: acts_as(y, x).
-
-    ! x [person]: ?=1 y [vote]: finished_with(x, y).
-    ! x [vote]: ?=1 y [person]: finished_with(y, x).
-
-    ! x [candidate]: ?=1 y [vote]: received(x, y).
-    ! x [vote]: ?=1 y [candidate]: received(y, x).
-
-    ! x [person]: ?=1 y [vote]: ended_up_with(x, y).
-    ! x [vote]: ?=1 y [person]: ended_up_with(y, x).
-
-    // Logigram synonym axioms:
-    ! x [person] y [vote]: finished_with(x, y) <=> ended_up_with(x, y).
-
-    // Logigram transitive relation axioms:
-    ! x [person] y [candidate]: acts_as(x, y) <=> ? z [vote]: finished_with(x, z) & received(y, z).
-    ! x [person] y [candidate]: acts_as(x, y) <=> ? z [vote]: ended_up_with(x, z) & received(y, z).
-
-    // Logigram reflexive relation axioms:
-
-    // Logigram symmetry breaking axioms:
+    assumption_satisfied( 0  ) => from(al_allen,glendale).
 }
+
+theory T2: V {
+    // Kelly Kirby finished 1000 votes ahead of the person who acts as the academic
+    assumption_satisfied( 0  ) => ?a [vote] b [person] c [vote]: acts_as(b,academic) & finished_with(b,a) & c = a+1000 & finished_with(kelly_kirby,c).
+}
+
+theory T3: V {
+    // The academic received 500 votes less than the teacher
+    assumption_satisfied( 0  ) => ?d [vote] e [vote]: received(teacher,d) & e = d-500 & received(academic,e).
+}
+
+theory T4: V {
+    // The candidate who received 10500 votes isn't the writer
+    assumption_satisfied( 0  ) => ?f [candidate]: received(f,10500) & ~ (writer = f).
+}
+
+theory T5: V {
+    // Kelly Kirby isn't from Olema
+    assumption_satisfied( 0  ) => ~ from(kelly_kirby,olema).
+}
+
+theory T6: V {
+    // The glendale native finished somewhat ahead of the Olema native
+    assumption_satisfied( 0  ) => ?g [person] h [type2] i [vote] j [person] k [vote]: h>0 & finished_with(j,i) & from(j,olema) & k = i+h & finished_with(g,k) & from(g,glendale).
+}
+
+theory T7: V {
+    // Bev Baird ended up with 8500 votes
+    assumption_satisfied( 0  ) => finished_with(bev_baird,8500).
+}
+
+theory T8: V {
+    // Ed Ewing finished 500 votes ahead of the Evansdale native
+    assumption_satisfied( 0  ) => ?l [vote] m [person] n [vote]: finished_with(m,l) & from(m,evansdale) & n = l+500 & finished_with(ed_ewing,n).
+}
+
+theory T9: V {
+    // The man who received 9500 votes isn't the doctor
+   assumption_satisfied( 0  ) =>  ?o [candidate]: received(o,9500) & ~ (doctor = o).
+}
+
+theory T10: V {
+    // Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes
+    ?assumption_satisfied( 0  ) => p [person]: acts_as(p,academic) & ~ (p = al_allen) & (finished_with(p,10000) & finished_with(al_allen,8500) | finished_with(al_allen,10000) & finished_with(p,8500)).
+}
+
+theory T11: V {
+    // The politician who finished with 10500 votes isn't from Lakota
+    assumption_satisfied( 0  ) => ?q [person]: finished_with(q,10500) & ~ from(q,lakota).
+}
+
+theory T12: V {
+    // The person acting as doctor was either the politician who finished with 10000 votes or Kelly Kirby
+    assumption_satisfied( 0  ) => ?r [person]: acts_as(r,doctor) & ((?s [person]: finished_with(s,10000) & s = r) | kelly_kirby = r).
+}
+
+theory bijections1 : V {
+     assumption_satisfied( 1  ) => ! x [person]: ?>=1 y [type1]: from(x, y).
+}
+theory bijections2 : V {
+     assumption_satisfied( 2  ) => ! x [person]: ?=<1 y [type1]: from(x, y).
+}
+theory bijections3 : V {
+     assumption_satisfied( 3  ) => ! x [type1]: ?>=1 y [person]: from(y, x).
+}
+theory bijections4 : V {
+     assumption_satisfied( 4  ) => ! x [type1]: ?=<1 y [person]: from(y, x).
+}
+theory bijections5 : V {
+     assumption_satisfied( 5  ) => ! x [person]: ?>=1 y [candidate]: acts_as(x, y).
+}
+theory bijections6 : V {
+     assumption_satisfied( 6  ) => ! x [person]: ?=<1 y [candidate]: acts_as(x, y).
+}
+theory bijections7 : V {
+     assumption_satisfied( 7  ) => ! x [candidate]: ?>=1 y [person]: acts_as(y, x).
+}
+theory bijections8 : V {
+     assumption_satisfied( 8  ) => ! x [candidate]: ?=<1 y [person]: acts_as(y, x).
+}
+theory bijections9 : V {
+     assumption_satisfied( 9  ) => ! x [person]: ?>=1 y [vote]: finished_with(x, y).
+}
+theory bijections10 : V {
+     assumption_satisfied( 10  ) => ! x [person]: ?=<1 y [vote]: finished_with(x, y).
+}
+theory bijections11 : V {
+     assumption_satisfied( 11  ) => ! x [vote]: ?>=1 y [person]: finished_with(y, x).
+}
+theory bijections12 : V {
+     assumption_satisfied( 12  ) => ! x [vote]: ?=<1 y [person]: finished_with(y, x).
+}
+theory bijections13 : V {
+     assumption_satisfied( 13  ) => ! x [candidate]: ?>=1 y [vote]: received(x, y).
+}
+theory bijections14 : V {
+     assumption_satisfied( 14  ) => ! x [candidate]: ?=<1 y [vote]: received(x, y).
+}
+theory bijections15 : V {
+     assumption_satisfied( 15  ) => ! x [vote]: ?>=1 y [candidate]: received(y, x).
+}
+theory bijections16 : V {
+     assumption_satisfied( 16  ) => ! x [vote]: ?=<1 y [candidate]: received(y, x).
+}
+theory bijections17 : V {
+     assumption_satisfied( 17  ) => ! x [type1]: ?>=1 y [candidate]: is_linked_with_1(x, y).
+}
+theory bijections18 : V {
+     assumption_satisfied( 18  ) => ! x [type1]: ?=<1 y [candidate]: is_linked_with_1(x, y).
+}
+theory bijections19 : V {
+     assumption_satisfied( 19  ) => ! x [candidate]: ?>=1 y [type1]: is_linked_with_1(y, x).
+}
+theory bijections20 : V {
+     assumption_satisfied( 20  ) => ! x [candidate]: ?=<1 y [type1]: is_linked_with_1(y, x).
+}
+theory bijections21 : V {
+     assumption_satisfied( 21  ) => ! x [type1]: ?>=1 y [vote]: is_linked_with_2(x, y).
+}
+theory bijections22 : V {
+     assumption_satisfied( 22  ) => ! x [type1]: ?=<1 y [vote]: is_linked_with_2(x, y).
+}
+theory bijections23 : V {
+     assumption_satisfied( 23  ) => ! x [vote]: ?>=1 y [type1]: is_linked_with_2(y, x).
+}
+theory bijections24 : V {
+     assumption_satisfied( 24  ) => ! x [vote]: ?=<1 y [type1]: is_linked_with_2(y, x).
+}
+
+theory synonyms : V {
+    // Logigram synonym axioms:
+    //! x [person] y [vote]: finished_with(x, y) <=> finished_with(x, y).
+
+}
+
+theory transitivity1 : V {
+     assumption_satisfied( 25  ) => ! x y z: acts_as(x, z) & is_linked_with_1(y, z)=>  from(x, y).
+}
+theory transitivity2 : V {
+     assumption_satisfied( 26  ) => ! x y z: ~ acts_as(x, z) & is_linked_with_1(y, z)=> ~ from(x, y).
+}
+theory transitivity3 : V {
+     assumption_satisfied( 27  ) => ! x y z: acts_as(x, z) & ~ is_linked_with_1(y, z)=> ~ from(x, y).
+}
+theory transitivity4 : V {
+     assumption_satisfied( 28  ) => ! x y z: finished_with(x, z) & is_linked_with_2(y, z)=>  from(x, y).
+}
+theory transitivity5 : V {
+     assumption_satisfied( 29  ) => ! x y z: ~ finished_with(x, z) & is_linked_with_2(y, z)=> ~ from(x, y).
+}
+theory transitivity6 : V {
+     assumption_satisfied( 30  ) => ! x y z: finished_with(x, z) & ~ is_linked_with_2(y, z)=> ~ from(x, y).
+}
+theory transitivity7 : V {
+     assumption_satisfied( 31  ) => ! x y z: finished_with(x, z) & received(y, z)=>  acts_as(x, y).
+}
+theory transitivity8 : V {
+     assumption_satisfied( 32  ) => ! x y z: ~ finished_with(x, z) & received(y, z)=> ~ acts_as(x, y).
+}
+theory transitivity9 : V {
+     assumption_satisfied( 33  ) => ! x y z: finished_with(x, z) & ~ received(y, z)=> ~ acts_as(x, y).
+}
+theory transitivity10 : V {
+     assumption_satisfied( 34  ) => ! x y z: is_linked_with_1(z, x) & is_linked_with_2(z, y)=>  received(x, y).
+}
+theory transitivity11 : V {
+     assumption_satisfied( 35  ) => ! x y z: ~ is_linked_with_1(z, x) & is_linked_with_2(z, y)=> ~ received(x, y).
+}
+theory transitivity12 : V {
+     assumption_satisfied( 36  ) => ! x y z: is_linked_with_1(z, x) & ~ is_linked_with_2(z, y)=> ~ received(x, y).
+}
+
+
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [person] y [type1]: ct_from(x,y) => from(x,y)) &
+        (! x [person] y [type1]: cf_from(x,y) => ~from(x,y)) &
+        (! x [person] y [candidate]: ct_acts_as(x,y) => acts_as(x,y)) &
+        (! x [person] y [candidate]: cf_acts_as(x,y) => ~acts_as(x,y)) &
+        (! x [person] y [vote]: ct_finished_with(x,y) => finished_with(x,y)) &
+        (! x [person] y [vote]: cf_finished_with(x,y) => ~finished_with(x,y)) &
+        (! x [candidate] y [vote]: ct_received(x,y) => received(x,y)) &
+        (! x [candidate] y [vote]: cf_received(x,y) => ~received(x,y)) &
+        (! x [type1] y [candidate]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [type1] y [candidate]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [type1] y [vote]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [type1] y [vote]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::from], S2[V::from].ct)
+    removeFrom(S3[V::from], S2[V::from].cf)
+    removeFrom(S3[V::acts_as], S2[V::acts_as].ct)
+    removeFrom(S3[V::acts_as], S2[V::acts_as].cf)
+    removeFrom(S3[V::finished_with], S2[V::finished_with].ct)
+    removeFrom(S3[V::finished_with], S2[V::finished_with].cf)
+    removeFrom(S3[V::received], S2[V::received].ct)
+    removeFrom(S3[V::received], S2[V::received].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::from, VExtra::ct_from, VExtra::cf_from},
+        {V::acts_as, VExtra::ct_acts_as, VExtra::cf_acts_as},
+        {V::finished_with, VExtra::ct_finished_with, VExtra::cf_finished_with},
+        {V::received, VExtra::ct_received, VExtra::cf_received},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+    }
+}
+
+include "./generic_procedures-split.idp"
 
 procedure main() {
-    stdoptions.nbmodels = 10;
-    printmodels(modelexpand(T,S))
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "Al allen is from glendale"},
+        {T2, "Kelly Kirby finished 1000 votes ahead of the person who acts as the academic"},
+        {T3, "The academic received 500 votes less than the teacher"},
+        {T4, "The candidate who received 10500 votes isn't the writer"},
+        {T5, "Kelly Kirby isn't from Olema"},
+        {T6, "The glendale native finished somewhat ahead of the Olema native"},
+        {T7, "Bev Baird ended up with 8500 votes"},
+        {T8, "Ed Ewing finished 500 votes ahead of the Evansdale native"},
+        {T9, "The man who received 9500 votes isn't the doctor"},
+        {T10, "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes"},
+        {T11, "The politician who finished with 10500 votes isn't from Lakota"},
+        {T12, "The person acting as doctor was either the politician who finished with 10000 votes or Kelly Kirby"},
+    }
+
+    S = compute_explanations(theories,S)
+
+    os.exit(0)
 }
 
+procedure get_trans_theories(){
+    transitivity_theories = {
+        {transitivity1}, "Transitivity constraint"}, 
+        {transitivity2}, "Transitivity constraint"}, 
+        {transitivity3}, "Transitivity constraint"}, 
+        {transitivity4}, "Transitivity constraint"}, 
+        {transitivity5}, "Transitivity constraint"}, 
+        {transitivity6}, "Transitivity constraint"}, 
+        {transitivity7}, "Transitivity constraint"}, 
+        {transitivity8}, "Transitivity constraint"}, 
+        {transitivity9}, "Transitivity constraint"}, 
+        {transitivity10}, "Transitivity constraint"}, 
+        {transitivity11}, "Transitivity constraint"}, 
+        {transitivity12}, "Transitivity constraint"}, 
+    }
+    return transitivity_theories
+}
+
+procedure get_bij_theories(){
+    bijection_theories = {
+        {bijections1}, "Bijectivity"}, 
+        {bijections2}, "Bijectivity"}, 
+        {bijections3}, "Bijectivity"}, 
+        {bijections4}, "Bijectivity"}, 
+        {bijections5}, "Bijectivity"}, 
+        {bijections6}, "Bijectivity"}, 
+        {bijections7}, "Bijectivity"}, 
+        {bijections8}, "Bijectivity"}, 
+        {bijections9}, "Bijectivity"}, 
+        {bijections10}, "Bijectivity"}, 
+        {bijections11}, "Bijectivity"}, 
+        {bijections12}, "Bijectivity"}, 
+        {bijections13}, "Bijectivity"}, 
+        {bijections14}, "Bijectivity"}, 
+        {bijections15}, "Bijectivity"}, 
+        {bijections16}, "Bijectivity"}, 
+        {bijections17}, "Bijectivity"}, 
+        {bijections18}, "Bijectivity"}, 
+        {bijections19}, "Bijectivity"}, 
+        {bijections20}, "Bijectivity"}, 
+        {bijections21}, "Bijectivity"}, 
+        {bijections22}, "Bijectivity"}, 
+        {bijections23}, "Bijectivity"}, 
+        {bijections24}, "Bijectivity"}, 
+    }
+    return  bijection_theories
+}

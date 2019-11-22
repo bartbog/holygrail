@@ -182,6 +182,8 @@ printExtraPredicate(predicate(Name, Type1, Type2)) :-
 
 printStructure() :-
     writeln('structure S : V {'),
+    writeln('       assumption_satisfied<cf>={}'),
+    writeln('       assumption_satisfied<u>={}'),
     writeln('}').
 
 printTheory(SentencePairs, voc(BaseTypes, _, Predicates)) :-
@@ -250,6 +252,29 @@ printSymmetryBreakersFakeConstructedTypes(Predicates, BaseTypes, baseType(FakeCo
 printPredicateFact(Name, Arg1, Arg2) :-
     format('    ~p(~p, ~p).~n', [Name, Arg1, Arg2]).
 
+
+printTransTheory(SentencePairs, Sentence-FOL) :-
+    nth1(Index, SentencePairs, Sentence-FOL),
+    format('        {transitivity~d, "Transitivity constraint"},', [Index]).
+printProcedureGetTransTheories(SentencePairs) :-
+    writeln('procedure get_trans_theories() {'),
+    writeln('    transitivity_theories = {'),
+    maplist(printTransTheory(SentencePairs), SentencePairs),
+    writeln('    }'),
+    writeln('    return transitivity_theories'),   
+    writeln('}').
+% todo 
+printBijTheory() :-
+    format('        {bijections~d, "Bijectivity"},', [Index]).
+
+printProcedureGetBijTheories() :-
+    writeln('procedure get_bij_theories() {'),
+    writeln('    bijection_theories = {'),
+    maplist(printBijTheory(), ),
+    writeln('    }'),
+    writeln('    return bijection_theories'), 
+    writeln('}').
+
 printForceSomethingWrongValueTheory(voc(_BaseTypes, _DerivedTypes, Predicates)) :-
     writeln('theory forceSomethingWrongValue : VExtra {'),
     writeln('    ~('),
@@ -281,7 +306,7 @@ printProcedureGetPredListPredicate(predicate(Name, _Type1, _Type2)) :-
     format('        {V::~p, VExtra::ct_~p, VExtra::cf_~p},~n', [Name, Name, Name]).
 
 printMain(SentencePairs) :-
-    writeln('include "./generic_procedures.idp"'),
+    writeln('include "./generic_procedures-split.idp"'),
     nl,
     writeln('procedure main() {'),
     writeln('    stdoptions.cpsupport = false'),
@@ -290,8 +315,9 @@ printMain(SentencePairs) :-
     maplist(printMainTheoriesDict(SentencePairs), SentencePairs),
     writeln('    }'),
     nl,
-    writeln('    test(theories,S)'),
-    writeln('    S = explanationLoop(theories,S,true,theories,true)'),
+    %writeln('    test(theories,S)'),
+    writeln('    compute_explanations(theories,S)'),
+    %writeln('    S = explanationLoop(theories,S,true,theories,true)'),
     nl,
     writeln('    os.exit(0)'),
     writeln('}').

@@ -353,6 +353,10 @@ procedure convertStructureToTupleList(d){
 procedure size(S){
 	//HERE THE WEIGHING OF EXPLANATION SIZE IS DONE.
 	result = #convertStructureToTupleList(S)
+	if result == 0 then
+		//Special case: no assumptions needed; only clue is super easy! 
+		return 0
+	end
 	for tuple in tuples(S[V::assumption_satisfied].ct) do
 		result = result +1
 	end
@@ -360,14 +364,24 @@ procedure size(S){
 }
 
 procedure cost(S){
+	//Number of clues
+    nbClues = 0
+	//Number of constraints including clues
+	nbConstraints = 0 
 	if Sexpl[V::assumption_satisfied].ct(0) then
-			//Here I assign a cost of 2 to using an actual clue
-			//One is already coming from size: assumptions_satisfied(0)
-			//The other is added here
-			return size(S) + 1
-	else
-		return size(S)
+        //General case not detectable yet.
+		nbClues = 1
 	end
+	for tuple in tuples(S[V::assumption_satisfied].ct) do
+		nbConstraints = nbConstraints + 1 
+	end
+	
+	basecost = 0 
+	if nbClues + nbConstraints > 1 then
+		basecost = 20
+	end
+	return basecost + size(S)
+
 }
 
 procedure addTo(S, d){

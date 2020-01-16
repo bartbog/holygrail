@@ -4,7 +4,7 @@ Before defining a cost-function, and the estimation for $g$ used in our implemen
 
 \textbf{Observation 1: propagations from a single implicit constraint are very easy to understand} Contrary to the clues, the implicit constraints (transitivity/bijectivity) are very limited in form and propagations over them follow well-specified patterns. 
 For instance in the case of bijectivity, a typical pattern that occurs is that when $X-1$ out of $X$ possible values for a given function have been derived not to be possible, it is propagated that the last value should be true; this is visualized for instance in Figure \ref{fig:zebrascreen}. 
-Hence, in our implementation, we ensure that they are always performed first. Stated differently, $g$ and $f$ are desigend in such a way that $g(C)\geq f(I,C')$ whenever $C'$ consists of only one implicit constraint and $C$ does not. 
+Hence, in our implementation, we ensure that they are always performed first. Stated differently, $g$ and $f$ are desigend in such a way that $g(S_1)\geq f(I,S_2)$ whenever $S_2$ consists of only one implicit constraint and $S$ does not. 
 
 \textbf{Observation 2: clues propagate rarely by themselves}
 We observed that the automatically obtained logic representation of clues usually has quite weak (unit) propagation strength in isolation. 
@@ -32,19 +32,19 @@ With these three observations in mind, we devised $f$ and $g$ as follows (where 
                               \end{array}\right.
                               \end{align*}
 The number $20$ is taken here to be larger than any reasonable explanation size. 
-The effect of this,  is that we can generate our subsets $C'$ in Line \ref{alg:min:for}
+The effect of this,  is that we can generate our subsets $S$ in Line \ref{alg:min:for}
  of Algorithm \ref{alg:minexpl} in the following order:
 % \tias{'this' refers to f(I,C), 20 is a lot, |I|+|C| < 20} 
 \begin{compactitem}
- \item First all $C'$ containing exactly one implicit constraint.
- \item Next, all $C'$ containing exactly all implicit constraints and (optionally) exactly one clue.
+ \item First all $S$ containing exactly one implicit constraint.
+ \item Next, all $S$ containing exactly all implicit constraints and (optionally) exactly one clue.
  \item Finally, all clue pairs, triples etc. though in practice this is never reached.
 \end{compactitem}
-Summarized, our instantiation for logic grid puzzles differs from the generic methods developed in the previous section in that it uses a domain-specific optimization function $f$ and does not considering all $C'$ in Line \ref{alg:min:for}, but only promising candidates based on our observations.
+Summarized, our instantiation for logic grid puzzles differs from the generic methods developed in the previous section in that it uses a domain-specific optimization function $f$ and does not considering all $S$ in Line \ref{alg:min:for}, but only promising candidates based on our observations.
 
-For the complete non-redundent explanation sequence our tool produces on the running example using these scoring functions, we refer to \url{http://bartbog.github.io/zebra/pasta}. An example of the hardest derivation we encountered (with cost 28) is depicted in Figure \ref{fig:screen2}. It uses several bijectivity constraints for uniqueness of persons, but also for reasoning on the relation between costs and types of pasta, in combination with a clue and three assumptions.
-Intuitively, the reasoning happening here can be explained as follows: if Farfalle were to cost \$8, then due to the assumptiosn and bijectivity rotini would cost 16. However, since Damon did not take Farfelle (which we assumed costs \$8), this is in contradiction with the highlighted clue. Hence Farfalle does not cost \$8. 
-\bart{remove explanation if space problem BUT MAKE SURE CONCLUSION DOES NOT REFER BACK TO THIS}
+For the complete non-redundant explanation sequence our tool produces on the running example using these scoring functions, we refer to \url{http://bartbog.github.io/zebra/pasta}. An example of the hardest derivation we encountered (with cost 28) is depicted in Figure \ref{fig:screen2}. It uses several bijectivity constraints for uniqueness of persons, but also for reasoning on the relation between costs and types of pasta, in combination with a clue and three assumptions.
+Intuitively, the reasoning happening here can be explained as follows: if Farfalle were to cost \$8, then due to the assumptions and bijectivity rotini would cost 16. However, since Damon did not take Farfelle (which we assumed costs \$8), this is in contradiction with the highlighted clue. Hence Farfalle does not cost \$8. 
+% \bart{remove explanation if space problem BUT MAKE SURE CONCLUSION DOES NOT REFER BACK TO THIS}
 
 
 \begin{figure}[t]

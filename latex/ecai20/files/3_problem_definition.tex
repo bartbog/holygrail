@@ -15,7 +15,7 @@ We define the \textbf{maximal consequence} of a theory $\allconstraints$ and par
 Phrased differently, $max(I,T)$ is the intersection of all the models of $T$ more precise than $I$; this is also known as the set of \emph{cautious consequences} of $T$ and $I$ and corresponds to ensuring \emph{global consistency} in constraint solving. 
 Algorithms for computing cautious consequences without explicitly enumerating all models exist, such as for instance the ones implemented in clasp \cite{DBLP:conf/lpnmr/GebserKS09} or \idp \cite{IDP} (in the latter system the task of computing all cautious consequences is called \emph{optimal-propagate} since it performs the strongest propagation possible).
 
-Weaker levels op propagation consistency can be used as well, leading to a potentially smaller maximal consequence interpretation $max_{other-consistency}(I,T)$
+Weaker levels of propagation consistency can be used as well, leading to a potentially smaller maximal consequence interpretation $max_{other-consistency}(I,T)$
 The rest of this paper assumes we want to construct a sequence that starts at $I_0$ and ends at $max(I_0,\allconstraints)$ for some consistency algorithm, i.e., that can explain all computable consequences of $\allconstraints$ and $I_0$. %However, all of our algorithms remain to work if a different (weaker) notion of propagation or consistency level is used. In fact, the only changes needed to our algorithms is to replace the implementation of the ``propagate'' method by a different propagation method. 
 
 %\bart{Tias, kijk jij eens met CP bril naar bovenstaande stukje?}
@@ -64,14 +64,14 @@ for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation 
 The problem of simply checking whether $(E_i,S_i,N_i)$ explains the derivation of $I_{i}$ from $I_{i-1}$ is in co-NP since this problem can be performed by verifying that $S_i \land \lnot N_i$ has no models more precise than $E_i$. It is hence an instance of the negation of a model expansion problem \cite{DBLP:conf/lpar/KolokolovaLMT10}.
 
 Part of our goal of finding easy to interpret explanations is to avoid redundancy. 
-That is, we want a non-redundent explanation $(E_i,S_i,N_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed while still explaining the derivation of $I_i$ from $I_{i-1}$; that is: the explanation must be \textit{subset-minimal}. 
+That is, we want a non-redundant explanation $(E_i,S_i,N_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed while still explaining the derivation of $I_i$ from $I_{i-1}$; that is: the explanation must be \textit{subset-minimal}. 
 \begin{definition}
  We call $(E_i,S_i,N_i)$ a \emph{non-redundant explanation of  the derivation of $I_i$ from $I_{i-1}$} if it explains this derivation and whenever $E'\subseteq E_i; S'\subseteq S_i$ while $(E',S',N_i)$ also explains this derivation, it must be that $E_i=E', S_i=S'$. 
 \end{definition}
 % $S_i \wedge E_i \rightarrow N_i$ and $\forall s \in S_i: S_i \setminus \{s\} \wedge E_i \nrightarrow N_i, \forall e \in E_i: S_i \wedge E_i \setminus \{e\} \nrightarrow N_i$
 
 \begin{definition} \label{def:nonred}
-A \textbf{non-redundent explanation sequence} is a sequence 
+A \textbf{non-redundant explanation sequence} is a sequence 
 \[(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n))\]
 such that $(I_i)_{i\leq n}$ is sequence of incremental partial interpretations and each $(E_i,S_i,N_i)$ explains the derivation of $I_i$ from $I_{i-1}$.
 \end{definition} 
@@ -91,7 +91,7 @@ While subset-minimality ensures that an explanation is non-redundant, it does no
 This quantification is a problem-specific and often subjective manner. 
 %To approximate of how easy to understand a explanation is (i.e., a single transition in the above described sequence), we start from the simple cognitive idea \bart{can we cite this somewhere? } that (in general) the fewer things a human needs to have in memory simultaneously, the easier the task at hand is. 
 
-We will assume the existence of a cost-function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation. 
+We will assume the existence of a cost function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation. 
 This is typically specific to the family of problems considered.
 
 In line with the goal of ``simple enough for a person to understand'' and Occam's Razor, we reason that smaller explanations are easier to interpret than explanations that use a larger number of facts or constraints. %For example, from a cognitive point of view, the more things a person needs to have in memory simultaneously, the more difficult the task will become. \tias{The cognitive statement is idd risky without scientific support...}
@@ -103,7 +103,7 @@ While quantifying the interpretability of a single step can be hard, doing so fo
 As a starting point, we here consider the total cost to be an aggregation of the costs of the individual explanations, e.g. the average or maximum cost.
 
 \begin{definition}
-Given a theory $\allconstraints$ and initial partial interpretation $I_0$, the \textbf{explanation-production problem} consist of finding a non-redundent explanation sequence
+Given a theory $\allconstraints$ and initial partial interpretation $I_0$, the \textbf{explanation-production problem} consist of finding a non-redundant explanation sequence
 \[(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n))\]
 such that a predefined aggregate over the sequence $\left(f(E_i,S_i,N_i)\right)_{i\leq n}$ is minimised.
 \end{definition} 

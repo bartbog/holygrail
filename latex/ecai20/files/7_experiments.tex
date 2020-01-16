@@ -2,7 +2,8 @@ Using logic grid puzzles as a use-case, we validate the feasibility of finding a
 % 
 As data we use puzzles from Puzzle Baron’s Logic Puzzles Volume 3~\cite{logigrammen}. The first 10 puzzles were used to construct the grammar; the next 10 to test the genericity of the grammar. 
 % Using this grammar, and a semi-automatically problem-specific lexicon, we are able to parse and solve all puzzles in the booklet, including those not used to construct the grammar. 
-Our experiments below are on test puzzles only; we also report results on the \textit{pasta} puzzle, which was sent to us by someone who did not manage to solve it himself.\tias{do we know the source of the original puzzle?}\bart{no}
+Our experiments below are on test puzzles only; we also report results on the \textit{pasta} puzzle, which was sent to us by someone who did not manage to solve it himself.
+% \tias{do we know the source of the original puzzle?}\bart{no}
 
 As constraint solving engine, we use \idp~\cite{IDP} for the reasons explained in Section \ref{sec:holistic}. % It is a knowledge representation and reasoning system that supports multiple queries on a first order logic theory. We will use the `optimalpropagate()' query, which efficiently finds the maximally consistent (partial) interpretation of a theory, which in our case is a full interpretation, e.g. the solution to the logic grid puzzle. We also use the `findMUS()'\tias{Bart, how is it really name?} query that searches for a subset-minimal unsatisfiable core.
 % 
@@ -17,7 +18,7 @@ The algorithm itself is written in embedded LUA, which provides an imperative en
 We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The puzzle identified as p is our running example. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(I_0,\allconstraints)$.
 
 
-Coincidentally, the puzzles all have 4 types with domain size 5, and hence 150 cells. We notice that the number of inference steps is around 120 for all but the pasta puzzle. When investigating the proportion of the inference steps that use bijections (only), transitivity (only) or a clue, we can see that around 50\% the explanations typically use a transitivity constraint, around 25\% typically a trivial bijectivity constraint (e.g. completing a row or column in one relation), and less then $1/5$th of the explanations actually need to use a clue.
+Coincidentally, the puzzles all have 4 types with domain size 5 \todo{EMILIO: FIX, also the table!}, and hence 150 cells. We notice that the number of inference steps is around 120 for all but the pasta puzzle. When investigating the proportion of the inference steps that use bijections (only), transitivity (only) or a clue, we can see that around 50\% the explanations typically use a transitivity constraint, around 25\% typically a trivial bijectivity constraint (e.g. completing a row or column in one relation), and less then $1/5$th of the explanations actually need to use a clue.
 In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints and multiple clues respectively. We can see that it is never necessary to combine multiple constraints in one inference step. Also, notably, the puzzles from the booklet never require combining implicit constraints, while the anecdotically hard pasta puzzle is the only one that does: it cannot be solved by focussing on the clues but requires combining facts and knowledge in the table alone to crack it.
 
 \begin{table}
@@ -51,26 +52,27 @@ In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints 
 \end{table}
 
 \paragraph{2. Sequence progression}
-Figure \ref{fig:steps} shows a visualisation the type of explanation used at every step of the sequence, for four different puzzles. The red line is the pasta puzzle. We can see that typically at the beginning of the sequence, clues (4th line) and bijectivity (2nd line) are used, i.e.\ the trivial ones. This is then followed by a round of clues and some bijectivity/transitivity, after which a large fraction of the table can be completed with bijectivity/transitivty, followed by a few last clues and another round of completion.
+Figure \ref{fig:steps} shows a visualisation the type of explanation used at every step of the sequence, for some different puzzles. The red line is the pasta puzzle. We can see that typically at the beginning of the sequence, clues (4th line) and bijectivity (2nd line) are used, i.e., the trivial ones. This is then followed by a round of clues and some bijectivity/transitivity, after which a large fraction of the table can be completed with bijectivity/transitivty, followed by a few last clues and another round of completion.
 
-The exception to this is the paste puzzle. We can see that after around 20 steps where mostly clues have been used, twice a combination of implicit logigram constraints must be used to derive a new fact, after which the table can be easily completed with bijectivity/transitivity and twice the use of a clue.
+The exception to this is the pasta puzzle. We can see that after around 20 steps where mostly clues have been used, twice a combination of implicit logigram constraints must be used to derive a new fact, after which the table can be easily completed with bijectivity/transitivity and twice the use of a clue.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_p12}
-\includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_p18}
-\includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_p25}
-\includegraphics[width=0.49\linewidth]{figures/plot_cost_steps_nielspasta}
+% \includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_p12}
+\includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_p18}
+\includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_p25}
+\includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_nielspasta}
 \caption{Type of constraints used in each step}
 \label{fig:steps}
-\end{figure}
+\end{figure*}
+\todo{in case of space constraints: make figure smaller again. }
 
 \myparagraph{3. Explanation size.}
 Our cost-function is constructed to favor few (if any) clues and constraints in the explanations, and few previously derived facts $|E|$. Table~\ref{table:sequence_leve} shows the average number of facts used per explanation. We also show the average number of facts used when using only bijectivity or transitivity, or when a clue is used.
 
-We can observe that the average number of facts used is indeed low, less than two. Further more, the breakdown shows that bijectivity typically uses more facts: it uses three `negative' facts in one row to infer a `positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one `positive' fact to infer three negative facts. Note that for such an intuitive constraint, the number of facts used does not matter much. Transitivity, by nature, always uses two previously derived facts. Finally, when looking at the number of facts used together with a clue we can see that our approach successfully finds small explanations: many clues (the trivial ones) use no facts, while some use 1 fact and only occasionally 2 or more facts are needed. The exception is again the difficult pasta puzzle.
+We can observe that the average number of facts used is indeed low, less than two. Furthermore, the breakdown shows that bijectivity typically uses more facts: it uses three `negative' facts in one row to infer a `positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one `positive' fact to infer three negative facts. Note that for such an intuitive constraint, the number of facts used does not matter much. Transitivity, by nature, always uses two previously derived facts. Finally, when looking at the number of facts used together with a clue we can see that our approach successfully finds small explanations: many clues (the trivial ones) use no facts, while some use 1 fact and only occasionally 2 or more facts are needed. The exception is again the difficult pasta puzzle.
 
-\tias{Ideal table:}
+% \tias{Ideal table:}
 
 \begin{table}
 	\centering

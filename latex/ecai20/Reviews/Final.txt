@@ -1,0 +1,189 @@
+SUBMISSION: 983
+TITLE: Step-wise explanations of logic problems by automated reasoning
+
+-------------------------  METAREVIEW  ------------------------
+This is an interesting paper, mixing constraint solving and explanation generation in the context of logic puzzles. Explanations take the form of sequences of "small", easily understandable, inference steps. The authors responded convincingly to the few comments/concerns raised in the reviews.
+
+
+
+----------------------- REVIEW 1 ---------------------
+SUBMISSION: 983
+TITLE: Step-wise explanations of logic problems by automated reasoning
+AUTHORS: Bart Bogaerts, Emilio Gamba, Jens Claes and Tias Guns
+
+----------- Relevance -----------
+SCORE: 4 (good)
+----------- Significance -----------
+SCORE: 3 (fair)
+----------- Novelty -----------
+SCORE: 4 (good)
+----------- Technical quality -----------
+SCORE: 4 (good)
+----------- Quality of the presentation -----------
+SCORE: 3 (fair)
+----------- Overall evaluation -----------
+SCORE: 1 (weak accept)
+----- TEXT:
+The authors study step-wise explanation of constraint satisfaction problem
+with the intent to persuade human beings that the logical inferences that
+were made are correct. They test their approach on Zebra Puzzles
+(also known as Einstein's Riddles), however one of the main contributions
+is being universal with possible application in other CSP domains.
+They also provide two demo examples on https://bartbog.github.io/zebra/
+I can confirm that from my subjective impression, the explanations of
+the puzzles can be well understood, and the example given in Figure 2
+in the paper was indeed the most puzzling moment in the process. While
+it seemed to me that some steps could be made more clearly (prefering
+bijection rule before transitivity, or transitivity infering positive
+facts before transitivity infering negative facts), these are most likely
+just subjective hyperparameters that can be adjusted within the frame of
+the provided algorithms.
+
+typos:
+* "redundent" -> "redundant" (5 times, p3,p3,p4,p4,p6)
+* p5: "search candidates" -> "search for candidates" (I believe this is better grammar-wise)
+* p6: "assumptiosn" -> "assumption"
+* p7: "paste puzzle" -> "pasta puzzle"
+* p7: "Further more" -> "Furthermore"
+
+deeper fixes:
+* p4: "The code below shows" -- this should be reffered to as
+  "Algorithm 2", I recommend completely avoiding the phrase
+  "code below" here.
+* It would be nice to unify the notation for the subsets of I and C.
+  For most of the article, they are denoted E, S, but sometimes,
+  they are denoted I', C'. This is mainly confusing in the description
+  of Algorithm 2 on p4.
+* p4: "To avoid redundancy on the sequence level, we wish to avoid
+  generating multiple explanations for the same E and S since they
+  will probably require the same types of reasoning anyway."
+  -- This sentence took me a while to digest. It could be better to
+     start with what you are actually doing -- that you generate
+     all the consequences of E and S as N on line 7 -- and then explain
+     the heuristic motives behind it.
+* p4: "Our goal is to find a cost-minimal explanation, where we
+  can use Algorithm 2 to generate candidate explanations."
+  -- This sounds as if you first find the cost-minimal explanation,
+     and then use Algorithm 2 on the result. Rephrase.
+* p5: "optimistic estimate g(C')" -- both symbols g and C' pop out
+  unexpectedly here (and just replacing C' by S does not seem
+  as a good enough solution).
+  It should be clarified that a new function g
+  is introduced from subsets of C to real numbers.
+* p6: "the puzzles have all 4 types with domain size 5"
+  -- as far as I understand, the pasta puzzle has domain size 4,
+     if my understanding is correct, also Table 1 should be fixed
+
+
+
+----------------------- REVIEW 2 ---------------------
+SUBMISSION: 983
+TITLE: Step-wise explanations of logic problems by automated reasoning
+AUTHORS: Bart Bogaerts, Emilio Gamba, Jens Claes and Tias Guns
+
+----------- Relevance -----------
+SCORE: 4 (good)
+----------- Significance -----------
+SCORE: 3 (fair)
+----------- Novelty -----------
+SCORE: 4 (good)
+----------- Technical quality -----------
+SCORE: 4 (good)
+----------- Quality of the presentation -----------
+SCORE: 4 (good)
+----------- Overall evaluation -----------
+SCORE: 2 (accept)
+----- TEXT:
+The authors propose a method to explain the decisions made when solving constraint satisfaction problems, focusing on the propagation through a sequence of small inference steps. They provide an algorithm that provides explanations of the inference steps by pointing out the involved combination of constraints. They demonstrate the usability in logic grid puzzles.
+
+The paper is nicely written and presents an interesting perspective to a highly relevant topic by focusing on a certain type of problems. They clearly describe their approach, the assumptions, and the shortcomings.
+
+While reading it I was questioning whether a human is needed to explain each step by looking at the marked constraints etc., which they confirm at the conclusion to be the case. Probably the main downside of the work would be this aspect. Because not everyone would be able to "easily" provide (or even understand) the discussion given at the end of Section 6. Any ideas to tackle this issue? maybe also in a 1-step explanation some trace can be provided for the user to follow to get the intuition.
+
+It would be interesting to see the outcomes of some human studies with this tool, on how long it takes them to understand the explanations with different sizes and costs etc.
+
+minor:
+page 3 end of 1st column: weaker levels op
+page 4 1st column: feasibly to
+page 4 2nd column : "the code below", which code? referring to the algo?
+page 6 1st column: assumptiosn
+                   since if natively
+page 6 end of 1st column last sentence has some space in the beginning?
+Having Fig 3 much bigger would be more understandable
+
+
+
+----------------------- REVIEW 3 ---------------------
+SUBMISSION: 983
+TITLE: Step-wise explanations of logic problems by automated reasoning
+AUTHORS: Bart Bogaerts, Emilio Gamba, Jens Claes and Tias Guns
+
+----------- Relevance -----------
+SCORE: 5 (excellent)
+----------- Significance -----------
+SCORE: 3 (fair)
+----------- Novelty -----------
+SCORE: 3 (fair)
+----------- Technical quality -----------
+SCORE: 4 (good)
+----------- Quality of the presentation -----------
+SCORE: 4 (good)
+----------- Overall evaluation -----------
+SCORE: 1 (weak accept)
+----- TEXT:
+This paper deals with explanations in the context of constraint satisfaction problems.
+Unlike many related papers, the objective here is *not* to explain why a problem is infeasible, but instead to help a user to understand -step by step- how a given solution can be obtained. The idea is that each step must be easily understandable (which is difficult to assess a priori). In the context of logic puzzles, the authors use 'complexity' functions which are intuitively reasonable. Indeed, the domain is sufficiently well structured to allow to identify different types of constraints, which provides a natural hierarchy of explanations.
+The integration of the technique with the existing (puzzle solving) software is also to be noticed. 
+
+## Main Comments
+The paper is nicely written and easy to follow. The logic grid puzzle is a nice setting, very appropriate to illustrate the different notions of the paper.
+It is shown in particular how non-redundant explanations can be found by exploiting MUS-extracting techniques, coupled with heuristics
+
+At a high-level, there seems to be connection to other approaches to explanation. For instance, in the context of decision-aiding, this sort of step-wise explanations have been advocated, with similar concerns it seems regarding the definition of generic complexity functions:
+- Belahcene et al. Explaining robust additive utility models by sequences of preference swaps. Theory and Decision, 2017
+
+
+## Other Comments
+
+* how robust would the explanation approach be to other (weaker) forms of propagation consistency?
+* are there theoretical bounds on the length of the explanations, perhaps depending on the 'type of clues'? (If so, you could design your function g(C) more generally by using this upper bound.)
+* did you encounter clues involving (more or less complex) arithmetic operations? If so, how do you handle their complexity? (If not, as I suspect, how would you?)   
+* there are quite a few typos remaining in the document, eg. redundent (instead of redundant), several times
+
+
+
+
+===========================================================
+
+
+REBUTTAL
+
+We thank the reviewers for their insightful comments and their time. We will incorporate the suggestions made and respond to the questions in more detail below:
+
+## Reviewer 1:
+
+As the reviewer has highlighted, it is true that the inference rule preference is subjected to hyper-parameters and should be tuned accordingly using human feedback/knowledge. The preference of which constraints should be more preferred above others are indeed hyper-parameters that can be tuned. In future work, we intend to do user-studies and see if we can learn these hyper-parameters from data now that the formal explanation framework is defined.
+
+We will incorporate the typos and fix the remarks made. The C’ in g(C’) indeed refers to subsets which we will clarify. The pasta puzzle indeed has a domain size of 4.
+
+## Reviewer2:
+
+Most steps involve just one or a few constraints, but some involve more and could indeed benefit from a more fine-grained explanation of how the constraints interact. This would be interesting to explore in follow-up work. We believe that in a manner similar to proofs by contradiction (or counterfactual reasoning) such hard steps can be split up in a sequence of simpler steps using the same methods as developed in this paper.
+
+Indeed, it would be interesting to add user studies, see the remark to reviewer 1 regarding the ability to learn the user’s preferences or explanations.
+
+We will furthermore correct the minor issues identified.
+
+## Reviewer3:
+
+Indeed, at the high level, there are connections to decision-aiding, especially the definition of generic complexity functions. We will add the reference to the article and discuss the link in the related work.
+
+1) At the current state using “global consistency”, we are able to solve the whole logic grid puzzle. By choosing a weaker form of consistency, of course, it is possible that not the entire puzzle can be solved by mere propagation. We would still find a good amount of new facts before one would have to resort to searching in order to finish solving the puzzle.
+
+With respect to the robustness of the explanations: our algorithm looks back onto already derived facts. It would be ‘robust’ in the sense that the same mechanism can be used, just that a smaller set of explanations will be found (corresponding to the facts that can be derived at that consistency level).
+
+2) A trivial upper-bound to the length of explanation would be the number of facts that still need to be derived. We do not immediately see a way to get without searching for explanation extensions, though if it exists one could indeed do a more informed search that greedy search.
+
+3)Logic grid puzzles can involve simple arithmetic and our method can handle that. In these puzzles, integer values have an explicit finite domain representation and changes are visualized on that. We see two possible extensions for more fine-grained explanations involving large arithmetic formula’s over large domains: visualizing the value of arithmetic sub-expressions as well as the value of actual variables, and reasoning over bounds of large domains (since bounds are also easily visualized), but these are outside the scope of this work.
+
+We will address the typos.

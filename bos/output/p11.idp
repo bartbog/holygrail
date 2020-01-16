@@ -1,6 +1,10 @@
 // Problem p11
 
 vocabulary V {
+
+    type assumptiontype = {0..64} isa int
+    assumption_satisfied(assumptiontype)
+
     type sector constructed from {sector_1, sector_2, sector_3, sector_4, sector_5}
     type type2 constructed from {utilities, financial, healthcare, energy, real_estate}
     type stock constructed from {qmz, gxtv, psto, jmo, kmpp}
@@ -12,87 +16,518 @@ vocabulary V {
     unknown_relation_stock_type2(stock, type2)
     bought(type1, stock)
     is_worth(stock, dollar)
-    purchased(type1, stock)
-    sold_for(stock, dollar)
     in(stock, sector)
+    is_linked_with_1(sector, type1)
+    is_linked_with_2(sector, dollar)
+    is_linked_with_3(type2, type1)
+    is_linked_with_4(type2, dollar)
+    is_linked_with_5(type1, dollar)
+}
+
+vocabulary VExtra {
+    extern vocabulary V
+    ct_unknown_relation_sector_type2(sector, type2)
+    cf_unknown_relation_sector_type2(sector, type2)
+    ct_unknown_relation_stock_type2(stock, type2)
+    cf_unknown_relation_stock_type2(stock, type2)
+    ct_bought(type1, stock)
+    cf_bought(type1, stock)
+    ct_is_worth(stock, dollar)
+    cf_is_worth(stock, dollar)
+    ct_in(stock, sector)
+    cf_in(stock, sector)
+    ct_is_linked_with_1(sector, type1)
+    cf_is_linked_with_1(sector, type1)
+    ct_is_linked_with_2(sector, dollar)
+    cf_is_linked_with_2(sector, dollar)
+    ct_is_linked_with_3(type2, type1)
+    cf_is_linked_with_3(type2, type1)
+    ct_is_linked_with_4(type2, dollar)
+    cf_is_linked_with_4(type2, dollar)
+    ct_is_linked_with_5(type1, dollar)
+    cf_is_linked_with_5(type1, dollar)
 }
 
 structure S : V {
+        assumption_satisfied<cf>={}
+        assumption_satisfied<u>={}
 }
 
-theory T : V {
+theory T1: V {
     // The utilities stock was $1 per share less expensive than the stock Geraldo bought
-    ?a [stock] b [dollar] c [stock] d [dollar]: bought(geraldo,c) & is_worth(c,b) & d = b-1 & is_worth(a,d) & unknown_relation_stock_type2(a,utilities).
-
-    // GXTV was $2 per share less expensive than QMZ
-    ?e [dollar] f [dollar]: is_worth(qmz,e) & f = e-2 & is_worth(gxtv,f).
-
-    // Edith didn't purchase the financial stock
-    ~ (?g [stock]: purchased(edith,g) & unknown_relation_stock_type2(g,financial)).
-
-    // PSTO sold for $29 per share
-    sold_for(psto,29).
-
-    // The stock Abigail bought was either KMPP or JMO
-    ?h [stock]: bought(abigail,h) & (kmpp = h | jmo = h).
-
-    // The health-care stock was $2 per share more expensive than the financial stock
-    ?i [stock] j [dollar] k [stock] l [dollar]: is_worth(k,j) & unknown_relation_stock_type2(k,financial) & l = j+2 & is_worth(i,l) & unknown_relation_stock_type2(i,healthcare).
-
-    // The energy stock was less expensive than JMO
-    ?m [stock] n [type3] o [dollar] p [dollar]: n>0 & is_worth(jmo,o) & p = o-n & is_worth(m,p) & unknown_relation_stock_type2(m,energy).
-
-    // Heathcliff purchased the real estate stock
-    ?q [stock]: purchased(heathcliff,q) & unknown_relation_stock_type2(q,real_estate).
-
-    // Of QMZ and GXTV, one sold for $26 per share and the other was in the health-care sector
-    ~ (qmz = gxtv) & ((?r [sector]: sold_for(qmz,26) & in(gxtv,r) & unknown_relation_sector_type2(r,healthcare)) | (?s [sector]: sold_for(gxtv,26) & in(qmz,s) & unknown_relation_sector_type2(s,healthcare))).
-
-    // Abigail didn't purchase the stock that sold for $25 per share
-    ~ (?t [stock]: sold_for(t,25) & purchased(abigail,t)).
-
-
-    // Logigram bijection axioms:
-    ! x [sector]: ?=1 y [type2]: unknown_relation_sector_type2(x, y).
-    ! x [type2]: ?=1 y [sector]: unknown_relation_sector_type2(y, x).
-
-    ! x [stock]: ?=1 y [type2]: unknown_relation_stock_type2(x, y).
-    ! x [type2]: ?=1 y [stock]: unknown_relation_stock_type2(y, x).
-
-    ! x [type1]: ?=1 y [stock]: bought(x, y).
-    ! x [stock]: ?=1 y [type1]: bought(y, x).
-
-    ! x [stock]: ?=1 y [dollar]: is_worth(x, y).
-    ! x [dollar]: ?=1 y [stock]: is_worth(y, x).
-
-    ! x [type1]: ?=1 y [stock]: purchased(x, y).
-    ! x [stock]: ?=1 y [type1]: purchased(y, x).
-
-    ! x [stock]: ?=1 y [dollar]: sold_for(x, y).
-    ! x [dollar]: ?=1 y [stock]: sold_for(y, x).
-
-    ! x [stock]: ?=1 y [sector]: in(x, y).
-    ! x [sector]: ?=1 y [stock]: in(y, x).
-
-    // Logigram synonym axioms:
-    ! x [type1] y [stock]: bought(x, y) <=> purchased(x, y).
-    ! x [stock] y [dollar]: is_worth(x, y) <=> sold_for(x, y).
-
-    // Logigram transitive relation axioms:
-    ! x [sector] y [type2]: unknown_relation_sector_type2(x, y) <=> ? z [stock]: in(z, x) & unknown_relation_stock_type2(z, y).
-
-    // Logigram reflexive relation axioms:
-
-    // Logigram symmetry breaking axioms:
-    unknown_relation_sector_type2(sector_1, utilities).
-    unknown_relation_sector_type2(sector_2, financial).
-    unknown_relation_sector_type2(sector_3, healthcare).
-    unknown_relation_sector_type2(sector_4, energy).
-    unknown_relation_sector_type2(sector_5, real_estate).
+    assumption_satisfied( 0  ) => ?a [stock] b [dollar] c [stock] d [dollar]: bought(geraldo,c) & is_worth(c,b) & d = b-1 & is_worth(a,d) & unknown_relation_stock_type2(a,utilities).
 }
+
+theory T2: V {
+    // GXTV was $2 per share less expensive than QMZ
+    assumption_satisfied( 0  ) => ?e [dollar] f [dollar]: is_worth(qmz,e) & f = e-2 & is_worth(gxtv,f).
+}
+
+theory T3: V {
+    // Edith didn't purchase the financial stock
+    assumption_satisfied( 0  ) => ~ (?g [stock]: bought(edith,g) & unknown_relation_stock_type2(g,financial)).
+}
+
+theory T4: V {
+    // PSTO sold for $29 per share
+    assumption_satisfied( 0  ) => is_worth(psto,29).
+}
+
+theory T5: V {
+    // The stock Abigail bought was either KMPP or JMO
+    assumption_satisfied( 0  ) => ?h [stock]: bought(abigail,h) & (kmpp = h | jmo = h).
+}
+
+theory T6: V {
+    // The health-care stock was $2 per share more expensive than the financial stock
+    assumption_satisfied( 0  ) => ?i [stock] j [dollar] k [stock] l [dollar]: is_worth(k,j) & unknown_relation_stock_type2(k,financial) & l = j+2 & is_worth(i,l) & unknown_relation_stock_type2(i,healthcare).
+}
+
+theory T7: V {
+    // The energy stock was less expensive than JMO
+    assumption_satisfied( 0  ) => ?m [stock] n [type3] o [dollar] p [dollar]: n>0 & is_worth(jmo,o) & p = o-n & is_worth(m,p) & unknown_relation_stock_type2(m,energy).
+}
+
+theory T8: V {
+    // Heathcliff purchased the real estate stock
+    assumption_satisfied( 0  ) =>  ?q [stock]: bought(heathcliff,q) & unknown_relation_stock_type2(q,real_estate).
+}
+
+theory T9: V {
+    // Of QMZ and GXTV, one sold for $26 per share and the other was in the health-care sector
+    assumption_satisfied( 0  ) => ~ (qmz = gxtv) & ((?r [sector]: is_worth(qmz,26) & in(gxtv,r) & unknown_relation_sector_type2(r,healthcare)) | (?s [sector]: is_worth(gxtv,26) & in(qmz,s) & unknown_relation_sector_type2(s,healthcare))).
+}
+
+theory T10: V {
+    // Abigail didn't purchase the stock that sold for $25 per share
+    assumption_satisfied( 0  ) => ~ (?t [stock]: is_worth(t,25) & bought(abigail,t)).
+}
+
+theory bijections1 : V {
+     assumption_satisfied( 1  ) => ! x [sector]: ?>=1 y [type2]: unknown_relation_sector_type2(x, y).
+}
+
+theory bijections2 : V {
+     assumption_satisfied( 2  ) => ! x [sector]: ?=<1 y [type2]: unknown_relation_sector_type2(x, y).
+}
+
+theory bijections3 : V {
+     assumption_satisfied( 3  ) => ! x [type2]: ?>=1 y [sector]: unknown_relation_sector_type2(y, x).
+}
+
+theory bijections4 : V {
+     assumption_satisfied( 4 ) => ! x [type2]: ?=<1 y [sector]: unknown_relation_sector_type2(y, x).
+}
+
+
+theory bijections5 : V {
+     assumption_satisfied( 5  ) =>! x [stock]: ?>=1 y [type2]: unknown_relation_stock_type2(x, y).
+}
+
+theory bijections6 : V {
+     assumption_satisfied( 6 ) => ! x [stock]: ?=<1 y [type2]: unknown_relation_stock_type2(x, y).
+}
+
+theory bijections7 : V {
+     assumption_satisfied( 7 ) => ! x [type2]: ?>=1 y [stock]: unknown_relation_stock_type2(y, x).
+}
+
+theory bijections8 : V {
+     assumption_satisfied( 8 ) => ! x [type2]: ?=<1 y [stock]: unknown_relation_stock_type2(y, x).
+}
+
+theory bijections9 : V {
+     assumption_satisfied( 9 ) => ! x [type1]: ?>=1 y [stock]: bought(x, y).
+}
+
+theory bijections10 : V {
+     assumption_satisfied( 10 ) => ! x [type1]: ?=<1 y [stock]: bought(x, y).
+}
+
+theory bijections11 : V {
+     assumption_satisfied( 11 ) => ! x [stock]: ?>=1 y [type1]: bought(y, x).
+}
+
+theory bijections12 : V {
+     assumption_satisfied( 12 ) => ! x [stock]: ?=<1 y [type1]: bought(y, x).
+}
+
+theory bijections13 : V {
+     assumption_satisfied( 13 ) => ! x [stock]: ?>=1 y [dollar]: is_worth(x, y).
+}
+
+theory bijections14 : V {
+     assumption_satisfied( 14 ) => ! x [stock]: ?=<1 y [dollar]: is_worth(x, y).
+}
+
+theory bijections15 : V {
+     assumption_satisfied( 15 ) => ! x [dollar]: ?>=1 y [stock]: is_worth(y, x).
+}
+
+theory bijections16 : V {
+     assumption_satisfied( 16 ) => ! x [dollar]: ?=<1 y [stock]: is_worth(y, x).
+}
+
+
+theory bijections17 : V {
+     assumption_satisfied( 17 ) => ! x [stock]: ?>=1 y [sector]: in(x, y).
+}
+
+theory bijections18 : V {
+     assumption_satisfied( 18 ) => ! x [stock]: ?=<1 y [sector]: in(x, y).
+}
+
+theory bijections19 : V {
+     assumption_satisfied( 19 ) => ! x [sector]: ?>=1 y [stock]: in(y, x).
+}
+
+theory bijections20 : V {
+     assumption_satisfied( 20 ) => ! x [sector]: ?=<1 y [stock]: in(y, x).
+}
+
+theory bijections21 : V {
+     assumption_satisfied( 21 ) => ! x [sector]: ?>=1 y [type1]: is_linked_with_1(x, y).
+}
+
+theory bijections22 : V {
+     assumption_satisfied( 22 ) => ! x [sector]: ?=<1 y [type1]: is_linked_with_1(x, y).
+}
+
+theory bijections23 : V {
+     assumption_satisfied( 23 ) => ! x [type1]: ?>=1 y [sector]: is_linked_with_1(y, x).
+}
+
+theory bijections24 : V {
+     assumption_satisfied( 24 ) => ! x [type1]: ?=<1 y [sector]: is_linked_with_1(y, x).
+}
+
+theory bijections25 : V {
+     assumption_satisfied( 25 ) =>  ! x [sector]: ?>=1 y [dollar]: is_linked_with_2(x, y).
+}
+
+theory bijections26 : V {
+     assumption_satisfied( 26  ) =>  ! x [sector]: ?=<1 y [dollar]: is_linked_with_2(x, y).
+}
+
+theory bijections27 : V {
+     assumption_satisfied( 27 ) => ! x [dollar]: ?>=1 y [sector]: is_linked_with_2(y, x).
+}
+
+theory bijections28 : V {
+     assumption_satisfied( 28  ) => ! x [dollar]: ?=<1 y [sector]: is_linked_with_2(y, x).
+}
+
+theory bijections29 : V {
+     assumption_satisfied( 29 ) =>  ! x [type2]: ?>=1 y [type1]: is_linked_with_3(x, y).
+}
+
+theory bijections30 : V {
+     assumption_satisfied( 30  ) =>  ! x [type2]: ?=<1 y [type1]: is_linked_with_3(x, y).
+}
+
+theory bijections31 : V {
+     assumption_satisfied( 31 ) => ! x [type1]: ?>=1 y [type2]: is_linked_with_3(y, x).
+}
+
+theory bijections32 : V {
+     assumption_satisfied( 32  ) => ! x [type1]: ?=<1 y [type2]: is_linked_with_3(y, x).
+}
+
+theory bijections33 : V {
+     assumption_satisfied( 33 ) =>  ! x [type2]: ?>=1 y [dollar]: is_linked_with_4(x, y).
+}
+
+theory bijections34 : V {
+     assumption_satisfied( 34  ) =>  ! x [type2]: ?=<1 y [dollar]: is_linked_with_4(x, y).
+}
+
+theory bijections35 : V {
+     assumption_satisfied( 35 ) => ! x [dollar]: ?>=1 y [type2]: is_linked_with_4(y, x).
+}
+
+theory bijections36 : V {
+     assumption_satisfied( 36  ) => ! x [dollar]: ?=<1 y [type2]: is_linked_with_4(y, x).
+}
+theory bijections37 : V {
+     assumption_satisfied( 37 ) =>   ! x [type1]: ?>=1 y [dollar]: is_linked_with_5(x, y).
+}
+
+theory bijections38 : V {
+     assumption_satisfied( 38  ) =>   ! x [type1]: ?=<1 y [dollar]: is_linked_with_5(x, y).
+}
+
+theory bijections39 : V {
+     assumption_satisfied( 39 ) =>     ! x [dollar]: ?>=1 y [type1]: is_linked_with_5(y, x).
+}
+
+theory bijections40 : V {
+     assumption_satisfied( 40  ) =>     ! x [dollar]: ?=<1 y [type1]: is_linked_with_5(y, x).
+}
+
+theory synonyms : V {
+    // Logigram synonym axioms:
+}
+
+theory transitivity1 : V {
+    assumption_satisfied( 41 ) =>   ! x y z : z is_linked_with_1(x, z) & is_linked_with_3(y, z) => unknown_relation_sector_type2(x, y).
+}
+
+theory transitivity2 : V {
+    assumption_satisfied( 42 ) =>   ! x y z : ~z is_linked_with_1(x, z) & is_linked_with_3(y, z) => ~ unknown_relation_sector_type2(x, y).
+}
+
+theory transitivity3 : V {
+    assumption_satisfied( 43 ) =>   ! x y z : z is_linked_with_1(x, z) & ~is_linked_with_3(y, z) => ~ unknown_relation_sector_type2(x, y).
+}
+
+theory transitivity4 : V {
+    assumption_satisfied( 44 ) =>   ! x y z : is_linked_with_2(x, z) & is_linked_with_4(y, z) => unknown_relation_sector_type2(x, y).
+}
+
+theory transitivity5 : V {
+    assumption_satisfied( 45 ) =>   ! x y z : ~ is_linked_with_2(x, z) & is_linked_with_4(y, z) => ~ unknown_relation_sector_type2(x, y).
+}
+
+theory transitivity6 : V {
+    assumption_satisfied( 46 ) =>   ! x y z : is_linked_with_2(x, z) & ~ is_linked_with_4(y, z) => ~ unknown_relation_sector_type2(x, y).
+}
+
+theory transitivity7 : V {
+    assumption_satisfied( 47 ) =>   ! x y z :  in(z, x) & unknown_relation_stock_type2(z, y)=> unknown_relation_sector_type2(x, y).
+}
+
+theory transitivity8 : V {
+    assumption_satisfied( 48 ) =>   ! x y z :  in(z, x) & ~unknown_relation_stock_type2(z, y)=> ~ unknown_relation_sector_type2(x, y).
+}
+
+theory transitivity9 : V {
+    assumption_satisfied( 49 ) =>   ! x y z :  ~in(z, x) & unknown_relation_stock_type2(z, y)=>  ~ unknown_relation_sector_type2(x, y).
+}
+
+theory transitivity10 : V {
+    assumption_satisfied( 50 ) =>   ! x y z :  is_worth(x, z) & is_linked_with_4(y, z)=> unknown_relation_stock_type2(x, y).
+}
+
+theory transitivity11 : V {
+    assumption_satisfied( 51 ) =>   ! x y z :  is_worth(x, z) & ~is_linked_with_4(y, z)=> ~ unknown_relation_stock_type2(x, y).
+}
+
+theory transitivity12 : V {
+    assumption_satisfied( 52 ) =>   ! x y z :  ~is_worth(x, z) & is_linked_with_4(y, z)=>  ~ unknown_relation_stock_type2(x, y).
+}
+
+theory transitivity13 : V {
+    assumption_satisfied( 53 ) =>   ! x y z : is_linked_with_5(x, z) & is_worth(y, z) =>  bought(x, y).
+}
+
+theory transitivity14 : V {
+    assumption_satisfied( 54 ) =>   ! x y z :  is_linked_with_5(x, z) & ~ is_worth(y, z)=> ~ bought(x, y).
+}
+
+theory transitivity15 : V {
+    assumption_satisfied( 55 ) =>   ! x y z : ~ is_linked_with_5(x, z) & is_worth(y, z) => ~ .bought(x, y)
+}
+
+theory transitivity16 : V {
+    assumption_satisfied( 56 ) =>   ! x y z :  bought(z, x) & is_linked_with_5(z, y) =>   is_worth(x, y) .
+}
+
+theory transitivity17 : V {
+    assumption_satisfied( 57 ) =>   ! x y z :   ~ bought(z, x) & is_linked_with_5(z, y) => ~ is_worth(x, y).
+}
+
+theory transitivity18 : V {
+    assumption_satisfied( 58 ) =>   ! x y z :  bought(z, x) &  ~ is_linked_with_5(z, y) => ~ is_worth(x, y).
+}
+
+theory transitivity19 : V {
+    assumption_satisfied( 59 ) =>   ! x y z : is_linked_with_2(x, z) & is_linked_with_5(y, z) =>  is_linked_with_1(x, y) .
+}
+
+theory transitivity20 : V {
+    assumption_satisfied( 60 ) =>   ! x y z : ~ is_linked_with_2(x, z) & is_linked_with_5(y, z) => ~ is_linked_with_1(x, y) .
+}
+
+theory transitivity21 : V {
+    assumption_satisfied( 61 ) =>   ! x y z : is_linked_with_2(x, z) & ~ is_linked_with_5(y, z) => ~ is_linked_with_1(x, y) .
+}
+
+theory transitivity22 : V {
+    assumption_satisfied( 62 ) =>   ! x y z : is_linked_with_4(x, z) & is_linked_with_5(y, z) => is_linked_with_3(x, y).
+}
+
+theory transitivity23 : V {
+    assumption_satisfied( 63 ) =>   ! x y z : ~ is_linked_with_4(x, z) & is_linked_with_5(y, z) =>  ~is_linked_with_3(x, y).
+}
+
+theory transitivity24 : V {
+    assumption_satisfied( 64 ) =>   ! x y z : is_linked_with_4(x, z) & ~ is_linked_with_5(y, z) => ~ is_linked_with_3(x, y).
+}
+
+
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [sector] y [type2]: ct_unknown_relation_sector_type2(x,y) => unknown_relation_sector_type2(x,y)) &
+        (! x [sector] y [type2]: cf_unknown_relation_sector_type2(x,y) => ~unknown_relation_sector_type2(x,y)) &
+        (! x [stock] y [type2]: ct_unknown_relation_stock_type2(x,y) => unknown_relation_stock_type2(x,y)) &
+        (! x [stock] y [type2]: cf_unknown_relation_stock_type2(x,y) => ~unknown_relation_stock_type2(x,y)) &
+        (! x [type1] y [stock]: ct_bought(x,y) => bought(x,y)) &
+        (! x [type1] y [stock]: cf_bought(x,y) => ~bought(x,y)) &
+        (! x [stock] y [dollar]: ct_is_worth(x,y) => is_worth(x,y)) &
+        (! x [stock] y [dollar]: cf_is_worth(x,y) => ~is_worth(x,y)) &
+        (! x [stock] y [sector]: ct_in(x,y) => in(x,y)) &
+        (! x [stock] y [sector]: cf_in(x,y) => ~in(x,y)) &
+        (! x [sector] y [type1]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [sector] y [type1]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [sector] y [dollar]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [sector] y [dollar]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        (! x [type2] y [type1]: ct_is_linked_with_3(x,y) => is_linked_with_3(x,y)) &
+        (! x [type2] y [type1]: cf_is_linked_with_3(x,y) => ~is_linked_with_3(x,y)) &
+        (! x [type2] y [dollar]: ct_is_linked_with_4(x,y) => is_linked_with_4(x,y)) &
+        (! x [type2] y [dollar]: cf_is_linked_with_4(x,y) => ~is_linked_with_4(x,y)) &
+        (! x [type1] y [dollar]: ct_is_linked_with_5(x,y) => is_linked_with_5(x,y)) &
+        (! x [type1] y [dollar]: cf_is_linked_with_5(x,y) => ~is_linked_with_5(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::unknown_relation_sector_type2], S2[V::unknown_relation_sector_type2].ct)
+    removeFrom(S3[V::unknown_relation_sector_type2], S2[V::unknown_relation_sector_type2].cf)
+    removeFrom(S3[V::unknown_relation_stock_type2], S2[V::unknown_relation_stock_type2].ct)
+    removeFrom(S3[V::unknown_relation_stock_type2], S2[V::unknown_relation_stock_type2].cf)
+    removeFrom(S3[V::bought], S2[V::bought].ct)
+    removeFrom(S3[V::bought], S2[V::bought].cf)
+    removeFrom(S3[V::is_worth], S2[V::is_worth].ct)
+    removeFrom(S3[V::is_worth], S2[V::is_worth].cf)
+    removeFrom(S3[V::in], S2[V::in].ct)
+    removeFrom(S3[V::in], S2[V::in].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
+    removeFrom(S3[V::is_linked_with_4], S2[V::is_linked_with_4].ct)
+    removeFrom(S3[V::is_linked_with_4], S2[V::is_linked_with_4].cf)
+    removeFrom(S3[V::is_linked_with_5], S2[V::is_linked_with_5].ct)
+    removeFrom(S3[V::is_linked_with_5], S2[V::is_linked_with_5].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::unknown_relation_sector_type2, VExtra::ct_unknown_relation_sector_type2, VExtra::cf_unknown_relation_sector_type2},
+        {V::unknown_relation_stock_type2, VExtra::ct_unknown_relation_stock_type2, VExtra::cf_unknown_relation_stock_type2},
+        {V::bought, VExtra::ct_bought, VExtra::cf_bought},
+        {V::is_worth, VExtra::ct_is_worth, VExtra::cf_is_worth},
+        {V::in, VExtra::ct_in, VExtra::cf_in},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+        {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
+        {V::is_linked_with_4, VExtra::ct_is_linked_with_4, VExtra::cf_is_linked_with_4},
+        {V::is_linked_with_5, VExtra::ct_is_linked_with_5, VExtra::cf_is_linked_with_5},
+    }
+}
+
+include "./generic_procedures-split.idp"
 
 procedure main() {
-    stdoptions.nbmodels = 10;
-    printmodels(modelexpand(T,S))
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "The utilities stock was $1 per share less expensive than the stock Geraldo bought"},
+        {T2, "GXTV was $2 per share less expensive than QMZ"},
+        {T3, "Edith didn't purchase the financial stock"},
+        {T4, "PSTO sold for $29 per share"},
+        {T5, "The stock Abigail bought was either KMPP or JMO"},
+        {T6, "The health-care stock was $2 per share more expensive than the financial stock"},
+        {T7, "The energy stock was less expensive than JMO"},
+        {T8, "Heathcliff purchased the real estate stock"},
+        {T9, "Of QMZ and GXTV, one sold for $26 per share and the other was in the health-care sector"},
+        {T10, "Abigail didn't purchase the stock that sold for $25 per share"},
+    }
+
+     S = compute_explanations(theories,S)
+
+    os.exit(0)
 }
 
+procedure get_trans_theories(){
+
+    transitivity_theories = {
+        {transitivity1, "Transitivity constraint"}, 
+        {transitivity2, "Transitivity constraint"}, 
+        {transitivity3, "Transitivity constraint"}, 
+        {transitivity4, "Transitivity constraint"}, 
+        {transitivity5, "Transitivity constraint"}, 
+        {transitivity6, "Transitivity constraint"}, 
+        {transitivity7, "Transitivity constraint"}, 
+        {transitivity8, "Transitivity constraint"}, 
+        {transitivity9, "Transitivity constraint"}, 
+        {transitivity10, "Transitivity constraint"}, 
+        {transitivity11, "Transitivity constraint"}, 
+        {transitivity12, "Transitivity constraint"}, 
+        {transitivity13, "Transitivity constraint"}, 
+        {transitivity14, "Transitivity constraint"}, 
+        {transitivity15, "Transitivity constraint"}, 
+        {transitivity16, "Transitivity constraint"}, 
+        {transitivity17, "Transitivity constraint"}, 
+        {transitivity18, "Transitivity constraint"}, 
+        {transitivity19, "Transitivity constraint"}, 
+        {transitivity20, "Transitivity constraint"}, 
+        {transitivity21, "Transitivity constraint"}, 
+        {transitivity22, "Transitivity constraint"}, 
+        {transitivity23, "Transitivity constraint"}, 
+        {transitivity24, "Transitivity constraint"}, 
+    }
+    return transitivity_theories
+}
+
+procedure get_bij_theories(){
+    bijection_theories = {
+        {bijections1, "Bijectivity"}, 
+        {bijections1, "Bijectivity"}, 
+        {bijections2, "Bijectivity"}, 
+        {bijections3, "Bijectivity"}, 
+        {bijections4, "Bijectivity"}, 
+        {bijections5, "Bijectivity"}, 
+        {bijections6, "Bijectivity"}, 
+        {bijections7, "Bijectivity"}, 
+        {bijections8, "Bijectivity"}, 
+        {bijections9, "Bijectivity"}, 
+        {bijections10, "Bijectivity"}, 
+        {bijections11, "Bijectivity"}, 
+        {bijections12, "Bijectivity"}, 
+        {bijections13, "Bijectivity"}, 
+        {bijections14, "Bijectivity"}, 
+        {bijections15, "Bijectivity"}, 
+        {bijections16, "Bijectivity"}, 
+        {bijections17, "Bijectivity"}, 
+        {bijections18, "Bijectivity"}, 
+        {bijections19, "Bijectivity"}, 
+        {bijections20, "Bijectivity"}, 
+        {bijections21, "Bijectivity"}, 
+        {bijections22, "Bijectivity"}, 
+        {bijections23, "Bijectivity"}, 
+        {bijections24, "Bijectivity"}, 
+        {bijections25, "Bijectivity"}, 
+        {bijections26, "Bijectivity"}, 
+        {bijections27, "Bijectivity"}, 
+        {bijections28, "Bijectivity"}, 
+        {bijections29, "Bijectivity"}, 
+        {bijections30, "Bijectivity"}, 
+        {bijections31, "Bijectivity"}, 
+        {bijections32, "Bijectivity"}, 
+        {bijections33, "Bijectivity"}, 
+        {bijections34, "Bijectivity"}, 
+        {bijections35, "Bijectivity"}, 
+        {bijections36, "Bijectivity"}, 
+        {bijections37, "Bijectivity"}, 
+        {bijections38, "Bijectivity"}, 
+        {bijections39, "Bijectivity"}, 
+        {bijections40, "Bijectivity"}, 
+    }
+    return  bijection_theories
+}

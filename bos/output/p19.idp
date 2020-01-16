@@ -1,6 +1,10 @@
 // Problem p19
 
 vocabulary V {
+
+    type assumptiontype = {0..67} isa int
+    assumption_satisfied(assumptiontype)
+
     type year = {21; 30; 42; 47; 58} isa int
     type orbital_period constructed from {orbital_period_1, orbital_period_2, orbital_period_3, orbital_period_4, orbital_period_5}
     type comet constructed from {the_other_comet, gostroma, trosny, casputi, sporrin}
@@ -11,85 +15,478 @@ vocabulary V {
     has(comet, orbital_period)
     discovered_by(comet, type1)
     discovered_in(comet, cycle)
-    found_in(comet, cycle)
-    with(comet, orbital_period)
+    is_linked_with_1(year, comet)
+    is_linked_with_2(year, type1)
+    is_linked_with_3(year, cycle)
+    is_linked_with_4(orbital_period, type1)
+    is_linked_with_5(orbital_period, cycle)
+    is_linked_with_6(type1, cycle)
+}
+
+vocabulary VExtra {
+    extern vocabulary V
+    ct_of(orbital_period, year)
+    cf_of(orbital_period, year)
+    ct_has(comet, orbital_period)
+    cf_has(comet, orbital_period)
+    ct_discovered_by(comet, type1)
+    cf_discovered_by(comet, type1)
+    ct_discovered_in(comet, cycle)
+    cf_discovered_in(comet, cycle)
+    ct_is_linked_with_1(year, comet)
+    cf_is_linked_with_1(year, comet)
+    ct_is_linked_with_2(year, type1)
+    cf_is_linked_with_2(year, type1)
+    ct_is_linked_with_3(year, cycle)
+    cf_is_linked_with_3(year, cycle)
+    ct_is_linked_with_4(orbital_period, type1)
+    cf_is_linked_with_4(orbital_period, type1)
+    ct_is_linked_with_5(orbital_period, cycle)
+    cf_is_linked_with_5(orbital_period, cycle)
+    ct_is_linked_with_6(type1, cycle)
+    cf_is_linked_with_6(type1, cycle)
 }
 
 structure S : V {
+        assumption_satisfied<cf>={}
+        assumption_satisfied<u>={}
 }
 
-theory T : V {
+theory T1: V {
     // The comet discovered by Whitaker doesn't have an orbital period of 30 years
-    ?a [comet]: discovered_by(a,whitaker) & ~ (?b [orbital_period]: of(b,30) & has(a,b)).
-
-    // Gostroma was discovered 1 cycle after the comet discovered by Tillman
-    ?c [cycle] d [comet] e [cycle]: discovered_by(d,tillman) & discovered_in(d,c) & e = c+1 & discovered_in(gostroma,e).
-
-    // Of the comet discovered by Underwood and the comet with an orbital period of 42 years, one was found in 2009 and the other is Trosny
-    ?f [comet] g [comet] h [orbital_period]: discovered_by(f,underwood) & of(h,42) & with(g,h) & ~ (f = g) & (found_in(f,2009) & trosny = g | found_in(g,2009) & trosny = f).
-
-    // The comet with an orbital period of 21 years is either the comet discovered by Whitaker or Casputi
-    ?i [comet] j [orbital_period]: of(j,21) & with(i,j) & ((?k [comet]: discovered_by(k,whitaker) & k = i) | casputi = i).
-
-    // The comet discovered in 2010 doesn't have an orbital period of 21 years
-    ?l [comet]: discovered_in(l,2010) & ~ (?m [orbital_period]: of(m,21) & has(l,m)).
-
-    // The comet discovered by Tillman, the comet discovered in 2011 and Casputi are three different comets
-    ?n [comet] o [comet]: ~ (n = o) & ~ (n = casputi) & ~ (o = casputi) & discovered_by(n,tillman) & discovered_in(o,2011).
-
-    // Sporrin wasn't found in 2010
-    ~ found_in(sporrin,2010).
-
-    // Whitaker's comet was discovered in 2010
-    ?p [comet]: discovered_in(p,2010) & discovered_by(p,whitaker).
-
-    // The comet discovered by Parks was discovered 1 cycle before Whitaker's comet
-    ?q [comet] r [cycle] s [comet] t [cycle]: discovered_by(q,parks) & discovered_in(s,r) & discovered_by(s,whitaker) & t = r-1 & discovered_in(q,t).
-
-    // The comet discovered in 2011 doesn't have an orbital period of 47 years
-    ?u [comet]: discovered_in(u,2011) & ~ (?v [orbital_period]: of(v,47) & has(u,v)).
-
-    // The comet discovered by Underwood has an orbital period of either 47 or 58 years
-    ?w [comet] x [orbital_period]: discovered_by(w,underwood) & (of(x,47) | of(x,58)) & has(w,x).
-
-
-    // Logigram bijection axioms:
-    ! x [orbital_period]: ?=1 y [year]: of(x, y).
-    ! x [year]: ?=1 y [orbital_period]: of(y, x).
-
-    ! x [comet]: ?=1 y [orbital_period]: has(x, y).
-    ! x [orbital_period]: ?=1 y [comet]: has(y, x).
-
-    ! x [comet]: ?=1 y [type1]: discovered_by(x, y).
-    ! x [type1]: ?=1 y [comet]: discovered_by(y, x).
-
-    ! x [comet]: ?=1 y [cycle]: discovered_in(x, y).
-    ! x [cycle]: ?=1 y [comet]: discovered_in(y, x).
-
-    ! x [comet]: ?=1 y [cycle]: found_in(x, y).
-    ! x [cycle]: ?=1 y [comet]: found_in(y, x).
-
-    ! x [comet]: ?=1 y [orbital_period]: with(x, y).
-    ! x [orbital_period]: ?=1 y [comet]: with(y, x).
-
-    // Logigram synonym axioms:
-    ! x [comet] y [orbital_period]: has(x, y) <=> with(x, y).
-    ! x [comet] y [cycle]: discovered_in(x, y) <=> found_in(x, y).
-
-    // Logigram transitive relation axioms:
-
-    // Logigram reflexive relation axioms:
-
-    // Logigram symmetry breaking axioms:
-    of(orbital_period_1, 21).
-    of(orbital_period_2, 30).
-    of(orbital_period_3, 42).
-    of(orbital_period_4, 47).
-    of(orbital_period_5, 58).
+    assumption_satisfied( 0  ) => ?a [comet]: discovered_by(a,whitaker) & ~ (?b [orbital_period]: of(b,30) & has(a,b)).
 }
+
+theory T2: V {
+    // Gostroma was discovered 1 cycle after the comet discovered by Tillman
+    assumption_satisfied( 0  ) => ?c [cycle] d [comet] e [cycle]: discovered_by(d,tillman) & discovered_in(d,c) & e = c+1 & discovered_in(gostroma,e).
+}
+
+theory T3: V {
+    // Of the comet discovered by Underwood and the comet with an orbital period of 42 years, one was found in 2009 and the other is Trosny
+    assumption_satisfied( 0  ) => ?f [comet] g [comet] h [orbital_period]: discovered_by(f,underwood) & of(h,42) & has(g,h) & ~ (f = g) & (discovered_in(f,2009) & trosny = g | discovered_in(g,2009) & trosny = f).
+}
+
+theory T4: V {
+    // The comet with an orbital period of 21 years is either the comet discovered by Whitaker or Casputi
+    assumption_satisfied( 0  ) => ?i [comet] j [orbital_period]: of(j,21) & has(i,j) & ((?k [comet]: discovered_by(k,whitaker) & k = i) | casputi = i).
+}
+
+theory T5: V {
+    // The comet discovered in 2010 doesn't have an orbital period of 21 years
+    assumption_satisfied( 0  ) => ?l [comet]: discovered_in(l,2010) & ~ (?m [orbital_period]: of(m,21) & has(l,m)).
+}
+
+theory T6: V {
+    // The comet discovered by Tillman, the comet discovered in 2011 and Casputi are three different comets
+    assumption_satisfied( 0  ) => ?n [comet] o [comet]: ~ (n = o) & ~ (n = casputi) & ~ (o = casputi) & discovered_by(n,tillman) & discovered_in(o,2011).
+}
+
+theory T7: V {
+    // Sporrin wasn't found in 2010
+    assumption_satisfied( 0  ) => ~ discovered_in(sporrin,2010).
+}
+
+theory T8: V {
+    // Whitaker's comet was discovered in 2010
+    assumption_satisfied( 0  ) => ?p [comet]: discovered_in(p,2010) & discovered_by(p,whitaker).
+}
+
+theory T9: V {
+    // The comet discovered by Parks was discovered 1 cycle before Whitaker's comet
+    assumption_satisfied( 0  ) => ?q [comet] r [cycle] s [comet] t [cycle]: discovered_by(q,parks) & discovered_in(s,r) & discovered_by(s,whitaker) & t = r-1 & discovered_in(q,t).
+}
+
+theory T10: V {
+    // The comet discovered in 2011 doesn't have an orbital period of 47 years
+    assumption_satisfied( 0  ) => ?u [comet]: discovered_in(u,2011) & ~ (?v [orbital_period]: of(v,47) & has(u,v)).
+}
+
+theory T11: V {
+    // The comet discovered by Underwood has an orbital period of either 47 or 58 years
+    assumption_satisfied( 0  ) => ?w [comet] x [orbital_period]: discovered_by(w,underwood) & (of(x,47) | of(x,58)) & has(w,x).
+}
+
+
+theory bijections1 : V {
+     assumption_satisfied( 1  ) =>     ! x [orbital_period]: ?>=1 y [year]: of(x, y).
+}
+theory bijections2 : V {
+     assumption_satisfied( 2  ) =>     ! x [orbital_period]: ?=<1 y [year]: of(x, y).
+}
+theory bijections3 : V {
+     assumption_satisfied( 3  ) =>     ! x [year]: ?>=1 y [orbital_period]: of(y, x).
+}
+theory bijections4 : V {
+     assumption_satisfied( 4  ) =>     ! x [year]: ?=<1 y [orbital_period]: of(y, x).
+}
+theory bijections5 : V {
+     assumption_satisfied( 5  ) =>     ! x [comet]: ?>=1 y [orbital_period]: has(x, y).
+}
+theory bijections6 : V {
+     assumption_satisfied( 6  ) =>     ! x [comet]: ?=<1 y [orbital_period]: has(x, y).
+}
+theory bijections7 : V {
+     assumption_satisfied( 7  ) =>     ! x [orbital_period]: ?>=1 y [comet]: has(y, x).
+}
+theory bijections8 : V {
+     assumption_satisfied( 8  ) =>     ! x [orbital_period]: ?=<1 y [comet]: has(y, x).
+}
+theory bijections9 : V {
+     assumption_satisfied( 9  ) =>   ! x [comet]: ?>=1 y [type1]: discovered_by(x, y).
+}
+theory bijections10 : V {
+     assumption_satisfied( 10  ) =>   ! x [comet]: ?=<1 y [type1]: discovered_by(x, y).
+}
+theory bijections11 : V {
+     assumption_satisfied( 11  ) => ! x [type1]: ?>=1 y [comet]: discovered_by(y, x).
+}
+theory bijections12 : V {
+     assumption_satisfied( 12  ) => ! x [type1]: ?=<1 y [comet]: discovered_by(y, x).
+}
+theory bijections13 : V {
+     assumption_satisfied( 13  ) => ! x [comet]: ?>=1 y [cycle]: discovered_in(x, y).
+}
+theory bijections14 : V {
+     assumption_satisfied( 14  ) => ! x [comet]: ?=<1 y [cycle]: discovered_in(x, y).
+}
+theory bijections15 : V {
+     assumption_satisfied( 15  ) =>     ! x [cycle]: ?>=1 y [comet]: discovered_in(y, x).
+}
+theory bijections16 : V {
+     assumption_satisfied( 16  ) =>     ! x [cycle]: ?=<1 y [comet]: discovered_in(y, x).
+}
+theory bijections17 : V {
+     assumption_satisfied( 17  ) =>     ! x [year]: ?>=1 y [comet]: is_linked_with_1(x, y).
+}
+theory bijections18 : V {
+     assumption_satisfied( 18  ) =>     ! x [year]: ?=<1 y [comet]: is_linked_with_1(x, y).
+}
+theory bijections19 : V {
+     assumption_satisfied( 19  ) =>     ! x [comet]: ?>=1 y [year]: is_linked_with_1(y, x).
+}
+theory bijections20 : V {
+     assumption_satisfied( 20  ) =>     ! x [comet]: ?=<1 y [year]: is_linked_with_1(y, x).
+}
+theory bijections21 : V {
+     assumption_satisfied( 21  ) =>     ! x [year]: ?>=1 y [type1]: is_linked_with_2(x, y).
+}
+theory bijections22 : V {
+     assumption_satisfied( 22  ) =>     ! x [year]: ?=<1 y [type1]: is_linked_with_2(x, y).
+}
+theory bijections23 : V {
+     assumption_satisfied( 23  ) =>     ! x [type1]: ?>=1 y [year]: is_linked_with_2(y, x).
+}
+theory bijections24 : V {
+     assumption_satisfied( 24  ) =>     ! x [type1]: ?=<1 y [year]: is_linked_with_2(y, x).
+}
+theory bijections25 : V {
+     assumption_satisfied( 25  ) =>     ! x [year]: ?>=1 y [cycle]: is_linked_with_3(x, y).
+}
+theory bijections26 : V {
+     assumption_satisfied( 26  ) =>     ! x [year]: ?=<1 y [cycle]: is_linked_with_3(x, y).
+}
+theory bijections27 : V {
+     assumption_satisfied( 27  ) =>     ! x [cycle]: ?>=1 y [year]: is_linked_with_3(y, x).
+}
+theory bijections28 : V {
+     assumption_satisfied( 28  ) =>     ! x [cycle]: ?=<1 y [year]: is_linked_with_3(y, x).
+}
+theory bijections29 : V {
+     assumption_satisfied( 29  ) =>     ! x [orbital_period]: ?>=1 y [type1]: is_linked_with_4(x, y).
+}
+theory bijections30 : V {
+     assumption_satisfied( 30  ) =>     ! x [orbital_period]: ?=<1 y [type1]: is_linked_with_4(x, y).
+}
+theory bijections31 : V {
+     assumption_satisfied( 31  ) =>     ! x [type1]: ?>=1 y [orbital_period]: is_linked_with_4(y, x).
+}
+theory bijections32 : V {
+     assumption_satisfied( 32  ) =>     ! x [type1]: ?=<1 y [orbital_period]: is_linked_with_4(y, x).
+}
+theory bijections33 : V {
+     assumption_satisfied( 33  ) =>     ! x [orbital_period]: ?>=1 y [cycle]: is_linked_with_5(x, y).
+}
+theory bijections34 : V {
+     assumption_satisfied( 34  ) =>     ! x [orbital_period]: ?=<1 y [cycle]: is_linked_with_5(x, y).
+}
+theory bijections35 : V {
+     assumption_satisfied( 35  ) =>    ! x [cycle]: ?>=1 y [orbital_period]: is_linked_with_5(y, x).
+}
+theory bijections36 : V {
+     assumption_satisfied( 36  ) =>    ! x [cycle]: ?=<1 y [orbital_period]: is_linked_with_5(y, x).
+}
+theory bijections37 : V {
+     assumption_satisfied( 37  ) =>     ! x [type1]: ?>=1 y [cycle]: is_linked_with_6(x, y).
+}
+theory bijections38 : V {
+     assumption_satisfied( 38  ) =>     ! x [type1]: ?=<1 y [cycle]: is_linked_with_6(x, y).
+}
+theory bijections39 : V {
+     assumption_satisfied( 39  ) =>     ! x [cycle]: ?>=1 y [type1]: is_linked_with_6(y, x).
+
+}
+theory bijections40 : V {
+     assumption_satisfied( 40  ) =>     ! x [cycle]: ?=<1 y [type1]: is_linked_with_6(y, x).
+
+}
+
+
+theory synonyms : V {
+    // Logigram synonym axioms:
+    //! x [comet] y [orbital_period]: has(x, y) <=> has(x, y).
+    //! x [comet] y [cycle]: discovered_in(x, y) <=> discovered_in(x, y).
+}
+
+theory transitivity1 : V {
+     assumption_satisfied( 41  ) => ! x y z: is_linked_with_4(x, z) & is_linked_with_2(y, z)=>  of(x, y).
+}
+theory transitivity2 : V {
+     assumption_satisfied( 42  ) => ! x y z: is_linked_with_4(x, z) & ~ is_linked_with_2(y, z)=> ~ of(x, y).
+}
+theory transitivity3 : V {
+     assumption_satisfied( 43  ) => ! x y z: ~ is_linked_with_4(x, z) & is_linked_with_2(y, z)=> ~ of(x, y).
+}
+theory transitivity4 : V {
+     assumption_satisfied( 44  ) => ! x y z: is_linked_with_5(x, z) & is_linked_with_3(y, z)=>  of(x, y).
+}
+theory transitivity5 : V {
+     assumption_satisfied( 45  ) => ! x y z: is_linked_with_5(x, z) & ~ is_linked_with_3(y, z)=> ~ of(x, y).
+}
+theory transitivity6 : V {
+     assumption_satisfied( 46  ) => ! x y z: ~ is_linked_with_5(x, z) & is_linked_with_3(y, z)=> ~ of(x, y).
+}
+theory transitivity7 : V {
+     assumption_satisfied( 47  ) => ! x y z: discovered_by(x, z) & is_linked_with_4(y, z)=>  has(x, y).
+}
+theory transitivity8 : V {
+     assumption_satisfied( 48  ) => ! x y z: discovered_by(x, z) & ~ is_linked_with_4(y, z)=> ~ has(x, y).
+}
+theory transitivity9 : V {
+     assumption_satisfied( 49  ) => ! x y z: ~ discovered_by(x, z) & is_linked_with_4(y, z)=> ~ has(x, y).
+}
+theory transitivity10 : V {
+     assumption_satisfied( 50  ) => ! x y z: discovered_in(x, z) & is_linked_with_5(y, z)=>  has(x, y).
+}
+theory transitivity11 : V {
+     assumption_satisfied( 51  ) => ! x y z: discovered_in(x, z) & ~ is_linked_with_5(y, z)=> ~ has(x, y).
+}
+theory transitivity12 : V {
+     assumption_satisfied( 52  ) => ! x y z: ~ discovered_in(x, z) & is_linked_with_5(y, z)=> ~ has(x, y).
+}
+theory transitivity13 : V {
+     assumption_satisfied( 53  ) => ! x y z: discovered_in(x, z) & is_linked_with_6(y, z)=>  discovered_by(x, y).
+}
+theory transitivity14 : V {
+     assumption_satisfied( 54  ) => ! x y z: discovered_in(x, z) & ~ is_linked_with_6(y, z)=> ~ discovered_by(x, y).
+}
+theory transitivity15 : V {
+     assumption_satisfied( 55  ) => ! x y z: ~ discovered_in(x, z) & is_linked_with_6(y, z)=> ~ discovered_by(x, y).
+}
+theory transitivity16 : V {
+     assumption_satisfied( 56  ) => ! x y z: is_linked_with_1(z, x) & is_linked_with_2(z, y)=>  discovered_by(x, y).
+}
+theory transitivity17 : V {
+     assumption_satisfied( 57  ) => ! x y z: is_linked_with_1(z, x) & ~ is_linked_with_2(z, y)=> ~ discovered_by(x, y).
+}
+theory transitivity18 : V {
+     assumption_satisfied( 58  ) => ! x y z: ~ is_linked_with_1(z, x) & is_linked_with_2(z, y) => ~ discovered_by(x, y).
+}
+theory transitivity19 : V {
+     assumption_satisfied( 59  ) => ! x y z: is_linked_with_1(z, x) & is_linked_with_3(z, y).=>  discovered_in(x, y).
+}
+theory transitivity20 : V {
+     assumption_satisfied( 60  ) => ! x y z: is_linked_with_1(z, x) & ~ is_linked_with_3(z, y).=> ~ discovered_in(x, y).
+}
+theory transitivity21 : V {
+     assumption_satisfied( 61  ) => ! x y z: ~ is_linked_with_1(z, x) & is_linked_with_3(z, y).=> ~ discovered_in(x, y).
+}
+theory transitivity22 : V {
+     assumption_satisfied( 62  ) => ! x y z: is_linked_with_3(x, z) & is_linked_with_6(y, z)=>  is_linked_with_2(x, y).
+}
+theory transitivity23 : V {
+     assumption_satisfied( 63  ) => ! x y z: is_linked_with_3(x, z) & ~ is_linked_with_6(y, z)=> ~ is_linked_with_2(x, y).
+}
+theory transitivity24 : V {
+     assumption_satisfied( 64  ) => ! x y z: ~ is_linked_with_3(x, z) & is_linked_with_6(y, z)=> ~ is_linked_with_2(x, y).
+}
+theory transitivity25 : V {
+     assumption_satisfied( 65  ) => ! x y z:  is_linked_with_5(x, z) & is_linked_with_6(y, z)=> is_linked_with_4(x, y).
+}
+theory transitivity26 : V {
+     assumption_satisfied( 66  ) => ! x y z:  ~ is_linked_with_5(x, z) & is_linked_with_6(y, z)=> ~ is_linked_with_4(x, y).
+}
+theory transitivity27 : V {
+     assumption_satisfied( 67  ) => ! x y z: is_linked_with_5(x, z) & ~is_linked_with_6(y, z)=> ~ is_linked_with_4(x, y).
+}
+
+
+
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [orbital_period] y [year]: ct_of(x,y) => of(x,y)) &
+        (! x [orbital_period] y [year]: cf_of(x,y) => ~of(x,y)) &
+        (! x [comet] y [orbital_period]: ct_has(x,y) => has(x,y)) &
+        (! x [comet] y [orbital_period]: cf_has(x,y) => ~has(x,y)) &
+        (! x [comet] y [type1]: ct_discovered_by(x,y) => discovered_by(x,y)) &
+        (! x [comet] y [type1]: cf_discovered_by(x,y) => ~discovered_by(x,y)) &
+        (! x [comet] y [cycle]: ct_discovered_in(x,y) => discovered_in(x,y)) &
+        (! x [comet] y [cycle]: cf_discovered_in(x,y) => ~discovered_in(x,y)) &
+        (! x [year] y [comet]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [year] y [comet]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [year] y [type1]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [year] y [type1]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        (! x [year] y [cycle]: ct_is_linked_with_3(x,y) => is_linked_with_3(x,y)) &
+        (! x [year] y [cycle]: cf_is_linked_with_3(x,y) => ~is_linked_with_3(x,y)) &
+        (! x [orbital_period] y [type1]: ct_is_linked_with_4(x,y) => is_linked_with_4(x,y)) &
+        (! x [orbital_period] y [type1]: cf_is_linked_with_4(x,y) => ~is_linked_with_4(x,y)) &
+        (! x [orbital_period] y [cycle]: ct_is_linked_with_5(x,y) => is_linked_with_5(x,y)) &
+        (! x [orbital_period] y [cycle]: cf_is_linked_with_5(x,y) => ~is_linked_with_5(x,y)) &
+        (! x [type1] y [cycle]: ct_is_linked_with_6(x,y) => is_linked_with_6(x,y)) &
+        (! x [type1] y [cycle]: cf_is_linked_with_6(x,y) => ~is_linked_with_6(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::of], S2[V::of].ct)
+    removeFrom(S3[V::of], S2[V::of].cf)
+    removeFrom(S3[V::has], S2[V::has].ct)
+    removeFrom(S3[V::has], S2[V::has].cf)
+    removeFrom(S3[V::discovered_by], S2[V::discovered_by].ct)
+    removeFrom(S3[V::discovered_by], S2[V::discovered_by].cf)
+    removeFrom(S3[V::discovered_in], S2[V::discovered_in].ct)
+    removeFrom(S3[V::discovered_in], S2[V::discovered_in].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
+    removeFrom(S3[V::is_linked_with_4], S2[V::is_linked_with_4].ct)
+    removeFrom(S3[V::is_linked_with_4], S2[V::is_linked_with_4].cf)
+    removeFrom(S3[V::is_linked_with_5], S2[V::is_linked_with_5].ct)
+    removeFrom(S3[V::is_linked_with_5], S2[V::is_linked_with_5].cf)
+    removeFrom(S3[V::is_linked_with_6], S2[V::is_linked_with_6].ct)
+    removeFrom(S3[V::is_linked_with_6], S2[V::is_linked_with_6].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::of, VExtra::ct_of, VExtra::cf_of},
+        {V::has, VExtra::ct_has, VExtra::cf_has},
+        {V::discovered_by, VExtra::ct_discovered_by, VExtra::cf_discovered_by},
+        {V::discovered_in, VExtra::ct_discovered_in, VExtra::cf_discovered_in},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+        {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
+        {V::is_linked_with_4, VExtra::ct_is_linked_with_4, VExtra::cf_is_linked_with_4},
+        {V::is_linked_with_5, VExtra::ct_is_linked_with_5, VExtra::cf_is_linked_with_5},
+        {V::is_linked_with_6, VExtra::ct_is_linked_with_6, VExtra::cf_is_linked_with_6},
+    }
+}
+
+include "./generic_procedures-split.idp"
 
 procedure main() {
-    stdoptions.nbmodels = 10;
-    printmodels(modelexpand(T,S))
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "The comet discovered by Whitaker doesn't have an orbital period of 30 years"},
+        {T2, "Gostroma was discovered 1 cycle after the comet discovered by Tillman"},
+        {T3, "Of the comet discovered by Underwood and the comet with an orbital period of 42 years, one was found in 2009 and the other is Trosny"},
+        {T4, "The comet with an orbital period of 21 years is either the comet discovered by Whitaker or Casputi"},
+        {T5, "The comet discovered in 2010 doesn't have an orbital period of 21 years"},
+        {T6, "The comet discovered by Tillman, the comet discovered in 2011 and Casputi are three different comets"},
+        {T7, "Sporrin wasn't found in 2010"},
+        {T8, "Whitaker's comet was discovered in 2010"},
+        {T9, "The comet discovered by Parks was discovered 1 cycle before Whitaker's comet"},
+        {T10, "The comet discovered in 2011 doesn't have an orbital period of 47 years"},
+        {T11, "The comet discovered by Underwood has an orbital period of either 47 or 58 years"},
+    }
+
+    S = compute_explanations(theories,S)
+
+    os.exit(0)
 }
 
+procedure get_bij_theories(){
+    bijection_theories = {
+        {bijections1}, "Bijectivity"}, 
+        {bijections2}, "Bijectivity"}, 
+        {bijections3}, "Bijectivity"}, 
+        {bijections4}, "Bijectivity"}, 
+        {bijections5}, "Bijectivity"}, 
+        {bijections6}, "Bijectivity"}, 
+        {bijections7}, "Bijectivity"}, 
+        {bijections8}, "Bijectivity"}, 
+        {bijections9}, "Bijectivity"}, 
+        {bijections10}, "Bijectivity"}, 
+        {bijections11}, "Bijectivity"}, 
+        {bijections12}, "Bijectivity"}, 
+        {bijections13}, "Bijectivity"}, 
+        {bijections14}, "Bijectivity"}, 
+        {bijections15}, "Bijectivity"}, 
+        {bijections16}, "Bijectivity"}, 
+        {bijections17}, "Bijectivity"}, 
+        {bijections18}, "Bijectivity"}, 
+        {bijections19}, "Bijectivity"}, 
+        {bijections20}, "Bijectivity"}, 
+        {bijections21}, "Bijectivity"}, 
+        {bijections22}, "Bijectivity"}, 
+        {bijections23}, "Bijectivity"}, 
+        {bijections24}, "Bijectivity"}, 
+        {bijections25}, "Bijectivity"}, 
+        {bijections26}, "Bijectivity"}, 
+        {bijections27}, "Bijectivity"}, 
+        {bijections28}, "Bijectivity"}, 
+        {bijections29}, "Bijectivity"}, 
+        {bijections30}, "Bijectivity"}, 
+        {bijections31}, "Bijectivity"}, 
+        {bijections32}, "Bijectivity"}, 
+        {bijections33}, "Bijectivity"}, 
+        {bijections34}, "Bijectivity"}, 
+        {bijections35}, "Bijectivity"}, 
+        {bijections36}, "Bijectivity"}, 
+        {bijections37}, "Bijectivity"}, 
+        {bijections38}, "Bijectivity"}, 
+        {bijections39}, "Bijectivity"}, 
+        {bijections40}, "Bijectivity"}, 
+    }
+    return  bijection_theories
+}
+
+procedure get_trans_theories(){
+    transitivity_theories = {
+        {transitivity1}, "Transitivity constraint"}, 
+        {transitivity2}, "Transitivity constraint"}, 
+        {transitivity3}, "Transitivity constraint"}, 
+        {transitivity4}, "Transitivity constraint"}, 
+        {transitivity5}, "Transitivity constraint"}, 
+        {transitivity6}, "Transitivity constraint"}, 
+        {transitivity7}, "Transitivity constraint"}, 
+        {transitivity8}, "Transitivity constraint"}, 
+        {transitivity9}, "Transitivity constraint"}, 
+        {transitivity10}, "Transitivity constraint"}, 
+        {transitivity11}, "Transitivity constraint"}, 
+        {transitivity12}, "Transitivity constraint"}, 
+        {transitivity13}, "Transitivity constraint"}, 
+        {transitivity14}, "Transitivity constraint"}, 
+        {transitivity15}, "Transitivity constraint"}, 
+        {transitivity16}, "Transitivity constraint"}, 
+        {transitivity17}, "Transitivity constraint"}, 
+        {transitivity18}, "Transitivity constraint"}, 
+        {transitivity19}, "Transitivity constraint"}, 
+        {transitivity20}, "Transitivity constraint"}, 
+        {transitivity21}, "Transitivity constraint"}, 
+        {transitivity22}, "Transitivity constraint"}, 
+        {transitivity23}, "Transitivity constraint"}, 
+        {transitivity24}, "Transitivity constraint"}, 
+        {transitivity25}, "Transitivity constraint"}, 
+        {transitivity26}, "Transitivity constraint"}, 
+        {transitivity27}, "Transitivity constraint"}, 
+    }
+    return transitivity_theories
+}

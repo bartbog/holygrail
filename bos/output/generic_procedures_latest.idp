@@ -1,0 +1,537 @@
+//This is a comment
+
+// Nieuw idee:
+// Splits bijections en transitivities op. 
+// Nog steeds na elke propagatie: alles daarmee doen. Maar... Deze keer 1 per 1. Dit zal ervoor zorgen dat de propagaties "mooier" zijn. 
+// Twee opties:
+//   - De echte theorieen krijgen nog altijd de full bijections cadeau. 
+//   - We beginnen met theorieen zonder bijections etc; voegen er 1 toe; voegen er twee toe; ... 
+//     - Merk op: zolang we nog met nul assumpties zitten kunnen we ELKE propagatie zomaar doen. Nul is eigenlijk special case. 
+//     - Merk op: Ook met 1 assumptie zal "alle bijections toevoegen aan theorieën" waarschijlijk weinig schade aanbrengen... 
+//     - IDEE: ipv unsatstructure, volledige unsatcore gebruiken??? Risico is dat hij de forcing constraint weghaalt natuurlijk... 
+// Idee is alles from scratch te doen (beter)
+// Mogelijke optimalisatie: queue bijhouden en slim nagaan wanneer updaten en wanneer niet. 
+
+
+//IDEA: can we get a core-size for an entire propagation at once: Idea: we add constraint "ALL of these must be violated". We compute a core for that. That is a minimal subtheory that allows concluding something. Might be a lot faster than doing this for each<< 
+// BUT I DO NOT THINK THIS WOULD ACTUALLY WORK: the problem is that "everything wrong" can be explained waaay to easily... eg by a bijection constraint on two of these wrong assumptions... 
+
+//OTHER IDEA: what if we reimplement the loop as follows: 
+// One huge theory: with everything asusmptions. 
+//   Take minimal core of "somtething is not as it is supposed to be" 
+// Repeat.    
+include <table_utils>
+
+procedure compute_explanations(theories,S){
+  print("[")
+	theories = add_implicit_theory(theories)
+	//THIS CODE IS IF WE do use the ultimate version... 
+	theories = make_ultimate_theories(theories)
+
+	theories = add_synonymy_information_theories(theories)
+	S = inner_explanation_loop(theories,S) 
+
+
+	//THIS CODE IS IF WE DO NOT WANT TO USE THE ULTIMATE VERSION OF THE THEORIES
+/*	inner_explanation_loop(theories,S)
+	while not isTwoValued(S) do 
+		theories = make_more_theories(theories,bijection_theories)
+		inner_explanation_loop(theories,S)
+	end
+*/
+
+	clean(S)
+	debug(S)
+  print("{\n\t\"clue\": \"Solution!\",\n\t\"assumptions\": [],\n\t\"derivations\": []\n}]")
+}
+
+
+
+//The inner explanation loop does not merge theories with background info. It simply lets the plain theories propagate.  
+// In case firstRun is true, only propagations with 0 assumptions are prioritized, otherwise also 
+procedure inner_explanation_loop(theories,S){
+	updated = true
+	exception = 0
+		propagations = {} 
+	while (updated or #propagations>0) do
+		updated = false
+		S_orig = clone(S)
+
+		//make the propagation list: 
+	debug("makelist")
+		for i, theory in ipairs(theories) do
+		debug("goProp")
+			S,propagations = addToPropagations(S,theory[1],theory[2],propagations,exception)
+	debug("doneProp")
+		end
+		//Sort the propagation list
+	debug("sort")
+		table.sort(propagations, function (left, right)
+									return left[5] < right[5]
+								end)
+		
+		//Perform some propagations from the list. Here... All the shortest. 
+		// Notice... Everything not done now is kept for in the next round. Maybe we find better things then, maybe not...
+		// An optimization would be to only keep the best propagation for each literal... 
+		while (not updated and #propagations > 0) do //might be that all short propagations do nothing (from previous time) 
+			if #propagations > 0 then
+				shortestExpl = propagations[1][5]
+				//Optimization: next round, anything of length at most the shortest thing found+1 now will be accepted (speed optimization -- Don't know how helpful...)
+				exception = shortestExpl - 4	
+				debug("Shortest explanation size")
+				debug(shortestExpl)
+				newpropagations = {}
+				for i,prop in ipairs(propagations) do
+					if prop[5] < shortestExpl + 1 then
+						S = doPropagation(S, prop[1],prop[2],prop[3],prop[4],false, prop[5])
+					else
+						table.insert(newpropagations,prop)
+					end
+				end
+			end
+			propagations = newpropagations
+			debug("End inner loope")
+			debug(S)
+			debug(S_orig)
+			if not equal(S,S_orig) then
+				debug("updated... Go again")
+				updated = true
+			end
+		end
+	end
+	return S
+	
+}
+
+//Checks what can be propagated from S using T, computes the size of its explanation, and adds it to the list of propagation
+// Exception, if size is exactly one, is performed immediately (optimization)
+//  -> For size 0, will happen in the beginn automatically anyway. 
+//SPECIAL CASE NOT DONE. DOES NOT CHANGE S FOR THE MOMENT
+procedure addToPropagations(S,T,reason,propagations,exception){
+	Snew = optimalpropagate(T,S)
+	if equal(S,Snew) then
+		return S,propagations
+	end
+	debug("here")
+	//Compute everything that *can* be propagated:
+    d = diff(Snew,S)
+	debug("diffdone")
+	//These are all the derivable tuples. We will explain one by one and pick the smallest explanation.
+	difftuples = convertStructureToTupleList(d)
+	debug("startloope")
+	for i,t in ipairs(difftuples) do
+		debug("findexplanation")
+		Sexpl = explainOnePropagation(S,T,t)
+		debug("foundexplanation")
+		explSize =  cost(Sexpl)
+		if explSize < exception then
+			S = doPropagation(S, Sexpl,T,t,reason,false,explSize)
+		else
+			table.insert(	propagations, {Sexpl,T,t,reason,explSize} ) 
+			debug("Found propagation with cost")
+			debug(explSize)
+		end
+	end	
+	return S,propagations
+
+}
+
+//T is a theory such that from T and S, t can be propagated
+//Returns the explaining structure
+procedure explainOnePropagation(S,T,t,doNotOptimize)  {
+	STemp = clone(S) 
+	if not doNotOptimize then
+		//OPTIMIZATION HAPPENING HERE:
+		//Can be disabled with option. For instance for implicit propagations this would not be correct!
+		debug("preparing")
+		STemp = prepareStructureForPropagation(S)
+	end
+	debug("done preparing")
+	setvocabulary(STemp,VExtra)
+	maketrue(STemp[t[2]],t[3])
+	for i, pred in ipairs(getpredlist()) do
+        STemp[pred[2]].pt = STemp[pred[2]].ct
+        STemp[pred[3]].pt = STemp[pred[3]].ct
+	end
+	//Now STemp is a structure in which one specific thing should be explained. 
+	//We minimize its explanation:
+	tempT = merge(T,forceSomethingWrongValue)
+ 	//Find minimally precise structure Sexpl that explains all the findings given the current clue.
+
+//TODO REMOVE DEBUG
+if sat(tempT,STemp) then
+	print("ORIG")
+	print(S)
+	print("OPT")
+	print(Stemp)
+	print("THEO")
+	print(tempT)
+	print("model")
+	print(onemodel(tempT,STemp))
+end
+    Sexpl =         unsatstructure(tempT,STemp,V)
+	setvocabulary(Sexpl,V)
+	return Sexpl
+}
+
+procedure doPropagation(S,Sexpl,T,t,reason,skip_implicit){
+//	if S[t[1]].ct(t[2])
+	//At this point, we know that from Sexpl we can propagate using T that t holds
+	// But... since the point we decided this, S might have changed, so better propagations might be possible. 
+	// So, we will do two additional checks:
+	// Search a new minimal propagation from S to t using T
+	// Search a new minimal propagation from S to t using T starting from the positive part of S
+	// We take the cheapest of the three found options... 
+	// Reason to do this: if we are propagating anyway, a little extra cost is okay :-) 
+	// We DO NOT do this optimization if skip_implicit holds: in that case we are working with such simple theories that will not help us... 
+	if not skip_implicit then
+		Sexpl2 = explainOnePropagation(S,T,t,true)
+		if cost(Sexpl2) < cost(Sexpl) then
+			Sexpl = Sexpl2
+		end
+		Sexpl2 = explainOnePropagation(S,T,t,false)
+		if cost(Sexpl2) < cost(Sexpl) then
+			Sexpl = Sexpl2
+		end
+	end
+	//Update reason if needbe:
+	if not Sexpl[V::assumption_satisfied].ct(0) and not skip_implicit then
+		//Theory not used!
+		reason = "Combination of logigram constraints"
+	end
+		
+	result = optimalpropagate(T,Sexpl)
+	newdiff = diff(result,S)
+	if #convertStructureToTupleList(newdiff) > 0 then
+		printExplanation(Sexpl,newdiff,reason,cost(Sexpl))
+		addTo(S,newdiff)
+		if not skip_implicit then
+			S = do_implicit_propagations(S)
+		end
+	end 
+	
+	return S
+}
+
+procedure do_implicit_propagations(S){
+	relevant_theories =  get_implicit_theories()
+
+	changed = true
+	while changed do
+		Sold = clone(S)
+		for j, theoryPair in ipairs(relevant_theories) do
+			T = theoryPair[1]
+			reason = theoryPair[2]
+			Snew = optimalpropagate(T,S)
+		    d = diff(Snew,S)
+			difftuples = convertStructureToTupleList(d)
+			for i,t in ipairs(difftuples) do
+				Sexpl = explainOnePropagation(S,T,t,true) 
+				doPropagation(S,Sexpl,T,t,reason,true,cost(Sexpl))
+			end
+		end
+		changed = not equal(Sold,S)
+	end
+
+
+	return S
+}
+
+// //============================================================\\
+// || THEORY MANIPULATION SPECIFICALLY FOR THIS TASK             ||
+// \\============================================================//
+
+procedure make_ultimate_theories(theories){
+	bijection_theories = get_bij_theories()
+	trans_theories = get_trans_theories()
+	result = {}
+	for i, theory in ipairs(theories) do
+		T = theory[1]
+		clue = theory[2]
+/*		for j, bij in ipairs(bijection_theories) do
+			T = merge(T,bij[1])
+		end
+*/
+		stringT = tostring(T)
+		for j, otherT in ipairs(get_implicit_theories()) do 
+			//THIS IS AN OPTIMIZATION:
+			// HOWEVER: IT BREAKS CERTAIN OTHER THINGS... E.G. THE preparestructure... 
+			// SO... I DISABLED IT AGAIN... 
+			// ALSO: I foudn the explanations better when it was still disabled... 
+			// Each theory is only merged with those implicit theories that "match" with it 
+			// i.e., that use some shared symbol (alternative: that use only shared symbols) 
+			/*shouldmerge = false
+			stringOtherT = tostring(otherT[1])
+			for i, pred in ipairs(getpredlist()) do
+				predname = name(pred[1])
+				if string.match(stringOtherT, predname) and string.match(stringT,predname) then
+					shouldmerge = true
+					debug(" merging these theories:")
+					debug(stringT)
+					debug(stringOtherT)
+					debug("for reason:")
+					debug(predname)
+				end
+			end
+			if shouldmerge then*/
+				T = merge(T,otherT[1])
+			//end
+		end
+		table.insert(result,{T,clue})
+	end
+	
+	return result
+
+}
+
+
+procedure make_more_theories(theories){
+	debug("making more theories")
+	bijection_theories = get_named_bij_theories()
+	result = {}
+    for i, theory in ipairs(theories) do
+		for j, bij in ipairs(bijection_theories) do
+			new = merge(theory[1],bij[1])
+			table.insert(result, {new, theory[2]})
+		end
+	end
+	return result
+
+
+}
+
+procedure add_implicit_theory(theories){
+	myT = synonyms
+	for j, otherT in ipairs(get_implicit_theories()) do 
+		myT = merge(myT, otherT[1])
+	end
+	result = {{myT,"Combination of logigram constraints"}}
+	for j, T in ipairs(theories) do
+		table.insert(result,T)
+	end
+	return result
+}
+
+//Merges each theory with synonyms 
+procedure add_synonymy_information_theories(theories){
+   	for i, theory in ipairs(theories) do
+		theories[i][1] = merge(theory[1],synonyms)
+	end
+	return theories
+}
+
+
+procedure get_implicit_theories(){
+	relevant_theories =  get_bij_theories()
+	for j, bij in ipairs(get_trans_theories()) do
+		table.insert(relevant_theories,bij)
+	end
+	return relevant_theories
+}
+
+// //============================================================\\
+// || AUXILIARY METHODS FOR STRUCTURE MANIPULATION.              ||
+// \\============================================================//
+
+
+
+// Converts a structure into a list of tuples, for easy iteration and counting
+procedure convertStructureToTupleList(d){
+	difftuples = {}
+
+	for i, pred in ipairs(getpredlist()) do
+		for tuple in tuples(d[pred[1]].ct) do
+			table.insert(difftuples, {pred[1], pred[2], tuple})
+		end
+		for tuple in tuples(d[pred[1]].cf) do
+			table.insert(difftuples, {pred[1], pred[3] , tuple})
+		end
+	end
+	return difftuples
+}
+
+procedure size(S){
+	//HERE THE WEIGHING OF EXPLANATION SIZE IS DONE.
+	result = #convertStructureToTupleList(S)
+	if result == 0 then
+		//Special case: no assumptions needed; only clue is super easy! 
+		return 0
+	end
+	for tuple in tuples(S[V::assumption_satisfied].ct) do
+		result = result +1
+	end
+	return result
+}
+
+procedure cost(S){
+	//Number of clues
+    nbClues = 0
+	//Number of constraints including clues
+	nbConstraints = 0 
+	if Sexpl[V::assumption_satisfied].ct(0) then
+        //General case not detectable yet.
+		nbClues = 1
+	end
+	for tuple in tuples(S[V::assumption_satisfied].ct) do
+		nbConstraints = nbConstraints + 1 
+	end
+	
+	basecost = 0 
+	if nbClues + nbConstraints > 1 then
+		basecost = 20
+	end
+	return basecost + size(S)
+
+}
+
+procedure addTo(S, d){
+        for i, pred in ipairs(getpredlist()) do
+			for tuple in tuples(d[pred[1]].ct) do      
+				maketrue(S[pred[1]], tuple)
+			end
+			for tuple in tuples(d[pred[1]].cf) do      
+				makefalse(S[pred[1]], tuple)
+			end
+		end
+}
+
+procedure removeFrom(table, truethings){
+
+        for tuple in tuples(truethings) do      
+                makeunknown(table,tuple)
+        end
+
+}
+
+
+procedure prepareStructureForPropagation(S){
+	trueS = clone(S)
+    for i, pred in ipairs(getpredlist()) do
+        trueS[pred[1]].cf = {}
+	end
+
+	fromTrueS = clone(trueS)
+
+	for i, T in ipairs(get_bij_theories()) do
+		fromTrueS = optimalpropagate(T[1],fromTrueS)
+	end
+	
+	result = trueS
+	d = diff(S,fromTrueS)
+	addTo(result,d)
+	return result
+}
+
+
+
+// //============================================================\\
+// || AUXILIARY STUFF FOR PRINTING THINGS NICELY..;              ||
+// \\============================================================//
+
+
+
+
+procedure debug(text){
+//	io.stderr:write("DEBUG... ")
+//	print(text)
+}
+
+
+procedure printExplanation(Sexpl,d,clue,cost){
+		preds = getpredlist()
+		mystring = ""
+			mystring = mystring .. "{\n\t\"cost\": \""..cost.."\",\n\t\"clue\": \""..clue.."\",\n\t\"assumptions\": [  "
+        for i, pred in ipairs(preds) do
+                for tuple in tuples(Sexpl[pred[1]].ct) do
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
+                        
+                end
+                for tuple in tuples(Sexpl[pred[1]].cf) do
+
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
+                    
+                end
+        end
+
+			mystring = mystring:sub(1,-2)
+			mystring = mystring .. "\n\t],\n\t\"derivations\": ["
+		
+        for i, pred in ipairs(preds) do
+                for tuple in tuples(d[pred[1]].ct) do
+
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
+                    
+                end
+                for tuple in tuples(d[pred[1]].cf) do
+
+							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
+                    
+                end
+        end
+
+			mystring = mystring:sub(1,-2)
+			mystring = mystring .. "\n\t]\n},"
+		
+        print(mystring)
+}
+
+
+
+
+
+// //============================================================\\
+// || EVERYTHING UNDER THIS LINE IS NOT YET USED IN THE REVISION ||
+// \\============================================================//
+
+
+
+procedure copyForcedValues(d,STemp){
+
+        for i, pred in ipairs(getpredlist()) do
+                STemp[pred[2]].ct = d[pred[1]].ct
+                STemp[pred[2]].pt = d[pred[1]].ct
+                STemp[pred[3]].ct = d[pred[1]].cf
+                STemp[pred[3]].pt = d[pred[1]].cf
+        end
+}
+
+
+
+
+
+procedure isTwoValued(S){
+	backup  = stdoptions.nbmodels
+	stdoptions.nbmodels = 2
+	nbfound = #nbModelsTwoValuedExtensions(S)
+	stdoptions.nbmodels = backup
+	return nbfound == 1
+}
+
+procedure combine(T1, T2){
+	newTheories = {}
+	for i,t1 in ipairs(T1) do
+		for j,t2 in ipairs(T2) do
+			newT = merge(t1[1],t2[1])
+			newClue = t1[2] .. "\" in combination with the clue \"" .. t2[2] 
+			table.insert(newTheories,{newT,newClue})
+		end
+	end
+	return newTheories
+
+}
+
+
+procedure test(theories, S){
+	myT = merge(bijections,synonyms)
+	myT = merge(myT,transitivity)
+	for i,t in ipairs(theories) do
+		myT = merge(myT,t[1])
+	end
+	stdoptions.nbmodels = 10;
+	models = modelexpand(myT,S)
+	if #models > 1 then
+		print("Solution not unique!")
+		printmodels(models)
+		os.exit(10)
+	end
+}

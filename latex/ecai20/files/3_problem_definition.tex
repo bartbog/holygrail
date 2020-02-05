@@ -2,7 +2,8 @@
 %When a person solves a logic grid puzzle, they typically maintain a grid with all the information obtained so far and use it in combination with the clues to derive new conclusions. In logic terminology, the user maintains a partial interpretation.  
 %With this in mind, the goal underlying our tool is to find a sequence of partial interpretations of the involved relations (e.g., in which it is known that Angie did not choose arrabiata sauce, but it still unknown whether she ordered farfalle) with an 
 %\emph{explanation} (see below) of why each of the steps is correct that is ``simple enough for a person to understand''. 
-The overarching goal of this paper is to generate a sequence of small reasoning steps, each with an interpretable explanation. We first introduce the concept of an explanation of a reasoning step, after which we introduce a cost function for a reasoning step and the cost of a sequence of reasoning steps. 
+The overarching goal of this paper is to generate a sequence of small reasoning steps, each with an interpretable explanation. 
+We first introduce the concept of an explanation of a reasoning step, after which we introduce a cost function for a reasoning step and the cost of a sequence of reasoning steps. 
 
 \myparagraph{Explanation of reasoning steps.}
 We assume that a theory $\allconstraints$ and an initial partial interpretation $I_0$ are given and fixed. 
@@ -15,7 +16,7 @@ We define the \textbf{maximal consequence} of a theory $\allconstraints$ and par
 Phrased differently, $max(I,T)$ is the intersection of all the models of $T$ more precise than $I$; this is also known as the set of \emph{cautious consequences} of $T$ and $I$ and corresponds to ensuring \emph{global consistency} in constraint solving. 
 Algorithms for computing cautious consequences without explicitly enumerating all models exist, such as for instance the ones implemented in clasp \cite{DBLP:conf/lpnmr/GebserKS09} or \idp \cite{IDP} (in the latter system the task of computing all cautious consequences is called \emph{optimal-propagate} since it performs the strongest propagation possible).
 
-Weaker levels of propagation consistency can be used as well, leading to a potentially smaller maximal consequence interpretation $max_{other-consistency}(I,T)$
+Weaker levels of propagation consistency can be used as well, leading to a potentially smaller maximal consequence interpretation $max_{other-consistency}(I,T)$. 
 The rest of this paper assumes we want to construct a sequence that starts at $I_0$ and ends at $max(I_0,\allconstraints)$ for some consistency algorithm, i.e., that can explain all computable consequences of $\allconstraints$ and $I_0$. %However, all of our algorithms remain to work if a different (weaker) notion of propagation or consistency level is used. In fact, the only changes needed to our algorithms is to replace the implementation of the ``propagate'' method by a different propagation method. 
 
 %\bart{Tias, kijk jij eens met CP bril naar bovenstaande stukje?}
@@ -36,7 +37,7 @@ The goal of our work is not just to obtain a sequence of incremental partial int
 %\[ I_0 = \emptyset, I_1 = I_0 \cup N_1, \dots , I_n = I_{n-1}\cup N_n\]
 %where $I_i$ represents the state of the grid at each point in time and $N_i$ represents the newly derived information. 
 % Additionally, 
-for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized, such as in Figure~\ref{fig:zebrascreen}, it will show to the user precisely which information and constraints were used to derive a new piece of information.
+for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized, such as in Figure~\ref{fig:zebrascreen}, it will show the user precisely which information and constraints were used to derive a new piece of information.
 
 % \tias{This needs removal/trimming by Bart}
 % Since we are working in the context of a given fixed finite domain, we identify a partial structure with a consistent set of ground literals (i.e., a set of variable-free literals that do not contain both an atom and its negation), and thus $I_i\geqp I_{i-1}$ iff $I_i\supseteq I_{i-1}$.
@@ -72,7 +73,8 @@ That is, we want a non-redundant explanation $(E_i,S_i,N_i)$ where none of the f
 
 \begin{definition} \label{def:nonred}
 A \textbf{non-redundant explanation sequence} is a sequence 
-\[(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n))\]
+\[\langle(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n))\rangle\]
+%\[(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n))\]
 such that $(I_i)_{i\leq n}$ is sequence of incremental partial interpretations and each $(E_i,S_i,N_i)$ explains the derivation of $I_i$ from $I_{i-1}$.
 \end{definition} 
 %\tias{Perhaps the above warants its own definition of 'subset minimal explanation'? Then we can more formalite translate the use of MUS's to it later}
@@ -104,7 +106,7 @@ As a starting point, we here consider the total cost to be an aggregation of the
 
 \begin{definition}
 Given a theory $\allconstraints$ and initial partial interpretation $I_0$, the \textbf{explanation-production problem} consist of finding a non-redundant explanation sequence
-\[(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n))\]
+\[\langle(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n))\rangle\]
 such that a predefined aggregate over the sequence $\left(f(E_i,S_i,N_i)\right)_{i\leq n}$ is minimised.
 \end{definition} 
 % \tias{check that $I_n$ etc definition matches the one defined higher up}

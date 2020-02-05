@@ -4,7 +4,7 @@ Before defining a cost-function, and the estimation for $g$ used in our implemen
 
 \textbf{Observation 1: propagations from a single implicit constraint are very easy to understand} Contrary to the clues, the implicit constraints (transitivity/bijectivity) are very limited in form and propagations over them follow well-specified patterns. 
 For instance in the case of bijectivity, a typical pattern that occurs is that when $X-1$ out of $X$ possible values for a given function have been derived not to be possible, it is propagated that the last value should be true; this is visualized for instance in Figure \ref{fig:zebrascreen}. 
-Hence, in our implementation, we ensure that they are always performed first. Stated differently, $g$ and $f$ are desigend in such a way that $g(S_1)\geq f(I,S_2)$ whenever $S_2$ consists of only one implicit constraint and $S$ does not. 
+Hence, in our implementation, we ensure that they are always performed first. Stated differently, $g$ and $f$ are desigend in such a way that $g(S_1)\geq f(I,S_2)$ whenever $S_2$ consists of only one implicit constraint and $S_1$ does not. 
 
 \textbf{Observation 2: clues propagate rarely by themselves}
 We observed that the automatically obtained logic representation of clues usually has quite weak (unit) propagation strength in isolation. 
@@ -31,6 +31,7 @@ With these three observations in mind, we devised $f$ and $g$ as follows (where 
                                20\cdot nc(C) & \text{otherwise}
                               \end{array}\right.
                               \end{align*}
+                              
 The number $20$ is taken here to be larger than any reasonable explanation size. 
 The effect of this,  is that we can generate our subsets $S$ in Line \ref{alg:min:for}
  of Algorithm \ref{alg:minexpl} in the following order:

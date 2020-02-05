@@ -16,11 +16,6 @@ The algorithm itself is written in embedded LUA, which provides an imperative en
 
 \myparagraph{1. Sequence composition}
 We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The puzzle identified as p is our running example. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(I_0,\allconstraints)$.
-
-Coincidentally, almost all the puzzles have 4 types with domain size 5,  
-%  \todo{EMILIO: FIX, also the table!}, 
-hence 150 cells, except for the pasta puzzle which has 4 types, with domain size 4, thus 96 cells. We notice that the number of inference steps is around 120 for all but the pasta puzzle. When investigating the proportion of the inference steps that use bijections (only), transitivity (only) or a clue, we can see that around 50\% the explanations typically use a transitivity constraint, around 25\% typically a trivial bijectivity constraint (e.g. completing a row or column in one relation), and less then $1/5$th of the explanations actually need to use a clue.
-In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints and multiple clues respectively. We can see that it is never necessary to combine multiple constraints in one inference step. Also, notably, the puzzles from the booklet never require combining implicit constraints, while the anecdotically hard pasta puzzle is the only one that does: it cannot be solved by focussing on the clues but requires combining facts and knowledge in the table alone to crack it.
 \begin{table}
 	\centering
 	\resizebox{\columnwidth}{!}{%
@@ -49,11 +44,14 @@ In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints 
 \caption{Composition of puzzle explanations}
 \label{table:composition}
 \end{table}
-\setlength{\parskip}{-12pt}
+Coincidentally, almost all the puzzles have 4 types with domain size 5,  
+%  \todo{EMILIO: FIX, also the table!}, 
+hence 150 cells, except for the pasta puzzle which has a domain size 4, thus 96 cells. We notice that the number of inference steps is around 120 for all but the pasta puzzle. When investigating the proportion of the inference steps that use bijections (only), transitivity (only) or a clue, we can see that around 50\% the explanations typically use a transitivity constraint, around 25\% typically a trivial bijectivity constraint (e.g. completing a row or column in one relation), and less then $1/5$th of the explanations actually need to use a clue.
+In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints and multiple clues respectively. We can see that it is never necessary to combine multiple constraints in one inference step. Also, notably, the puzzles from the booklet never require combining implicit constraints, while the anecdotically hard pasta puzzle is the only one that does: it cannot be solved by focussing on the clues but requires combining facts and knowledge in the table alone to crack it.
+
+%\setlength{\parskip}{-12pt}
 
 \myparagraph{2. Sequence progression} Figure \ref{fig:steps} shows a visualisation the type of explanation used at every step of the sequence, for some different puzzles. The red line is the pasta puzzle. We can see that typically at the beginning of the sequence, clues (4th line) and bijectivity (2nd line) are used, i.e., the trivial ones. This is then followed by a round of clues and some bijectivity/transitivity, after which a large fraction of the table can be completed with bijectivity/transitivty, followed by a few last clues and another round of completion.\setlength{\parskip}{0pt}
-
-The exception to this is the pasta puzzle. We can see that after around 20 steps where mostly clues have been used, twice a combination of implicit logigram constraints must be used to derive a new fact, after which the table can be easily completed with bijectivity/transitivity and twice the use of a clue.
 
 \begin{figure}[H]
 \centering
@@ -62,16 +60,8 @@ The exception to this is the pasta puzzle. We can see that after around 20 steps
 \includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_nielspasta}\caption{Type of constraints used in each step}
 \label{fig:steps}
 \end{figure}
-%\todo{in case of space constraints: make figure smaller again. }
-\setlength{\parskip}{-12pt}
 
-\myparagraph{3. Explanation size.}
-Our cost-function is constructed to favor few (if any) clues and constraints in the explanations, and few previously derived facts $|E|$. Table~\ref{table:sequence_leve} shows the average number of facts used per explanation. We also show the average number of facts used when using only bijectivity or transitivity, or when a clue is used.\setlength{\parskip}{0pt}
-
-
-We can observe that the average number of facts used is indeed low, less than two. Furthermore, the breakdown shows that bijectivity typically uses more facts: it uses three `negative' facts in one row to infer a `positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one `positive' fact to infer three negative facts. Note that for such an intuitive constraint, the number of facts used does not matter much. Transitivity, by nature, always uses two previously derived facts. Finally, when looking at the number of facts used together with a clue we can see that our approach successfully finds small explanations: many clues (the trivial ones) use no facts, while some use 1 fact and only occasionally 2 or more facts are needed. The exception is again the difficult pasta puzzle.
-
-% \tias{Ideal table:}
+The exception to this is the pasta puzzle. We can see that after around 20 steps where mostly clues have been used, twice a combination of implicit logigram constraints must be used to derive a new fact, after which the table can be easily completed with bijectivity/transitivity and twice the use of a clue.
 
 \begin{table}
 	\centering
@@ -103,6 +93,18 @@ We can observe that the average number of facts used is indeed low, less than tw
 	\caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
 	\label{table:sequence_leve}
 \end{table}
+%\todo{in case of space constraints: make figure smaller again. }
+%\setlength{\parskip}{-12pt}
+
+\myparagraph{3. Explanation size.}
+Our cost-function is constructed to favor few (if any) clues and constraints in the explanations, and few previously derived facts $|E|$. Table~\ref{table:sequence_leve} shows the average number of facts used per explanation. We also show the average number of facts used when using only bijectivity or transitivity, or when a clue is used.\setlength{\parskip}{0pt}
+
+
+We can observe that the average number of facts used is indeed low, less than two. Furthermore, the breakdown shows that bijectivity typically uses more facts: it uses three `negative' facts in one row to infer a `positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one `positive' fact to infer three negative facts. Note that for such an intuitive constraint, the number of facts used does not matter much. Transitivity, by nature, always uses two previously derived facts. Finally, when looking at the number of facts used together with a clue we can see that our approach successfully finds small explanations: many clues (the trivial ones) use no facts, while some use 1 fact and only occasionally 2 or more facts are needed. The exception is again the difficult pasta puzzle.
+
+% \tias{Ideal table:}
+
+
 % 			pasta & 4 & 5 & 150 & 82 & 34.15 & 40.24 & 21.95 & 2.44 & 0\\ 
 %\paragraph{Bonus. How well does it compare to human solving process ?} 
 % TODO Compare with the tutorial puzzle of logicgridpuzzles.com? Ideally, a small human evaluation (e.g. ask people to solve a 3-with-3 puzzle and note the order of derivations and clues used, compare this `ranking' to our ranking, discuss some differences.

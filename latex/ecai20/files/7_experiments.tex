@@ -13,6 +13,13 @@ The algorithm itself is written in embedded LUA, which provides an imperative en
 % We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The bottom puzzle is the pasta puzzle. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, e.g. the number of literals in the $max(I_0,\allconstraints)$.
 % 
 % The algorithm itself is written in embedded LUA, which is provided as en imperative environment inside the otherwise declarative IDP system. The code was not optimized for efficiency and can at this point not be used in an interactive setting, as it takes between 15 minutes to a few hours to fully explain a logic grid puzzle. Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0 and IDP version 3.7.1.
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_p18}
+\includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_p25}
+\includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_nielspasta}\caption{Type of constraints used in each step}
+\label{fig:steps}
+\end{figure*}
 
 \myparagraph{1. Sequence composition}
 We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The puzzle identified as p is our running example. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(I_0,\allconstraints)$.
@@ -53,13 +60,7 @@ In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints 
 
 \myparagraph{2. Sequence progression} Figure \ref{fig:steps} shows a visualisation the type of explanation used at every step of the sequence, for some different puzzles. The red line is the pasta puzzle. We can see that typically at the beginning of the sequence, clues (4th line) and bijectivity (2nd line) are used, i.e., the trivial ones. This is then followed by a round of clues and some bijectivity/transitivity, after which a large fraction of the table can be completed with bijectivity/transitivty, followed by a few last clues and another round of completion.\setlength{\parskip}{0pt}
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_p18}
-\includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_p25}
-\includegraphics[width=0.32\linewidth]{figures/plot_cost_steps_nielspasta}\caption{Type of constraints used in each step}
-\label{fig:steps}
-\end{figure*}
+
 
 The exception to this is the pasta puzzle. We can see that after around 20 steps where mostly clues have been used, twice a combination of implicit logigram constraints must be used to derive a new fact, after which the table can be easily completed with bijectivity/transitivity and twice the use of a clue.
 

@@ -194,7 +194,7 @@ function FOL({fol}){
                 }else{
                   listvals.push(letter)
                 }
-              })
+              });
               return <tr className="removed-space"><td><pre>{listvals}</pre></td></tr>
             }) }
             </table>
@@ -274,9 +274,9 @@ function FOL({fol}){
 function cleanEntities(entities){
   const types = Object.keys(entities).map((elem)=> elem.toLowerCase());
   Object.keys(entities)
-        .map((elem)=> entities[elem]
-        .map((entity) => entity.replace("a_", "").split('_')
-        .map((splitelem) => types.push(splitelem))))
+        .forEach((elem)=> entities[elem]
+        .forEach((entity) => entity.replace("a_", "").split('_')
+        .forEach((splitelem) => types.push(splitelem))))
 
   return types;
 }
@@ -428,19 +428,16 @@ function InfoButtons() {
   return (
     <div className="row">
       <div id="clue-button" className="col-sm"><button className="button-step3" onClick={() => setBoxInfoDisplayTo(displayTypes.clues)}>Input</button></div>
-      <div className="div-centered-hv col-sm">----></div>
+      <div className="div-centered-hv col-sm">&#8594;</div>
       <div id="pos-button" className="col-sm"><button className="button-step3" onClick={() => setBoxInfoDisplayTo(displayTypes.postags)}>Pos Tagging</button></div>
-      <div className="div-centered-hv col-sm">----></div>
+      <div className="div-centered-hv col-sm">&#8594;</div>
       <div id="chun-button" className="col-sm"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.chunking_lexicon)}>Chunking & Lexicon Building</button></div>
-      <div className=" div-centered-hv col-sm">----></div>
+      <div className=" div-centered-hv col-sm">&#8594;</div>
       <div id="fol-button" className="col-sm"><button className="button-step4" onClick={() => setBoxInfoDisplayTo(displayTypes.fol)}>Discourse representation theory</button></div>
-      <div className=" div-centered-hv col-sm">----></div>
+      <div className=" div-centered-hv col-sm">&#8594;</div>
       <div id="idp-button" className="col-sm"><button className="button-step2" onClick={() => setBoxInfoDisplayTo(displayTypes.idp)}>IDP (first-order logic)</button></div>
-      <div className=" div-centered-hv">----></div>
-      <div className=" div-centered-hv col-sm">Explanation Generation</div>
-      {/* <div id="expl-button" className="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>6. Explanation Generation</button></div> */}
-      {/* <div id="expl-button" className="col-sm"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>6. Explanation Generation</button></div> */}
-      {/* <div id="idp-button" className=""><button className="button-step2">Explanation Generation</button></div> */}
+      <div className=" div-centered-hv col-sm">&#8594;</div>
+      <div className=" div-centered-hv col-sm-2">Explanation Generation + Visualisation</div>
     </div>)
 }
 

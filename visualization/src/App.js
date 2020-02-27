@@ -567,13 +567,20 @@ function Legend() {
           </td>
           <td className="legend-td">{legend_new_fact}</td>
           <td className="legend-td2">
-            <div className="coral-full-rectangle"></div>
-          </td>
-          <td className="legend-td">Counter factual</td>
-          <td className="legend-td2">
             <div className="blue-full-rectangle"></div>
           </td>
           <td className="legend-td">{legend_derived_fact}</td>
+          <td className="legend-td2">
+            <div className="coral-full-rectangle"></div>
+          </td>
+          <td className="legend-td">Counter factual</td>          
+          <td className="legend-td2">
+            <div className="unsat-full-rectangle"></div>
+          </td>
+          <td className="legend-td">Countradiction Unsatisfiable</td>
+              
+        </tr>
+          <tr className="legend-tr">
           <td className="legend-td2">
             <div className="black-empty-rectangle"> ✔ </div>
           </td>
@@ -582,7 +589,8 @@ function Legend() {
             <div className="black-empty-rectangle"> - </div>
           </td>
           <td className="legend-td">{legend_false}</td>
-        </tr>
+          </tr>
+      
       </table>
     </div>
   );

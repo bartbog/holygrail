@@ -13,7 +13,7 @@ const problemName = 'nielspasta-split-nested'; //pasta
 
 ReactDOM.render( <PuzzleInfo /> , document.getElementById('problemIntro'));
 ReactDOM.render( <App problemName={problemName} /> , document.getElementById('root'));
-ReactDOM.render( <BoxInfo problemName={problemName}  />, document.getElementById('box-info'));
+// ReactDOM.render( <BoxInfo problemName={problemName}  />, document.getElementById('box-info'));
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

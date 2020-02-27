@@ -20,12 +20,6 @@ const legend_derived_fact = "Known fact";
 const legend_false = "False";
 const legend_true = "True";
 
-let nestedExplanationActive = false;
-
-function switchNestedExplanation(){
-  nestedExplanationActive = ~nestedExplanationActive
-}
-
 const initialState = {
   clue: null,
   known: [],
@@ -33,14 +27,45 @@ const initialState = {
   assumptions: []
 };
 
-
 function reducer(state, next) {
+
+  const reasonSequenceInitialState = {
+    fact:null,
+    reason_sequence: [],
+    known: state.known
+  } 
+
+  function sequenceReduce(state, next){
+
+    const nestedSequenceInitialState = {
+      clue: null,
+      known: state.known == null ? [] : state.known,
+      derived: [],
+      assumptions: []
+    }
+
+    function nestedReducer(state, next){
+      return {
+        clue: next.clue,
+        known: [...state.known, ...state.derived],
+        derived: next.derivations,
+        assumptions: next.assumptions,
+      };
+    }    
+  
+    return {
+      fact: next.derivable_fact,
+      known:state.known,
+      reason_sequence: next.reason_sequence != null ? R.scan(nestedReducer, nestedSequenceInitialState, next.reason_sequence).slice(1) : null
+    }
+  }  
+
   return {
     clue: next.clue,
     known: [...state.known, ...state.derived],
     derived: next.derivations,
     assumptions: next.assumptions,
-    nested_explanations:next.nested_explanations,
+    nested_explanations: Array.isArray(next.nested_explanations) ? R.scan(sequenceReduce, reasonSequenceInitialState,next.nested_explanations).slice(1): null
   };
 }
 
@@ -167,7 +192,10 @@ function App({ problemName }) {
 
   const clues = cleanClues(steps);
 
+  // state variables: whenever they are updated, the hooks back to this place => update interface
   const [index, setIndex] = React.useState(0);
+  const [sequenceIndex, setSequenceIndex] = React.useState(0)
+  const [activeSequenceIndex, setActiveSequenceIndex] = React.useState(0)
   const [nestedIndex, setNestedIndex] = React.useState(0)
 
   const factsOverTime = React.useMemo(() => {
@@ -175,10 +203,20 @@ function App({ problemName }) {
   }, []);
 
 
+  function setSequenceIndexClipped(newIndex, maxVal){
+    // setNestedIndex(0)
+    if (newIndex > maxVal) {
+      setSequenceIndex(maxVal);
+    } else if (newIndex < 0) {
+      setSequenceIndex(0);
+    } else {
+      setSequenceIndex(newIndex);
+    }
+  }
 
  function setIndexClipped(newIndex) {
-    nestedExplanationActive = false;
-    setNestedIndex(0)
+    setNestedIndex(-1)
+    setSequenceIndex(-1)
     if (newIndex >= factsOverTime.length) {
       setIndex(factsOverTime.length - 1);
     } else if (newIndex < 0) {
@@ -190,7 +228,7 @@ function App({ problemName }) {
 
   function setNestedIndexClipped(newIndex, maxLength) {
 
-    if (newIndex >= maxLength) {
+    if (newIndex > maxLength) {
       setNestedIndex(maxLength);
     } else if (newIndex < 0) {
       setNestedIndex(0);
@@ -202,7 +240,10 @@ function App({ problemName }) {
   let facts = null
   let usedClue
 
-  if(index > 0){
+  if(nestedIndex > 0){
+    facts = factsOverTime[index-1];
+    usedClue = <UsedClue clues={clues} clue={facts.nested_explanations[sequenceIndex-1].reason_sequence[nestedIndex-1].clue} />
+  }else if(index > 0){
     facts = factsOverTime[index-1];
     usedClue = <UsedClue clues={clues} clue={facts.clue} />
   }else{
@@ -212,77 +253,308 @@ function App({ problemName }) {
    
   ReactDOM.render(
     <div className="Clues">
-      <h2>
-        <span class="line-center">Clues</span>
-      </h2>
+      <h2><span class="line-center">Clues</span></h2>
       {usedClue}
-      <MyLegend />
+      <Legend />
       <p></p>
-    </div>,
-    document.getElementById("clues"));
+    </div>
+    ,document.getElementById("clues"));
 
-  const header = (
-    <h2>
-      <span class="line-center">Puzzle</span>
-    </h2>
-  );
+  const header = (<h2><span className="line-center">Puzzle</span></h2>);
   
   let prevNextButton;
+  let prevNextSequenceButton = null
+  let nestedExplanations = null
+  let counterfact = null
 
   if( facts === null){
-    prevNextButton = 
-    <div>
-      <button onClick={() => setIndexClipped(index + 1)}>start</button>
-    </div>
-  } else if(Array.isArray(facts.nested_explanations) && nestedIndex <= 0 ){
-    prevNextButton = 
-    <div>
-      <table>
-      <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
-        <td className="buttonNavigationClues"></td>
-        <td><button onClick={() => setIndexClipped(0)}>Restart</button></td>
-        <td className="buttonNavigationClues"></td>
-        <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
-        <td className="buttonNavigationClues"></td>
-        <td><button onClick={() => setNestedIndexClipped(1)}>HELP</button></td>
-      </table> 
-    </div>  
-}  else if(Array.isArray(facts.nested_explanations) && nestedIndex > 0 ){
-  let maxNestedIndex = facts.nested_reason_sequence
-  prevNextButton = 
-  <div>
-    <table>
-    <td><button onClick={() => setNestedIndexClipped(nestedIndex - 1, maxNestedIndex)}>&#8592; Prev Explanation</button></td>
-      <td className="buttonNavigationClues"></td>
-      <td><button onClick={() => setNestedIndexClipped(0, maxNestedIndex)}>EXIT Explanation</button></td>
-      <td className="buttonNavigationClues"></td>
-      <td><button onClick={() => setNestedIndexClipped(nestedIndex + 1,maxNestedIndex)}>Next Explanation &#8594;</button></td>
-    </table> 
-  </div>  
-}else{
-    prevNextButton = 
-    <div>
-      <table>
+    prevNextButton = <div><button onClick={() => setIndexClipped(index + 1)}>start</button></div>
+  }else if(Array.isArray(facts.nested_explanations)){
+
+    prevNextButton = <div>
+          <table>
+          <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
+            {/* <td className="buttonNavigationClues"></td>
+            <td><button className="buttonNavigationCluesExit" onClick={() => setIndexClipped(0)}>Restart</button></td> */}
+            <td className="buttonNavigationClues"></td>
+            <td><button className="heavyBorder" onClick={() => setSequenceIndex(1)}>&#x1F4A1; - HELP</button></td>
+            <td className="buttonNavigationClues"></td>
+            <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
+
+          </table> 
+        </div>  
+    
+    const nested_explanations = facts.nested_explanations.filter((nExpl) => nExpl.fact != null)
+    
+    if(sequenceIndex > 0 && nestedIndex > 0){
+      counterfact = nested_explanations[sequenceIndex-1].fact
+
+      facts=nested_explanations[sequenceIndex-1].reason_sequence.filter((nExpl) => nExpl.clue != null)[nestedIndex-1]
+      const nested_sequence_length = nested_explanations[sequenceIndex-1].reason_sequence.length
+
+      prevNextButton = <div>
+          <table>
+          <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
+            <td className="buttonNavigationClues"></td>
+            <td><button className="buttonNavigationCluesExit heavyBorder" onClick={() => setSequenceIndex(0)}>EXIT</button></td>
+            <td className="buttonNavigationClues"></td>
+            <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
+          </table> 
+        </div>  
+      
+      prevNextSequenceButton = <div>
+        <h5 className="blue-font">Nested Explanation</h5>
+        <table>
+            <td><button onClick={() => setNestedIndexClipped(Math.max(1, nestedIndex-1), nested_sequence_length)}>&#8592;</button></td>
+            <td className="buttonNavigationClues"></td>
+            <td><button className="buttonNavigationCluesExit heavyBorder" onClick={() => setNestedIndex(0)}>EXIT</button></td>
+            <td className="buttonNavigationClues"></td>
+            <td><button onClick={() => setNestedIndexClipped(nestedIndex+1, nested_sequence_length)}>&#8594;</button></td>
+        </table> 
+        <p />
+      </div>
+    
+    }else if(sequenceIndex > 0){
+      
+      prevNextButton = <div>
+        <table>
         <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
-        <td className="buttonNavigationClues"></td>
-        <td><button onClick={() => setIndexClipped(0)}>Restart</button></td>
-        <td className="buttonNavigationClues"></td>
-        <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
-      </table> 
-    </div>
+          <td className="buttonNavigationClues"></td>
+          <td><button className="buttonNavigationCluesExit heavyBorder" onClick={() => setSequenceIndex(0)}>EXIT</button></td>
+          <td className="buttonNavigationClues"></td>
+          <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
+        </table> 
+      </div>  
+
+    }  
+  }else{
+        prevNextButton = <div>
+          <table>
+            <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
+            <td className="buttonNavigationClues"></td>
+            <td><button className="Disabled" onClick={() => setSequenceIndex(1)}>&#x1F4A1; - HELP</button></td>
+            <td className="buttonNavigationClues"></td>
+            <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
+          </table> 
+        </div>
   }
 
-    return (
+  return (
     <div className="App">
       {header}
       {prevNextButton}
       <p />
-      <Grid vocabulary={vocabulary} facts={facts} nestedFactActive={nestedIndex}/>
-    </div>);
+      {prevNextSequenceButton}
+      <Grid vocabulary={vocabulary} counterfact={counterfact} facts={facts} explSeqActive={sequenceIndex} nestedExplSeqActive={nestedIndex} funSequenceIndex={setSequenceIndexClipped} funNestedIndex={setNestedIndexClipped}/>
+    </div>
+    );
        
 }
 
-function MyLegend() {
+
+function Grid({ vocabulary, facts, counterfact,explSeqActive,nestedExplSeqActive, funSequenceIndex,funNestedIndex}) {
+
+  const nbTypes = vocabulary.length;
+  const nbEntities = vocabulary[0].length;
+
+  const horizontalTypes = vocabulary.slice(0, -1);
+  const verticalTypes = [...vocabulary].reverse().slice(0, -1);
+
+  return (
+    <div style={styles.parentGrid(nbEntities, nbTypes)}>
+      <div style={styles.parentGridItem(nbEntities)} />
+      {verticalTypes.map(type => (
+        <VocBlock type={type} vertical />
+      ))}
+      {horizontalTypes.map((type, index) => (
+        <>
+          <VocBlock type={type} />
+          {verticalTypes.map((type2, index2) => {
+            if (index >= nbTypes - index2 - 1) {
+              return (<div style={styles.parentGridItemEmpty(nbEntities)} />)
+            }
+            return (
+              <FillBlock type1={type} type2={type2} counterfact={counterfact} facts={facts} explSeqActive={explSeqActive} nestedExplSeqActive={nestedExplSeqActive} funSequenceIndex={funSequenceIndex} funNestedIndex={funNestedIndex}/>            
+              )
+          })}
+        </>
+      ))}
+    </div>
+  )
+}
+
+function VocBlock({ type, vertical = false }) {
+  const nbEntities = type.length;
+  return (
+    <div style={styles.parentGridItemVoc(nbEntities, vertical)}>
+      {type.map((entity) => (
+        <div style={styles.childVocGridItem(nbEntities, vertical)}>
+          {entity}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyGrid({type1, type2}){
+  const nbEntities = type1.length;
+  return (
+      <div style={styles.parentGridItemFill(nbEntities)}>
+        {type1.map(entity1 => (
+          <>
+            {type2.map(entity2 => {
+              const color = "white";
+              const frontcolor = "#000";
+              return (<div style={styles.childFillGridItem(color, frontcolor)}>{" "}</div>);
+            })}
+          </>
+        ))}
+      </div>
+  );
+}
+
+function RegularExplanation({ type1, type2, facts, counterfact }){
+  const nbEntities = type1.length;
+  return (
+    <div style={styles.parentGridItemFill(nbEntities)}>
+      {type1.map(entity1 => (
+        <>
+          {type2.map(entity2 => {
+            const derivedKnowledge = getKnowledgeFrom(
+              facts.derived,
+              entity1,
+              entity2
+            );
+            const assumedKnowledge = getKnowledgeFrom(
+              facts.assumptions,
+              entity1,
+              entity2
+            );
+            const knownKnowledge = getKnowledgeFrom(
+              facts.known,
+              entity1,
+              entity2
+            );
+
+            let counterfactColored = null
+            if(counterfact != null){
+              counterfactColored = getKnowledgeFrom(
+                [counterfact],
+                entity1,
+                entity2
+              );
+              
+            }
+
+            const knowledge =
+              derivedKnowledge || assumedKnowledge || knownKnowledge|| counterfactColored;
+            let color = null;
+            let frontcolor = "#000";
+
+            if(counterfactColored != null){
+              color = "lightcoral"
+            }else 
+            if (derivedKnowledge != null) {
+              color = knowledge.value ? "#FF6600" : "#FF6600";
+            }else if (assumedKnowledge != null) {
+
+              if(facts.derived[0] === "UNSAT"){
+                color ="red"
+              }else{
+                color = "#003399"; //Asymmetry true/false is not so important here...
+                frontcolor = "white";
+              }
+
+              
+            } else if (knowledge != null) {
+              color = "whitesmoke";
+            }
+
+            return (
+              <div style={styles.childFillGridItem(color, frontcolor)}>
+                {knowledge == null ? " " : knowledge.value ? "✔" : "-"}
+              </div>
+            );
+          })}
+        </>
+      ))}
+    </div>
+  );
+}
+
+function SequenceExplanationGrid({ type1, type2, derived, known, funSequenceIndex,funNestedIndex}){
+  const nbEntities = type1.length;
+
+  return (
+    <div style={styles.parentGridItemFill(nbEntities)}>
+      {type1.map(entity1 => (
+        <>
+          {type2.map(entity2 => {
+            const factKnowledge = getKnowledgeFrom(
+              derived,
+              entity1,
+              entity2
+            );
+            const posInDerived = derived.indexOf(factKnowledge) +1
+            
+            const knownKnowledge = getKnowledgeFrom(
+              known,
+              entity1,
+              entity2
+            );
+
+            const knowledge = factKnowledge || knownKnowledge;
+
+            let color = "#C0C0C0";
+            let frontcolor = "#000";
+
+            if (factKnowledge != null) {
+              color = "lightcoral";// knowledge.value ? "#FF6600" : "#FF6600";
+            }else if(knownKnowledge != null){
+              color = "whitesmoke";
+            }
+
+            if(factKnowledge != null){
+              return (
+                <div >
+                  <button style={styles.childFillGridItem(color, frontcolor)} onClick={() => {funNestedIndex(1, 3); funSequenceIndex(posInDerived)}}>
+                    {knowledge == null ? " " : knowledge.value ? "✔" : "-"}
+                  </button>        
+                </div>
+              );
+            }else{
+              return (
+                <div style={styles.childFillGridItem(color, frontcolor)}>
+                  {knowledge == null ? " " : knowledge.value ? "✔" : "-"}
+                </div>
+              );
+            }
+          })}
+        </>
+      ))}
+    </div>
+  );
+
+
+}
+
+function FillBlock({ type1, type2, counterfact, facts, explSeqActive,nestedExplSeqActive, funSequenceIndex,funNestedIndex }) {
+
+  if(facts === null){
+    return <EmptyGrid type1={type1} type2={type2} />
+  }else if( explSeqActive > 0 & nestedExplSeqActive > 0){
+    //TODO: return nestedSequenceExplanationGrid
+    return <RegularExplanation facts={facts} counterfact={counterfact} type1={type1} type2={type2}/>
+  }else if( explSeqActive > 0){
+    //TODO: return sequenceExplanationGrid 
+    return <SequenceExplanationGrid derived={facts.derived} known={facts.known} type1={type1} type2={type2} funSequenceIndex={funSequenceIndex} funNestedIndex={funNestedIndex}/>
+  }
+  else{
+    return <RegularExplanation facts={facts} type1={type1} type2={type2} />
+  }
+}
+
+function Legend() {
   return (
     <div>
       <h2>
@@ -294,6 +566,10 @@ function MyLegend() {
             <div className="red-full-rectangle"></div>
           </td>
           <td className="legend-td">{legend_new_fact}</td>
+          <td className="legend-td2">
+            <div className="coral-full-rectangle"></div>
+          </td>
+          <td className="legend-td">Counter factual</td>
           <td className="legend-td2">
             <div className="blue-full-rectangle"></div>
           </td>
@@ -415,175 +691,6 @@ function UsedClue({ clues, clue }) {
   
 }
 
-function Grid({ vocabulary, facts,nestedFactActive }) {
-
-  const nbTypes = vocabulary.length;
-  const nbEntities = vocabulary[0].length;
-
-  const horizontalTypes = vocabulary.slice(0, -1);
-  const verticalTypes = [...vocabulary].reverse().slice(0, -1);
-
-  return (
-    <div style={styles.parentGrid(nbEntities, nbTypes)}>
-      <div style={styles.parentGridItem(nbEntities)} />
-      {verticalTypes.map(type => (
-        <VocBlock type={type} vertical />
-      ))}
-      {horizontalTypes.map((type, index) => (
-        <>
-          <VocBlock type={type} />
-          {verticalTypes.map((type2, index2) => {
-            if (index >= nbTypes - index2 - 1) {
-              return (<div style={styles.parentGridItemEmpty(nbEntities)} />)
-            }
-            return (
-              <FillBlock type1={type} type2={type2} facts={facts} nestedFactActive={nestedFactActive}/>            
-              )
-          })}
-        </>
-      ))}
-    </div>
-  )
-
-}
-
-function VocBlock({ type, vertical = false }) {
-  const nbEntities = type.length;
-  return (
-    <div style={styles.parentGridItemVoc(nbEntities, vertical)}>
-      {type.map(entity => (
-        <div style={styles.childVocGridItem(nbEntities, vertical)}>
-          {entity}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function EmptyGrid({type1, type2}){
-  const nbEntities = type1.length;
-  return (
-      <div style={styles.parentGridItemFill(nbEntities)}>
-        {type1.map(entity1 => (
-          <>
-            {type2.map(entity2 => {
-              const color = "white";
-              const frontcolor = "#000";
-              return (<div style={styles.childFillGridItem(color, frontcolor)}>{" "}</div>);
-            })}
-          </>
-        ))}
-      </div>
-  );
-}
-
-function RegularExplanation({ type1, type2, facts }){
-  const nbEntities = type1.length;
-  return (
-    <div style={styles.parentGridItemFill(nbEntities)}>
-      {type1.map(entity1 => (
-        <>
-          {type2.map(entity2 => {
-            const derivedKnowledge = getKnowledgeFrom(
-              facts.derived,
-              entity1,
-              entity2
-            );
-            const assumedKnowledge = getKnowledgeFrom(
-              facts.assumptions,
-              entity1,
-              entity2
-            );
-            const knownKnowledge = getKnowledgeFrom(
-              facts.known,
-              entity1,
-              entity2
-            );
-
-            const knowledge =
-              derivedKnowledge || assumedKnowledge || knownKnowledge;
-            let color = null;
-            let frontcolor = "#000";
-            if (derivedKnowledge != null) {
-              color = knowledge.value ? "#FF6600" : "#FF6600";
-            } else if (assumedKnowledge != null) {
-              color = "#003399"; //Asymmetry true/false is not so important here...
-              frontcolor = "white";
-            } else if (knowledge != null) {
-              color = "whitesmoke";
-            }
-
-            return (
-              <div style={styles.childFillGridItem(color, frontcolor)}>
-                {knowledge == null ? " " : knowledge.value ? "✔" : "-"}
-              </div>
-            );
-          })}
-        </>
-      ))}
-    </div>
-  );
-}
-
-function NestedExplanationGrid({ type1, type2, facts, nestedFactActive }){
-  const nbEntities = type1.length;
-  // let sequenceExplanations = facts.nested_explanations.reason_sequence[nestedFactActive-1]
-
-  return (
-    <div style={styles.parentGridItemFill(nbEntities)}>
-      {type1.map(entity1 => (
-        <>
-          {type2.map(entity2 => {
-            const derivedKnowledge = getKnowledgeFrom(
-              facts.derived,
-              entity1,
-              entity2
-            );
-            const assumedKnowledge = getKnowledgeFrom(
-              facts.assumptions,
-              entity1,
-              entity2
-            );
-
-            const knowledge = derivedKnowledge || assumedKnowledge;  
-
-            let color = "#C0C0C0";
-            let frontcolor = "#000";
-
-            if (derivedKnowledge != null) {
-              color = "#FF6600";// knowledge.value ? "#FF6600" : "#FF6600";
-            } else if (assumedKnowledge != null) {
-              color = "#003399"; //Asymmetry true/false is not so important here...
-              frontcolor = "white";
-            } else if (knowledge != null) {
-              color = "grey";
-            }
-
-            return (
-              <div style={styles.childFillGridItem(color, frontcolor)}>
-                {knowledge == null ? " " : knowledge.value ? "✔" : "-"}
-              </div>
-            );
-          })}
-        </>
-      ))}
-    </div>
-  );
-
-
-}
-
-function FillBlock({ type1, type2, facts, nestedFactActive }) {
-  if(facts === null){
-    return <EmptyGrid type1={type1} type2={type2} />
-  }else if( Array.isArray(facts.nested_explanations) && nestedFactActive > 0){
-    // return <RegularExplanation facts={facts} type1={type1} type2={type2} />
-
-    return <NestedExplanationGrid facts={facts} type1={type1} type2={type2} nestedFactActive={nestedFactActive}/>
-  }
-  else{
-    return <RegularExplanation facts={facts} type1={type1} type2={type2} />
-  }
-}
 
 export default App;
+

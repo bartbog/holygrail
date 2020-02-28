@@ -4,9 +4,6 @@ import './BoxInfo.css';
 // import * as R from 'ramda'
 import ReactDOM from 'react-dom';
 
-// const problemName = 'p5-split';
-
-// const cluesTags = require(`../../bos/output/${problemName}.tags.json`);
 var cluesTags;
 
 var selectedBox = 0;
@@ -42,15 +39,10 @@ function setToClue(clueNr) {
   for (let index = 0; index < cluesTags["tags"].length; index++) {
     const tagName = `tag${index}`
     var tagChild = document.getElementById(tagName);
-
-    // const idpName = `idp${index}`
-    // var idpChild = document.getElementById(idpName);
     if (activeClue === index) {
       tagChild.style.display = 'block';
-      // idpChild.style.display = 'block';
     } else {
       tagChild.style.display = 'none';
-      // idpChild.style.display = 'none';
     }
   }
 }
@@ -70,16 +62,12 @@ function setToClueFol(clueNr) {
     const folName = `fol${index}`
     var folChild = document.getElementById(folName);
 
-    // const idpName = `idp${index}`
-    // var idpChild = document.getElementById(idpName);
     if (activeClueFol === index) {
 
       folChild.style.display = 'block';
-      // idpChild.style.display = 'block';
     } else {
 
       folChild.style.display = 'none';
-      // idpChild.style.display = 'none';
     }
   }
 }
@@ -127,12 +115,6 @@ function setBoxInfoDisplayTo(displayType) {
         document.getElementById('BoxInfoText')
       );
       break;
-    // case displayTypes.expl:
-    //   ReactDOM.render(
-    //     <Clues clues={cluesTags["clues"]} />,
-    //     document.getElementById('BoxInfoText')
-    //   );
-    //   break;
     default:
 
   }
@@ -144,7 +126,7 @@ function IDP({idp}){
   const listIdpItems = Object.keys(idp).map((elem) => 
   <div className="padding-top">
     <tr >
-      <td>// {elem}</td>
+      <td>{'//'} {elem}</td>
     </tr>
     <tr>
       <td>{idp[elem]}</td>
@@ -188,7 +170,7 @@ function FOL({fol}){
           {element["logic_representation"].map(
             function(elem) {
               var listvals = []
-              elem.split("").map(function(letter) {
+              elem.split("").foreach(function(letter) {
                 if(letter === " "){
                   listvals.push(" ")
                 }else{
@@ -218,7 +200,7 @@ function FOL({fol}){
           {element["logic_representation"].map(
             function(elem) {
               var listvals = []
-              elem.split("").map(function(letter) {
+              elem.split("").foreach(function(letter) {
                 if(letter === " "){
                   listvals.push(" ")
                 }else{
@@ -292,7 +274,6 @@ function highlightEntities(clue, entities){
     }
     });
 
-  // return <td className="thick-text">{clue.charAt(0).toUpperCase() + clue.slice(1)}.</td>
   return <td><div>{cleanedClues}</div></td>
 }
 
@@ -305,7 +286,6 @@ function Clues({ clues, entities }) {
       </tr>
     </div>
   );
-  // const listEntities = JSON.stringify(entities);
   const entitiesTable = <table>
     <tr>
       <th></th>
@@ -320,7 +300,6 @@ function Clues({ clues, entities }) {
 
   const introText = <div className="grey-text"> {cluesIntroText}</div>
   const cluesTable = <table>{listClues}</table>
-  // const entitiesTable = <table>{listEntities}</table>
   return (
     <div>
       {introText}
@@ -443,13 +422,11 @@ function InfoButtons() {
 
 function BoxInfo({problemName}) {
 
-  cluesTags  = require(`../../bos/output/${problemName}.tags.json`);
+  cluesTags  = require(`./source_explanations/${problemName}.tags.json`);
 
   return (
     <div>
-      {/* <h2>The process</h2> */}
       <h2><span  class="line-center">The process</span></h2>
-
       <InfoButtons />
       <InfoText />
     </div>

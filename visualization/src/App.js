@@ -31,15 +31,14 @@ function reducer(state, next) {
 
   const reasonSequenceInitialState = {
     fact:null,
-    reason_sequence: [],
-    known: state.known
+    reason_sequence: []
   } 
 
   function sequenceReduce(state, next){
 
     const nestedSequenceInitialState = {
       clue: null,
-      known: state.known == null ? [] : state.known,
+      known: [],//state.known == null ? [] : state.known,
       derived: [],
       assumptions: []
     }
@@ -55,7 +54,7 @@ function reducer(state, next) {
   
     return {
       fact: next.derivable_fact,
-      known:state.known,
+      // known:state.known,
       reason_sequence: next.reason_sequence != null ? R.scan(nestedReducer, nestedSequenceInitialState, next.reason_sequence).slice(1) : null
     }
   }  
@@ -151,6 +150,11 @@ const styles = {
     "justify-content": "center",
     "background-color": color,
     color: frontcolor
+  }),
+  childNestedButtonItem:(color, frontcolor) => ({
+    width: size - 2,
+    height: size - 2,
+    border: "1px dashed black"
   })
 };
 
@@ -187,15 +191,16 @@ function cleanClues(steps) {
 
 function App({ problemName }) {
   // input files
-  steps = require(`../../bos/output/${problemName}.output.json`);
-  vocabulary = require(`../../bos/output/${problemName}.voc.json`);
+  
+  steps = require(`./source_explanations/${problemName}.output.json`);
+  vocabulary = require(`./source_explanations/${problemName}.voc.json`);
 
   const clues = cleanClues(steps);
 
   // state variables: whenever they are updated, the hooks back to this place => update interface
   const [index, setIndex] = React.useState(0);
   const [sequenceIndex, setSequenceIndex] = React.useState(0)
-  const [activeSequenceIndex, setActiveSequenceIndex] = React.useState(0)
+  // const [activeSequenceIndex, setActiveSequenceIndex] = React.useState(0)
   const [nestedIndex, setNestedIndex] = React.useState(0)
 
   const factsOverTime = React.useMemo(() => {
@@ -264,7 +269,6 @@ function App({ problemName }) {
   
   let prevNextButton;
   let prevNextSequenceButton = null
-  let nestedExplanations = null
   let counterfact = null
 
   if( facts === null){
@@ -274,10 +278,8 @@ function App({ problemName }) {
     prevNextButton = <div>
           <table>
           <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
-            {/* <td className="buttonNavigationClues"></td>
-            <td><button className="buttonNavigationCluesExit" onClick={() => setIndexClipped(0)}>Restart</button></td> */}
             <td className="buttonNavigationClues"></td>
-            <td><button className="heavyBorder" onClick={() => setSequenceIndex(1)}>&#x1F4A1; - HELP</button></td>
+            <td><button className="heavyBorder" onClick={() => setSequenceIndex(1)}><span  role="img"  aria-label="help">&#x1F4A1; - HELP</span></button></td>
             <td className="buttonNavigationClues"></td>
             <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
 
@@ -309,7 +311,7 @@ function App({ problemName }) {
             <td className="buttonNavigationClues"></td>
             <td><button className="buttonNavigationCluesExit heavyBorder" onClick={() => setNestedIndex(0)}>EXIT</button></td>
             <td className="buttonNavigationClues"></td>
-            <td><button onClick={() => setNestedIndexClipped(nestedIndex+1, nested_sequence_length)}>&#8594;</button></td>
+            <td><button onClick={() => setNestedIndexClipped(nestedIndex+1, nested_sequence_length)}><span>&#8594;</span></button></td>
         </table> 
         <p />
       </div>
@@ -332,7 +334,7 @@ function App({ problemName }) {
           <table>
             <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
             <td className="buttonNavigationClues"></td>
-            <td><button className="Disabled" onClick={() => setSequenceIndex(1)}>&#x1F4A1; - HELP</button></td>
+            <td><button className="Disabled" onClick={() => setSequenceIndex(1)}><span role="img"  aria-label="help">&#x1F4A1;</span> - HELP</button></td>
             <td className="buttonNavigationClues"></td>
             <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
           </table> 
@@ -348,7 +350,6 @@ function App({ problemName }) {
       <Grid vocabulary={vocabulary} counterfact={counterfact} facts={facts} explSeqActive={sequenceIndex} nestedExplSeqActive={nestedIndex} funSequenceIndex={setSequenceIndexClipped} funNestedIndex={setNestedIndexClipped}/>
     </div>
     );
-       
 }
 
 
@@ -517,7 +518,7 @@ function SequenceExplanationGrid({ type1, type2, derived, known, funSequenceInde
             if(factKnowledge != null){
               return (
                 <div >
-                  <button style={styles.childFillGridItem(color, frontcolor)} onClick={() => {funNestedIndex(1, 3); funSequenceIndex(posInDerived)}}>
+                  <button className="coral-button" onClick={() => {funNestedIndex(1, 3); funSequenceIndex(posInDerived)}}>
                     {knowledge == null ? " " : knowledge.value ? "✔" : "-"}
                   </button>        
                 </div>
@@ -543,10 +544,8 @@ function FillBlock({ type1, type2, counterfact, facts, explSeqActive,nestedExplS
   if(facts === null){
     return <EmptyGrid type1={type1} type2={type2} />
   }else if( explSeqActive > 0 & nestedExplSeqActive > 0){
-    //TODO: return nestedSequenceExplanationGrid
     return <RegularExplanation facts={facts} counterfact={counterfact} type1={type1} type2={type2}/>
   }else if( explSeqActive > 0){
-    //TODO: return sequenceExplanationGrid 
     return <SequenceExplanationGrid derived={facts.derived} known={facts.known} type1={type1} type2={type2} funSequenceIndex={funSequenceIndex} funNestedIndex={funNestedIndex}/>
   }
   else{
@@ -573,7 +572,7 @@ function Legend() {
           <td className="legend-td2">
             <div className="coral-full-rectangle"></div>
           </td>
-          <td className="legend-td">Counter factual</td>          
+          <td className="legend-td">Nested Explanation</td>          
           <td className="legend-td2">
             <div className="unsat-full-rectangle"></div>
           </td>
@@ -599,7 +598,7 @@ function Legend() {
 function UsedClue({ clues, clue }) {
   var unique = 0;
   if(clue !== null){
-    const listClues = clues.map(function(element) {
+    const listClues = clues.map((element) => {
       if (
         element === transitivity ||
         element === bijectivity ||
@@ -653,7 +652,10 @@ function UsedClue({ clues, clue }) {
               </ul>
             </div>
           );
+        }else{
+          return <div></div>
         }
+        
       } else if (element === clue) {
         return (
           <li className="clue-used">
@@ -670,7 +672,7 @@ function UsedClue({ clues, clue }) {
     });
     return <ol>{listClues}</ol>;
   }else{
-    const listClues = clues.map(function(element) {
+    const listClues = clues.map((element)=> {
       if (
         element !== transitivity &&
         element !== bijectivity &&
@@ -692,7 +694,7 @@ function UsedClue({ clues, clue }) {
           </div>
         );
       }
-          
+      return <div></div>
     });
     return <ol>{listClues}</ol>;
   }

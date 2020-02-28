@@ -290,14 +290,12 @@ function App({ problemName }) {
     const nested_explanations = facts.nested_explanations.filter((nExpl) => nExpl.fact != null)
     
     if(sequenceIndex > 0 && nestedIndex > 0){
-      console.log("Here")
-      console.log(facts)
 
       counterfact = nested_explanations[sequenceIndex-1].fact
 
       facts=nested_explanations[sequenceIndex-1].reason_sequence.filter((nExpl) => nExpl.clue != null)[nestedIndex-1]
       const nested_sequence_length = nested_explanations[sequenceIndex-1].reason_sequence.length
-      console.log(facts)
+
       prevNextButton = <div>
           <table>
           <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
@@ -456,10 +454,6 @@ function RegularExplanation({ type1, type2, facts, counterfact }){
             let color = null;
             let frontcolor = "#000";
 
-            // if(counterfactColored != null){
-            //   color = "lightcoral"
-            // }else 
-
             if(counterfactColored!=null && facts.derived[0] === "UNSAT"){
               color = "red"
             }else if(derivedKnowledge != null) {
@@ -470,21 +464,6 @@ function RegularExplanation({ type1, type2, facts, counterfact }){
             }else if (knowledge != null) {
                 color = "whitesmoke";
               }
-            // if (derivedKnowledge != null) {
-            //   color = "#FF6600";
-            // }else if (assumedKnowledge != null) {
-            //   if(facts.derived[0] === "UNSAT" && counterfactColored != null){
-            //     color ="red"
-            //   }
-            //   else{
-            //     color = "#003399"; //Asymmetry true/false is not so important here...
-            //     frontcolor = "white";
-            //   }
-
-              
-            // } else if (knowledge != null) {
-            //   color = "whitesmoke";
-            // }
 
             return (
               <div style={styles.childFillGridItem(color, frontcolor)}>
@@ -514,11 +493,6 @@ function SequenceExplanationGrid({ type1, type2, derived, known, funSequenceInde
             const posInDerived = derived.indexOf(factKnowledge) +1
             
             const knownKnowledge = null
-            // getKnowledgeFrom(
-            //   known,
-            //   entity1,
-            //   entity2
-            // );
 
             const knowledge = factKnowledge || knownKnowledge;
 

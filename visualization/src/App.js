@@ -298,7 +298,8 @@ function App({ problemName }) {
     
     if(sequenceIndex > 0 && nestedIndex > 0){
 
-      counterfact = nested_explanations[sequenceIndex-1].fact
+      counterfact = JSON.parse(JSON.stringify(nested_explanations[sequenceIndex-1].fact))
+      counterfact.value = ~counterfact.value
 
       facts=nested_explanations[sequenceIndex-1].reason_sequence.filter((nExpl) => nExpl.clue != null)[nestedIndex-1]
       const nested_sequence_length = nested_explanations[sequenceIndex-1].reason_sequence.length

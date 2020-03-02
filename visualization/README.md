@@ -1,4 +1,14 @@
+# Explanation visualisation
+
+## Input Files
+
+given a problem name, ex: `niels-split-nested`
+1. {problemname}.voc.json : Vocabulary input file (ex: `niels-split-nested.voc.json`)
+2. {problemname}.tags.json : File with clue-tags (ex: `niels-split-nested.tags.json`)
+3. {problemname}.output.json Explanations steps (ex: `niels-split-nested.output.json`)
+
 # Running the server
+
 Go into the project folder:
 
 	cd visualisation

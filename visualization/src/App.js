@@ -7,6 +7,7 @@ var steps;
 var vocabulary;
 
 // String constants used in the file
+
 const sol = "Solution!";
 const bijectivity = "Bijectivity";
 const logigramConstraint = "Logigram Constraint";
@@ -19,6 +20,7 @@ const legend_new_fact = "New fact";
 const legend_derived_fact = "Known fact";
 const legend_false = "False";
 const legend_true = "True";
+const legend_contradiction = "Contradiction Fact"
 
 const initialState = {
   clue: null,
@@ -155,7 +157,12 @@ const styles = {
   childNestedButtonItem:(color, frontcolor) => ({
     width: size - 2,
     height: size - 2,
-    border: "1px dashed black"
+    border: "5px solid black",
+    display: "flex",
+    "align-items": "center",
+    "justify-content": "center",
+    "background-color": color,
+    color: frontcolor
   })
 };
 
@@ -224,7 +231,7 @@ function App({ problemName }) {
     setNestedIndex(-1)
     setSequenceIndex(-1)
     if (newIndex >= factsOverTime.length) {
-      setIndex(factsOverTime.length - 1);
+      setIndex(factsOverTime.length);
     } else if (newIndex < 0) {
       setIndex(0);
     } else {
@@ -300,7 +307,7 @@ function App({ problemName }) {
           <table>
           <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
             <td className="buttonNavigationClues"></td>
-            <td><button className="buttonNavigationCluesExit heavyBorder" onClick={() => setSequenceIndex(0)}>EXIT</button></td>
+            <td><button className="buttonNavigationCluesExit heavyBorder" onClick={() => setIndexClipped(index)}>Back to MAIN explanations</button></td>
             <td className="buttonNavigationClues"></td>
             <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
           </table> 
@@ -311,7 +318,7 @@ function App({ problemName }) {
         <table>
             <td><button onClick={() => setNestedIndexClipped(Math.max(1, nestedIndex-1), nested_sequence_length)}>&#8592;</button></td>
             <td className="buttonNavigationClues"></td>
-            <td><button className="buttonNavigationCluesExit heavyBorder" onClick={() => setNestedIndex(0)}>EXIT</button></td>
+            <td><button className="buttonNavigationCluesExit heavyBorder" onClick={() => setNestedIndexClipped(0)}>Back to NESTED explanations</button></td>
             <td className="buttonNavigationClues"></td>
             <td><button onClick={() => setNestedIndexClipped(nestedIndex+1, nested_sequence_length)}><span>&#8594;</span></button></td>
         </table> 
@@ -324,7 +331,7 @@ function App({ problemName }) {
         <table>
         <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
           <td className="buttonNavigationClues"></td>
-          <td><button className="buttonNavigationCluesExit heavyBorder" onClick={() => setSequenceIndex(0)}>EXIT</button></td>
+          <td><button className="buttonNavigationCluesExit heavyBorder" onClick={() => setIndexClipped(index)}>Back to main explanations</button></td>
           <td className="buttonNavigationClues"></td>
           <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
         </table> 
@@ -336,7 +343,7 @@ function App({ problemName }) {
           <table>
             <td><button onClick={() => setIndexClipped(index - 1)}>&#8592; Prev</button></td>
             <td className="buttonNavigationClues"></td>
-            <td><button className="Disabled" onClick={() => setSequenceIndex(1)}><span role="img"  aria-label="help">&#x1F4A1;</span> - HELP</button></td>
+            <td><button className="Disabled" onClick={() => setSequenceIndexClipped(1)}><span role="img"  aria-label="help">&#x1F4A1;</span> - HELP</button></td>
             <td className="buttonNavigationClues"></td>
             <td><button onClick={() => setIndexClipped(index + 1)}>Next &#8594;</button></td>
           </table> 
@@ -449,14 +456,17 @@ function RegularExplanation({ type1, type2, facts, counterfact }){
               );
             }
 
-            const knowledge = derivedKnowledge || assumedKnowledge || knownKnowledge || counterfactColored;
+            const knowledge = counterfactColored || derivedKnowledge || assumedKnowledge || knownKnowledge ;
 
             let color = null;
             let frontcolor = "#000";
 
             if(counterfactColored!=null && facts.derived[0] === "UNSAT"){
+              color = "whitesmoke"
+            }else if(counterfact != null && facts.derived[0] === "UNSAT" && assumedKnowledge != null){
               color = "red"
-            }else if(derivedKnowledge != null) {
+            }
+            else if(derivedKnowledge != null) {
                 color = "#FF6600";
             }else if(assumedKnowledge != null) {
               color = "#003399"; //Asymmetry true/false is not so important here...
@@ -464,12 +474,19 @@ function RegularExplanation({ type1, type2, facts, counterfact }){
             }else if (knowledge != null) {
                 color = "whitesmoke";
               }
+            
+            if(counterfactColored!=null){
+              return (<div style={styles.childNestedButtonItem(color, frontcolor)}>
+                  {knowledge == null ? " " : knowledge.value ? "✔" : "-"}
+                </div>);
+            }else{
+              return (
+                <div style={styles.childFillGridItem(color, frontcolor)}>
+                  {knowledge == null ? " " : knowledge.value ? "✔" : "-"}
+                </div>
+              );
+            }
 
-            return (
-              <div style={styles.childFillGridItem(color, frontcolor)}>
-                {knowledge == null ? " " : knowledge.value ? "✔" : "-"}
-              </div>
-            );
           })}
         </>
       ))}
@@ -490,10 +507,15 @@ function SequenceExplanationGrid({ type1, type2, derived, known, funSequenceInde
               entity1,
               entity2
             );
+
+            const knownKnowledge = getKnowledgeFrom(
+              known, 
+              entity1, 
+              entity2
+            )
+
             const posInDerived = derived.indexOf(factKnowledge) +1
             
-            const knownKnowledge = null
-
             const knowledge = factKnowledge || knownKnowledge;
 
             let color = "#C0C0C0";
@@ -502,7 +524,7 @@ function SequenceExplanationGrid({ type1, type2, derived, known, funSequenceInde
             if (factKnowledge != null) {
               color = "lightcoral";// knowledge.value ? "#FF6600" : "#FF6600";
             }else if(knownKnowledge != null){
-              color = "whitesmoke";
+              color = "#003399";
             }
 
             if(factKnowledge != null){
@@ -536,7 +558,7 @@ function FillBlock({ type1, type2, counterfact, facts, explSeqActive,nestedExplS
   }else if( explSeqActive > 0 & nestedExplSeqActive > 0){
     return <RegularExplanation facts={facts} counterfact={counterfact} type1={type1} type2={type2}/>
   }else if( explSeqActive > 0){
-    return <SequenceExplanationGrid derived={facts.derived} known={facts.known} type1={type1} type2={type2} funSequenceIndex={funSequenceIndex} funNestedIndex={funNestedIndex}/>
+    return <SequenceExplanationGrid derived={facts.derived} known={facts.assumptions} type1={type1} type2={type2} funSequenceIndex={funSequenceIndex} funNestedIndex={funNestedIndex}/>
   }
   else{
     return <RegularExplanation facts={facts} type1={type1} type2={type2} />
@@ -578,7 +600,11 @@ function Legend() {
             <div className="black-empty-rectangle"> - </div>
           </td>
           <td className="legend-td">{legend_false}</td>
-          </tr>
+          <td className="legend-td2">
+            <div className="black-solid-empty-rectangle"> - </div>
+          </td>
+          <td className="legend-td">{legend_contradiction}</td>
+        </tr>
       
       </table>
     </div>
@@ -691,6 +717,4 @@ function UsedClue({ clues, clue }) {
   
 }
 
-
 export default App;
-

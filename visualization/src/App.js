@@ -281,7 +281,7 @@ function App({ problemName }) {
 
   if( facts === null){
     prevNextButton = <div><button onClick={() => setIndexClipped(index + 1)}>start</button></div>
-  }else if(Array.isArray(facts.nested_explanations)){
+  }else if(Array.isArray(facts.nested_explanations) && facts.nested_explanations[0].derivable_fact != null  ){
 
     prevNextButton = <div>
           <table>

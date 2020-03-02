@@ -524,7 +524,7 @@ function SequenceExplanationGrid({ type1, type2, derived, known, funSequenceInde
             if (factKnowledge != null) {
               color = "lightcoral";// knowledge.value ? "#FF6600" : "#FF6600";
             }else if(knownKnowledge != null){
-              color = "#003399";
+              color = "whitesmoke";
             }
 
             if(factKnowledge != null){

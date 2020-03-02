@@ -78,15 +78,17 @@ procedure inner_explanation_loop(theories,S){
 			if #propagations > 0 then
 				shortestExpl = propagations[1][5]
 				//Optimization: next round, anything of length at most the shortest thing found+1 now will be accepted (speed optimization -- Don't know how helpful...)
-				exception = shortestExpl - 6	
+				exception = shortestExpl - 7	
 				debug("Shortest explanation size")
 				debug(shortestExpl)
 				newpropagations = {}
+				first = true
 				for i,prop in ipairs(propagations) do
-					if prop[5] < shortestExpl + 1 then
+					if ((prop[5] < shortestExpl + 1) and (first or prop[5] < 26)) then
+						first = false
 						S = doPropagation(S, prop[1],prop[2],prop[3],prop[4],false, prop[5])
 					else
-						if prop[5] < 29 then
+						if prop[5] < 31 then
 						//TODO this is test maybe only keep first half or something for allowing for some garbage collection to happen...  Or only those with cost smaller than smallest + X
 						table.insert(newpropagations,prop)
 						end
@@ -628,8 +630,10 @@ procedure propagateUntilUnsat(Sin,theTheory,reason,tuple){
 				Sexpl = explainOnePropagation_nested(S,theTheory,tuple)
 				//Derive all consequences of the actual propagation in S. 
 				cons = optimalpropagate(theTheory,Sexpl)
+
+				newfacts = diff(cons,S)
 				addTo(S,cons)
-				print_explanation_nested(Sexpl,theTheory,cons,reason)
+				print_explanation_nested(Sexpl,theTheory,newfacts,reason)
 
 
 			end

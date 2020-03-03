@@ -278,10 +278,13 @@ function App({ problemName }) {
   let prevNextButton;
   let prevNextSequenceButton = null
   let counterfact = null
-
+    console.log(facts)
   if( facts === null){
     prevNextButton = <div><button onClick={() => setIndexClipped(index + 1)}>start</button></div>
-  }else if(Array.isArray(facts.nested_explanations) && facts.nested_explanations[0].derivable_fact != null  ){
+  }else if(
+    Array.isArray(facts.nested_explanations) && 
+    facts.nested_explanations
+         .filter((nExpl) => nExpl.fact != null && nExpl.reason_sequence.length > 0) != null ){
 
     prevNextButton = <div>
           <table>
@@ -294,7 +297,7 @@ function App({ problemName }) {
           </table> 
         </div>  
     
-    const nested_explanations = facts.nested_explanations.filter((nExpl) => nExpl.fact != null)
+    const nested_explanations = facts.nested_explanations.filter((nExpl) => nExpl.fact != null && nExpl.reason_sequence.length > 0)
     
     if(sequenceIndex > 0 && nestedIndex > 0){
 

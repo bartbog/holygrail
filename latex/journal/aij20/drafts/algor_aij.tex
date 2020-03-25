@@ -46,12 +46,13 @@ $step\_cost \gets f(E,S,N)$\;
  \For{$n_i \in N$}{ 
  	expensive $\gets false$\;
 	nested$\_$seq $\gets \{\}$ \;
-	\While{$\neg unsat(I) \wedge \neg expensive$}{
+	$I' \gets E \wedge \neg \{n_i\} $ \;
+	\While{$ consistent(I') \wedge \neg expensive$}{
   $(E', S', N') \gets $min-explanation$(I, T_p)$\;
-  append $(E, S, N)$ to nested$\_$seq\;
-  $I \gets I \cup N$\;
+  append $(E', S', N')$ to nested$\_$seq\;
+  $I' \gets I' \cup N'$\;
   
-  \If{$f(E', S', N') > step\_cost$}{
+  \If{$f(E', S', N') \leq step\_cost$}{
         expensive $\gets true$\;}
 
      }

@@ -1,0 +1,70 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{latexsym}
+\usepackage{hyperref}
+\usepackage{paralist}
+%\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{xspace}
+\usepackage{amsmath,amssymb}
+% \usepackage{algpseudocode}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+
+\begin{document}
+
+\begin{algorithm}
+%  \begin{algorithmic}
+$I_{end} \gets$ propagate$(I_0\land T_p)$\;
+Seq $\gets$ empty sequence\;
+$I \gets I_0$\;
+\While{$I \neq I_{end}$}{
+  $(E, S, N) \gets $min-explanation$(I, T_p)$\;
+  
+  $nested \gets nested-explanation(E, S, N, T_p)$\;
+  \uIf{$nested \neq \emptyset$}{
+        append $nested$ to Seq\;}
+  \Else{
+  append $(E, S, N)$ to Seq\;
+  }   
+  
+  $I \gets I \cup N$\;
+}
+% \end{algorithmic}
+\caption{High-level greedy sequence-generating algorithm.}
+\label{alg:main}
+\end{algorithm}
+
+\begin{algorithm}
+%  \begin{algorithmic}
+$nested\_explanations \gets \{\}$\;
+$step\_cost \gets f(E,S,N)$\;
+ \For{$n_i \in N$}{ 
+ 	expensive $\gets false$\;
+	nested$\_$seq $\gets \{\}$ \;
+	\While{$\neg unsat(I) \wedge \neg expensive$}{
+  $(E', S', N') \gets $min-explanation$(I, T_p)$\;
+  append $(E, S, N)$ to nested$\_$seq\;
+  $I \gets I \cup N$\;
+  
+  \If{$f(E', S', N') > step\_cost$}{
+        expensive $\gets true$\;}
+
+     }
+     \If{$\neg expensive$}{
+        append $nested\_seq$ to $nested\_explanations$\;}   
+}
+\Return $nested\_explanations$
+    
+  
+% \end{algorithmic}
+\caption{nested-explanation(E, S, N, $T_p$)}
+\label{alg:main}
+\end{algorithm}
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

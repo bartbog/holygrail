@@ -30,8 +30,8 @@
 \usecolortheme{rose}
 %  \usetheme[coloredtitles]{vub}
 % \usetheme[showsection]{vub}
-\title{Visual Step-By-Step Explanations of Constraint Satisfaction Problems}
-\subtitle{ZebraTutor - Explaining logic grid puzzles}
+\title{GC4 WP4 - Visual Step-By-Step Explanations of Constraint Satisfaction Problems}
+% \subtitle{ZebraTutor - Explaining logic grid puzzles}
 \author{Emilio Gamba\textsuperscript{1}, Bart Bogaerts\textsuperscript{2}, Tias Guns\textsuperscript{1}}
 \date{}
 
@@ -152,37 +152,37 @@
 
 
 
-\begin{frame}{\small{History}}
+% \begin{frame}{\small{History}}
 
 
-    2019: \textbf{Holy Grail Challenge - Zebra puzzles}
+%     2019: \textbf{Holy Grail Challenge - Zebra puzzles}
 
-    \begin{itemize}
-        \item Parse puzzles and translate into CSP
-        \item Solve CSP automatically
-        \item Explain in a \emph{human-understandable} way how to solve this puzzle
-    \end{itemize}
-    \vspace{1em}
-    2020: \textbf{ECAI Accepted paper - formalization of XCSP} \\
+%     \begin{itemize}
+%         \item Parse puzzles and translate into CSP
+%         \item Solve CSP automatically
+%         \item Explain in a \emph{human-understandable} way how to solve this puzzle
+%     \end{itemize}
+%     \vspace{1em}
+%     2020: \textbf{ECAI Accepted paper - formalization of XCSP} \\
 
-    \vspace{1em}
+%     \vspace{1em}
 
-    2020: \textbf{IJCAI Demo - submitted} \\
-    \vspace{1em}
+%     2020: \textbf{IJCAI Demo - submitted} \\
+%     \vspace{1em}
 
-    Next: \textbf{AIJournal Special Issue on Explainability} \\
-\end{frame}
+%     Next: \textbf{AIJournal Special Issue on Explainability} \\
+% \end{frame}
 
 \begin{frame}{\small{Contributions}}
 
     \begin{itemize}
-        \item Formalize the step-wise explanation problem (ECAI)
+        \item Formalize the step-wise explanation problem %(ECAI)
               \begin{itemize}
                   \item Propose an algorithm (agnostic of actual propagators, consistency level, etc.)
                   \item Propose heuristics for guiding the search for explanations
                   \item Experimentally demonstrate feasibility
               \end{itemize}
-        \item Refine complex explanation steps (nested-explanations, IJCAI, AIJournal)
+        \item Refine complex explanation steps (nested-explanations)%, IJCAI, AIJournal)
 
     \end{itemize}
 
@@ -375,38 +375,58 @@
 
 \end{frame}
 
-\begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
-    \framesubtitle{ZebraTutor : background}
-    % \vspace{1.5cm}
-    \begin{block}{Typed Entity} \textit{Elisa} \texttt{[Person]}, \textit{farfalle} \texttt{[Pasta]}\end{block}
-    \vspace{0.5em}
-    \begin{block}{Literal} relation between entities $chose(Elisa, farfalle)$\end{block}
-    \vspace{0.5em}
-    \begin{block}{Clue}A clue is a first-order logic theory $\allconstraints$
-        \begin{center}
-            ``\emph{The person who chose arrabiata sauce ordered farfalle}''\\
-            \vspace{0.5em}
-            $\exists$ p \texttt{[Person]} : chose(p, arrabiata) $\wedge$ ordered(p, farfalle)
-        \end{center}
-    \end{block}
+% \begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
+%     \framesubtitle{ZebraTutor : background}
+%     % \vspace{1.5cm}
+%     \begin{block}{Typed Entity} \textit{Elisa} \texttt{[Person]}, \textit{farfalle} \texttt{[Pasta]}\end{block}
+%     \vspace{0.5em}
+%     \begin{block}{Literal} relation between entities $chose(Elisa, farfalle)$\end{block}
+%     \vspace{0.5em}
+%     \begin{block}{Clue}A clue is a first-order logic theory $\allconstraints$
+%         \begin{center}
+%             ``\emph{The person who chose arrabiata sauce ordered farfalle}''\\
+%             \vspace{0.5em}
+%             $\exists$ p \texttt{[Person]} : chose(p, arrabiata) $\wedge$ ordered(p, farfalle)
+%         \end{center}
+%     \end{block}
 
-\end{frame}
+% \end{frame}
 
-\begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
-    \framesubtitle{ZebraTutor : csp problem definition}
-    \vfill
-    \textbf{Goal} Find relations between each two types s.t.:
-    {\small
-    \begin{itemize}
-        \item Each clue is respected
-        \item \textbf{Bijectivity} Entity of 1 type is matched exactly with 1 entity of the second type (reverse holds)
-        \item \textbf{Transitivity} Relations are logically linked:\\
-              ``If Angie chose arrabiata sauce, and arrabiata sauce is paired with farfalle, then Angie must have eaten farfalle''
-    \end{itemize}
-    }
+% \begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
+%     \framesubtitle{ZebraTutor : csp problem definition}
+%     \vfill
+%     \textbf{Goal} Find relations between each two types s.t.:
+%     {\small
+%     \begin{itemize}
+%         \item Each clue is respected
+%         \item \textbf{Bijectivity} Entity of 1 type is matched exactly with 1 entity of the second type (reverse holds)
+%         \item \textbf{Transitivity} Relations are logically linked:\\
+%               ``If Angie chose arrabiata sauce, and arrabiata sauce is paired with farfalle, then Angie must have eaten farfalle''
+%     \end{itemize}
+%     }
 
-\end{frame}
+% \end{frame}
 
+
+% % \begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
+% %     \framesubtitle{ZebraTutor : background}
+% %     % \vspace{1.5cm}
+% %     \begin{block}{(Partial) Interpretation}
+% %         Finite set of literals of the form $P(\overline{d})$ or $\neg P(\overline{d})$
+% %         \begin{description}
+% %             \item[$P$] {\small where  is a relation symbol typed $T_1 \times ... \times T_n$}
+% %             \item[$\overline{d}$] {\small where  is tuple of domain elements, $d_i$ is of type $T_i$}
+% %             \item[$I_1$] $\{chose(Elisa, farfalle), \neg chose(Angie, farfalle) \}$
+% %         \end{description}
+% %     \end{block}
+% %     \begin{block}{Full Interpretation $I$}
+% %         I contains $P(\overline{d})$ or $\neg P(\overline{d})$ for each well-typed atom $P(\overline{d})$
+% %     \end{block}
+
+% %     \begin{block}{$I_2 \geq_p I_1$}
+% %         Interpretation $I_2$ is more precise than $I_1$  iff $I_2$ contains at least all the literals of $I_1$
+% %     \end{block}
+% % \end{frame}
 
 % \begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
 %     \framesubtitle{ZebraTutor : background}
@@ -419,97 +439,77 @@
 %             \item[$I_1$] $\{chose(Elisa, farfalle), \neg chose(Angie, farfalle) \}$
 %         \end{description}
 %     \end{block}
-%     \begin{block}{Full Interpretation $I$}
-%         I contains $P(\overline{d})$ or $\neg P(\overline{d})$ for each well-typed atom $P(\overline{d})$
-%     \end{block}
-
-%     \begin{block}{$I_2 \geq_p I_1$}
-%         Interpretation $I_2$ is more precise than $I_1$  iff $I_2$ contains at least all the literals of $I_1$
-%     \end{block}
-% \end{frame}
-
-\begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
-    \framesubtitle{ZebraTutor : background}
-    % \vspace{1.5cm}
-    \begin{block}{(Partial) Interpretation}
-        Finite set of literals of the form $P(\overline{d})$ or $\neg P(\overline{d})$
-        \begin{description}
-            \item[$P$] {\small where  is a relation symbol typed $T_1 \times ... \times T_n$}
-            \item[$\overline{d}$] {\small where  is tuple of domain elements, $d_i$ is of type $T_i$}
-            \item[$I_1$] $\{chose(Elisa, farfalle), \neg chose(Angie, farfalle) \}$
-        \end{description}
-    \end{block}
-
-    \begin{block}{Sequence of incremental partial interpretations}
-        A \textit{sequence of incremental partial interpretations} of a theory $\allconstraints$ with initial partial interpretation $I_0$ is a sequence $\langle I_0, I_1, \ldots, I_n  = max(I_0,\allconstraints)\rangle$ where $\forall i>0, I_{i-1} \leq_p I_{i}$ (i.e., the sequence is precision-increasing).
-    \end{block}
-    % \begin{block}{Full Interpretation $I$}
-    %     I contains $P(\overline{d})$ or $\neg P(\overline{d})$ for each well-typed atom $P(\overline{d})$
-    % \end{block}
-
-    % \begin{block}{$I_2 \geq_p I_1$}
-    %     Interpretation $I_2$ is more precise than $I_1$  iff $I_2$ contains at least all the literals of $I_1$
-    % \end{block}
-\end{frame}
-
-
-% \begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
-%     \framesubtitle{ZebraTutor : background}
-%     % \vspace{1.5cm}
-
-%     % \begin{block}{Full Interpretation $I$}
-%     %     I contains $P(\overline{d})$ or $\neg P(\overline{d})$ for each well-typed atom $P(\overline{d})$
-%     % \end{block}
-
-%     \begin{block}{Maximal consequence max($I$, $\allconstraints$)}
-%         The \textit{maximal consequence  of a theory $\allconstraints$}, and \textit{partial interpretation I},  $J$ is the precision-maximal partial interpretation J s.t. $I \wedge \allconstraints \models J$
-%     \end{block}
 
 %     \begin{block}{Sequence of incremental partial interpretations}
 %         A \textit{sequence of incremental partial interpretations} of a theory $\allconstraints$ with initial partial interpretation $I_0$ is a sequence $\langle I_0, I_1, \ldots, I_n  = max(I_0,\allconstraints)\rangle$ where $\forall i>0, I_{i-1} \leq_p I_{i}$ (i.e., the sequence is precision-increasing).
 %     \end{block}
+%     % \begin{block}{Full Interpretation $I$}
+%     %     I contains $P(\overline{d})$ or $\neg P(\overline{d})$ for each well-typed atom $P(\overline{d})$
+%     % \end{block}
 
+%     % \begin{block}{$I_2 \geq_p I_1$}
+%     %     Interpretation $I_2$ is more precise than $I_1$  iff $I_2$ contains at least all the literals of $I_1$
+%     % \end{block}
+% \end{frame}
+
+
+% % \begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
+% %     \framesubtitle{ZebraTutor : background}
+% %     % \vspace{1.5cm}
+
+% %     % \begin{block}{Full Interpretation $I$}
+% %     %     I contains $P(\overline{d})$ or $\neg P(\overline{d})$ for each well-typed atom $P(\overline{d})$
+% %     % \end{block}
+
+% %     \begin{block}{Maximal consequence max($I$, $\allconstraints$)}
+% %         The \textit{maximal consequence  of a theory $\allconstraints$}, and \textit{partial interpretation I},  $J$ is the precision-maximal partial interpretation J s.t. $I \wedge \allconstraints \models J$
+% %     \end{block}
+
+% %     \begin{block}{Sequence of incremental partial interpretations}
+% %         A \textit{sequence of incremental partial interpretations} of a theory $\allconstraints$ with initial partial interpretation $I_0$ is a sequence $\langle I_0, I_1, \ldots, I_n  = max(I_0,\allconstraints)\rangle$ where $\forall i>0, I_{i-1} \leq_p I_{i}$ (i.e., the sequence is precision-increasing).
+% %     \end{block}
+
+% % \end{frame}
+
+% % \begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
+% %     \framesubtitle{ZebraTutor : background (2)}
+
+% %     A sequence $\langle I_0, I_1, ..., I_n = max(I, \allconstraints)\rangle$ where 
+
+% % \end{frame}
+
+% \begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
+%     \framesubtitle{ZebraTutor : Explanation-Producing Problem}
+%     \begin{block}{Explanation $(E,S,N)$}
+%         Let $I_{i-1}$ and $I_i$ be partial interpretations such that $I_{i-1}\wedge T \models I_i$.
+%         We say that $(E_i,S_i,N_i)$ \emph{explains} the derivation of $I_{i}$ from $I_{i-1}$ if the following hold:
+%         \begin{itemize}
+%             \item $N_i= I_i \setminus I_{i-1}$ (i.e., $N_i$ consists of all newly defined facts),
+%             \item $E_i\subseteq I_i$ (i.e., the explaining facts are a subset of what was previously derived),
+%             \item $S_i \subseteq T_P$ (i.e., a subset of the clues and implicit constraints are used), and
+%             \item $S_i \cup E_i \models N_i$ (i.e., all newly derived information indeed follows from this explanation).
+%         \end{itemize}
+%     \end{block}
 % \end{frame}
 
 % \begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
-%     \framesubtitle{ZebraTutor : background (2)}
-
-%     A sequence $\langle I_0, I_1, ..., I_n = max(I, \allconstraints)\rangle$ where 
-
+%     \framesubtitle{ZebraTutor : Explanation-Producing Problem}
+%     \begin{block}{Non-redundant explanation}
+%         We call $(E_i,S_i,N_i)$ a \emph{non-redundant explanation of  the derivation of $I_i$ from $I_{i-1}$} if it explains this derivation and whenever $E'\subseteq E_i; S'\subseteq S_i$ while $(E',S',N_i)$ also explains this derivation, it must be that $E_i=E', S_i=S'$.
+%     \end{block}
+%     \pause
+%     Furthermore, we assume existence of a \emph{cost function} $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation
 % \end{frame}
 
-\begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
-    \framesubtitle{ZebraTutor : Explanation-Producing Problem}
-    \begin{block}{Explanation $(E,S,N)$}
-        Let $I_{i-1}$ and $I_i$ be partial interpretations such that $I_{i-1}\wedge T \models I_i$.
-        We say that $(E_i,S_i,N_i)$ \emph{explains} the derivation of $I_{i}$ from $I_{i-1}$ if the following hold:
-        \begin{itemize}
-            \item $N_i= I_i \setminus I_{i-1}$ (i.e., $N_i$ consists of all newly defined facts),
-            \item $E_i\subseteq I_i$ (i.e., the explaining facts are a subset of what was previously derived),
-            \item $S_i \subseteq T_P$ (i.e., a subset of the clues and implicit constraints are used), and
-            \item $S_i \cup E_i \models N_i$ (i.e., all newly derived information indeed follows from this explanation).
-        \end{itemize}
-    \end{block}
-\end{frame}
 
-\begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
-    \framesubtitle{ZebraTutor : Explanation-Producing Problem}
-    \begin{block}{Non-redundant explanation}
-        We call $(E_i,S_i,N_i)$ a \emph{non-redundant explanation of  the derivation of $I_i$ from $I_{i-1}$} if it explains this derivation and whenever $E'\subseteq E_i; S'\subseteq S_i$ while $(E',S',N_i)$ also explains this derivation, it must be that $E_i=E', S_i=S'$.
-    \end{block}
-    \pause
-    Furthermore, we assume existence of a \emph{cost function} $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation
-\end{frame}
-
-
-\begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
-    \framesubtitle{ZebraTutor : Explanation-Producing Problem}
-    \begin{definition}
-        Given a theory $T$ and initial partial interpretation $I_0$, the \emph{explanation-production problem} consist of finding a non-redundant explanation sequence
-        \[ \langle (I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n)) \rangle\]
-        such that a predefined aggregate over the sequence $\left(f(E_i,S_i,N_i)\right)_{i\leq n}$ is minimised.
-    \end{definition}
-\end{frame}
+% \begin{frame}{\small{Explaining Constraint Satisfaction Problems}}
+%     \framesubtitle{ZebraTutor : Explanation-Producing Problem}
+%     \begin{definition}
+%         Given a theory $T$ and initial partial interpretation $I_0$, the \emph{explanation-production problem} consist of finding a non-redundant explanation sequence
+%         \[ \langle (I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n)) \rangle\]
+%         such that a predefined aggregate over the sequence $\left(f(E_i,S_i,N_i)\right)_{i\leq n}$ is minimised.
+%     \end{definition}
+% \end{frame}
 
 \begin{frame}
     \frametitle{\small{Explaining Constraint Satisfaction Problems}}
@@ -517,8 +517,8 @@
 
     \textbf{Algorithm}
     \begin{itemize}
-        \item Greedy algorithm (max aggregate)
-        \item Prune based on optimistic approximation of cost
+        \item Greedy algorithm (max aggregate)\pause
+        \item Prune based on optimistic approximation of cost\pause
         \item Finding non-redundant explanations : Unsat-core extraction (IDP system)
     \end{itemize}
 
@@ -569,15 +569,17 @@
     \frametitle{\small{Future Perspectives}}
 
     \begin{itemize}
-        \item Extend explanation capacity to constraint optimization problems
-        \item Fast explanation generation: Unsat-core optimization
-        \item Learning cost/optimization function
+        \item Extend explanation capacity to Constraint Optimization
+        \begin{itemize}
+            \item Explainable Planning (XAIP)
+            \item Model reconciliation    \pause     
+        \end{itemize}
+        \item Fast explanation generation: Unsat-core optimization\pause
+        \item Learning cost/optimization function (Preference learning)\pause
         \item Interactive configuration/planning/scheduling
     \end{itemize}
 
 \end{frame}
-
-
 
 \bibliographystyle{abbrv}
 \begin{frame}

@@ -1,10 +1,10 @@
-outputname=test.pdf
+outputname=main.pdf
 
 .PHONY: clean $(outputname) all
 
 all: $(outputname)
 $(outputname): $(texfile)
-	latexmk -pdf -xelatex -latexoption='--shell-escape' -use-make test.tex
+	latexmk -pdf -pdflatex="pdflatex -interaction=nonstopmode" -use-make main.tex
 
 clean:
 	latexmk -c -C

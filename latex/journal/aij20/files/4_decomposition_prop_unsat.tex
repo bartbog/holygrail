@@ -102,3 +102,58 @@ We can then search for the smallest explanation among the candidates found, by s
 Every time \textit{min-explanation$(I,C)$} is called with an updated partial interpretation $I$ the explanations should be regenerated. The reason is that for some derivable facts $a$, there may now be a much easier and cost-effective explanation of that fact.
 There is one benefit in caching the \textit{Candidates} across the different iterations, and that is that in a subsequent call, the cost of the most cost-effective explanation that is still applicable can be used as a lower bound to start from.
 Furthermore, in practice, we cache all candidates and when we (re)compute a MUS for a fact $a$, we only store it if it is more cost-effective than the best one we have previously found for that fact, across the different iterations.
+
+\subsection{Exploring nested explanations}
+
+\begin{algorithm}
+  %  \begin{algorithmic}
+  $I_{end} \gets$ propagate$(I_0\land T_p)$\;
+  Seq $\gets$ empty sequence\;
+  $I \gets I_0$\;
+  \While{$I \neq I_{end}$}{
+    $(E, S, N) \gets $min-explanation$(I, T_p)$\;
+    
+    $nested \gets$ nested-explanation$(E, S, N, T_p)$\;
+    \uIf{$nested \neq \emptyset$}{
+          append $nested$ to Seq\;}
+    \Else{
+    append $(E, S, N)$ to Seq\;
+    }   
+    
+    $I \gets I \cup N$\;
+  }
+  % \end{algorithmic}
+  \caption{greedy-explanations$(I_0, T_p)$}
+  \label{alg:main}
+  \end{algorithm}
+  
+  \begin{algorithm}
+    \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+    \SetKwComment{command}{/*}{*/}
+    \SetKw{Break}{break}
+    
+    
+     \Input{A partial interpretation $I$ and a set of constraints $C$}
+  %  \begin{algorithmic}
+  $nested\_explanations \gets \{\}$\;
+  $step\_cost \gets f(E,S,N)$\;
+   \For{$n_i \in N$}{ 
+     expensive $\gets false$\;
+    nested$\_$seq $\gets \{\}$ \;
+    $I' \gets E \wedge \neg \{n_i\} $ \;
+    \While{$ consistent(I') \wedge \neg expensive$}{
+    $(E', S', N') \gets $min-explanation$(I', S)$\;
+    append $(E', S', N')$ to nested$\_$seq\;
+    $I' \gets I' \cup N'$\;
+    
+    \If{$f(E', S', N') \leq step\_cost$}{
+          expensive $\gets true$\;}
+       }
+       \If{$\neg expensive$}{
+          append $nested\_seq$ to $nested\_explanations$\;}   
+  }
+  \Return $nested\_explanations$
+  % \end{algorithmic}
+  \caption{nested-explanation(E, S, N)}
+  \label{alg:main}
+  \end{algorithm}

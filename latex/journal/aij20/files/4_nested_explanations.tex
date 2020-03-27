@@ -1,7 +1,25 @@
-Ideas : 
-\begin{itemize}
-    \item Difficult inference steps
-    \item 2 levels of abstraction
-    \item Refine explanations using counterfactual reasoning
-    \item 
-\end{itemize}
+The generation of the explanation sequence, as formally defined in section 4, is guided by the cost function $f(E, S, N)$, a proxy for the mental-effort of the explanation-step. 
+It turns out from preliminary analysis of the generated explanation sequence that some steps are still too hard to understand as they combine different constraints and/or multiple clues. 
+In order to cope with this problem, we take a step back, and tackle it from another perspective: \textit{``Can I find another easier way to explain this step using the same facts and constraints by negating the newly derived fact and finding an inconsistency ?''} For the definition of \textit{inconsistency}, we refer back to definition \ref{def:consistent}.
+
+
+To answer this question, we extend the explanation-production problem with the purpose of refining those explanations that are too complex and taking inspiration from counterfactual reasoning. 
+Thus, our problem becomes an explanation-generating problem with 2 levels of abstractions: ``regular'' explanations and ``lower-level'' \textit{nested-explanations}. 
+We define the concept of \emph{nested-explanation} as follows:
+
+\begin{definition}
+    Given a non-redundant explanation $(E_i, S_i, N_i)$, let $n_i \in N_i$ be a newly derived fact and partial interpretation  $I_0' = \{ \neg n_i \wedge E_i \}$ , the \textbf{nested-explanation} problem consists of finding a non-redundant explanation sequence that leads to an inconsistency 
+    \[\langle \ (I_0',(\emptyset,\emptyset,\emptyset)),\ (I_1',(E_1',S_1',N_1')), \dots ,\ (I_n',(E_n',S_n',N_n')) \ \rangle\]
+    such that $\forall \ (E_i',S_i',N_i') : f(E_i',S_i',N_i') \leq f(E_i, S_i, N_i)$. 
+\end{definition}
+In other words, for every newly derived fact, we look for an \emph{nested} explanation-sequence such that every nested explanation-step is easier than the original explanation step.
+
+% Ideas : 
+% \begin{itemize}
+%     \item During analysis of sequence of reasoning steps too hard/ complex to understand 
+%     \item 2 levels of abstraction
+%     \item Refine explanations using counterfactual reasoning
+%     \item 
+% \end{itemize}
+
+% We introduce a second

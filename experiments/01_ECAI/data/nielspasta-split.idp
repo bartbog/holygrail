@@ -1,0 +1,350 @@
+// Problem nielspasta
+
+vocabulary V {
+    type assumptiontype = {0..36} isa int
+	assumption_satisfied(assumptiontype)
+
+    type type1 constructed from {the_other_type1, arrabiata_sauce, marinara_sauce, puttanesca_sauce}
+    type person constructed from {angie, damon, claudia, elisa}
+    type dollar = {4; 8; 12; 16} isa int
+    type type2 constructed from {capellini, farfalle, tagliolini, rotini}
+    type type3 = {-4; 4; -8; 8; -12; 12} isa int // differences between values of type dollar
+    type type4 = {-4; 4; -8; 8; -12; 12} isa int // differences between values of type dollar
+    type type5 = {-4; 4; -8; 8; -12; 12} isa int // differences between values of type dollar
+
+    chose(person, type1)
+    paid(person, dollar)
+    ordered(person, type2)
+    is_linked_with_1(type1, dollar)
+    is_linked_with_2(type1, type2)
+    is_linked_with_3(dollar, type2)
+}
+
+vocabulary VExtra {
+    extern vocabulary V
+    ct_chose(person, type1)
+    cf_chose(person, type1)
+    ct_paid(person, dollar)
+    cf_paid(person, dollar)
+    ct_ordered(person, type2)
+    cf_ordered(person, type2)
+    ct_is_linked_with_1(type1, dollar)
+    cf_is_linked_with_1(type1, dollar)
+    ct_is_linked_with_2(type1, type2)
+    cf_is_linked_with_2(type1, type2)
+    ct_is_linked_with_3(dollar, type2)
+    cf_is_linked_with_3(dollar, type2)
+}
+
+structure S : V {
+    	assumption_satisfied<cf>={}
+		assumption_satisfied<u>={}
+}
+
+theory T1: V {
+    // The person who ordered capellini paid less than the person who chose arrabiata sauce
+    assumption_satisfied( 0  ) => ?a [person] b [type3] c [dollar] d [person] e [dollar]: ordered(a,capellini) & b>0 & chose(d,arrabiata_sauce) & paid(d,c) & e = c-b & paid(a,e).
+}
+
+theory T2: V {
+    // The person who chose arrabiata sauce ordered farfalle
+    assumption_satisfied( 0  ) => ?f [person]: chose(f,arrabiata_sauce) & ordered(f,farfalle).
+}
+
+theory T3: V {
+    // The person who ordered tagliolini paid less than the person who chose marinara sauce
+    assumption_satisfied( 0  ) => ?g [person] h [type4] i [dollar] j [person] k [dollar]: ordered(g,tagliolini) & h>0 & chose(j,marinara_sauce) & paid(j,i) & k = i-h & paid(g,k).
+}
+
+theory T4: V {
+    // The person who ordered tagliolini paid more than Angie
+    assumption_satisfied( 0  ) => ?l [person] m [type5] n [dollar] o [dollar]: ordered(l,tagliolini) & m>0 & paid(angie,n) & o = n+m & paid(l,o).
+}
+
+theory T5: V {
+    // The person who ordered rotini is either the person who paid $8 more than Damon or the person who paid $8 less than Damon
+    assumption_satisfied( 0  ) => ?p [person]: ordered(p,rotini) & ((?q [person] r [dollar] s [dollar]: paid(damon,r) & s = r+8 & paid(q,s) & q = p) | (?t [person] u [dollar] v [dollar]: paid(damon,u) & v = u-8 & paid(t,v) & t = p)).
+}
+
+theory T6: V {
+    // Claudia did not choose puttanesca sauce
+    assumption_satisfied( 0  ) => ~ chose(claudia,puttanesca_sauce).
+}
+
+theory T7: V {
+    // The person who ordered capellini is either Damon or Claudia
+    assumption_satisfied( 0  ) => ?w [person]: ordered(w,capellini) & (damon = w | claudia = w).
+}
+
+theory T8: V {
+    // The person who chose arrabiata sauce is either Angie or Elisa
+    assumption_satisfied( 0  ) => ?x [person]: chose(x,arrabiata_sauce) & (angie = x | elisa = x).
+}
+
+
+theory bijections1 : V {
+     assumption_satisfied( 1  ) => ! x [person]: ?>=1 y [type1]: chose(x, y).
+}
+
+theory bijections2 : V {
+     assumption_satisfied( 2  ) => ! x [type1]: ?>=1 y [person]: chose(y, x).
+}
+
+theory bijections3 : V {
+     assumption_satisfied( 3  ) => ! x [person]: ?>=1 y [dollar]: paid(x, y).
+}
+
+theory bijections4 : V {
+     assumption_satisfied( 4  ) => ! x [dollar]: ?>=1 y [person]: paid(y, x).
+}
+
+theory bijections5 : V {
+     assumption_satisfied( 5  ) => ! x [dollar]: ?>=1 y [person]: paid(y, x).
+}
+
+theory bijections6 : V {
+     assumption_satisfied( 6  ) => ! x [person]: ?>=1 y [type2]: ordered(x, y).
+}
+
+theory bijections7 : V {
+     assumption_satisfied( 7  ) => ! x [type2]: ?>=1 y [person]: ordered(y, x).
+}
+
+theory bijections8 : V {
+     assumption_satisfied( 8  ) => ! x [dollar]: ?>=1 y [type1]: is_linked_with_1(y, x).
+}
+
+theory bijections9 : V {
+     assumption_satisfied( 9  ) => ! x [type1]: ?>=1 y [type2]: is_linked_with_2(x, y).
+}
+
+theory bijections10 : V {
+     assumption_satisfied( 10  ) => ! x [type2]: ?>=1 y [type1]: is_linked_with_2(y, x).
+}
+
+theory bijections11 : V {
+     assumption_satisfied( 11  ) => ! x [dollar]: ?>=1 y [type2]: is_linked_with_3(x, y).
+}
+
+theory bijections12 : V {
+     assumption_satisfied( 12  ) => ! x [type2]: ?>=1 y [dollar]: is_linked_with_3(y, x).
+}
+
+theory bijections13 : V {
+     assumption_satisfied( 13  ) => ! x [person]: ?=<1 y [type1]: chose(x, y).
+}
+
+theory bijections14 : V {
+     assumption_satisfied( 14  ) => ! x [type1]: ?=<1 y [person]: chose(y, x).
+}
+
+theory bijections15 : V {
+     assumption_satisfied( 15  ) => ! x [person]: ?=<1 y [dollar]: paid(x, y).
+}
+
+theory bijections16 : V {
+     assumption_satisfied( 16  ) => ! x [dollar]: ?=<1 y [person]: paid(y, x).
+}
+
+theory bijections17 : V {
+     assumption_satisfied( 17  ) => ! x [dollar]: ?=<1 y [person]: paid(y, x).
+}
+
+theory bijections18 : V {
+     assumption_satisfied( 18  ) => ! x [person]: ?=<1 y [type2]: ordered(x, y).
+}
+
+theory bijections19 : V {
+     assumption_satisfied( 19  ) => ! x [type2]: ?=<1 y [person]: ordered(y, x).
+}
+
+theory bijections20 : V {
+     assumption_satisfied( 20  ) => ! x [dollar]: ?=<1 y [type1]: is_linked_with_1(y, x).
+}
+
+theory bijections21 : V {
+     assumption_satisfied( 21  ) => ! x [type1]: ?=<1 y [type2]: is_linked_with_2(x, y).
+}
+
+theory bijections22 : V {
+     assumption_satisfied( 22  ) => ! x [type2]: ?=<1 y [type1]: is_linked_with_2(y, x).
+}
+
+theory bijections23 : V {
+     assumption_satisfied( 23  ) => ! x [dollar]: ?=<1 y [type2]: is_linked_with_3(x, y).
+}
+
+theory bijections24 : V {
+     assumption_satisfied( 24  ) => ! x [type2]: ?=<1 y [dollar]: is_linked_with_3(y, x).
+}
+
+
+theory synonyms : V {
+
+}
+
+theory transitivity1 : V {
+    assumption_satisfied( 25  ) =>   ! x y z: paid(x, z) & is_linked_with_1(y, z) => chose(x, y).
+}
+
+theory transitivity2 : V {
+    assumption_satisfied( 26  ) =>   ! x y z: ~paid(x, z) & is_linked_with_1(y, z) => ~chose(x, y).
+}
+
+theory transitivity3 : V {
+    assumption_satisfied( 27  ) =>   ! x y z: paid(x, z) & ~is_linked_with_1(y, z) => ~chose(x, y).
+}
+
+theory transitivity4 : V {
+    assumption_satisfied( 28  ) =>   ! x y z: ordered(x, z) & is_linked_with_2(y, z) => chose(x, y).
+}
+
+theory transitivity5 : V {
+    assumption_satisfied( 29  ) =>   ! x y z: ordered(x, z) & ~is_linked_with_2(y, z) => ~chose(x, y).
+}
+
+theory transitivity6 : V {
+    assumption_satisfied( 30  ) =>   ! x y z: ~ordered(x, z) & is_linked_with_2(y, z) => ~chose(x, y).
+}
+
+theory transitivity7 : V {
+    assumption_satisfied( 31  ) =>   ! x y z: ordered(x, z) & is_linked_with_3(y, z) => paid(x, y).
+}
+
+theory transitivity8 : V {
+    assumption_satisfied( 32  ) =>   ! x y z: ~ordered(x, z) & is_linked_with_3(y, z) => ~paid(x, y).
+}
+
+theory transitivity9 : V {
+    assumption_satisfied( 33  ) =>   ! x y z: ordered(x, z) & ~is_linked_with_3(y, z) => ~paid(x, y).
+}
+
+theory transitivity10 : V {
+    assumption_satisfied( 34  ) =>   ! x y z: is_linked_with_2(x, z) & is_linked_with_3(y, z) => is_linked_with_1(x, y).
+}
+
+theory transitivity11 : V {
+    assumption_satisfied( 35  ) =>   ! x y z: is_linked_with_2(x, z) & ~is_linked_with_3(y, z) => ~is_linked_with_1(x, y).
+}
+
+theory transitivity12 : V {
+    assumption_satisfied( 36  ) =>   ! x y z: ~is_linked_with_2(x, z) & is_linked_with_3(y, z) => ~is_linked_with_1(x, y).
+}
+
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [person] y [type1]: ct_chose(x,y) => chose(x,y)) &
+        (! x [person] y [type1]: cf_chose(x,y) => ~chose(x,y)) &
+        (! x [person] y [dollar]: ct_paid(x,y) => paid(x,y)) &
+        (! x [person] y [dollar]: cf_paid(x,y) => ~paid(x,y)) &
+        (! x [person] y [type2]: ct_ordered(x,y) => ordered(x,y)) &
+        (! x [person] y [type2]: cf_ordered(x,y) => ~ordered(x,y)) &
+        (! x [type1] y [dollar]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [type1] y [dollar]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [type1] y [type2]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [type1] y [type2]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        (! x [dollar] y [type2]: ct_is_linked_with_3(x,y) => is_linked_with_3(x,y)) &
+        (! x [dollar] y [type2]: cf_is_linked_with_3(x,y) => ~is_linked_with_3(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::chose], S2[V::chose].ct)
+    removeFrom(S3[V::chose], S2[V::chose].cf)
+    removeFrom(S3[V::paid], S2[V::paid].ct)
+    removeFrom(S3[V::paid], S2[V::paid].cf)
+    removeFrom(S3[V::ordered], S2[V::ordered].ct)
+    removeFrom(S3[V::ordered], S2[V::ordered].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::chose, VExtra::ct_chose, VExtra::cf_chose},
+        {V::paid, VExtra::ct_paid, VExtra::cf_paid},
+        {V::ordered, VExtra::ct_ordered, VExtra::cf_ordered},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+        {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
+    }
+}
+
+include "./generic_procedures-split.idp"
+
+procedure main() {
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "The person who ordered capellini paid less than the person who chose arrabiata sauce"},
+        {T2, "The person who chose arrabiata sauce ordered farfalle"},
+        {T3, "The person who ordered tagliolini paid less than the person who chose marinara sauce"},
+        {T4, "The person who ordered tagliolini paid more than Angie"},
+        {T5, "The person who ordered rotini is either the person who paid $8 more than Damon or the person who paid $8 less than Damon"},
+        {T6, "Claudia did not choose puttanesca sauce"},
+        {T7, "The person who ordered capellini is either Damon or Claudia"},
+        {T8, "The person who chose arrabiata sauce is either Angie or Elisa"},
+    }
+
+    S = compute_explanations(theories,S)
+
+    os.exit(0)
+}
+
+procedure get_trans_theories(){
+
+	transitivity_theories = {
+		{transitivity1, "Transitivity constraint"}, 
+		{transitivity2, "Transitivity constraint"}, 
+		{transitivity3, "Transitivity constraint"}, 
+		{transitivity4, "Transitivity constraint"}, 
+		{transitivity5, "Transitivity constraint"}, 
+		{transitivity6, "Transitivity constraint"}, 
+		{transitivity7, "Transitivity constraint"}, 
+		{transitivity8, "Transitivity constraint"}, 
+		{transitivity9, "Transitivity constraint"}, 
+		{transitivity10, "Transitivity constraint"}, 
+		{transitivity11, "Transitivity constraint"}, 
+		{transitivity12, "Transitivity constraint"}, 
+	}
+	return transitivity_theories
+}
+
+procedure get_bij_theories(){
+	bijection_theories = {
+		{bijections1, "Bijectivity"}, 
+		{bijections2, "Bijectivity"}, 
+		{bijections3, "Bijectivity"}, 
+		{bijections4, "Bijectivity"}, 
+		{bijections5, "Bijectivity"}, 
+		{bijections6, "Bijectivity"}, 
+		{bijections7, "Bijectivity"}, 
+		{bijections8, "Bijectivity"}, 
+		{bijections9, "Bijectivity"}, 
+		{bijections10, "Bijectivity"}, 
+		{bijections11, "Bijectivity"}, 
+		{bijections12, "Bijectivity"}, 
+		{bijections13, "Bijectivity"}, 
+		{bijections14, "Bijectivity"}, 
+		{bijections15, "Bijectivity"}, 
+		{bijections16, "Bijectivity"}, 
+		{bijections17, "Bijectivity"}, 
+		{bijections18, "Bijectivity"}, 
+		{bijections19, "Bijectivity"}, 
+		{bijections20, "Bijectivity"}, 
+		{bijections21, "Bijectivity"}, 
+		{bijections22, "Bijectivity"}, 
+		{bijections23, "Bijectivity"}, 
+		{bijections24, "Bijectivity"}, 
+	}
+	return	bijection_theories
+}
+
+

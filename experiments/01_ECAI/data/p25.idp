@@ -1,0 +1,316 @@
+// Problem p25
+
+vocabulary V {
+    type assumptiontype = {0..36} isa int
+    assumption_satisfied(assumptiontype)
+
+    type month = {3; 4; 5; 6; 7} isa int
+    type application constructed from {the_other_application, flowcarts, vitalinks, bubble_boms, angry_ants}
+    type type1 constructed from {the_other_type1, vortia, apptastic, gadingo, digibits}
+    type download = {2300000; 4200000; 5500000; 6800000; 8900000} isa int
+
+    released_in(application, month)
+    made_by(application, type1)
+    with(application, download)
+    is_linked_with_1(month, type1)
+    is_linked_with_2(month, download)
+    is_linked_with_3(type1, download)
+}
+
+vocabulary VExtra {
+    extern vocabulary V
+    ct_released_in(application, month)
+    cf_released_in(application, month)
+    ct_made_by(application, type1)
+    cf_made_by(application, type1)
+    ct_with(application, download)
+    cf_with(application, download)
+    ct_is_linked_with_1(month, type1)
+    cf_is_linked_with_1(month, type1)
+    ct_is_linked_with_2(month, download)
+    cf_is_linked_with_2(month, download)
+    ct_is_linked_with_3(type1, download)
+    cf_is_linked_with_3(type1, download)
+}
+
+structure S : V {
+        assumption_satisfied<cf>={}
+        assumption_satisfied<u>={}
+}
+
+theory T1: V {
+    // Of Flowcarts and the application with 5500000 downloads, one was made by Vortia and the other was released in May
+    assumption_satisfied( 0  ) => ?a [application]: with(a,5500000) & ~ (flowcarts = a) & (made_by(flowcarts,vortia) & released_in(a,5) | made_by(a,vortia) & released_in(flowcarts,5)).
+}
+
+theory T2: V {
+    // The app released in July, the app developed by Apptastic and Vitalinks are three different games
+    assumption_satisfied( 0  ) => ?b [application] c [application]: ~ (b = c) & ~ (b = vitalinks) & ~ (c = vitalinks) & released_in(b,7) & made_by(c,apptastic).
+}
+
+theory T3: V {
+    // Neither the game released by Gadingo nor the apptastic app has 2300000 downloads
+    assumption_satisfied( 0  ) => ~ (?d [application]: made_by(d,gadingo) & with(d,2300000)) & ~ (?e [application]: with(e,2300000) & made_by(e,apptastic)).
+}
+
+theory T4: V {
+    // The five apps are Bubble Boms, the app released in April, the app released in July, the application released by Apptastic and the app released by Digibits
+    assumption_satisfied( 0  ) => ?f [application] g [application] h [application] i [application]: ~ (bubble_boms = f) & ~ (bubble_boms = g) & ~ (bubble_boms = h) & ~ (bubble_boms = i) & ~ (f = g) & ~ (f = h) & ~ (f = i) & ~ (g = h) & ~ (g = i) & ~ (h = i) & released_in(f,4) & released_in(g,7) & made_by(h,apptastic) & made_by(i,digibits).
+}
+
+theory T5: V {
+    // Vortia's app came out in march
+    assumption_satisfied( 0  ) => ?j [application]: released_in(j,3) & made_by(j,vortia).
+}
+
+theory T6: V {
+    // Angry Ants was released 2 months earlier than the app with 6800000 downloads
+    assumption_satisfied( 0  ) => ?k [month] l [application] m [month]: with(l,6800000) & released_in(l,k) & m = k-2 & released_in(angry_ants,m).
+}
+
+theory T7: V {
+    // Flowcarts doesn't have 4200000 downloads
+    assumption_satisfied( 0  ) => ~ with(flowcarts,4200000).
+}
+
+theory T8: V {
+    // The game released in July is either the game with 6800000 downloads or the app released by Gadingo
+    assumption_satisfied( 0  ) => ?n [application]: released_in(n,7) & ((?o [application]: with(o,6800000) & o = n) | (?p [application]: made_by(p,gadingo) & p = n)).
+}
+
+
+theory bijections1 : V {
+     assumption_satisfied( 1  ) => ! x [application]: ?>=1 y [month]: released_in(x, y).
+}
+theory bijections2 : V {
+     assumption_satisfied( 2  ) => ! x [application]: ?=<1 y [month]: released_in(x, y).
+}
+theory bijections3 : V {
+     assumption_satisfied( 3  ) => ! x [month]: ?>=1 y [application]: released_in(y, x).
+}
+theory bijections4 : V {
+     assumption_satisfied( 4  ) => ! x [month]: ?=<1 y [application]: released_in(y, x).
+}
+theory bijections5 : V {
+     assumption_satisfied( 5  ) => ! x [application]: ?>=1 y [type1]: made_by(x, y).
+}
+theory bijections6 : V {
+     assumption_satisfied( 6  ) => ! x [application]: ?=<1 y [type1]: made_by(x, y).
+}
+theory bijections7 : V {
+     assumption_satisfied( 7  ) => ! x [type1]: ?>=1 y [application]: made_by(y, x).
+}
+theory bijections8 : V {
+     assumption_satisfied( 8  ) => ! x [type1]: ?=<1 y [application]: made_by(y, x).
+}
+theory bijections9 : V {
+     assumption_satisfied( 9  ) => ! x [application]: ?>=1 y [download]: with(x, y).
+}
+theory bijections10 : V {
+     assumption_satisfied( 10  ) => ! x [application]: ?=<1 y [download]: with(x, y).
+}
+theory bijections11 : V {
+     assumption_satisfied( 11  ) => ! x [download]: ?>=1 y [application]: with(y, x).
+}
+theory bijections12 : V {
+     assumption_satisfied( 12  ) => ! x [download]: ?=<1 y [application]: with(y, x).
+}
+theory bijections13 : V {
+     assumption_satisfied( 13  ) => ! x [month]: ?>=1 y [type1]: is_linked_with_1(x, y).
+}
+theory bijections14 : V {
+     assumption_satisfied( 14  ) => ! x [month]: ?=<1 y [type1]: is_linked_with_1(x, y).
+}
+theory bijections15 : V {
+     assumption_satisfied( 15  ) => ! x [type1]: ?>=1 y [month]: is_linked_with_1(y, x).
+}
+theory bijections16 : V {
+     assumption_satisfied( 16  ) => ! x [type1]: ?=<1 y [month]: is_linked_with_1(y, x).
+}
+theory bijections17 : V {
+     assumption_satisfied( 17  ) => ! x [month]: ?>=1 y [download]: is_linked_with_2(x, y).
+}
+theory bijections18 : V {
+     assumption_satisfied( 18  ) => ! x [month]: ?=<1 y [download]: is_linked_with_2(x, y).
+}
+theory bijections19 : V {
+     assumption_satisfied( 19  ) => ! x [download]: ?>=1 y [month]: is_linked_with_2(y, x).
+}
+theory bijections20 : V {
+     assumption_satisfied( 20  ) => ! x [download]: ?=<1 y [month]: is_linked_with_2(y, x).
+}
+theory bijections21 : V {
+     assumption_satisfied( 21  ) => ! x [type1]: ?>=1 y [download]: is_linked_with_3(x, y).
+}
+theory bijections22 : V {
+     assumption_satisfied( 22  ) => ! x [type1]: ?=<1 y [download]: is_linked_with_3(x, y).
+}
+theory bijections23 : V {
+     assumption_satisfied( 23  ) => ! x [download]: ?>=1 y [type1]: is_linked_with_3(y, x).
+}
+theory bijections24 : V {
+     assumption_satisfied( 24  ) => ! x [download]: ?=<1 y [type1]: is_linked_with_3(y, x).
+}
+
+theory synonyms : V {
+    // Logigram synonym axioms:
+    //! x [application] y [month]: released_in(x, y) <=> released_in(x, y).
+    //! x [application] y [type1]: made_by(x, y) <=> made_by(x, y).
+    //! x [application] y [download]: with(x, y) <=> with(x, y).
+    //! x [application] y [type1]: made_by(x, y) <=> made_by(x, y).
+
+}
+
+
+theory transitivity1 : V {
+     assumption_satisfied( 25  ) => ! x y z: made_by(x, z) & is_linked_with_1(y, z) =>  released_in(x, y).
+}
+theory transitivity2 : V {
+     assumption_satisfied( 26  ) => ! x y z: ~ made_by(x, z) & is_linked_with_1(y, z) => ~ released_in(x, y).
+}
+theory transitivity3 : V {
+     assumption_satisfied( 27  ) => ! x y z:  made_by(x, z) & ~ is_linked_with_1(y, z) => ~ released_in(x, y).
+}
+theory transitivity4 : V {
+     assumption_satisfied( 28  ) => ! x y z: with(x, z) & is_linked_with_2(y, z) =>  released_in(x, y).
+}
+theory transitivity5 : V {
+     assumption_satisfied( 29  ) => ! x y z: ~ with(x, z) & is_linked_with_2(y, z) => ~ released_in(x, y).
+}
+theory transitivity6 : V {
+     assumption_satisfied( 30  ) => ! x y z: with(x, z) & ~ is_linked_with_2(y, z) => ~ released_in(x, y).
+}
+theory transitivity7 : V {
+     assumption_satisfied( 31  ) => ! x y z: with(x, z) & is_linked_with_3(y, z)=>  made_by(x, y).
+}
+theory transitivity8 : V {
+     assumption_satisfied( 32  ) => ! x y z: with(x, z) & ~is_linked_with_3(y, z)=> ~ made_by(x, y).
+}
+theory transitivity9 : V {
+     assumption_satisfied( 33  ) => ! x y z: ~with(x, z) & is_linked_with_3(y, z)=> ~ made_by(x, y).
+}
+theory transitivity10 : V {
+     assumption_satisfied( 34  ) => ! x y z: is_linked_with_2(x, z) & is_linked_with_3(y, z)=>  is_linked_with_1(x, y).
+}
+theory transitivity11 : V {
+     assumption_satisfied( 35  ) => ! x y z: is_linked_with_2(x, z) &  ~is_linked_with_3(y, z)=> ~ is_linked_with_1(x, y).
+}
+theory transitivity12 : V {
+     assumption_satisfied( 36  ) => ! x y z:  ~is_linked_with_2(x, z) & is_linked_with_3(y, z)=> ~ is_linked_with_1(x, y).
+}
+
+
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [application] y [month]: ct_released_in(x,y) => released_in(x,y)) &
+        (! x [application] y [month]: cf_released_in(x,y) => ~released_in(x,y)) &
+        (! x [application] y [type1]: ct_made_by(x,y) => made_by(x,y)) &
+        (! x [application] y [type1]: cf_made_by(x,y) => ~made_by(x,y)) &
+        (! x [application] y [download]: ct_with(x,y) => with(x,y)) &
+        (! x [application] y [download]: cf_with(x,y) => ~with(x,y)) &
+        (! x [month] y [type1]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [month] y [type1]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [month] y [download]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [month] y [download]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        (! x [type1] y [download]: ct_is_linked_with_3(x,y) => is_linked_with_3(x,y)) &
+        (! x [type1] y [download]: cf_is_linked_with_3(x,y) => ~is_linked_with_3(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::released_in], S2[V::released_in].ct)
+    removeFrom(S3[V::released_in], S2[V::released_in].cf)
+    removeFrom(S3[V::made_by], S2[V::made_by].ct)
+    removeFrom(S3[V::made_by], S2[V::made_by].cf)
+    removeFrom(S3[V::with], S2[V::with].ct)
+    removeFrom(S3[V::with], S2[V::with].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::released_in, VExtra::ct_released_in, VExtra::cf_released_in},
+        {V::made_by, VExtra::ct_made_by, VExtra::cf_made_by},
+        {V::with, VExtra::ct_with, VExtra::cf_with},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+        {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
+    }
+}
+
+include "./generic_procedures-split.idp"
+
+procedure main() {
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "Of Flowcarts and the application with 5500000 downloads, one was made by Vortia and the other was released in May"},
+        {T2, "The app released in July, the app developed by Apptastic and Vitalinks are three different games"},
+        {T3, "Neither the game released by Gadingo nor the apptastic app has 2300000 downloads"},
+        {T4, "The five apps are Bubble Boms, the app released in April, the app released in July, the application released by Apptastic and the app released by Digibits"},
+        {T5, "Vortia's app came out in march"},
+        {T6, "Angry Ants was released 2 months earlier than the app with 6800000 downloads"},
+        {T7, "Flowcarts doesn't have 4200000 downloads"},
+        {T8, "The game released in July is either the game with 6800000 downloads or the app released by Gadingo"},
+    }
+
+    S = compute_explanations(theories,S)
+
+    os.exit(0)
+}
+
+procedure get_bij_theories(){
+    bijection_theories = {
+        {bijections1, "Bijectivity"}, 
+        {bijections2, "Bijectivity"}, 
+        {bijections3, "Bijectivity"}, 
+        {bijections4, "Bijectivity"}, 
+        {bijections5, "Bijectivity"}, 
+        {bijections6, "Bijectivity"}, 
+        {bijections7, "Bijectivity"}, 
+        {bijections8, "Bijectivity"}, 
+        {bijections9, "Bijectivity"}, 
+        {bijections10, "Bijectivity"}, 
+        {bijections11, "Bijectivity"}, 
+        {bijections12, "Bijectivity"}, 
+        {bijections13, "Bijectivity"}, 
+        {bijections14, "Bijectivity"}, 
+        {bijections15, "Bijectivity"}, 
+        {bijections16, "Bijectivity"}, 
+        {bijections17, "Bijectivity"}, 
+        {bijections18, "Bijectivity"}, 
+        {bijections19, "Bijectivity"}, 
+        {bijections20, "Bijectivity"}, 
+        {bijections21, "Bijectivity"}, 
+        {bijections22, "Bijectivity"}, 
+        {bijections23, "Bijectivity"}, 
+        {bijections24, "Bijectivity"}, 
+    }
+    return  bijection_theories
+}
+
+procedure get_trans_theories(){
+    transitivity_theories = {
+        {transitivity1, "Transitivity constraint"}, 
+        {transitivity2, "Transitivity constraint"}, 
+        {transitivity3, "Transitivity constraint"}, 
+        {transitivity4, "Transitivity constraint"}, 
+        {transitivity5, "Transitivity constraint"}, 
+        {transitivity6, "Transitivity constraint"}, 
+        {transitivity7, "Transitivity constraint"}, 
+        {transitivity8, "Transitivity constraint"}, 
+        {transitivity9, "Transitivity constraint"}, 
+        {transitivity10, "Transitivity constraint"}, 
+        {transitivity11, "Transitivity constraint"}, 
+        {transitivity12, "Transitivity constraint"}, 
+    }
+    return transitivity_theories
+}

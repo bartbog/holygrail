@@ -4,9 +4,6 @@ import './BoxInfo.css';
 // import * as R from 'ramda'
 import ReactDOM from 'react-dom';
 
-// const problemName = 'p5-split';
-
-// const cluesTags = require(`../../bos/output/${problemName}.tags.json`);
 var cluesTags;
 
 var selectedBox = 0;
@@ -42,15 +39,10 @@ function setToClue(clueNr) {
   for (let index = 0; index < cluesTags["tags"].length; index++) {
     const tagName = `tag${index}`
     var tagChild = document.getElementById(tagName);
-
-    // const idpName = `idp${index}`
-    // var idpChild = document.getElementById(idpName);
     if (activeClue === index) {
       tagChild.style.display = 'block';
-      // idpChild.style.display = 'block';
     } else {
       tagChild.style.display = 'none';
-      // idpChild.style.display = 'none';
     }
   }
 }
@@ -70,16 +62,12 @@ function setToClueFol(clueNr) {
     const folName = `fol${index}`
     var folChild = document.getElementById(folName);
 
-    // const idpName = `idp${index}`
-    // var idpChild = document.getElementById(idpName);
     if (activeClueFol === index) {
 
       folChild.style.display = 'block';
-      // idpChild.style.display = 'block';
     } else {
 
       folChild.style.display = 'none';
-      // idpChild.style.display = 'none';
     }
   }
 }
@@ -127,12 +115,6 @@ function setBoxInfoDisplayTo(displayType) {
         document.getElementById('BoxInfoText')
       );
       break;
-    // case displayTypes.expl:
-    //   ReactDOM.render(
-    //     <Clues clues={cluesTags["clues"]} />,
-    //     document.getElementById('BoxInfoText')
-    //   );
-    //   break;
     default:
 
   }
@@ -144,7 +126,7 @@ function IDP({idp}){
   const listIdpItems = Object.keys(idp).map((elem) => 
   <div className="padding-top">
     <tr >
-      <td>// {elem}</td>
+      <td>{'//'} {elem}</td>
     </tr>
     <tr>
       <td>{idp[elem]}</td>
@@ -188,13 +170,13 @@ function FOL({fol}){
           {element["logic_representation"].map(
             function(elem) {
               var listvals = []
-              elem.split("").map(function(letter) {
+              elem.split("").foreach(function(letter) {
                 if(letter === " "){
                   listvals.push(" ")
                 }else{
                   listvals.push(letter)
                 }
-              })
+              });
               return <tr className="removed-space"><td><pre>{listvals}</pre></td></tr>
             }) }
             </table>
@@ -218,7 +200,7 @@ function FOL({fol}){
           {element["logic_representation"].map(
             function(elem) {
               var listvals = []
-              elem.split("").map(function(letter) {
+              elem.split("").foreach(function(letter) {
                 if(letter === " "){
                   listvals.push(" ")
                 }else{
@@ -274,9 +256,9 @@ function FOL({fol}){
 function cleanEntities(entities){
   const types = Object.keys(entities).map((elem)=> elem.toLowerCase());
   Object.keys(entities)
-        .map((elem)=> entities[elem]
-        .map((entity) => entity.replace("a_", "").split('_')
-        .map((splitelem) => types.push(splitelem))))
+        .forEach((elem)=> entities[elem]
+        .forEach((entity) => entity.replace("a_", "").split('_')
+        .forEach((splitelem) => types.push(splitelem))))
 
   return types;
 }
@@ -292,7 +274,6 @@ function highlightEntities(clue, entities){
     }
     });
 
-  // return <td className="thick-text">{clue.charAt(0).toUpperCase() + clue.slice(1)}.</td>
   return <td><div>{cleanedClues}</div></td>
 }
 
@@ -305,7 +286,6 @@ function Clues({ clues, entities }) {
       </tr>
     </div>
   );
-  // const listEntities = JSON.stringify(entities);
   const entitiesTable = <table>
     <tr>
       <th></th>
@@ -320,7 +300,6 @@ function Clues({ clues, entities }) {
 
   const introText = <div className="grey-text"> {cluesIntroText}</div>
   const cluesTable = <table>{listClues}</table>
-  // const entitiesTable = <table>{listEntities}</table>
   return (
     <div>
       {introText}
@@ -428,31 +407,26 @@ function InfoButtons() {
   return (
     <div className="row">
       <div id="clue-button" className="col-sm"><button className="button-step3" onClick={() => setBoxInfoDisplayTo(displayTypes.clues)}>Input</button></div>
-      <div className="div-centered-hv col-sm">----></div>
+      <div className="div-centered-hv col-sm">&#8594;</div>
       <div id="pos-button" className="col-sm"><button className="button-step3" onClick={() => setBoxInfoDisplayTo(displayTypes.postags)}>Pos Tagging</button></div>
-      <div className="div-centered-hv col-sm">----></div>
+      <div className="div-centered-hv col-sm">&#8594;</div>
       <div id="chun-button" className="col-sm"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.chunking_lexicon)}>Chunking & Lexicon Building</button></div>
-      <div className=" div-centered-hv col-sm">----></div>
+      <div className=" div-centered-hv col-sm">&#8594;</div>
       <div id="fol-button" className="col-sm"><button className="button-step4" onClick={() => setBoxInfoDisplayTo(displayTypes.fol)}>Discourse representation theory</button></div>
-      <div className=" div-centered-hv col-sm">----></div>
+      <div className=" div-centered-hv col-sm">&#8594;</div>
       <div id="idp-button" className="col-sm"><button className="button-step2" onClick={() => setBoxInfoDisplayTo(displayTypes.idp)}>IDP (first-order logic)</button></div>
-      <div className=" div-centered-hv">----></div>
-      <div className=" div-centered-hv col-sm">Explanation Generation</div>
-      {/* <div id="expl-button" className="col-2"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>6. Explanation Generation</button></div> */}
-      {/* <div id="expl-button" className="col-sm"><button className="button-step" onClick={() => setBoxInfoDisplayTo(displayTypes.expl)}>6. Explanation Generation</button></div> */}
-      {/* <div id="idp-button" className=""><button className="button-step2">Explanation Generation</button></div> */}
+      <div className=" div-centered-hv col-sm">&#8594;</div>
+      <div className=" div-centered-hv col-sm-2">Explanation Generation + Visualisation</div>
     </div>)
 }
 
 function BoxInfo({problemName}) {
 
-  cluesTags  = require(`../../bos/output/${problemName}.tags.json`);
+  cluesTags  = require(`./source_explanations/${problemName}.tags.json`);
 
   return (
     <div>
-      {/* <h2>The process</h2> */}
       <h2><span  class="line-center">The process</span></h2>
-
       <InfoButtons />
       <InfoText />
     </div>

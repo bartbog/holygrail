@@ -64,7 +64,8 @@ procedure inner_explanation_loop(theories,S){
 			S,propagations = addToPropagations(S,theory[1],theory[2],propagations,exception)
 	debug("doneProp")
 		end
-		//Sort the propagation list
+		//Sort the propagation list 
+
 	debug("sort")
 		table.sort(propagations, function (left, right)
 									return left[5] < right[5]
@@ -77,15 +78,20 @@ procedure inner_explanation_loop(theories,S){
 			if #propagations > 0 then
 				shortestExpl = propagations[1][5]
 				//Optimization: next round, anything of length at most the shortest thing found+1 now will be accepted (speed optimization -- Don't know how helpful...)
-				exception = shortestExpl - 4	
+				exception = shortestExpl - 7	
 				debug("Shortest explanation size")
 				debug(shortestExpl)
 				newpropagations = {}
+				first = true
 				for i,prop in ipairs(propagations) do
-					if prop[5] < shortestExpl + 1 then
+					if ((prop[5] < shortestExpl + 1) and (first or prop[5] < 26)) then
+						first = false
 						S = doPropagation(S, prop[1],prop[2],prop[3],prop[4],false, prop[5])
 					else
+						if prop[5] < 31 then
+						//TODO this is test maybe only keep first half or something for allowing for some garbage collection to happen...  Or only those with cost smaller than smallest + X
 						table.insert(newpropagations,prop)
+						end
 					end
 				end
 			end
@@ -158,17 +164,6 @@ procedure explainOnePropagation(S,T,t,doNotOptimize)  {
 	tempT = merge(T,forceSomethingWrongValue)
  	//Find minimally precise structure Sexpl that explains all the findings given the current clue.
 
-//TODO REMOVE DEBUG
-if sat(tempT,STemp) then
-	print("ORIG")
-	print(S)
-	print("OPT")
-	print(Stemp)
-	print("THEO")
-	print(tempT)
-	print("model")
-	print(onemodel(tempT,STemp))
-end
     Sexpl =         unsatstructure(tempT,STemp,V)
 	setvocabulary(Sexpl,V)
 	return Sexpl
@@ -203,7 +198,7 @@ procedure doPropagation(S,Sexpl,T,t,reason,skip_implicit){
 	result = optimalpropagate(T,Sexpl)
 	newdiff = diff(result,S)
 	if #convertStructureToTupleList(newdiff) > 0 then
-		printExplanation(Sexpl,newdiff,reason,cost(Sexpl))
+		printExplanation(Sexpl,newdiff,reason,cost(Sexpl),"\t",T)
 		addTo(S,newdiff)
 		if not skip_implicit then
 			S = do_implicit_propagations(S)
@@ -341,14 +336,17 @@ procedure convertStructureToTupleList(d){
 
 	for i, pred in ipairs(getpredlist()) do
 		for tuple in tuples(d[pred[1]].ct) do
-			table.insert(difftuples, {pred[1], pred[2], tuple})
+			table.insert(difftuples, {pred[1], pred[2], tuple, true})
 		end
 		for tuple in tuples(d[pred[1]].cf) do
-			table.insert(difftuples, {pred[1], pred[3] , tuple})
+			table.insert(difftuples, {pred[1], pred[3] , tuple, false})
 		end
 	end
 	return difftuples
 }
+
+
+
 
 procedure size(S){
 	//HERE THE WEIGHING OF EXPLANATION SIZE IS DONE.
@@ -436,43 +434,364 @@ procedure debug(text){
 //	print(text)
 }
 
+procedure debug2(text){
+	//print(text)
+}
 
-procedure printExplanation(Sexpl,d,clue,cost){
+
+procedure printExplanation(Sexpl,d,clue,cost,prefix,T){
+		if prefix == nil then
+			prefix = "\t"
+		end
 		preds = getpredlist()
 		mystring = ""
-			mystring = mystring .. "{\n\t\"cost\": \""..cost.."\",\n\t\"clue\": \""..clue.."\",\n\t\"assumptions\": [  "
+			mystring = mystring ..prefix.. "{\n"..prefix.."\"cost\": \""..cost.."\",\n"..prefix.."\"clue\": \""..clue.."\",\n"..prefix.."\"assumptions\": [  "
         for i, pred in ipairs(preds) do
                 for tuple in tuples(Sexpl[pred[1]].ct) do
-							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
+							mystring = mystring .. "\n"..prefix.."\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
                         
                 end
                 for tuple in tuples(Sexpl[pred[1]].cf) do
 
-							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
+							mystring = mystring .. "\n"..prefix.."\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
                     
                 end
         end
 
 			mystring = mystring:sub(1,-2)
-			mystring = mystring .. "\n\t],\n\t\"derivations\": ["
+			mystring = mystring .. "\n"..prefix.."],\n"..prefix.."\"derivations\": ["
 		
         for i, pred in ipairs(preds) do
                 for tuple in tuples(d[pred[1]].ct) do
 
-							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
+							mystring = mystring .. "\n"..prefix.."\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
                     
                 end
                 for tuple in tuples(d[pred[1]].cf) do
 
-							mystring = mystring .. "\n\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
+							mystring = mystring .. "\n"..prefix.."\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
                     
                 end
         end
 
 			mystring = mystring:sub(1,-2)
-			mystring = mystring .. "\n\t]\n},"
+			mystring = mystring .. "\n"..prefix.."]"
+		if (prefix == "\t") and (clue ~= "Bijectivity") and (clue ~= "Transitivity constraint") and (cost ~= 20)  then
+			mystring = mystring..","
+			print(mystring)
+			debug2(Sexpl)
+			debug2(T)
+			debug2(d)
+			debug2(clue)
+			explainByContradiction(Sexpl, T, d, clue)
+		else
+			print(mystring)
+		end
+		print(prefix.."},")
+}
+
+
+
+
+
+// //============================================================\\
+// || NEW STUFF FOR THE IJCAI DEM0								 ||
+// \\============================================================//
+
+
+
+/*
+While conceptually, our sequence-generation approach should still work for the counterfactual case, in practice it does not.
+The reason is: our nice equivalence between MUS and non-redundant explanation no longer holds. 
+Usually we had 
+T:= Data this far + constraints + negation of fact to be derived is UNSAT.
+Every MUS of T must contain the negation of that fact. 
+However, in our current situation
+Data this far + constraints is already UNSAT. So MUSs might just ignore the fact to be derived. That is problematic.
+Therefor, I propose a new bottom-up appraoch taht is close to the paper. We generate the candidate MUSs bottom-up and check for UNSAT. 
+*/
+
+// POSSIBLE EXTRA ARGUMENT: partialSolution: the grid this far. Anything we can derive that is in the current grid is irrelevant. 
+// relevantPart: the things we can use for propagation. They are our MUS in the high-level explanation
+// theory: the complete theory (though several sentences are conditional and assumption_satisfied tells us which part of the theory is relevant. 
+// derivedFacts: the things that can be derived. They are what we want to explain. 
+procedure explainByContradiction(relevantPart, theory, derivedFacts, reason){
+	debug2("STARTED EXPLAIN BY CONTRADICTION")
+//For each derived fact, we compute an explanation sequence. The user should click which one he/she does not get. That is the one that gets explained. 
+	print("\t\"nested_explanations\": [")
+	newtuples = convertStructureToTupleList(derivedFacts)
+	//Note: newtuples does not contain the assumption_satisfieds 
+	
+	//For each derived tuple. We will make one structure over the original vocabulary in which the tuple has the wrong value. Starting from that we will do a propagation towards a UNSAT.   
+	for i,t in ipairs(difftuples) do
+		Sclone = clone(relevantPart) 
+		if t[4] then
+			makefalse(Sclone[t[1]],t[3])
+		else
+			maketrue(Sclone[t[1]],t[3])
+		end
+		debug2("Explain by contradiction with ")
+		debug2(tostring(Sclone))
+		propagateUntilUnsat(Sclone,theory,reason,t)
+	end		
+	print("\t\t{}\n\t]")
+}
+
+//TODO. use the "prepareforpropagation"
+// We will now do "small" propagation steps
+procedure propagateUntilUnsat(Sin,theTheory,reason,tuple){
+	debug2("propagating until unsat")
+	debug2("=============================")
+	//First, we generate all candidate explanations. From small to large. 
+	//We take subsets of constraints and always combine them with all facts. 
+	SFacts = clone(Sin)
+	SFacts[V::assumption_satisfied].ct = {}
+
+	SConstraints = clone(Sin)
+	SConstraints = diff(SConstraints,Sin)
+	
+	debug2("buildin up constraintlist")
+	debug2("starting from")
+	debug2(SConstraints)
+	constraintList = orderedPowerSet(SConstraints)
+	debug2("found this many constraint sets: "..#constraintList)
+
+	//What we do next is: as long as something changes and we do not get to unsat, use the simplest possible theory to propagate. 
+	//Whenever we find propagation, we use the MUS to minimize/explain it. 
+	//No search for small MUS here. I assume the order will take care of this automatically. 
+
+	
+	foundUnsat = false
+	changed = true
+
+	ExplSequence ={}
+
+	debug2("starting with")
+	debug2(SFacts)
+	while changed and not foundUnsat do
+		debug2("in while loop")
+		changed = false
+		for i,SC in ipairs(constraintList) do
+			debug2(">>>>>>>>>>>>>>>>>>>>>>in for loop")
+			debug2("propagating with:")
+			debug2(theTheory)
+			CurrS = merge(SC,SFacts)
+			debug2(CurrS)
+			if not sat(theTheory,CurrS) then
+				foundUnsat = true
+				table.insert(ExplSequence, {CurrS, nil})
+				debug2("foundUnsat")
+				break
+			else
+				PropS = optimalpropagate(theTheory,CurrS)
+				debug2("result")
+				debug2(PropS)
+				debug2("done propagation")
+				if not equal(CurrS,PropS) then
+					changed = true
+					newder = diff(PropS,CurrS)
+					addTo(SFacts, newder)
+					debug2("propagated. now have")
+					debug2(SFacts)
+					table.insert(ExplSequence, {CurrS, newder})
+					break
+				end
+			end
+		end
+	end
+
+	//If we did not encounter an UNSAT, this means that the problem to explain is too simple and we do not generate a nested explanation. 
+	if not foundUnsat then
+		debug2("noUnsatFound.Next...")
+		return 
+	end
+	print("\t\t{\n\t\t\t\"derivable_fact\":\t {\"pred\" : \"".. name(tuple[1]).."\", \"subject\" : \"".. tostring(tuple[3][1]) .. "\", \"object\": \"" .. tostring(tuple[3][2]) .. "\", \"value\": "..tostring(tuple[4]).."},")
+	print("\t\t\t\"reason_sequence\": \t[")
+
+	// If we did find unsat, we can now generate the nested explanation sequence. 
+	nbSteps = #ExplSequence
+	for i, SAndNewder in ipairs(ExplSequence) do
+		S = SAndNewder[1]
+		newder = SAndNewder[2]
+		if i == nbSteps then
+			//Special case for the last step where we detect an inconsistency instead of doing a propagation step. 
+			// We simplify the inconsistency
+			Sexpl = unsatstructure(theTheory,S)
+			print_nested_unsat_step(Sexpl,reason)
+			return
+		end
+		//We now explain the propagation 
+		difftuples = convertStructureToTupleList(newder)
+		for j, tuple in ipairs(difftuples) do	
+			alreadyDone = (tuple[4] and S[tuple[1]].ct(tuple[3][1],tuple[3][2])  ) or (not tuple[4] and S[tuple[1]].cf(tuple[3][1],tuple[3][2]))
+			//Continue if tuple already satisfied
+			if not alreadyDone then
+				//Find the actual explanation (might be smaller) 
+				Sexpl = explainOnePropagation_nested(S,theTheory,tuple)
+				//Derive all consequences of the actual propagation in S. 
+				cons = optimalpropagate(theTheory,Sexpl)
+
+				newfacts = diff(cons,S)
+				addTo(S,cons)
+				print_explanation_nested(Sexpl,theTheory,newfacts,reason)
+
+
+			end
+
+
+			
+		end
+	end
 		
-        print(mystring)
+		
+		
+		
+}
+
+procedure extract_real_reason(Sexpl,reason){
+	if Sexpl[V::assumption_satisfied].ct(0) then
+		return reason
+	else
+		foundOne = false
+		for tuple in tuples(Sexpl[V::assumption_satisfied].ct) do
+			if foundOne then
+				return "Combination of logigram constraints"
+			end 
+			foundOne = true
+			if tuple[1] <= #get_bij_theories() then
+				reason = "Bijectivity"
+			else
+				reason = "Transitivity constraint"
+			end
+		end
+	end
+	return reason
+}
+
+procedure print_nested_unsat_step(Sexpl,reason){
+	clue = extract_real_reason(Sexpl,reason)
+	thecost = cost(Sexpl)
+	
+
+		preds = getpredlist()
+		mystring = ""
+		mystring = mystring .. "\t\t\t\t{\n\t\t\t\t\"cost\": \""..thecost.."\",\n\t\t\t\t\"clue\": \""..clue.."\",\n\t\t\t\t\"assumptions\": [  "
+        for i, pred in ipairs(preds) do
+                for tuple in tuples(Sexpl[pred[1]].ct) do
+							mystring = mystring .. "\n\t\t\t\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": true},"
+                        
+                end
+                for tuple in tuples(Sexpl[pred[1]].cf) do
+
+							mystring = mystring .. "\n\t\t\t\t\t{\"pred\" : \"".. name(pred[1]).."\", \"subject\" : \"".. tostring(tuple[1]) .. "\", \"object\": \"" .. tostring(tuple[2]) .. "\", \"value\": false},"
+                    
+                end
+        end
+
+		mystring = mystring:sub(1,-2)
+		mystring = mystring .. "\n\t\t\t\t],\n\t\t\t\t\"derivations\": [\"UNSAT\"]\n\t\t\t\t}\n\t\t\t]\n\t\t},"
+		print(mystring)
+
+
+
+
+}
+
+procedure print_explanation_nested(Sexpl,T,consequences,reason){
+	reason = extract_real_reason(Sexpl,reason)
+	printExplanation(Sexpl,consequences,reason,cost(Sexpl),"\t\t\t\t",T)
+
+}
+
+
+
+//T is a theory such that from T and S, t can be propagated
+//Returns the explaining structure
+procedure explainOnePropagation_nested(S,T,t)  {
+	STemp = clone(S) 
+
+	setvocabulary(STemp,VExtra)
+	maketrue(STemp[t[2]],t[3])
+	for i, pred in ipairs(getpredlist()) do
+        STemp[pred[2]].pt = STemp[pred[2]].ct
+        STemp[pred[3]].pt = STemp[pred[3]].ct
+	end
+	//Now STemp is a structure in which one specific thing should be explained. 
+	//We minimize its explanation:
+	tempT = merge(T,forceSomethingWrongValue)
+ 	//Find minimally precise structure Sexpl that explains all the findings given the current clue.
+
+    Sexpl =         unsatstructure(tempT,STemp,V)
+	setvocabulary(Sexpl,V)
+	return Sexpl
+}
+
+
+procedure orderedPowerSet(Sconstraints){
+	//Create a list of structures. Simpler is better. 
+	//First bijections, then transitivity, then constraint (if any). Ordering almost does this correct. 
+	ListOfFacts = {}
+	ZeroS = nil
+	nbfacts = 0
+	for tuple in tuples(Sconstraints[V::assumption_satisfied].ct) do
+		nbfacts = nbfacts + 1 
+		value = tuple[1]
+		//TODO. the newstructures mess up types!!!!! FIX THAT! Do a clone and make all unkonwn! 
+		Snew = clone(Sconstraints)
+		Snew[V::assumption_satisfied].ct = {}
+		Snew[V::assumption_satisfied].cf = {}
+		maketrue(Snew[V::assumption_satisfied],tuple)
+		if tuple[1] == 0 then
+			ZeroS = Snew
+		else
+			table.insert(ListOfFacts,{Snew,value})
+		end 	
+	end
+	if ZeroS ~= nil then
+		//This is al the way in the back. 
+		table.insert(ListOfFacts,{ZeroS,0})
+	end
+
+	//Now we will make two extra lists. 
+	// * The final results containing all the subsets
+	// * The A temporary list containing the biggest sets constructed this far. 
+	result = {}
+	maxList = {}
+	for i, Str in ipairs(ListOfFacts) do
+		table.insert(result,Str[1])
+		table.insert(maxList,Str[1])
+	end
+	
+	setsize = 1
+	while setsize < nbfacts - 1 do
+		setsize = setsize + 1 
+		//For all subsets up to size (these are all the Subsets) we will generate all subsets of that size. 
+		//We do not generate the full subset. If that is to be used we have not gained anything: the explanatoin is still equally complex. In that case, we do not generate an explanation. 
+		newMaxList = {}
+		for i,S1 in ipairs(maxList) do
+			for j,S2AndV in ipairs(ListOfFacts) do
+				S2 = S2AndV[1]
+				value = S2AndV[2]
+
+				if S1[V::assumption_satisfied].ct(value) == false then
+					//This is a new structure that should be created. 
+					Snew = clone(S1)
+					Snew = merge(Snew,S2)
+					
+					table.insert(result,Snew)
+					table.insert(newMaxList,Snew)
+				end
+			end
+		end
+		maxList = newMaxList
+	end
+	//TODO. eliminate double occurrences!!!! 
+
+	//To simplify what follows, we complete assumption_satisfied (so that reasoning over that gets simplified. 
+	for i, Sres in ipairs(result) do
+		Sres[V::assumption_satisfied].pt = 		Sres[V::assumption_satisfied].ct
+	end
+	return result
 }
 
 
@@ -535,3 +854,6 @@ procedure test(theories, S){
 		os.exit(10)
 	end
 }
+
+
+

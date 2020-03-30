@@ -1,0 +1,356 @@
+// Problem p12
+
+vocabulary V {
+    type assumptiontype = {0..36} isa int
+    assumption_satisfied(assumptiontype)
+
+    type type1 constructed from {the_other_type1, water, lemonade, iced_tea, orange_soda}
+    type order constructed from {the_other_order, homer, glen, wallace, oliver}
+    type dollar = {5; 6; 7; 8; 9} isa int
+    type type2 constructed from {the_other_type2, sloppy_joe, spaghetti, hamburger, turkey_plate}
+
+    with(order, type1)
+    cost(order, dollar)
+    ordered(order, type2)
+    is_linked_with_1(type1, dollar)
+    is_linked_with_2(type1, type2)
+    is_linked_with_3(dollar, type2)
+}
+
+vocabulary VExtra {
+    extern vocabulary V
+    ct_with(order, type1)
+    cf_with(order, type1)
+    ct_cost(order, dollar)
+    cf_cost(order, dollar)
+    ct_ordered(order, type2)
+    cf_ordered(order, type2)
+    ct_is_linked_with_1(type1, dollar)
+    cf_is_linked_with_1(type1, dollar)
+    ct_is_linked_with_2(type1, type2)
+    cf_is_linked_with_2(type1, type2)
+    ct_is_linked_with_3(dollar, type2)
+    cf_is_linked_with_3(dollar, type2)
+}
+
+structure S : V {
+        assumption_satisfied<cf>={}
+        assumption_satisfied<u>={}
+}
+
+theory T1: V {
+    // The order with the lemonade cost $1 more than the order with the water
+    assumption_satisfied( 0  ) => ?a [order] b [dollar] c [order] d [dollar]: with(a,lemonade) & with(c,water) & cost(c,b) & d = b+1 & cost(a,d).
+}
+
+theory T2: V {
+    // Homer paid $7
+    assumption_satisfied( 0  ) => cost(homer,7).
+}
+
+theory T3: V {
+    // Glen paid $3 less than whoever ordered the sloppy joe
+    assumption_satisfied( 0  ) => ?e [dollar] f [order] g [dollar]: ordered(f,sloppy_joe) & cost(f,e) & g = e-3 & cost(glen,g).
+}
+
+theory T4: V {
+    // Wallace didn't have the iced tea
+    assumption_satisfied( 0  ) => ~ with(wallace,iced_tea).
+}
+
+theory T5: V {
+    // Of the diner who paid $6 and Homer, one ordered the spaghetti and the other drank the water
+    assumption_satisfied( 0  ) => ?h [order]: cost(h,6) & ~ (h = homer) & (ordered(h,spaghetti) & with(homer,water) | ordered(homer,spaghetti) & with(h,water)).
+}
+
+theory T6: V {
+    // Oliver ordered the hamburger
+    assumption_satisfied( 0  ) => ordered(oliver,hamburger).
+}
+
+theory T7: V {
+    // The five diners were whoever ordered the turkey plate, Oliver, Glen, the person who got the iced tea and the person who paid $5
+    assumption_satisfied( 0  ) => ?i [order] j [order] k [order]: ~ (i = oliver) & ~ (i = glen) & ~ (i = j) & ~ (i = k) & ~ (oliver = glen) & ~ (oliver = j) & ~ (oliver = k) & ~ (glen = j) & ~ (glen = k) & ~ (j = k) & ordered(i,turkey_plate) & with(j,iced_tea) & cost(k,5).
+}
+
+theory T8: V {
+    // Glen didn't have the orange soda
+    assumption_satisfied( 0  ) => ~ with(glen,orange_soda).
+}
+
+theory bijections1 : V {
+     assumption_satisfied( 1  ) =>     ! x [order]: ?>=1 y [type1]: with(x, y).
+}
+theory bijections2 : V {
+     assumption_satisfied( 2  ) =>     ! x [order]: ?=<1 y [type1]: with(x, y).
+}
+
+theory bijections3 : V {
+     assumption_satisfied( 3  ) =>     ! x [type1]: ?>=1 y [order]: with(y, x).
+}
+
+theory bijections4 : V {
+     assumption_satisfied( 4  ) =>     ! x [type1]: ?=<1 y [order]: with(y, x).
+}
+
+theory bijections5 : V {
+     assumption_satisfied( 5  ) =>    ! x [order]: ?>=1 y [dollar]: cost(x, y).
+}
+
+theory bijections6 : V {
+     assumption_satisfied( 6  ) =>    ! x [order]: ?=<1 y [dollar]: cost(x, y).
+}
+
+theory bijections7 : V {
+     assumption_satisfied( 7  ) =>   ! x [dollar]: ?>=1 y [order]: cost(y, x).
+}
+
+theory bijections8 : V {
+     assumption_satisfied( 8  ) =>   ! x [dollar]: ?=<1 y [order]: cost(y, x).
+}
+
+theory bijections9 : V {
+     assumption_satisfied( 9  ) => ! x [order]: ?>=1 y [type2]: ordered(x, y).
+}
+
+theory bijections10 : V {
+     assumption_satisfied( 10  ) => ! x [order]: ?=<1 y [type2]: ordered(x, y).
+}
+
+theory bijections11: V {
+     assumption_satisfied( 11 ) => ! x [type2]: ?>=1 y [order]: ordered(y, x).
+}
+
+theory bijections12 : V {
+     assumption_satisfied( 12 ) => ! x [type2]: ?=<1 y [order]: ordered(y, x).
+}
+
+theory bijections13: V {
+     assumption_satisfied( 13  ) => ! x [type1]: ?>=1 y [dollar]: is_linked_with_1(x, y).
+}
+
+theory bijections14 : V {
+     assumption_satisfied( 14  ) => ! x [type1]: ?=<1 y [dollar]: is_linked_with_1(x, y).
+}
+
+theory bijections15 : V {
+     assumption_satisfied( 15  ) => ! x [dollar]: ?>=1 y [type1]: is_linked_with_1(y, x).
+}
+
+theory bijections16 : V {
+     assumption_satisfied( 16  ) => ! x [dollar]: ?=<1 y [type1]: is_linked_with_1(y, x).
+}
+
+theory bijections17 : V {
+     assumption_satisfied( 17  ) => ! x [type1]: ?>=1 y [type2]: is_linked_with_2(x, y).
+}
+
+theory bijections18 : V {
+     assumption_satisfied( 18  ) => ! x [type1]: ?=<1 y [type2]: is_linked_with_2(x, y).
+}
+
+theory bijections19 : V {
+     assumption_satisfied( 19  ) => ! x [type2]: ?>=1 y [type1]: is_linked_with_2(y, x).
+}
+
+theory bijections20 : V {
+     assumption_satisfied( 20  ) => ! x [type2]: ?=<1 y [type1]: is_linked_with_2(y, x).
+}
+
+theory bijections21 : V {
+     assumption_satisfied( 21  ) => ! x [dollar]: ?>=1 y [type2]: is_linked_with_3(x, y).
+}
+
+theory bijections22 : V {
+     assumption_satisfied( 22  ) => ! x [dollar]: ?=<1 y [type2]: is_linked_with_3(x, y).
+}
+
+theory bijections23 : V {
+     assumption_satisfied( 23 ) => ! x [type2]: ?>=1 y [dollar]: is_linked_with_3(y, x).
+}
+
+theory bijections24 : V {
+     assumption_satisfied( 24  ) => ! x [type2]: ?=<1 y [dollar]: is_linked_with_3(y, x).
+}
+
+
+
+
+theory synonyms : V {
+    // Logigram synonym axioms:
+    //! x [order] y [type1]: had(x, y) <=> with(x, y).
+    //! x [order] y [dollar]: cost(x, y) <=> paid(x, y).
+    //! x [order] y [type1]: with(x, y) <=> drank(x, y).
+    //! x [order] y [type1]: with(x, y) <=> got(x, y).
+
+}
+
+
+theory transitivity1 : V {
+    assumption_satisfied( 25  ) =>  ! x y z: cost(x, z) & is_linked_with_1(y, z)  =>  with(x, y).
+}
+
+theory transitivity2 : V {
+    assumption_satisfied( 26  ) => ! x y z:   cost(x, z) & ~is_linked_with_1(y, z)  => ~ with(x, y).
+}
+
+theory transitivity3 : V {
+    assumption_satisfied( 27  ) =>  ! x y z:  ~cost(x, z) & is_linked_with_1(y, z)  => ~with(x, y).
+}
+
+
+theory transitivity4 : V {
+    assumption_satisfied( 28  ) => ! x y z:  ordered(x, z) & is_linked_with_2(y, z)  =>  with(x, y).
+}
+
+theory transitivity5 : V {
+    assumption_satisfied( 29  ) => ! x y z:   ordered(x, z) & ~is_linked_with_2(y, z)  => ~ with(x, y).
+}
+
+theory transitivity6 : V {
+    assumption_satisfied( 30  ) => ! x y z:   ~ordered(x, z) & is_linked_with_2(y, z)  => ~with(x, y).
+}
+
+
+theory transitivity7 : V {
+    assumption_satisfied( 31  ) => ! x y z:  ordered(x, z) & is_linked_with_3(y, z)  =>  cost(x, y).
+}
+
+theory transitivity8 : V {
+    assumption_satisfied( 32  ) =>  ! x y z:  ordered(x, z) & ~ is_linked_with_3(y, z)  => ~ cost(x, y).
+}
+
+theory transitivity9 : V {
+    assumption_satisfied( 33  ) => ! x y z:  ~  ordered(x, z) & is_linked_with_3(y, z)  => ~cost(x, y).
+}
+
+
+theory transitivity10 : V {
+    assumption_satisfied( 34  ) => ! x y z:  is_linked_with_2(x, z) & is_linked_with_3(y, z)  =>  is_linked_with_1(x, y).
+}
+
+theory transitivity11 : V {
+    assumption_satisfied( 35  ) => ! x y z:  ~is_linked_with_2(x, z) & is_linked_with_3(y, z)   => ~ is_linked_with_1(x, y).
+}
+
+theory transitivity12 : V {
+    assumption_satisfied( 36  ) => ! x y z:  is_linked_with_2(x, z) & ~is_linked_with_3(y, z)   => ~is_linked_with_1(x, y).
+}
+
+
+theory forceSomethingWrongValue : VExtra {
+    ~(
+        (! x [order] y [type1]: ct_with(x,y) => with(x,y)) &
+        (! x [order] y [type1]: cf_with(x,y) => ~with(x,y)) &
+        (! x [order] y [dollar]: ct_cost(x,y) => cost(x,y)) &
+        (! x [order] y [dollar]: cf_cost(x,y) => ~cost(x,y)) &
+        (! x [order] y [type2]: ct_ordered(x,y) => ordered(x,y)) &
+        (! x [order] y [type2]: cf_ordered(x,y) => ~ordered(x,y)) &
+        (! x [type1] y [dollar]: ct_is_linked_with_1(x,y) => is_linked_with_1(x,y)) &
+        (! x [type1] y [dollar]: cf_is_linked_with_1(x,y) => ~is_linked_with_1(x,y)) &
+        (! x [type1] y [type2]: ct_is_linked_with_2(x,y) => is_linked_with_2(x,y)) &
+        (! x [type1] y [type2]: cf_is_linked_with_2(x,y) => ~is_linked_with_2(x,y)) &
+        (! x [dollar] y [type2]: ct_is_linked_with_3(x,y) => is_linked_with_3(x,y)) &
+        (! x [dollar] y [type2]: cf_is_linked_with_3(x,y) => ~is_linked_with_3(x,y)) &
+        true
+    ).
+}
+
+procedure diff(S1, S2) {
+    S3 = clone(S1)
+    removeFrom(S3[V::with], S2[V::with].ct)
+    removeFrom(S3[V::with], S2[V::with].cf)
+    removeFrom(S3[V::cost], S2[V::cost].ct)
+    removeFrom(S3[V::cost], S2[V::cost].cf)
+    removeFrom(S3[V::ordered], S2[V::ordered].ct)
+    removeFrom(S3[V::ordered], S2[V::ordered].cf)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].ct)
+    removeFrom(S3[V::is_linked_with_1], S2[V::is_linked_with_1].cf)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].ct)
+    removeFrom(S3[V::is_linked_with_2], S2[V::is_linked_with_2].cf)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].ct)
+    removeFrom(S3[V::is_linked_with_3], S2[V::is_linked_with_3].cf)
+    return S3
+}
+
+procedure getpredlist() {
+    return {
+        {V::with, VExtra::ct_with, VExtra::cf_with},
+        {V::cost, VExtra::ct_cost, VExtra::cf_cost},
+        {V::ordered, VExtra::ct_ordered, VExtra::cf_ordered},
+        {V::is_linked_with_1, VExtra::ct_is_linked_with_1, VExtra::cf_is_linked_with_1},
+        {V::is_linked_with_2, VExtra::ct_is_linked_with_2, VExtra::cf_is_linked_with_2},
+        {V::is_linked_with_3, VExtra::ct_is_linked_with_3, VExtra::cf_is_linked_with_3},
+    }
+}
+
+include "./generic_procedures-split.idp"
+
+procedure main() {
+    stdoptions.cpsupport = false
+
+    theories = {
+        {T1, "The order with the lemonade cost $1 more than the order with the water"},
+        {T2, "Homer paid $7"},
+        {T3, "Glen paid $3 less than whoever ordered the sloppy joe"},
+        {T4, "Wallace didn't have the iced tea"},
+        {T5, "Of the diner who paid $6 and Homer, one ordered the spaghetti and the other drank the water"},
+        {T6, "Oliver ordered the hamburger"},
+        {T7, "The five diners were whoever ordered the turkey plate, Oliver, Glen, the person who got the iced tea and the person who paid $5"},
+        {T8, "Glen didn't have the orange soda"},
+    }
+
+    S = compute_explanations(theories,S)
+
+    os.exit(0)
+}
+
+
+procedure get_trans_theories(){
+
+    transitivity_theories = {
+        {transitivity1, "Transitivity constraint"}, 
+        {transitivity2, "Transitivity constraint"}, 
+        {transitivity3, "Transitivity constraint"}, 
+        {transitivity4, "Transitivity constraint"}, 
+        {transitivity5, "Transitivity constraint"}, 
+        {transitivity6, "Transitivity constraint"}, 
+        {transitivity7, "Transitivity constraint"}, 
+        {transitivity8, "Transitivity constraint"}, 
+        {transitivity9, "Transitivity constraint"}, 
+        {transitivity10, "Transitivity constraint"}, 
+        {transitivity11, "Transitivity constraint"}, 
+        {transitivity12, "Transitivity constraint"}, 
+    }
+    return transitivity_theories
+}
+
+procedure get_bij_theories(){
+    bijection_theories = {
+        {bijections1, "Bijectivity"}, 
+        {bijections2, "Bijectivity"}, 
+        {bijections3, "Bijectivity"}, 
+        {bijections4, "Bijectivity"}, 
+        {bijections5, "Bijectivity"}, 
+        {bijections6, "Bijectivity"}, 
+        {bijections7, "Bijectivity"}, 
+        {bijections8, "Bijectivity"}, 
+        {bijections9, "Bijectivity"}, 
+        {bijections10, "Bijectivity"}, 
+        {bijections11, "Bijectivity"}, 
+        {bijections12, "Bijectivity"}, 
+        {bijections13, "Bijectivity"}, 
+        {bijections14, "Bijectivity"}, 
+        {bijections15, "Bijectivity"}, 
+        {bijections16, "Bijectivity"}, 
+        {bijections17, "Bijectivity"}, 
+        {bijections18, "Bijectivity"}, 
+        {bijections19, "Bijectivity"}, 
+        {bijections20, "Bijectivity"}, 
+        {bijections21, "Bijectivity"}, 
+        {bijections22, "Bijectivity"}, 
+        {bijections23, "Bijectivity"}, 
+        {bijections24, "Bijectivity"}, 
+    }
+    return  bijection_theories
+}

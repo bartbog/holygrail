@@ -1,7 +1,18 @@
 The generation of the explanation sequence, as formally defined in section 4, is guided by the cost function $f(E, S, N)$, a proxy for the mental-effort of the explanation-step. 
-It turns out from preliminary analysis of the generated explanation sequence that some steps are still too hard to understand as they combine different constraints and/or multiple clues. 
+It turns out from preliminary results in our previous work \cite{ecai/BogaertsGCG20}, we observed that, for \textit{difficult} puzzles, some explanation steps were still quite hard to understand. An example is depicted in Figure \ref{fig:pasta_diff}.
+It uses a complicated (disjunctive) clue (``The person who ordered Rotini is either the person who paid \$8 more than Damon or the person who paid \$8 less than Damon'' ), in combination with three previously derived facts to derive that Farfalle does not cost \$8. 
+The reasoning behind the scenes can be explained by contradiction as follows: if Farfalle did cost \$8, then it does not cost \$16, hence the only possible pasta that can still cost \$16 would be Rotini.  However, since Damon did not take Farfelle (which we assumed costs \$8), Damon did not pay \$8; this is in contradiction with the highlighted clue. Hence Farfalle cannot cost \$8. 
+
+While equally straightforward for a computer, understanding such an indirect proof, using contradiction, in a single step is notably harder for a person than the more common forward reasoning explanations our tool generates. 
+%  Hence, we expanded our tool to -- on demand -- generate a \textit{nested} explanation of this contradiction reasoning.
+% It turns out from preliminary analysis of the generated explanation sequence that some steps are still too hard to understand as they combine different constraints and/or multiple clues. 
 In order to cope with this problem, we take a step back, and tackle it from another perspective: \textit{``Can I find another easier way to explain this step using the same facts and constraints by negating the newly derived fact and finding an inconsistency ?''} For the definition of \textit{inconsistency}, we refer back to definition \ref{def:consistent}.
 
+
+\begin{figure}[H]
+    \includegraphics[width=\linewidth]{figures/ijcaidemo-Page-5(1).png}
+    \caption{A difficult explanation step.}\label{fig:pasta_diff}
+    \end{figure}
 
 To answer this question, we extend the explanation-production problem with the purpose of refining those explanations that are too complex and taking inspiration from counterfactual reasoning. 
 Thus, our problem becomes an explanation-generating problem with 2 levels of abstractions: ``regular'' explanations and ``lower-level'' \textit{nested-explanations}. 
@@ -10,9 +21,14 @@ We define the concept of \emph{nested-explanation} as follows:
 \begin{definition}
     Given a non-redundant explanation $(E_i, S_i, N_i)$, let $n_i \in N_i$ be a newly derived fact and partial interpretation  $I_0' = \{ \neg n_i \wedge E_i \}$ , the \textbf{nested-explanation} problem consists of finding a non-redundant explanation sequence that leads to an inconsistency 
     \[\langle \ (I_0',(\emptyset,\emptyset,\emptyset)),\ (I_1',(E_1',S_1',N_1')), \dots ,\ (I_n',(E_n',S_n',N_n')) \ \rangle\]
-    such that $\forall \ (E_i',S_i',N_i') : f(E_i',S_i',N_i') \leq f(E_i, S_i, N_i)$. 
+    such that 
+    \begin{itemize}
+        \item $\forall \ (E_i',S_i',N_i') : f(E_i',S_i',N_i') \leq f(E_i, S_i, N_i)$ and 
+        \item a predefined aggregate over the sequence $\left(f(E_i',S_i',N_i')\right)_{i\leq n}$ is minimised.
+    \end{itemize} 
 \end{definition}
-In other words, for every newly derived fact, we look for an \emph{nested} explanation-sequence such that every nested explanation-step is easier than the original explanation step.
+
+Put differently, for every newly derived fact of a given explanation step, we look for an \emph{nested} explanation-sequence such that every nested explanation-step is easier than the original explanation step.
 
 % Ideas : 
 % \begin{itemize}

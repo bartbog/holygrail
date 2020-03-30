@@ -1,9 +1,22 @@
-%Need for explanations of reasoning systems
-Explainable AI research aims to fulfil the need for trustworthy AI systems that can explain their reasoning in a human-understandable way. 
-As these systems employ more advanced reasoning mechanisms and computation power, it becomes increasingly difficult to understand why certain decisions are made. 
-Understanding the decisions is important for verifying the correctness of the system, as well as to control for biased or systematically unfair decisions.
 
-Explainable AI is often studied in the context of (black box) machine learning systems such as neural networks, where the goal is to provide insight into what part of the input is important in the \textit{learned} model. These insights (or local approximations thereof) can justify why certain predictions are made. In contrast, in constraint satisfaction problems, the problem specification is an explicit model-based representation of the problem, hence creating the opportunity to explain the inference steps directly in terms of this representation.
+% Publication history
+\paragraph*{Publication history} Our nested explanation XAI submission stems from the work originally proposed \cite{ecai/BogaertsGCG20} and motivated by the results from the demonstrator submitted to IJCAI-PRICAI 2020.
+
+%Need for explanations of reasoning systems
+In the last few years, as AI systems employ more advanced reasoning mechanisms and computation power, it becomes increasingly difficult to understand why certain decisions are made. 
+Explainable AI (XAI) research aims to fulfil the need for trustworthy AI systems to understand why the system made a decision for verifying the correctness of the system, as well as to control for biased or systematically unfair decisions.
+
+Explainable AI is often studied in the context of (black box) prediction systems such as neural networks, where the goal is to provide insight into what part of the input is important in the \textit{learned} model. 
+These insights (or local approximations thereof) can justify why certain predictions are made.
+In contrast, in Constraint Satisfaction Problems (CSP), the problem specification is an explicit model-based representation of the problem, hence creating the opportunity to explain the inference steps directly in terms of this representation.
+
+
+
+% Explainable AI research aims to fulfil the need for trustworthy AI systems that can explain their reasoning in a human-understandable way. 
+% As these systems employ more advanced reasoning mechanisms and computation power, it becomes increasingly difficult to understand why certain decisions are made. 
+% Understanding the decisions is important for verifying the correctness of the system, as well as to control for biased or systematically unfair decisions.
+
+% Explainable AI is often studied in the context of (black box) machine learning systems such as neural networks, where the goal is to provide insight into what part of the input is important in the \textit{learned} model. These insights (or local approximations thereof) can justify why certain predictions are made. In contrast, in constraint satisfaction problems, the problem specification is an explicit model-based representation of the problem, hence creating the opportunity to explain the inference steps directly in terms of this representation.
 
 Explanations have been investigated in constraint solving before, most notably for explaining overconstrained, and hence unsatisfiable, problems to a user~\cite{junker2001quickxplain}.
 Our case is more general in that it also works for satisfiable problems.
@@ -19,8 +32,10 @@ It deserves to be stressed that we are not interested in the computational cost 
 More specifically, we aim to develop an explanation-producing system that is complete and interpretable. 
 By \textit{complete} we mean that it finds a \textit{sequence} of small reasoning steps that, starting from the given problem specification and a partial solution, derives all consequences. 
 Gilpin et al.~\cite{DBLP:conf/dsaa/GilpinBYBSK18} define \textit{interpretable} explanations as ``descriptions that are simple enough for a person to understand, using a vocabulary that is meaningful to the user''. 
-Our guiding principle is that of simplicity, where smaller and simpler explanations are better.
-We choose to represent the constraints in natural language, which is an obvious choice for logic grid puzzles which are given as natural language \textit{clues}. 
+Our guiding principle is that of simplicity, where smaller and simpler explanations are better. 
+For those explanations that are still too complex, we provide nested explanation sequences inspired by counterfactual reasoning.
+
+In practice, we choose to represent the constraints in natural language, which is an obvious choice for logic grid puzzles as they are given in the form of natural language \textit{clues}. 
 We represent the previously and newly derived facts visually, as can be seen in the grid in Figure~\ref{fig:zebrascreen}.
 
 \begin{figure}[ht]
@@ -31,22 +46,29 @@ We represent the previously and newly derived facts visually, as can be seen in 
 \end{figure}
 
 %HolyGrail challenge and related work
-Our work is motivated by the ``Holy Grail Challenge''\footnote{\tiny \url{https://freuder.wordpress.com/pthg-19-the- third-workshop-on-progress-towards-the-holy-grail/}} which had as objective to provide automated processing of logic grid puzzles, ranging from natural language processing, to solving, and explaining. 
-An earlier version of our system won the challenge at the workshop. 
-While our system has the capability of solving logic grid puzzle starting from the natural language clues (see Section \ref{sec:holistic}), the focus of this paper is on the novel explanation-producing part of the system.
+Our work is motivated by the ``Holy Grail Challenge''\footnote{\tiny \url{https://freuder.wordpress.com/pthg-19-the- third-workshop-on-progress-towards-the-holy-grail/}} which had as objective to provide \textit{automated} processing of logic grid puzzles, ranging from natural language processing, to solving, and explaining.
+% An earlier version of our system won the challenge at the workshop. 
+\emilio{do we really need to say that ?}
+While the \ourtool, our integrated system, has the capability of solving logic grid puzzle starting from the natural language clues (see Section \ref{sec:holistic}), the focus of this contribution is on the explanation-producing part of the system.
 
 The explanation-generating techniques we develop can be applied in a multitude of use cases. 
 For instance, our tool can explain the entire sequence of reasoning, such that a user can debug the reasoning system or the set of constraints that specify their problem. 
 As our approach starts from an arbitrary set of facts, it can also be used as a virtual assistant when a user is stuck in solving a problem.
-The system will explain the simplest possible next move, or in an interactive setting where a system can explain how it would complete a partial solution of a user.
+The system will explain the simplest possible next move, or in an interactive setting, the system can explain how it would complete a partial solution of a user.
 Finally, our measures of simplicity of reasoning steps can be used to estimate the difficulty of solving a problem for a human, e.g. for gradual training of experts.
 
 \noindent Our contributions are the following:
 \begin{compactitem}
 	\item We formalize the problem of step-wise explaining the propagation of a constraint solver through a sequence of small inference steps;
 	\item We propose an algorithm that is agnostic to the propagators and the consistency level used, and that can provide explanations for inference steps involving arbitrary combinations of constraints;
-	\item Given a cost function quantifying interpretability, our method uses an optimistic estimate of this function to guide the search to low-cost explanations, thereby making use of Minimal Unsatisfiable Subset extraction;
+	\item Given a cost function quantifying human interpretability, our method uses an optimistic estimate of this function to guide the search to low-cost explanations, thereby making use of Minimal Unsatisfiable Subset extraction;
+	\item We introduce nested-explanations to refine explanations of complex inference steps using counterfactual reasoning; \emilio{contrastive explanations ?}
 	\item We experimentally demonstrate the quality and feasibility of the approach in the domain of logic grid puzzles.
 \end{compactitem}
 
-This paper is structured as follows: section 2 , explores the literature related to explainable constraint satisfaction problem. Section 3, explains the rules of logic grid puzzles as a use case to test our methodology. Section 4 and 5, formalize the theory of the explanation-production problem on 2 abstraction-levels. Section 6, focuses on how to generate the explanations. In section 7, we motivate our design decisions using observations from the use case, whereas section 8, describes the information pipeline of our the end-to-end system to translate natural language problem statement into first-order logic and process using the proposed explanation-generating algorithm. Section 9, shows experimentally the feasibility of our approach. Section 10 concludes the paper.
+This paper is structured as follows: section \ref{sec:related-work}, explores related works. Section \ref{sec:background}, explains the rules of logic grid puzzles and presents background information. 
+Section \ref{sec:problem-definition} and \ref{sec:nested-explanation}, formalize the theory of the explanation-production problem on 2 abstraction-levels, while Section \ref{sec:expl-gen-prod} sketches the algorithms. 
+In section \ref{sec:zebra}, we motivate our design decisions using observations from the use case. 
+Section \ref{sec:holistic} describes the information pipeline of the \ourtool integrated system. 
+Section \ref{sec:experiments} shows experimentally the feasibility of our approach. 
+Finally, we conclude the paper in Section \ref{sec:conclusion}.

@@ -103,7 +103,16 @@ Every time \textit{min-explanation$(I,C)$} is called with an updated partial int
 There is one benefit in caching the \textit{Candidates} across the different iterations, and that is that in a subsequent call, the cost of the most cost-effective explanation that is still applicable can be used as a lower bound to start from.
 Furthermore, in practice, we cache all candidates and when we (re)compute a MUS for a fact $a$, we only store it if it is more cost-effective than the best one we have previously found for that fact, across the different iterations.
 
+
 \subsection{Exploring nested explanations}
+
+% In our previous work \cite{ecai/BogaertsGCG20}, we observed that, for \textit{difficult} puzzles, some explanation steps were still quite hard to understand. An example is depicted in Figure \ref{fig:pasta_diff}.
+% It uses a complicated (disjunctive) clue (``The person who ordered Rotini is either the person who paid \$8 more than Damon or the person who paid \$8 less than Damon'' ), in combination with three previously derived facts to derive that Farfalle does not cost \$8. 
+% The reasoning behind the scenes can be explained by contradiction as follows: if Farfalle did cost \$8, then it does not cost \$16, hence the only possible pasta that can still cost \$16 would be Rotini.  However, since Damon did not take Farfelle (which we assumed costs \$8), Damon did not pay \$8; this is in contradiction with the highlighted clue. Hence Farfalle cannot cost \$8. 
+
+% While equally straightforward for a computer, understanding such an indirect proof, using contradiction, in a single step is notably harder for a person than the more common forward reasoning explanations our tool generates. Hence, we expanded our tool to -- on demand -- generate a \textit{nested} explanation of this contradiction reasoning.
+% If a user indicates that they do not understand why a certain fact is derived, (in this case, the fact Farfalle does not cost \$8), we initiate a new (nested) explanation sequence that starts from the negation of that fact and derives a contradiction. 
+% As such, this gives the user the option to zoom in into the difficult explanation steps, especially those where multiple (implicit or explicit) constraints are combined. 
 
 In section \ref{sec:nested-explanation}, we have introduced the notion of nested explanations to refine those individual explanation steps in the sequence that are still too hard to understand. Subsequent algorithm \ref{alg:nested-main} is the extension of the greedy algorithm presented in algorithm \ref{alg:main} to support nested-explanations.
 
@@ -162,3 +171,6 @@ Fundamentally, for a given explanation step $(E, S, N)$, algorithm \ref{alg:nest
   \caption{nested-explanation(E, S, N)}
   \label{alg:nested-explanation}
 \end{algorithm}
+
+
+  

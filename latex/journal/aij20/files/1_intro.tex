@@ -1,4 +1,4 @@
-
+\todo{include refs from FWO proejct in bibtex}
 
 
 %Need for explanations of reasoning systems
@@ -6,8 +6,10 @@ In the last few years, as AI systems employ more advanced reasoning mechanisms a
 Explainable AI (XAI) research aims to fulfil the need for trustworthy AI systems to understand why the system made a decision for verifying the correctness of the system, as well as to control for biased or systematically unfair decisions.
 
 Explainable AI is often studied in the context of (black box) prediction systems such as neural networks, where the goal is to provide insight into what part of the input is important in the \textit{learned} model. 
-These insights (or local approximations thereof) can justify why certain predictions are made.
-In contrast, in Constraint Satisfaction Problems (CSP), the problem specification is an explicit model-based representation of the problem, hence creating the opportunity to explain the inference steps directly in terms of this representation.
+These insights (or local approximations thereof) can justify why certain predictions are made. 
+In that setting, a range of techniques have been developed, ranging from local explanations of predictions at the \textit{feature level}~\cite{ribeiro2016should,lundberg2017unified} to \textbf{visual explanations} with \textit{attention maps} \cite{selvaraju2017grad}. %\emilio{Tias, do you mean \cite{selvaraju2017grad}}~\tias{TODO}. 
+Adadi et al.~\cite{Adadi_2018}, Guidotti et al.~\cite{guidotti2018survey} and more recently Arrieta et al.~\cite{Barredo_Arrieta_2020}, survey the trends and  major research directions in this area.
+In contrast, in Constraint Satisfaction Problems (CSP) \cite{fai/Rossi06}, the problem specification is an explicit model-based representation of the problem, hence creating the opportunity to explain the inference steps directly in terms of this representation.
 
 
 
@@ -54,10 +56,15 @@ While the \ourtool, our integrated system, has the capability of solving logic g
 The explanation-generating techniques we develop can be applied in a multitude of use cases. 
 For instance, our tool can explain the entire sequence of reasoning, such that a user can debug the reasoning system or the set of constraints that specify their problem. 
 As our approach starts from an arbitrary set of facts, it can also be used as a virtual assistant when a user is stuck in solving a problem.
-The system will explain the simplest possible next move, or in an interactive setting, the system can explain how it would complete a partial solution of a user.
+The system will explain the simplest possible next move, or in an interactive setting, the system can explain how it would complete a partial solution of a user. Such explanations would be useful in the context of  \emph{interactive configuration} \cite{felfernig2014knowledge} where a domain expert solves a problem (e.g., a complicated scheduling or rostering problem) but is assisted by an intelligent system. 
+The system in that case typically does not have the all the knowledge required to solve the problem since certain things are hard to formalize, especially when personal matters are involved. In such case, the system cannot find the optimal solution automatically, but it can help the expert for instance by propagating information that follows from its knowledge base. In case something undesired is propagated, the user might need an explanation about \emph{why} this follows; this is where our methods can be plugged in.
+% 
+% 
 Finally, our measures of simplicity of reasoning steps can be used to estimate the difficulty of solving a problem for a human, e.g. for gradual training of experts.
-\bart{Mention interactive configuration here as an application domain? }
+% % \bart{Mention interactive configuration here as an application domain? }
 
+% As far as industrial 
+% Finally, as we will allow users to \textbf{explore} the solution space \textbf{interactively}, there is a strong link to. We believe our notions of explanation will prove to be valuable there as well, to allow more transparent guidance of the user to good solutions. 
 
 Our main contributions are the following:
 \begin{itemize}
@@ -78,6 +85,6 @@ Finally, we conclude the paper in Section \ref{sec:conclusion}.
 
 
 % Publication history
-\paragraph*{Publication history} This paper is an extension of a couple of previous papers presented at workshops and conferences \cite{claesuser,DBLP:conf/bnaic/ClaesBCGG19,ecai/BogaertsGCG20}. The current paper extends the previous papers we more detailed examples, additional experiments, as well as a formal treatment of what we call \emph{nested explanation sequences} (an idea that first appeared in a demo we submitted to IJCAI-PRICAI 2020 but that is first formalized in the current paper).  
+\paragraph{Publication history} This paper is an extension of a couple of previous papers presented at workshops and conferences \cite{claesuser,DBLP:conf/bnaic/ClaesBCGG19,ecai/BogaertsGCG20}. The current paper extends the previous papers we more detailed examples, additional experiments, as well as a formal treatment of what we call \emph{nested explanation sequences} (an idea that first appeared in a demo we submitted to IJCAI-PRICAI 2020 but that is first formalized in the current paper).  
 
 % Our nested explanation XAI submission stems from the work originally proposed \cite{ecai/BogaertsGCG20} and motivated by the results from the demonstrator submitted to IJCAI-PRICAI 2020.

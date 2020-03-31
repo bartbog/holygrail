@@ -26,11 +26,6 @@ The result is a vocabulary with types corresponding to the groups of entities in
 as well as constraints (first-order sentences) corresponding to the clues, and the bijectivity and transitivity constraints. 
 % Formally and for future references, let us define $T_P$ as the theory containing all of these constraints for a given puzzle $P$. 
 
-\bart{THIS CANNOT BE HERE! THEORY IS NOT DEFINED YET. This is also nto a property but a definition at best}
-\begin{property}
-	Let $T_P$ be the theory containing the first-order sentences, the bijectivity and the transitivity constraints for a given puzzle $P$. 
-\end{property}
-
 \subsection{Typed first-order logic}
 
 Our constraint solving method is based on \emph{typed first-order logic}. %, with links to \emph{typed second-order logic}.
@@ -66,3 +61,21 @@ Informally, one partial interpretation is more precise than another if it contai
 For practical purposes, since variable-free literals are also sentences, we will freely use a partial interpretation as (a part of) a theory in solver calls or in statements of the form $I\land T \models J$, meaning that everything in $J$ is a consequence of $I$ and $T$, or stated differently, that $J$ is less precise than any model $M$ of $T$ satisfying $M\geqp I$. 
 
 In the context of first-order logic, the task of finite-domain constraint solving is better known as \emph{model expansion} \cite{MitchellTHM06}: given a logical theory $T$ (corresponding to the constraint specification) and a partial interpretation $I$ with a finite domain (corresponding to the initial domain of the variables), find a model $M$ more precise than $I$ (a partial solution that satisfies $T$).
+
+If $P$ is a logic grid puzzle, we will use $T_P$ to denote a first-order theory consisting of:
+\begin{itemize}
+ \item One logical sentence for each clue;
+ \item A logical representation of each bijection constraint;
+ \item A logical representation for each transitivity constraint.
+\end{itemize}
+
+For instance, for our running example, some sentences in $T_P$ are: 
+\begin{align*}
+ &\lnot chose(claudia,puttanesca).\\
+ & \forall s\in sauce : \exists p\in pasta : pairedwith(s,p)\\
+ & \forall s\in sauce: \forall p1\in pasta, \forall p2\in pasta:  pairedwith(s,p1)\land pairedwith(s,p2)\limplies p1=p2. \\
+ & \forall s\in sauce: \forall p\in person, \forall c\in cost: chose(s,p)\land payed(p,c)\limplies costs(s,c). 
+\end{align*}
+\todo{ensure consistency of the naming of our predicates, and the notation of typed first order logic. I think the notation from the sentences I just used is very readable. Emilio, can you check the rest of the paper}
+
+

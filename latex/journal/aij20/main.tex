@@ -57,10 +57,12 @@
 \bibliographystyle{elsarticle-num}
 %%%%%%%%%%%%%%%%%%%%%%%
 %% `User comments`
-\newcommand{\bart}[1]{\marginpar{\tiny\color{red}\textsc{BB:}#1}}
-\newcommand{\tias}[1]{\marginpar{\tiny\color{red}\textsc{TG:}#1}}
-\newcommand{\emilio}[1]{\marginpar{\tiny\color{red}\textsc{EG:}#1}}
-\newcommand{\todo}[1]{\marginpar{\tiny\color{red}\textsc{TODO:}#1}}
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\bart}[1]{{\comment{\color{red}\textsc{BB:}#1}}}
+\newcommand{\tias}[1]{{\comment{\color{red}\textsc{TG:}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}\textsc{EG:}#1}}}
+\newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1}}}
 \newcommand\ignore[1]{}
 
 
@@ -72,12 +74,12 @@
 \newpage
 \begin{frontmatter}
 
-\title{A framework for explaining how to solve constraint satisfaction problems with multiple abstraction levels}
+\title{A framework for explaining how to solve constraint satisfaction problems at multiple abstraction levels}
 %\tnotetext[mytitlenote]{Fully documented templates are available in the elsarticle package on \href{http://www.ctan.org/tex-archive/macros/latex/contrib/elsarticle}{CTAN}.}
 
 %% Group authors per affiliation:
 \author[mymainaddress]{Bart Bogaerts, Emilio Gamba, Tias Guns}
-\address{Vrije Universiteit Brussel, pleinlaan 2, 1050 Brussel, Belgium}
+\address{Vrije Universiteit Brussel, Pleinlaan 2, 1050 Brussel, Belgium}
 \ead{\{firstname.lastname\}@vub.be}
 
 \begin{abstract}
@@ -87,12 +89,14 @@ We aim to give the constraint solver explainable agency, which can help in build
 The main challenge is that of finding a sequence of \textit{simple} explanations, where each explanation should aim to be as cognitively easy as possible for a human to verify and understand. 
 This contrasts with the arbitrary combination of facts and constraints that the solver may use when propagating.
 We propose the use of a cost function to quantify how simple an individual explanation of an inference step is, and identify the explanation-production problem of finding the best sequence of explanations of a CSP. 
-We propose an approach that is agnostic of the underlying constraint propagation mechanisms, and that can provide explanations even for inference steps resulting from combinations of constraints.
+Our approach is agnostic of the underlying constraint propagation mechanisms, and can provide explanations even for inference steps resulting from combinations of constraints. 
+In case multiple constraints are involved, we also develop a mechanism that allows to break the most difficult steps up and thus gives the user the ability to \emph{zoom in} on specific parts of the explanation. 
 Our proposed algorithm iteratively constructs the explanation sequence by using an optimistic estimate of the cost function to guide the search for the best explanation at each step.
 Our experiments on logic grid puzzles show the feasibility of the approach in terms of the quality of the individual explanations and the resulting sequences obtained.
 \end{abstract}
 
 \begin{keyword}
+Artificial Intelligence \sep Constraint Programming \sep Explanation
 %\texttt{elsarticle.cls}\sep \LaTeX\sep Elsevier \sep template
 %\MSC[2010] 00-01\sep  99-00
 \end{keyword}
@@ -138,6 +142,6 @@ This research received funding from the Flemish Government under the ``Onderzoek
 
 \section*{References}
 
-\bibliography{mybibfile, refs}
+\bibliography{mybibfile,refs}
 
 \end{document}

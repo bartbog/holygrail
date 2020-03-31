@@ -1,12 +1,13 @@
 While our proposed method is applicable to constraint satisfaction problems in general, we use \textit{logic grid puzzles} as example domain, as it requires no expert knowledge to understand.
 Our running example is a puzzle about people having dinner in a restaurant and ordering different types of pasta. 
-It is the hardest logic grid puzzle we encountered (as a reference, at a recent AI conference, when presenting our tool \cite{DBLP:conf/bnaic/ClaesBCGG19}, only four out of 80 researchers who tried managed to solve it).    
+It is the hardest logic grid puzzle we encountered (as a reference, at a recent AI conference, when presenting our tool \cite{DBLP:conf/bnaic/ClaesBCGG19}, only four out of 80 researchers who tried, actually managed to solve it).    
 The entire puzzle can be seen in Figure \ref{fig:zebrascreen}; the full final explanation generated for it can be found at \url{http://bartbog.github.io/zebra/pasta}.
 
-In this section, we first present logic grid puzzles as a use case, and introduce the necessary background used in section \ref{sec:problem-definition} formalizing the problem definition.
+In this section, we first present logic grid puzzles as a use case, and afterwards introduce \emph{typed first-order logic}, which we use as the language to express our constraint programs in. Here, it is important to stress that our definitions and algorithms work for any language with a model-theoretic semantics. 
+% introduce the necessary background used in section \ref{sec:problem-definition} formalizing the problem definition.
 
 
-\textbf{Logic grid puzzles.}
+\subsection{Logic grid puzzles}
 A logic grid puzzle (also known as Zebra puzzle or Einstein puzzle) consists of natural language sentences (from hereon referred to as ``clues'') over a set of \emph{entities} occurring in those sentences. 
 For instance, our running example in Figure~\ref{fig:zebrascreen} contains as second clue ``The person who chose arrabiata sauce is either Angie or Elisa'' and (among others) entities ``arrabiata sauce'', ``Angie'' and ``Elisa''. 
 
@@ -14,22 +15,18 @@ The set of entities is sometimes left implicit if it can be derived from the clu
 Furthermore, in such a puzzle the set of entities is partitioned into equally-sized groups (corresponding to \emph{types}); in our example, ``person'' and ``sauce'' are two such types. 
 % 
 The goal of the puzzle is to find relations between each two types such that
-\begin{compactitem}
+\begin{itemize}
 	\item \textit{Each clue is respected}; 
 	\item \textit{Each entity of one type is matched with exactly one entity of the second type}, e.g., each person chose exactly one sauce and each sauce is linked to one person (this type of constraint will be referred to as \emph{bijectivity}); and 
 	\item \textit{The relations are logically linked}, e.g., if Angie chose arrabiata sauce and arrabiata sauce was paired with farfalle, then Angie must also have eaten farfalle (from now on called \emph{transitivity}). 
-\end{compactitem}
+\end{itemize}
 
 In Section \ref{sec:holistic}, we explain how we obtain a vocabulary and first-order theory in a mostly automated way from the clues. 
 The result is a vocabulary with types corresponding to the groups of entities in the clues, and the names and types of the binary relations to find (e.g \textit{chose(person, sauce)}, \textit{paired(sauce, pasta)}, \textit{eaten(person, pasta)});
 as well as constraints (first-order sentences) corresponding to the clues, and the bijectivity and transitivity constraints. 
 % Formally and for future references, let us define $T_P$ as the theory containing all of these constraints for a given puzzle $P$. 
 
-\begin{property}
-	Let $T_P$ be the theory containing the first-order sentences, the bijectivity and the transitivity constraints for a given puzzle $P$. 
-\end{property}
-
-\myparagraph{Typed first-order logic.}
+\subsection{Typed first-order logic}
 
 Our constraint solving method is based on \emph{typed first-order logic}. %, with links to \emph{typed second-order logic}.
 Part of the input is a logical vocabulary consisting of a set of type symbols, (typed) constant symbols, and (typed) relation symbols with associated type signature (i.e., each relation symbol is typed $T_1\times \dots \times T_n$ with $n$ types $T_i$).
@@ -37,7 +34,7 @@ Part of the input is a logical vocabulary consisting of a set of type symbols, (
 For example, type \textit{person} with constant symbol \textit{Angie} of type \textit{person} and a relation \textit{chose(.,.)} with signature \textit{person $\times$ sauce}.
 
 
-A \emph{first-order theory} is a set of sentences (well-formed variable-free first-order formulas in which each quantified variable has an associated type), also referred to as constraints.
+A \emph{first-order theory} is a set of sentences (well-formed variable-free first-order formulas \cite{enderton} in which each quantified variable has an associated type), also referred to as constraints.
 Since we work in a fixed and finite domain, the vocabulary, the interpretation of the types (the domains) and the constants are fixed.
 This justifies the following definition. 
 \begin{definition}\label{def:partial-interpretation}
@@ -47,15 +44,38 @@ This justifies the following definition.
  A partial interpretation is \emph{consistent} if it does not contain both an atom and its negation, it is called a \emph{full} interpretation if it either contains $P(\ddd)$ or $\lnot P(\ddd)$ for each well-typed atom $P(\ddd)$. 
 \end{definition}
 
-For instance, in the partial interpretation $I_{Ang-Ar}=\{chose(Angie,arrabiata),$ $\lnot chose(Elisa,arrabiata)\}$ it is known that $Angia$ had arrabiata sauce and Elisa did not. 
-\begin{property}\label{prop:precise}
-	A partial interpretation $I_1$ is \emph{more precise} than partial interpretation $I_2$ (notation $I_1\geqp I_2$) if $I_1\supseteq I_2$.
-\end{property}
+For instance, in the partial interpretation $I_1=\{chose(Angie,arrabiata),$ $\lnot chose(Elisa,arrabiata)\}$ it is known that $Angia$ had arrabiata sauce while Elisa did not. This partial interpretation does not specify whether or not Elisa ate Farfalle.  
 
-By way of example, the partial interpretation $\{chose(Angie,arrabiata)$, $\lnot chose(Elisa,arrabiata)$, $ \lnot chose(damon,arrabiata)\}$ is more precise than $I_{Ang-Ar}$. 
+
+The syntax and semantics of first-order logic are defined as usual (see e.g.\ \cite{enderton}) by means of a satisfaction relation $I \models T$ between first-order theories $T$ and full interpretations $I$. As usual, if $I\models T$, we say that $I$ is a model (or solution) of $T$.
+
+
+\begin{definition} %\label{prop:precise}
+	A partial interpretation $I_1$ is \emph{more precise} than partial interpretation $I_2$ (notation $I_1\geqp I_2$) if $I_1\supseteq I_2$.
+\end{definition}
+
+Informally, one partial interpretation is more precise than another if it contains more information. For instance the partial interpretation $\{chose(Angie,arrabiata)$, $\lnot chose(Elisa,arrabiata)$, $ \lnot chose(damon,arrabiata)\}$ is more precise than $I_1$. 
 
 % \myparagraph{Model Expansion}
 
 For practical purposes, since variable-free literals are also sentences, we will freely use a partial interpretation as (a part of) a theory in solver calls or in statements of the form $I\land T \models J$, meaning that everything in $J$ is a consequence of $I$ and $T$, or stated differently, that $J$ is less precise than any model $M$ of $T$ satisfying $M\geqp I$. 
 
 In the context of first-order logic, the task of finite-domain constraint solving is better known as \emph{model expansion} \cite{MitchellTHM06}: given a logical theory $T$ (corresponding to the constraint specification) and a partial interpretation $I$ with a finite domain (corresponding to the initial domain of the variables), find a model $M$ more precise than $I$ (a partial solution that satisfies $T$).
+
+If $P$ is a logic grid puzzle, we will use $T_P$ to denote a first-order theory consisting of:
+\begin{itemize}
+ \item One logical sentence for each clue;
+ \item A logical representation of each bijection constraint;
+ \item A logical representation for each transitivity constraint.
+\end{itemize}
+
+For instance, for our running example, some sentences in $T_P$ are: 
+\begin{align*}
+ &\lnot chose(claudia,puttanesca).\\
+ & \forall s\in sauce : \exists p\in pasta : pairedwith(s,p)\\
+ & \forall s\in sauce: \forall p1\in pasta, \forall p2\in pasta:  pairedwith(s,p1)\land pairedwith(s,p2)\limplies p1=p2. \\
+ & \forall s\in sauce: \forall p\in person, \forall c\in cost: chose(s,p)\land payed(p,c)\limplies costs(s,c). 
+\end{align*}
+\todo{ensure consistency of the naming of our predicates, and the notation of typed first order logic. I think the notation from the sentences I just used is very readable. Emilio, can you check the rest of the paper}
+
+

@@ -1,14 +1,15 @@
+\todo{include refs from FWO proejct in bibtex}
 
-% Publication history
-\paragraph*{Publication history} Our nested explanation XAI submission stems from the work originally proposed \cite{ecai/BogaertsGCG20} and motivated by the results from the demonstrator submitted to IJCAI-PRICAI 2020.
 
 %Need for explanations of reasoning systems
 In the last few years, as AI systems employ more advanced reasoning mechanisms and computation power, it becomes increasingly difficult to understand why certain decisions are made. 
 Explainable AI (XAI) research aims to fulfil the need for trustworthy AI systems to understand why the system made a decision for verifying the correctness of the system, as well as to control for biased or systematically unfair decisions.
 
 Explainable AI is often studied in the context of (black box) prediction systems such as neural networks, where the goal is to provide insight into what part of the input is important in the \textit{learned} model. 
-These insights (or local approximations thereof) can justify why certain predictions are made.
-In contrast, in Constraint Satisfaction Problems (CSP), the problem specification is an explicit model-based representation of the problem, hence creating the opportunity to explain the inference steps directly in terms of this representation.
+These insights (or local approximations thereof) can justify why certain predictions are made. 
+In that setting, a range of techniques have been developed, ranging from local explanations of predictions at the \textit{feature level}~\cite{ribeiro2016should,lundberg2017unified} to \textbf{visual explanations} with \textit{attention maps} \cite{selvaraju2017grad}. %\emilio{Tias, do you mean \cite{selvaraju2017grad}}~\tias{TODO}. 
+Adadi et al.~\cite{Adadi_2018}, Guidotti et al.~\cite{guidotti2018survey} and more recently Arrieta et al.~\cite{Barredo_Arrieta_2020}, survey the trends and  major research directions in this area.
+In contrast, in Constraint Satisfaction Problems (CSP) \cite{fai/Rossi06}, the problem specification is an explicit model-based representation of the problem, hence creating the opportunity to explain the inference steps directly in terms of this representation.
 
 
 
@@ -33,11 +34,12 @@ More specifically, we aim to develop an explanation-producing system that is com
 By \textit{complete} we mean that it finds a \textit{sequence} of small reasoning steps that, starting from the given problem specification and a partial solution, derives all consequences. 
 Gilpin et al.~\cite{DBLP:conf/dsaa/GilpinBYBSK18} define \textit{interpretable} explanations as ``descriptions that are simple enough for a person to understand, using a vocabulary that is meaningful to the user''. 
 Our guiding principle is that of simplicity, where smaller and simpler explanations are better. 
-For those explanations that are still too complex, we provide nested explanation sequences inspired by counterfactual reasoning.
+For those explanation steps that are still too complex, we provide a mechanism that allows \emph{zooming in} onto the explanation step and thus enables explanations at different levels of abstraction. Our nested explanation sequences are inspired by counterfactual reasoning, as often found in research on actual causality and by proofs by contradiction, as common in mathematics.
 
 In practice, we choose to represent the constraints in natural language, which is an obvious choice for logic grid puzzles as they are given in the form of natural language \textit{clues}. 
-We represent the previously and newly derived facts visually, as can be seen in the grid in Figure~\ref{fig:zebrascreen}.
+We represent the previously and newly derived facts visually, as can be seen in the grid in Figure~\ref{fig:zebrascreen}, in which it is visualized that the implicit ``Bijectivity'' axiom present in each logic grid puzzle is used to derive that since Arrabiata sauce was eaten with Farfalle, it was not eaten with any of the other pasta types.
 
+\bart{Make better quality screenshot! Also check the others. }
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.9\linewidth]{figures/zebra_screen_1}
@@ -46,29 +48,43 @@ We represent the previously and newly derived facts visually, as can be seen in 
 \end{figure}
 
 %HolyGrail challenge and related work
-Our work is motivated by the ``Holy Grail Challenge''\footnote{\tiny \url{https://freuder.wordpress.com/pthg-19-the- third-workshop-on-progress-towards-the-holy-grail/}} which had as objective to provide \textit{automated} processing of logic grid puzzles, ranging from natural language processing, to solving, and explaining.
+Our work is motivated by the ``Holy Grail Challenge''\footnote{\url{https://freuder.wordpress.com/pthg-19-the- third-workshop-on-progress-towards-the-holy-grail/}} which had as objective to provide \textit{automated} processing of logic grid puzzles, ranging from natural language processing, to solving, and explaining.
 % An earlier version of our system won the challenge at the workshop. 
-\emilio{do we really need to say that ?}
+\emilio{do we really need to say that ?}\bart{What? The line in comment about winning above? Not really, no}
 While the \ourtool, our integrated system, has the capability of solving logic grid puzzle starting from the natural language clues (see Section \ref{sec:holistic}), the focus of this contribution is on the explanation-producing part of the system.
 
 The explanation-generating techniques we develop can be applied in a multitude of use cases. 
 For instance, our tool can explain the entire sequence of reasoning, such that a user can debug the reasoning system or the set of constraints that specify their problem. 
 As our approach starts from an arbitrary set of facts, it can also be used as a virtual assistant when a user is stuck in solving a problem.
-The system will explain the simplest possible next move, or in an interactive setting, the system can explain how it would complete a partial solution of a user.
+The system will explain the simplest possible next move, or in an interactive setting, the system can explain how it would complete a partial solution of a user. Such explanations would be useful in the context of  \emph{interactive configuration} \cite{felfernig2014knowledge} where a domain expert solves a problem (e.g., a complicated scheduling or rostering problem) but is assisted by an intelligent system. 
+The system in that case typically does not have the all the knowledge required to solve the problem since certain things are hard to formalize, especially when personal matters are involved. In such case, the system cannot find the optimal solution automatically, but it can help the expert for instance by propagating information that follows from its knowledge base. In case something undesired is propagated, the user might need an explanation about \emph{why} this follows; this is where our methods can be plugged in.
+% 
+% 
 Finally, our measures of simplicity of reasoning steps can be used to estimate the difficulty of solving a problem for a human, e.g. for gradual training of experts.
+% % \bart{Mention interactive configuration here as an application domain? }
 
-\noindent Our contributions are the following:
-\begin{compactitem}
+% As far as industrial 
+% Finally, as we will allow users to \textbf{explore} the solution space \textbf{interactively}, there is a strong link to. We believe our notions of explanation will prove to be valuable there as well, to allow more transparent guidance of the user to good solutions. 
+
+Our main contributions are the following:
+\begin{itemize}
 	\item We formalize the problem of step-wise explaining the propagation of a constraint solver through a sequence of small inference steps;
 	\item We propose an algorithm that is agnostic to the propagators and the consistency level used, and that can provide explanations for inference steps involving arbitrary combinations of constraints;
 	\item Given a cost function quantifying human interpretability, our method uses an optimistic estimate of this function to guide the search to low-cost explanations, thereby making use of Minimal Unsatisfiable Subset extraction;
-	\item We introduce nested-explanations to refine explanations of complex inference steps using counterfactual reasoning; \emilio{contrastive explanations ?}
+	\item We introduce nested-explanations to refine explanations of complex inference steps using counterfactual reasoning; \emilio{contrastive explanations ?}\bart{What about them? That is not really what this nested is...}
 	\item We experimentally demonstrate the quality and feasibility of the approach in the domain of logic grid puzzles.
-\end{compactitem}
+\end{itemize}
 
-This paper is structured as follows: section \ref{sec:related-work}, explores related works. Section \ref{sec:background}, explains the rules of logic grid puzzles and presents background information. 
-Section \ref{sec:problem-definition} and \ref{sec:nested-explanation}, formalize the theory of the explanation-production problem on 2 abstraction-levels, while Section \ref{sec:expl-gen-prod} sketches the algorithms. 
-In section \ref{sec:zebra}, we motivate our design decisions using observations from the use case. 
-Section \ref{sec:holistic} describes the information pipeline of the \ourtool integrated system. 
-Section \ref{sec:experiments} shows experimentally the feasibility of our approach. 
+
+This paper is structured as follows. In Section~\ref{sec:related-work}, we discuss related work. Section \ref{sec:background}, explains the rules of logic grid puzzles and presents background information. 
+Sections \ref{sec:problem-definition} and \ref{sec:nested-explanation}, formalize the theory of the explanation-production problem on multiple abstraction levels, while Section \ref{sec:expl-gen-prod} describes the algorithms needed to solve the explanation-production problem. 
+In Section \ref{sec:zebra}, we motivate our design decisions using observations from the use case. 
+Section \ref{sec:holistic} describes the entire pipeline of the \ourtool integrated system. 
+In Section \ref{sec:experiments}, we experimentally study the feasibility of our approach. 
 Finally, we conclude the paper in Section \ref{sec:conclusion}.
+
+
+% Publication history
+\paragraph{Publication history} This paper is an extension of a couple of previous papers presented at workshops and conferences \cite{claesuser,DBLP:conf/bnaic/ClaesBCGG19,ecai/BogaertsGCG20}. The current paper extends the previous papers we more detailed examples, additional experiments, as well as a formal treatment of what we call \emph{nested explanation sequences} (an idea that first appeared in a demo we submitted to IJCAI-PRICAI 2020 but that is first formalized in the current paper).  
+
+% Our nested explanation XAI submission stems from the work originally proposed \cite{ecai/BogaertsGCG20} and motivated by the results from the demonstrator submitted to IJCAI-PRICAI 2020.

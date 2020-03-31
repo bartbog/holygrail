@@ -106,15 +106,16 @@ Furthermore, in practice, we cache all candidates and when we (re)compute a MUS 
 
 \subsection{Exploring nested explanations}
 
-% In our previous work \cite{ecai/BogaertsGCG20}, we observed that, for \textit{difficult} puzzles, some explanation steps were still quite hard to understand. An example is depicted in Figure \ref{fig:pasta_diff}.
-% It uses a complicated (disjunctive) clue (``The person who ordered Rotini is either the person who paid \$8 more than Damon or the person who paid \$8 less than Damon'' ), in combination with three previously derived facts to derive that Farfalle does not cost \$8. 
-% The reasoning behind the scenes can be explained by contradiction as follows: if Farfalle did cost \$8, then it does not cost \$16, hence the only possible pasta that can still cost \$16 would be Rotini.  However, since Damon did not take Farfelle (which we assumed costs \$8), Damon did not pay \$8; this is in contradiction with the highlighted clue. Hence Farfalle cannot cost \$8. 
+We extend algorithm \ref{alg:main} to generate new candidate explanations with support for nested explanations as introduced in section \ref{sec:nested-explanation}.
+Fundamentally, the generated candidate explanations are further decomposed in a nested explanation sequence provided that the sequence is easier than the candidate explanation according to the defined cost function $f$. 
+% Subsequent algorithm \ref{alg:nested-main} 
+We assess the possibility for a nested explanation for every newly derived fact in the candidate explanation.
+Similarly to the algorithm \ref{alg:main}, the \textit{nested-explanation} exploits the \textit{min-explanation} function to generate the candidate nested explanations. 
+However, for a nested explanation sequence, the search space for the next easiest explanation-step is bounded by the cost-function and the explanations it can use which ultimately also serves for efficiency purposes. 
 
-% While equally straightforward for a computer, understanding such an indirect proof, using contradiction, in a single step is notably harder for a person than the more common forward reasoning explanations our tool generates. Hence, we expanded our tool to -- on demand -- generate a \textit{nested} explanation of this contradiction reasoning.
-% If a user indicates that they do not understand why a certain fact is derived, (in this case, the fact Farfalle does not cost \$8), we initiate a new (nested) explanation sequence that starts from the negation of that fact and derives a contradiction. 
-% As such, this gives the user the option to zoom in into the difficult explanation steps, especially those where multiple (implicit or explicit) constraints are combined. 
-
-In section \ref{sec:nested-explanation}, we have introduced the notion of nested explanations to refine those individual explanation steps in the sequence that are still too hard to understand. Subsequent algorithm \ref{alg:nested-main} is the extension of the greedy algorithm presented in algorithm \ref{alg:main} to support nested-explanations.
+Given an explanation step $(E, S, N)$ and the new information $n_i \in N$ for which we want more explanations, algorithm \ref{alg:nested-explanation} first constructs a partial interpretation $I'$ formed by the explanations and the negated new fact $n_i$. 
+Then, we gradually build the sequence by adding the newly found explanations $(E', S', N')$ as long as the interpretation is consistent and the explanation is easier than explanation step $(E, S, N)$, 
+In the end, the algorithm inherently recognises the complex inference steps for which it builds nested explanation sequences.
 
 \begin{algorithm}
   %  \begin{algorithmic}
@@ -139,7 +140,7 @@ In section \ref{sec:nested-explanation}, we have introduced the notion of nested
   \label{alg:nested-main}
 \end{algorithm}
 
-Fundamentally, for a given explanation step $(E, S, N)$, algorithm \ref{alg:nested-explanation} exploits only the previously derived facts $E$, the constraints and the newly derived facts used in the explanation step. 
+
 
 \begin{algorithm}
   \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
@@ -173,4 +174,3 @@ Fundamentally, for a given explanation step $(E, S, N)$, algorithm \ref{alg:nest
 \end{algorithm}
 
 
-  

@@ -14,4 +14,4 @@ ${idp_home} "${idp_files}p13-debug.idp" | grep -v "reduce" > "${output}p13-debug
 #${idp_home} "${idp_files}p25.idp" | grep -v "reduce" > "${output}p25.output.json"
 #${idp_home} "${idp_files}p93.idp" | grep -v "reduce" > "${output}p93.output.json"
 #${idp_home} "${idp_files}p5-split.idp" | grep -v "reduce" > "${output}p5-split.output.json"
-#${idp_home} "${idp_files}nielspasta-split.idp" | grep -v "reduce" > "${output}nielspasta-split.output.json"
+${idp_home} "${idp_files}nielspasta-debug-split.idp" | grep -v "reduce" > "${output}nielspasta-debug-split.output.json"

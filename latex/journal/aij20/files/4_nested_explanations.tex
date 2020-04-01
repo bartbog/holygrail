@@ -36,7 +36,23 @@ As such, our problem becomes an explanation-generating problem with 2 levels of 
 %The generation of the explanation sequence, as formally defined in Section 4, is initially guided by the cost function $f(E, S, N)$, a proxy for the mental-effort of the explanation-step. 
 %To further explain the complex inference steps generated in the explanation sequence, w
 \tias{The nested explanation is by definition by contradiction due to the construction of I'0 and that I'n is inconsistent; I think we should be more explicit about this! It is not just nested (e.g. an abstraction level, with smaller steps)?}
-We define the concept of \emph{nested-explanation} as follows. 
+
+When should an explanation-step have a more detailed nested explanation of a newly derived fact? We propose the following principles for an explanation $(E,S,N)$:
+%Each explanation $(E,S,N)$ might 
+%For each explanation, we 
+%Put differently, for every newly derived fact of a given explanation step $(E, S, N)$, we look for an \emph{nested} explanation sequence such that 
+\begin{itemize}
+ \item a nested explanation starts from the explaining facts $E$, %used in the parent explanation step, 
+ augmented with the counterfactual assumption of the newly derived fact $n \in N$; 
+ \item at each step, it only uses clues from $S$;
+ \item each step is easier to understand (has a strictly lower cost) than the parent explanation $f(E,S,N)$;
+ \item from the counterfactual assumption, a contradiction is derived. %; and
+ %\item as before, a means to aggregate costs of the different steps to obtain a cost of the sequence to be minimized is assumed to exist.
+\end{itemize}
+
+Note that if an explanation steps derives multiple new facts, e.g. $|N| > 1$, then we can compute a nested explanation for each $n_i \in N$.
+
+More formally, we define the concept of \emph{nested-explanation} as follows. 
 
 \begin{definition}
 The \textbf{nested-explanation} problem consists of --- given a non-redundant explanation $(E, S, N)$, and a newly derived fact $n \in N$ --- finding a non-redundant explanation sequence 
@@ -47,20 +63,13 @@ The \textbf{nested-explanation} problem consists of --- given a non-redundant ex
         \item $S_i'\subseteq S$ for each $i$;
         \item $f(E_i',S_i',N_i')< f(E, S, N)$ for each $i$; 
         \item $I_n'$ is inconsistent; and
-        \item a predefined aggregate over the sequence $\left(f(E_i',S_i',N_i')\right)_{i\leq n}$ is minimised..
+        \item a predefined aggregate over the sequence $\left(f(E_i',S_i',N_i')\right)_{i\leq n}$ is minimised.
     \end{itemize}
 \end{definition}
 
-Put differently, for every newly derived fact of a given explanation step $(E, S, N)$, we look for an \emph{nested} explanation sequence such that 
-\begin{itemize}
- \item it starts only from the assumptions used in the given explanation step, augmented with the counterfactual assumption that the derivation does not hold; 
- \item at each step, only uses clues from $S$;
- \item each step is easier to understand (has a strictly lower cost) than the high-level explanation;
- \item from the counterfactual assumption, a contradiction is derived; and
- \item as before, a means to aggregate costs of the different steps to obtain a cost of the sequence to be minimized is assumed to exist.
-\end{itemize}
-
-In the next section, we discuss algorithms to generate (nested) explanation sequences; afterwards, we apply them to the field of logic grid puzzles.
+We can hence augment each explanation $(E,S,N)$ with a set of nested explanations if they exist. We next discuss algorithms for computing explanations and nested explanations.
+%As for a regular explanation sequence, possible aggregation operators are \textit{max()} and \textit{average()}. 
+%\noindent In the following section, we discuss algorithms to generate (nested) explanation sequences; afterwards, we apply them to the domain of logic grid puzzles.
 
 
 % Ideas : 

@@ -1,10 +1,15 @@
-From results in previous work \cite{ecai/BogaertsGCG20}, we observed that, for \textit{difficult} puzzles, some explanation steps were still quite hard to understand.
+When we implemented the ideas from the previous section and applied them to logic grid puzzles, as explained in Section \ref{sec:zebra}, we noticed that 
+for the most \textit{difficult} puzzles, some explanation steps were still quite hard to understand.
 An example is depicted in Figure \ref{fig:pasta_diff}.
 It uses a complicated (disjunctive) clue (``The person who ordered Rotini is either the person who paid \$8 more than Damon or the person who paid \$8 less than Damon'' ), in combination with three previously derived facts to derive that Farfalle does not cost \$8.
-The reasoning behind the scenes can be explained by contradiction as follows: if Farfalle did cost \$8, then it does not cost \$16, hence the only possible pasta that can still cost \$16 would be Rotini.
-However, since Damon did not take Farfelle (which we assumed costs \$8), Damon did not pay \$8; this is in contradiction with the highlighted clue. Hence Farfalle cannot cost \$8.
-
-While equally straightforward for a computer, understanding such an indirect proof, using contradiction, in a single step is notably harder for a person than the more common forward reasoning explanations our tool generates.
+The reasoning behind the scenes can be explained by contradiction as follows: 
+ \begin{enumerate}
+  \item If Farfalle did cost \$8, then (since Damon did not take Farfalle), Damon did not pay \$8;
+  \item If Farfalle did cost \$8, then it did not cost \$16; 
+  \item Since Farfalle does not cost \$16 and neither does Capellini or Tagliolini, Rotini must cost \$16;
+  \item However, the fact that Rotini costs \$16, while Damon did not pay \$8 is in contradiction with the clue in question. 
+ \end{enumerate}
+ While equally straightforward for a computer, understanding such an indirect proof, using contradiction, in a single step is notably harder for a person than the more common explanation steps our tool generates.
 %  Hence, we expanded our tool to -- on demand -- generate a \textit{nested} explanation of this contradiction reasoning.
 % It turns out from preliminary analysis of the generated explanation sequence that some steps are still too hard to understand as they combine different constraints and/or multiple clues. 
 \bart{DIE LAATSTE SCREENSHOT IS NIET JUIST!
@@ -15,7 +20,7 @@ While equally straightforward for a computer, understanding such an indirect pro
 \end{figure}
 
 In this section, we extend the explanation-production problem with the purpose of refining those explanations that are too complex and taking inspiration from counterfactual reasoning.
-Thus, our problem becomes an explanation-generating problem with 2 levels of abstractions: ``regular'' explanations and ``lower-level'' \textit{nested-explanations}.
+As such, our problem becomes an explanation-generating problem with 2 levels of abstractions: ``regular'' explanations and ``lower-level'' \textit{nested-explanations}.
 
 \myparagraph{Nested explanation sequence production}
 
@@ -25,20 +30,32 @@ Thus, our problem becomes an explanation-generating problem with 2 levels of abs
 % For the definition of \textit{inconsistency}, we refer back to definition \ref{def:consistent}.
 
 
-The generation of the explanation sequence, as formally defined in section 4, is initially guided by the cost function $f(E, S, N)$, a proxy for the mental-effort of the explanation-step. To tackle the complex inference steps generated in the explanation sequence, we specify the concept of \emph{nested-explanation} as follows:
+The generation of the explanation sequence, as formally defined in Section 4, is initially guided by the cost function $f(E, S, N)$, a proxy for the mental-effort of the explanation-step. 
+To further explain the complex inference steps generated in the explanation sequence, we define the concept of \emph{nested-explanation} as follows. 
 
 \begin{definition}
-    Given a non-redundant explanation $(E_i, S_i, N_i)$, let $n_i \in N_i$ be a newly derived fact and partial interpretation  $I_0' = \{ \neg n_i \wedge E_i \}$ , the \textbf{nested-explanation} problem consists of finding a non-redundant explanation sequence that leads to an inconsistency
+The \textbf{nested-explanation} problem consists of --- given a non-redundant explanation $(E, S, N)$, and a newly derived fact $n \in N$ --- finding a non-redundant explanation sequence 
     \[\langle \ (I_0',(\emptyset,\emptyset,\emptyset)),\ (I_1',(E_1',S_1',N_1')), \dots ,\ (I_n',(E_n',S_n',N_n')) \ \rangle\]
-    such that
+    such that:
     \begin{itemize}
-        \item $\forall \ (E_i',S_i',N_i') : f(E_i',S_i',N_i') \leq f(E_i, S_i, N_i)$ and
-        \item a predefined aggregate over the sequence $\left(f(E_i',S_i',N_i')\right)_{i\leq n}$ is minimised.
+        \item $I_0'$ is the partial interpretation $\{ \neg n_i \wedge E \}$;
+        \item $S_i'\subseteq S$ for each $i$;
+        \item $f(E_i',S_i',N_i')< f(E, S, N)$ for each $i$; 
+        \item $I_n'$ is inconsistent; and
+        \item a predefined aggregate over the sequence $\left(f(E_i',S_i',N_i')\right)_{i\leq n}$ is minimised..
     \end{itemize}
 \end{definition}
 
-Put differently, for every newly derived fact of a given explanation step, we look for an \emph{nested} explanation-sequence such that every nested explanation-step is easier than the original explanation step.
+Put differently, for every newly derived fact of a given explanation step $(E, S, N)$, we look for an \emph{nested} explanation sequence such that 
+\begin{itemize}
+ \item it starts only from the assumptions used in the given explanation step, augmented with the counterfactual assumption that the derivation does not hold; 
+ \item at each step, only uses clues from $S$;
+ \item each step is easier to understand (has a strictly lower cost) than the high-level explanation;
+ \item from the counterfactual assumption, a contradiction is derived; and
+ \item as before, a means to aggregate costs of the different steps to obtain a cost of the sequence to be minimized is assumed to exist.
+\end{itemize}
 
+In the next section, we discuss algorithms to generate (nested) explanation sequences; afterwards, we apply them to the field of logic grid puzzles.
 
 
 % Ideas : 

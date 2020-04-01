@@ -9,8 +9,8 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.js';
 
 
-const problemName = 'p5-split-nested'; //pasta
-// const problemName = 'nielspasta-split-nested'; //pasta
+//const problemName = 'p5-split-nested'; //pasta
+ const problemName = 'nielspasta-split-nested'; //pasta
 
 ReactDOM.render( <PuzzleInfo /> , document.getElementById('problemIntro'));
 ReactDOM.render( <App problemName={problemName} /> , document.getElementById('root'));

@@ -2,14 +2,16 @@ When we implemented the ideas from the previous section and applied them to logi
 for the most \textit{difficult} puzzles, some explanation steps were still quite hard to understand.
 An example is depicted in Figure \ref{fig:pasta_diff}.
 It uses a complicated (disjunctive) clue (``The person who ordered Rotini is either the person who paid \$8 more than Damon or the person who paid \$8 less than Damon'' ), in combination with three previously derived facts to derive that Farfalle does not cost \$8.
-The reasoning behind the scenes can be explained by contradiction as follows: 
+This derivation is non-trivial because it uses reasoning by contradiction:
+%The reasoning behind the scenes can be explained by contradiction as follows: 
  \begin{enumerate}
   \item If Farfalle did cost \$8, then (since Damon did not take Farfalle), Damon did not pay \$8;
   \item If Farfalle did cost \$8, then it did not cost \$16; 
-  \item Since Farfalle does not cost \$16 and neither does Capellini or Tagliolini, Rotini must cost \$16;
-  \item However, the fact that Rotini costs \$16, while Damon did not pay \$8 is in contradiction with the clue in question. 
+  \item Since Farfalle would not cost \$16 and neither does Capellini or Tagliolini, Rotini must cost \$16;
+  \item However, the fact that Rotini costs \$16, while Damon did not pay \$8 is in contradiction with the clue in question;
+  \item Hence, Farfalle can not cost \$8.
  \end{enumerate}
- While equally straightforward for a computer, understanding such an indirect proof, using contradiction, in a single step is notably harder for a person than the more common explanation steps our tool generates.
+ While equally straightforward for a computer, understanding such an indirect proof, using contradiction, in a single step is notably harder for a person; especially compared to the more \textit{forward} explanations of other reasoning steps.
 %  Hence, we expanded our tool to -- on demand -- generate a \textit{nested} explanation of this contradiction reasoning.
 % It turns out from preliminary analysis of the generated explanation sequence that some steps are still too hard to understand as they combine different constraints and/or multiple clues. 
 \bart{DIE LAATSTE SCREENSHOT IS NIET JUIST!
@@ -20,9 +22,9 @@ The reasoning behind the scenes can be explained by contradiction as follows:
 \end{figure}
 
 In this section, we extend the explanation-production problem with the purpose of refining those explanations that are too complex and taking inspiration from counterfactual reasoning.
-As such, our problem becomes an explanation-generating problem with 2 levels of abstractions: ``regular'' explanations and ``lower-level'' \textit{nested-explanations}.
+As such, our problem becomes an explanation-generating problem with 2 levels of abstractions: ``regular'' explanations and ``lower-level'' \textit{nested-explanations}. \tias{lower-level is always 'by contradiction'? Maybe we should be more explicit about that?}
 
-\myparagraph{Nested explanation sequence production}
+\myparagraph{Nested explanation of a reasoning step}
 
 % To tackle complex inference steps with the lense of counterfactual reasoning, one  \textit{``Can I find another easier way to explain this step using the same facts and constraints by negating the newly derived fact and finding an inconsistency ?''} 
 
@@ -30,8 +32,11 @@ As such, our problem becomes an explanation-generating problem with 2 levels of 
 % For the definition of \textit{inconsistency}, we refer back to definition \ref{def:consistent}.
 
 
-The generation of the explanation sequence, as formally defined in Section 4, is initially guided by the cost function $f(E, S, N)$, a proxy for the mental-effort of the explanation-step. 
-To further explain the complex inference steps generated in the explanation sequence, we define the concept of \emph{nested-explanation} as follows. 
+% Tias commented some (filler?) sentences
+%The generation of the explanation sequence, as formally defined in Section 4, is initially guided by the cost function $f(E, S, N)$, a proxy for the mental-effort of the explanation-step. 
+%To further explain the complex inference steps generated in the explanation sequence, w
+\tias{The nested explanation is by definition by contradiction due to the construction of I'0 and that I'n is inconsistent; I think we should be more explicit about this! It is not just nested (e.g. an abstraction level, with smaller steps)?}
+We define the concept of \emph{nested-explanation} as follows. 
 
 \begin{definition}
 The \textbf{nested-explanation} problem consists of --- given a non-redundant explanation $(E, S, N)$, and a newly derived fact $n \in N$ --- finding a non-redundant explanation sequence 

@@ -16,9 +16,11 @@ However, the (automatically) obtained logical representation is
 This logic sentence only entails that Angie did not order capellini \emph{in conjunction with the bijectivity constraint on $ \mathit{ordered}$}.
 In the natural language sentence, this bijectivity is implicit by the use of the article ``The'' which entails that there is a unique person who ordered capellini. 
 
-We observed that there is rarely any propagation from sole clues, and that only few implicit constraints are active together with a clue at any time. Hence, when pairing clues to other constraints we always pair it with the set of all implicit (bijectivity, transitivity) constraints.
-\bart{This last sentence is unclear... 
-Drop or CHange to??? ``Because of this last observation, in our implementation for logic grid puzzles we decided not to consider all subsets of implicit constraints in combination with a clue as candidate sets $S$ in Line \ref{alg:min:for} in Algorithm \ref{alg:minexpl} but instead combine the set of all implicit constraints, subsequently counting on the non-redundance (the subset-minimality of the core) to eliminate most of the implicit constraints since they are not used anyway. }
+We observed that there is rarely any propagation from sole clues, and that only few implicit constraints are active together with a clue at any time. 
+% Hence, when pairing clues to other constraints we always pair it with the set of all implicit (bijectivity, transitivity) constraints.
+% \bart{This last sentence is unclear... 
+% Drop ior CHange to??? ``
+Because of this last observation, in our implementation for logic grid puzzles we decided not to consider all subsets of implicit constraints in combination with a clue as candidate sets $S$ in Line \ref{alg:min:for} in Algorithm \ref{alg:minexpl}. Instead, we combine each clue with the entire set of all implicit constraints, subsequently counting on the non-redundance of the explanation (the subset-minimality of the core) to eliminate most of the implicit constraints since they are not used anyway. 
 
 \paragraph{Observation 3: Clues are typically used independently from other clues} 
 A next observation is that in all the puzzles we encountered, human reasoners never needed to combine two clues in order to derive new information and that when such propagations are possible, they are quite hard to explain, and can be split up into derivations containing only single clues.
@@ -34,13 +36,12 @@ With these three observations in mind, we devised $f$ and $g$ as follows (where 
 \begin{align*}&f(I,C) = basecost(C) + |I| + 5\cdot|C|\\
 &g(C) = basecost(C) = \left\{\begin{array}{ll}
                                0 & \text{if $|C|=1$ and $nc(C) = 0$}\\
-                               20 & \text{if $|C|>1$ and $nc(C)=0$}\\
-                               20\cdot nc(C) & \text{otherwise}
+                               100 & \text{if $|C|>1$ and $nc(C)=0$}\\
+                               100\cdot nc(C) & \text{otherwise}
                               \end{array}\right.
                               \end{align*}
                               
-The number $20$ is taken here to be larger than any reasonable explanation size. 
-\bart{Due to the factor 5 the 20 is no longer ''larger than any reasonable size... Emilio, can you increase this to 100? }
+The number $100$ is taken here to be larger than any reasonable explanation size. 
 The effect of this,  is that we can generate our subsets $S$ in Line \ref{alg:min:for}
  of Algorithm \ref{alg:minexpl} in the following order:
 \begin{itemize}

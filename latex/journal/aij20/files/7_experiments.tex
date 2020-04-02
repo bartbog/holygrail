@@ -17,7 +17,7 @@ The algorithm itself is written in embedded LUA, which provides an imperative en
 We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The puzzle identified as p is our running example. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(I_0,\allconstraints)$.
 \begin{table}
 	\centering
-	\resizebox{\columnwidth}{!}{%
+	% \resizebox{\columnwidth}{!}{%
 \begin{tabular}{c|ccc|c|cccccc} 
 	\textbf{puzzle} & \textbf{$|$type$|$} & \textbf{$|$dom$|$} & \textbf{$|$grid$|$} & \textbf{steps} & \textbf{\% Bij.} & \textbf{\% Trans.} & \textbf{\% 1 Clue} & \textbf{\% m-i} & \textbf{\% m-c} \\ 
 				\hline 
@@ -39,7 +39,8 @@ We first investigate the properties of the puzzles and the composition of the re
 				8 & 4 & 5 & 150 & 119 & 33.61 & 47.06 & 18.49 & 0.0 & 0\\ 
 				%nielspasta.output.json
 				p & 4 & 4 & 96 & 82 & 34.15 & 40.24 & 21.95 & 2.44 & 0\\ 
-\end{tabular}  }
+\end{tabular}  
+% }
 \caption{Composition of puzzle explanations}
 \label{table:composition}
 \end{table}
@@ -96,3 +97,38 @@ We can observe that the average number of facts used is indeed low, less than tw
 	\item length of the nested explanation sequence
 	\item 
 \end{itemize}
+
+\begin{table}
+	\centering
+	\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lllllllll}
+	\hline
+	{} &     p & $\% steps w/ n-expl.$  & $\textbackslash \%$ steps use clues & $\textbackslash \#$ steps w/ 1 n-expl. & $\textbackslash \#$ steps w/ 2 n-expl. & $\textbackslash \#$ steps w/ $\>$2 n-expl. & avg. $max$(cost of expl in n-expl.) & avg. cost expl. w/ n-expl. \\
+	\hline
+	0 &  None &                       None &                 None &                         None &                         None &                          None &                                     None &                            None \\
+	\hline
+	\end{tabular}
+	}
+	\caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
+	\label{table:sequence_leve2}
+\end{table}
+
+\begin{figure*}[t]
+	\centering
+	\includegraphics[width=0.5\linewidth]{figures/p18.eps}
+	\caption{p18 cost with highlighted nested expl.}
+	\label{fig:p18}
+	\end{figure*}
+
+	\begin{figure*}[t]
+		\centering
+		\includegraphics[width=0.5\linewidth]{figures/p25.eps}
+		\caption{p25 cost with highlighted nested expl.}
+		\label{fig:p25}
+		\end{figure*}
+		\begin{figure*}[t]
+			\centering
+			\includegraphics[width=0.5\linewidth]{figures/nielspasta-split-nested.eps}
+			\caption{pasta cost with highlighted nested expl.}
+			\label{fig:pasta}
+			\end{figure*}

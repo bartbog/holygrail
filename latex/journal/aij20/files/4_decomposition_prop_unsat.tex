@@ -82,6 +82,7 @@ We can then search for the smallest explanation among the candidates found, by s
 
  \bart{IN THE FOLLOWING ALGORITHM: WHY is there the $\mathit{Candidates}$, why not just keep track of ONE candidate (best-so-far)?
  One advantage **could** be (it is oen that we actually exploit in the implementation) is that  if we find a good explanation for some $a$, we store it, and we see that it is **also** a good explanation for some $a'$, allowing us to potentially not search too much for $a'$. But... Not sure how well this fits in our current presetnation}
+ \tias{Notational convenience, otherwise we need to write something like bestcandidate is argmax\_f(cand, bestcandidate) or something else clumsy with an if... no other reason}
 \begin{algorithm}
   \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
   \SetKwComment{command}{/*}{*/}
@@ -91,7 +92,7 @@ We can then search for the smallest explanation among the candidates found, by s
   \Input{A partial interpretation $I$ and a set of constraints $C$}
   $\mathit{Candidates}\gets \{\}$\;
   \For{$S \subseteq C$ ordered ascending by $g(S)$}{ \label{alg:min:for}
-    \If{$g(S) < min(\{f(cand_i) | cand_i \in \mathit{Candidates}\})$ {\color{red}SHOULD THIS NOT BE $>$ INSTEAD OF $<$?}}{
+    \If{$g(S) > min(\{f(cand_i) | cand_i \in \mathit{Candidates}\})$ }{
       \Break\;}
     cand $\gets$ candidate-explanations$(I, S)$\; \label{alg:min:gets}
     add to $\mathit{Candidates}$ all cand$_i$ with corresp. value $f(cand_i)$\;
@@ -130,7 +131,7 @@ In the end, the algorithm inherently recognises the complex inference steps for 
   \While{$I \neq I_{end}$}{
   $(E, S, N) \gets $min-explanation$(I, T_p)$\;
   {\color{vuborange}
-  $nested \gets$ nested-explanation$(E, S, N)$\;
+  $nested \gets$ nested-explanations$(E, S, N)$\;
 %   \uIf{$nested \neq \emptyset$}{
     append $((E, S, N),nested)$ to Seq\;
 %   \Else{
@@ -156,25 +157,25 @@ In the end, the algorithm inherently recognises the complex inference steps for 
   \Input{A partial interpretation $I$ and a set of constraints $C$}
   %  \begin{algorithmic}
   $nested\_explanations \gets \{\}$\;
-  $step\_cost \gets f(E,S,N)$\;
   \For{$n_i \in N$}{
-    expensive $\gets false$\;
+    store $\gets true$\;
     nested$\_$seq $\gets \{\}$ \;
     $I' \gets E \wedge \neg \{n_i\} $ \;
-    \While{$ consistent(I') \wedge \neg expensive$}{
+    \While{$consistent(I')$}{
       $(E', S', N') \gets $min-explanation$(I', S)$\;
+      \If{$f(E', S', N') \geq f(E,S,N)$}{
+              store $\gets false$; \Break\;}
+              
       append $(E', S', N')$ to nested$\_$seq\;
       $I' \gets I' \cup N'$\;
 
-      \If{$f(E', S', N') \geq step\_cost$}{
-        expensive $\gets true$\;}
     }
-    \If{$\neg expensive$}{
+    \If{$store$}{
       append $nested\_seq$ to $nested\_explanations$\;}
   }
   \Return $nested\_explanations$
   % \end{algorithmic}
-  \caption{nested-explanation(E, S, N)}
+  \caption{nested-explanations(E, S, N)}
   \label{alg:nested-explanation}
 \end{algorithm}
 

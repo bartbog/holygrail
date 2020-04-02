@@ -3,7 +3,7 @@ Our running example is a puzzle about people having dinner in a restaurant and o
 It is the hardest logic grid puzzle we encountered (as a reference, at a recent AI conference, when presenting our tool \cite{DBLP:conf/bnaic/ClaesBCGG19}, only four out of 80 researchers who tried, actually managed to solve it).    
 The entire puzzle can be seen in Figure \ref{fig:zebrascreen}; the full final explanation generated for it can be found at \url{http://bartbog.github.io/zebra/pasta}.
 
-In this section, we first present logic grid puzzles as a use case, and afterwards introduce \emph{typed first-order logic}, which we use as the language to express our constraint programs in. Here, it is important to stress that our definitions and algorithms work for any language with a model-theoretic semantics. 
+In this section, we first present logic grid puzzles as a use case, and afterwards introduce \emph{typed first-order logic}, which we use as the language to express our constraint programs in. Here, it is important to stress that our definitions and algorithms work for any language with model-theoretic semantics, including constraint satisfaction problems~\cite{rossi2006handbook}.
 % introduce the necessary background used in section \ref{sec:problem-definition} formalizing the problem definition.
 
 
@@ -47,7 +47,7 @@ This justifies the following definition.
 For instance, in the partial interpretation $I_1=\{chose(Angie,arrabiata),$ $\lnot chose(Elisa,arrabiata)\}$ it is known that $Angia$ had arrabiata sauce while Elisa did not. This partial interpretation does not specify whether or not Elisa ate Farfalle.  
 
 
-The syntax and semantics of first-order logic are defined as usual (see e.g.\ \cite{enderton}) by means of a satisfaction relation $I \models T$ between first-order theories $T$ and full interpretations $I$. As usual, if $I\models T$, we say that $I$ is a model (or solution) of $T$.
+The syntax and semantics of first-order logic are defined as usual (see e.g.\ \cite{enderton}) by means of a satisfaction relation $I \models T$ between first-order theories $T$ and full interpretations $I$. If $I\models T$, we say that $I$ is a model (or solution) of $T$.
 
 
 \begin{definition} %\label{prop:precise}
@@ -66,7 +66,7 @@ If $P$ is a logic grid puzzle, we will use $T_P$ to denote a first-order theory 
 \begin{itemize}
  \item One logical sentence for each clue;
  \item A logical representation of each bijection constraint;
- \item A logical representation for each transitivity constraint.
+ \item A logical representation of each transitivity constraint.
 \end{itemize}
 
 For instance, for our running example, some sentences in $T_P$ are: 
@@ -74,7 +74,7 @@ For instance, for our running example, some sentences in $T_P$ are:
  &\lnot chose(claudia,puttanesca).\\
  & \forall s\in sauce : \exists p\in pasta : pairedwith(s,p)\\
  & \forall s\in sauce: \forall p1\in pasta, \forall p2\in pasta:  pairedwith(s,p1)\land pairedwith(s,p2)\limplies p1=p2. \\
- & \forall s\in sauce: \forall p\in person, \forall c\in cost: chose(s,p)\land payed(p,c)\limplies costs(s,c). 
+ & \forall s\in sauce: \forall p\in person, \forall c\in price: chose(s,p)\land payed(p,c)\limplies priced(s,c).  % changed 'cost' to priced to differentiate from constraint cost...
 \end{align*}
 \todo{ensure consistency of the naming of our predicates, and the notation of typed first order logic. I think the notation from the sentences I just used is very readable. Emilio, can you check the rest of the paper}
 

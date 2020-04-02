@@ -127,11 +127,11 @@ Then, we gradually build the sequence by adding the newly found explanations $(E
 
 \begin{algorithm}[ht]
   %  \begin{algorithmic}
-  $I_{end} \gets$ propagate$(I_0\land T_p)$\;
+  $I_{end} \gets$ propagate$(I_0\land \allconstraints)$\;
   Seq $\gets$ empty sequence\;
   $I \gets I_0$\;
   \While{$I \neq I_{end}$}{
-  $(E, S, N) \gets $min-explanation$(I, T_p)$\;
+  $(E, S, N) \gets $min-explanation$(I, \allconstraints)$\;
   {\color{vuborange}
   $nested \gets$ nested-explanations$(E, S, N)$\;
 %   \uIf{$nested \neq \emptyset$}{
@@ -144,7 +144,7 @@ Then, we gradually build the sequence by adding the newly found explanations $(E
   $I \gets I \cup N$\;
   }
   % \end{algorithmic}
-  \caption{greedy-explanations$(I_0, T_p)$}
+  \caption{greedy-explanations$(I_0, \allconstraints)$}
   \label{alg:nested-main}
 \end{algorithm}
 

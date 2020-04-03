@@ -80,10 +80,6 @@ We make one further assumption to ensure that we do not have to search for candi
 
 We can then search for the smallest explanation among the candidates found, by searching among increasingly worse scoring $S$ as shown in Algorithm~\ref{alg:minexpl}. This is the algorithm called by the iterative sequence generation (Algorithm \ref{alg:main}).
 
- \bart{IN THE FOLLOWING ALGORITHM: WHY is there the $\mathit{Candidates}$, why not just keep track of ONE candidate (best-so-far)?
- One advantage **could** be (it is oen that we actually exploit in the implementation) is that  if we find a good explanation for some $a$, we store it, and we see that it is **also** a good explanation for some $a'$, allowing us to potentially not search too much for $a'$. But... Not sure how well this fits in our current presetnation}
- \tias{Notational convenience, otherwise we need to write something like bestcandidate is argmax\_f(cand, bestcandidate) or something else clumsy with an if... no other reason}
- \bart{BART DOES IT.}
 \begin{algorithm}
   \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
   \SetKwComment{command}{/*}{*/}
@@ -91,14 +87,14 @@ We can then search for the smallest explanation among the candidates found, by s
 
 
   \Input{A partial interpretation $I$ and a set of constraints $C$}
-  $\mathit{Candidates}\gets \{\}$\;
+  $\mathit{best}\gets none$\;
   \For{$S \subseteq C$ ordered ascending by $g(S)$}{ \label{alg:min:for}
-    \If{$g(S) > min(\{f(cand_i) | cand_i \in \mathit{Candidates}\})$ }{
+    \If{$best\neq none\wedge g(S) > f(\mathit{best})$ }{
       \Break\;}
-    cand $\gets$ candidate-explanations$(I, S)$\; \label{alg:min:gets}
-    add to $\mathit{Candidates}$ all cand$_i$ with corresp. value $f(cand_i)$\;
+    cand $\gets$ best explanation from candidate-explanations$(I, S)$\;
+        \If{$\mathit{best} = none \vee f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\; \label{alg:min:gets}}
   }
-  \Return{$cand_i \in\mathit{Candidates}$  with minimal $f(cand_i)$}
+   \Return{$\mathit{best}$}
   \caption{min-explanation$(I,C)$}
   \label{alg:minexpl}
 \end{algorithm}
@@ -122,7 +118,8 @@ The computation of a nested explanation as described in Algorithm~\ref{alg:neste
 
 Given an explanation step $(E, S, N)$ and new information $n_i \in N$ for which we want more explanations, Algorithm~\ref{alg:nested-explanation} first constructs a partial interpretation $I'$ formed by the facts in $E$ and the negated new fact $n_i$. 
 Then, we gradually build the sequence by adding the newly found explanations $(E', S', N')$ as long as the interpretation is consistent and the explanation is easier than explanation step $(E, S, N)$ (this is in line with Definition~\ref{def:nested-problem} and serves to avoid that the nested explanation is simply a single-step explanation that is equally difficult as the original step.  
-\bart{adds ex}
+
+While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line \ref{ifcheck}. This check is present to avoid that the nested explanation is as difficult as the high-level step it aims to clarify. This check can kick in for two different reasons. The first reason is that the explanation stap at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure \ref{fig:zebrascreen} is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult as the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain those steps. 
 % In the end, the algorithm inherently recognises the complex inference steps for which it builds nested explanation sequences.\bart{What do you mean by this??? } 
 
 \begin{algorithm}[ht]
@@ -165,7 +162,7 @@ Then, we gradually build the sequence by adding the newly found explanations $(E
     $I' \gets E \wedge \neg \{n_i\} $ \;
     \While{$consistent(I')$}{
       $(E', S', N') \gets $min-explanation$(I', S)$\;
-      \If{$f(E', S', N') \geq f(E,S,N)$}{
+      \If{$f(E', S', N') \geq f(E,S,N)$ \label{ifcheck}}{
               store $\gets false$; \Break\;}
               
       append $(E', S', N')$ to nested$\_$seq\;

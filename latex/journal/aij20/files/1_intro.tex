@@ -7,7 +7,7 @@ Explainable AI (XAI) research aims to fulfil the need for trustworthy AI systems
 
 Explainable AI is often studied in the context of (black box) prediction systems such as neural networks, where the goal is to provide insight into what part of the input is important in the \textit{learned} model. 
 These insights (or local approximations thereof) can justify why certain predictions are made. 
-In that setting, a range of techniques have been developed, ranging from local explanations of predictions at the \textit{feature level}~\cite{ribeiro2016should,lundberg2017unified} to \textbf{visual explanations} with \textit{attention maps} \cite{selvaraju2017grad}. %\emilio{Tias, do you mean \cite{selvaraju2017grad}}~\tias{TODO}. 
+In that setting, a range of techniques have been developed, ranging from local explanations of predictions at the \textit{feature level}~\cite{ribeiro2016should,lundberg2017unified} to \textbf{visual explanations} with \textit{saliency maps} \cite{selvaraju2017grad}. %\emilio{Tias, do you mean \cite{selvaraju2017grad}}~\tias{TODO}. 
 Adadi et al.~\cite{Adadi_2018}, Guidotti et al.~\cite{guidotti2018survey} and more recently Arrieta et al.~\cite{Barredo_Arrieta_2020}, survey the trends and  major research directions in this area.
 In contrast, in Constraint Satisfaction Problems (CSP) \cite{fai/Rossi06}, the problem specification is an explicit model-based representation of the problem, hence creating the opportunity to explain the inference steps directly in terms of this representation.
 
@@ -34,10 +34,22 @@ More specifically, we aim to develop an explanation-producing system that is com
 By \textit{complete} we mean that it finds a \textit{sequence} of small reasoning steps that, starting from the given problem specification and a partial solution, derives all consequences. 
 Gilpin et al.~\cite{DBLP:conf/dsaa/GilpinBYBSK18} define \textit{interpretable} explanations as ``descriptions that are simple enough for a person to understand, using a vocabulary that is meaningful to the user''. 
 Our guiding principle is that of simplicity, where smaller and simpler explanations are better. 
-For those explanation steps that are still too complex, we provide a mechanism that allows \emph{zooming in} onto the explanation step and thus enables explanations at different levels of abstraction. Our nested explanation sequences are inspired by counterfactual reasoning, as often found in research on actual causality and by proofs by contradiction, as common in mathematics.
+
+
+\todo{TIAS LOOKS AT IT and places some of this text in 5?1. } 
+
+On top of this idea of explaining propagations by means of as simple as possible steps, we add a mechanism for controlling the level of abstraction of the explanation sequence. 
+There are two ways to achieve this. 
+The first direction is that one could \emph{group} multiple single steps into one larger step that can then be expanded on the fly. 
+The second direction is to provide a \emph{more detailed} explanation of some of the more harder steps. 
+While the first direction can be useful when explanations get very long, from a theoretical perspective it is less interesting. 
+The second direction on the other hand is interesting for several reasons. First of all, when implementing this, we noticed that some of the generated steps are still too complicated to be understood easily and thus really require being explained in more detailed. Secondly, breaking them up in smaller steps is an interesting challenge. Indeed, since we start from the idea that steps should be as simple as possible, it should not be possible to break them up further. 
+To achieve this, we took inspiration from methods humans use when solving puzzles, and mathematicians use when proving theorems. 
+That is, for explaining a single step in more detail we work by reasoning by contradiction: after assuming the negation of the derived fact, we present a sequence of small explanation steps that leads, starting from this negated assumption, to an inconsistency. 
+As such, in the end this provides a mechanism that allows \emph{zooming in} onto the difficult explanation step.
 
 In practice, we choose to represent the constraints in natural language, which is an obvious choice for logic grid puzzles as they are given in the form of natural language \textit{clues}. 
-We represent the previously and newly derived facts visually, as can be seen in the grid in Figure~\ref{fig:zebrascreen}, in which it is visualized that the implicit ``Bijectivity'' axiom present in each logic grid puzzle is used to derive that since Arrabiata sauce was eaten with Farfalle, it was not eaten with any of the other pasta types.
+We represent the previously and newly derived facts visually, as can be seen in the grid in Figure~\ref{fig:zebrascreen}. In this figure, the implicit ``Bijectivity'' axiom present in each logic grid puzzle is used to derive that since Arrabiata sauce was eaten with Farfalle, it was not eaten with any of the other pasta types.
 
 % \bart{Make better quality screenshot! Also check the others. }
 \begin{figure}[ht]
@@ -51,12 +63,12 @@ We represent the previously and newly derived facts visually, as can be seen in 
 Our work is motivated by the ``Holy Grail Challenge''\footnote{\url{https://freuder.wordpress.com/pthg-19-the- third-workshop-on-progress-towards-the-holy-grail/}} which had as objective to provide \textit{automated} processing of logic grid puzzles, ranging from natural language processing, to solving, and explaining.
 % An earlier version of our system won the challenge at the workshop. 
 % \emilio{do we really need to say that ?}\bart{What? The line in comment about winning above? Not really, no}
-While the \ourtool, our integrated system, has the capability of solving logic grid puzzle starting from the natural language clues (see Section \ref{sec:holistic}), the focus of this contribution is on the explanation-producing part of the system.
+While our integrated system, \ourtool, has the capability of solving logic grid puzzle starting from the natural language clues (see Section \ref{sec:holistic}), the focus in this paper is on the explanation-producing part of the system.
 
 The explanation-generating techniques we develop can be applied in a multitude of use cases. 
-For instance, our tool can explain the entire sequence of reasoning, such that a user can debug the reasoning system or the set of constraints that specify their problem. 
+For instance, it can explain the entire sequence of reasoning, such that a user can better understand it, or in case of an unexpected outcome can debug the reasoning system or the set of constraints that specify the problem. 
 As our approach starts from an arbitrary set of facts, it can also be used as a virtual assistant when a user is stuck in solving a problem.
-The system will explain the simplest possible next move, or in an interactive setting, the system can explain how it would complete a partial solution of a user. Such explanations would be useful in the context of  \emph{interactive configuration} \cite{felfernig2014knowledge} where a domain expert solves a problem (e.g., a complicated scheduling or rostering problem) but is assisted by an intelligent system. 
+The system will explain the simplest possible next step, or in an interactive setting, the system can explain how it would complete a partial solution of a user. Such explanations can be useful in the context of  \emph{interactive configuration} \cite{felfernig2014knowledge} where a domain expert solves a problem (e.g., a complicated scheduling or rostering problem) but is assisted by an intelligent system. 
 The system in that case typically does not have the all the knowledge required to solve the problem since certain things are hard to formalize, especially when personal matters are involved. In such case, the system cannot find the optimal solution automatically, but it can help the expert for instance by propagating information that follows from its knowledge base. In case something undesired is propagated, the user might need an explanation about \emph{why} this follows; this is where our methods can be plugged in.
 % 
 % 

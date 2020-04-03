@@ -4,14 +4,14 @@ The input to \ourtool is a plain English language representation of the clues an
 The underlying solver, \idp\cite{IDP} uses this formal representation of the clues both to solve the puzzle and to explain the solution. 
 We chose the \idp system as an underlying solver since it natively offers different inference methods to be applied on logic theories, including model expansion (searching for solutions), different types of propagation (we used optimalpropagate here to find $max(I,\allconstraints)$), and unsat-core extraction and offers a lua interface to glue these inference steps together seamlessly \cite{IDP}. 
 The complete specification undergoes the following \textbf{steps}:
-\begin{compactenum}
+\begin{enumerate}
 	\item[\bf A] \textbf{Part-Of-Speech (POS) tagging}: A part-of-speech tag is associated with each word using an out-of-the-box POS tagger \cite{DBLP:journals/coling/MarcusSM94}.
 	\item[\bf B] \textbf{Chunking and lexicon building}: A problem-specific lexicon is constructed; each word or set of words (chunk) is assigned a role, based on the POS tags. On top of these roles, we defined a puzzle-independent grammar in the Blackburn and Bos framework \cite{Blackburn2005,Blackburn2006}. The grammar was created based on 10 example training puzzles, and tested on 10 different puzzles to ensure genericity \cite{msc/Claes17}. 
 	\item[\bf C] \textbf{Parsing}: We use a typed variant of the Blackburn and Bos framework to use the lexicon and grammar to derive a logical formulation of the clues in Discourse Representation Theory. The typed extension allows us to discover the case where different verbs are used as synonyms for the same inherent relation between two types, e.g. `$ate(person, pasta)$' and `$ordered(person, pasta)$'. This is then translated into the \idp language and the bijectivity and transitivity constraints are automatically added. 
 	\item[\bf D] \textbf{Explanation-producing search in \idp}: this is the main contribution of this paper, as explained in Section~\ref{sec:expl-gen-prod}.
-	\item[\bf E] \textbf{Visualisation}: all  explanation steps $(E_i, S_i, N_i)$ are visualized by means of a color-coded logic grid, where different colors are used to highlight $E_i$ and $N_i$, and $S_i$. Figures~\ref{fig:zebrascreen} and \ref{fig:screen2} contain examples.
-\end{compactenum}
+	\item[\bf E] \textbf{Visualisation}: all  explanation steps $(E_i, S_i, N_i)$ are visualized by means of a color-coded logic grid, where different colors are used to highlight $E_i$ and $N_i$, and $S_i$. Figures~\ref{fig:zebrascreen} and \ref{fig:zebrascreen:path} contain examples.
+\end{enumerate}
 
-\noindent
+% \noindent
 An online demo of our system can be found on \url{http://bartbog.github.io/zebra}, containing examples of all the steps. 
 A more detailed explanation of steps B and C of the information pipeline can be found in \cite{msc/Claes17}. From a natural language processing point of view, the hardest part is step B: automatically deriving the lexicon. In our system, this is a semi-automated method that suggests a lexicon and lets a user modify and approve it, to compensate for possible ``creativity'' of the puzzle designers who tend to insert ambiguous words, or use implicit background knowledge such as using ``in the morning'' when there is only one timeslot before 12:00.

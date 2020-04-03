@@ -1,9 +1,9 @@
 In this section, we tackle the goal of searching for a non-redundant explanation sequence that is as simple as possible to understand.
 
-Ideally, we could generate all explanations of each fact in $I_n$, and search for the lowest scoring sequence among those explanations. However, the number of explanations for each fact quickly explodes with the number of constraints, and is hence not feasible to compute. Instead, we will iteratively construct the sequence, by generating candidates for a given partial interpretation and searching for the smallest one among those.
+Ideally, we could generate all explanations of each fact in $max(I_0,\allconstraints)$, and search for the lowest scoring sequence among those explanations. However, the number of explanations for each fact quickly explodes with the number of constraints, and is hence not feasible to compute. Instead, we will iteratively construct the sequence, by generating candidates for a given partial interpretation and searching for the smallest one among those.
 
-\myparagraph{Sequence construction.}
-We aim to minimize the cost of the explanations of the sequence, measured with an aggregate over individual explanation costs $f(E_i, S_i, N_i)$ for some aggregate like $max()$ or $average()$. The cost function $f$ could for example be a weighted sum of the cardinalities of $E_i$, $S_i$ and $N_i$; see Section~\ref{sec:cost} for the cost function we will use for logic grid puzzles.
+\myparagraph{Sequence construction}
+We aim to minimize the cost of the explanations of the sequence, measured with an aggregate over individual explanation costs $f(E_i, S_i, N_i)$ for some aggregate like $max()$ or $average()$. The cost function $f$ could for example be a weighted sum of the cardinalities of $E_i$, $S_i$ and $N_i$; in Section~\ref{sec:cost}, we discuss a concrete cost function for the use case of logic grid puzzles.
 
 Instead of globally optimizing the aggregated sequence cost, we encode the knowledge that we are seeking a sequence of small explanations in our algorithm. Namely, we will greedily and incrementally build the sequence, each time searching for the lowest scoring next explanation, given the current partial interpretation. Such an explanation always exists since the end point of the explanation process $max(I_0,\allconstraints)$ only contains consequences of $I_0$ and \allconstraints.
 
@@ -23,10 +23,10 @@ Algorithm \ref{alg:main} formalizes the greedy construction of the sequence, whi
   \caption{High-level greedy sequence-generating algorithm.}
   \label{alg:main}
 \end{algorithm}
-\myparagraph{Candidate generation.}
-The main challenge is finding the lowest scoring explanation, among all reasoning steps that can be applied for a given partial interpretation $I$. We first look at how to \textit{enumerate} a set of candidate non-redundant explanations given a set of constraints.
+\myparagraph{Candidate generation}
+The main challenge is finding the lowest scoring explanation, among all reasoning steps that can be applied for a given partial interpretation $I$. We first study how to \textit{enumerate} a set of candidate non-redundant explanations given a set of constraints.
 
-For a set of constraints $C$ (later algorithms will not always use \allconstraints for this $C$!), we can first use propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints $C$. For each new fact $a$ not in $I$, we wish to find a non-redundant explanation $(E \subseteq I, S \subseteq C,\{a\})$ that explains $a$. Recall from Definition~\ref{def:nonred} that this means that whenever one of the facts in $E$ or constraints in $S$ is removed, the result is no longer an explanation.
+For a set of constraints $C$ (later algorithms will not always use \allconstraints for this $C$), we can first use propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints $C$. For each new fact $a$ not in $I$, we wish to find a non-redundant explanation $(E \subseteq I, S \subseteq C,\{a\})$ that explains $a$ (and possibly explains more). Recall from Definition~\ref{def:nonred} that this means that whenever one of the facts in $E$ or constraints in $S$ is removed, the result is no longer an explanation.
 We now show that this task is equivalent to finding a Minimal Unsat Core (or Minimal Unsat Subset, MUS) of a derived this.
 To see this, consider the theory
 \[ I\wedge C \wedge \lnot a.\]
@@ -69,10 +69,10 @@ Note that the other implicants $A \setminus \{a\}$ may have simpler explanations
   \label{alg:cand}
 \end{algorithm}
 
-We assume the use of a standard MUS algorithm, e.g. one that searches for a satisfying solution and if a failure is encountered, the resulting Unsat Core is shrunk to a Minimal one~\cite{marques2010minimal}. While computing a MUS may be computationally demanding, it is far less demanding than enumerating all MUS's (of arbitrary size) as candidates.
+We assume the use of a standard MUS algorithm, e.g., one that searches for a satisfying solution and if a failure is encountered, the resulting Unsat Core is shrunk to a minimal one~\cite{marques2010minimal}. While computing a MUS may be computationally demanding, it is far less demanding than enumerating all MUS's (of arbitrary size) as candidates.
 
-\myparagraph{Cost functions and cost-minimal explanations.}
-We use Algorithm~\ref{alg:cand} to generate candidate explanations, but in general our goal is to find cost-minimal explanations. In the following, we assume that we have a cost function $f(E, S, N)$ that returns a score for every possible explanation $(E, S, N)$.
+\myparagraph{Cost functions and cost-minimal explanations}
+We use Algorithm~\ref{alg:cand} to generate candidate explanations, but in general our goal is to find cost-minimal explanations. In the following, we assume that have a cost function $f$ is fixed that returns a score for every possible explanation $(E, S, N)$.
 
 To guide the search to cost-minimal MUS's, we use the observation that typically a small (1 to a few) number of constraints is sufficient to explain the reasoning. A small number of constraints is also preferred in terms of easy to understand explanations, and hence have a lower cost. For this reason, we will  not call \textit{candidate-explanations} with the full set of constraints \allconstraints, but we will iteratively grow the number of constraints used.
 
@@ -87,14 +87,14 @@ We can then search for the smallest explanation among the candidates found, by s
 
 
   \Input{A partial interpretation $I$ and a set of constraints $C$}
-  Candidates $\gets \{\}$\;
-  \For{$S \subseteq C$ ordered by $g(S)$}{ \label{alg:min:for}
-    \If{$g(S) < min(\{f(cand_i) | cand_i \in $Candidates$\})$}{
+  $\mathit{best}\gets none$\;
+  \For{$S \subseteq C$ ordered ascending by $g(S)$}{ \label{alg:min:for}
+    \If{$best\neq none\wedge g(S) > f(\mathit{best})$ }{
       \Break\;}
-    cand $\gets$ candidate-explanations$(I, S)$\; \label{alg:min:gets}
-    add to Candidates all cand$_i$ with corresp. value $f(cand_i)$\;
+    cand $\gets$ best explanation from candidate-explanations$(I, S)$\;
+        \If{$\mathit{best} = none \vee f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\; \label{alg:min:gets}}
   }
-  \Return{$cand_i \in$ Candidates with minimal $f(cand_i)$}
+   \Return{$\mathit{best}$}
   \caption{min-explanation$(I,C)$}
   \label{alg:minexpl}
 \end{algorithm}
@@ -104,45 +104,50 @@ There is one benefit in caching the \textit{Candidates} across the different ite
 Furthermore, in practice, we cache all candidates and when we (re)compute a MUS for a fact $a$, we only store it if it is more cost-effective than the best one we have previously found for that fact, across the different iterations.
 
 
-\subsection{Exploring nested explanations}
+\subsection{Searching nested explanations}
 
-We extend algorithm \ref{alg:main} to generate new candidate explanations with support for nested explanations as introduced in section \ref{sec:nested-explanation}.
+We extend Algorithm \ref{alg:main} to generate new candidate explanations with support for nested explanations as introduced in Section~\ref{sec:nested-explanation}.
 Fundamentally, the generated candidate explanations are further decomposed in a nested explanation sequence provided that the sequence is easier than the candidate explanation according to the defined cost function $f$. 
-% Subsequent algorithm \ref{alg:nested-main} 
-We assess the possibility for a nested explanation for every newly derived fact in the candidate explanation.
-Similarly to the algorithm \ref{alg:main}, the \textit{nested-explanation} exploits the \textit{min-explanation} function to generate the candidate nested explanations. 
-However, for a nested explanation sequence, the search space for the next easiest explanation-step is bounded by the cost-function and the explanations it can use which ultimately also serves for efficiency purposes. 
+% Subsequent Algorithm~\ref{alg:nested-main} 
+We assess the possibility for a nested explanation for every newly derived fact in the candidate explanation. 
+Similar to Algorithm~\ref{alg:main}, Algorithm~\ref{alg:nested-main} exploits the \textit{min-explanation} function to generate the candidate nested explanations. 
+The only difference is that after computing each explanation step, also a call to \textit{nested-explanation} (which is found in Algorithm~\ref{alg:nested-explanation}) is done to generate a nested sequence. 
 
-Given an explanation step $(E, S, N)$ and the new information $n_i \in N$ for which we want more explanations, algorithm \ref{alg:nested-explanation} first constructs a partial interpretation $I'$ formed by the explanations and the negated new fact $n_i$. 
-Then, we gradually build the sequence by adding the newly found explanations $(E', S', N')$ as long as the interpretation is consistent and the explanation is easier than explanation step $(E, S, N)$, 
-In the end, the algorithm inherently recognises the complex inference steps for which it builds nested explanation sequences.
 
-\begin{algorithm}
+The computation of a nested explanation as described in Algorithm~\ref{alg:nested-explanation} also reuses \textit{min-explanation}; but, the main differences with the high level explanation generating algorithm come from the fact that the search space for next easiest explanation-step is bounded by \emph{(i)} the input explanation: it can use only constraints (and facts) from the original explanation, and \emph{(ii)} the cost of the higher-level explanation is an upper bound on the acceptable costs at the nested level. 
+
+Given an explanation step $(E, S, N)$ and new information $n_i \in N$ for which we want more explanations, Algorithm~\ref{alg:nested-explanation} first constructs a partial interpretation $I'$ formed by the facts in $E$ and the negated new fact $n_i$. 
+Then, we gradually build the sequence by adding the newly found explanations $(E', S', N')$ as long as the interpretation is consistent and the explanation is easier than explanation step $(E, S, N)$ (this is in line with Definition~\ref{def:nested-problem} and serves to avoid that the nested explanation is simply a single-step explanation that is equally difficult as the original step.  
+
+While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line \ref{ifcheck}. This check is present to avoid that the nested explanation is as difficult as the high-level step it aims to clarify. This check can kick in for two different reasons. The first reason is that the explanation stap at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure \ref{fig:zebrascreen} is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult as the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain those steps. 
+% In the end, the algorithm inherently recognises the complex inference steps for which it builds nested explanation sequences.\bart{What do you mean by this??? } 
+
+\begin{algorithm}[ht]
   %  \begin{algorithmic}
-  $I_{end} \gets$ propagate$(I_0\land T_p)$\;
+  $I_{end} \gets$ propagate$(I_0\land \allconstraints)$\;
   Seq $\gets$ empty sequence\;
   $I \gets I_0$\;
   \While{$I \neq I_{end}$}{
-  $(E, S, N) \gets $min-explanation$(I, T_p)$\;
+  $(E, S, N) \gets $min-explanation$(I, \allconstraints)$\;
   {\color{vuborange}
-  $nested \gets$ nested-explanation$(E, S, N)$\;
-  \uIf{$nested \neq \emptyset$}{
-    append $nested$ to Seq\;}
-  \Else{
-    append $(E, S, N)$ to Seq\;
-  }
+  $nested \gets$ nested-explanations$(E, S, N)$\;
+%   \uIf{$nested \neq \emptyset$}{
+    append $((E, S, N),nested)$ to Seq\;
+%   \Else{
+%     append $(E, S, N)$ to Seq\;
+%   }
   }
 
   $I \gets I \cup N$\;
   }
   % \end{algorithmic}
-  \caption{greedy-explanations$(I_0, T_p)$}
+  \caption{greedy-explanations$(I_0, \allconstraints)$}
   \label{alg:nested-main}
 \end{algorithm}
 
 
 
-\begin{algorithm}
+\begin{algorithm}[ht]
   \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
   \SetKwComment{command}{/*}{*/}
   \SetKw{Break}{break}
@@ -151,25 +156,25 @@ In the end, the algorithm inherently recognises the complex inference steps for 
   \Input{A partial interpretation $I$ and a set of constraints $C$}
   %  \begin{algorithmic}
   $nested\_explanations \gets \{\}$\;
-  $step\_cost \gets f(E,S,N)$\;
   \For{$n_i \in N$}{
-    expensive $\gets false$\;
+    store $\gets true$\;
     nested$\_$seq $\gets \{\}$ \;
     $I' \gets E \wedge \neg \{n_i\} $ \;
-    \While{$ consistent(I') \wedge \neg expensive$}{
+    \While{$consistent(I')$}{
       $(E', S', N') \gets $min-explanation$(I', S)$\;
+      \If{$f(E', S', N') \geq f(E,S,N)$ \label{ifcheck}}{
+              store $\gets false$; \Break\;}
+              
       append $(E', S', N')$ to nested$\_$seq\;
       $I' \gets I' \cup N'$\;
 
-      \If{$f(E', S', N') \leq step\_cost$}{
-        expensive $\gets true$\;}
     }
-    \If{$\neg expensive$}{
+    \If{$store$}{
       append $nested\_seq$ to $nested\_explanations$\;}
   }
   \Return $nested\_explanations$
   % \end{algorithmic}
-  \caption{nested-explanation(E, S, N)}
+  \caption{nested-explanations(E, S, N)}
   \label{alg:nested-explanation}
 \end{algorithm}
 

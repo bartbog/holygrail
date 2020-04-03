@@ -1,9 +1,12 @@
 Using logic grid puzzles as a use-case, we validate the feasibility of finding a non-redundant explanation sequence and generating nested explanation sequences.
-As data we use puzzles from Puzzle Baron’s Logic Puzzles Volume 3~\cite{logigrammen}. The first 10 puzzles were used to construct the grammar; the next 10 to test the genericity of the grammar. 
+As data we use puzzles from Puzzle Baron’s Logic Puzzles Volume 3~\cite{logigrammen}. 
+The first 10 puzzles were used to construct the grammar; the next 10 to test the genericity of the grammar. 
 Our experiments below are on test puzzles only; we also report results on the \textit{pasta} puzzle, which was sent to us by someone who did not manage to solve it himself.
 
 As constraint solving engine, we use \idp~\cite{IDP} for the reasons explained in Section \ref{sec:holistic}. 
-The algorithm itself is written in embedded LUA, which provides an imperative environment inside the otherwise declarative \idp system. The code was not optimized for efficiency and can at this point not be used in an interactive setting, as it takes between 15 minutes to a few hours to fully explain a logic grid puzzle. Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0 and \idp 3.7.1.
+The algorithm itself is written in embedded LUA, which provides an imperative environment inside the otherwise declarative \idp system. 
+The code was not optimized for efficiency and can at this point not be used in an interactive setting, as it takes between 15 minutes to a few hours to fully explain a logic grid puzzle. 
+Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0 and \idp 3.7.1.
 
 \begin{figure}
 \centering
@@ -19,101 +22,64 @@ The algorithm itself is written in embedded LUA, which provides an imperative en
 \caption{A subfigure}
 \label{fig:sub2}
 \end{subfigure}
-\caption{A figure with two subfigures}
-\label{fig:test}
-\end{figure}
-
-
-\begin{figure}
-\centering
-\begin{subfigure}{.5\textwidth}
-\centering
-\includegraphics[width=0.98\linewidth]{figures/plot_cost_steps_5.eps}
-\caption{A subfigure}
-\label{fig:sub1}
-\end{subfigure}%
-\begin{subfigure}{.5\textwidth}
-\centering
-\includegraphics[width=0.9\linewidth]{figures/5.eps}
-\caption{A subfigure}
-\label{fig:sub2}
-\end{subfigure}
-\caption{A figure with two subfigures}
-\label{fig:test}
-\end{figure}
-
-\begin{figure}
-\centering
 \begin{subfigure}{.5\textwidth}
 	\centering
-	\includegraphics[width=0.98\linewidth]{figures/plot_cost_steps_p.eps}
+	\includegraphics[width=0.98\linewidth]{figures/plot_cost_steps_5.eps}
 	\caption{A subfigure}
 	\label{fig:sub1}
-\end{subfigure}%
-\begin{subfigure}{.5\textwidth}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
 	\centering
-	\includegraphics[width=0.9\linewidth]{figures/p.eps}
+	\includegraphics[width=0.9\linewidth]{figures/5.eps}
 	\caption{A subfigure}
 	\label{fig:sub2}
-\end{subfigure}
+	\end{subfigure}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.98\linewidth]{figures/plot_cost_steps_p.eps}
+		\caption{A subfigure}
+		\label{fig:sub1}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.9\linewidth]{figures/p.eps}
+		\caption{A subfigure}
+		\label{fig:sub2}
+	\end{subfigure}
 \caption{A figure with two subfigures}
-\label{fig:test}
+\label{fig:steps}
 \end{figure}
+
 
 \begin{table}
 	\centering
-\begin{tabular}{c|cccc|cccccc}
-     \textbf{p} &  \textbf{$|$types$|$} &  \textbf{$|$dom$|$} &  \textbf{$|$grid$|$} &  \textbf{$|$steps$|$} &  \textbf{\% bij} &  \textbf{\% trans} &  \textbf{\% clue} & \textbf{\% clue+i.} &   \textbf{\% m-i} &  \textbf{\% m-c} \\
-    \hline
-         1 &       4 &            5 &         150 &    107 &  34.58 \% &  45.79 \% &        13.08 \% &       6.54 \% &     0 \% &    0 \% \\
-    2 &       4 &            5 &         150 &    121 &  23.14 \% &   56.2 \% &         9.09 \% &      11.57 \% &     0 \% &    0 \% \\
-    3 &       4 &            5 &         150 &    115 &  29.57 \% &  54.78 \% &        12.17 \% &       3.48 \% &     0 \% &    0 \% \\
-    4 &       4 &            5 &         150 &    111 &  27.93 \% &  57.66 \% &         9.91 \% &        4.5 \% &     0 \% &    0 \% \\
-    5 &       4 &            5 &         150 &    121 &  23.97 \% &   59.5 \% &        10.74 \% &       5.79 \% &     0 \% &    0 \% \\
-    6 &       4 &            5 &         150 &    116 &  26.72 \% &  58.62 \% &        11.21 \% &       3.45 \% &     0 \% &    0 \% \\
-    7 &       4 &            5 &         150 &    109 &  29.36 \% &  55.96 \% &         9.17 \% &        5.5 \% &     0 \% &    0 \% \\
-    8 &       4 &            5 &         150 &    112 &  32.14 \% &  48.21 \% &        16.96 \% &       2.68 \% &     0 \% &    0 \% \\
-    p &       4 &            4 &          96 &     82 &  36.59 \% &  39.02 \% &        14.63 \% &       7.32 \% &  2.44 \% &    0 \%
-    \end{tabular}
-    \caption{Composition of puzzle explanations}
-    \label{table:composition}
-    \end{table}
+\begin{tabular}{c|ccccc|cccccc}
+\textbf{p} &\textbf{$|$types$|$}&\textbf{$|$dom$|$} &  \textbf{$|$grid$|$} &  \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{\% bij} &  \textbf{\% trans} &  \textbf{\% clue} & \textbf{\% clue+i.} &   \textbf{\% m-i} &  \textbf{\% m-c} \\\hline
+		1 &       				4 &            			5 &         		150 &    				107 & 27.17      		& 34.58 \% &  45.79 \% &        13.08 \% &       6.54 \% &     0 \% &    0 \% \\
+   		2 &       				4 &            			5 &         		150 &    				121 & 28.73      		& 23.14 \% &   56.2 \% &         9.09 \% &      11.57 \% &     0 \% &    0 \% \\
+   		3 &       				4 &            			5 &         		150 &    				115 & 22.90      		& 29.57 \% &  54.78 \% &        12.17 \% &       3.48 \% &     0 \% &    0 \% \\
+   		4 &       				4 &            			5 &         		150 &    				111 & 21.89      		& 27.93 \% &  57.66 \% &         9.91 \% &        4.5 \% &     0 \% &    0 \% \\
+   		5 &       				4 &            			5 &         		150 &    				121 & 24.17      		& 23.97 \% &   59.5 \% &        10.74 \% &       5.79 \% &     0 \% &    0 \% \\
+   		6 &       				4 &            			5 &         		150 &    				116 & 21.84      		& 26.72 \% &  58.62 \% &        11.21 \% &       3.45 \% &     0 \% &    0 \% \\
+   		7 &       				4 &            			5 &         		150 &    				109 & 22.56      		& 29.36 \% &  55.96 \% &         9.17 \% &        5.5 \% &     0 \% &    0 \% \\
+   		8 &       				4 &            			5 &         		150 &    				112 & 26.71      		& 32.14 \% &  48.21 \% &        16.96 \% &       2.68 \% &     0 \% &    0 \% \\
+   		p &       				4 &            			4 &         		 96 &    				 82 & 32.45      		& 36.59 \% &  39.02 \% &        14.63 \% &       7.32 \% &  2.44 \% &    0 \%
+\end{tabular}
+\caption{Composition of puzzle explanations}
+\label{table:composition}
+\end{table}
 
 \myparagraph{Sequence composition}
-We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The puzzle identified as p is our running example. $|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. $|grid|$ is the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(I_0,\allconstraints)$.
-
-
-% \begin{table}
-% 	\centering
-% \begin{tabular}{c|ccc|c|cccccc} 
-% 	\textbf{puzzle} & \textbf{$|$type$|$} & \textbf{$|$dom$|$} & \textbf{$|$grid$|$} & \textbf{steps} & \textbf{\% Bij.} & \textbf{\% Trans.} & \textbf{\% 1 Clue} & \textbf{\% m-i} & \textbf{\% m-c} \\ 
-% 				\hline 
-% 				%p5.output.json
-% 				1 & 4 & 5 & 150 & 113 & 30.97 & 49.56 & 18.58 & 0.0 & 0\\ 
-% 				%p16.output.json
-% 				2 & 4 & 5 & 150 & 122 & 21.31 & 59.02 & 18.85 & 0.0 & 0\\ 
-% 				%p12.output.json
-% 				3 & 4 & 5 & 150 & 115 & 28.7 & 53.91 & 16.52 & 0.0 & 0\\ 
-% 				%p18.output.json
-% 				4 & 4 & 5 & 150 & 116 & 27.59 & 54.31 & 17.24 & 0.0 & 0\\ 
-% 				%p19.output.json
-% 				5 & 4 & 5 & 150 & 123 & 24.39 & 58.54 & 16.26 & 0.0 & 0\\ 
-% 				%p20.output.json
-% 				6 & 4 & 5 & 150 & 116 & 26.72 & 57.76 & 14.66 & 0.0 & 0\\ 
-% 				%p25.output.json
-% 				7 & 4 & 5 & 150 & 111 & 36.94 & 45.05 & 17.12 & 0.0 & 0\\ 
-% 				%p93.output.json
-% 				8 & 4 & 5 & 150 & 119 & 33.61 & 47.06 & 18.49 & 0.0 & 0\\ 
-% 				%nielspasta.output.json
-% 				p & 4 & 4 & 96 & 82 & 34.15 & 40.24 & 21.95 & 2.44 & 0\\ 
-% \end{tabular}  
-% \caption{Composition of puzzle explanations}
-% \label{table:composition}
-% \end{table}
-Coincidentally, almost all the puzzles have 4 types with domain size 5,  
-%  \todo{EMILIO: FIX, also the table!}, 
-hence 150 cells, except for the pasta puzzle which has a domain size 4, thus 96 cells. We notice that the number of inference steps is around 120 for all but the pasta puzzle. When investigating the proportion of the inference steps that use bijections (only), transitivity (only) or a clue, we can see that around 50\% the explanations typically use a transitivity constraint, around 25\% typically a trivial bijectivity constraint (e.g. completing a row or column in one relation), and less then $1/5$th of the explanations actually need to use a clue.
-In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints and multiple clues respectively. We can see that it is never necessary to combine multiple constraints in one inference step. Also, notably, the puzzles from the booklet never require combining implicit constraints, while the anecdotally hard pasta puzzle is the only one that does: it cannot be solved by focussing on the clues but requires combining facts and knowledge in the table alone to crack it.
+We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. 
+The puzzle identified as p is our running example. 
+$|type|$ is the number of types of entities (e.g. person, sauce) while $|dom|$ is the number of entities of each type. 
+$|grid|$ is the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(I_0,\allconstraints)$.
+Coincidentally, almost all the puzzles have 4 types with domain size 5,  hence 150 cells, except for the pasta puzzle which has a domain size 4, thus 96 cells. 
+We notice that the number of inference steps is around 120 for all but the pasta puzzle. 
+When investigating the proportion of the inference steps that use bijections (only), transitivity (only) or a clue, we can see that around 50\% the explanations typically use a transitivity constraint, around 25\% typically a trivial bijectivity constraint (e.g. completing a row or column in one relation), and less then $1/5$th of the explanations actually need to use a clue.
+In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints and multiple clues respectively. 
+We can see that it is never necessary to combine multiple constraints in one inference step. 
+Also, notably, the puzzles from the booklet never require combining implicit constraints, while the anecdotally hard pasta puzzle is the only one that does: it cannot be solved by focussing on the clues but requires combining facts and knowledge in the table alone to crack it.
 
 \begin{table}
 	\centering
@@ -135,33 +101,44 @@ p &      1.84 &        0.72 &           2 &       2.20 &          4 &      66.67
 \label{table:sequence_leve}
 \end{table}
 
-\myparagraph{Sequence progression} Figure \ref{fig:steps} shows a visualisation the type of explanation used at every step of the sequence, for some different puzzles. The red line is the pasta puzzle. We can see that typically at the beginning of the sequence, clues (4th line) and bijectivity (2nd line) are used, i.e., the trivial ones. This is then followed by a round of clues and some bijectivity/transitivity, after which a large fraction of the table can be completed with bijectivity/transitivty, followed by a few last clues and another round of completion.
+\myparagraph{Sequence progression} 
+Figure \ref{fig:steps} shows a visualisation the type of explanation used at every step of the sequence, for some different puzzles. 
+The red line is the pasta puzzle. 
+We can see that typically at the beginning of the sequence, clues (4th line) and bijectivity (2nd line) are used, i.e., the trivial ones. 
+This is then followed by a round of clues and some bijectivity/transitivity, after which a large fraction of the table can be completed with bijectivity/transitivty, followed by a few last clues and another round of completion.
 
-The exception to this is the pasta puzzle. We can see that after around 20 steps where mostly clues have been used, twice a combination of implicit logigram constraints must be used to derive a new fact, after which the table can be easily completed with bijectivity/transitivity and twice the use of a clue.
+The exception to this is the pasta puzzle. 
+We can see that after around 20 steps where mostly clues have been used, twice a combination of implicit logigram constraints must be used to derive a new fact, after which the table can be easily completed with bijectivity/transitivity and twice the use of a clue.
 
 
 \myparagraph{Explanation size}
-Our cost-function is constructed to favour few (if any) clues and constraints in the explanations, and few previously derived facts $|E|$. Table~\ref{table:sequence_leve} shows the average number of facts used per explanation. We also show the average number of facts used when using only bijectivity or transitivity, or when a clue is used.
+Our cost-function is constructed to favour few (if any) clues and constraints in the explanations, and few previously derived facts $|E|$. 
+Table~\ref{table:sequence_leve} shows the average number of facts used per explanation. We also show the average number of facts used when using only bijectivity or transitivity, or when a clue is used.
 
-We can observe that the average number of facts used is indeed low, less than two. Furthermore, the breakdown shows that bijectivity typically uses more facts: it uses three `negative' facts in one row to infer a `positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one `positive' fact to infer three negative facts. Note that for such an intuitive constraint, the number of facts used does not matter much. Transitivity, by nature, always uses two previously derived facts. Finally, when looking at the number of facts used together with a clue we can see that our approach successfully finds small explanations: many clues (the trivial ones) use no facts, while some use 1 fact and only occasionally 2 or more facts are needed. The exception is again the difficult pasta puzzle.
+We can observe that the average number of facts used is indeed low, less than two. 
+Furthermore, the breakdown shows that bijectivity typically uses more facts: it uses three `negative' facts in one row to infer a `positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one `positive' fact to infer three negative facts. 
+Note that for such an intuitive constraint, the number of facts used does not matter much. 
+Transitivity, by nature, always uses two previously derived facts. 
+Finally, when looking at the number of facts used together with a clue we can see that our approach successfully finds small explanations: many clues (the trivial ones) use no facts, while some use 1 fact and only occasionally 2 or more facts are needed. 
+The exception is again the difficult pasta puzzle.
 
 \myparagraph{Nested sequence comparison}
 
 % \begin{landscape}
 	\begin{table}
 		\centering
-	\begin{tabular}{c|ccc|cc|c|ccccc}
-		  &  		  &         &  & \multicolumn{2}{c|}{\textbf{\% non-trivial clues}} & \multicolumn{1}{c|}{\textbf{average n-expl.}}& \multicolumn{5}{c}{\textbf{\% facts in n-expl.}} \\
-	\textbf{p} &  \textbf{$|$steps$|$} &  $\overline{cost}$ &\textbf{\% steps nested} & \textbf{with n-expl.} & \textbf{with i-c. with n-expl.}  			&   \textbf{length}  &  \textbf{Bij.} &   \textbf{Trans.} &  \textbf{Clue}  &  \textbf{Clue+i-c.} &  \textbf{m-i} \\\hline
-		1 &      					107 & 27.168224   &       6.54\% &       100\% &        0\% &    4.28 &       31.25 \% &          50.00 \% &                6.25 \% &              12.5 \% &          0.00 \% \\
-		2 &      					121 & 28.735537   &      11.57\% &       100\% &        0\% &    3.00 &       43.75 \% &         16.67 \% &               16.67 \% &             22.92 \% &         0.00 \% \\
-		3 &      					115 & 22.895652   &       1.74\% &       100\% &        0\% &    2.00 &        50.00 \% &             0.00 \% &                  0.00 \% &              50.00 \% &           0.00 \% \\
-		4 &      					111 & 21.891892   &        4.50\% &       100\% &        0\% &    8.15 &       36.54 \% &         44.23 \% &               13.46 \% &              5.77 \% &         0.00 \% \\
-		5 &      					121 & 24.173554   &       4.96\% &       100\% &        0\% &    2.77 &       45.45 \% &             0.00 \% &                  0.00 \% &             54.55 \% &          0.00 \% \\
-		6 &      					116 & 21.844828   &       3.45\% &       100\% &        0\% &    3.68 &       42.86 \% &         21.43 \% &               10.71 \% &              25.00 \% &         0.00 \% \\
-		7 &      					109 & 22.559633   &        5.50\% &       100\% &        0\% &    7.53 &       19.05 \% &         64.29 \% &                9.52 \% &              7.14 \% &          0.00 \% \\
-		8 &      					112 & 26.714286   &       2.68\% &      100\% &        0\% &    2.91 &       26.92 \% &         46.15 \% &                7.69 \% &             19.23 \% &           0.00 \% \\
-		p &      					 82 & 32.451220   &       8.54\% &      75\% &     	25\% &       3.85 &       25.93 \% &         33.33 \% &                   0.00 \% &             29.63 \% &       11.11 \% 
+	\begin{tabular}{c|cc|cc|c|ccccc}
+		  		&  		  				&  \textbf{\% nested}	& \multicolumn{2}{c|}{\textbf{\% non-trivial steps}}& \multicolumn{1}{c|}{}	& \multicolumn{5}{c}{\textbf{Composition of nested explanation (n.-e.)}} \\
+	\textbf{p} &  \textbf{\# steps } 	&  \textbf{steps} 		& \textbf{clues+i-c.} 	& \textbf{m-i}  			&   \textbf{$\overline{ \# \text{\textbf{n.-e. steps}}}$}  							&  \textbf{Bij.} 	&   \textbf{Trans.} 	&  \textbf{Clue}  	&  \textbf{Clue+i-c.} 	&  \textbf{m-i} 	\\\hline
+		1 &      					107 &       	 6.54\% 	&       100\% 			&     	0\% 				&    4.28 										&       31.25 \% 	&          50.00 \% 	&     6.25 \% 		&              12.5 \% 	&          0.00 \% 	\\
+		2 &      					121 &       	11.57\% 	&       100\% 			&     	0\% 				&    3.00 										&       43.75 \% 	&         16.67 \% 		&    16.67 \% 		&             22.92 \% 	&         0.00 \% 	\\
+		3 &      					115 &       	 1.74\% 	&       100\% 			&     	0\% 				&    2.00 										&       50.00 \%	&             0.00 \% 	&       0.00 \% 	&             50.00 \%  &           0.00 \% \\
+		4 &      					111 &       	  4.50\% 	&       100\% 			&     	0\% 				&    8.15 										&       36.54 \% 	&         44.23 \% 		&    13.46 \% 		&              5.77 \% 	&         0.00 \% 	\\
+		5 &      					121 &       	 4.96\% 	&       100\% 			&     	0\% 				&    2.77 										&       45.45 \% 	&             0.00 \% 	&       0.00 \% 	&             54.55 \% 	&          0.00 \% 	\\
+		6 &      					116 &       	 3.45\% 	&       100\% 			&     	0\% 				&    3.68 										&       42.86 \% 	&         21.43 \% 		&    10.71 \% 		&             25.00 \%  &         0.00 \% 	\\
+		7 &      					109 &       	  5.50\% 	&       100\% 			&     	0\% 				&    7.53 										&       19.05 \% 	&         64.29 \% 		&     9.52 \% 		&              7.14 \% 	&          0.00 \% 	\\
+		8 &      					112 &       	 2.68\% 	&      	100\% 			&     	0\% 				&    2.91 										&       26.92 \% 	&         46.15 \% 		&     7.69 \% 		&             19.23 \% 	&           0.00 \% \\
+		p &      					 82 &       	 8.54\% 	&      	75\% 			&     	25\%				&    3.85 										&       25.93 \% 	&         33.33 \% 		&        0.00 \% 	&             29.63 \% 	&       11.11 \% 
 		\end{tabular}
 		\caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
 		\label{table:sequence_leve}

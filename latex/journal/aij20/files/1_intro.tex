@@ -35,26 +35,24 @@ By \textit{complete} we mean that it finds a \textit{sequence} of small reasonin
 Gilpin et al.~\cite{DBLP:conf/dsaa/GilpinBYBSK18} define \textit{interpretable} explanations as ``descriptions that are simple enough for a person to understand, using a vocabulary that is meaningful to the user''. 
 Our guiding principle is that of simplicity, where smaller and simpler explanations are better. 
 
-
-\todo{TIAS LOOKS AT IT and places some of this text in 5?1. } 
-
-On top of this idea of explaining propagations by means of as simple as possible steps, we add a mechanism for controlling the level of abstraction of the explanation sequence. 
-There are two ways to achieve this. 
+An open issue when presenting a sequence of explanations is that of the level of abstraction used.
+%On top of this idea of explaining propagations by means of as simple as possible steps, we add a mechanism for controlling the level of abstraction of the explanation sequence. 
+Starting from a sequence of as-simple-as-possible explanations as we do, there are two ways to change the level of abstraction.
 The first direction is that one could \emph{group} multiple single steps into one larger step that can then be expanded on the fly. 
-The second direction is to provide a \emph{more detailed} explanation of some of the more harder steps. 
+The second direction is to provide a \emph{more detailed} explanation of harder steps which can not be broken into simpler steps with the standard mechanism.
 While the first direction can be useful when explanations get very long, from a theoretical perspective it is less interesting. 
-The second direction on the other hand is interesting for several reasons. First of all, when implementing this, we noticed that some of the generated steps are still too complicated to be understood easily and thus really require being explained in more detailed. Secondly, breaking them up in smaller steps is an interesting challenge. Indeed, since we start from the idea that steps should be as simple as possible, it should not be possible to break them up further. 
-To achieve this, we took inspiration from methods humans use when solving puzzles, and mathematicians use when proving theorems. 
-That is, for explaining a single step in more detail we work by reasoning by contradiction: after assuming the negation of the derived fact, we present a sequence of small explanation steps that leads, starting from this negated assumption, to an inconsistency. 
-As such, in the end this provides a mechanism that allows \emph{zooming in} onto the difficult explanation step.
+The second direction on the other hand is interesting for several reasons. First of all, we noticed that some of the generated steps are still too complicated to be understood easily and thus really require being explained in more detailed. Secondly, breaking them up in smaller steps is an interesting challenge. Indeed, since we start from the idea that steps should be as simple as possible, it should not be possible to break them up further. 
+To still break them up further, we took inspiration from methods people use when solving puzzles, and mathematicians use when proving theorems. 
+That is, for explaining a single step in more detail we work by reasoning by contradiction: starting from the negation of a consequence of the difficult step, we can explain how this leads to a contradiction and hence requires the consequence. In short, we assume the negation of the derived fact, and can reuse the principle of explanation steps up to the inconsistency and hence contradiction. 
+This novel approach allows us to provide a mechanism for \emph{zooming in} into the most difficult explanation step.
 
-In practice, we choose to represent the constraints in natural language, which is an obvious choice for logic grid puzzles as they are given in the form of natural language \textit{clues}. 
+In practice, we choose to present the constraints in natural language, which is an obvious choice for logic grid puzzles as they are given in the form of natural language \textit{clues}. 
 We represent the previously and newly derived facts visually, as can be seen in the grid in Figure~\ref{fig:zebrascreen}. In this figure, the implicit ``Bijectivity'' axiom present in each logic grid puzzle is used to derive that since Arrabiata sauce was eaten with Farfalle, it was not eaten with any of the other pasta types.
 
 % \bart{Make better quality screenshot! Also check the others. }
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.9\linewidth]{figures/introduction.jpeg}
+\includegraphics[width=0.7\linewidth]{figures/introduction.jpeg}
 \caption{Demonstration of explanation visualisation.}
 \label{fig:zebrascreen}
 \end{figure}
@@ -83,7 +81,7 @@ Our main contributions are the following:
 	\item We formalize the problem of step-wise explaining the propagation of a constraint solver through a sequence of small inference steps;
 	\item We propose an algorithm that is agnostic to the propagators and the consistency level used, and that can provide explanations for inference steps involving arbitrary combinations of constraints;
 	\item Given a cost function quantifying human interpretability, our method uses an optimistic estimate of this function to guide the search to low-cost explanations, thereby making use of Minimal Unsatisfiable Subset extraction;
-	\item We introduce nested-explanations to refine explanations of complex inference steps using counterfactual reasoning;
+	\item We introduce nested-explanations to refine explanations of complex inference steps using reasoning by contradiction;
 	\item We experimentally demonstrate the quality and feasibility of the approach in the domain of logic grid puzzles.
 \end{itemize}
 

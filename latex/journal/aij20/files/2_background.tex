@@ -1,8 +1,8 @@
 While our proposed method is applicable to constraint satisfaction problems in general, we use \textit{logic grid puzzles} as example domain, as it requires no expert knowledge to understand.
 Our running example is a puzzle about people having dinner in a restaurant and ordering different types of pasta, which is the hardest logic grid puzzle we encountered; it was sent to us by someone who got stuck solving it and wondered whether it was correct in the first place.    
-The entire puzzle can be seen in Figure \ref{fig:zebrascreen}; the full final explanation generated for it can be found at \url{http://bartbog.github.io/zebra/pasta}.
+The entire puzzle can be seen in Figure \ref{fig:zebrascreen}; the full explanation sequence generated for it can be found online at \url{http://bartbog.github.io/zebra/pasta}.
 
-In this section, we first present logic grid puzzles as a use case, and afterwards introduce \emph{typed first-order logic}, which we use as the language to express our constraint programs in. Here, it is important to stress that our definitions and algorithms work for any language with model-theoretic semantics, including constraint satisfaction problems~\cite{rossi2006handbook}.
+In this section, we first present logic grid puzzles as a use case, and afterwards introduce \emph{typed first-order logic}, which we use as the language to express our constraint programs in. Here, it is important to stress that our definitions and algorithms work for any language with model-theoretic semantics, including typical constraint programming languages~\cite{rossi2006handbook}.
 % introduce the necessary background used in section \ref{sec:problem-definition} formalizing the problem definition.
 
 
@@ -20,7 +20,7 @@ The goal of the puzzle is to find relations between each two types such that
 	\item \textit{The relations are logically linked}, e.g., if Angie chose arrabiata sauce and arrabiata sauce was paired with farfalle, then Angie must also have eaten farfalle (from now on called \emph{transitivity}). 
 \end{itemize}
 
-In Section \ref{sec:holistic}, we explain how we obtain a vocabulary and first-order theory in a mostly automated way from the clues. 
+In Section \ref{sec:holistic}, we explain how we obtain a vocabulary and first-order theory in a mostly automated way from the clues using natural language processing. 
 The result is a vocabulary with types corresponding to the groups of entities in the clues, and the names and types of the binary relations to find (e.g \textit{chose(person, sauce)}, \textit{paired(sauce, pasta)}, \textit{eaten(person, pasta)});
 as well as constraints (first-order sentences) corresponding to the clues, and the bijectivity and transitivity constraints. 
 % Formally and for future references, let us define $T_P$ as the theory containing all of these constraints for a given puzzle $P$. 
@@ -63,9 +63,9 @@ In the context of first-order logic, the task of finite-domain constraint solvin
 
 If $P$ is a logic grid puzzle, we will use $T_P$ to denote a first-order theory consisting of:
 \begin{itemize}
- \item One logical sentence for each clue;
- \item A logical representation of each bijection constraint;
- \item A logical representation of each transitivity constraint.
+ \item One logical sentence for each clue in $P$;
+ \item A logical representation of all possible bijection constraints;
+ \item A logical representation of all possible transitivity constraints.
 \end{itemize}
 
 For instance, for our running example, some sentences in $T_P$ are: 

@@ -50,7 +50,8 @@ In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints 
 We can see that it is never necessary to combine multiple clues in one inference step.
 Also, notably, the puzzles from the booklet never require combining implicit constraints, while the anecdotally hard pasta puzzle is the only one that does: it cannot be solved by focussing on the clues but requires combining facts and knowledge in the table alone to crack it.
 
-\ourfigure
+\emilio{wat is ourfigure ? }
+% \ourfigure
 \begin{table}[t]
 	\centering
 	\begin{tabular}{l|ccccc|ccccc}
@@ -68,7 +69,7 @@ Also, notably, the puzzles from the booklet never require combining implicit con
 		p & 1.84                                & 0.72                                                & 2      & 2.20 & 4   & 66.67 \% & 16.67 \% & 0.0 \%   & 11.11 \% & 5.56 \%    \\
 	\end{tabular}
 	\caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
-% 	\label{table:sequence_leve} I REMOVED SINCE DOUBLE LABEL. TO CHECK WHICH ONE IS RIGHT
+ 	\label{table:sequence_leve} %I REMOVED SINCE DOUBLE LABEL. TO CHECK WHICH ONE IS RIGHT
 \end{table}
 
 \myparagraph{Sequence progression}
@@ -94,9 +95,20 @@ The exception is again the difficult pasta puzzle.
 
 \myparagraph{Nested sequence comparison}
 Figure \ref{fig:steps} shows for each step the decomposition of the type of inference used on the left and the explanation cost with the steps highlighted for which there exists 1 or more nested explanation sequences for puzzles 1,2, 5 and the pasta puzzle.
-Table~\ref{table:nested_explanation} reports in further detail the information concerning the nested explanation sequences. The first block in the table after the puzzle identifier depicts the number of steps in the explanation sequence and percentage of steps for which there exist nested explanation sequences, $\% nested steps$. 
-In fact, we see that the puzzle 
-The second block 
+The puzzles are chosen due to their higher content of nested explanation steps. 
+We see that for most of the clues involving implicit there exists a nested explanation. 
+This suggests that as we guide our explanation sequence according to the \textit{max} aggregator, there is a possibility of generating a sequences of explanations that is easier according to another aggregator (e.g \textit{average}). 
+Table~\ref{table:nested_explanation} reports in further detail the information concerning the nested explanation sequences. The first block in the table after the puzzle identifier depicts the number of steps in the explanation sequence and percentage of steps for which there exist nested explanation sequences, $\%$ \textit{nested steps}. 
+In fact, when combining the average cost of an explanation step in table \ref{table:composition} with the percentage of nested explanation steps, there appears to be a clear correlation between the difficulty of the puzzle and the amount of nested epxlanations generated. This is especially true for puzzles 2 and pasta.
+
+In the second block, the explanation for the steps with nested explanations is mostly a combination of clues with 1 or more implicit constraints except for the pasta puzzle, the only puzzle requiring combinations of implicit constraints.
+In the third part of the table, $\#$ \textit{n.-e. steps} represents the average length of an explanation sequence. Surprisingly, puzzles 4 and 7 have a very high number of (not always useful) explanations in the nested explanation sequences. We refer back to observation 4 in section \ref{sec:zebra} for complementary explanations. 
+
+The last section of the table focuses on the composition of the nested explanations. 
+There is still a high number of explanations that require the use clues combined with implicit constraints. 
+An alternative to visualize this amount is through figure \ref{fig:experiments:violin}, which examines the ratio of nested explanation step cost and its original explanation step cost. 
+In other words, there are still explanations in the nested sequence that have a cost close to the original explanation step for which a further decomposition in nested sequences or another easier sequence could be generated. 
+
 
 
 \begin{figure}
@@ -178,7 +190,7 @@ The second block
 
 \begin{figure}[]
 	\centering
-	\includegraphics[width=0.5\textwidth]{figures/violin_plot.pdf}
+	\includegraphics[width=.7\textwidth]{figures/violin_plot.pdf}
 	\caption{Distribution of the ratio of the cost of a nested explanation sequence step and the cost of original explanation step for all puzzles}
 	\label{fig:experiments:violin}
 \end{figure}

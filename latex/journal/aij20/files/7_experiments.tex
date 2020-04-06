@@ -1,9 +1,10 @@
 Using logic grid puzzles as a use-case, we validate the feasibility of finding non-redundant explanation sequences and generating nested explanation sequences.
 As data, we use puzzles from Puzzle Baron’s Logic Puzzles Volume 3~\cite{logigrammen}.
 The first 10 puzzles were used to construct the grammar; the next 10 to test the genericity of the grammar.
+\bart{In onze experiementen hebben we acht (+1) puzzels. Is daar een reden voor??? Ik zou tien verwachten (ofwel de eerste ofwel de laatste tien...}
 Our experiments below are on test puzzles only; we also report results on the \textit{pasta} puzzle, which was sent to us by someone who did not manage to solve it himself.
 
-As constraint solving engine, we use \idp~\cite{IDP} due to the multiple inference methods available with it.
+As constraint solving engine, we use \idp~\cite{IDP} due to the variety of inference methods it supports natively.
 The algorithms themselves are written in embedded LUA, which provides an imperative environment inside the otherwise declarative \idp system.
 The code was not optimized for efficiency and can at this point not be used in an interactive setting, as it takes between 15 minutes to a few hours to fully explain a logic grid puzzle.
 Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0 and \idp 3.7.1.
@@ -14,7 +15,7 @@ Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb m
 Experimenten opnieuw gerund met juiste size functie??? 
 
 Ik heb in de size het ``foute'' stuk in commentaar (``Special case'') gezet: 
-} \tias{ook, avg cost is niet >100}
+} \tias{ook, avg cost is niet >100} \bart{Good catch: alle costs nakijken dat ze correct zijn. Maar die average, klopt ide niet? 80 procent van de stappen zijn wel bijectivity of trans met kost van plusminus 5-10}
 
 \begin{table}[t]
 	\centering
@@ -44,7 +45,7 @@ Columns 5 and 6 show the amount of steps ($\# steps$) in the explanation sequenc
 
 The rest of the columns investigate the proportion of inference steps in the explanation sequence, e.g. the trivia steps using just one bijection constraint (1 bij.), one transitivity constraint (1 trans.) or one clue (1 clue) and no other constraints; and the more complex inference steps using one clue and some implicit (bijectivity or transitivity) constraint (1 clue+i), multiple implicit constraints (mult i.) or multiple clues and other constraints (mult c.). We can observe that around 25-30\% of steps are simple bijectivity steps (e.g. completing a row or column in one relation), around 50\% are transitivity steps and 10-15\% use just a single clue. The remaining 5-10\% use a more complex combination of a clue with other constraints. We can also see that while our method can combine multiple clues, the explanations generated never require combining multiple clues in one inference step, that is, the method always find simpler steps involving just one clue. Also notably, the puzzles from the booklet never require combining implicit constraints, while the harder pasta puzzle does. In general, less then $1/5$th of the explanations actually need to use a clue or a combination of a clue and implicit constraints.
 \emilio{add resutls here: waiting for the new results}
-\todo{ADD THE DIFFERENT TYPES OF CLUE AND EXPLAIN. Also: should be reran?}
+\todo{ADD THE DIFFERENT TYPES OF CLUE AND EXPLAIN. Also: should be reran? --> add clue vs clue+1 implicit vs clue +2implicit}
 
 %In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints and multiple clues respectively.
 %We can see that it is never necessary to combine multiple clues in one inference step.
@@ -84,12 +85,12 @@ Table~\ref{table:sequence_leve}, first 6 columns, shows the average number of fa
 We can observe that the average number of facts used is indeed low, less than two (column 'all').
 The breakdown per type of constraint shows that bijectivity typically uses more facts: it either uses three `negative' facts in one row to infer a `positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one `positive' fact to infer three negative facts.
 Note that for such an intuitive constraint, the number of facts used does not matter much. Transitivity, by nature, always uses two previously derived facts.
-When an explanation involves a clue, few facts are involved on average.
+When an explanation involves a clue, few facts are involved on average. 
 
-The rest of the columns take a closer look at the number of facts used when the explanation involves a clue. We can see that our approach successfully finds small explanations: many clues (the trivial ones) use no facts, while some use 1 fact and only occasionally 2 or more facts are needed. Only the harder pasta puzzle has more than 16\% of its clue explanations involving 3 or more facts.
+The rest of the columns take a closer look at the number of facts used when the explanation involves a clue. We can see that our approach successfully finds small explanations: many clues (the trivial ones) use no facts, while some use 1 fact and only occasionally 2 or more facts are needed. Only the harder pasta puzzle has more than 16\% of its clue explanations involving 3 or more facts.\bart{iets meer over zeggen? Meer dan de helft van de tijd nul. nul betekent: kan onafhankelijk van andere derivations afgeleid worden. }
 
 \myparagraph{Nested explanations}
-We first look at the explanation cost of the different steps in an explanation sequence, and which ones we can find a nested explanation for. Figure \ref{fig:steps}, right side, shows for a few puzzles the explanation cost of each explanation step. We can see that the highest cost steps involve more than one constraint: either a clue and some implicit constraints, or a combination of implicit constraints (only in the pasta puzzle). The harder pasta puzzle also has a higher average cost, as was already reported in Table~\ref{table:composition}. For each of the non-trivial explanations, we are able to find a nested explanation that can provide a more detailed explanation using contradiction (indicated by a ball in the figure).
+We first investigate the explanation cost of the different steps in an explanation sequence, and which ones we can find a nested explanation for. Figure \ref{fig:steps}, right side, shows for a few puzzles the explanation cost of each explanation step; for each step it is also indicated whether or not a nested explanation can be found (those where one was found are indicated by a ball in the figure). We can see that the highest cost steps involve more than one constraint: either a clue and some implicit constraints, or a combination of implicit constraints (only in the pasta puzzle). The harder pasta puzzle also has a higher average cost, as was already reported in Table~\ref{table:composition}. Interestingly, for each of the non-trivial explanations, we are able to find a nested explanation that can provide a more detailed explanation using contradiction. \bart{Kunnen we iets zeggen over of dat voor ALLE puzzels zo was, niet enkel 1 2 en 5 en pasta? Bijvoorbeeld ergens een kolom ``duurste explanation waar geen nested explanation voor was''. Of zoiets?}
 
 %for each step the decomposition of the type of inference used on the left and the explanation cost with the steps highlighted for which there exists 1 or more nested explanation sequences for puzzles 1,2, 5 and the pasta puzzle.
 %The puzzles are chosen due to their higher content of nested explanation steps. 
@@ -98,7 +99,7 @@ We first look at the explanation cost of the different steps in an explanation s
 %% Tias finds the above to raise more questions than providing answers
 
 % \begin{landscape}
-\begin{table}
+\begin{table}[t]
 	\centering
 	\begin{tabular}{c|c|ccc|c|ccccc}
 		           &                    &  \multicolumn{3}{c|}{\textbf{\% steps with nested}} & \multicolumn{1}{c|}{\textbf{average}} & \multicolumn{5}{c}{\textbf{Composition of nested explanation }}                                                                                       \\
@@ -121,7 +122,7 @@ We first look at the explanation cost of the different steps in an explanation s
 % \end{landscape}
 
 We now have a closer look at the composition of these nested explanations in Table~\ref{table:nested_explanation}.
-When looking at the percentage of reasoning steps that have a nested explanation, we see that only a fraction of all steps have a nested explanation. As the figures already indicated, when looking at the non-trivial steps, we see that for all of those our method is able to generate a nested sequence that explains the reasoning step using contradiction.
+When looking at the percentage of reasoning steps that have a nested explanation, we see that only a fraction of all steps have a nested explanation. As the figures already indicated, when looking at the non-trivial steps, we see that for all of those our method is able to generate a nested sequence that explains the reasoning step using contradiction. \bart{ en toch heb je bij pasta 75procent vs 25 procent. Dat zou betekenen dat er maar drie clue+i constraints zijn waarvoor nested wordt gemaakt? Ik snap die table niet goed..}
 
 %The first block in the table after the puzzle identifier depicts the number of steps in the explanation sequence and percentage of steps for which there exist nested explanation sequences, $\%$ \textit{nested steps}. 
 %In fact, when combining the average cost of an explanation step in table \ref{table:composition} with the percentage of nested explanation steps, there appears to be a clear correlation between the difficulty of the puzzle and the amount of nested epxlanations generated. This is especially true for puzzles 2 and pasta.
@@ -131,25 +132,27 @@ When looking at the percentage of reasoning steps that have a nested explanation
 
 When looking at the number of steps in a nested sequence, we see that the nested explanations are rather small: from 2 to 8 steps. Especially puzzles 4 and 7 have higher number of steps in their nested explanations.
 %In the third part of the table, $\#$ \textit{n.-e. steps} represents the average length of an explanation sequence. Surprisingly, puzzles 4 and 7 have a very high number of (not always useful) explanations in the nested explanation sequences. We refer back to observation 4 in section \ref{sec:zebra} for complementary explanations. 
-The subsequent columns in the table show the composition of the nested explanations, in terms of the types of constraints used. We can see that the majority of those are simple steps involving just a single constraint (1 bij/trans/clue). Interestingly, even in nested explanations which typically explain a '1 clue+i.' step, the nested explanation also has a step involving a clue and at least one other implicit constraint. Detailed inspection showed this was typically the final step, which is a contradiction in the clue as in Figure~\ref{fig:pasta_diff}.
+The subsequent columns in the table show the composition of the nested explanations, in terms of the types of constraints used. We can see that the majority of those are simple steps involving just a single constraint (a single bijectivity, transitivity or clue). Interestingly, even in nested explanations which typically explain a '1 clue+i.' step, the nested explanation also has a step involving a clue and at least one other implicit constraint. Detailed inspection showed this was typically the final step, which is a contradiction in the clue as in Figure~\ref{fig:pasta_diff}. 
 
 %The last section of the table focuses on the composition of the nested explanations. 
 %There is still a high number of explanations that require the use clues combined with implicit constraints. 
 
-We can further look at the \textit{cost} of the different steps in a nested explanation, which we use as a proxy for difficulty of the steps. Figure \ref{fig:experiments:violin} displays a violin plot of the ratio of the cost of a nested step divided by the cost of the original parent step that it is contributing to explain. Note that by definition~\ref{}, a step in a nested explanation can never be as costly or more costly than its parent step.
+We can further look at the \textit{cost} of the different steps in a nested explanation, which we use as a proxy for difficulty of the steps. Figure \ref{fig:experiments:violin} displays a violin plot of the ratio of the cost of a nested step divided by the cost of the original parent step that it is contributing to explain. Note that by Definition~\ref{}, a step in a nested explanation can never be as costly or more costly than its parent step.
 %tnested step costs to its  its original explanation step cost. 
 %In other words, there are still explanations in the nested sequence that have a cost close to the original explanation step for which a further decomposition in nested sequences or another easier sequence could be generated. 
-The figure shows us that there are many steps with a cost of only a fraction of the parent step (near 0-10\% of the original cost), but also some steps closer but still a bit simpler than the parent step. Due to the construction of the cost function in Section~\ref{}, this means it typically involves less previously derived facts, which should make it easier to understand. The odd-one out is puzzle \textbf{the middle one}, which \tias{Needs explanation, Emilio?}.
+The figure shows us that there are many steps with a cost of only a fraction of the parent step (near 0-10\% of the original cost), but also some steps closer but still a bit simpler than the parent step. Due to the construction of the cost function in Section~\ref{}, this means it typically involves fewer previously derived facts, which should make it easier to understand. The odd-one out is puzzle \textbf{the middle one}, which \tias{Needs explanation, Emilio?} \bart{Looks very strange to me. }.
 
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=.7\textwidth]{figures/violin_plot.eps}
 	\caption{Distribution of the ratio of the cost of a nested explanation sequence step and the cost of original explanation step for all puzzles}
+	\todo{Y AXIS VALUES? WHERE IS ONE?}
+	\todo{This figure is suddenly twice in here.}
 	\label{fig:experiments:violin}
 \end{figure}
 
 
-\begin{figure}
+\begin{figure}[t!]
 	\centering
 	\begin{subfigure}{.5\textwidth}
 		\centering
@@ -203,7 +206,7 @@ The figure shows us that there are many steps with a cost of only a fraction of 
 	\label{fig:steps}
 \end{figure}
 % \begin{landscape}
-\begin{table}
+\begin{table}[t]
 	\centering
 	\begin{tabular}{c|cc|cc|c|ccccc}
 		           &                    & \textbf{\% nested} & \multicolumn{2}{c|}{\textbf{\% non-trivial steps}} & \multicolumn{1}{c|}{} & \multicolumn{5}{c}{\textbf{Composition of nested explanation (n.-e.)}}                                                                                       \\
@@ -226,7 +229,7 @@ The figure shows us that there are many steps with a cost of only a fraction of 
 % \end{landscape}
 
 
-\begin{figure}[]
+\begin{figure}[t]
 	\centering
 	\includegraphics[width=.7\textwidth]{figures/violin_plot.eps}
 	\caption{Distribution of the ratio of the cost of a nested explanation sequence step and the cost of original explanation step for all puzzles\todo{Y AXIS VALUES? WHERE IS ONE?}}

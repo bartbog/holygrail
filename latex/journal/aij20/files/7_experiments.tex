@@ -1,7 +1,7 @@
 Using logic grid puzzles as a use-case, we validate the feasibility of finding non-redundant explanation sequences and generating nested explanation sequences.
 As data, we use puzzles from Puzzle Baron’s Logic Puzzles Volume 3~\cite{logigrammen}.
 The first 10 puzzles were used to construct the grammar; the next 10 to test the genericity of the grammar.
-\bart{In onze experiementen hebben we acht (+1) puzzels. Is daar een reden voor??? Ik zou tien verwachten (ofwel de eerste ofwel de laatste tien...}
+%\bart{In onze experiementen hebben we acht (+1) puzzels. Is daar een reden voor??? Ik zou tien verwachten (ofwel de eerste ofwel de laatste tien...}
 Our experiments below are on test puzzles only; we also report results on the \textit{pasta} puzzle, which was sent to us by someone who did not manage to solve it himself.
 
 As constraint solving engine, we use \idp~\cite{IDP} due to the variety of inference methods it supports natively.
@@ -11,33 +11,41 @@ Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb m
 
 
 
-\bart{Volgens mij kloppen de kolommen \textbf{\% clue} \& \textbf{\% clue+i.} niet. 
-Experimenten opnieuw gerund met juiste size functie??? 
+%\bart{
+	%Volgens mij kloppen de kolommen \textbf{\% clue} \& \textbf{\% clue+i.} niet. 
+	%Experimenten opnieuw gerund met juiste size functie??? 
+%Ik heb in de size het ``foute'' stuk in commentaar (``Special case'') gezet: 
+%} 
+%\tias{ook, avg cost is niet >100} 
+%\bart{Good catch: alle costs nakijken dat ze correct zijn. Maar die average, klopt ide niet? 80 procent van de stappen zijn wel bijectivity of trans met kost van plusminus 5-10}
 
-Ik heb in de size het ``foute'' stuk in commentaar (``Special case'') gezet: 
-} \tias{ook, avg cost is niet >100} \bart{Good catch: alle costs nakijken dat ze correct zijn. Maar die average, klopt ide niet? 80 procent van de stappen zijn wel bijectivity of trans met kost van plusminus 5-10}
 
 \begin{table}[t]
 	\centering
+	\resizebox{\textwidth}{!}{%
 	\begin{tabular}{c|ccc|cc|cccccc}
-		\textbf{p} & \textbf{$|$types$|$} & \textbf{$|$dom$|$} & \textbf{$|$grid$|$} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+i.} & \textbf{mult i.} & \textbf{mult c.} \\\hline
-		1 &       4 &            5 &         150 &    112 &      27.06 &  31.25\% &  50.00\% &         0.89\% &      17.86\% &  0.00\% &  0.00\% \\
-		2 &       4 &            5 &         150 &    119 &      27.77 &  23.53\% &  57.14\% &         1.68\% &      17.65\% &  0.00\% &  0.00\% \\
-		3 &       4 &            5 &         150 &    110 &      23.93 &  32.73\% &  51.82\% &         0.00\% &      15.45\% &  0.00\% &  0.00\% \\
-		4 &       4 &            5 &         150 &    115 &      24.54 &  27.83\% &  55.65\% &         2.61\% &      13.91\% &  0.00\% &  0.00\% \\
-		5 &       4 &            5 &         150 &    122 &      24.97 &  24.59\% &  59.02\% &         0.82\% &      15.57\% &  0.00\% &  0.00\% \\
-		6 &       4 &            5 &         150 &    115 &      22.58 &  26.96\% &  58.26\% &         2.61\% &      12.17\% &  0.00\% &  0.00\% \\
-		7 &       4 &            5 &         150 &    110 &      26.79 &  35.45\% &  46.36\% &         0.91\% &      17.27\% &  0.00\% &  0.00\% \\
-		8 &       4 &            5 &         150 &    118 &      26.81 &  33.90\% &  47.46\% &         3.39\% &      15.25\% &  0.00\% &  0.00\% \\
-		9 &       4 &            5 &         150 &    114 &      24.75 &  28.95\% &  54.39\% &         3.51\% &      13.16\% &  0.00\% &  0.00\% \\
-		p &       4 &            4 &          96 &     83 &      34.45 &  33.73\% &  40.96\% &         1.20\% &      21.69\% &  2.41\% &  0.00\%
+		\textbf{p} & \textbf{$|$types$|$} & \textbf{$|$dom$|$} & \textbf{$|$grid$|$} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+1i.} & \textbf{1 clue+ $>$1i.} & \textbf{mult i.} \\\hline %& \textbf{mult c.} \\\hline
+		1 &       4 &            5 &         150 &    112 &      27.06 &  31.25\% &  50.00\% &    0.89\% &      7.14\% &  10.71\%  &  0.00\% \\ %  &  0.00\%  \\
+		2 &       4 &            5 &         150 &    119 &      27.77 &  23.53\% &  57.14\% &    1.68\% &      7.56\% &  10.08\%  &  0.00\% \\ %  &  0.00\%  \\
+		3 &       4 &            5 &         150 &    110 &      23.93 &  32.73\% &  51.82\% &    0.00\% &      2.73\% &  12.73\%  &  0.00\% \\ %  &  0.00\%  \\
+		4 &       4 &            5 &         150 &    115 &      24.54 &  27.83\% &  55.65\% &    2.61\% &      7.83\% &   6.09\%  &  0.00\% \\ %  &  0.00\%  \\
+		5 &       4 &            5 &         150 &    122 &      24.97 &  24.59\% &  59.02\% &    0.82\% &      4.10\% &  11.48\%  &  0.00\% \\ %  &  0.00\%  \\
+		6 &       4 &            5 &         150 &    115 &      22.58 &  26.96\% &  58.26\% &    2.61\% &      6.09\% &   6.09\%  &  0.00\% \\ %  &  0.00\%  \\
+		7 &       4 &            5 &         150 &    110 &      26.79 &  35.45\% &  46.36\% &    0.91\% &      8.18\% &   9.09\%  &  0.00\% \\ %  &  0.00\%  \\
+		8 &       4 &            5 &         150 &    118 &      26.81 &  33.90\% &  47.46\% &    3.39\% &      5.08\% &  10.17\%  &  0.00\% \\ %  &  0.00\%  \\
+		9 &       4 &            5 &         150 &    114 &      24.75 &  28.95\% &  54.39\% &    3.51\% &      3.51\% &   9.65\%  &  0.00\% \\ %  &  0.00\%  \\
+		p &       4 &            4 &          96 &     83 &      34.45 &  33.73\% &  40.96\% &    1.20\% &      4.82\% &  16.87\%  &  2.41\% %  &  0.00\%
 	\end{tabular}
+	}
 	\caption{Properties of the puzzles, explanation sequences and constraints used in the explanations.}
 	\label{table:composition}
 \end{table}
 
+
 \myparagraph{Sequence composition}
 We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The first column is the puzzle identifier, where the puzzle identified as p is the pasta puzzle, our running example. 
+% The next column shows the configuration of the puzzle as a tuple of 3 numbers: the number of types (e.g. person, sauce); the number of entities of each type; and the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(\emptyset, \allconstraints)$.
+\emilio{hard to fit everything inside ...}
 The next 3 columns show properties of the puzzle:
 $|type|$ is the number of types (e.g. person, sauce) while $|dom|$ is the number of entities of each type and $|grid|$ is the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(\emptyset, \allconstraints)$.
 Coincidentally, almost all the puzzles have 4 types with domain size 5,  hence 150 cells, except for the pasta puzzle which has a domain size of 4, thus 96 cells.
@@ -45,8 +53,8 @@ Coincidentally, almost all the puzzles have 4 types with domain size 5,  hence 1
 Columns 5 and 6 show the amount of steps ($\# steps$) in the explanation sequences found, and $\overline{cost}$ is the average cost of an explanation step in the puzzle. The number of inference steps is around 110-120 for all but the pasta puzzle, which is related to the grid size.
 
 The rest of the columns investigate the proportion of inference steps in the explanation sequence, e.g. the trivia steps using just one bijection constraint (1 bij.), one transitivity constraint (1 trans.) or one clue (1 clue) and no other constraints; and the more complex inference steps using one clue and some implicit (bijectivity or transitivity) constraint (1 clue+i), multiple implicit constraints (mult i.) or multiple clues and other constraints (mult c.). We can observe that around 25-30\% of steps are simple bijectivity steps (e.g. completing a row or column in one relation), around 50\% are transitivity steps and 10-15\% use just a single clue. The remaining 5-10\% use a more complex combination of a clue with other constraints. We can also see that while our method can combine multiple clues, the explanations generated never require combining multiple clues in one inference step, that is, the method always find simpler steps involving just one clue. Also notably, the puzzles from the booklet never require combining implicit constraints, while the harder pasta puzzle does. In general, less then $1/5$th of the explanations actually need to use a clue or a combination of a clue and implicit constraints.
-\emilio{add resutls here: waiting for the new results}
-\todo{ADD THE DIFFERENT TYPES OF CLUE AND EXPLAIN. Also: should be reran? --> add clue vs clue+1 implicit vs clue +2implicit}
+%\emilio{add resutls here: waiting for the new results}
+%\todo{ADD THE DIFFERENT TYPES OF CLUE AND EXPLAIN. Also: should be reran? --> add clue vs clue+1 implicit vs clue +2implicit}
 
 %In the table, \#m-i and \#m-c refer to the use of multiple implicit constraints and multiple clues respectively.
 %We can see that it is never necessary to combine multiple clues in one inference step.
@@ -105,16 +113,16 @@ We first investigate the explanation cost of the different steps in an explanati
 	\begin{tabular}{c|c|ccc|c|ccccc}
 		           &                    &  \multicolumn{3}{c|}{\textbf{\% steps with nested}} & \multicolumn{1}{c|}{\textbf{average}} & \multicolumn{5}{c}{\textbf{Composition of nested explanation }}                                                                                       \\
 		\textbf{p} & \textbf{\# steps } & \textbf{all}     & \textbf{clue+i.}                                & \textbf{m-i}          & \textbf{nested steps}                  & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+i.} & \textbf{mult i.} \\\hline
-		1 &      112 &  14.29\% &  100.00\% &  0.00\% &         3.00 &  36.99\% &   32.88\% &  12.33\% &    17.81\% &    0.00\% \\
-		2 &      119 &  14.29\% &  100.00\% &  0.00\% &         3.00 &  48.28\% &   10.34\% &  20.69\% &    20.69\% &    0.00\% \\
+		1 &      112 &  14.29\% &  100.00\% &  0.00\% &         2.94 &  36.99\% &   32.88\% &  12.33\% &    17.81\% &    0.00\% \\
+		2 &      119 &  14.29\% &  100.00\% &  0.00\% &         2.65 &  48.28\% &   10.34\% &  20.69\% &    20.69\% &    0.00\% \\
 		3 &      110 &   7.27\% &  100.00\% &  0.00\% &         2.00 &  50.00\% &    0.00\% &   0.00\% &    50.00\% &    0.00\% \\
-		4 &      115 &  13.04\% &  100.00\% &  0.00\% &         4.00 &  40.26\% &   29.87\% &  20.78\% &     9.09\% &    0.00\% \\
-		5 &      122 &  13.11\% &  100.00\% &  0.00\% &         2.00 &  47.83\% &    0.00\% &   8.70\% &    43.48\% &    0.00\% \\
-		6 &      115 &  10.43\% &  100.00\% &  0.00\% &         3.00 &  50.00\% &    8.00\% &  20.00\% &    22.00\% &    0.00\% \\
-		7 &      110 &  15.45\% &  100.00\% &  0.00\% &         3.00 &  37.50\% &   32.69\% &  18.27\% &    11.54\% &    0.00\% \\
-		8 &      118 &   9.32\% &  100.00\% &  0.00\% &         2.00 &  43.75\% &    9.38\% &  25.00\% &    21.88\% &    0.00\% \\
-		9 &      114 &  10.53\% &  100.00\% &  0.00\% &         4.00 &  31.25\% &   28.12\% &  20.31\% &    20.31\% &    0.00\% \\
-		p &       83 &  16.87\% &   90.48\% &  9.52\% &         3.00 &  48.44\% &   20.31\% &   7.81\% &    17.19\% &    6.25\% \\
+		4 &      115 &  13.04\% &  100.00\% &  0.00\% &         4.04 &  40.26\% &   29.87\% &  20.78\% &     9.09\% &    0.00\% \\
+		5 &      122 &  13.11\% &  100.00\% &  0.00\% &         2.29 &  47.83\% &    0.00\% &   8.70\% &    43.48\% &    0.00\% \\
+		6 &      115 &  10.43\% &  100.00\% &  0.00\% &         2.56 &  50.00\% &    8.00\% &  20.00\% &    22.00\% &    0.00\% \\
+		7 &      110 &  15.45\% &  100.00\% &  0.00\% &         3.29 &  37.50\% &   32.69\% &  18.27\% &    11.54\% &    0.00\% \\
+		8 &      118 &   9.32\% &  100.00\% &  0.00\% &         2.36 &  43.75\% &    9.38\% &  25.00\% &    21.88\% &    0.00\% \\
+		9 &      114 &  10.53\% &  100.00\% &  0.00\% &         3.50 &  31.25\% &   28.12\% &  20.31\% &    20.31\% &    0.00\% \\
+		p &       83 &  16.87\% &   90.48\% &  9.52\% &         3.07 &  48.44\% &   20.31\% &   7.81\% &    17.19\% &    6.25\% \\
 	\end{tabular}
 	\caption{Properties of the nested explanations.\tias{there is only one m-i so I think last line should be 100\% for clue+i and m-i?}\tias{although, percentage does not match then? Also for '3', it says 1.74 at 100\% but higher table says 3.48 are non-trivial?}}
 
@@ -277,3 +285,47 @@ The figure shows us that there are many steps with a cost of only a fraction of 
 %	%\label{fig:steps}
 %\end{figure}
 %}
+
+% \begin{table}[b]
+% 	\centering
+% 	% 	\resizebox{\textwidth}{!}{%
+% 	\begin{tabular}{c|c|cc|cccccc}
+% 		\textbf{p} & \textbf{($|$types$|$, $|$dom$|$, $|$grid$|$)} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+1i. (+$>$1i.)} & \textbf{mult i.} & \textbf{mult c.} \\\hline
+% 		% \textbf{p} & \textbf{$|$types$|$, $|$dom$|$, $|$grid$|$} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+1i.} & \textbf{1 clue+ $>$1i.} & \textbf{mult i.} & \textbf{mult c.} \\\hline
+% 		1 &       (4, 5, 150) &    112 &      27.06 &  31.25\% &  50.00\% &         0.89\% &      7.14\%  (+10.71\% ) &  0.00\%  &  0.00\%  \\
+% 		2 &       (4, 5, 150) &    119 &      27.77 &  23.53\% &  57.14\% &         1.68\% &      7.56\%  (+10.08\% ) &  0.00\%  &  0.00\%  \\
+% 		3 &       (4, 5, 150) &    110 &      23.93 &  32.73\% &  51.82\% &         0.00\% &      2.73\%  (+12.73\% ) &  0.00\%  &  0.00\%  \\
+% 		4 &       (4, 5, 150) &    115 &      24.54 &  27.83\% &  55.65\% &         2.61\% &      7.83\%  (+ 6.09\% ) &  0.00\%  &  0.00\%  \\
+% 		5 &       (4, 5, 150) &    122 &      24.97 &  24.59\% &  59.02\% &         0.82\% &      4.10\%  (+11.48\% ) &  0.00\%  &  0.00\%  \\
+% 		6 &       (4, 5, 150) &    115 &      22.58 &  26.96\% &  58.26\% &         2.61\% &      6.09\%  (+ 6.09\% ) &  0.00\%  &  0.00\%  \\
+% 		7 &       (4, 5, 150) &    110 &      26.79 &  35.45\% &  46.36\% &         0.91\% &      8.18\%  (+ 9.09\% ) &  0.00\%  &  0.00\%  \\
+% 		8 &       (4, 5, 150) &    118 &      26.81 &  33.90\% &  47.46\% &         3.39\% &      5.08\%  (+10.17\% ) &  0.00\%  &  0.00\%  \\
+% 		9 &       (4, 5, 150) &    114 &      24.75 &  28.95\% &  54.39\% &         3.51\% &      3.51\%  (+ 9.65\% ) &  0.00\%  &  0.00\%  \\
+% 		p &       (4, 4, 96\ ) &     83 &      34.45 &  33.73\% &  40.96\% &         1.20\% &      4.82\% (+ 16.87\%)  &  2.41\%  &  0.00\%
+% 	\end{tabular}
+% 	% 	}
+% 	\caption{Properties of the puzzles, explanation sequences and constraints used in the explanations.}
+% 	\label{table:composition}
+% \end{table}
+
+% \begin{table}[b]
+% 	\centering
+% 	% 	\resizebox{\textwidth}{!}{%
+% 	\begin{tabular}{c|c|cc|ccccccc}
+% 		\textbf{p} & \textbf{($|$types$|$, $|$dom$|$, $|$grid$|$)} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+1i.} & \textbf{1 clue+ $>$1i.} & \textbf{mult i.} & \textbf{mult c.} \\\hline
+% 		% \textbf{p} & \textbf{$|$types$|$, $|$dom$|$, $|$grid$|$} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+1i.} & \textbf{1 clue+ $>$1i.} & \textbf{mult i.} & \textbf{mult c.} \\\hline
+% 		1 &       (4, 5, 150) &    112 &      27.06 &  31.25\% &  50.00\% &         0.89\% &      7.14\% &  10.71\%  &  0.00\%  &  0.00\%  \\
+% 		2 &       (4, 5, 150) &    119 &      27.77 &  23.53\% &  57.14\% &         1.68\% &      7.56\% &  10.08\%  &  0.00\%  &  0.00\%  \\
+% 		3 &       (4, 5, 150) &    110 &      23.93 &  32.73\% &  51.82\% &         0.00\% &      2.73\% &  12.73\%  &  0.00\%  &  0.00\%  \\
+% 		4 &       (4, 5, 150) &    115 &      24.54 &  27.83\% &  55.65\% &         2.61\% &      7.83\% &   6.09\%  &  0.00\%  &  0.00\%  \\
+% 		5 &       (4, 5, 150) &    122 &      24.97 &  24.59\% &  59.02\% &         0.82\% &      4.10\% &  11.48\%  &  0.00\%  &  0.00\%  \\
+% 		6 &       (4, 5, 150) &    115 &      22.58 &  26.96\% &  58.26\% &         2.61\% &      6.09\% &   6.09\%  &  0.00\%  &  0.00\%  \\
+% 		7 &       (4, 5, 150) &    110 &      26.79 &  35.45\% &  46.36\% &         0.91\% &      8.18\% &   9.09\%  &  0.00\%  &  0.00\%  \\
+% 		8 &       (4, 5, 150) &    118 &      26.81 &  33.90\% &  47.46\% &         3.39\% &      5.08\% &  10.17\%  &  0.00\%  &  0.00\%  \\
+% 		9 &       (4, 5, 150) &    114 &      24.75 &  28.95\% &  54.39\% &         3.51\% &      3.51\% &   9.65\%  &  0.00\%  &  0.00\%  \\
+% 		p &       (4, 4, 96\ ) &     83 &      34.45 &  33.73\% &  40.96\% &         1.20\% &      4.82\% &  16.87\%  &  2.41\%  &  0.00\%
+% 	\end{tabular}
+% 	% 	}
+% 	\caption{Properties of the puzzles, explanation sequences and constraints used in the explanations.}
+% 	\label{table:composition}
+% \end{table}

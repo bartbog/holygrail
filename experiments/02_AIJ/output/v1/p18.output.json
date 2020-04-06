@@ -1,14 +1,11 @@
 [
 	{
-	"cost": "21",
+	"cost": "20",
 	"clue": "Al allen is from glendale",
 	"assumptions": [ 
 	],
 	"derivations": [
 		{"pred" : "from", "subject" : "al_allen", "object": "glendale", "value": true}
-	],
-	"nested_explanations": [
-		{}
 	]
 	},
 	{
@@ -38,27 +35,16 @@
 	]
 	},
 	{
-	"cost": "21",
-	"clue": "Kelly Kirby isn't from Olema",
-	"assumptions": [ 
-	],
-	"derivations": [
-		{"pred" : "from", "subject" : "kelly_kirby", "object": "olema", "value": false}
-	],
-	"nested_explanations": [
-		{}
-	]
-	},
-	{
-	"cost": "21",
+	"cost": "20",
 	"clue": "Bev Baird ended up with 8500 votes",
 	"assumptions": [ 
 	],
 	"derivations": [
-		{"pred" : "finished_with", "subject" : "bev_baird", "object": "8500", "value": true}
-	],
-	"nested_explanations": [
-		{}
+		{"pred" : "finished_with", "subject" : "bev_baird", "object": "8500", "value": true},
+		{"pred" : "finished_with", "subject" : "al_allen", "object": "8500", "value": false},
+		{"pred" : "finished_with", "subject" : "ed_ewing", "object": "8500", "value": false},
+		{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "8500", "value": false},
+		{"pred" : "finished_with", "subject" : "the_other_person", "object": "8500", "value": false}
 	]
 	},
 	{
@@ -75,19 +61,6 @@
 	]
 	},
 	{
-	"cost": "2",
-	"clue": "Bijectivity",
-	"assumptions": [  
-		{"pred" : "finished_with", "subject" : "bev_baird", "object": "8500", "value": true}
-	],
-	"derivations": [
-		{"pred" : "finished_with", "subject" : "al_allen", "object": "8500", "value": false},
-		{"pred" : "finished_with", "subject" : "ed_ewing", "object": "8500", "value": false},
-		{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "8500", "value": false},
-		{"pred" : "finished_with", "subject" : "the_other_person", "object": "8500", "value": false}
-	]
-	},
-	{
 	"cost": "3",
 	"clue": "Transitivity constraint",
 	"assumptions": [  
@@ -99,167 +72,34 @@
 	]
 	},
 	{
-	"cost": "22",
-	"clue": "The academic received 500 votes less than the teacher",
+	"cost": "20",
+	"clue": "Ed Ewing finished 500 votes ahead of the Evansdale native",
 	"assumptions": [ 
 	],
 	"derivations": [
-		{"pred" : "received", "subject" : "academic", "object": "10500", "value": false},
-		{"pred" : "received", "subject" : "teacher", "object": "8500", "value": false}
-	],
-	"nested_explanations": [
-		{
-			"derivable_fact":	 {"pred" : "received", "subject" : "academic", "object": "10500", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "academic", "object": "10500", "value": true}
-				],
-				"derivations": [
-					{"pred" : "received", "subject" : "academic", "object": "8500", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "9000", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "10000", "value": false}
-				]
-				},
-				{
-				"cost": "25",
-				"clue": "The academic received 500 votes less than the teacher",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "academic", "object": "8500", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "9000", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "10000", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{
-			"derivable_fact":	 {"pred" : "received", "subject" : "teacher", "object": "8500", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "teacher", "object": "8500", "value": true}
-				],
-				"derivations": [
-					{"pred" : "received", "subject" : "teacher", "object": "9000", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "10000", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "10500", "value": false}
-				]
-				},
-				{
-				"cost": "25",
-				"clue": "The academic received 500 votes less than the teacher",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "teacher", "object": "9000", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "10000", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "10500", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{}
+		{"pred" : "from", "subject" : "ed_ewing", "object": "evansdale", "value": false},
+		{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "10500", "value": false}
 	]
 	},
 	{
-	"cost": "3",
-	"clue": "Transitivity constraint",
-	"assumptions": [  
-		{"pred" : "finished_with", "subject" : "bev_baird", "object": "8500", "value": true},
-		{"pred" : "received", "subject" : "teacher", "object": "8500", "value": false}
-	],
-	"derivations": [
-		{"pred" : "acts_as", "subject" : "bev_baird", "object": "teacher", "value": false}
-	]
-	},
-	{
-	"cost": "22",
-	"clue": "The candidate who received 10500 votes isn't the writer",
+	"cost": "20",
+	"clue": "The man who received 9500 votes isn't the doctor",
 	"assumptions": [ 
 	],
 	"derivations": [
-		{"pred" : "received", "subject" : "writer", "object": "10500", "value": false}
-	],
-	"nested_explanations": [
-		{
-			"derivable_fact":	 {"pred" : "received", "subject" : "writer", "object": "10500", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "writer", "object": "10500", "value": true}
-				],
-				"derivations": [
-					{"pred" : "received", "subject" : "academic", "object": "10500", "value": false},
-					{"pred" : "received", "subject" : "doctor", "object": "10500", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "10500", "value": false},
-					{"pred" : "received", "subject" : "the_other_candidate", "object": "10500", "value": false}
-				]
-				},
-				{
-				"cost": "25",
-				"clue": "The candidate who received 10500 votes isn't the writer",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "academic", "object": "10500", "value": false},
-					{"pred" : "received", "subject" : "doctor", "object": "10500", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "10500", "value": false},
-					{"pred" : "received", "subject" : "the_other_candidate", "object": "10500", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{}
+		{"pred" : "received", "subject" : "doctor", "object": "9500", "value": false}
 	]
 	},
 	{
-	"cost": "22",
+	"cost": "20",
 	"clue": "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes",
 	"assumptions": [ 
 	],
 	"derivations": [
-		{"pred" : "acts_as", "subject" : "al_allen", "object": "academic", "value": false}
-	],
-	"nested_explanations": [
-		{
-			"derivable_fact":	 {"pred" : "acts_as", "subject" : "al_allen", "object": "academic", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "acts_as", "subject" : "al_allen", "object": "academic", "value": true}
-				],
-				"derivations": [
-					{"pred" : "acts_as", "subject" : "bev_baird", "object": "academic", "value": false},
-					{"pred" : "acts_as", "subject" : "ed_ewing", "object": "academic", "value": false},
-					{"pred" : "acts_as", "subject" : "kelly_kirby", "object": "academic", "value": false},
-					{"pred" : "acts_as", "subject" : "the_other_person", "object": "academic", "value": false}
-				]
-				},
-				{
-				"cost": "25",
-				"clue": "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes",
-				"assumptions": [  
-					{"pred" : "acts_as", "subject" : "bev_baird", "object": "academic", "value": false},
-					{"pred" : "acts_as", "subject" : "ed_ewing", "object": "academic", "value": false},
-					{"pred" : "acts_as", "subject" : "kelly_kirby", "object": "academic", "value": false},
-					{"pred" : "acts_as", "subject" : "the_other_person", "object": "academic", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{}
+		{"pred" : "acts_as", "subject" : "al_allen", "object": "academic", "value": false},
+		{"pred" : "received", "subject" : "academic", "object": "9000", "value": false},
+		{"pred" : "received", "subject" : "academic", "object": "9500", "value": false},
+		{"pred" : "received", "subject" : "academic", "object": "10500", "value": false}
 	]
 	},
 	{
@@ -274,100 +114,7 @@
 	]
 	},
 	{
-	"cost": "22",
-	"clue": "The politician who finished with 10500 votes isn't from Lakota",
-	"assumptions": [ 
-	],
-	"derivations": [
-		{"pred" : "is_linked_with_2", "subject" : "lakota", "object": "10500", "value": false}
-	],
-	"nested_explanations": [
-		{}
-	]
-	},
-	{
-	"cost": "22",
-	"clue": "The man who received 9500 votes isn't the doctor",
-	"assumptions": [ 
-	],
-	"derivations": [
-		{"pred" : "received", "subject" : "doctor", "object": "9500", "value": false}
-	],
-	"nested_explanations": [
-		{
-			"derivable_fact":	 {"pred" : "received", "subject" : "doctor", "object": "9500", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "doctor", "object": "9500", "value": true}
-				],
-				"derivations": [
-					{"pred" : "received", "subject" : "academic", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "the_other_candidate", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "writer", "object": "9500", "value": false}
-				]
-				},
-				{
-				"cost": "25",
-				"clue": "The man who received 9500 votes isn't the doctor",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "academic", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "the_other_candidate", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "writer", "object": "9500", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{}
-	]
-	},
-	{
-	"cost": "22",
-	"clue": "Kelly Kirby finished 1000 votes ahead of the person who acts as the academic",
-	"assumptions": [ 
-	],
-	"derivations": [
-		{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "9000", "value": false}
-	],
-	"nested_explanations": [
-		{
-			"derivable_fact":	 {"pred" : "finished_with", "subject" : "kelly_kirby", "object": "9000", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "9000", "value": true}
-				],
-				"derivations": [
-					{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "8500", "value": false},
-					{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "9500", "value": false},
-					{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "10000", "value": false},
-					{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "10500", "value": false}
-				]
-				},
-				{
-				"cost": "24",
-				"clue": "Kelly Kirby finished 1000 votes ahead of the person who acts as the academic",
-				"assumptions": [  
-					{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "9500", "value": false},
-					{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "10000", "value": false},
-					{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "10500", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{}
-	]
-	},
-	{
-	"cost": "22",
+	"cost": "20",
 	"clue": "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes",
 	"assumptions": [ 
 	],
@@ -375,90 +122,6 @@
 		{"pred" : "finished_with", "subject" : "al_allen", "object": "9000", "value": false},
 		{"pred" : "finished_with", "subject" : "al_allen", "object": "9500", "value": false},
 		{"pred" : "finished_with", "subject" : "al_allen", "object": "10500", "value": false}
-	],
-	"nested_explanations": [
-		{
-			"derivable_fact":	 {"pred" : "finished_with", "subject" : "al_allen", "object": "9000", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "9000", "value": true}
-				],
-				"derivations": [
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "8500", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "9500", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "10000", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "10500", "value": false}
-				]
-				},
-				{
-				"cost": "23",
-				"clue": "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes",
-				"assumptions": [  
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "8500", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "10000", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{
-			"derivable_fact":	 {"pred" : "finished_with", "subject" : "al_allen", "object": "9500", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "9500", "value": true}
-				],
-				"derivations": [
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "8500", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "9000", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "10000", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "10500", "value": false}
-				]
-				},
-				{
-				"cost": "23",
-				"clue": "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes",
-				"assumptions": [  
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "8500", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "10000", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{
-			"derivable_fact":	 {"pred" : "finished_with", "subject" : "al_allen", "object": "10500", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "10500", "value": true}
-				],
-				"derivations": [
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "8500", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "9000", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "9500", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "10000", "value": false}
-				]
-				},
-				{
-				"cost": "23",
-				"clue": "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes",
-				"assumptions": [  
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "8500", "value": false},
-					{"pred" : "finished_with", "subject" : "al_allen", "object": "10000", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{}
 	]
 	},
 	{
@@ -586,114 +249,6 @@
 	]
 	},
 	{
-	"cost": "23",
-	"clue": "The glendale native finished somewhat ahead of the Olema native",
-	"assumptions": [ 
-	],
-	"derivations": [
-		{"pred" : "is_linked_with_2", "subject" : "olema", "object": "10500", "value": false}
-	],
-	"nested_explanations": [
-		{
-			"derivable_fact":	 {"pred" : "is_linked_with_2", "subject" : "olema", "object": "10500", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "is_linked_with_2", "subject" : "olema", "object": "10500", "value": true}
-				],
-				"derivations": [
-					{"pred" : "is_linked_with_2", "subject" : "olema", "object": "8500", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "olema", "object": "9000", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "olema", "object": "9500", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "olema", "object": "10000", "value": false}
-				]
-				},
-				{
-				"cost": "26",
-				"clue": "The glendale native finished somewhat ahead of the Olema native",
-				"assumptions": [  
-					{"pred" : "is_linked_with_2", "subject" : "olema", "object": "8500", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "olema", "object": "9000", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "olema", "object": "9500", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "olema", "object": "10000", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{}
-	]
-	},
-	{
-	"cost": "23",
-	"clue": "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes",
-	"assumptions": [ 
-	],
-	"derivations": [
-		{"pred" : "received", "subject" : "academic", "object": "9000", "value": false},
-		{"pred" : "received", "subject" : "academic", "object": "9500", "value": false}
-	],
-	"nested_explanations": [
-		{
-			"derivable_fact":	 {"pred" : "received", "subject" : "academic", "object": "9000", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "academic", "object": "9000", "value": true}
-				],
-				"derivations": [
-					{"pred" : "received", "subject" : "academic", "object": "8500", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "10000", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "10500", "value": false}
-				]
-				},
-				{
-				"cost": "24",
-				"clue": "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "academic", "object": "8500", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "10000", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{
-			"derivable_fact":	 {"pred" : "received", "subject" : "academic", "object": "9500", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "academic", "object": "9500", "value": true}
-				],
-				"derivations": [
-					{"pred" : "received", "subject" : "academic", "object": "8500", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "9000", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "10000", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "10500", "value": false}
-				]
-				},
-				{
-				"cost": "24",
-				"clue": "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "academic", "object": "8500", "value": false},
-					{"pred" : "received", "subject" : "academic", "object": "10000", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{}
-	]
-	},
-	{
 	"cost": "5",
 	"clue": "Bijectivity",
 	"assumptions": [  
@@ -714,6 +269,7 @@
 	],
 	"derivations": [
 		{"pred" : "received", "subject" : "doctor", "object": "8500", "value": false},
+		{"pred" : "received", "subject" : "teacher", "object": "8500", "value": false},
 		{"pred" : "received", "subject" : "the_other_candidate", "object": "8500", "value": false},
 		{"pred" : "received", "subject" : "writer", "object": "8500", "value": false}
 	]
@@ -778,6 +334,17 @@
 	"clue": "Transitivity constraint",
 	"assumptions": [  
 		{"pred" : "finished_with", "subject" : "bev_baird", "object": "8500", "value": true},
+		{"pred" : "received", "subject" : "teacher", "object": "8500", "value": false}
+	],
+	"derivations": [
+		{"pred" : "acts_as", "subject" : "bev_baird", "object": "teacher", "value": false}
+	]
+	},
+	{
+	"cost": "3",
+	"clue": "Transitivity constraint",
+	"assumptions": [  
+		{"pred" : "finished_with", "subject" : "bev_baird", "object": "8500", "value": true},
 		{"pred" : "received", "subject" : "the_other_candidate", "object": "8500", "value": false}
 	],
 	"derivations": [
@@ -796,45 +363,48 @@
 	]
 	},
 	{
-	"cost": "23",
-	"clue": "Ed Ewing finished 500 votes ahead of the Evansdale native",
+	"cost": "20",
+	"clue": "The glendale native finished somewhat ahead of the Olema native",
 	"assumptions": [ 
 	],
 	"derivations": [
-		{"pred" : "from", "subject" : "ed_ewing", "object": "evansdale", "value": false},
-		{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "10500", "value": false}
+		{"pred" : "is_linked_with_2", "subject" : "olema", "object": "10500", "value": false}
+	]
+	},
+	{
+	"cost": "20",
+	"clue": "Kelly Kirby finished 1000 votes ahead of the person who acts as the academic",
+	"assumptions": [ 
 	],
-	"nested_explanations": [
-		{
-			"derivable_fact":	 {"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "10500", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "10500", "value": true}
-				],
-				"derivations": [
-					{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "8500", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "9000", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "9500", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "10000", "value": false}
-				]
-				},
-				{
-				"cost": "26",
-				"clue": "Ed Ewing finished 500 votes ahead of the Evansdale native",
-				"assumptions": [  
-					{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "8500", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "9000", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "9500", "value": false},
-					{"pred" : "is_linked_with_2", "subject" : "evansdale", "object": "10000", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{}
+	"derivations": [
+		{"pred" : "finished_with", "subject" : "kelly_kirby", "object": "9000", "value": false}
+	]
+	},
+	{
+	"cost": "20",
+	"clue": "The candidate who received 10500 votes isn't the writer",
+	"assumptions": [ 
+	],
+	"derivations": [
+		{"pred" : "received", "subject" : "writer", "object": "10500", "value": false}
+	]
+	},
+	{
+	"cost": "20",
+	"clue": "Kelly Kirby isn't from Olema",
+	"assumptions": [ 
+	],
+	"derivations": [
+		{"pred" : "from", "subject" : "kelly_kirby", "object": "olema", "value": false}
+	]
+	},
+	{
+	"cost": "20",
+	"clue": "The politician who finished with 10500 votes isn't from Lakota",
+	"assumptions": [ 
+	],
+	"derivations": [
+		{"pred" : "is_linked_with_2", "subject" : "lakota", "object": "10500", "value": false}
 	]
 	},
 	{
@@ -909,65 +479,13 @@
 	"cost": "23",
 	"clue": "The academic received 500 votes less than the teacher",
 	"assumptions": [  
-		{"pred" : "received", "subject" : "academic", "object": "10000", "value": false}
-	],
-	"derivations": [
-		{"pred" : "received", "subject" : "teacher", "object": "10500", "value": false}
-	],
-	"nested_explanations": [
-		{
-			"derivable_fact":	 {"pred" : "received", "subject" : "teacher", "object": "10500", "value": false},
-			"reason_sequence": 	[
-				{
-				"cost": "2",
-				"clue": "Bijectivity",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "teacher", "object": "10500", "value": true}
-				],
-				"derivations": [
-					{"pred" : "received", "subject" : "teacher", "object": "8500", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "9000", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "10000", "value": false}
-				]
-				},
-				{
-				"cost": "25",
-				"clue": "The academic received 500 votes less than the teacher",
-				"assumptions": [  
-					{"pred" : "received", "subject" : "academic", "object": "10000", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "9000", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "9500", "value": false},
-					{"pred" : "received", "subject" : "teacher", "object": "10000", "value": false}
-				],
-				"derivations": ["UNSAT"]
-				}
-			]
-		},
-		{}
-	]
-	},
-	{
-	"cost": "3",
-	"clue": "Transitivity constraint",
-	"assumptions": [  
-		{"pred" : "received", "subject" : "teacher", "object": "10500", "value": false},
-		{"pred" : "is_linked_with_2", "subject" : "the_other_type1", "object": "10500", "value": true}
-	],
-	"derivations": [
-		{"pred" : "is_linked_with_1", "subject" : "the_other_type1", "object": "teacher", "value": false}
-	]
-	},
-	{
-	"cost": "23",
-	"clue": "The academic received 500 votes less than the teacher",
-	"assumptions": [  
 		{"pred" : "received", "subject" : "academic", "object": "8500", "value": true}
 	],
 	"derivations": [
 		{"pred" : "received", "subject" : "teacher", "object": "9000", "value": true},
 		{"pred" : "received", "subject" : "teacher", "object": "9500", "value": false},
-		{"pred" : "received", "subject" : "teacher", "object": "10000", "value": false}
+		{"pred" : "received", "subject" : "teacher", "object": "10000", "value": false},
+		{"pred" : "received", "subject" : "teacher", "object": "10500", "value": false}
 	],
 	"nested_explanations": [
 		{
@@ -1083,6 +601,48 @@
 				}
 			]
 		},
+		{
+			"derivable_fact":	 {"pred" : "received", "subject" : "teacher", "object": "10500", "value": false},
+			"reason_sequence": 	[
+				{
+				"cost": "2",
+				"clue": "Bijectivity",
+				"assumptions": [  
+					{"pred" : "received", "subject" : "academic", "object": "8500", "value": true}
+				],
+				"derivations": [
+					{"pred" : "received", "subject" : "academic", "object": "9000", "value": false},
+					{"pred" : "received", "subject" : "academic", "object": "9500", "value": false},
+					{"pred" : "received", "subject" : "academic", "object": "10000", "value": false},
+					{"pred" : "received", "subject" : "academic", "object": "10500", "value": false}
+				]
+				},
+				{
+				"cost": "2",
+				"clue": "Bijectivity",
+				"assumptions": [  
+					{"pred" : "received", "subject" : "teacher", "object": "10500", "value": true}
+				],
+				"derivations": [
+					{"pred" : "received", "subject" : "teacher", "object": "8500", "value": false},
+					{"pred" : "received", "subject" : "teacher", "object": "9000", "value": false},
+					{"pred" : "received", "subject" : "teacher", "object": "9500", "value": false},
+					{"pred" : "received", "subject" : "teacher", "object": "10000", "value": false}
+				]
+				},
+				{
+				"cost": "25",
+				"clue": "The academic received 500 votes less than the teacher",
+				"assumptions": [  
+					{"pred" : "received", "subject" : "academic", "object": "9000", "value": false},
+					{"pred" : "received", "subject" : "academic", "object": "10000", "value": false},
+					{"pred" : "received", "subject" : "teacher", "object": "9000", "value": false},
+					{"pred" : "received", "subject" : "teacher", "object": "10000", "value": false}
+				],
+				"derivations": ["UNSAT"]
+				}
+			]
+		},
 		{}
 	]
 	},
@@ -1129,6 +689,17 @@
 	],
 	"derivations": [
 		{"pred" : "is_linked_with_1", "subject" : "glendale", "object": "teacher", "value": false}
+	]
+	},
+	{
+	"cost": "3",
+	"clue": "Transitivity constraint",
+	"assumptions": [  
+		{"pred" : "received", "subject" : "teacher", "object": "10500", "value": false},
+		{"pred" : "is_linked_with_2", "subject" : "the_other_type1", "object": "10500", "value": true}
+	],
+	"derivations": [
+		{"pred" : "is_linked_with_1", "subject" : "the_other_type1", "object": "teacher", "value": false}
 	]
 	},
 	{

@@ -1,5 +1,5 @@
-We developed a demo system, called \ourtool, named after Einstein's zebra puzzle, which is an integrated solution for solving logic grid puzzles, and for explaining, \textit{in a human-understandable way}, how the solution can be obtained from the clues. 
-The input to \ourtool is a plain English language representation of the clues and the names of the \textit{entities} that make up the puzzle, e.g  `'`Angie'' , ``arrabiata''. 
+The demo system we developed, called \ourtool, is named after Einstein's zebra puzzle, which is an integrated solution for solving logic grid puzzles, and for explaining, \textit{in a human-understandable way}, how the solution can be obtained from the clues. 
+The input to \ourtool is a plain English language representation of the clues and the names of the \textit{entities} that make up the puzzle, e.g  ``Angie'' , ``arrabiata''. 
 
 In typical logic grid puzzles, the entity names are present in the grid that is supplied with the puzzle. For some puzzles, not all entities are named or required to know in advance; a prototypical example is Einstein's Zebra puzzle, which ends with the question ``Who owns the zebra?'', while the clues do not name the zebra entity and the puzzle can be solved without knowledge of the fact there is a zebra in the first place.
 
@@ -21,17 +21,19 @@ An online demo of our system can be found on \url{http://bartbog.github.io/zebra
 \subsection{Natural Language Processing}\label{sec:pipeline:nlp}
 
 \subsubsection*{Step A. POS tagging} The standard procedure in Natural Language Processing is to start by tagging each word with its estimated Part-Of-Speech tag (POS tag).
-We use the standard English Penn treebank Pos tagset \cite{marcus1993building}.
-As POS tagger we use NLTK's built-in perceptron tagger \footnote{\url{http://www.nltk.org/}}. It uses a statistical inference mechanism trained on a standard training set from the Wall Street Journal. Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are tagged as \textit{noun}.
+We use the standard English Penn treebank Pos tagset \cite{marcus1993building} together with NLTK's built-in perceptron tagger \footnote{\url{http://www.nltk.org/}} as POS tagger. 
+It uses a statistical inference mechanism trained on a standard training set from the Wall Street Journal. 
+Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are tagged as \textit{noun}.
 
 \subsubsection*{Step B. Chunking and lexicon building} From a natural language processing point of view, the hardest part is step B: automatically deriving the lexicon and building the grammar.
-The lexicon assigns a role to different sets of words, and the grammar is a set of rules describing how words can be combined into sentences. 
-The goal of this second step is to group the POS-tagged words of the clues into \textit{chunks} that are tagged with lexical categories of which 3 are puzzle-specific: proper nouns for the individual entities that are central to the puzzle, other nouns to groups of entities (like \textit{pasta, sauce}) and transitive verbs that link two entities to each other (e.g Claudia did not \textit{choose} puttanesca sauce.) The other categories are genera and contain a built-in list of possible members. 
-The other categories are determiner, number, preposition, auxiliary verb etc. We refer to \cite{msc/Claes17} for full details on the categories.
+The lexicon assigns a role to different sets of words, while the grammar is a set of rules describing how words can be combined into sentences. 
+The goal of this second step is to group the POS-tagged words of the clues into \textit{chunks} that are tagged with lexical categories of which 3 are puzzle-specific: proper nouns for the individual entities that are central to the puzzle, other nouns to groups of entities (like \textit{pasta, sauce}) and transitive verbs that link two entities to each other (e.g Claudia did not \textit{choose} puttanesca sauce). 
+% The other categories are genera
+The other categories are determiner, number, preposition, auxiliary verb etc.  and contain a built-in list of possible members.  We refer to \cite{msc/Claes17} for full details on the categories.
 
 This process of grouping words is referred to as \textit{chunking}. 
 We use NLTK and a custom set of regular expressions for chunking the proper nouns and different types of transitive verbs.
-The result is a lexicon where each word or set of words (chunk) is assigned a role, based on the POS tags.  
+The result is a lexicon where each word or set of words (chunk) is assigned a role based on the POS tags.  
 On top of these roles, we defined a puzzle-independent grammar in the Blackburn and Bos framework \cite{Blackburn2005,Blackburn2006}.
 The grammar itself was created based on 10 example training puzzles, and tested on 10 different puzzles to ensure genericity \cite{msc/Claes17}. 
 
@@ -41,7 +43,7 @@ The typed extension allows us to discover the case where different verbs are use
 In our system, this is a semi-automated method that suggests a lexicon and lets a user modify and approve it, to compensate for possible ``creativity'' of the puzzle designers who tend to insert ambiguous words, or use implicit background knowledge such as using ``in the morning'' when there is only one time slot before 12:00.
 
 \subsection{From logic to visual explanations}\label{sec:pipeline:IDPtoExplanations}
-Once the types are built, we generate a complete specification which is used by the reasoner to solve the problem. 
+Once the types are built, we generate a complete specification which is used by the reasoner, the IDP system~\cite{IDP}, to solve the problem. 
 
 \subsubsection*{Step D. From logic to a complete IDP specification}
 % The typed extension allows us to discover the case where different verbs are used as synonyms for the same inherent relation between two types, e.g. `$ate(person, pasta)$' and `$ordered(person, pasta)$'. 

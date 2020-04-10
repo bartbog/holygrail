@@ -26,7 +26,10 @@ Algorithm \ref{alg:main} formalizes the greedy construction of the sequence, whi
 \myparagraph{Candidate generation}
 The main challenge is finding the lowest scoring explanation, among all reasoning steps that can be applied for a given partial interpretation $I$. We first study how to \textit{enumerate} a set of candidate non-redundant explanations given a set of constraints.
 
-For a set of constraints $C$ (later algorithms will not always use \allconstraints for this $C$), we can first use propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints $C$. For each new fact $a$ not in $I$, we wish to find a non-redundant explanation $(E \subseteq I, S \subseteq C,\{a\})$ that explains $a$ (and possibly explains more). Recall from Definition~\ref{def:nonred} that this means that whenever one of the facts in $E$ or constraints in $S$ is removed, the result is no longer an explanation.
+For a set of constraints $C$ (later algorithms will not always use \allconstraints for this $C$), we can first use propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints $C$. 
+\emilio{why a ? and not n ? Vor visibility ?}
+For each new fact $a$ not in $I$, we wish to find a non-redundant explanation $(E \subseteq I, S \subseteq C,\{a\})$ that explains $a$ (and possibly explains more). 
+Recall from Definition~\ref{def:nonred} that this means that whenever one of the facts in $E$ or constraints in $S$ is removed, the result is no longer an explanation.
 We now show that this task is equivalent to finding a Minimal Unsat Core (or Minimal Unsat Subset, MUS) of a derived this.
 To see this, consider the theory
 \[ I\wedge C \wedge \lnot a.\]
@@ -76,7 +79,7 @@ We use Algorithm~\ref{alg:cand} to generate candidate explanations, but in gener
 
 To guide the search to cost-minimal MUS's, we use the observation that typically a small (1 to a few) number of constraints is sufficient to explain the reasoning. A small number of constraints is also preferred in terms of easy to understand explanations, and hence have a lower cost. For this reason, we will  not call \textit{candidate-explanations} with the full set of constraints \allconstraints, but we will iteratively grow the number of constraints used.
 
-We make one further assumption to ensure that we do not have to search for candidates for all possible subsets of constraints. The assumption is that we have an optimistic estimate $g$ that maps a subset $S$ of $T_P$ to a real number such that  $\forall E, N, S: g(S) \leq f(E, S, N)$. This is for example the case if $f$ is an additive function, such as $f(E, S, N) = f_1(E) + f_2(S) + f_3(N)$ where $g(S) = f_2(S)$ assuming $f_1$ and $f_3$ are always positive.
+We make one further assumption to ensure that we do not have to search for candidates for all possible subsets of constraints. The assumption is that we have an optimistic estimate $g$ that maps a subset $S$ of $T_P$ \emilio{\allconstraints all constraints ? } to a real number such that  $\forall E, N, S: g(S) \leq f(E, S, N)$. This is for example the case if $f$ is an additive function, such as $f(E, S, N) = f_1(E) + f_2(S) + f_3(N)$ where $g(S) = f_2(S)$ assuming $f_1$ and $f_3$ are always positive.
 
 We can then search for the smallest explanation among the candidates found, by searching among increasingly worse scoring $S$ as shown in Algorithm~\ref{alg:minexpl}. This is the algorithm called by the iterative sequence generation (Algorithm \ref{alg:main}).
 
@@ -125,14 +128,14 @@ While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation 
 \begin{algorithm}[ht]
   %  \begin{algorithmic}
   $I_{end} \gets$ propagate$(I_0\land \allconstraints)$\;
-  Seq $\gets$ empty sequence\;
+  $Seq \gets$ empty sequence\;
   $I \gets I_0$\;
   \While{$I \neq I_{end}$}{
   $(E, S, N) \gets $min-explanation$(I, \allconstraints)$\;
   {\color{vuborange}
   $nested \gets$ nested-explanations$(E, S, N)$\;
 %   \uIf{$nested \neq \emptyset$}{
-    append $((E, S, N),nested)$ to Seq\;
+    append $((E, S, N),nested)$ to $Seq$\;
 %   \Else{
 %     append $(E, S, N)$ to Seq\;
 %   }
@@ -141,7 +144,7 @@ While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation 
   $I \gets I \cup N$\;
   }
   % \end{algorithmic}
-  \caption{greedy-explanations$(I_0, \allconstraints)$}
+  \caption{greedy-explain$(I_0, \allconstraints)$}
   \label{alg:nested-main}
 \end{algorithm}
 
@@ -155,17 +158,17 @@ While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation 
 
   \Input{A partial interpretation $I$ and a set of constraints $C$}
   %  \begin{algorithmic}
-  $nested\_explanations \gets \{\}$\;
+    $nested\_explanations \gets$ empty collection of sequences\tcp*{ \emilio{check if notation ok}} 
   \For{$n_i \in N$}{
-    store $\gets true$\;
-    nested$\_$seq $\gets \{\}$ \;
+    $store \gets true$\;
+    $nested\_seq \gets$ empty sequence\;
     $I' \gets E \wedge \neg \{n_i\} $ \;
-    \While{$consistent(I')$}{
+    \While{consistent($I'$)}{
       $(E', S', N') \gets $min-explanation$(I', S)$\;
       \If{$f(E', S', N') \geq f(E,S,N)$ \label{ifcheck}}{
-              store $\gets false$; \Break\;}
+        $store \gets false$; \Break\;}
               
-      append $(E', S', N')$ to nested$\_$seq\;
+      append $(E', S', N')$ to $nested\_seq$\;
       $I' \gets I' \cup N'$\;
 
     }

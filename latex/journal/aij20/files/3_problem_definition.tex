@@ -1,7 +1,7 @@
 % \todo{The macro \allconstraints should be changed to jsut $T$, not $\allconstraints$ since $\allconstraints$ refers to a Puzzle P. This should be done carefully so that no ambiguity is created. Also in the section on logic grid puzzles $\allconstraints$ shoudl be used. }
 
 The overarching goal of this paper is to generate a sequence of small reasoning steps, each with an interpretable explanation. 
-We first introduce the concept of an explanation of a single reasoning step, after which we introduce a cost function for a reasoning step and the cost of a sequence of such steps. 
+We first introduce the concept of an explanation of a single reasoning step, after which we introduce a cost function as a proxy for the interpretability of a reasoning step, and the cost of a sequence of such steps. 
 
 \subsection{Explanation of reasoning steps}
 We assume that a theory $\allconstraints$ and an initial partial interpretation $I_0$ are given and fixed. 
@@ -10,7 +10,10 @@ We assume that a theory $\allconstraints$ and an initial partial interpretation 
 We define the \textbf{maximal consequence} of a theory $\allconstraints$ and partial interpretation $I$ (denoted $max(I,T)$) as the precision-maximal partial interpretation $J$ such that  $I \wedge \allconstraints \entails J$. 
 \end{definition}
 
-Phrased differently, $max(I,T)$ is the intersection of all the models of $T$ more precise than $I$; this is also known as the set of \emph{cautious consequences} of $T$ and $I$ and corresponds to ensuring \emph{global consistency} in constraint solving. 
+Phrased differently, $max(I,T)$ is the intersection of all the models of $T$ more precise than $I$; this is also known as the set of \emph{cautious consequences} of $T$ and $I$ and corresponds to ensuring \emph{global consistency} in constraint solving.
+\emilio{why is it the intersection of all models of T more precise than I?}
+% if J \entails T and K \entails T; J \geq I and K \geq I, their intersection is not necessarly 
+% } 
 Algorithms for computing cautious consequences without explicitly enumerating all models exist, such as for instance the ones implemented in clasp \cite{DBLP:conf/lpnmr/GebserKS09} or \idp \cite{IDP} (in the latter system the task of computing all cautious consequences is called \emph{optimal-propagate} since it performs the strongest propagation possible).
 
 Weaker levels of propagation consistency can be used as well, leading to a potentially smaller maximal consequence interpretation $max_{other-consistency}(I,T)$. 

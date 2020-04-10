@@ -7,7 +7,7 @@ We aim to minimize the cost of the explanations of the sequence, measured with a
 
 Instead of globally optimizing the aggregated sequence cost, we encode the knowledge that we are seeking a sequence of small explanations in our algorithm. Namely, we will greedily and incrementally build the sequence, each time searching for the lowest scoring next explanation, given the current partial interpretation. Such an explanation always exists since the end point of the explanation process $max(I_0,\allconstraints)$ only contains consequences of $I_0$ and \allconstraints.
 
-Algorithm \ref{alg:main} formalizes the greedy construction of the sequence, which determines $I_{end} = max(I_0,\allconstraints)$  through propagation and relies on a \textit{min-explanation$(I,C)$} function to find the next cost-minimal explanation.
+Algorithm \ref{alg:main} formalizes the greedy construction of the sequence, which determines $I_{end} = max(I_0,\allconstraints)$  through propagation and relies on a \textit{min-explanation$(I,\allconstraints)$} function to find the next cost-minimal explanation.
 
 \begin{algorithm}
   %  \begin{algorithmic}
@@ -26,48 +26,48 @@ Algorithm \ref{alg:main} formalizes the greedy construction of the sequence, whi
 \myparagraph{Candidate generation}
 The main challenge is finding the lowest scoring explanation, among all reasoning steps that can be applied for a given partial interpretation $I$. We first study how to \textit{enumerate} a set of candidate non-redundant explanations given a set of constraints.
 
-For a set of constraints $C$ (later algorithms will not always use \allconstraints for this $C$), we can first use propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints $C$. 
-\emilio{why a ? and not n ? Vor visibility ?}
-For each new fact $a$ not in $I$, we wish to find a non-redundant explanation $(E \subseteq I, S \subseteq C,\{a\})$ that explains $a$ (and possibly explains more). 
-Recall from Definition~\ref{def:nonred} that this means that whenever one of the facts in $E$ or constraints in $S$ is removed, the result is no longer an explanation.
+For a set of constraints $\allconstraints$, we can first use propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints $\allconstraints$. 
+%\emilio{why a ? and not n ? Vor visibility ?} -> you are right, 'n' is more consistent. Changing...
+For each new fact $n$ not in $I$, we wish to find a non-redundant explanation $(E \subseteq I, S \subseteq \allconstraints,\{n\})$ that explains $n$ (and possibly explains more). 
+Recall from Definition~\ref{def:nonred} that this means that whenever one of the facts in $E$ or constraints in $\allconstraints$ is removed, the result is no longer an explanation.
 We now show that this task is equivalent to finding a Minimal Unsat Core (or Minimal Unsat Subset, MUS) of a derived this.
 To see this, consider the theory
-\[ I\wedge C \wedge \lnot a.\]
-This theory surely is unsatisfiable since $a$ is a consequence of $I$ and $C$.
-Furthermore, under the assumption that $I\wedge C$ is consistent (if it were not, there would be nothing left to explain),
-\emph{any} unsatisfiable subset of this theory contains $\lnot a$.
-We then see that each unsatisifiable subset of this theory is of the form $E \wedge S \wedge \lnot a$ where $(E,S,\{a\})$ is a (not necessarily redundant) explanation of the derivation of $\{a\}$ from $I$.
-Vice versa, each explanation of $\{a\}$ corresponds to an unsatisifiable subset. Thus, the \emph{minimal} unsatisifiable subsets (MUS) of the above theory are in one-to-one correspondence with the non-redundant explanations of $a$, allowing us to use existing MUS algorithms to search for non-redundant explanations.
+\[ I\wedge \allconstraints \wedge \lnot n.\]
+This theory surely is unsatisfiable since $n$ is a consequence of $I$ and $\allconstraints$.
+Furthermore, under the assumption that $I\wedge \allconstraints$ is consistent (if it were not, there would be nothing left to explain),
+\emph{any} unsatisfiable subset of this theory contains $\lnot n$.
+We then see that each unsatisifiable subset of this theory is of the form $E \wedge S \wedge \lnot n$ where $(E,S,\{n\})$ is a (not necessarily redundant) explanation of the derivation of $\{n\}$ from $I$.
+Vice versa, each explanation of $\{n\}$ corresponds to an unsatisifiable subset. Thus, the \emph{minimal} unsatisifiable subsets (MUS) of the above theory are in one-to-one correspondence with the non-redundant explanations of $n$, allowing us to use existing MUS algorithms to search for non-redundant explanations.
 
 We must point out that MUS algorithms typically find \textit{an} unsatisfiable core that is \textit{subset-minimal}, but not \textit{cardinality-minimal}. That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller.
 That means that if size is taken as a measure of simplicity of explanations, we do not have the guarantee to find the optimal ones. And definitely, when a cost function kicks, optimality is also not guaranteed.
 
-Algorithm~\ref{alg:cand} shows our proposed algorithm. The key part of the algorithm is on line \ref{line:mus} where we find an explanation of a single new fact $a$ by searching for a MUS that includes $\neg a$.
+Algorithm~\ref{alg:cand} shows our proposed algorithm. The key part of the algorithm is on line \ref{line:mus} where we find an explanation of a single new fact $n$ by searching for a MUS that includes $\neg n$.
 We search for subset-minimal unsat cores to avoid redundancy in the explanations.
 Furthermore, once a good explanation $(E,S,N)$ is found, we immediately explain all implicants of $E$ and $S$. In other words: we take $N$ to be subset-maximal.
 The reason is that we assume that all derivable facts that use the same part of the theory and the same part of the previously derived knowledge probably require similar types of reasoning and it is thus better to consider them at once.
 Thus, we choose to generate candidate explanations at once for all implicants of $(E, S)$ on line~\ref{line:implicants}.
-Note that the other implicants $A \setminus \{a\}$ may have simpler explanations that may be found later in the for loop, hence we do not remove them from $J$.
+Note that the other implicants $N \setminus \{n\}$ may have simpler explanations that may be found later in the for loop, hence we do not remove them from $J$.
 
 \begin{algorithm}
   % 
   \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
   \SetKwComment{command}{/*}{*/}
 
-  \Input{A partial interpretation $I$ and a set of constraints $C$}
+  \Input{A partial interpretation $I$ and a set of constraints $\allconstraints$}
 
   Candidates $\gets \{\}$\;
-  $J \gets$ propagate$(I \wedge C)$\;
-  \For{$a \in J \setminus I$\label{line:for}}{
+  $J \gets$ propagate$(I \wedge \allconstraints)$\;
+  \For{$n \in J \setminus I$\label{line:for}}{
     \tcp{\small Minimal expl. of each new fact:}
-    $X \gets MUS(\neg a \wedge I \wedge C)$ \label{line:mus}\;
+    $X \gets MUS(\neg n \wedge I \wedge \allconstraints)$ \label{line:mus}\;
     $E \gets I \cap X$\tcp*{\small facts used}
-    $S \gets C \cap X$\tcp*{\small constraints used}
-    $A \gets$ propagate$(E \wedge S)$\tcp*{\small all implied facts}\label{line:implicants}
-    add $(E, S, A)$ to Candidates
+    $S \gets \allconstraints \cap X$\tcp*{\small constraints used}
+    $N \gets$ propagate$(E \wedge S)$\tcp*{\small all implied facts}\label{line:implicants}
+    add $(E, S, N)$ to Candidates
   }
   \Return{Candidates}
-  \caption{candidate-explanations$(I,C)$}
+  \caption{candidate-explanations$(I,\allconstraints)$}
 
   \label{alg:cand}
 \end{algorithm}
@@ -79,7 +79,7 @@ We use Algorithm~\ref{alg:cand} to generate candidate explanations, but in gener
 
 To guide the search to cost-minimal MUS's, we use the observation that typically a small (1 to a few) number of constraints is sufficient to explain the reasoning. A small number of constraints is also preferred in terms of easy to understand explanations, and hence have a lower cost. For this reason, we will  not call \textit{candidate-explanations} with the full set of constraints \allconstraints, but we will iteratively grow the number of constraints used.
 
-We make one further assumption to ensure that we do not have to search for candidates for all possible subsets of constraints. The assumption is that we have an optimistic estimate $g$ that maps a subset $S$ of $T_P$ \emilio{\allconstraints all constraints ? } to a real number such that  $\forall E, N, S: g(S) \leq f(E, S, N)$. This is for example the case if $f$ is an additive function, such as $f(E, S, N) = f_1(E) + f_2(S) + f_3(N)$ where $g(S) = f_2(S)$ assuming $f_1$ and $f_3$ are always positive.
+We make one further assumption to ensure that we do not have to search for candidates for all possible subsets of constraints. The assumption is that we have an optimistic estimate $g$ that maps a subset $S$ of $\allconstraints$ to a real number such that  $\forall E, N, S: g(S) \leq f(E, S, N)$. This is for example the case if $f$ is an additive function, such as $f(E, S, N) = f_1(E) + f_2(S) + f_3(N)$ where $g(S) = f_2(S)$ assuming $f_1$ and $f_3$ are always positive.
 
 We can then search for the smallest explanation among the candidates found, by searching among increasingly worse scoring $S$ as shown in Algorithm~\ref{alg:minexpl}. This is the algorithm called by the iterative sequence generation (Algorithm \ref{alg:main}).
 
@@ -89,22 +89,22 @@ We can then search for the smallest explanation among the candidates found, by s
   \SetKw{Break}{break}
 
 
-  \Input{A partial interpretation $I$ and a set of constraints $C$}
+  \Input{A partial interpretation $I$ and a set of constraints $\allconstraints$}
   $\mathit{best}\gets none$\;
-  \For{$S \subseteq C$ ordered ascending by $g(S)$}{ \label{alg:min:for}
-    \If{$best\neq none\wedge g(S) > f(\mathit{best})$ }{
+  \For{$S \subseteq \allconstraints$ ordered ascending by $g(S)$}{ \label{alg:min:for}
+    \If{$best\neq none$ {\bf and} $g(S) > f(\mathit{best})$ }{
       \Break\;}
     cand $\gets$ best explanation from candidate-explanations$(I, S)$\;
-        \If{$\mathit{best} = none \vee f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\; \label{alg:min:gets}}
+        \If{$\mathit{best} = none$ {\bf or} $f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\; \label{alg:min:gets}}
   }
    \Return{$\mathit{best}$}
-  \caption{min-explanation$(I,C)$}
+  \caption{min-explanation$(I,\allconstraints)$}
   \label{alg:minexpl}
 \end{algorithm}
 
-Every time \textit{min-explanation$(I,C)$} is called with an updated partial interpretation $I$ the explanations should be regenerated. The reason is that for some derivable facts $a$, there may now be a much easier and cost-effective explanation of that fact.
+Every time \textit{min-explanation$(I,\allconstraints)$} is called with an updated partial interpretation $I$ the explanations should be regenerated. The reason is that for some derivable facts $n$, there may now be a much easier and cost-effective explanation of that fact.
 There is one benefit in caching the \textit{Candidates} across the different iterations, and that is that in a subsequent call, the cost of the most cost-effective explanation that is still applicable can be used as a lower bound to start from.
-Furthermore, in practice, we cache all candidates and when we (re)compute a MUS for a fact $a$, we only store it if it is more cost-effective than the best one we have previously found for that fact, across the different iterations.
+Furthermore, in practice, we cache all candidates and when we (re)compute a MUS for a fact $n$, we only store it if it is more cost-effective than the best one we have previously found for that fact, across the different iterations.
 
 
 \subsection{Searching nested explanations}
@@ -119,7 +119,7 @@ The only difference is that after computing each explanation step, also a call t
 
 The computation of a nested explanation as described in Algorithm~\ref{alg:nested-explanation} also reuses \textit{min-explanation}; but, the main differences with the high level explanation generating algorithm come from the fact that the search space for next easiest explanation-step is bounded by \emph{(i)} the input explanation: it can use only constraints (and facts) from the original explanation, and \emph{(ii)} the cost of the higher-level explanation is an upper bound on the acceptable costs at the nested level. 
 
-Given an explanation step $(E, S, N)$ and new information $n_i \in N$ for which we want more explanations, Algorithm~\ref{alg:nested-explanation} first constructs a partial interpretation $I'$ formed by the facts in $E$ and the negated new fact $n_i$. 
+Given an explanation step $(E, S, N)$ and new information $n \in N$ for which we want more explanations, Algorithm~\ref{alg:nested-explanation} first constructs a partial interpretation $I'$ formed by the facts in $E$ and the negated new fact $n$. 
 Then, we gradually build the sequence by adding the newly found explanations $(E', S', N')$ as long as the interpretation is consistent and the explanation is easier than explanation step $(E, S, N)$ (this is in line with Definition~\ref{def:nested-problem} and serves to avoid that the nested explanation is simply a single-step explanation that is equally difficult as the original step.  
 
 While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line \ref{ifcheck}. This check is present to avoid that the nested explanation is as difficult as the high-level step it aims to clarify. This check can kick in for two different reasons. The first reason is that the explanation stap at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure \ref{fig:zebrascreen} is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult as the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain those steps. 
@@ -156,13 +156,13 @@ While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation 
   \SetKw{Break}{break}
 
 
-  \Input{A partial interpretation $I$ and a set of constraints $C$}
+  %\Input{A partial interpretation $I$ and a set of constraints $C$} WRONG?
   %  \begin{algorithmic}
-    $nested\_explanations \gets$ empty collection of sequences\tcp*{ \emilio{check if notation ok}} 
-  \For{$n_i \in N$}{
+    $nested\_explanations \gets$ empty set\;
+  \For{$n \in N$}{
     $store \gets true$\;
     $nested\_seq \gets$ empty sequence\;
-    $I' \gets E \wedge \neg \{n_i\} $ \;
+    $I' \gets E \wedge \neg \{n\} $ \;
     \While{consistent($I'$)}{
       $(E', S', N') \gets $min-explanation$(I', S)$\;
       \If{$f(E', S', N') \geq f(E,S,N)$ \label{ifcheck}}{
@@ -172,7 +172,7 @@ While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation 
       $I' \gets I' \cup N'$\;
 
     }
-    \If{$store$}{
+    \If{$store$}{\tcp{\small only when all steps simpler than (E,S,N)}
       append $nested\_seq$ to $nested\_explanations$\;}
   }
   \Return $nested\_explanations$

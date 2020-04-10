@@ -1,18 +1,21 @@
-In this paper, we formally defined the problem of step-wise explanation generation and presented a generic algorithm for solving this problem. 
-We implemented this algorithm in the context of logic grid puzzles, where we start from natural language clues and provide a human-friendly explanation in the form of a visualisation.
-We used this implementation to investigate puzzle properties and difficulty. 
+In this paper, we formally defined the problem of step-wise explanation generation for satisfaction problems, as well as presenting a generic algorithm for solving the problem. We extended the mechanism so that it can be used in a \textit{nested} way, to further explain an explanation.
+We developed algorithm in the context of logic grid puzzles where we start from natural language clues and provide a human-friendly explanation in the form of a visualisation.
+%We used this implementation to investigate puzzle properties and difficulty. 
 
 The main bottleneck of the current algorithm is the many calls to MUS, which is a hard problem by itself. 
-Therefore, in future work we want to investigate unsat-core \emph{optimization} with respect to a cost-function, either by taking inspiration for instance from the MARCO algorithm~\cite{liffiton2013enumerating} but adapting it to prune based on cost-functions instead of subset-minimality, or alternatively by reduction to QBF \cite{QBF}.\emilio{put the ignatiev smallest mus? \cite{ignatiev2015smallest}}
+Therefore, in future work we want to investigate unsat-core \emph{optimization} with respect to a cost-function, either by taking inspiration for instance from the MARCO algorithm~\cite{liffiton2013enumerating} but adapting it to prune based on cost-functions instead of subset-minimality, or alternatively by reduction to QBF \cite{QBF} %.\emilio{put the ignatiev smallest mus? \cite{ignatiev2015smallest}} No, don't want to give it away...
 
 Secondly, we want to dig deeper into the question \emph{what constitutes an understandable explanations for humans}, either by optimizing the entire sequence instead of step by step, by learning the cost function based on user traces, or by reusing our developed algorithms to explain reasoning steps in more detail and as such develop an explanation mechanism that operates at different levels of abstraction. 
-To illustrate this last point: in the setting of very difficult puzzles, some of the explanation steps still require some effort to understand. 
-When explained by a human, this is often done using some form of proof by contradiction using an explanation of the form ``suppose this [the derived fact] would not hold, then [some simpler reasoning steps], which is not possible''. This is also how we explained Figure \ref{fig:pasta_diff} at the end of Section \ref{sec:nested-explanation}.
-This explanation process is of \emph{exactly the same form} as what we generate now. The only difference is that $I_0$ is not the empty interpretation, but one in which a wrong value is assigned. 
+Our nested explanations can also be seen as a form of abstraction. More work can be done on further grouping steps, or refining steps, based on feedback of what the user finds \textit{useful}.
+%To illustrate this last point: in the setting of very difficult puzzles, some of the explanation steps still require some effort to understand. 
+%When explained by a human, this is often done using some form of proof by contradiction using an explanation of the form ``suppose this [the derived fact] would not hold, then [some simpler reasoning steps], which is not possible''. This is also how we explained Figure \ref{fig:pasta_diff} at the end of Section \ref{sec:nested-explanation}.
+%This explanation process is of \emph{exactly the same form} as what we generate now. The only difference is that $I_0$ is not the empty interpretation, but one in which a wrong value is assigned. 
 
-A final direction for future work is to make our approach interactive, essentially allowing \ourtool to be called \emph{while} a user is solving the puzzle and to implement in more serious domains such as for instance interactive configuration in which a human and a search engine cooperate to solve some configuration problem and the human can often be interested in understanding \emph{why} the system did certain derivations \cite{DBLP:journals/tplp/HertumDJD17,DBLP:conf/bnaic/CarbonnelleADVD19}. 
+From a systems point of view, a direction for future work is to make our approach interactive, essentially allowing \ourtool to be called \emph{while} a user is solving the puzzle and to implement in more serious domains such as for instance interactive configuration in which a human and a search engine cooperate to solve some configuration problem and the human can often be interested in understanding \emph{why} the system did certain derivations \cite{DBLP:journals/tplp/HertumDJD17,DBLP:conf/bnaic/CarbonnelleADVD19}. 
 
-\tias{tias adds future work}
+Finally, we wish to extend the approach so that it is also applicable to \textit{optimisation problems}. An additional challenge is explaining \textit{search} choices on top of propagation steps as we do in this work. Many open questions remain, but key concepts such as a sequence of simple steps and searching for simple explanations based on explanations of individual facts offer interesting starting points.
+
+%\tias{tias adds future work}
 
 % 
 % \todo{add some observations for future work:

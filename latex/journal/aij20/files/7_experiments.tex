@@ -26,39 +26,39 @@ Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb m
 \myparagraph{Sequence composition}
 We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The first column is the puzzle identifier, where the puzzle identified as p is the pasta puzzle, our running example. 
 % The next column shows the configuration of the puzzle as a tuple of 3 numbers: the number of types (e.g. person, sauce); the number of entities of each type; and the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(\emptyset, \allconstraints)$.
-\emilio{hard to fit everything inside ...}
+%\emilio{hard to fit everything inside ...}
 The next 3 columns show properties of the puzzle:
 $|type|$ is the number of types (e.g. person, sauce) while $|dom|$ is the number of entities of each type and $|grid|$ is the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(\emptyset, \allconstraints)$.
 Coincidentally, almost all the puzzles have 4 types with domain size 5,  hence 150 cells, except for the pasta puzzle which has a domain size of 4, thus 96 cells.
 
 Columns 5 and 6 show the amount of steps ($\# steps$) in the explanation sequences found, and $\overline{cost}$ is the average cost of an explanation step in the puzzle. The number of inference steps is around 110-120 for all but the pasta puzzle, which is related to the grid size.
 
-\begin{table}[h]
+\begin{table}[t]
 	\centering
 	% \resizebox{\textwidth}{!}{%
 	\begin{tabular}{c|ccc|cc|cccccc}
 		\textbf{p} & \textbf{$|$types$|$} & \textbf{$|$dom$|$} & \textbf{$|$grid$|$} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+i.}  & \textbf{mult i.} & \textbf{mult c.} \\\hline
-		1 &       4 &            5 &         150 &    112 &      27.06 &  31.25\% &  50.00\% &    0.89\% &        17.85\%   &  0.00\%  &  0.00\%  \\
-		2 &       4 &            5 &         150 &    119 &      27.77 &  23.53\% &  57.14\% &    1.68\% &        17.64\%   &  0.00\%  &  0.00\%  \\
-		3 &       4 &            5 &         150 &    110 &      23.93 &  32.73\% &  51.82\% &    0.00\% &        15.46\%   &  0.00\%  &  0.00\%  \\
-		4 &       4 &            5 &         150 &    115 &      24.54 &  27.83\% &  55.65\% &    2.61\% &        13.92\%   &  0.00\%  &  0.00\%  \\
-		5 &       4 &            5 &         150 &    122 &      24.97 &  24.59\% &  59.02\% &    0.82\% &        15.58\%   &  0.00\%  &  0.00\%  \\
-		6 &       4 &            5 &         150 &    115 &      22.58 &  26.96\% &  58.26\% &    2.61\% &        12.18\%   &  0.00\%  &  0.00\%  \\
-		7 &       4 &            5 &         150 &    110 &      26.79 &  35.45\% &  46.36\% &    0.91\% &        17.27\%   &  0.00\%  &  0.00\%  \\
-		8 &       4 &            5 &         150 &    118 &      26.81 &  33.90\% &  47.46\% &    3.39\% &        15.25\%   &  0.00\%  &  0.00\%  \\
-		9 &       4 &            5 &         150 &    114 &      24.75 &  28.95\% &  54.39\% &    3.51\% &        13.16\%   &  0.00\%  &  0.00\%  \\
-		p &       4 &            4 &          96 &     83 &      34.45 &  33.73\% &  40.96\% &    1.20\% &        21.69\%   &  2.41\%  &  0.00\%
+		1 &       4 &            5 &         150 &    112 &      27.06 &  31.25\% &  50.00\% &    0.89\% &        17.85\%   &  0\%  &  0\%  \\
+		2 &       4 &            5 &         150 &    119 &      27.77 &  23.53\% &  57.14\% &    1.68\% &        17.64\%   &  0\%  &  0\%  \\
+		3 &       4 &            5 &         150 &    110 &      23.93 &  32.73\% &  51.82\% &    0\% &        15.46\%   &  0\%  &  0\%  \\
+		4 &       4 &            5 &         150 &    115 &      24.54 &  27.83\% &  55.65\% &    2.61\% &        13.92\%   &  0\%  &  0\%  \\
+		5 &       4 &            5 &         150 &    122 &      24.97 &  24.59\% &  59.02\% &    0.82\% &        15.58\%   &  0\%  &  0\%  \\
+		6 &       4 &            5 &         150 &    115 &      22.58 &  26.96\% &  58.26\% &    2.61\% &        12.18\%   &  0\%  &  0\%  \\
+		7 &       4 &            5 &         150 &    110 &      26.79 &  35.45\% &  46.36\% &    0.91\% &        17.27\%   &  0\%  &  0\%  \\
+		8 &       4 &            5 &         150 &    118 &      26.81 &  33.90\% &  47.46\% &    3.39\% &        15.25\%   &  0\%  &  0\%  \\
+		9 &       4 &            5 &         150 &    114 &      24.75 &  28.95\% &  54.39\% &    3.51\% &        13.16\%   &  0\%  &  0\%  \\
+		p &       4 &            4 &          96 &     83 &      34.45 &  33.73\% &  40.96\% &    1.20\% &        21.69\%   &  2.41\%  &  0\%
 	\end{tabular}
 	% }
 	\caption{Properties of the puzzles, explanation sequences and constraints used in the explanations.}
 	\label{table:composition}
 \end{table}
 
-The rest of the columns investigate the proportion of inference steps in the explanation sequence, e.g. the trivia steps using just one bijection constraint (\textbf{1 bij.}), one transitivity constraint (\textbf{1 trans.}) or one clue (\textbf{1 clue}) and no other constraints; and the more complex inference steps using one clue and some implicit (bijectivity or transitivity) constraint (\textbf{1 clue+i}), multiple implicit constraints (\textbf{mult i.}). 
+The rest of the columns investigate the proportion of inference steps in the explanation sequence, e.g. the trivial steps using just one bijection constraint (\textbf{1 bij.}), one transitivity constraint (\textbf{1 trans.}) or one clue (\textbf{1 clue}) and no other constraints; and the more complex inference steps using one clue and some implicit (bijectivity or transitivity) constraint (\textbf{1 clue+i}), multiple implicit constraints (\textbf{mult i.}). 
 % Therefore, we omit reporting multiple clues with other constraints. 
 We can observe that around 30\% of steps are simple bijectivity steps (e.g. completing a row or column in one relation), around 50\% are transitivity steps (except for the pasta puzzle) and up to 3 \% use just a single clue. 
 The majority of the steps involving clues use a more complex combination of a clue with other constraints. 
-We see that while our method can combine multiple clues, the explanations generated never require combining multiple clues in one inference step, that is, the method always find simpler steps involving just one clue. 
+We see that while our method can combine multiple clues, the explanations generated never require combining multiple clues in one inference step (\textbf{mult c.} always 0), that is, the method always find simpler steps involving just one clue. 
 Also notably, the puzzles from the booklet never require combining implicit constraints, while the harder pasta puzzle does. 
 In general, less then $1/5$th of the explanations actually need to use a clue or a combination of a clue and implicit constraints.
 Note that however, for puzzle 3, it is not possible to find new facts based on clue information only, it has to be combined with 1 or multiple constraints.
@@ -92,21 +92,21 @@ The rest of the columns take a closer look at the number of facts used when the 
 The puzzles 1, 2, 9 and pasta require the use of 3 facts or more together with a clue corresponding to the puzzles with the highest amounts of clues with implicit constraints. Only puzzle 1 requires clues to be combined with more than 3 facts.
 Even though puzzle 9 has a lower cost, the fact it uses more than 3 facts combined with a clue is linked to a complex clue formulation.
 
-\begin{table}[h]
+\begin{table}[t]
 	\centering
 	\begin{tabular}{l|c|cccc|ccccc}
 		& \multicolumn{5}{c|}{\bf average nr. of facts used} & \multicolumn{5}{c}{\bf \% of explanations with a clue that use \# facts}                                                                                \\
 		p & all &  Bij. & Trans. &  Clue & multi i. & 0 facts & 1 facts & 2 facts & 3 facts & $>$3 facts \\\hline
-		1 &  1.84 &  2.37 &   2.00 &  0.52 &        - &  66.67\% &  28.57\% &   0.00\% &   0.00\% &    4.76\% \\
-		2 &  1.85 &  2.50 &   2.00 &  0.61 &        - &  47.83\% &  47.83\% &   0.00\% &   4.35\% &    0.00\% \\
-		3 &  1.84 &  2.33 &   2.00 &  0.24 &        - &  82.35\% &  11.76\% &   5.88\% &   0.00\% &    0.00\% \\
-		4 &  1.89 &  2.50 &   2.00 &  0.47 &        - &  68.42\% &  15.79\% &  15.79\% &   0.00\% &    0.00\% \\
-		5 &  1.85 &  2.50 &   2.00 &  0.35 &        - &  65.00\% &  35.00\% &   0.00\% &   0.00\% &    0.00\% \\
-		6 &  1.84 &  2.35 &   2.00 &  0.29 &        - &  76.47\% &  17.65\% &   5.88\% &   0.00\% &    0.00\% \\
-		7 &  1.88 &  2.31 &   2.00 &  0.75 &        - &  55.00\% &  25.00\% &  10.00\% &  10.00\% &    0.00\% \\
-		8 &  1.86 &  2.58 &   2.00 &  0.18 &        - &  81.82\% &  18.18\% &   0.00\% &   0.00\% &    0.00\% \\
-		9 &  1.85 &  2.45 &   2.00 &  0.32 &        - &  78.95\% &  15.79\% &   0.00\% &   5.26\% &    0.00\% \\
-		p &  1.73 &  2.07 &   2.00 &  0.53 &     4.00 &  68.42\% &  21.05\% &   0.00\% &  10.53\% &    0.00\% \\
+		1 &  1.84 &  2.37 &   2.00 &  0.52 &        - &  66.67\% &  28.57\% &   0\% &   0\% &    4.76\% \\
+		2 &  1.85 &  2.50 &   2.00 &  0.61 &        - &  47.83\% &  47.83\% &   0\% &   4.35\% &    0\% \\
+		3 &  1.84 &  2.33 &   2.00 &  0.24 &        - &  82.35\% &  11.76\% &   5.88\% &   0\% &    0\% \\
+		4 &  1.89 &  2.50 &   2.00 &  0.47 &        - &  68.42\% &  15.79\% &  15.79\% &   0\% &    0\% \\
+		5 &  1.85 &  2.50 &   2.00 &  0.35 &        - &  65.00\% &  35.00\% &   0\% &   0\% &    0\% \\
+		6 &  1.84 &  2.35 &   2.00 &  0.29 &        - &  76.47\% &  17.65\% &   5.88\% &   0\% &    0\% \\
+		7 &  1.88 &  2.31 &   2.00 &  0.75 &        - &  55.00\% &  25.00\% &  10.00\% &  10.00\% &    0\% \\
+		8 &  1.86 &  2.58 &   2.00 &  0.18 &        - &  81.82\% &  18.18\% &   0\% &   0\% &    0\% \\
+		9 &  1.85 &  2.45 &   2.00 &  0.32 &        - &  78.95\% &  15.79\% &   0\% &   5.26\% &    0\% \\
+		p &  1.73 &  2.07 &   2.00 &  0.53 &     4.00 &  68.42\% &  21.05\% &   0\% &  10.53\% &    0\% \\
 	\end{tabular}
 	\caption{Statistics on number of previously derived facts $|E|$ used in the explanation steps.
 	%\tias{pls change order to: all, bij. trans. clue, m-i}
@@ -124,7 +124,7 @@ Altogether clues with 0 or 1 facts form more than 80 \% of the explanations usin
 
 \myparagraph{Nested explanations}
 
-We first investigate the explanation cost of the different steps in an explanation sequence, and which ones we can find a nested explanation for. 
+We next investigate the explanation cost of the different steps in an explanation sequence, and which ones we can find a nested explanation for. 
 Figure \ref{fig:steps}, right side, shows for a few puzzles the explanation cost of each explanation step; for each step it is also indicated whether or not a nested explanation can be found (those where one was found are indicated by a dot in the figure). 
 The first observation we can draw from the side-by-side figures, is peaks with nested explanations (on the right) overcome with almost all peaks on the left. Simply put, for each of the non-trivial explanations, we are most often able to find a nested explanation that can provide a more detailed explanation using contradiction. 
 Secondly, we observe that the highest cost steps involve more than one constraint: either a clue and some implicit constraints, or a combination of implicit constraints (only in the pasta puzzle). 
@@ -133,75 +133,6 @@ The harder pasta puzzle also has a higher average cost, as was already reported 
 As the explanation sequence progresses, the cost of difficult explanation steps also increases, meaning that we can find easy explanations in the beginning, but we will require more complex reasoning to find new facts that unlock more simpler steps afterwards. 
 This is especially visible from the trend line that fits all each puzzle's nested explanation dots on the right side of Figure \ref{fig:steps}. 
 % \bart{Kunnen we iets zeggen over of dat voor ALLE puzzels zo was, niet enkel 1 2 en 5 en pasta? Bijvoorbeeld ergens een kolom ``duurste explanation waar geen nested explanation voor was''. Of zoiets?}
-
-%for each step the decomposition of the type of inference used on the left and the explanation cost with the steps highlighted for which there exists 1 or more nested explanation sequences for puzzles 1,2, 5 and the pasta puzzle.
-%The puzzles are chosen due to their higher content of nested explanation steps. 
-%We see that for most of the clues involving implicit there exists a nested explanation. 
-%This suggests that as we guide our explanation sequence according to the \textit{max} aggregator, there is a possibility of generating a sequences of explanations that is easier according to another aggregator (e.g \textit{average}).
-%% Tias finds the above to raise more questions than providing answers
-
-
-\begin{table}[t]
-	\centering
-	\begin{tabular}{c|c|ccc|c|ccccc}
-		& &  \multicolumn{3}{c|}{\textbf{\% steps with nested}} & \multicolumn{1}{c|}{\textbf{average}} & \multicolumn{5}{c}{\textbf{Composition of nested explanation }}\\
-		\textbf{p} & \textbf{\# steps } & \textbf{all}     & \textbf{clue+i.} & \textbf{m-i}          & \textbf{nested steps} & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+i.} & \textbf{mult i.} \\ \hline
-		1 &      112 &  14.29\% &  100.00\% &  0.00\% &         2.94 &  36.99\% &   32.88\% &  12.33\% &    17.81\% &    0.00\% \\
-		2 &      119 &  14.29\% &  100.00\% &  0.00\% &         2.65 &  48.28\% &   10.34\% &  20.69\% &    20.69\% &    0.00\% \\
-		3 &      110 &   7.27\% &  100.00\% &  0.00\% &         2.00 &  50.00\% &    0.00\% &   0.00\% &    50.00\% &    0.00\% \\
-		4 &      115 &  13.04\% &  100.00\% &  0.00\% &         4.04 &  40.26\% &   29.87\% &  20.78\% &     9.09\% &    0.00\% \\
-		5 &      122 &  13.11\% &  100.00\% &  0.00\% &         2.29 &  47.83\% &    0.00\% &   8.70\% &    43.48\% &    0.00\% \\
-		6 &      115 &  10.43\% &  100.00\% &  0.00\% &         2.56 &  50.00\% &    8.00\% &  20.00\% &    22.00\% &    0.00\% \\
-		7 &      110 &  15.45\% &  100.00\% &  0.00\% &         3.29 &  37.50\% &   32.69\% &  18.27\% &    11.54\% &    0.00\% \\
-		8 &      118 &   9.32\% &  100.00\% &  0.00\% &         2.36 &  43.75\% &    9.38\% &  25.00\% &    21.88\% &    0.00\% \\
-		9 &      114 &  10.53\% &  100.00\% &  0.00\% &         3.50 &  31.25\% &   28.12\% &  20.31\% &    20.31\% &    0.00\% \\
-		p &       83 &  16.87\% &   90.48\% &  9.52\% &         3.07 &  48.44\% &   20.31\% &   7.81\% &    17.19\% &    6.25\% \\
-	\end{tabular}
-	\caption{Properties of the nested explanations.}
-	\label{table:nested_explanation}
-\end{table}
-
-We now have a closer look at the composition of these nested explanations in Table~\ref{table:nested_explanation}.
-When looking at the percentage of reasoning steps that have a nested explanation, we see that only a fraction of all steps have a nested explanation. 
-As the figures already indicated, when looking at the non-trivial steps, we see that for all of those our method is able to generate a nested sequence that explains the reasoning step using contradiction. 
-% \bart{ en toch heb je bij pasta 75procent vs 25 procent. Dat zou betekenen dat er maar drie clue+i constraints zijn waarvoor nested wordt gemaakt? Ik snap die table niet goed..}
-
-%The first block in the table after the puzzle identifier depicts the number of steps in the explanation sequence and percentage of steps for which there exist nested explanation sequences, $\%$ \textit{nested steps}. 
-%In fact, when combining the average cost of an explanation step in table \ref{table:composition} with the percentage of nested explanation steps, there appears to be a clear correlation between the difficulty of the puzzle and the amount of nested epxlanations generated. This is especially true for puzzles 2 and pasta.
-% % but is always near 100\%?
-
-%In the second block, the explanation for the steps with nested explanations is mostly a combination of clues with 1 or more implicit constraints except for the pasta puzzle, the only puzzle requiring combinations of implicit constraints.
-
-When looking at the number of steps in a nested sequence, we see that the nested explanations are rather small: from 2 to 4 steps.
-% Especially puzzles 4 and 7 have higher number of steps in their nested explanations.
-%In the third part of the table, $\#$ \textit{n.-e. steps} represents the average length of an explanation sequence. Surprisingly, puzzles 4 and 7 have a very high number of (not always useful) explanations in the nested explanation sequences. We refer back to observation 4 in section \ref{sec:zebra} for complementary explanations. 
-The subsequent columns in the table show the composition of the nested explanations, in terms of the types of constraints used. 
-The majority of those are simple steps involving just a single constraint (a single bijectivity, transitivity or clue). 
-Interestingly, even in nested explanations which typically explain a '1 clue+i.' step, the nested explanation also has a step involving a clue and at least one other implicit constraint. 
-Detailed inspection showed this was typically the final step, which is a contradiction in the clue as in Figure~\ref{fig:pasta_diff}. 
-
-%The last section of the table focuses on the composition of the nested explanations. 
-%There is still a high number of explanations that require the use clues combined with implicit constraints. 
-
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=.6\textwidth]{figures/violin_plot.pdf}
-	\caption{Distribution of the ratio of the cost of a nested explanation sequence step and the cost of original explanation step for all puzzles}
-	% \todo{Y AXIS VALUES? WHERE IS ONE?}
-	% \todo{This figure is suddenly twice in here.}
-	\label{fig:experiments:violin}
-\end{figure}
-
-
-We can further look at the \textit{cost} of the different steps in a nested explanation, which we use as a proxy for difficulty of the steps. 
-Figure \ref{fig:experiments:violin} displays a violin plot of the ratio of the cost of a nested step divided by the cost of the original parent step that it is contributing to explain. 
-Note that by Definition~\ref{def:nested-problem}, a step in a nested explanation can never be as costly or more costly than its parent step.
-%tnested step costs to its  its original explanation step cost. 
-%In other words, there are still explanations in the nested sequence that have a cost close to the original explanation step for which a further decomposition in nested sequences or another easier sequence could be generated. 
-The figure shows us that there are many steps with a cost of only a fraction of the parent step (near 0-10\% of the original cost), but also some steps closer but still a bit simpler than the parent step. 
-Due to the construction of the cost function in Section~\ref{sec:zebra}, this means it typically involves fewer previously derived facts, which should make it easier to understand. 
-%The odd-one out is puzzle \textbf{the middle one}, which \tias{Needs explanation, Emilio?} \bart{Looks very strange to me. }.
-
 
 
 \begin{figure}[t!]
@@ -245,21 +176,92 @@ Due to the construction of the cost function in Section~\ref{sec:zebra}, this me
 		\caption{Side-by-side comparison of puzzle composition (left) and puzzle complexity with nested explanation steps highlighted (right)}
 		\label{fig:steps}
 \end{figure}
+
+%for each step the decomposition of the type of inference used on the left and the explanation cost with the steps highlighted for which there exists 1 or more nested explanation sequences for puzzles 1,2, 5 and the pasta puzzle.
+%The puzzles are chosen due to their higher content of nested explanation steps. 
+%We see that for most of the clues involving implicit there exists a nested explanation. 
+%This suggests that as we guide our explanation sequence according to the \textit{max} aggregator, there is a possibility of generating a sequences of explanations that is easier according to another aggregator (e.g \textit{average}).
+%% Tias finds the above to raise more questions than providing answers
+
+
+\begin{table}[t]
+	\centering
+	\begin{tabular}{c|c|ccc|c|ccccc}
+		& &  \multicolumn{3}{c|}{\textbf{\% steps with nested among}} & \multicolumn{1}{c|}{\textbf{average steps}} & \multicolumn{5}{c}{\textbf{Composition of nested explanation }}\\
+		\textbf{p} & \textbf{\# steps } & \textbf{all}     & \textbf{clue+i.} & \textbf{m-i}          & \textbf{nested expl.} & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+i.} & \textbf{mult i.} \\ \hline
+		1 &      112 &  14.29\% &  100\% &  - &         2.94 &  36.99\% &   32.88\% &  12.33\% &    17.81\% &    0\% \\
+		2 &      119 &  14.29\% &  100\% &  - &         2.65 &  48.28\% &   10.34\% &  20.69\% &    20.69\% &    0\% \\
+		3 &      110 &   7.27\% &  100\% &  - &         2.00 &  50.00\% &    0\% &   0\% &    50.00\% &    0\% \\
+		4 &      115 &  13.04\% &  100\% &  - &         4.04 &  40.26\% &   29.87\% &  20.78\% &     9.09\% &    0\% \\
+		5 &      122 &  13.11\% &  100\% &  - &         2.29 &  47.83\% &    0\% &   8.70\% &    43.48\% &    0\% \\
+		6 &      115 &  10.43\% &  100\% &  - &         2.56 &  50.00\% &    8.00\% &  20.00\% &    22.00\% &    0\% \\
+		7 &      110 &  15.45\% &  100\% &  - &         3.29 &  37.50\% &   32.69\% &  18.27\% &    11.54\% &    0\% \\
+		8 &      118 &   9.32\% &  100\% &  - &         2.36 &  43.75\% &    9.38\% &  25.00\% &    21.88\% &    0\% \\
+		9 &      114 &  10.53\% &  100\% &  - &         3.50 &  31.25\% &   28.12\% &  20.31\% &    20.31\% &    0\% \\
+		p &       83 &  16.87\% &   90.48\% &  9.52\% &         3.07 &  48.44\% &   20.31\% &   7.81\% &    17.19\% &    6.25\% \\
+	\end{tabular}
+	\caption{Properties of the nested explanations. \tias{should be 100\% on last line for nested among? at least for m-i I guess?}}
+	\label{table:nested_explanation}
+\end{table}
+
+We now have a closer look at the composition of these nested explanations in Table~\ref{table:nested_explanation}.
+When looking at the percentage of reasoning steps that have a nested explanation, we see that only a fraction of all steps have a nested explanation. 
+As the figures already indicated, when looking at the non-trivial steps, we see that for all of those our method is able to generate a nested sequence that explains the reasoning step using contradiction. 
+% \bart{ en toch heb je bij pasta 75procent vs 25 procent. Dat zou betekenen dat er maar drie clue+i constraints zijn waarvoor nested wordt gemaakt? Ik snap die table niet goed..}
+
+%The first block in the table after the puzzle identifier depicts the number of steps in the explanation sequence and percentage of steps for which there exist nested explanation sequences, $\%$ \textit{nested steps}. 
+%In fact, when combining the average cost of an explanation step in table \ref{table:composition} with the percentage of nested explanation steps, there appears to be a clear correlation between the difficulty of the puzzle and the amount of nested epxlanations generated. This is especially true for puzzles 2 and pasta.
+% % but is always near 100\%?
+
+%In the second block, the explanation for the steps with nested explanations is mostly a combination of clues with 1 or more implicit constraints except for the pasta puzzle, the only puzzle requiring combinations of implicit constraints.
+
+When looking at the number of steps in a nested sequence, we see that the nested explanations are rather small: from 2 to 4 steps.
+% Especially puzzles 4 and 7 have higher number of steps in their nested explanations.
+%In the third part of the table, $\#$ \textit{n.-e. steps} represents the average length of an explanation sequence. Surprisingly, puzzles 4 and 7 have a very high number of (not always useful) explanations in the nested explanation sequences. We refer back to observation 4 in section \ref{sec:zebra} for complementary explanations. 
+The subsequent columns in the table show the composition of the nested explanations, in terms of the types of constraints used. 
+The majority of those are simple steps involving just a single constraint (a single bijectivity, transitivity or clue). 
+Interestingly, even in nested explanations which typically explain a '1 clue+i.' step, the nested explanation also has a step involving a clue and at least one other implicit constraint. 
+Detailed inspection showed this was typically the final step, which is a contradiction in the clue as in Figure~\ref{fig:pasta_diff}. 
+
+%The last section of the table focuses on the composition of the nested explanations. 
+%There is still a high number of explanations that require the use clues combined with implicit constraints. 
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=.6\textwidth]{figures/violin_plot.pdf}
+	\caption{Distribution of the ratio of the cost of a nested explanation sequence step and the cost of original explanation step for all puzzles}
+	% \todo{Y AXIS VALUES? WHERE IS ONE?}
+	% \todo{This figure is suddenly twice in here.}
+	\label{fig:experiments:violin}
+\end{figure}
+
+
+We can further look at the \textit{cost} of the different steps in a nested explanation, which we use as a proxy for difficulty of the steps. 
+Figure \ref{fig:experiments:violin} displays a violin plot of the ratio of the cost of a nested step divided by the cost of the original parent step that it is contributing to explain; a wider region indicates a higher density of steps having that ratio. 
+Note that by Definition~\ref{def:nested-problem}, a step in a nested explanation can never be as costly or more costly than its parent step (always below the top orange line).
+%tnested step costs to its  its original explanation step cost. 
+%In other words, there are still explanations in the nested sequence that have a cost close to the original explanation step for which a further decomposition in nested sequences or another easier sequence could be generated. 
+The figure shows us that there are many steps with a cost of only a fraction of the parent step (near 0-10\% of the original cost), but also some steps closer but still a bit simpler than the parent step. 
+Due to the construction of the cost function in Section~\ref{sec:zebra}, this means it typically involves fewer previously derived facts, which should make it easier to understand. 
+%The odd-one out is puzzle \textbf{the middle one}, which \tias{Needs explanation, Emilio?} \bart{Looks very strange to me. }.
+
+
+
 % \begin{landscape}
 	% \begin{table}[t]
 		% 	\centering
 		% 	\begin{tabular}{c|cc|cc|c|ccccc}
 			% 		           &                    & \textbf{\% nested} & \multicolumn{2}{c|}{\textbf{\% non-trivial steps}} & \multicolumn{1}{c|}{\textbf{avg n.-e.}} & \multicolumn{5}{c}{\textbf{Composition of nested explanation (n.-e.)}}                                                                                       \\
 			% 		\textbf{p} & \textbf{\# steps } & \textbf{steps}     & \textbf{clues+i-c.}                                & \textbf{m-i}          & \textbf{\#steps}                  & \textbf{Bij.} & \textbf{Trans.} & \textbf{Clue} & \textbf{Clue+i-c.} & \textbf{m-i} \\\hline
-			% 		1 &      112 &  14.29\% &  100.00\% &  0.00\% &         3.00 &  36.99\% &   32.88\% &  12.33\% &    17.81\% &    0.00\% \\
-			% 		2 &      119 &  14.29\% &  100.00\% &  0.00\% &         3.00 &  48.28\% &   10.34\% &  20.69\% &    20.69\% &    0.00\% \\
-			% 		3 &      110 &   7.27\% &  100.00\% &  0.00\% &         2.00 &  50.00\% &    0.00\% &   0.00\% &    50.00\% &    0.00\% \\
-			% 		4 &      115 &  13.04\% &  100.00\% &  0.00\% &         4.00 &  40.26\% &   29.87\% &  20.78\% &     9.09\% &    0.00\% \\
-			% 		5 &      122 &  13.11\% &  100.00\% &  0.00\% &         2.00 &  47.83\% &    0.00\% &   8.70\% &    43.48\% &    0.00\% \\
-			% 		6 &      115 &  10.43\% &  100.00\% &  0.00\% &         3.00 &  50.00\% &    8.00\% &  20.00\% &    22.00\% &    0.00\% \\
-			% 		7 &      110 &  15.45\% &  100.00\% &  0.00\% &         3.00 &  37.50\% &   32.69\% &  18.27\% &    11.54\% &    0.00\% \\
-			% 		8 &      118 &   9.32\% &  100.00\% &  0.00\% &         2.00 &  43.75\% &    9.38\% &  25.00\% &    21.88\% &    0.00\% \\
-			% 		9 &      114 &  10.53\% &  100.00\% &  0.00\% &         4.00 &  31.25\% &   28.12\% &  20.31\% &    20.31\% &    0.00\% \\
+			% 		1 &      112 &  14.29\% &  100\% &  0\% &         3.00 &  36.99\% &   32.88\% &  12.33\% &    17.81\% &    0\% \\
+			% 		2 &      119 &  14.29\% &  100\% &  0\% &         3.00 &  48.28\% &   10.34\% &  20.69\% &    20.69\% &    0\% \\
+			% 		3 &      110 &   7.27\% &  100\% &  0\% &         2.00 &  50.00\% &    0\% &   0\% &    50.00\% &    0\% \\
+			% 		4 &      115 &  13.04\% &  100\% &  0\% &         4.00 &  40.26\% &   29.87\% &  20.78\% &     9.09\% &    0\% \\
+			% 		5 &      122 &  13.11\% &  100\% &  0\% &         2.00 &  47.83\% &    0\% &   8.70\% &    43.48\% &    0\% \\
+			% 		6 &      115 &  10.43\% &  100\% &  0\% &         3.00 &  50.00\% &    8.00\% &  20.00\% &    22.00\% &    0\% \\
+			% 		7 &      110 &  15.45\% &  100\% &  0\% &         3.00 &  37.50\% &   32.69\% &  18.27\% &    11.54\% &    0\% \\
+			% 		8 &      118 &   9.32\% &  100\% &  0\% &         2.00 &  43.75\% &    9.38\% &  25.00\% &    21.88\% &    0\% \\
+			% 		9 &      114 &  10.53\% &  100\% &  0\% &         4.00 &  31.25\% &   28.12\% &  20.31\% &    20.31\% &    0\% \\
 			% 		p &       83 &  16.87\% &   90.48\% &  9.52\% &         3.00 &  48.44\% &   20.31\% &   7.81\% &    17.19\% &    6.25\% \\
 		% 	\end{tabular}
 		% 	\caption{Puzzle explanation cost based on the cost function $f(I, C)$ and statistics on puzzle constraints}
@@ -322,16 +324,16 @@ Due to the construction of the cost function in Section~\ref{sec:zebra}, this me
 	% 	\begin{tabular}{c|c|cc|cccccc}
 		% 		\textbf{p} & \textbf{($|$types$|$, $|$dom$|$, $|$grid$|$)} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+1i. (+$>$1i.)} & \textbf{mult i.} & \textbf{mult c.} \\\hline
 		% 		% \textbf{p} & \textbf{$|$types$|$, $|$dom$|$, $|$grid$|$} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+1i.} & \textbf{1 clue+ $>$1i.} & \textbf{mult i.} & \textbf{mult c.} \\\hline
-		% 		1 &       (4, 5, 150) &    112 &      27.06 &  31.25\% &  50.00\% &         0.89\% &      7.14\%  (+10.71\% ) &  0.00\%  &  0.00\%  \\
-		% 		2 &       (4, 5, 150) &    119 &      27.77 &  23.53\% &  57.14\% &         1.68\% &      7.56\%  (+10.08\% ) &  0.00\%  &  0.00\%  \\
-		% 		3 &       (4, 5, 150) &    110 &      23.93 &  32.73\% &  51.82\% &         0.00\% &      2.73\%  (+12.73\% ) &  0.00\%  &  0.00\%  \\
-		% 		4 &       (4, 5, 150) &    115 &      24.54 &  27.83\% &  55.65\% &         2.61\% &      7.83\%  (+ 6.09\% ) &  0.00\%  &  0.00\%  \\
-		% 		5 &       (4, 5, 150) &    122 &      24.97 &  24.59\% &  59.02\% &         0.82\% &      4.10\%  (+11.48\% ) &  0.00\%  &  0.00\%  \\
-		% 		6 &       (4, 5, 150) &    115 &      22.58 &  26.96\% &  58.26\% &         2.61\% &      6.09\%  (+ 6.09\% ) &  0.00\%  &  0.00\%  \\
-		% 		7 &       (4, 5, 150) &    110 &      26.79 &  35.45\% &  46.36\% &         0.91\% &      8.18\%  (+ 9.09\% ) &  0.00\%  &  0.00\%  \\
-		% 		8 &       (4, 5, 150) &    118 &      26.81 &  33.90\% &  47.46\% &         3.39\% &      5.08\%  (+10.17\% ) &  0.00\%  &  0.00\%  \\
-		% 		9 &       (4, 5, 150) &    114 &      24.75 &  28.95\% &  54.39\% &         3.51\% &      3.51\%  (+ 9.65\% ) &  0.00\%  &  0.00\%  \\
-		% 		p &       (4, 4, 96\ ) &     83 &      34.45 &  33.73\% &  40.96\% &         1.20\% &      4.82\% (+ 16.87\%)  &  2.41\%  &  0.00\%
+		% 		1 &       (4, 5, 150) &    112 &      27.06 &  31.25\% &  50.00\% &         0.89\% &      7.14\%  (+10.71\% ) &  0\%  &  0\%  \\
+		% 		2 &       (4, 5, 150) &    119 &      27.77 &  23.53\% &  57.14\% &         1.68\% &      7.56\%  (+10.08\% ) &  0\%  &  0\%  \\
+		% 		3 &       (4, 5, 150) &    110 &      23.93 &  32.73\% &  51.82\% &         0\% &      2.73\%  (+12.73\% ) &  0\%  &  0\%  \\
+		% 		4 &       (4, 5, 150) &    115 &      24.54 &  27.83\% &  55.65\% &         2.61\% &      7.83\%  (+ 6.09\% ) &  0\%  &  0\%  \\
+		% 		5 &       (4, 5, 150) &    122 &      24.97 &  24.59\% &  59.02\% &         0.82\% &      4.10\%  (+11.48\% ) &  0\%  &  0\%  \\
+		% 		6 &       (4, 5, 150) &    115 &      22.58 &  26.96\% &  58.26\% &         2.61\% &      6.09\%  (+ 6.09\% ) &  0\%  &  0\%  \\
+		% 		7 &       (4, 5, 150) &    110 &      26.79 &  35.45\% &  46.36\% &         0.91\% &      8.18\%  (+ 9.09\% ) &  0\%  &  0\%  \\
+		% 		8 &       (4, 5, 150) &    118 &      26.81 &  33.90\% &  47.46\% &         3.39\% &      5.08\%  (+10.17\% ) &  0\%  &  0\%  \\
+		% 		9 &       (4, 5, 150) &    114 &      24.75 &  28.95\% &  54.39\% &         3.51\% &      3.51\%  (+ 9.65\% ) &  0\%  &  0\%  \\
+		% 		p &       (4, 4, 96\ ) &     83 &      34.45 &  33.73\% &  40.96\% &         1.20\% &      4.82\% (+ 16.87\%)  &  2.41\%  &  0\%
 	% 	\end{tabular}
 	% 	% 	}
 	% 	\caption{Properties of the puzzles, explanation sequences and constraints used in the explanations.}
@@ -344,16 +346,16 @@ Due to the construction of the cost function in Section~\ref{sec:zebra}, this me
 	% 	\begin{tabular}{c|c|cc|ccccccc}
 		% 		\textbf{p} & \textbf{($|$types$|$, $|$dom$|$, $|$grid$|$)} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+1i.} & \textbf{1 clue+ $>$1i.} & \textbf{mult i.} & \textbf{mult c.} \\\hline
 		% 		% \textbf{p} & \textbf{$|$types$|$, $|$dom$|$, $|$grid$|$} & \textbf{\# steps} & $\overline{\text{\textbf{cost}}}$ & \textbf{1 bij.} & \textbf{1 trans.} & \textbf{1 clue} & \textbf{1 clue+1i.} & \textbf{1 clue+ $>$1i.} & \textbf{mult i.} & \textbf{mult c.} \\\hline
-		% 		1 &       (4, 5, 150) &    112 &      27.06 &  31.25\% &  50.00\% &         0.89\% &      7.14\% &  10.71\%  &  0.00\%  &  0.00\%  \\
-		% 		2 &       (4, 5, 150) &    119 &      27.77 &  23.53\% &  57.14\% &         1.68\% &      7.56\% &  10.08\%  &  0.00\%  &  0.00\%  \\
-		% 		3 &       (4, 5, 150) &    110 &      23.93 &  32.73\% &  51.82\% &         0.00\% &      2.73\% &  12.73\%  &  0.00\%  &  0.00\%  \\
-		% 		4 &       (4, 5, 150) &    115 &      24.54 &  27.83\% &  55.65\% &         2.61\% &      7.83\% &   6.09\%  &  0.00\%  &  0.00\%  \\
-		% 		5 &       (4, 5, 150) &    122 &      24.97 &  24.59\% &  59.02\% &         0.82\% &      4.10\% &  11.48\%  &  0.00\%  &  0.00\%  \\
-		% 		6 &       (4, 5, 150) &    115 &      22.58 &  26.96\% &  58.26\% &         2.61\% &      6.09\% &   6.09\%  &  0.00\%  &  0.00\%  \\
-		% 		7 &       (4, 5, 150) &    110 &      26.79 &  35.45\% &  46.36\% &         0.91\% &      8.18\% &   9.09\%  &  0.00\%  &  0.00\%  \\
-		% 		8 &       (4, 5, 150) &    118 &      26.81 &  33.90\% &  47.46\% &         3.39\% &      5.08\% &  10.17\%  &  0.00\%  &  0.00\%  \\
-		% 		9 &       (4, 5, 150) &    114 &      24.75 &  28.95\% &  54.39\% &         3.51\% &      3.51\% &   9.65\%  &  0.00\%  &  0.00\%  \\
-		% 		p &       (4, 4, 96\ ) &     83 &      34.45 &  33.73\% &  40.96\% &         1.20\% &      4.82\% &  16.87\%  &  2.41\%  &  0.00\%
+		% 		1 &       (4, 5, 150) &    112 &      27.06 &  31.25\% &  50.00\% &         0.89\% &      7.14\% &  10.71\%  &  0\%  &  0\%  \\
+		% 		2 &       (4, 5, 150) &    119 &      27.77 &  23.53\% &  57.14\% &         1.68\% &      7.56\% &  10.08\%  &  0\%  &  0\%  \\
+		% 		3 &       (4, 5, 150) &    110 &      23.93 &  32.73\% &  51.82\% &         0\% &      2.73\% &  12.73\%  &  0\%  &  0\%  \\
+		% 		4 &       (4, 5, 150) &    115 &      24.54 &  27.83\% &  55.65\% &         2.61\% &      7.83\% &   6.09\%  &  0\%  &  0\%  \\
+		% 		5 &       (4, 5, 150) &    122 &      24.97 &  24.59\% &  59.02\% &         0.82\% &      4.10\% &  11.48\%  &  0\%  &  0\%  \\
+		% 		6 &       (4, 5, 150) &    115 &      22.58 &  26.96\% &  58.26\% &         2.61\% &      6.09\% &   6.09\%  &  0\%  &  0\%  \\
+		% 		7 &       (4, 5, 150) &    110 &      26.79 &  35.45\% &  46.36\% &         0.91\% &      8.18\% &   9.09\%  &  0\%  &  0\%  \\
+		% 		8 &       (4, 5, 150) &    118 &      26.81 &  33.90\% &  47.46\% &         3.39\% &      5.08\% &  10.17\%  &  0\%  &  0\%  \\
+		% 		9 &       (4, 5, 150) &    114 &      24.75 &  28.95\% &  54.39\% &         3.51\% &      3.51\% &   9.65\%  &  0\%  &  0\%  \\
+		% 		p &       (4, 4, 96\ ) &     83 &      34.45 &  33.73\% &  40.96\% &         1.20\% &      4.82\% &  16.87\%  &  2.41\%  &  0\%
 	% 	\end{tabular}
 	% 	% 	}
 	% 	\caption{Properties of the puzzles, explanation sequences and constraints used in the explanations.}

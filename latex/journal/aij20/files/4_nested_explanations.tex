@@ -1,28 +1,28 @@
-Each explanation in the sequence will be non-redundant and hence as small as possible. Yet, in our earlier work we noticed that some explanations were still quite hard to understand. That is because these constraints \textit{together} implied the consequence, they have to be reasoned about at once.
-They are hence still too complicated to be understood easily and thus really require being explained in more detailed.
+Each explanation in the sequence will be non-redundant and hence as small as possible. Yet, in our earlier work we noticed that some explanations were still quite hard to understand, mainly since a clue had to be combined with implicit constraints and a couple of previously derived facts. All these things \textit{together} implied a consequence, and they had to be taken into account at once.
+Such steps turned out to be too complicated to be understood easily and thus require being explained in more detail.
 
 An example is depicted at the top in Figure \ref{fig:pasta_diff}.
-It uses a disjunctive clue (``The person who ordered Rotini is either the person who paid \$8 more than Damon or the person who paid \$8 less than Damon'' ), in combination with three previously derived facts to derive that Farfalle does not cost \$8.
+It uses a disjunctive clue (``The person who ordered Rotini is either the person who paid \$8 more than Damon or the person who paid \$8 less than Damon''), in combination with three previously derived facts to derive that Farfalle does not cost \$8.
 This derivation is non-trivial, but can be explained in a step-wise manner using reasoning by contradiction:
 %The reasoning behind the scenes can be explained by contradiction as follows: 
- \begin{enumerate}
-  \item If Farfalle did cost \$8, then (since Damon did not take Farfalle), Damon did not pay \$8;
-  \item If Farfalle did cost \$8, then it did not cost \$16; 
-  \item Since Farfalle would not cost \$16 and neither does Capellini or Tagliolini, Rotini must cost \$16;
+ \begin{itemize}
+  \item If Farfalle did cost \$8, then (since Damon did not eat Farfalle), Damon did not pay \$8;
+  \item If Farfalle costs \$8, then it does not cost \$16; 
+  \item Since Farfalle does not cost \$16 and neither does Capellini or Tagliolini, Rotini must cost \$16;
   \item However, the fact that Rotini costs \$16, while Damon did not pay \$8 is in contradiction with the clue in question;
   \item Hence, Farfalle can not cost \$8.
- \end{enumerate}
-The reasoning step in this Figure~\ref{fig:pasta_diff} is equally straightforward for a computer as the bijectivity reasoning step in Fig~\ref{fig:zebrascreen}. However, understanding the former reasoning step is notably harder for a person. %; especially compared to the more \textit{forward} explanations of other reasoning steps.
+ \end{itemize}
+The reasoning step in this Figure~\ref{fig:pasta_diff} is equally straightforward for a computer as the bijectivity reasoning step in Figure~\ref{fig:zebrascreen}. However, understanding the former reasoning step is notably harder for a person. %; especially compared to the more \textit{forward} explanations of other reasoning steps.
 %  Hence, we expanded our tool to -- on demand -- generate a \textit{nested} explanation of this contradiction reasoning.
 % It turns out from preliminary analysis of the generated explanation sequence that some steps are still too hard to understand as they combine different constraints and/or multiple clues. 
 
 \begin{figure}[t!]
 	\centering
-    \includegraphics[width=0.9\linewidth]{figures/incosistency.jpg}
+    \includegraphics[width=\linewidth]{figures/incosistency.jpg}
     \caption{A difficult explanation step, including its nested explanation}\label{fig:pasta_diff}
 \end{figure}
 
-We hence wish to provide a further, \textit{nested} explanation of such difficult reasoning steps. We believe that an explanation using contradiction is a good tool for this for two reasons: 1) it is often used by people when solving puzzles, as well as by mathematicians when proving theorems; and 2) if we add the negation of a derived fact such as 'Farfalle does not cost \$8', then we can generate a new sequence of non-redundant explanations up to inconsistence and hence contradiction. 
+We hence wish to provide a further, \textit{nested} explanation of such difficult reasoning steps. We believe that an explanation using contradiction is a good tool for this for two reasons: \emph{(i)} it is often used by people when solving puzzles, as well as by mathematicians when proving theorems; and \emph{(ii)} adding the negation of a derived fact such as `Farfalle does not cost \$8', allows us to generate a new sequence of non-redundant explanations up to inconsistency and hence contradiction, hence reusing the techniques from the previous section. 
 This novel approach allows us to provide a mechanism for \emph{zooming in} into the most difficult explanation step.
 
 

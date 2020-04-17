@@ -5,9 +5,9 @@ Before defining a cost-function, and the estimation for $g$ used in our implemen
 
 \paragraph{Observation 1: Propagations from a single implicit constraint are very easy to understand} Contrary to the clues, the implicit constraints (transitivity/bijectivity) are very limited in form and propagations over them follow well-specified patterns. 
 For instance in the case of bijectivity, a typical pattern that occurs is that when $X-1$ out of $X$ possible values for a given function have been derived not to be possible, it is propagated that the last value should be true; this is visualized for instance in Figure \ref{fig:zebrascreen}. 
-Hence, in our implementation, we ensure that they are always performed first. Stated differently, $g$ and $f$ are designed in such a way that $g(S_1)\geq f(I,S_2)$ \tias{should be $f(E,S,N)$?} whenever $S_2$ consists of only one implicit constraint and $S_1$ does not. 
+Hence, in our implementation, we ensure that they are always performed first. Stated differently, $g$ and $f$ are designed in such a way that $g(S_1)\geq f(E,S_2,N)$  whenever $S_2$ consists of only one implicit constraint and $S_1$ does not. 
 
-\paragraph{Observation 2: Clues propagate rarely by themselves}
+\paragraph{Observation 2: Clues rarely propagate by themselves}
 We observed that the automatically obtained logic representation of clues usually has quite weak (unit) propagation strength in isolation. 
 This is not a property of the clues, but rather of the final obtained translation. As an example, consider the following sentence: 
 ``The person who ordered capellini is either Damon or Claudia''. From this, a human reasoner might conclude that Angie did not order capellini. 
@@ -33,12 +33,13 @@ Our final observation that drove the design of the cost functions is that using 
 
 
 \paragraph{A cost function}
-With these three observations in mind, we devised $f$ and $g$ as follows (where $nc(C)$ denotes the number of clues in constraint set $C$): \label{sec:cost}\tias{should be $f(E,S,N)$?}
-\begin{align*}&f(I,C) = basecost(C) + |I| + 5\cdot|C|\\
-&g(C) = basecost(C) = \left\{\begin{array}{ll}
-                               0 & \text{if $|C|=1$ and $nc(C) = 0$}\\
-                               100 & \text{if $|C|>1$ and $nc(C)=0$}\\
-                               100\cdot nc(C) & \text{otherwise}
+With these three observations in mind, we devised $f$ and $g$ as follows (where $nc(S)$ denotes the number of clues in constraint set $S$): \label{sec:cost}
+% \tias{should be $f(E,S,N)$?}
+\begin{align*}&f(E,S,N) = basecost(S) + |E| + 5\cdot|S|\\
+&g(S) = basecost(S) = \left\{\begin{array}{ll}
+                               0 & \text{if $|S|=1$ and $nc(S) = 0$}\\
+                               100 & \text{if $|S|>1$ and $nc(S)=0$}\\
+                               100\cdot nc(S) & \text{otherwise}
                               \end{array}\right.
                               \end{align*}
                               
@@ -54,18 +55,9 @@ Summarized, our instantiation for logic grid puzzles differs from the generic me
 
 For the complete non-redundant explanation sequence our tool produces on the running example using these scoring functions, we refer to \url{http://bartbog.github.io/zebra/pasta}. An example of the hardest derivation we encountered (with cost 108), as well as its nested explanation, is depicted in Figure \ref{fig:pasta_diff}. It uses several bijectivity constraints for uniqueness of persons, but also for reasoning on the relation between costs and types of pasta, in combination with a clue and three assumptions.
 
-When investigating the nested explanation produced by the system, one can observe that this explanation does not entirely match an explanation that would be produced by a human reasoner for a couple of reasons: 
-\begin{itemize}
- \item In the generation of the nested explanation, as well as in the high-level sequence, we used the greedy algorithm from the previous section. 
- While at the high level, this yields good results, at the nested level, this results in sometimes propagating facts that are not used afterwards. 
- The very first propagation in the nested explanation is of this kind.
- While this would be easy to fix by postprocessing the generated explanation, we left it in our example to highlight this difference between the nested and non-nested explanation. 
- \item It sometimes happens that the system finds, as a minimal explanation, one in which $X-1$ negative facts are used instead of the corresponding single positive fact. This can be seen in the last step. For human reasoners the positive facts often seem to be easier to grasp. A preference for the system towards these negative facts might be incidentally due to formulation of the clues or it can incidentally happen due to the way the MUS is computed (only subset-minimality is guaranteed there). 
- In general, observations of this kind should be taken into account when devising a cost function. 
- \item A last observation we made (but that is not visible in the current figure) is that sometimes the generated nested explanations seem to be unnecessarily hard. In all cases we encountered where that was the case, the explanation was the same: the set of implicit constraints contains a lot of redundant information: a small number of them would be sufficient to imply all the others. Our cost function, and the subset-minimality of the generated MUS entails that in the explanation of a single step, implicit constraints will never be included if they follow from other included implicit constraints. However, when generating the nested explanations, it would actually be preferred to have those redundant constraints, since they allow breaking up the explanation in simpler parts, e.g., giving a simple step with a single bijectivity, rather than a complex step that uses a combination of multiple implicit constraints.
-\end{itemize}
 
-\tias{OK, so you just explained three weaknesses. Now there needs to be 'something' to close this section. Why did you explain that? Or why don't we fix that? Or, looks more like a discussion section for after the exps? -- we want the discussion to be larger, so consider moving it there?}
+
+% \tias{OK, so you just explained three weaknesses. Now there needs to be 'something' to close this section. Why did you explain that? Or why don't we fix that? Or, looks more like a discussion section for after the exps? -- we want the discussion to be larger, so consider moving it there?}
 
 \ignore{
 \begin{figure}[ht]

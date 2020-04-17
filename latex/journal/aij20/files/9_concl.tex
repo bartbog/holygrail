@@ -1,12 +1,27 @@
 In this paper, we formally defined the problem of step-wise explanation generation for satisfaction problems, as well as presenting a generic algorithm for solving the problem. We extended the mechanism so that it can be used in a \textit{nested} way, to further explain an explanation.
-We developed algorithm in the context of logic grid puzzles where we start from natural language clues and provide a human-friendly explanation in the form of a visualisation.
+We developed algorithm in the context of logic grid puzzles where we start from natural language clues and provide a human-friendly explanation in the form of a visualisation. 
+While developing this work, we discovered some potential topics for improvement. 
 %We used this implementation to investigate puzzle properties and difficulty. 
 
-The main bottleneck of the current algorithm is the many calls to MUS, which is a hard problem by itself. 
-Therefore, in future work we want to investigate unsat-core \emph{optimization} with respect to a cost-function, either by taking inspiration for instance from the MARCO algorithm~\cite{liffiton2013enumerating} but adapting it to prune based on cost-functions instead of subset-minimality, or alternatively by reduction to QBF \cite{QBF} %.\emilio{put the ignatiev smallest mus? \cite{ignatiev2015smallest}} No, don't want to give it away...
+When investigating the nested explanation in Figure \ref{fig:zebrascreen:path} as it is produced by the system, one can observe that this explanation does not entirely match an explanation that would be produced by a human reasoner for a couple of reasons: 
+\begin{itemize}
+ \item In the generation of the nested explanation, as well as in the high-level sequence, we used the greedy algorithm from the previous section. 
+ While at the high level, this yields good results, at the nested level, this results in sometimes propagating facts that are not used afterwards. 
+ The very first propagation in the nested explanation is of this kind.
+ While this would be easy to fix by postprocessing the generated explanation, we left it in our example to highlight this difference between the nested and non-nested explanation. 
+ \item It sometimes happens that the system finds, as a minimal explanation, one in which $X-1$ negative facts are used instead of the corresponding single positive fact. This can be seen in the last step. For human reasoners the positive facts often seem to be easier to grasp. A preference for the system towards these negative facts might be incidentally due to formulation of the clues or it can incidentally happen due to the way the MUS is computed (only subset-minimality is guaranteed there). 
+ In general, observations of this kind should be taken into account when devising a cost function. 
+ \item A last observation we made (but that is not visible in the current figure) is that sometimes the generated nested explanations seem to be unnecessarily hard. In all cases we encountered where that was the case, the explanation was the same: the set of implicit constraints contains a lot of redundant information: a small number of them would be sufficient to imply all the others. Our cost function, and the subset-minimality of the generated MUS entails that in the explanation of a single step, implicit constraints will never be included if they follow from other included implicit constraints. However, when generating the nested explanations, it would actually be preferred to have those redundant constraints, since they allow breaking up the explanation in simpler parts, e.g., giving a simple step with a single bijectivity, rather than a complex step that uses a combination of multiple implicit constraints.
+\end{itemize}
+These observations suggest that further research into the question \emph{what constitutes an understandable explanation for humans} is needed. Additional directions to produce easier-to-understand explanations would be optimizing the entire sequence instead of step by step, and learning the cost function based on user traces.
+% Our nested explanations can also be seen as a form of abstraction. More work can be done on further grouping steps, or refining steps, based on feedback of what the user finds \textit{useful}.
 
-Secondly, we want to dig deeper into the question \emph{what constitutes an understandable explanations for humans}, either by optimizing the entire sequence instead of step by step, by learning the cost function based on user traces, or by reusing our developed algorithms to explain reasoning steps in more detail and as such develop an explanation mechanism that operates at different levels of abstraction. 
-Our nested explanations can also be seen as a form of abstraction. More work can be done on further grouping steps, or refining steps, based on feedback of what the user finds \textit{useful}.
+With respect to \emph{efficiency}, the main bottleneck of the current algorithm is the many calls to MUS, which is a hard problem by itself. 
+Therefore, in future work we want to investigate unsat-core \emph{optimization} with respect to a cost-function, either by taking inspiration for instance from the MARCO algorithm~\cite{liffiton2013enumerating} but adapting it to prune based on cost-functions instead of subset-minimality, or alternatively by reduction to quantified Boolean formulas \cite{QBF,DBLP:journals/constraints/IgnatievJM16}.
+\bart{I added the ref to maxQBF here. It seems very strange to not put it here since they do unsat core optimization! But I see a commented-out discussion about fear of giving something away. To be verified.}
+%.\emilio{put the ignatiev smallest mus? \cite{ignatiev2015smallest}} No, don't want to give it away...
+
+% Secondly, we want to dig deeper into 
 %To illustrate this last point: in the setting of very difficult puzzles, some of the explanation steps still require some effort to understand. 
 %When explained by a human, this is often done using some form of proof by contradiction using an explanation of the form ``suppose this [the derived fact] would not hold, then [some simpler reasoning steps], which is not possible''. This is also how we explained Figure \ref{fig:pasta_diff} at the end of Section \ref{sec:nested-explanation}.
 %This explanation process is of \emph{exactly the same form} as what we generate now. The only difference is that $I_0$ is not the empty interpretation, but one in which a wrong value is assigned. 

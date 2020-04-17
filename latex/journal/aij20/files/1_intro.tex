@@ -5,7 +5,7 @@
 In the last few years, as AI systems employ more advanced reasoning mechanisms and computation power, it becomes increasingly difficult to understand why certain decisions are made. 
 Explainable AI (XAI) research aims to fulfil the need for trustworthy AI systems to understand why the system made a decision for verifying the correctness of the system, as well as to control for biased or systematically unfair decisions.
 
-Explainable AI is often studied in the context of (black box) prediction systems such as neural networks, where the goal is to provide insight into what part of the input is important in the \textit{learned} model. 
+Explainable AI is often studied in the context of (black box) prediction systems such as neural networks, where the goal is to provide insight into which part(s) of the input is important in the \textit{learned} model. 
 These insights (or local approximations thereof) can justify why certain predictions are made. 
 In that setting, a range of techniques have been developed, ranging from local explanations of predictions at the \textit{feature level}~\cite{ribeiro2016should,lundberg2017unified} to \textbf{visual explanations} with \textit{saliency maps} \cite{selvaraju2017grad}. %\emilio{Tias, do you mean \cite{selvaraju2017grad}}~\tias{TODO}. 
 Adadi et al.~\cite{Adadi_2018}, Guidotti et al.~\cite{guidotti2018survey} and more recently Arrieta et al.~\cite{Barredo_Arrieta_2020}, survey the latest trends and  major research directions in this area.
@@ -23,7 +23,7 @@ Explanations have been investigated in constraint solving before, most notably f
 Our case is more general in that it also works for satisfiable problems.
 At the solving level, in lazy clause generation solvers, explanations of a constraint are studied in the form of an implication of low-level Boolean literals that encode the result of a propagation step of an individual constraint~\cite{feydy2009lazy}. 
 Also, no-goods (learned clauses) in conflict-driven clause learning SAT solvers can be seen as explanations of failure during search~\cite{marques2009conflict}. 
-These are not meant to be human-interpretable but rather to propagate efficiently.
+These are not meant to be human-interpretable but rather to propagate effectively.
 
 We aim to explain the process of propagation in a constraint solver, independent of the consistency level of the propagation and without augmenting the propagators with explanation capabilities.
 For problems that can --- given a strong enough propagation mechanism --- be solved without search, e.g. problems such as logic grid puzzles with a unique solution, this means explaining the entire problem solving process. 
@@ -44,7 +44,7 @@ The second direction is to provide a \emph{more detailed} explanation of harder 
 While the first direction can be useful when explanations get very long, from a theoretical perspective, it is less interesting. 
 The second direction on the other hand is interesting for several reasons. First of all, we noticed that some of the generated steps are still too complicated to be understood easily and thus really require being explained in more detailed. Secondly, breaking them up in smaller steps is an interesting challenge. Indeed, since we start from the idea that steps should be as simple as possible, it should not be possible to break them up further. 
 To still break them up further, we took inspiration from methods people use when solving puzzles, and mathematicians use when proving theorems. 
-That is, for explaining a single step in more detail we work using reasoning by contradiction: starting from the negation of a consequence of the difficult step, we can explain how this leads to a contradiction and hence requires the consequence. In essence, we assume the negation of the derived fact, and can reuse the principle of explanation steps up to the inconsistency and hence contradiction. 
+That is, for explaining a single step in more detail we work using reasoning by contradiction: starting from the negation of a consequence, we explain how a contradiction is obtained.  In essence, we assume the negation of the derived fact, and can then reuse the principle of explanation steps to construct a sequence that leads to an inconsistency. 
 This novel approach allows us to provide a mechanism for \emph{zooming in} on the most difficult explanation step.
 
 In practice, we choose to present the constraints in natural language, which is an obvious choice for logic grid puzzles as they are given in the form of natural language \textit{clues}. 
@@ -53,7 +53,7 @@ We represent the previously and newly derived facts visually, as can be seen in 
 % \bart{Make better quality screenshot! Also check the others. }
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.7\linewidth]{figures/introduction.jpeg}
+\includegraphics[width=0.9\linewidth]{figures/introduction.jpeg}
 \caption{Demonstration of explanation visualisation.}
 \label{fig:zebrascreen}
 \end{figure}
@@ -97,5 +97,6 @@ Finally, we conclude the paper in Section \ref{sec:conclusion}.
 
 % Publication history
 \paragraph{Publication history} This paper is an extension of previous papers presented at workshops and conferences \cite{claesuser,DBLP:conf/bnaic/ClaesBCGG19,ecai/BogaertsGCG20}. The current paper extends the previous papers with more detailed examples, additional experiments, as well as the formalization of what we call \emph{nested explanation sequences} (an idea that first appeared in a demo we submitted to IJCAI-PRICAI 2020 but that is first formalized in the current paper).  
+\todo{Delete reference to IJCAI-PRIJCAI if rejected. Otherwise, add a citation in bibtex}
 
 % Our nested explanation XAI submission stems from the work originally proposed \cite{ecai/BogaertsGCG20} and motivated by the results from the demonstrator submitted to IJCAI-PRICAI 2020.

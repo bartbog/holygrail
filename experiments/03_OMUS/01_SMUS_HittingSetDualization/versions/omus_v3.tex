@@ -1,0 +1,281 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{float}
+\usepackage{amsthm}
+\usepackage{thmtools} 
+\usepackage[parfill]{parskip}
+
+\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+\newcommand\m[1]{\mathcal{#1}}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{lem}{Lemma}
+\newtheorem{lemma}[lem]{Lemma}
+\newtheorem{propo}{Proposition}
+\newtheorem{proposition}[propo]{Proposition}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+
+\bibliographystyle{apalike}
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}#1}}}
+\newcommand{\bart}[1]{{\comment{\color{green}#1}}}
+\newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1}}}
+
+
+
+\begin{document}
+\section{Introduction}
+\begin{itemize}
+  \item explanations in constraint satisfaction problems \todo{cite: xai special issue} easy, understandable, human-interpretable
+  \item Explanations can be small, but also difficult (combinations of constraints/clues)
+  \item \todo{which complexity is extracting an OMUS ?}
+  \item use a/different proxy(s) to qualify interpretability of an explanation
+  \item extension SMUS to OMUS based on enumeration of optimal hitting set
+  \item \todo{approach tested on Boolean Satisfiability instances and on a high level problem}
+\end{itemize}
+
+\section{Background}
+
+The algorithm presented in this section is based on the key ideas and observations of Ignatiev et al. presented in \cite{ignatiev2015smallest}.
+The algorithm is adapted to incorporate an optimality criterion in order to guide the search not in the direction of the SMUS, but towards the OMUS. 
+To do so, we first define the  objective function f:
+
+\begin{definition}
+  Given a CNF Formula $\m{F}$, let $f : 2^{\m{F}} \rightarrow \mathbb{R}$ be a mapping of a set of clauses to a real number. f is said to be a valid objective function if for any subsets $\m{A}$, $\m{B}$ of $\m{F}$ if $\m{A} \subseteq \m{B}$ then $f(\m{A}) \leq f(\m{B})$.
+  \emilio{function f is said to be set increasing if ...}
+\end{definition}
+
+For an unsatisfiable CNF formula $\m{F}$, a subset of clauses that are still unsatisfiable, but if any of the clauses are removed then the reduced formula becomes satisfiable. 
+Formally, we define this set as a Minimum unsatisfiable Subset (MUS):
+% Ignatiev et al. present in \cite{ignatiev2015smallest} a novel algorithm for computing the smallest minimal unsatisfiable subset with regard to set cardinality.
+
+\begin{definition}
+  A subset $\m{U} \subseteq \m{F}$ is a \textbf{minimal unsatisfiable subset} (MUS) if $\m{U}$ \emph{unsatisfiable} and $\forall \ \m{U}' \subset \m{U}$, $\m{U}'$ is \emph{satisfiable}. An MUS of $\m{F}$ with an optimal value w.r.t an \emph{objective function $f$} is called an \textbf{optimal MUS} (OMUS).
+\end{definition}
+
+\begin{definition}
+  A subset $\m{C}$ of $\m{F}$ is an \textbf{minimal correction subset} (MCS) if $\m{F}  \setminus \m{C}$ is \emph{satisfiable} and $\forall \m{C}' \subseteq \m{C} \wedge \m{C}' \neq \emptyset$, $(\m{F} \setminus \m{C}) \cup \m{C}'$ is \emph{unsatisfiable}.
+\end{definition}
+
+\begin{definition}
+  A \emph{satisfiable subset} $\m{S} \subseteq \m{F}$ is a \textbf{Maximal Satisfiable Subset} (MSS) if  $\forall \ \m{S}' \subseteq \m{F}'$ s.t $ \m{S} \subseteq \m{S}'$, $\m{S}'$ is \emph{unsatisfiable}.
+\end{definition}
+
+An MSS can also be defined as the complement of an MCS (and vice versa). If $\m{C}$ is a MCS then $ \m{S} = \m{F} \setminus \m{C}$ is a MSS. On the other hand, MUSes and MCSes are related by the concept of minimal hitting set.
+
+\begin{definition}
+  Given a collection of sets $\Gamma$ from a universe $\mathbb{U}$, a hitting set on $\Gamma$ is a set such that $\forall \ \m{S} \in \Gamma, h \cap S \neq \emptyset$.
+\end{definition}
+
+\begin{proposition}\label{prop:duality_MCS_MUS}
+  Given a CNF formula $\m{F}$, let MUSes($\m{F}$) and MCSes($\m{F}$) be the set of all MUSes and MCSes of $\m{F}$ respectively. Then the following holds:
+  \begin{enumerate}
+    \item A subset $\m{U}$ of $\m{F}$ is an MUS iff $\m{U}$ is a minimal hitting set of MCSes($\m{F}$)
+    \item A subset $\m{C}$ of $\m{F}$ is an MCS iff $\m{U}$ is a minimal hitting set of MUSes($\m{F}$)
+  \end{enumerate}
+\end{proposition}
+
+\section{OMUS Algorithm}
+
+
+
+Note that if we assign a unit weight to every element in the subset, we reduce the problem of finding an OMUS back to finding a SMUS.
+
+\begin{definition}
+  Let $\Gamma$ be a collection of sets and HS($\Gamma$) the set of all hitting sets on $\Gamma$ and let $f$ be an valid objective function. Then a hitting set $ h \in \Gamma$ is said to be an \textbf{optimal} hitting set if $\forall$ $h' \in HS(\Gamma)$ we have that %$|h| \leq |h'|$ and 
+  $f(h) \leq f(h')$. %\cite{davies2011solving}.
+\end{definition}
+
+\begin{property}
+  The \textbf{optimal} hitting set of a collection of sets $\Gamma$ is denoted by $OHS(\Gamma)$.
+\end{property}
+
+The algorithm is based on the following observation:
+
+\begin{proposition}\label{prop:optimal-hitting-set}
+  A set $\m{U} \subseteq \m{F}$ is an OMUS of $\m{F}$ if and only if $\m{U}$ is an optimal hitting set of MCSes($\m{F}$)
+\end{proposition}
+
+Algorithm \ref{alg:omus} can be seen as the dual of the algorithm presented in \cite{davies2011solving}. $\m{H}$ represents a collection of sets, where each set is a Minimal Correction Set on $\m{F}$. The algorithm is given $\m{F}$ is a CNF formula of sets, f a valid objective function and optionally a set of MCSes $\m{H}_0$.
+Each element in $\m{H}$ is a clause from $\m{F}$. At the beginning,  $\m{H}$ is empty of initialised with a collection of MCSes. 
+At every iteration, the optimal hitting set is computed on $\m{H}$ guided by objective function f (line \todo{ref line}) and all clauses are added into $\m{F}'$  (line \todo{ref line}). 
+The resulting formula is tested for satisfiability at line \todo{ref line}. 
+If $\m{F}'$ is satisfiable, it is grown to a maximum satisfiable subset with and its complement, MCS C is added to $\m{H}$.
+If instead $\m{F}'$ is unsatisfiable, then $\m{F}'$ is guaranteed to be an OMUS of $\m{F}$ as the following lemma states:
+
+\begin{lemma}\label{lemma:K}
+  Let $\m{K}  \subseteq$ MCSes($\m{F}$). Then a subset $\m{U}$ of $\m{F}$ is an OMUS if $\m{U}$ is a optimal hitting set on $\m{K}$ and $\m{U}$ is unsatisfiable
+\end{lemma}
+
+\begin{proof}
+  Since $\m{U}$ is unsatisfiable it means it means it already hits every MCS in MCSes($\m{F}$) \ref{prop:duality_MCS_MUS}. $\m{U}$ is also an optimal hitting set on MCSes($\m{F}$), since it is an optimal hitting set for $\m{K}$ and no other added MCS can reduce its optimality criterion. Moreover, all other hittings sets can have their objective value stay equal or increase. Thus, by proposition \ref{prop:optimal-hitting-set} $\m{U}$ must be an OMUS.
+\end{proof}
+
+\begin{algorithm}
+  %  \begin{algorithmic}
+  \SetKwInOut{Input}{input}
+  \SetKwInOut{OptInput}{optional input}
+  \SetKwInOut{Output}{output}
+  \SetKwComment{command}{/*}{*/}
+
+  \Input{$\m{F}$ \textit{a CNF formula } }
+  \Input{$f$ \textit{a cost function} }
+  \OptInput{$\m{H}_0$ \textit{initial collection of disjoint Minimum Correction Sets}}
+  \Output{$\m{OMUS}(\m{F})$}
+  \Begin{
+    $\m{H} \gets \m{H}_0$ \;
+    \While{true}{
+      \tcp{\small cost minimal hitting set w.r.t cost function f}
+      $h \gets$ \texttt{OHS}($\m{H}, f$)\;
+
+      \tcp{\small set with all unique clauses from hitting set}
+      $\m{F}' \gets \{ c_i | e_i \in h\}$ \;
+
+      \If{\textbf{not} \texttt{SAT($\m{F}'$)} }{
+        \Return{$\m{OMUS} \gets \m{F}' $} \;}
+      %\Else{
+      \tcp{\small written as \texttt{grow($\m{F}'$)} which is Minimum Correction Set of $\m{F}'$}
+      \tcp{\small find the biggest one with the biggest cost}
+      %$\m{C} \gets \m{F} \setminus grow(\m{F}', \m{F}, f)$ \;  
+      % $\m{C} \gets grow(\m{F}', \m{F}, f)$ \;
+      $\m{C} \gets \m{F} \setminus \m{F}'$ \;
+      %}
+
+      $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
+
+    }
+  }
+  % \end{algorithmic}
+  \caption{OMUS($\m{F},f, \m{H}_0$) \cite{ignatiev2015smallest}}
+  % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
+  \label{alg:omus}
+\end{algorithm}
+
+\begin{algorithm}
+  %  \begin{algorithmic}
+  \SetKwInOut{Input}{input}
+  \SetKwInOut{OptInput}{optional input}
+  \SetKwInOut{Output}{output}
+  \SetKwComment{command}{/*}{*/}
+
+  \Input{$\m{F}'$ \textit{a CNF formula to grow} }
+  \Input{$\m{F}$ \textit{the original CNF formula} }
+  \Input{$f$ \textit{a cost function} }
+  \Output{MCS}
+  \Begin{
+    $\m{MSS} \gets \m{F}'$\;
+    $\bar{\m{F}} \gets$ \texttt{sort\_decreasing($\m{F} \setminus \m{F}' $)}\;
+    \While{\texttt{SAT($\m{MSS}$)}}{
+      $clause  \gets$ \texttt{pop($\bar{\m{F}}$)}\;
+      $\m{MSS} \gets \m{F}' \ \cup \ clause$ \;
+    }
+    \Return{$\bar{\m{F}}$}
+  }
+  % \end{algorithmic}
+  \caption{grow($\m{F}',\m{F}', f$)}
+  % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
+  \label{alg:omus2}
+\end{algorithm}
+
+
+% \end{algorithm}
+\newpage
+For the set of clauses $ \m{C} = \{c_1, ... c_{|C|}\}$ with weights $\m{W} = \{w_1, ... w_{|C|}\}$ in the collection of sets $\m{H}$. For Example:
+% \begin{itemize}
+%   \item $\m{C} = \{c_1, ... c_6 \}$
+%   \item $\m{W} = \{w_1 = 20, w_2 = 20,  w_3 = 10,  w_4 = 10,  w_5 = 10,  w_6 = 20\}$
+%   \item $\m{H} = \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_6\} $
+% \end{itemize}
+\begin{equation} \label{mip:example}
+  \begin{split}
+    \m{C} &= \{c_1, ... c_6 \}  \\
+    \m{W} &= \{w_1 = 20, w_2 = 20,  w_3 = 10,  w_4 = 10,  w_5 = 10,  w_6 = 20\} \\
+    \m{H} &= \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_6\} 
+  \end{split}
+  \end{equation}
+
+
+The optimal hitting set can be formulated as an integer linear program.
+\begin{equation} \label{eq:ILP:objective}
+  min \sum_{ i \in \{1..|C|\}} w_i \cdot x_i
+\end{equation}
+\begin{equation} \label{eq:ILP:hittingset}
+  \sum_{i \in \{1..|C|\}} x_i \cdot h_{ij} \geq 1, \  \forall \ j \in \{1..|\m{H}|\}
+\end{equation}
+\begin{equation} \label{eq:ILP:bool:xi}
+  x_i = \{0,1\}
+\end{equation}
+% \begin{equation} \label{eq:ILP:bool:wij}
+%   w_{ij} = \{0, 1\}
+% \end{equation}
+\begin{itemize}
+  \item $w_i$ is the input cost/weight associated with clause i in
+  \item $x_i$ is a boolean decision variable if constraint/clause $c_i$ is chosen or not.
+  \item Equation \ref{eq:ILP:hittingset}, $h_{ij}$ is a boolean input variable corresponding to if constraint/clause i is in set to hit j.
+\end{itemize}
+
+\newpage
+\section{Future Work}
+
+\begin{itemize}
+  \item \todo{@holygrail : for every literal }
+  \item \todo{@holygrail : efficient computation}
+  \item \todo{Can we derive any properties from OCS and OSS for the algorithm ?}
+  \item \todo{Can we engineer it to be faster, parallelize parts ?}
+\end{itemize}
+
+\begin{definition}
+  A \emph{minimal correction subset} $\m{C}$ of $\m{F}$ is an \textbf{Optimal Correction Subset} of $\m{F}$, OCS($\m{F}$) if $\forall \ \m{C}' \in MCSes(\m{F}'): f(\m{C}) \leq f(\m{C}')$.
+\end{definition}
+
+\begin{definition}
+  A \emph{maximal satisfiable subset} $\m{S} \subseteq \m{F}$ is an \textbf{Optimal Satisfiable Subset} (OSS) if $\forall \ \m{S}' \in MSSes(\m{F}'): f(\m{S}) \leq f(\m{S}')$.
+\end{definition}
+
+
+
+\newpage
+
+\bibliography{omusrefs}
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% \begin{algorithm}
+%   %  \begin{algorithmic}
+%   \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+%   \SetKwComment{command}{/*}{*/}
+
+%   \Input{A set of constraint sets $\m{H}$}
+%   \Begin{
+
+%   }
+%   % \end{algorithmic}
+%   \caption{OMHS($\m{H}, f_o$)}
+%   \label{alg:ominhs}
+
+
+% \begin{enumerate}
+%   \item Engineering Parallelize OMUS with parallel calls to OMHS
+%   \item Ideas from \cite{davies2011solving} and from \cite{de2014future}:
+%   \begin{enumerate}
+%     \item Formalize : Dissociate SAT from from minimum cost hitting set using Design model
+%     \item OMHS can be written as a Integer Linear Program:
+%   \end{enumerate}
+%   \item Ideas from \cite{ignatiev2015smallest}:
+%   \begin{enumerate}
+%     \item Reducing the number of SAT Calls
+%   \end{enumerate}
+% \end{enumerate}

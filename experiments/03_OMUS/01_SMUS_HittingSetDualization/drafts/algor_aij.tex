@@ -1,0 +1,197 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{latexsym}
+\usepackage{hyperref}
+\usepackage{paralist}
+%\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{xspace}
+\usepackage{amsmath,amssymb}
+% \usepackage{algpseudocode}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+
+\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+
+
+\newcommand\m[1]{\ensuremath{#1}\xspace}
+\newcommand\ltrue{\m{\mathbf{t}}}
+\newcommand\lunkn{\m{\mathbf{u}}}
+\newcommand\lfalse{\m{\mathbf{f}}}
+\newcommand\leqp{\m{\leq_p}}
+\newcommand\geqp{\m{\geq_p}}
+\newcommand\entails{\m{\models}}
+% \newcommand\land{\m{\wedge}}
+\newcommand\limplies{\m{\Rightarrow}}
+\newcommand\ourtool{\textsc{ZebraTutor}\xspace}
+\newcommand\idp{\textsc{IDP}\xspace}
+\usepackage{amsthm}
+\usepackage{thmtools} 
+
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+\newcommand\xxx{\m{\overline{x}}}
+\newcommand\ddd{\m{\overline{d}}}
+
+%To easily allow for saving space
+\newcommand{\myparagraph}[1]{\subsection{#1}}
+
+\newcommand\allconstraints{\m{T}}
+
+\begin{document}
+
+\begin{algorithm}
+%  \begin{algorithmic}
+$I_{end} \gets$ propagate$(I_0\land T_p)$\;
+Seq $\gets$ empty sequence\;
+$I \gets I_0$\;
+\While{$I \neq I_{end}$}{
+  $(E, S, N) \gets $min-explanation$(I, T_p)$\;
+  
+  $nested \gets$ nested-explanation$(E, S, N, T_p)$\;
+  \uIf{$nested \neq \emptyset$}{
+        append $nested$ to Seq\;}
+  \Else{
+  append $(E, S, N)$ to Seq\;
+  }   
+  
+  $I \gets I \cup N$\;
+}
+% \end{algorithmic}
+\caption{greedy-explanations$(I_0, T_p)$}
+\label{alg:main}
+\end{algorithm}
+
+\begin{algorithm}
+%  \begin{algorithmic}
+$nested\_explanations \gets \{\}$\;
+$step\_cost \gets f(E,S,N)$\;
+ \For{$n_i \in N$}{ 
+ 	expensive $\gets false$\;
+	nested$\_$seq $\gets \{\}$ \;
+	$I' \gets E \wedge \neg \{n_i\} $ \;
+	\While{$ consistent(I') \wedge \neg expensive$}{
+  $(E', S', N') \gets $min-explanation$(I', S)$\;
+  append $(E', S', N')$ to nested$\_$seq\;
+  $I' \gets I' \cup N'$\;
+  
+  \If{$f(E', S', N') \leq step\_cost$}{
+        expensive $\gets true$\;}
+     }
+     \If{$\neg expensive$}{
+        append $nested\_seq$ to $nested\_explanations$\;}   
+}
+\Return $nested\_explanations$
+% \end{algorithmic}
+\caption{nested-explanation(E, S, N, $T_p$)}
+\label{alg:main}
+\end{algorithm}
+
+\begin{algorithm}
+  % 
+  \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+  \SetKwComment{command}{/*}{*/}
+
+  \Input{A partial interpretation $I$ and a set of constraints $C$}
+
+  Candidates $\gets \{\}$\;
+  $J \gets$ propagate$(I \wedge C)$\;
+  \For{$a \in J \setminus I$\label{line:for}}{
+    \tcp{\small Minimal expl. of each new fact:}
+    $X \gets MUS(\neg a \wedge I \wedge C)$ \label{line:mus}\;
+    $E \gets I \cap X$\tcp*{\small facts used}
+    $S \gets C \cap X$\tcp*{\small constraints used}
+    $A \gets$ propagate$(E \wedge S)$\tcp*{\small all implied facts}\label{line:implicants}
+    add $(E, S, A)$ to Candidates
+  }
+  \Return{Candidates}
+  \caption{candidate-explanations$(I,C)$}
+
+  \label{alg:cand}
+\end{algorithm}
+
+\begin{algorithm}
+  \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+  \SetKwComment{command}{/*}{*/}
+  \SetKw{Break}{break}
+
+
+  \Input{A partial interpretation $I$ and a set of constraints $C$}
+  $\mathit{best}\gets none$\;
+  \For{$S \subseteq C$ ordered ascending by $g(S)$}{ \label{alg:min:for}
+    \If{$best\neq none\wedge g(S) > f(\mathit{best})$ }{
+      \Break\;}
+    cand $\gets$ best explanation from candidate-explanations$(I, S)$\;
+        \If{$\mathit{best} = none \vee f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\; \label{alg:min:gets}}
+  }
+   \Return{$\mathit{best}$}
+  \caption{min-explanation$(I,C)$}
+  \label{alg:minexpl}
+\end{algorithm}
+
+\begin{algorithm}[ht]
+  %  \begin{algorithmic}
+  $I_{end} \gets$ propagate$(I_0\land \allconstraints)$\;
+  Seq $\gets$ empty sequence\;
+  $I \gets I_0$\;
+  \While{$I \neq I_{end}$}{
+  $(E, S, N) \gets $min-explanation$(I, \allconstraints)$\;
+  {\color{vuborange}
+  $nested \gets$ nested-explanations$(E, S, N)$\;
+%   \uIf{$nested \neq \emptyset$}{
+    append $((E, S, N),nested)$ to Seq\;
+%   \Else{
+%     append $(E, S, N)$ to Seq\;
+%   }
+  }
+
+  $I \gets I \cup N$\;
+  }
+  % \end{algorithmic}
+  \caption{greedy-explanations$(I_0, \allconstraints)$}
+  \label{alg:nested-main}
+\end{algorithm}
+
+
+
+\begin{algorithm}[ht]
+  \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+  \SetKwComment{command}{/*}{*/}
+  \SetKw{Break}{break}
+
+
+  \Input{A partial interpretation $I$ and a set of constraints $C$}
+  %  \begin{algorithmic}
+  $nested\_explanations \gets \{\}$\;
+  \For{$n_i \in N$}{
+    store $\gets true$\;
+    nested$\_$seq $\gets \{\}$ \;
+    $I' \gets E \wedge \neg \{n_i\} $ \;
+    \While{$consistent(I')$}{
+      $(E', S', N') \gets $min-explanation$(I', S)$\;
+      \If{$f(E', S', N') \geq f(E,S,N)$ \label{ifcheck}}{
+              store $\gets false$; \Break\;}
+              
+      append $(E', S', N')$ to nested$\_$seq\;
+      $I' \gets I' \cup N'$\;
+
+    }
+    \If{$store$}{
+      append $nested\_seq$ to $nested\_explanations$\;}
+  }
+  \Return $nested\_explanations$
+  % \end{algorithmic}
+  \caption{nested-explanations(E, S, N)}
+  \label{alg:nested-explanation}
+\end{algorithm}
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

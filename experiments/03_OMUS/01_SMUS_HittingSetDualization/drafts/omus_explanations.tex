@@ -1,0 +1,123 @@
+\documentclass{article}
+% \usepackage{fullpage}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{latexsym}
+\usepackage{hyperref}
+\usepackage{paralist}
+%\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{xspace}
+\usepackage{amsmath,amssymb}
+% \usepackage{algpseudocode}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+
+\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+
+
+\newcommand\m[1]{\ensuremath{#1}\xspace}
+\newcommand\ltrue{\m{\mathbf{t}}}
+\newcommand\lunkn{\m{\mathbf{u}}}
+\newcommand\lfalse{\m{\mathbf{f}}}
+\newcommand\leqp{\m{\leq_p}}
+\newcommand\geqp{\m{\geq_p}}
+\newcommand\entails{\m{\models}}
+% \newcommand\land{\m{\wedge}}
+\newcommand\limplies{\m{\Rightarrow}}
+\newcommand\ourtool{\textsc{ZebraTutor}\xspace}
+\newcommand\idp{\textsc{IDP}\xspace}
+\usepackage{amsthm}
+\usepackage{thmtools} 
+
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+\newcommand\xxx{\m{\overline{x}}}
+\newcommand\ddd{\m{\overline{d}}}
+
+%To easily allow for saving space
+\newcommand{\myparagraph}[1]{\subsection{#1}}
+
+\newcommand\allconstraints{\m{T}}
+
+\begin{document}
+
+\begin{algorithm}
+%  \begin{algorithmic}
+$I_{end} \gets$ propagate$(I_0\land T_p)$\;
+Seq $\gets$ empty sequence\;
+$I \gets I_0$\;
+\While{$I \neq I_{end}$}{
+
+  $(E, S, N) \gets $min-explanation$(I, T_p)$\;
+  
+  % $nested \gets$ nested-explanation$(E, S, N)$\;
+  % \uIf{$nested \neq \emptyset$}{
+  %       append $nested$ to Seq\;}
+  % \Else{
+  %       append $(E, S, N)$ to Seq\;
+  % }   
+  
+  $I \gets I \cup N$\;
+}
+% \end{algorithmic}
+\caption{greedy-explanations$(I_0, T_p)$}
+\label{alg:main}
+\end{algorithm}
+
+\begin{algorithm}
+  % 
+  \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+  \SetKwComment{command}{/*}{*/}
+
+  \Input{A partial interpretation $I$ and a set of constraints $C$}
+
+  % \For{$S \subseteq C$ ordered ascending by $g(S)$}{
+    $candidates \gets \emptyset$ \;
+      $J \gets$ propagate$(I \wedge C)$\;
+
+        \For{$a \in J \setminus I$\label{line:for}}{
+
+        $X \gets$ OMUS($\neg a \wedge I \wedge S$) \;
+
+        $E \gets I \cap X$\tcp*{\small facts used}
+
+        $S \gets C \cap X$\tcp*{\small constraints used}
+
+        $A \gets$ propagate$(E \wedge S)$\tcp*{\small all implied facts}
+
+      \Return{$(E, S, A)$}
+
+    } 
+    % \If{$best\neq none\wedge g(S) > f(\mathit{best})$ }{
+    %   \Break\;
+    % }
+
+  % }
+  % Candidates $\gets \{\}$\;
+  % $J \gets$ propagate$(I \wedge C)$\;
+  % \For{$a \in J \setminus I$\label{line:for}}{
+  %   \tcp{\small Minimal expl. of each new fact:}
+  %   $X \gets$ OMUS($\neg a \wedge I \wedge C$) \;
+  %   $E \gets I \cap X$\tcp*{\small facts used}
+  %   $S \gets C \cap X$\tcp*{\small constraints used}
+  %   $A \gets$ propagate$(E \wedge S)$\tcp*{\small all implied facts}\label{line:implicants}
+  %   add $(E, S, A)$ to Candidates
+  % }
+  % \Return{Candidates}
+  \caption{min-explanations(I,C)}
+  \label{alg:cand}
+\end{algorithm}
+
+
+
+
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

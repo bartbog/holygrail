@@ -1,0 +1,117 @@
+\documentclass{article}
+
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{float}
+\usepackage{amsthm}
+\usepackage{thmtools} 
+
+\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+\newcommand\m[1]{\mathcal{#1}}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+
+\bibliographystyle{apalike}
+
+\begin{document}
+
+Algorithm inspired by \cite{ignatiev2015smallest}.
+
+\begin{algorithm}
+  %  \begin{algorithmic}
+  \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+  \SetKwComment{command}{/*}{*/}
+
+  \Input{$\m{F}$ \textit{a CNF formula } }
+  \Input{$\m{H}_0$ \textit{set of disjoint Minimum Correction Sets}}%, ex: $ \{ \{ a \}, \{ \m{I}\} \} $}
+  \Input{$f$ \textit{a cost function} }
+  \Begin{
+    $\m{H} \gets \emptyset$ \;
+    \While{true}{
+      \tcp{\small minimum hitting set with cost function}
+      $h \gets$ \texttt{OMinHS}($\m{H}, f$)\;
+
+      $\m{F}' \gets \{ c_i | e_i \in h\}$ \;
+
+      \uIf{\textbf{not} \texttt{SAT($\m{F}'$)} }{
+        \Return{$\m{OMUS} \gets \m{F}' $} \;}
+      \Else{
+        \tcp{\small written as \texttt{grow($\m{F}'$)} which is Minimum Correction Set of $\m{F}'$}
+        $\m{C} \gets \m{F} \setminus grow(\m{F}', \m{F}, f)$ \;
+      }
+
+      $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
+
+    }
+  }
+  % \end{algorithmic}
+  \caption{OMUS($\m{F},\m{H}_0 ,f_o$)}
+  % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
+    \label{alg:omus}
+\end{algorithm}
+
+\begin{definition}
+  Let $\Gamma$ be a collection of sets and MHS($\Gamma$) the set of all minimal hitting sets on $\Gamma$ and let $f$ be an objective function with input a set of constraints. Then a hitting set $ h \in \Gamma$ is said to be an \textbf{minimum cost} hitting set if $\forall h' \in MHS(\Gamma)$ we have that $|h| \leq |h'|$ and $f(h) \leq f(h')$ \cite{davies2011solving}.
+\end{definition}
+
+\begin{property}
+  The \textbf{minimum cost} hitting set of a collection of sets $\Gamma$ is denoted by $OMHS(\Gamma)$.
+\end{property}
+
+% \begin{algorithm}
+%   %  \begin{algorithmic}
+%   \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+%   \SetKwComment{command}{/*}{*/}
+
+%   \Input{A set of constraint sets $\m{H}$}
+%   \Begin{
+
+%   }
+%   % \end{algorithmic}
+%   \caption{OMHS($\m{H}, f_o$)}
+%   \label{alg:ominhs}
+% \end{algorithm}
+
+\begin{enumerate}
+  \item Parallelize OMUS with parallel calls to OMHS
+  \item Ideas from \cite{davies2011solving} and from \cite{de2014future}:
+  \begin{enumerate}
+    \item Formalize : Dissociate SAT from from minimum cost hitting set using Design model
+    \item OMHS can be written as a Integer Linear Program:
+  \end{enumerate}
+
+  \item Ideas from \cite{ignatiev2015smallest}:
+  \begin{enumerate}
+    \item Reducing the number of SAT Calls
+  \end{enumerate}
+\end{enumerate}
+\newpage
+\subsection*{OMHS ILP}
+
+\begin{equation} \label{eq:ILP:objective}
+  min_{x_i} \sum_{i \in [1..|C|]} cost(c_i) \times x_i
+\end{equation}
+$x_i$ is a boolean decision variable if constraint/clause $c_i$ is chosen or not.
+\begin{equation} \label{eq:ILP:bool}
+  x_i = \{0,1\}
+\end{equation}
+Every constraint has to appear at least once in the hitting set.  
+\begin{equation} \label{eq:ILP:}
+  \sum_{i \in [1..|w_j|]} x_i \times w_{ij} \geq 1
+\end{equation}
+
+\newpage
+\bibliography{omusrefs}
+
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

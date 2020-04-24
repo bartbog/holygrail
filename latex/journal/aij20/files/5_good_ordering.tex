@@ -3,11 +3,11 @@ In that setting, for $\allconstraints$, we take $T_P$ for some puzzle $P$, as de
 There are three types of constraints in $\allconstraints$: transitivity constraints, bijectivity constraints and clues, where the first two follow the same structure in every puzzle and the clues are obtained in a mostly automatic way (see Section \ref{sec:holistic}). 
 Before defining a cost-function, and the estimation for $g$ used in our implementation, we provide some observations that drove our design decision. 
 
-\paragraph{Observation 1: Propagations from a single implicit constraint are very easy to understand} Contrary to the clues, the implicit constraints (transitivity/bijectivity) are very limited in form and propagations over them follow well-specified patterns. 
+\paragraph{Observation 1: Propagations from a single implicit constraint are very easy to understand}\label{obs:1:implicitconstraints} Contrary to the clues, the implicit constraints (transitivity/bijectivity) are very limited in form and propagations over them follow well-specified patterns. 
 For instance in the case of bijectivity, a typical pattern that occurs is that when $X-1$ out of $X$ possible values for a given function have been derived not to be possible, it is propagated that the last value should be true; this is visualized for instance in Figure \ref{fig:zebrascreen}. 
 Hence, in our implementation, we ensure that they are always performed first. Stated differently, $g$ and $f$ are designed in such a way that $g(S_1)\geq f(E,S_2,N)$  whenever $S_2$ consists of only one implicit constraint and $S_1$ does not. 
 
-\paragraph{Observation 2: Clues rarely propagate by themselves}
+\paragraph{Observation 2: Clues rarely propagate by themselves}\label{obs:2:cluespropagate}
 We observed that the automatically obtained logic representation of clues usually has quite weak (unit) propagation strength in isolation. 
 This is not a property of the clues, but rather of the final obtained translation. As an example, consider the following sentence: 
 ``The person who ordered capellini is either Damon or Claudia''. From this, a human reasoner might conclude that Angie did not order capellini. 
@@ -23,7 +23,7 @@ We observed that there is rarely any propagation from sole clues, and that only 
 % Drop ior CHange to??? ``
 Because of this last observation, in our implementation for logic grid puzzles we decided not to consider all subsets of implicit constraints in combination with a clue as candidate sets $S$ in Line \ref{alg:min:for} in Algorithm \ref{alg:minexpl}. Instead, we combine each clue with the entire set of all implicit constraints, subsequently counting on the non-redundance of the explanation (the subset-minimality of the core) to eliminate most of the implicit constraints since they are not used anyway. 
 
-\paragraph{Observation 3: Clues are typically used independently from other clues} 
+\paragraph{Observation 3: Clues are typically used independently from other clues}\label{obs:3:cluesusedindependently}
 A next observation is that in all the puzzles we encountered, human reasoners never needed to combine two clues in order to derive new information and that when such propagations are possible, they are quite hard to explain, and can be split up into derivations containing only single clues.
 The latter is of course not guaranteed, since one can artificially devise disjunctive clues that do not allow propagation by themselves. 
 Our algorithms are built to handle this case as well, but it turned out to be not necessary in practice: in the puzzles we tested, we never encountered an explanation step that combined multiple clues. 
@@ -33,7 +33,7 @@ Our final observation that drove the design of the cost functions is that using 
 
 
 \paragraph{A cost function}
-With these three observations in mind, we devised $f$ and $g$ as follows (where $nc(S)$ denotes the number of clues in constraint set $S$): \label{sec:cost}
+With these four observations in mind, we devised $f$ and $g$ as follows (where $nc(S)$ denotes the number of clues in constraint set $S$): \label{sec:cost}
 % \tias{should be $f(E,S,N)$?}
 \begin{align*}&f(E,S,N) = basecost(S) + |E| + 5\cdot|S|\\
 &g(S) = basecost(S) = \left\{\begin{array}{ll}

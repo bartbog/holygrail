@@ -258,88 +258,141 @@ def extension1(cnf_clauses, F_prime, model):
 
         assert all([True if -i not in validated_literals else False for i in validated_literals])
 
-    return new_F_prime
+    return new_F_prime, validated_literals
 
-def extension2(cnf_clauses, F_prime, model, random_literal = True):
+def extension2(cnf_clauses, F_prime, model, random_literal= True):
     remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime
     new_F_prime = set(F_prime)
 
-    # for literal in model:
-    #     print(literal, remaining_clauses)
-    new_clauses_added = set()
-
-    for c in remaining_clauses:
-        clause = cnf_clauses[c]
-        if clause.intersection(model):
-            new_F_prime.add(c)
-            new_clauses_added.add(c)
-    
-    if not new_clauses_added:
-        return new_F_prime 
-
     validated_literals = set(model)
 
-    remaining_clauses -= new_clauses_added 
+    for c in remaining_clauses:
 
-    list_new_clauses_added = [cnf_clauses[i] for i in new_clauses_added]
-    
-    literals_added = frozenset.union(*list_new_clauses_added)
-    literals_added -= model
-    literals_added -= {-i for i in model}
-
-    conflict_free_literals = frozenset({i for i in literals_added if -i not in literals_added})
-
-    conflictual_literals = {i for i in literals_added if -i in literals_added}
-
-    if conflict_free_literals:
-        # add all clauses for the literals we can validate without conflicting negated values
-        conflict_free_clauses = set()
-
-        for c in remaining_clauses:
-            clause = cnf_clauses[c]
-            intersection_clause_literals = clause.intersection(conflict_free_literals)
-            if intersection_clause_literals:
-                new_F_prime.add(c)
-                conflict_free_clauses.add(c)
-                validated_literals |= intersection_clause_literals
+        clause = cnf_clauses[c]
         
-        remaining_clauses -= conflict_free_clauses
-        # validated_literals |= conflict_free_literals
+        # if the clause is validated by any of the literals of the model or newly validated literals
+        intersection_clause_model =  clause.intersection(validated_literals)
+        
+        # add the clause to F_prime 
+        if intersection_clause_model:
+            new_F_prime.add(c)
+        
+        # literals to be checked 
+        remaining_literals = clause - validated_literals
+        remaining_literals -= {-literal for literal in validated_literals}
 
-    if conflictual_literals:
-        # print()
-        # ppprint({
-        #     "conflictual_literals":conflictual_literals,
-        #     "conflict_free_literals":conflict_free_literals,
-        #     "remaining_clauses": [cnf_clauses[i] for i in remaining_clauses]
-        # })
+        if intersection_clause_model and  remaining_literals:
+            validated_literals |= remaining_literals
 
-        while(conflictual_literals):
-            if random_literal:
-                literal = conflictual_literals.pop()
-            else:
-                literal = find_best_literal(cnf_clauses, remaining_clauses, conflictual_literals)
+    remaining_clauses -= new_F_prime
+       
 
-            # SANITY CHECK : add to validated literals
-            assert literal not in validated_literals, "literal already present"
-            assert -literal not in validated_literals, "negation of literal already present, conflict !!!"
 
-            # remove literal and its negation
-            # conflictual_literals.remove(literal)
-            conflictual_literals.remove(-literal)
 
-            conflictual_clauses = set()
+# def extension2(cnf_clauses, F_prime, model, random_literal = True):
+#     remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime
+#     # new_F_prime = set(F_prime)
+#     # validated_literals = set(model)
 
-            for c in remaining_clauses:
-                clause = cnf_clauses[c]
-                if literal in clause:
-                    conflictual_clauses.add(c)
-                    new_F_prime.add(c)
+#     new_F_prime, validated_literals = extension1(cnf_clauses, F_prime, model)
+
+
+#     # for c in remaining_clauses:
+
+#     #     clause = cnf_clauses[c]
+        
+#     #     # if the clause is validated by any of the literals of the model or newly validated literals
+#     #     intersection_clause_model =  clause.intersection(validated_literals)
+        
+#     #     # add the clause to F_prime 
+#     #     if intersection_clause_model:
+#     #         new_F_prime.add(c)
+        
+#     #     # literals to be checked 
+#     #     remaining_literals = clause - validated_literals
+#     #     remaining_literals -= {-literal for literal in validated_literals}
+
+#     #     if intersection_clause_model and  remaining_literals:
+#     #         validated_literals |= remaining_literals
+
+
+
+#     # for literal in model:
+#     #     print(literal, remaining_clauses)
+#     # new_clauses_added = set()
+
+#     # for c in remaining_clauses:
+#     #     clause = cnf_clauses[c]
+#     #     if clause.intersection(model):
+#     #         new_F_prime.add(c)
+#     #         new_clauses_added.add(c)
+    
+#     # if not new_clauses_added:
+#     #     return new_F_prime 
+
+#     # validated_literals = set(model)
+
+#     # remaining_clauses -= new_clauses_added 
+
+#     # list_new_clauses_added = [cnf_clauses[i] for i in new_clauses_added]
+    
+#     # literals_added = frozenset.union(*list_new_clauses_added)
+#     # literals_added -= model
+#     # literals_added -= {-i for i in model}
+
+#     # conflict_free_literals = frozenset({i for i in literals_added if -i not in literals_added})
+
+#     # conflictual_literals = {i for i in literals_added if -i in literals_added}
+
+#     if conflict_free_literals:
+#         # add all clauses for the literals we can validate without conflicting negated values
+#         conflict_free_clauses = set()
+
+#         for c in remaining_clauses:
+#             clause = cnf_clauses[c]
+#             intersection_clause_literals = clause.intersection(conflict_free_literals)
+#             if intersection_clause_literals:
+#                 new_F_prime.add(c)
+#                 conflict_free_clauses.add(c)
+#                 validated_literals |= intersection_clause_literals
+        
+#         remaining_clauses -= conflict_free_clauses
+#         # validated_literals |= conflict_free_literals
+
+#     if conflictual_literals:
+#         # print()
+#         # ppprint({
+#         #     "conflictual_literals":conflictual_literals,
+#         #     "conflict_free_literals":conflict_free_literals,
+#         #     "remaining_clauses": [cnf_clauses[i] for i in remaining_clauses]
+#         # })
+
+#         while(conflictual_literals):
+#             if random_literal:
+#                 literal = conflictual_literals.pop()
+#             else:
+#                 literal = find_best_literal(cnf_clauses, remaining_clauses, conflictual_literals)
+
+#             # SANITY CHECK : add to validated literals
+#             assert literal not in validated_literals, "literal already present"
+#             assert -literal not in validated_literals, "negation of literal already present, conflict !!!"
+
+#             # remove literal and its negation
+#             # conflictual_literals.remove(literal)
+#             conflictual_literals.remove(-literal)
+
+#             conflictual_clauses = set()
+
+#             for c in remaining_clauses:
+#                 clause = cnf_clauses[c]
+#                 if literal in clause:
+#                     conflictual_clauses.add(c)
+#                     new_F_prime.add(c)
             
-            remaining_clauses -= conflictual_clauses
-            validated_literals.add(literal)
+#             remaining_clauses -= conflictual_clauses
+#             validated_literals.add(literal)
 
-    return new_F_prime
+#     return new_F_prime
 
 def extension3(cnf_clauses, F_prime, model):
     return F_prime
@@ -397,9 +450,10 @@ def grow(clauses, F_prime, model, extensions = None):
     assert all([True if ext in exts else False for ext in extensions]), "extension doest not exist"
     
     new_F_prime = frozenset(F_prime)
+    new_model = frozenset(model)
 
     for ext in extensions:
-        new_F_prime = exts[ext](clauses, new_F_prime, model)
+        new_F_prime, new_model = exts[ext](clauses, new_F_prime, new_model)
     
     return complement(clauses, new_F_prime)
 

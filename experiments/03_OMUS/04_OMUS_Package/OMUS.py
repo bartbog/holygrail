@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from enum import Enum
 import json
+import time
 
 # pysat library
 from pysat.solvers import Solver, SolverNames
@@ -35,10 +36,7 @@ def debug_ppprint(info, verbose=False):
     if verbose:
         print(json.dumps(info, indent=4))
 
-
-
-# # Test extensions on simple cases
-## MIP model
+sign = lambda x: (1, -1)[x < 0]
 
 def print_omus(H, h, F_prime, C, weights, clauses, write_file=True):
     d = {
@@ -53,25 +51,21 @@ def print_omus(H, h, F_prime, C, weights, clauses, write_file=True):
     ppprint(d)
 
 def complement(F, F_prime):
-    return set([i for i in range(len(F))]) - set(F_prime)
-
-# def unique_clauses_hs(H):
-#    return flatten_set(H)
+    return {i for i in range(len(F))} - {i for i in F_prime}
 
 def flatten_set(H):
     return set([val for sublist in H for val in sublist])
 
-def f(x):
+def clause_length(x):
     # weighted based on the number of literals inside the clause
     # return 1
     return len(x)
 
-def cnf_weights(cnf, weight = f):
+def cnf_weights(cnf, weight = clause_length):
     return [weight(clause) for clause in cnf.clauses]
 
-def clauses_weights(clauses, weight = f):
+def clauses_weights(clauses, weight = clause_length):
     return [weight(clause) for clause in clauses]
-
    
 def create_data_model(H, weights):
     """Stores the data for the problem."""
@@ -105,13 +99,42 @@ def create_data_model(H, weights):
     data['matching_table'] = {idx : i for i, idx in enumerate(indices_H) }
     return data
 
-def checkSatClauses(clauses, F_prime):
-    c = [clauses[i] for i in F_prime]
-    with Solver() as s:
-        added = s.append_formula(c, no_return=False)
-        solved = s.solve()
-    return solved    
+def mapping_clauses(clauses):
 
+    union_clauses = frozenset.union(*clauses)
+
+    sorted_vars = frozenset(sorted(map(abs, union_clauses)))
+
+    mapping = {elem:i+1 for i, elem in enumerate(sorted_vars)}
+    reversemapping = {i+1:elem for i, elem in enumerate(sorted_vars)}
+
+    return mapping, reversemapping
+
+def map_clauses(clauses, mapping):
+
+    newclauses = [[mapping[abs(literal)]*sign(literal) for literal in clause] for clause in clauses]
+
+    return newclauses
+
+def checkSatClauses(clauses, F_prime):
+    if not F_prime :
+        return [], True
+
+    cnf_clauses = [clauses[i] for i in F_prime]
+
+    mapping, reverse_mapping = mapping_clauses(cnf_clauses)
+    mapped_clauses = map_clauses(cnf_clauses, mapping)
+
+    with Solver() as s:
+        added = s.append_formula(mapped_clauses, no_return=False)
+        solved = s.solve()
+        model = s.get_model()
+
+    if solved:
+        mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , model))
+        return mapped_model, solved
+    else:
+        return None, solved
 
 # # Optimal Hitting set MIP implementation
 
@@ -157,42 +180,12 @@ def optimalHittingSet(H, weights):
         return []
     # [END print_solution]
 
-
 def checkConflict(literals):
     for l in literals:
         assert -l not in literals, f"conflicting literals are present {l}, {-l}"
 
-def default_extension(cnf_clauses, F_prime):
+def default_extension(cnf_clauses, F_prime, model):
     return F_prime
-
-def extension1(cnf_clauses, F_prime):
-    """
-    
-        Add all clauses that are true based on the assignment by the model of Fprime
-        :param cnf_clauses: a collection of clauses (list of literals).
-        :param F_prime: hitting set : a list of clauses.
-        
-        :type cnf_clauses: iterable(iterable(int))
-        :type F_prime: iterable(int)    
-        
-    """
-    # new set of validated literals
-    new_F_prime = set(F_prime)
-    
-    # all literals (clauses with 1 element) validated in current hitting set
-    validated_literals = {cnf_clauses[index][0] for index in new_F_prime if len(cnf_clauses[index]) == 1}
-    
-    # remaining clauses to check for validation
-    remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime
-    
-    for c in remaining_clauses:
-        clause = cnf_clauses[c]
-        for literal in validated_literals:
-            if literal in clause:
-                new_F_prime.add(c)
-
-    #validated_variables = flatten_set(validated_clauses)
-    return new_F_prime
 
 def find_best_literal(clauses, remaining_clauses, conflictual_literals):
     literal_validatable_clauses = {l : 0 for l in conflictual_literals}
@@ -215,155 +208,6 @@ def find_best_literal(clauses, remaining_clauses, conflictual_literals):
     best_literal = max(literal_validatable_clauses.iterkeys(), key=(lambda key: literal_validatable_clauses[key]))
     return best_literal
     
-def extension2(cnf_clauses, F_prime, random_assignment = True):
-    """
-    
-            Step 1 : Compute clauses with unique literals
-            
-            Step 2 :
-                2.1 Compute validated clauses
-                2.2 Compute remaining clauses
-            
-            Step 3:
-                3.1 Compute all literal in validated clauses
-                3.2 remove already validated literals from unique literal clauses
-                3.3 remove negation of already validated literals from unique clauses
-            
-            Step 4:
-                4.1 Seperate all remaining literals in validated clauses in 2 parts:
-                    4.1.1 literals without negation of literal present
-                    4.1.2. literals with negation present
-            
-            Step 5: Add all remaining clauses validated by assignement literals w/o negation
-            
-            Step 6:
-                6.1a choose first literal from all literals with negation
-                                or
-                6.1b choose literal with best clause propagation
-                6.2 Add all remaining clauses validated by assignement of literal                 
-                
-    """
-    
-    new_F_prime = set(F_prime)
-
-    # Step 1 : clauses with unique literals
-    # clauses with 1 literal 
-    unique_literal_validated_clauses = {index for index in new_F_prime if len(cnf_clauses[index]) == 1}
-    
-    # literals validated in clauses with 1 literal
-    validated_literals = {cnf_clauses[index][0] for index in unique_literal_validated_clauses}
-    
-    # non-unique clauses
-    remaining_clauses = {i for i in range(len(cnf_clauses))} - unique_literal_validated_clauses
-    
-    # Step 2 : clauses with unique literals
-    # all clauses satisfied by current single literal assignments of Fprime
-    satisfied_clauses = set()
-    
-    # for every literal in validated literal check for any clause satisfied 
-    for literal in validated_literals:
-        for c in remaining_clauses:
-            clause = cnf_clauses[c]
-            if literal in clause:
-                satisfied_clauses.add(c)
-                new_F_prime.add(c)
-    
-    # remove unique literal clauses already validated
-    satisfied_clauses -= unique_literal_validated_clauses
-
-    remaining_clauses -= satisfied_clauses
-    
-    # remaining validated clauses in F prime
-    assert all([True if -i not in validated_literals else False for i in validated_literals]), "literal conflict"
-        
-    # remaining literals to assign
-    other_literals = flatten_set([cnf_clauses[index] for index in satisfied_clauses])
-
-    # remove already validated literals
-    other_literals -= validated_literals
-    
-    # remove negated already validated literals
-    other_literals -= {-i for i in validated_literals}
-    
-    # filtered literals with negated literal also present 
-    conflict_free_literals = {i for i in other_literals if -i not in other_literals}
-    
-    # remove all clauses validated by conflict free literals
-    for literal in conflict_free_literals:
-        clauses_to_remove = set()
-        for c in remaining_clauses:
-            clause = cnf_clauses[c]
-            if literal in clause:
-                clauses_to_remove.add(c)
-                new_F_prime.add(c)
-        remaining_clauses -= clauses_to_remove
-
-    validated_literals |= conflict_free_literals
-
-    other_literals -= conflict_free_literals
-    # remaining conflictual literals to validate
-    conflictual_literals = set(other_literals)    
-   
-    # check if only conflictual literals are present in conflictual literals
-    assert all([True if -i in conflictual_literals else False for i in conflictual_literals]), "conflictual literals error"
-    assert len(conflictual_literals) % 2 == 0, "check remaining literals are present in pairs"
-    
-    # for every literal, remove its negation and 
-    while len(conflictual_literals) > 0:
-        # randomly assigns truthness value
-        if random_assignment:
-            literal = conflictual_literals[0]
-        else: 
-            literal = find_best_literal(cnf_clauses, remaining_clauses, conflictual_literals)
-            
-        # SANITY CHECK : add to validated literals
-        assert literal not in validated_literals, "literal already present"
-        assert -literal not in validated_literals, "negation of literal already present, conflict !!!"
-        validated_literals.add(literal)
-
-        # remove literal and its negation
-        conflictual_literals.remove(literal)
-        conflictual_literals.remove(-literal)
-
-        # remove validated clauses
-        clauses_to_remove = set()
-        
-        for c in remaining_clauses:
-            clause = cnf_clauses[c]
-            if literal in clause:
-                clauses_to_remove.add(c)
-                new_F_prime.add(c)
-        remaining_clauses -= clauses_to_remove
-    # print("validated literals:", validated_literals)   
-    return new_F_prime
-
-def extension2silly(cnf_clauses, F_prime, random_assignment = True):
-    """
-    
-            Repeatedly apply extension 2 until there is no more progress
-            Propagate as much as possible
-                
-    """
-    # TODO: 
-    # - add while loop to propagate as long as possible as long as possible
-    #   whenever len(other_literals ) > 0 
-    # 
-    # - exploit validatable clauses
-    
-    clauses_added = True
-    new_F_prime = set(F_prime)
-
-    while(clauses_added):
-        ext2_F_prime = extension2(cnf_clauses, new_F_prime, random_assignment)
-        ppprint({"new_F_prime" : new_F_prime,
-                 "ext2_F_prime":ext2_F_prime,
-                 "cnf_clauses": cnf_clauses
-                  })
-        clauses_added = ext2_F_prime > new_F_prime
-        new_F_prime = set(ext2_F_prime)
-        
-    return new_F_prime
-
 def getLiteralsSubsetClauses(cnf_clauses, subsetClauses):
 
     s = set()
@@ -384,87 +228,126 @@ def getClausesValidatedByLiterals(cnf_clauses, subset_clauses, literals):
                 validated_clauses.add(c)
     return validated_clauses
 
-def extension3(cnf_clauses, F_prime, random_assignment = True):
-
-    """
-    
-        Greedy Approach : 
-            validated literals = {}
-
-            1. Fprime = {unique literal clauses in F_prime} + {other validated clauses in F_prime} (sanity check)
-                . seperate the unique literal clauses from other clauses in Fprime
-                    => unique clause literals (a) => add to validated literals
-
-            2. {clauses validated but not in F_prime} = {validated clauses using unique literal clauses in F_prime} - {F_prime}
-                . get clauses that are validated by unique literals in Fprime but are not present in Fprime
-                    => get the literals
-                    => remove the unique literals 
-                    => literals from validated clauses but not in F_prime and not a unique clause literal (b)
-
-            3. {validated clauses in F_prime that have no literals from unique literal clauses}:
-                . seperate into 
-                    - conflict free literals : 
-                        => 
-                    - conflictual literals :
-                        . this is a hitting set problem solve with optimal hitting set with special case of negated literals also present? 
-                        . get a number of literals that covers the clauses 
-                    => literals from F_prime that need to be  (c)
-
-            4. {validated clauses in F_prime with literals from unique literal clauses} -  {unique literal clauses in F_prime}
-                . {get the literals} - {validated literals up until now} - {negation of validated literals up until now}
-            
-    """
-
-    new_F_prime = set(F_prime)
-    
-    all_clauses = {i for i in range(len(cnf_clauses))}
-    
-    # Step 1 : clauses with unique literals
-    # clauses with 1 literal 
-    unique_literal_validated_clauses = {index for index in new_F_prime if len(cnf_clauses[index]) == 1}
-    unique_literals = getLiteralsSubsetClauses(cnf_clauses, unique_literal_validated_clauses) 
-
-    # all clauses validated by current unique literal assignments
-    all_validated_clauses = getClausesValidatedByLiterals(cnf_clauses, all_clauses, unique_literals)
-    
-    # all remaining validated clauses by F_prime assignement not in unique literal assignement
-    remaining_validated_clauses = (new_F_prime | all_validated_clauses) - unique_literal_validated_clauses
-
-    remaining_literals_validated_clauses = getLiteralsSubsetClauses(cnf_clauses, remaining_validated_clauses)
-
-    remaining_literals_f_prime = getLiteralsSubsetClauses(cnf_clauses, F_prime)
-
-    remaining_literals_validated_clauses -= unique_literals
-
-    
-    # remaining propagatable clauses
-    remaining_clauses = all_clauses
-    remaining_clauses -= new_F_prime
-    remaining_clauses -= all_validated_clauses
-    remaining_clauses -= unique_literal_validated_clauses
-    
-    
-    # ppprint({
-    #     "cnf_clauses": cnf_clauses, 
-    #     "F_prime" : F_prime, 
-    #     "unique_literals":unique_literals, 
-    #     "all_validated_clauses": all_validated_clauses, 
-    #     "remaining_literals_validated_clauses": remaining_literals_validated_clauses,
-    #     "remaining_clauses":remaining_clauses
-    # })
-    
-    return new_F_prime
-
 def maxsat_fprime(cnf_clauses, F_prime):
     new_F_prime = set(F_prime)
 
+    return new_F_prime
+
+def extension1(cnf_clauses, F_prime, model):
+    remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime
+    new_F_prime = set(F_prime)
+    validated_literals = set(model)
+
+    for c in remaining_clauses:
+
+        clause = cnf_clauses[c]
+        
+        # if the clause is validated by any of the literals of the model or newly validated literals
+        intersection_clause_model =  clause.intersection(validated_literals)
+        
+        # add the clause to F_prime 
+        if intersection_clause_model:
+            new_F_prime.add(c)
+        
+        # literals to be checked 
+        remaining_literals = clause - validated_literals
+        remaining_literals -= {-literal for literal in validated_literals}
+
+        if intersection_clause_model and  remaining_literals:
+            validated_literals |= remaining_literals
+
+        assert all([True if -i not in validated_literals else False for i in validated_literals])
 
     return new_F_prime
 
-def extension4(cnf_clauses, F_prime):
+def extension2(cnf_clauses, F_prime, model, random_literal = True):
+    remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime
+    new_F_prime = set(F_prime)
+
+    # for literal in model:
+    #     print(literal, remaining_clauses)
+    new_clauses_added = set()
+
+    for c in remaining_clauses:
+        clause = cnf_clauses[c]
+        if clause.intersection(model):
+            new_F_prime.add(c)
+            new_clauses_added.add(c)
+    
+    if not new_clauses_added:
+        return new_F_prime 
+
+    validated_literals = set(model)
+
+    remaining_clauses -= new_clauses_added 
+
+    list_new_clauses_added = [cnf_clauses[i] for i in new_clauses_added]
+    
+    literals_added = frozenset.union(*list_new_clauses_added)
+    literals_added -= model
+    literals_added -= {-i for i in model}
+
+    conflict_free_literals = frozenset({i for i in literals_added if -i not in literals_added})
+
+    conflictual_literals = {i for i in literals_added if -i in literals_added}
+
+    if conflict_free_literals:
+        # add all clauses for the literals we can validate without conflicting negated values
+        conflict_free_clauses = set()
+
+        for c in remaining_clauses:
+            clause = cnf_clauses[c]
+            intersection_clause_literals = clause.intersection(conflict_free_literals)
+            if intersection_clause_literals:
+                new_F_prime.add(c)
+                conflict_free_clauses.add(c)
+                validated_literals |= intersection_clause_literals
+        
+        remaining_clauses -= conflict_free_clauses
+        # validated_literals |= conflict_free_literals
+
+    if conflictual_literals:
+        # print()
+        # ppprint({
+        #     "conflictual_literals":conflictual_literals,
+        #     "conflict_free_literals":conflict_free_literals,
+        #     "remaining_clauses": [cnf_clauses[i] for i in remaining_clauses]
+        # })
+
+        while(conflictual_literals):
+            if random_literal:
+                literal = conflictual_literals.pop()
+            else:
+                literal = find_best_literal(cnf_clauses, remaining_clauses, conflictual_literals)
+
+            # SANITY CHECK : add to validated literals
+            assert literal not in validated_literals, "literal already present"
+            assert -literal not in validated_literals, "negation of literal already present, conflict !!!"
+
+            # remove literal and its negation
+            # conflictual_literals.remove(literal)
+            conflictual_literals.remove(-literal)
+
+            conflictual_clauses = set()
+
+            for c in remaining_clauses:
+                clause = cnf_clauses[c]
+                if literal in clause:
+                    conflictual_clauses.add(c)
+                    new_F_prime.add(c)
+            
+            remaining_clauses -= conflictual_clauses
+            validated_literals.add(literal)
+
+    return new_F_prime
+
+def extension3(cnf_clauses, F_prime, model):
+    return F_prime
+
+def extension4(cnf_clauses, F_prime, model):
     return F_prime
     
-def grow(clauses, F_prime, extensions = None):
+def grow(clauses, F_prime, model, extensions = None):
     """
     
         Procedure to efficiently grow the list clauses in ``F_prime``. The complement of F_prime is a correction
@@ -513,55 +396,45 @@ def grow(clauses, F_prime, extensions = None):
     
     assert all([True if ext in exts else False for ext in extensions]), "extension doest not exist"
     
+    new_F_prime = frozenset(F_prime)
+
     for ext in extensions:
-        F_prime = exts[ext](clauses, F_prime)
-        
-    return complement(clauses, F_prime)
+        new_F_prime = exts[ext](clauses, new_F_prime, model)
+    
+    return complement(clauses, new_F_prime)
 
 
 # # OMUS algorithm
 
-
-def omus(cnf: CNF, extensions = [0]):    
-    clauses = cnf.clauses
-    weights = clauses_weights(clauses)
+def omus(cnf: CNF, extensions = [0], f = clause_length):
+    frozen_clauses = [frozenset(clause) for clause in cnf.clauses]
+    weights = clauses_weights(cnf.clauses, f)
     H = [] # the complement of a max-sat call
+    C = None
 
     while(True):
+
         # compute optimal hitting set
         h = optimalHittingSet(H, weights)
-        
+
         # set with all unique clauses from hitting set
-        F_prime = {i for i, hi in enumerate(h) if hi > 0}
-        ppprint({
-            "h": h,
-            # "C": C, 
-            # "H": H
-        })
-        
+        F_prime = frozenset({i for i, hi in enumerate(h) if hi > 0})
+
+        if len(H) > 0:
+            assert len(F_prime) > 0 and len(H) > 0, "empty F_prime"
+
         # check satisfiability of clauses
-        if not checkSatClauses(clauses, F_prime):
-            # ppprint({
-            #     "OMUS": F_prime,
-            #     "H": len(H)
-            #     #"H": H
-            # })
+        model, sat = checkSatClauses(frozen_clauses, F_prime)
+
+        if not sat:
             return F_prime
-        
+
         # add all clauses ny building complement
-        C = grow(clauses, F_prime, extensions=extensions)
+        C = grow(frozen_clauses, F_prime, model,  extensions=extensions)
+        assert len(C) > 0," C not empty set"
 
         if C in H:
             raise "MCS is already in H'"
         
         H.append(C)
-        # printing        
-
-
-
-# useless to call mus on cnf files, only on WCNF
-#for cnf_name, cnf_dict in cnfs.items():
-#    wcnf = CNF(from_file = cnf_dict['path']).weighted()
-#    with MUSX(wcnf, verbosity=1) as musx:
-#        print(musx.compute())
-#wncf = WCNF(from_file = cnf1['path'])
+        # printing

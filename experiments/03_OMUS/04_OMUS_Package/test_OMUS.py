@@ -317,13 +317,13 @@ def myCheckSatClauses(clauses):
 
 def main():
     # smus_cnf = smus_CNF()
-    # assert omus(smus_cnf, [1] ) == {0, 1, 2}, "SMUS error"
-
+    # assert omus(smus_cnf, 2 ) == [0, 1, 2], "SMUS error"
 
     cnf_files = sorted(cnfUnsatInstances(), key=lambda item: item.stat().st_size)
     cnf_instances = list(map(lambda cnf_file: CNF(from_file=cnf_file), cnf_files))
     
     for i, cnf in enumerate(cnf_instances):
+        # print("helllooooo")
         cnf_clauses = []
         [cnf_clauses.append(frozenset(clause)) for clause in cnf.clauses if clause not in cnf_clauses and len(clause) > 0 ] 
 
@@ -332,8 +332,9 @@ def main():
         if not solved:
             print("Not solvable", solved ) 
             print(f"\nCNF File Example: {cnf_files[i].name} ({CNFisUnsat(cnf_files[i])}) - clauses = {len(cnf_clauses)}")
-            ppprint(cnf_clauses)
-            omus(cnf = CNF(from_clauses=cnf_clauses), extensions = [1] )
+            # ppprint(cnf_clauses)
+            omus(cnf = CNF(from_clauses=cnf_clauses), extension = 2 )
+            break
     # [clause for clause in cnf.clauses if len(clause) > 0]
     # print(cnf_clauses)
     # print()

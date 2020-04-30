@@ -179,11 +179,7 @@ def optimalHittingSet(H, weights):
     if status == pywraplp.Solver.OPTIMAL:
         #print('Objective value =', solver.Objective().Value())
         # From Tias: should it not just return the hitting set?
-        h = [j for j in data['indices'] if x[j].solution_value() == 1]
-        # ohs = 
-        return h
-
-        # return [x[j].solution_value() for j in data['indices']]
+        return [x[j].solution_value() for j in data['indices']]
     else:
         print('The problem does not have an optimal solution.', status)
         return []
@@ -244,68 +240,196 @@ def maxsat_fprime(cnf_clauses, F_prime):
 
 def extension1(cnf_clauses, F_prime, model):
     new_F_prime = set(F_prime)
+    validated_literals = set(model)
     # precompute both
     lit_true = set(model)
     lit_false = set(-l for l in model)
 
-    lit_added = True
-    while(lit_added):
-        lit_added = False
-        for i, clause in enumerate(cnf_clauses):
-            if i in new_F_prime:
-                pass # already in F_prime
+    #remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime
+    #for c in remaining_clauses:
+    #    clause = cnf_clauses[c]
+    for i, clause in enumerate(cnf_clauses):
+        if i in F_prime:
+            pass # already in F_prime
 
-            # Similar alternative:
-            if len(clause.intersection(lit_true)) > 0:
-                # a true literal, clause is true
+        print("cl",clause,"true",lit_true)
+        # Similar alternative:
+        if len(clause.intersection(lit_true)) > 0:
+            # a true literal, clause is true
+            new_F_prime.add(i)
+            print("clause is sat")
+        else:
+            # check for unit propagation
+            unassigned = clause - lit_false
+            if len(unassigned) == 1:
+                print("unit prop, sat")
                 new_F_prime.add(i)
-            else:
-                # check for unit propagation
-                unassigned = clause - lit_false
-                if len(unassigned) == 1:
-                    new_F_prime.add(i)
-                    # add literal to the model
-                    lit = next(iter(unassigned))
-                    lit_true.add(lit)
-                    lit_false.add(-lit)
-                    lit_added = True
-    
+                # add literal to the model
+                lit = next(iter(unassigned))
+                lit_true.add(lit)
+                lit_false.add(-lit)
+            
+        
+        # if the clause is validated by any of the literals of the model or newly validated literals
+        intersection_clause_model =  clause.intersection(validated_literals)
+        
+        # add the clause to F_prime 
+        if intersection_clause_model:
+            print("2, sat")
+            #new_F_prime.add(i)
+        
+        # literals to be checked 
+        remaining_literals = clause - validated_literals
+        remaining_literals -= {-literal for literal in validated_literals}
+
+        # Tias: this is buggy; I think because of the way you use "if set:" without making the condition
+        # explicit... it can not be unit if inters_cl_ml (then true), and should only when len(rem_lit) == 1
+        if intersection_clause_model and  remaining_literals:
+            print("2, unit", validated_literals)
+            validated_literals |= remaining_literals
+
+        assert all([True if -j not in validated_literals else False for j in validated_literals])
+
+# <<<<<<< HEAD
+    return new_F_prime, validated_literals
+# =======
     # Tias: you probably want this to return the 'new' model so it can be used by other functions
-    return new_F_prime, lit_true
+    # return new_F_prime
+# >>>>>>> 4ab72b5e69c9ceae42666dbac2d1024a9e98b298
 
-def extension2(cnf_clauses, F_prime, model, random_literal = True):
-    new_F_prime, new_model = extension1(cnf_clauses, F_prime, model)
+def extension2(cnf_clauses, F_prime, model, random_literal= True):
+    remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime
+    new_F_prime = set(F_prime)
 
-    lit_true = set(new_model)
-    lit_false = set(-l for l in new_model)
+    validated_literals = set(model)
+
+    for c in remaining_clauses:
+
+        clause = cnf_clauses[c]
+        
+        # if the clause is validated by any of the literals of the model or newly validated literals
+        intersection_clause_model =  clause.intersection(validated_literals)
+        
+        # add the clause to F_prime 
+        if intersection_clause_model:
+            new_F_prime.add(c)
+        
+        # literals to be checked 
+        remaining_literals = clause - validated_literals
+        remaining_literals -= {-literal for literal in validated_literals}
+
+        if intersection_clause_model and  remaining_literals:
+            validated_literals |= remaining_literals
+
+    remaining_clauses -= new_F_prime
+       
+
+
+
+# def extension2(cnf_clauses, F_prime, model, random_literal = True):
+#     remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime
+#     # new_F_prime = set(F_prime)
+#     # validated_literals = set(model)
+
+#     new_F_prime, validated_literals = extension1(cnf_clauses, F_prime, model)
+
+
+#     # for c in remaining_clauses:
+
+#     #     clause = cnf_clauses[c]
+        
+#     #     # if the clause is validated by any of the literals of the model or newly validated literals
+#     #     intersection_clause_model =  clause.intersection(validated_literals)
+        
+#     #     # add the clause to F_prime 
+#     #     if intersection_clause_model:
+#     #         new_F_prime.add(c)
+        
+#     #     # literals to be checked 
+#     #     remaining_literals = clause - validated_literals
+#     #     remaining_literals -= {-literal for literal in validated_literals}
+
+#     #     if intersection_clause_model and  remaining_literals:
+#     #         validated_literals |= remaining_literals
+
+
+
+#     # for literal in model:
+#     #     print(literal, remaining_clauses)
+#     # new_clauses_added = set()
+
+#     # for c in remaining_clauses:
+#     #     clause = cnf_clauses[c]
+#     #     if clause.intersection(model):
+#     #         new_F_prime.add(c)
+#     #         new_clauses_added.add(c)
     
-    all_literals = frozenset.union(*cnf_clauses) - lit_false - lit_true
-    lit_added = True
-    while(lit_added):
-        lit_added = False
-        for i, clause in enumerate(cnf_clauses):
-            if i in new_F_prime:
-                pass
-            if len(clause.intersection(lit_true)) > 0:
-                # a true literal, clause is true
-                # print("is that even possible ?????")
-                new_F_prime.add(i)
-            else:
-                unassigned = clause - lit_false
+#     # if not new_clauses_added:
+#     #     return new_F_prime 
 
-                if len(unassigned) > 0:
-                    # print("unassigned:", unassigned)
-                    new_F_prime.add(i)
-                    # add literal to the model
-                    lit = next(iter(unassigned))
-                    lit_true.add(lit)
-                    lit_false.add(-lit)
-                    lit_added = True
-                # do something .....
+#     # validated_literals = set(model)
 
-    # print(all_literals)
+#     # remaining_clauses -= new_clauses_added 
 
-    return new_F_prime, new_model
+#     # list_new_clauses_added = [cnf_clauses[i] for i in new_clauses_added]
+    
+#     # literals_added = frozenset.union(*list_new_clauses_added)
+#     # literals_added -= model
+#     # literals_added -= {-i for i in model}
+
+#     # conflict_free_literals = frozenset({i for i in literals_added if -i not in literals_added})
+
+#     # conflictual_literals = {i for i in literals_added if -i in literals_added}
+
+#     if conflict_free_literals:
+#         # add all clauses for the literals we can validate without conflicting negated values
+#         conflict_free_clauses = set()
+
+#         for c in remaining_clauses:
+#             clause = cnf_clauses[c]
+#             intersection_clause_literals = clause.intersection(conflict_free_literals)
+#             if intersection_clause_literals:
+#                 new_F_prime.add(c)
+#                 conflict_free_clauses.add(c)
+#                 validated_literals |= intersection_clause_literals
+        
+#         remaining_clauses -= conflict_free_clauses
+#         # validated_literals |= conflict_free_literals
+
+#     if conflictual_literals:
+#         # print()
+#         # ppprint({
+#         #     "conflictual_literals":conflictual_literals,
+#         #     "conflict_free_literals":conflict_free_literals,
+#         #     "remaining_clauses": [cnf_clauses[i] for i in remaining_clauses]
+#         # })
+
+#         while(conflictual_literals):
+#             if random_literal:
+#                 literal = conflictual_literals.pop()
+#             else:
+#                 literal = find_best_literal(cnf_clauses, remaining_clauses, conflictual_literals)
+
+#             # SANITY CHECK : add to validated literals
+#             assert literal not in validated_literals, "literal already present"
+#             assert -literal not in validated_literals, "negation of literal already present, conflict !!!"
+
+#             # remove literal and its negation
+#             # conflictual_literals.remove(literal)
+#             conflictual_literals.remove(-literal)
+
+#             conflictual_clauses = set()
+
+#             for c in remaining_clauses:
+#                 clause = cnf_clauses[c]
+#                 if literal in clause:
+#                     conflictual_clauses.add(c)
+#                     new_F_prime.add(c)
+            
+#             remaining_clauses -= conflictual_clauses
+#             validated_literals.add(literal)
+
+#     return new_F_prime
 
 def extension3(cnf_clauses, F_prime, model):
     return F_prime
@@ -313,7 +437,7 @@ def extension3(cnf_clauses, F_prime, model):
 def extension4(cnf_clauses, F_prime, model):
     return F_prime
     
-def grow(clauses, F_prime, model, extension = 0):
+def grow(clauses, F_prime, model, extensions = None):
     """
     
         Procedure to efficiently grow the list clauses in ``F_prime``. The complement of F_prime is a correction
@@ -349,8 +473,10 @@ def grow(clauses, F_prime, model, extension = 0):
             
             Maxsat
     """
+    if not extensions: 
+        return complement(clauses, F_prime)
 
-    extensions = {
+    exts = {
         0 : default_extension,
         1 : extension1,
         2 : extension2,
@@ -358,43 +484,60 @@ def grow(clauses, F_prime, model, extension = 0):
         4 : extension4
     }
     
+    assert all([True if ext in exts else False for ext in extensions]), "extension doest not exist"
     
     new_F_prime = frozenset(F_prime)
+    new_model = frozenset(model)
 
+    # for ext in extensions:
+# <<<<<<< HEAD
+        # new_F_prime, new_model = exts[ext](clauses, new_F_prime, new_model)
+# =======
         # is this meant to be a loop? extensions should just be one??
-    new_F_prime, new_model = extensions[extension](clauses, new_F_prime, model)
+    extension = extensions[0]
+    new_F_prime = exts[extension](clauses, new_F_prime, model)
+# >>>>>>> 4ab72b5e69c9ceae42666dbac2d1024a9e98b298
     
-    # print("F_prime:", F_prime, "model:", model)
-    # print("new_F_prime:", new_F_prime, "new_model:", new_model)
+    print("F_prime:", F_prime)
+    print("new_F_prime:", new_F_prime)
     
     return complement(clauses, new_F_prime)
 
 
 # # OMUS algorithm
 
-def omus(cnf: CNF, extension = 0, f = clause_length):
+def omus(cnf: CNF, extensions = [0], f = clause_length):
     frozen_clauses = [frozenset(clause) for clause in cnf.clauses]
     weights = clauses_weights(cnf.clauses, f)
     H = [] # the complement of a max-sat call
     C = None
 
     while(True):
-        print("Step", len(H))
+
         # compute optimal hitting set
-        F_prime = optimalHittingSet(H, weights)
-        print("--- optimal hitting set")
+        h = optimalHittingSet(H, weights)
+
+        # set with all unique clauses from hitting set
+        # Tias; imho, for clarity, optimalHittingSet should return the hitting set, e.g. F_prime
+        F_prime = frozenset(i for i, hi in enumerate(h) if hi > 0)
+        print("H",H,"h",h,"F_prime",F_prime)
+        # Tias: indeed it should because it has to map back to the correct indices, the ones used in H! --BUG--
+
+        if len(H) > 0:
+            assert len(F_prime) > 0 and len(H) > 0, "empty F_prime"
+
         # check satisfiability of clauses
         model, sat = checkSatClauses(frozen_clauses, F_prime)
-        print("--- satisfiability")
-        if not sat:
-            print(len(H))
-            return F_prime
-        
-        # add all clauses ny building complement
-        C = grow(frozen_clauses, F_prime, model,  extension=extension)
-        print("hs", F_prime, "model", model, "sat", sat)
-        print("C", C)
 
+        if not sat:
+            return F_prime
+
+        # add all clauses ny building complement
+        C = grow(frozen_clauses, F_prime, model,  extensions=extensions)
+        assert len(C) > 0," C not empty set"
+
+        print("H",H)
+        print("C",C)
         if C in H:
             raise "MCS is already in H'"
         

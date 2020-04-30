@@ -139,6 +139,10 @@ def checkSatClauses(clauses, F_prime):
 # # Optimal Hitting set MIP implementation
 
 def optimalHittingSet(H, weights):
+    # trivial case
+    if len(H) == 0:
+        return []
+
     data = create_data_model(H, weights)
     # [START solver]
     # Create the mip solver with the CBC backend.
@@ -174,6 +178,7 @@ def optimalHittingSet(H, weights):
 
     if status == pywraplp.Solver.OPTIMAL:
         #print('Objective value =', solver.Objective().Value())
+        # From Tias: should it not just return the hitting set?
         return [x[j].solution_value() for j in data['indices']]
     else:
         print('The problem does not have an optimal solution.', status)
@@ -234,30 +239,58 @@ def maxsat_fprime(cnf_clauses, F_prime):
     return new_F_prime
 
 def extension1(cnf_clauses, F_prime, model):
-    remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime
     new_F_prime = set(F_prime)
     validated_literals = set(model)
+    # precompute both
+    lit_true = set(model)
+    lit_false = set(-l for l in model)
 
-    for c in remaining_clauses:
+    #remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime
+    #for c in remaining_clauses:
+    #    clause = cnf_clauses[c]
+    for i, clause in enumerate(cnf_clauses):
+        if i in F_prime:
+            pass # already in F_prime
 
-        clause = cnf_clauses[c]
+        print("cl",clause,"true",lit_true)
+        # Similar alternative:
+        if len(clause.intersection(lit_true)) > 0:
+            # a true literal, clause is true
+            new_F_prime.add(i)
+            print("clause is sat")
+        else:
+            # check for unit propagation
+            unassigned = clause - lit_false
+            if len(unassigned) == 1:
+                print("unit prop, sat")
+                new_F_prime.add(i)
+                # add literal to the model
+                lit = next(iter(unassigned))
+                lit_true.add(lit)
+                lit_false.add(-lit)
+            
         
         # if the clause is validated by any of the literals of the model or newly validated literals
         intersection_clause_model =  clause.intersection(validated_literals)
         
         # add the clause to F_prime 
         if intersection_clause_model:
-            new_F_prime.add(c)
+            print("2, sat")
+            #new_F_prime.add(i)
         
         # literals to be checked 
         remaining_literals = clause - validated_literals
         remaining_literals -= {-literal for literal in validated_literals}
 
+        # Tias: this is buggy; I think because of the way you use "if set:" without making the condition
+        # explicit... it can not be unit if inters_cl_ml (then true), and should only when len(rem_lit) == 1
         if intersection_clause_model and  remaining_literals:
+            print("2, unit", validated_literals)
             validated_literals |= remaining_literals
 
-        assert all([True if -i not in validated_literals else False for i in validated_literals])
+        assert all([True if -j not in validated_literals else False for j in validated_literals])
 
+    # Tias: you probably want this to return the 'new' model so it can be used by other functions
     return new_F_prime
 
 def extension2(cnf_clauses, F_prime, model, random_literal = True):
@@ -399,7 +432,11 @@ def grow(clauses, F_prime, model, extensions = None):
     new_F_prime = frozenset(F_prime)
 
     for ext in extensions:
+        # is this meant to be a loop? extensions should just be one??
         new_F_prime = exts[ext](clauses, new_F_prime, model)
+    
+    print("F_prime:", F_prime)
+    print("new_F_prime:", new_F_prime)
     
     return complement(clauses, new_F_prime)
 
@@ -418,7 +455,10 @@ def omus(cnf: CNF, extensions = [0], f = clause_length):
         h = optimalHittingSet(H, weights)
 
         # set with all unique clauses from hitting set
-        F_prime = frozenset({i for i, hi in enumerate(h) if hi > 0})
+        # Tias; imho, for clarity, optimalHittingSet should return the hitting set, e.g. F_prime
+        F_prime = frozenset(i for i, hi in enumerate(h) if hi > 0)
+        print("H",H,"h",h,"F_prime",F_prime)
+        # Tias: indeed it should because it has to map back to the correct indices, the ones used in H! --BUG--
 
         if len(H) > 0:
             assert len(F_prime) > 0 and len(H) > 0, "empty F_prime"
@@ -433,6 +473,8 @@ def omus(cnf: CNF, extensions = [0], f = clause_length):
         C = grow(frozen_clauses, F_prime, model,  extensions=extensions)
         assert len(C) > 0," C not empty set"
 
+        print("H",H)
+        print("C",C)
         if C in H:
             raise "MCS is already in H'"
         

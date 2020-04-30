@@ -316,8 +316,8 @@ def myCheckSatClauses(clauses):
         return None, solved
 
 def main():
-    # smus_cnf = smus_CNF()
-    # assert omus(smus_cnf, [1] ) == {0, 1, 2}, "SMUS error"
+    smus_cnf = smus_CNF()
+    assert omus(smus_cnf, [1] ) == {0, 1, 2}, "SMUS error"
 
 
     cnf_files = sorted(cnfUnsatInstances(), key=lambda item: item.stat().st_size)

@@ -15,7 +15,6 @@ from pysat.solvers import Solver, SolverNames
 from pysat.formula import CNF, WCNF, IDPool
 from pysat.examples.fm import FM
 from pysat.examples.musx import MUSX
-
 from pysat.examples.rc2 import RC2
 
 
@@ -118,7 +117,6 @@ def smus_CNF():
     n = 3
     p = 4
     s = 5
-    t = 6
     cnf = CNF()
     cnf.append([-s])    # c1: ¬s
     cnf.append([s, -p]) # c2: s or ¬p
@@ -315,54 +313,46 @@ def myCheckSatClauses(clauses):
     else:
         return None, solved
 
-def main():
-    # smus_cnf = smus_CNF()
-    # assert omus(smus_cnf, 2 ) == [0, 1, 2], "SMUS error"
+def test_omus(extension):
+    smus_cnf = smus_CNF()
+    assert sorted(omus(smus_cnf, extension )) == sorted([0, 1, 2]), "SMUS error"
+
+def test_cnf_instances():
+    extension = 2
 
     cnf_files = sorted(cnfUnsatInstances(), key=lambda item: item.stat().st_size)
     cnf_instances = list(map(lambda cnf_file: CNF(from_file=cnf_file), cnf_files))
-    
+
     for i, cnf in enumerate(cnf_instances):
         # print("helllooooo")
         cnf_clauses = []
-        [cnf_clauses.append(frozenset(clause)) for clause in cnf.clauses if clause not in cnf_clauses and len(clause) > 0 ] 
+        [cnf_clauses.append(frozenset(clause)) for clause in cnf.clauses if clause not in cnf_clauses and len(clause) > 0 ]
 
         model, solved = myCheckSatClauses(cnf_clauses)
-        
+
         if not solved:
-            print("Not solvable", solved ) 
+            print("Not solvable", solved )
             print(f"\nCNF File Example: {cnf_files[i].name} ({CNFisUnsat(cnf_files[i])}) - clauses = {len(cnf_clauses)}")
             # ppprint(cnf_clauses)
-            omus(cnf = CNF(from_clauses=cnf_clauses), extension = 2 )
+            omus(cnf = CNF(from_clauses=cnf_clauses), extension =    extension )
             break
-    # [clause for clause in cnf.clauses if len(clause) > 0]
-    # print(cnf_clauses)
-    # print()
 
-    # omus(cnf = CNF(from_clauses=cnf_clauses), extensions=[1])
+def test_unsat_core():
+    print(smus_CNF().clauses)
+    from pysat.solvers import Minisat22
+    with Minisat22() as m:
+        for clause in smus_CNF().clauses:
+            m.add_clause(clause)
 
-    # for i, cnf in enumerate(cnf_instances):
-    #     print(i)
-    #     print(f"\nCNF File Example: {cnf_files[i].name} ({CNFisUnsat(cnf_files[i])}) - clauses = {len(cnf.clauses)}")
-    #     print(cnf.clauses)
-    #     omus(cnf, [1] )
-    #     if i > 10:
-    #         break
+        print(m.solve(assumptions=[-1,-3]))
+        print(m.get_core())  # literals 2 and 3 are not in the core
 
-    # wcnf_files = sorted(wcnfUnsatInstances(), key=lambda item: item.stat().st_size)
 
-    # cnf_instances = list(map(lambda cnf_file: CNF(from_file=cnf_file), cnf_files))
-    # wcnf_instances = list(map(lambda wcnf_file: WCNF(from_file=wcnf_file), wcnf_files))
 
-    # cnf = cnf_instances[0]
-    # wcnf = wcnf_instances[0]
-    # print(cnf.clauses)
-    # testMaxSat(wcnf_files[0])
-    # print(wcnf.hard)
-    # print(wcnf.soft)
-    # print(wcnf.wght)
-
-    # omus(cnf, [] )
+def main():
+    # test_omus(extension = 2)
+    test_cnf_instances()
+    print("nothing executed.")
 
 
 if __name__ == "__main__":
@@ -371,7 +361,7 @@ if __name__ == "__main__":
 # ppprint({
 #     # "remaining_clauses": [cnf_clauses[i] for i in remaining_clauses],
 #     "clause": clause,
-#     "clause_number": c, 
+#     "clause_number": c,
 #     "new_F_prime": new_F_prime,
 #     "intersection_clause_model": intersection_clause_model,
 #     "validated_literals": validated_literals,

@@ -262,17 +262,17 @@ def extension2(clauses, F_prime, model, random_literal = True):
             lit_false.add(-l)
 
         # unit propagate the conflict free literals
-        new_F_prime, new_model = extension1(clauses, new_F_prime, lit_true)
+        t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
 
-        lit_true = set(new_model)
-        lit_false = set(-l for l in new_model)
+        lit_true = set(t_model)
+        lit_false = set(-l for l in t_model)
 
         # propagate all remaining literals
         while len(conflictual_literals) > 0:
             if random_literal:
                 literal = next(iter(conflictual_literals))
             else:
-                literal = findBestLiteral(clauses, new_F_prime, conflictual_literals)
+                literal = findBestLiteral(clauses, t_F_prime, conflictual_literals)
 
             conflictual_literals.remove(literal)
             conflictual_literals.remove(-literal)
@@ -281,15 +281,20 @@ def extension2(clauses, F_prime, model, random_literal = True):
             lit_false.add(-literal)
 
             # unit propagate new literal
-            new_F_prime, new_model = extension1(clauses, new_F_prime, lit_true)
+            t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
 
-    assert all([True if -l not in new_model else False for l in new_model])
+        if len(t_F_prime) > len(new_F_prime):
+            clause_added = True
+            new_F_prime = t_F_prime
+            new_model = t_model
 
-    assert len(conflict_free_literals.intersection(conflictual_literals)) == 0,"no intersectionbetween two"
+    assert all([True if -l not in new_model else False for l in new_model]), f"Model error: {[l for l in new_model if -l in new_model]}"
 
     return new_F_prime, new_model
 
 def extension3(cnf_clauses, F_prime, model):
+
+
     return F_prime
 
 def extension4(clauses, F_prime, model):

@@ -311,7 +311,7 @@ def extension2(clauses, F_prime, model, random_literal = True):
 
     assert all([True if -l not in lit_true else False for l in lit_true])
 
-    return new_F_prime, new_model
+    return t_F_prime, lit_true
 
 def extension3(cnf_clauses, F_prime, model):
     return F_prime

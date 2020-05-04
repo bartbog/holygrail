@@ -237,8 +237,8 @@ def extension2(clauses, F_prime, model, random_literal = True):
     lit_false = set(-l for l in new_model)
     clause_added = True
 
-    #t_F_prime = new_F_prime
-    #t_model = new_model
+    t_F_prime = new_F_prime
+    t_model = new_model
 
     while(clause_added):
         clause_added = False
@@ -272,10 +272,10 @@ def extension2(clauses, F_prime, model, random_literal = True):
 
         # unit propagate the conflict free literals
         if clause_added:
-            new_F_prime, new_model = extension1(clauses, new_F_prime, lit_true)
+            t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
 
-            lit_true = set(new_model)
-            lit_false = set(-l for l in new_model)
+            lit_true = set(t_model)
+            lit_false = set(-l for l in t_model)
             # this in itself can create new conflict_free literals it seems... ignoring that for now
 
         remaining_literals = all_literals - lit_true - lit_false
@@ -285,7 +285,7 @@ def extension2(clauses, F_prime, model, random_literal = True):
             if random_literal:
                 literal = next(iter(conflictual_literals))
             else:
-                literal = findBestLiteral(clauses, new_F_prime, conflictual_literals)
+                literal = findBestLiteral(clauses, t_F_prime, conflictual_literals)
 
             conflictual_literals.remove(literal)
             # because the unit prop created a conflict-free one, we must check
@@ -294,20 +294,22 @@ def extension2(clauses, F_prime, model, random_literal = True):
 
             lit_true.add(literal)
             lit_false.add(-literal)
-            clause_added = True
 
             # unit propagate new literal
-            new_F_prime, new_model = extension1(clauses, new_F_prime, lit_true)
-            lit_true = set(new_model)
-            lit_false = set(-l for l in new_model)
+            t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
+            lit_true = set(t_model)
+            lit_false = set(-l for l in t_model)
             # code was probably not finished because the latter was missing
             conflictual_literals = conflictual_literals - lit_true - lit_false
+
         # hmm, this is the end?
+        #if len(t_F_prime) > len(new_F_prime):
+        #    clause_added = True
+        #    new_F_prime = t_F_prime
+        #    new_model = t_model
         clause_added = False
 
     assert all([True if -l not in lit_true else False for l in lit_true])
-
-    assert len(conflict_free_literals.intersection(conflictual_literals)) == 0,"no intersectionbetween two"
 
     return new_F_prime, new_model
 

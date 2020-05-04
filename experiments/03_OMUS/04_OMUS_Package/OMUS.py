@@ -231,42 +231,55 @@ def findBestLiteral(clauses, F_prime, literals):
     return best_literal
 
 def extension2(clauses, F_prime, model, random_literal = True):
+    all_literals = frozenset.union(*clauses)
     new_F_prime, new_model = extension1(clauses, F_prime, model)
+    lit_true = set(new_model)
+    lit_false = set(-l for l in new_model)
     clause_added = True
 
-    t_F_prime = new_F_prime
-    t_model = new_model
+    #t_F_prime = new_F_prime
+    #t_model = new_model
 
     while(clause_added):
-        lit_true = set(new_model)
-        lit_false = set(-l for l in new_model)
+        clause_added = False
 
         # find all literals in clauses already
         assignable_literals = set()
         for i, clause in enumerate(clauses):
             if i in new_F_prime:
                 continue
+            # Tias: I don't think this does what you want...
+            # if clause and new_model/t_model/lit_true intersect, then this clause is already satisfied?
+            # so all interesting clauses (not yet satisfied) do not have their literals included?
             if len(new_model.intersection(clause)) > 0:
                 assignable_literals |= clause
 
         # remove literals already added
-        assignable_literals -= lit_true
-        assignable_literals -= lit_false
+        #assignable_literals -= lit_true
+        #assignable_literals -= lit_false
 
-        conflict_free_literals = set(l for l in assignable_literals if -l not in assignable_literals)
-        conflictual_literals = set(l for l in assignable_literals if -l  in assignable_literals)
+        #conflict_free_literals = set(l for l in assignable_literals if -l not in assignable_literals)
+        #conflictual_literals = set(l for l in assignable_literals if -l  in assignable_literals)
+        # alternative, over all literals
+        remaining_literals = all_literals - lit_true - lit_false
+        conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
         # all literals can be added to the model since they don't pose any conflict with other literals
         for l in conflict_free_literals:
+            clause_added = True
             lit_true.add(l)
             lit_false.add(-l)
 
         # unit propagate the conflict free literals
-        new_F_prime, new_model = extension1(clauses, new_F_prime, lit_true)
+        if clause_added:
+            new_F_prime, new_model = extension1(clauses, new_F_prime, lit_true)
 
-        lit_true = set(new_model)
-        lit_false = set(-l for l in new_model)
+            lit_true = set(new_model)
+            lit_false = set(-l for l in new_model)
+            # this in itself can create new conflict_free literals it seems... ignoring that for now
 
+        remaining_literals = all_literals - lit_true - lit_false
+        conflictual_literals = set(remaining_literals)
         # propagate all remaining literals
         while len(conflictual_literals) > 0:
             if random_literal:
@@ -275,15 +288,24 @@ def extension2(clauses, F_prime, model, random_literal = True):
                 literal = findBestLiteral(clauses, new_F_prime, conflictual_literals)
 
             conflictual_literals.remove(literal)
-            conflictual_literals.remove(-literal)
+            # because the unit prop created a conflict-free one, we must check
+            if -literal in conflictual_literals:
+                conflictual_literals.remove(-literal)
 
             lit_true.add(literal)
             lit_false.add(-literal)
+            clause_added = True
 
             # unit propagate new literal
             new_F_prime, new_model = extension1(clauses, new_F_prime, lit_true)
+            lit_true = set(new_model)
+            lit_false = set(-l for l in new_model)
+            # code was probably not finished because the latter was missing
+            conflictual_literals = conflictual_literals - lit_true - lit_false
+        # hmm, this is the end?
+        clause_added = False
 
-    assert all([True if -l not in new_model else False for l in new_model])
+    assert all([True if -l not in lit_true else False for l in lit_true])
 
     assert len(conflict_free_literals.intersection(conflictual_literals)) == 0,"no intersectionbetween two"
 

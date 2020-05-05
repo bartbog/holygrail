@@ -288,16 +288,8 @@ def extension2(clauses, F_prime, model, random_literal = False):
         lit_true = set(t_model)
         lit_false = set(-l for l in t_model)
 
-        remaining_literals = all_literals - lit_true - lit_false
+        remaining_literals = remaining_literals - lit_true - lit_false
         conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
-
-    # unit propagate the conflict free literals
-    # if clause_added:
-    #     t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
-
-    #     lit_true = set(t_model)
-    #     lit_false = set(-l for l in t_model)
-        # this in itself can create new conflict_free literals it seems... ignoring that for now
 
     # remaining_literals = all_literals - lit_true - lit_false
     conflictual_literals = set(remaining_literals)

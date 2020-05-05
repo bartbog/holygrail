@@ -10,6 +10,7 @@ from pathlib import Path
 from enum import Enum
 import json
 import time
+from collections import Counter
 
 # pysat library
 from pysat.solvers import Solver, SolverNames
@@ -23,7 +24,7 @@ from pysat.examples.hitman import Hitman
 # or-tools library
 from ortools.linear_solver import pywraplp
 from OMUS_utils import *
-import operator
+# import operator
 # numpy
 #import numpy as np
 
@@ -201,37 +202,6 @@ def extension1(clauses, F_prime, model):
     assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
     return new_F_prime, lit_true
 
-def findBestConflictualLiteral(clauses, F_prime, literals):
-    """Find the best literal in the list of `literals' based on the number of clauses
-    the literal hits.
-
-    Arguments:
-        clauses {iterable(set(int))} -- collection of clauses (sets of literals)
-        F_prime {iterable(int)} -- Hitting set
-        literals {iterable(int)} -- Candidate literals
-
-    Returns:
-        int -- literal hitting the most clauses in the not satisfied clauses of `clauses'
-    """
-    if literals == []:
-        return None
-    literal_clause_prop = dict()
-    for literal in literals:
-        literal_clause_prop[literal] = 0
-        literal_clause_prop[-literal] = 0
-
-
-    for i, clause in enumerate(clauses):
-        if i in F_prime:
-            continue
-        clause_lit_intersection = clause.intersection(literals)
-        if len(clause_lit_intersection) > 0:
-            for l in clause_lit_intersection:
-                literal_clause_prop[l] += 1
-
-    best_literal = max(literal_clause_prop.keys(), key=(lambda k: literal_clause_prop[k]))
-    return best_literal
-
 def findBestLiteral(clauses, F_prime, literals):
     """Find the best literal in the list of `literals' based on the number of clauses
     the literal hits.
@@ -244,21 +214,37 @@ def findBestLiteral(clauses, F_prime, literals):
     Returns:
         int -- literal hitting the most clauses in the not satisfied clauses of `clauses'
     """
-    literal_clause_prop = dict()
-    for literal in literals:
-        literal_clause_prop[literal] = 0
-
+    literal_count = Counter({literal:0 for literal in literals})
 
     for i, clause in enumerate(clauses):
-        if i in F_prime:
-            continue
-        clause_lit_intersection = clause.intersection(literals)
-        if len(clause_lit_intersection) > 0:
-            for l in clause_lit_intersection:
-                literal_clause_prop[l] += 1
+        if i not in F_prime:
+            literal_count.update(clause.intersection(literals))
 
-    best_literal = max(literal_clause_prop.keys(), key=(lambda k: literal_clause_prop[k]))
+    # literal_count = literal_count.update([literal   for literal in clause if literal in literals])
+    best_literal = literal_count.most_common(1)[0][0] if literal_count else None
+
     return best_literal
+
+def literalCoverage(clauses, F_prime, literals):
+    """Literal coverage for every literal in `literals' in clauses not yet in F_prime
+
+    Arguments:
+        clauses {iterable(iterable(int))} -- Clauses
+        F_prime {iterable(int)} -- List of clauses, Hitting set to grow
+        literals {iterable(int)} -- List of literals that are yet to be validated in the remaining clauses
+
+    Returns:
+        dict(int, iterable(int)) -- Dictionary of literals with corresponding clauses validated
+    """
+    literal_coverage = {literal:set() for literal in literals}
+
+    for clause_id, clause in enumerate(clauses):
+        if clause_id not in F_prime:
+            for literal in clause.intersection(literals):
+                literal_coverage[literal].add(clause_id)
+    return literal_coverage
+
+
 
 def extension2(clauses, F_prime, model, random_literal = False):
     all_literals = frozenset.union(*clauses)
@@ -271,27 +257,28 @@ def extension2(clauses, F_prime, model, random_literal = False):
     remaining_literals = all_literals - lit_true - lit_false
     conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
-    # all literals can be added to the model since they don't pose any conflict with other literals
     while(len(conflict_free_literals) > 0):
-        clause_added = True
+            # clause_added = True
 
-        if random_literal:
-            lit = next(iter(conflict_free_literals))
-        else:
-            lit = findBestLiteral(clauses, t_F_prime, conflict_free_literals)
+            if random_literal:
+                lit = next(iter(conflict_free_literals))
+            else:
+                lit = findBestLiteral(clauses, t_F_prime, conflict_free_literals)
 
-        lit_true.add(lit)
-        lit_false.add(-lit)
+            lit_true.add(lit)
+            lit_false.add(-lit)
 
-        t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
+            t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
 
-        lit_true = set(t_model)
-        lit_false = set(-l for l in t_model)
+            lit_true = set(t_model)
+            lit_false = set(-l for l in t_model)
 
-        remaining_literals = remaining_literals - lit_true - lit_false
-        conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
+            remaining_literals = all_literals - lit_true - lit_false
+            conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
-    # remaining_literals = all_literals - lit_true - lit_false
+    # if len(conflict_free_literals) > 0:
+    #     raise "Conflict free literlas happening"
+
     conflictual_literals = set(remaining_literals)
 
     assert all([True if -l in conflictual_literals else False for l in conflictual_literals])
@@ -301,7 +288,7 @@ def extension2(clauses, F_prime, model, random_literal = False):
         if random_literal:
             literal = next(iter(conflictual_literals))
         else:
-            literal = findBestConflictualLiteral(clauses, t_F_prime, conflictual_literals)
+            literal = findBestLiteral(clauses, t_F_prime, conflictual_literals)
 
         conflictual_literals.remove(literal)
         # because the unit prop created a conflict-free one, we must check
@@ -313,18 +300,74 @@ def extension2(clauses, F_prime, model, random_literal = False):
 
         # unit propagate new literal
         t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
+
         lit_true = set(t_model)
         lit_false = set(-l for l in t_model)
 
         # code was probably not finished because the latter was missing
-        conflictual_literals = conflictual_literals - lit_true - lit_false
+        remaining_literals = all_literals - lit_true - lit_false
+        conflictual_literals = set(remaining_literals)
 
     assert all([True if -l not in lit_true else False for l in lit_true])
 
     return t_F_prime, lit_true
-def extension3(clauses, F_prime, model, random_literal = True):
 
-    return F_prime, model
+def mipLiteralClauseCoverage(clauses, F_prime, literals, model):
+    t_F_prime = set(F_prime)
+    t_model = set(model)
+    # computing coverage 
+    clause_literal_coverage = literalCoverage(clauses, t_F_prime, literals)
+
+
+
+    return t_F_prime, t_model
+
+def greedySearch(clauses, F_prime, literals, model):
+    t_F_prime = set(F_prime)
+    lit_true = set(model)
+    lit_false = set(-l for l in model)
+    remaining_literals = set(literals)
+    # literal_coverage = literalCoverage(clauses, t_F_prime, literals)
+
+    while(len(remaining_literals) > 0):
+        literal = findBestLiteral(clauses, F_prime, literals)
+
+        remaining_literals.remove(literal)
+
+        # because the unit prop created a conflict-free one, we must check
+        if -literal in remaining_literals:
+            remaining_literals.remove(-literal)
+
+        lit_true.add(literal)
+        lit_false.add(-literal)
+
+        # unit propagate new literal
+        t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
+
+        lit_true = set(t_model)
+        lit_false = set(-l for l in t_model)
+
+        # code was probably not finished because the latter was missing
+        remaining_literals = all_literals - lit_true - lit_false
+        conflictual_literals = set(remaining_literals)
+
+    return t_F_prime, t_model
+
+def extension3(clauses, F_prime, model, greedy = True):
+    all_literals = frozenset.union(*clauses)
+    t_F_prime, t_model = extension1(clauses, F_prime, model)
+    lit_true = set(t_model)
+    lit_false = set(-l for l in t_model)
+
+    remaining_literals = all_literals - lit_true - lit_false
+
+    if greedy:
+        t_F_prime, t_model = greedySearch(clauses, t_F_prime, remaining_literals, t_model)
+    else:
+        t_F_prime, t_model = mipLiteralClauseCoverage(clauses, t_F_prime, remaining_literals, t_model)
+
+    return t_F_prime, t_model
+
 def extension4(clauses, F_prime, model):
 
     return F_prime, model

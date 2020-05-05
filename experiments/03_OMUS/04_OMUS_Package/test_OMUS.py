@@ -108,8 +108,7 @@ def wcnfUnsatInstances():
     return [instance  for instance in wcnfInstances()]
 
 def cnfUnsatInstances():
-    return [instance  for instance in cnfInstances() if CNFisUnsat(instance)]
-
+    return [instance  for instance in cnfInstances(Difficulty.MEDIUM) if CNFisUnsat(instance)]
 
 def smus_CNF():
     l = 1
@@ -322,7 +321,7 @@ def test_cnf_instances():
 
     cnf_files = sorted(cnfUnsatInstances(), key=lambda item: item.stat().st_size)
     cnf_instances = list(map(lambda cnf_file: CNF(from_file=cnf_file), cnf_files))
-
+    cnt = 0
     for i, cnf in enumerate(cnf_instances):
         # print("helllooooo")
         cnf_clauses = []
@@ -335,7 +334,6 @@ def test_cnf_instances():
             print(f"\nCNF File Example: {cnf_files[i].name} ({CNFisUnsat(cnf_files[i])}) - clauses = {len(cnf_clauses)}")
             # ppprint(cnf_clauses)
             omus(cnf = CNF(from_clauses=cnf_clauses), extension =    extension )
-            break
 
 def test_unsat_core():
     print(smus_CNF().clauses)
@@ -356,6 +354,7 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
 
 # ppprint({

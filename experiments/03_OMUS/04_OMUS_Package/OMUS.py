@@ -23,7 +23,7 @@ from pysat.examples.hitman import Hitman
 # or-tools library
 from ortools.linear_solver import pywraplp
 from OMUS_utils import *
-
+import operator
 # numpy
 #import numpy as np
 
@@ -198,8 +198,39 @@ def extension1(clauses, F_prime, model):
             new_F_prime = t_F_prime
             # check for unit propagation
 
-    # Tias: you probably want this to return the 'new' model so it can be used by other functions
+    assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
     return new_F_prime, lit_true
+
+def findBestConflictualLiteral(clauses, F_prime, literals):
+    """Find the best literal in the list of `literals' based on the number of clauses
+    the literal hits.
+
+    Arguments:
+        clauses {iterable(set(int))} -- collection of clauses (sets of literals)
+        F_prime {iterable(int)} -- Hitting set
+        literals {iterable(int)} -- Candidate literals
+
+    Returns:
+        int -- literal hitting the most clauses in the not satisfied clauses of `clauses'
+    """
+    if literals == []:
+        return None
+    literal_clause_prop = dict()
+    for literal in literals:
+        literal_clause_prop[literal] = 0
+        literal_clause_prop[-literal] = 0
+
+
+    for i, clause in enumerate(clauses):
+        if i in F_prime:
+            continue
+        clause_lit_intersection = clause.intersection(literals)
+        if len(clause_lit_intersection) > 0:
+            for l in clause_lit_intersection:
+                literal_clause_prop[l] += 1
+
+    best_literal = max(literal_clause_prop.keys(), key=(lambda k: literal_clause_prop[k]))
+    return best_literal
 
 def findBestLiteral(clauses, F_prime, literals):
     """Find the best literal in the list of `literals' based on the number of clauses
@@ -216,7 +247,6 @@ def findBestLiteral(clauses, F_prime, literals):
     literal_clause_prop = dict()
     for literal in literals:
         literal_clause_prop[literal] = 0
-        literal_clause_prop[-literal] = 0
 
 
     for i, clause in enumerate(clauses):
@@ -227,95 +257,82 @@ def findBestLiteral(clauses, F_prime, literals):
             for l in clause_lit_intersection:
                 literal_clause_prop[l] += 1
 
-    best_literal = max(literal_clause_prop.iterkeys(), key=(lambda key: literal_clause_prop[key]))
+    best_literal = max(literal_clause_prop.keys(), key=(lambda k: literal_clause_prop[k]))
     return best_literal
 
-def extension2(clauses, F_prime, model, random_literal = True):
+def extension2(clauses, F_prime, model, random_literal = False):
     all_literals = frozenset.union(*clauses)
-    new_F_prime, new_model = extension1(clauses, F_prime, model)
-    lit_true = set(new_model)
-    lit_false = set(-l for l in new_model)
-    clause_added = True
+    t_F_prime, t_model = extension1(clauses, F_prime, model)
+    lit_true = set(t_model)
+    lit_false = set(-l for l in t_model)
+    clause_added = False
 
-    t_F_prime = new_F_prime
-    t_model = new_model
+    # alternative, over all literals
+    remaining_literals = all_literals - lit_true - lit_false
+    conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
-    while(clause_added):
-        clause_added = False
+    # all literals can be added to the model since they don't pose any conflict with other literals
+    while(len(conflict_free_literals) > 0):
+        clause_added = True
 
-        # find all literals in clauses already
-        assignable_literals = set()
-        for i, clause in enumerate(clauses):
-            if i in new_F_prime:
-                continue
-            # Tias: I don't think this does what you want...
-            # if clause and new_model/t_model/lit_true intersect, then this clause is already satisfied?
-            # so all interesting clauses (not yet satisfied) do not have their literals included?
-            if len(new_model.intersection(clause)) > 0:
-                assignable_literals |= clause
+        if random_literal:
+            lit = next(iter(conflict_free_literals))
+        else:
+            lit = findBestLiteral(clauses, t_F_prime, conflict_free_literals)
 
-        # remove literals already added
-        #assignable_literals -= lit_true
-        #assignable_literals -= lit_false
+        lit_true.add(lit)
+        lit_false.add(-lit)
 
-        #conflict_free_literals = set(l for l in assignable_literals if -l not in assignable_literals)
-        #conflictual_literals = set(l for l in assignable_literals if -l  in assignable_literals)
-        # alternative, over all literals
+        t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
+
+        lit_true = set(t_model)
+        lit_false = set(-l for l in t_model)
+
         remaining_literals = all_literals - lit_true - lit_false
         conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
-        # all literals can be added to the model since they don't pose any conflict with other literals
-        for l in conflict_free_literals:
-            clause_added = True
-            lit_true.add(l)
-            lit_false.add(-l)
+    # unit propagate the conflict free literals
+    # if clause_added:
+    #     t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
 
-        # unit propagate the conflict free literals
-        if clause_added:
-            t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
+    #     lit_true = set(t_model)
+    #     lit_false = set(-l for l in t_model)
+        # this in itself can create new conflict_free literals it seems... ignoring that for now
 
-            lit_true = set(t_model)
-            lit_false = set(-l for l in t_model)
-            # this in itself can create new conflict_free literals it seems... ignoring that for now
+    # remaining_literals = all_literals - lit_true - lit_false
+    conflictual_literals = set(remaining_literals)
 
-        remaining_literals = all_literals - lit_true - lit_false
-        conflictual_literals = set(remaining_literals)
-        # propagate all remaining literals
-        while len(conflictual_literals) > 0:
-            if random_literal:
-                literal = next(iter(conflictual_literals))
-            else:
-                literal = findBestLiteral(clauses, t_F_prime, conflictual_literals)
+    assert all([True if -l in conflictual_literals else False for l in conflictual_literals])
 
-            conflictual_literals.remove(literal)
-            # because the unit prop created a conflict-free one, we must check
-            if -literal in conflictual_literals:
-                conflictual_literals.remove(-literal)
+    # propagate all remaining literals
+    while len(conflictual_literals) > 0:
+        if random_literal:
+            literal = next(iter(conflictual_literals))
+        else:
+            literal = findBestConflictualLiteral(clauses, t_F_prime, conflictual_literals)
 
-            lit_true.add(literal)
-            lit_false.add(-literal)
+        conflictual_literals.remove(literal)
+        # because the unit prop created a conflict-free one, we must check
+        if -literal in conflictual_literals:
+            conflictual_literals.remove(-literal)
 
-            # unit propagate new literal
-            t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
-            lit_true = set(t_model)
-            lit_false = set(-l for l in t_model)
-            # code was probably not finished because the latter was missing
-            conflictual_literals = conflictual_literals - lit_true - lit_false
+        lit_true.add(literal)
+        lit_false.add(-literal)
 
-        # hmm, this is the end?
-        #if len(t_F_prime) > len(new_F_prime):
-        #    clause_added = True
-        #    new_F_prime = t_F_prime
-        #    new_model = t_model
-        clause_added = False
+        # unit propagate new literal
+        t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
+        lit_true = set(t_model)
+        lit_false = set(-l for l in t_model)
+
+        # code was probably not finished because the latter was missing
+        conflictual_literals = conflictual_literals - lit_true - lit_false
 
     assert all([True if -l not in lit_true else False for l in lit_true])
 
     return t_F_prime, lit_true
+def extension3(clauses, F_prime, model, random_literal = True):
 
-def extension3(cnf_clauses, F_prime, model):
-    return F_prime
-
+    return F_prime, model
 def extension4(clauses, F_prime, model):
 
     return F_prime, model
@@ -329,16 +346,16 @@ def optimalHittingSet(H, weights):
     data = create_data_model(H, weights)
     # [START solver]
     # Create the mip solver with the CBC backend.
-    # solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.BOP_INTEGER_PROGRAMMING)
-    solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+    solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.BOP_INTEGER_PROGRAMMING)
+    # solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
     # [END solver]
 
     # [START variables]
     #infinity = solver.infinity()
     x = {}
     for j in data['indices']:
-        x[j] = solver.IntVar(0,1,'x[%i]' % j)
-        # x[j] = solver.BoolVar('x[%i]' % j)
+        # x[j] = solver.IntVar(0,1,'x[%i]' % j)
+        x[j] = solver.BoolVar('x[%i]' % j)
     # [END variables]
 
     # [START constraints]
@@ -436,9 +453,9 @@ def omus(cnf: CNF, extension = 0, f = clause_length):
 
     while(True):
         end_time = time.time()
-        print("Step", len(H), f'{round(end_time - start_time, 3)}' )
         # compute optimal hitting set
         F_prime =  optimalHittingSet(H, weights)
+
         # check satisfiability of clauses
         model, sat = checkSatClauses(frozen_clauses, F_prime)
         # model, sat = getAllModels(frozen_clauses, F_prime)
@@ -451,6 +468,7 @@ def omus(cnf: CNF, extension = 0, f = clause_length):
         C = grow(frozen_clauses, F_prime, model,  extension=extension)
         # print("hs", F_prime, "model", model, "sat", sat)
         # print("C", C)
+        print("Step", len(H), f'{round(end_time - start_time, 3)}', '|hs|',  len(F_prime), '|C|' , len(C) )
 
         if C in H:
             raise f"{F_prime} {C} is already in {H}"

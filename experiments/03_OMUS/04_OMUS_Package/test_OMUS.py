@@ -350,7 +350,7 @@ def test_unsat_core():
 
 
 def main():
-    # test_omus(extension = 2)
+    test_omus(extension = 2)
     test_cnf_instances()
     print("nothing executed.")
 

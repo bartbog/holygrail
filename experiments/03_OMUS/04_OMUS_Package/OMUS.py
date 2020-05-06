@@ -312,18 +312,69 @@ def extension2(clauses, F_prime, model, random_literal = False):
 
     return t_F_prime, lit_true
 
+def mipLiteralCoverageDataModel(coverage, literals):
+    # TODO: Build data model
+    data = {}
+    data['indices'] = {}
+
+    return data
+
 def mipLiteralClauseCoverage(clauses, F_prime, literals, model):
     t_F_prime = set(F_prime)
     t_model = set(model)
-    # computing coverage 
+
+    # computing coverage
     clause_literal_coverage = literalCoverage(clauses, t_F_prime, literals)
+    data = mipLiteralCoverageDataModel(clause_literal_coverage, literals)
 
+    # [START solver]
+    # Create the mip solver with the CBC backend.
+    solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.BOP_INTEGER_PROGRAMMING)
+    # [END solver]
 
+    # [START variables]
+    l = {}
+    for i in data['indices']:
+        l[i] = solver.BoolVar('l[%i]' % j)
+    # [END variables]
 
-    return t_F_prime, t_model
+    # [START constraints]
+    # TODO: add sum constraint
+    solver.add(sum() == 1)
+    # [END constraints]
+
+    # [START objective]
+    # Maximize sum w[i] * x[i]
+    objective = solver.Objective()
+    for idx in data['indices']:
+        # TODO : sum li * sum cij*wj
+        continue
+        # objective.SetCoefficient(x[idx], data['obj_coeffs'][idx])
+    objective.SetMaximization()
+    # [END objective]
+
+    # max 10 minute timeout for solution
+    # solver.parameters.max_time_in_seconds = 10 (min) * 60 (s) * 1000 ms
+    k = solver.SetNumThreads(8)
+    solver.set_time_limit(60 * 3* 1000)
+    # solver.set_time_limit(10 * 60 * 1000)
+
+    # Solve the problem and print the solution.
+    # [START print_solution]
+    status = solver.Solve()
+
+    if status == pywraplp.Solver.OPTIMAL:
+        # TODO: modify output values
+        return t_F_prime, t_model
+    else:
+        return F_prime, model
+    # [END print_solution]
+
 
 def greedySearch(clauses, F_prime, literals, model):
+    all_literals = frozenset.union(*clauses)
     t_F_prime = set(F_prime)
+    t_model = set(model)
     lit_true = set(model)
     lit_false = set(-l for l in model)
     remaining_literals = set(literals)
@@ -349,7 +400,6 @@ def greedySearch(clauses, F_prime, literals, model):
 
         # code was probably not finished because the latter was missing
         remaining_literals = all_literals - lit_true - lit_false
-        conflictual_literals = set(remaining_literals)
 
     return t_F_prime, t_model
 

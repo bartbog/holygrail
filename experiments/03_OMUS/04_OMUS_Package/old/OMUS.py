@@ -237,6 +237,96 @@ def maxsat_fprime(cnf_clauses, F_prime):
     new_F_prime = set(F_prime)
 
     return new_F_prime
+def mipLiteralCoverageDataModel(clauses, F_prime, literals, weights):
+    data = {}
+    data['indices'] = sorted([l for l in literals])
+    data['conflictual']=set((abs(l),-abs(l)) for l in literals if -l in literals)
+    data['conflictfree']=set(l for l in literals if -l not in literals)
+    data['n_c'] = len(data['conflictual']) * 2 + 1
+    data['n_v'] = len(literals)
+    data['n_L'] = len(set(abs(l) for l in literals ))
+    data['bounds'] = {'lb':0, 'ub': 2, 'n_L' : data['n_L']}
+    data['weights']= [weights[i] for i in range(len(clauses)) if i not in F_prime]
+    data['coverage'] = literalCoverage(clauses, F_prime, literals)
+    data['n_clauses'] = len(clauses) - len(F_prime)
+    remaining_clauses = [clauses[i] for i in range(len(clauses)) if i not in F_prime]
+    data['remaining_clauses'] = remaining_clauses
+    c = [[0 for j in range(data['n_clauses'])] for i in range(len(literals))]
+    for i in range(len(literals)):
+        for j, clause in enumerate(remaining_clauses):
+            literal = data['indices'][i]
+            if literal in clause:
+                c[i][j] = 1
+
+    data['obj_coef']= c
+
+    return data
+
+def test_mipLiteralClauseCoverage():
+    l = 1
+    m = 2
+    n = 3
+    p = 4
+    s = 5
+    smus_cnf = smus_CNF()
+    clauses = [set(clause) for clause in smus_cnf.clauses]
+    F_prime = [2]
+    literals = set({l, -l, m, -m, n, -n, -s, s})
+    model = [p]
+    weights = [len(clause) for clause in clauses]
+    data = mipLiteralCoverageDataModel(clauses, F_prime, literals, weights)
+    ppprint(data)
+
+def mipLiteralClauseCoverage(clauses, F_prime, literals, model):
+    t_F_prime = set(F_prime)
+    t_model = set(model)
+
+    # computing coverage
+    data = mipLiteralCoverageDataModel(clauses, F_prime, literals, weights)
+
+    # [START solver]
+    # Create the mip solver with the CBC backend.
+    solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.BOP_INTEGER_PROGRAMMING)
+    # [END solver]
+
+    # [START variables]
+    l = {}
+    for i in data['indices']:
+        l[i] = solver.BoolVar('l[%i]' % j)
+    # [END variables]
+
+    # [START constraints]
+    # TODO: add sum constraint
+    solver.add(sum() == 1)
+    # [END constraints]
+
+    # [START objective]
+    # Maximize sum w[i] * x[i]
+    objective = solver.Objective()
+    for idx in data['indices']:
+        # TODO : sum li * sum cij*wj
+        continue
+        # objective.SetCoefficient(x[idx], data['obj_coeffs'][idx])
+    objective.SetMaximization()
+    # [END objective]
+
+    # max 10 minute timeout for solution
+    # solver.parameters.max_time_in_seconds = 10 (min) * 60 (s) * 1000 ms
+    k = solver.SetNumThreads(8)
+    solver.set_time_limit(60 * 3* 1000)
+    # solver.set_time_limit(10 * 60 * 1000)
+
+    # Solve the problem and print the solution.
+    # [START print_solution]
+    status = solver.Solve()
+
+    if status == pywraplp.Solver.OPTIMAL:
+        # TODO: modify output values
+        return t_F_prime, t_model
+    else:
+        return F_prime, model
+    # [END print_solution]
+
 
 def extension1(cnf_clauses, F_prime, model):
     new_F_prime = set(F_prime)
@@ -290,12 +380,8 @@ def extension1(cnf_clauses, F_prime, model):
 
         assert all([True if -j not in validated_literals else False for j in validated_literals])
 
-# <<<<<<< HEAD
     return new_F_prime, validated_literals
-# =======
-    # Tias: you probably want this to return the 'new' model so it can be used by other functions
-    # return new_F_prime
-# >>>>>>> 4ab72b5e69c9ceae42666dbac2d1024a9e98b298
+
 
 def extension2(cnf_clauses, F_prime, model, random_literal= True):
     remaining_clauses = {i for i in range(len(cnf_clauses))} - F_prime

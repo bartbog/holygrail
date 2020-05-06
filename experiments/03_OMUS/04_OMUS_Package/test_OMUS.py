@@ -30,6 +30,8 @@ import pprint
 
 sign = lambda x: (1, -1)[x < 0]
 
+
+
 # # Pysat pre-processing
 folderPaths={
     'easyInstances':'data/easy_instances/',
@@ -252,9 +254,7 @@ def list_clause_frozen(clauses):
     return [frozenset(clause) for clause in clauses]
 
 
-
 def test_checkSatClauses():
-
 
     smus_cnf = smus_CNF()
     clauses = list_clause_frozen(smus_cnf.clauses)
@@ -345,16 +345,36 @@ def test_unsat_core():
         print(m.solve(assumptions=[-1,-3]))
         print(m.get_core())  # literals 2 and 3 are not in the core
 
+def test_gurobi_model():
+    clauses = smus_CNF().clauses
+    weights = clauses_weights(clauses)
+    print(clauses)
+    print(weights)
 
+    m = gurobiModel(clauses, weights)
+    m.optimize()
+    # x = m.getVars()
+    # print(x[0])
+    addSetGurobiModel(clauses, m, [2,3])
+    # m.reset()
+    m.optimize()
+
+
+ 
+
+    for v in m.getVars():
+        print('%s %g' % (v.varName, v.x))
+
+
+    print('Obj: %g' % m.objVal)
 
 def main():
-    test_omus(extension = 2)
+    # test_gurobi_model()
+    # test_omus(extension = 2)
     test_cnf_instances()
-    print("nothing executed.")
-
+    # test_mipLiteralClauseCoverage()
 
 if __name__ == "__main__":
-
     main()
 
 # ppprint({

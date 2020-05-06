@@ -11,6 +11,7 @@ from enum import Enum
 import json
 import time
 from collections import Counter
+from datetime import datetime
 
 # pysat library
 from pysat.solvers import Solver, SolverNames
@@ -18,8 +19,11 @@ from pysat.formula import CNF, WCNF
 from pysat.examples.fm import FM
 from pysat.examples.musx import MUSX
 from pysat.examples.rc2 import RC2
-
 from pysat.examples.hitman import Hitman
+
+# gurobi library
+import gurobipy as gp
+from gurobipy import GRB
 
 # or-tools library
 from ortools.linear_solver import pywraplp
@@ -244,8 +248,6 @@ def literalCoverage(clauses, F_prime, literals):
                 literal_coverage[literal].add(clause_id)
     return literal_coverage
 
-
-
 def extension2(clauses, F_prime, model, random_literal = False):
     all_literals = frozenset.union(*clauses)
     t_F_prime, t_model = extension1(clauses, F_prime, model)
@@ -312,65 +314,6 @@ def extension2(clauses, F_prime, model, random_literal = False):
 
     return t_F_prime, lit_true
 
-def mipLiteralCoverageDataModel(coverage, literals):
-    # TODO: Build data model
-    data = {}
-    data['indices'] = {}
-
-    return data
-
-def mipLiteralClauseCoverage(clauses, F_prime, literals, model):
-    t_F_prime = set(F_prime)
-    t_model = set(model)
-
-    # computing coverage
-    clause_literal_coverage = literalCoverage(clauses, t_F_prime, literals)
-    data = mipLiteralCoverageDataModel(clause_literal_coverage, literals)
-
-    # [START solver]
-    # Create the mip solver with the CBC backend.
-    solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.BOP_INTEGER_PROGRAMMING)
-    # [END solver]
-
-    # [START variables]
-    l = {}
-    for i in data['indices']:
-        l[i] = solver.BoolVar('l[%i]' % j)
-    # [END variables]
-
-    # [START constraints]
-    # TODO: add sum constraint
-    solver.add(sum() == 1)
-    # [END constraints]
-
-    # [START objective]
-    # Maximize sum w[i] * x[i]
-    objective = solver.Objective()
-    for idx in data['indices']:
-        # TODO : sum li * sum cij*wj
-        continue
-        # objective.SetCoefficient(x[idx], data['obj_coeffs'][idx])
-    objective.SetMaximization()
-    # [END objective]
-
-    # max 10 minute timeout for solution
-    # solver.parameters.max_time_in_seconds = 10 (min) * 60 (s) * 1000 ms
-    k = solver.SetNumThreads(8)
-    solver.set_time_limit(60 * 3* 1000)
-    # solver.set_time_limit(10 * 60 * 1000)
-
-    # Solve the problem and print the solution.
-    # [START print_solution]
-    status = solver.Solve()
-
-    if status == pywraplp.Solver.OPTIMAL:
-        # TODO: modify output values
-        return t_F_prime, t_model
-    else:
-        return F_prime, model
-    # [END print_solution]
-
-
 def greedySearch(clauses, F_prime, literals, model):
     all_literals = frozenset.union(*clauses)
     t_F_prime = set(F_prime)
@@ -411,10 +354,7 @@ def extension3(clauses, F_prime, model, greedy = True):
 
     remaining_literals = all_literals - lit_true - lit_false
 
-    if greedy:
-        t_F_prime, t_model = greedySearch(clauses, t_F_prime, remaining_literals, t_model)
-    else:
-        t_F_prime, t_model = mipLiteralClauseCoverage(clauses, t_F_prime, remaining_literals, t_model)
+    t_F_prime, t_model = greedySearch(clauses, t_F_prime, remaining_literals, t_model)
 
     return t_F_prime, t_model
 
@@ -422,7 +362,66 @@ def extension4(clauses, F_prime, model):
 
     return F_prime, model
 
-## Optimal Hitting set MIP implementation
+# def optimalHittingSet(H, weights, solver = 'ortools'):
+#     solvers = {
+#         'ortools':ortools_optimalHittingSet,
+#         'gurobi':gurobi_optimalHittingSet,
+#     }
+
+
+#     return ortools_optimalHittingSet(H, weights)
+
+def gurobiModel(clauses, weights):
+    # create gurobi model
+    g_model = gp.Model('MipOptimalHittingSet')
+
+    # model parameters
+    g_model.Params.LogFile = 'logs/'+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+'.log'
+    g_model.Params.LogToConsole = 0
+    g_model.Params.Threads = 8
+
+    # create the variables
+    x = g_model.addMVar(shape= len(clauses), vtype=GRB.BINARY, name="x")
+
+    # set objective : min sum xi*wi
+    g_model.setObjective(sum( x[i] * weights[i] for i in range(len(clauses)) ), GRB.MINIMIZE)
+
+    # update the model
+    g_model.update()
+
+    return g_model
+
+def addSetGurobiModel(clauses, gurobi_model, C):
+
+    h = [1 if i in C else 0 for i in range(len(clauses))]
+
+    # variables
+    x = gurobi_model.getVars()
+
+    # add new constraint sum x[j] * hij >= 1
+    gurobi_model.addConstr(gp.quicksum(x[i] * h[i] for i in range(len(clauses))) >= 1)
+
+    # update model
+    gurobi_model.update()
+
+def gurobiOptimalHittingSet(clauses, gurobi_model, C):
+    # trivial case
+    if len(C) == 0:
+        return []
+
+    # add new constraint sum x[j] * hij >= 1
+    addSetGurobiModel(clauses, gurobi_model, C)
+
+    # solve optimization problem
+    gurobi_model.optimize()
+
+    # output hitting set
+    x = gurobi_model.getVars()
+    hs = set(i for i in range(len(clauses)) if x[i].x == 1)
+
+    return hs
+
+## OR tools Optimal Hitting set MIP implementation
 def optimalHittingSet(H, weights):
     # trivial case
     if len(H) == 0:
@@ -530,37 +529,41 @@ def grow(clauses, F_prime, model, extension = 0):
 ## OMUS algorithm
 
 def omus(cnf: CNF, extension = 0, f = clause_length):
+
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf.clauses]
     weights = clauses_weights(cnf.clauses, f)
-    H = [] # the complement of a max-sat call
-    C = None
+
+    # H = [] # the complement of a max-sat call
+    C = []
     start_time = time.time()
+    gurobi_model = gurobiModel(cnf.clauses, weights)
 
     while(True):
         end_time = time.time()
         # compute optimal hitting set
-        F_prime =  optimalHittingSet(H, weights)
-
+        # F_prime =  optimalHittingSet(H, weights)
+        hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        print("hs", hs)
         # check satisfiability of clauses
-        model, sat = checkSatClauses(frozen_clauses, F_prime)
+        model, sat = checkSatClauses(frozen_clauses, hs)
         # model, sat = getAllModels(frozen_clauses, F_prime)
         # print("--- satisfiability")
         if not sat:
-            print("OMUS:", F_prime)
-            return F_prime
+            print("OMUS:", hs)
+            return hs
 
         # add all clauses ny building complement
-        C = grow(frozen_clauses, F_prime, model,  extension=extension)
+        C = grow(frozen_clauses, hs, model,  extension=extension)
         # print("hs", F_prime, "model", model, "sat", sat)
         # print("C", C)
-        print("Step", len(H), f'{round(end_time - start_time, 3)}', '|hs|',  len(F_prime), '|C|' , len(C) )
+        # print("Step", len(H), f'{round(end_time - start_time, 3)}', '|hs|',  len(F_prime), '|C|' , len(C) )
 
-        if C in H:
-            raise f"{F_prime} {C} is already in {H}"
+        # if C in H:
+        #     raise f"{F_prime} {C} is already in {H}"
 
-        H.append(C)
+        # H.append(C)
         # printing
-
+    gurobi_model.dispose()
 
 def smus_CNF():
     l = 1
@@ -579,12 +582,12 @@ def smus_CNF():
     cnf.append([-l])    # c8 ¬l
     return cnf
 
-def test_omus(extension):
+def test_myomus(extension):
     smus_cnf = smus_CNF()
     assert sorted(omus(smus_cnf, extension )) == sorted([0, 1, 2]), "SMUS error"
 
 def main():
-    test_omus(extension = 2)
+    test_myomus(extension = 1)
 
 if __name__ == "__main__":
     main()

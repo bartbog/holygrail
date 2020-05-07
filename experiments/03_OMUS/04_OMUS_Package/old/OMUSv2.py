@@ -35,6 +35,14 @@ import pprint
 # utilities
 ppprint = pprint.PrettyPrinter(indent=4).pprint
 
+def debug(info, verbose=True):
+    if verbose:
+        print(info)
+
+def debug_ppprint(info, verbose=False):
+    if verbose:
+        print(json.dumps(info, indent=4))
+
 def complement(F, F_prime):
     return set(i for i in range(len(F))) - set(i for i in F_prime)
 
@@ -279,6 +287,12 @@ def extension3(clauses, F_prime, model, diff= True):
     lit_false = set(-l for l in t_model)
 
     remaining_literals = set(all_literals - lit_true - lit_false)
+
+    t2_F_prime = set(t_F_prime)
+    t2_model = set(t_model)
+    t2_lit_true = set(t_model)
+    t2_lit_false = set(-l for l in t_model)
+    t2_remaining_literals = set(all_literals - lit_true - lit_false)
 
     while(len(remaining_literals) > 0):
         literal = findBestLiteral(clauses, t_F_prime, remaining_literals, diff=diff)

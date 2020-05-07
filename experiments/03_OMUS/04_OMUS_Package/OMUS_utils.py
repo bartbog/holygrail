@@ -1,3 +1,5 @@
+import json
+
 sign = lambda x: (1, -1)[x < 0]
 
 class HittingSetSolver(Exception):
@@ -16,6 +18,13 @@ class HittingSetSolver(Exception):
         for i in range(data['num_constraints']):
             self.message += " ".join([f"{data['constraint_coefficients'][i][j]} * x[{idx}]" for j, idx in enumerate(data['indices'])])
             self.message + " >= " + str(data['bounds'][i]) + "\n\n"
+def debug(info, verbose=True):
+    if verbose:
+        print(info)
+
+def debug_ppprint(info, verbose=False):
+    if verbose:
+        print(json.dumps(info, indent=4))
 
 def mapping_clauses(clauses):
 
@@ -42,7 +51,7 @@ def checkConflict(literals):
 def getLiteralsSubsetClauses(cnf_clauses, subsetClauses):
 
     s = set()
-    
+
     for c in subsetClauses:
         clause = cnf_clauses[c]
         for literal in clause:
@@ -63,64 +72,3 @@ def maxsat_fprime(cnf_clauses, F_prime):
     new_F_prime = set(F_prime)
 
     return new_F_prime
-
-# def extension4(clauses, F_prime, model):
-
-#     if not F_prime :
-#         return [], True
-
-#     with  RC2(WCNF()) as rc2:
-#         wcnf = WCNF()
-#         for idx, clause in enumerate(clauses):
-#             if idx in F_prime:
-#                 wcnf.append(list(clause))
-#             else:
-#                 wcnf.append(list(clause), weight = len(clause))  
-        
-#         rc2.init(formula=wcnf)
-#         for maxsatModel in rc2.enumerate():
-#             print(maxsatModel, rc2.cost)
-#             print("maxsat model", maxsatModel, "cost=", rc2.cost )
-
-#     return F_prime, model
-
-# def hitman_hittingset(clauses):
-
-#     with Hitman(solver='m22', htype='lbx') as h:
-
-#         for clause in clauses:
-#             h.hit(clause)
-#         hs = h.get()
-#     return hs
-
-# def extension4(clauses, F_prime, model):
-
-#     if not F_prime :
-#         return [], True
-
-#     # cnf_clauses = [clauses[i] for i in F_prime]
-
-#     # mapping, reverse_mapping = mapping_clauses(cnf_clauses)
-#     # mapped_clauses = map_clauses(cnf_clauses, mapping)
-
-
-#     with  RC2(formula = WCNF()) as rc2:
-#         for idx, clause in enumerate(clauses):
-#             if idx in F_prime:
-#                 rc2.add_clause(list(clause))
-#             else:
-#                 rc2.add_clause(list(clause), weight = len(clause))  
-        
-#         maxsatModel = rc2.compute()
-#         print("clauses", clauses, "F_prime:", F_prime, "model", model,"maxsatmodel:", maxsatModel )
-#     #     ppprint(mapping)
-#     #     ppprint(reverse_mapping)
-
-#     #     for clause in mapped_clauses:
-#     #         rc2.add_clause(clause, weight=len(clause))
-
-#     #     model = rc2.compute()
-#     #         print("model:", model, "cost:",  rc2.cost)
-#     # for literal, pos in mapping.items():       
-
-#     return F_prime, maxsatModel

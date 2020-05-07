@@ -35,6 +35,14 @@ import pprint
 # utilities
 ppprint = pprint.PrettyPrinter(indent=4).pprint
 
+def debug(info, verbose=True):
+    if verbose:
+        print(info)
+
+def debug_ppprint(info, verbose=False):
+    if verbose:
+        print(json.dumps(info, indent=4))
+
 def complement(F, F_prime):
     return set(i for i in range(len(F))) - set(i for i in F_prime)
 

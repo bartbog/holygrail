@@ -282,7 +282,7 @@ def test_omus(extension):
     assert sorted(omus(smus_cnf, extension )) == sorted([0, 1, 2]), "SMUS error"
 
 def test_cnf_instances():
-    extension = 4
+    extension = 3
 
     cnf_files = sorted(cnfUnsatInstances(), key=lambda item: item.stat().st_size)
     cnf_instances = list(map(lambda cnf_file: CNF(from_file=cnf_file), cnf_files))
@@ -301,6 +301,28 @@ def test_cnf_instances():
             omus(cnf = CNF(from_clauses=cnf_clauses), extension =    extension )
             break
 
+def test_unsat_core():
+    print(smus_CNF().clauses)
+    from pysat.solvers import Minisat22
+    with Minisat22() as m:
+        for clause in smus_CNF().clauses:
+            m.add_clause(clause)
+
+        print(m.solve(assumptions=[-1,-3]))
+        print(m.get_core())  # literals 2 and 3 are not in the core
+def test_maxsat():
+    clauses = smus_CNF().clauses
+    print(clauses)
+    F_prime = [0]
+
+    with RC2(WCNF()) as rc2:
+        for i, clause in enumerate(clauses):
+            if i in F_prime:
+                rc2.add_clause(clause)
+            else:
+                rc2.add_clause(clause, weight=1)
+        model = rc2.compute()
+        print(model, rc2.cost)
 def main():
     test_cnf_instances()
 

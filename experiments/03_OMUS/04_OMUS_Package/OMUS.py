@@ -142,26 +142,6 @@ def findBestLiteral(clauses, F_prime, literals, diff = True):
 
     return best_literal
 
-
-def literalCoverage(clauses, F_prime, literals):
-    """Literal coverage for every literal in `literals' in clauses not yet in F_prime
-
-    Arguments:
-        clauses {iterable(iterable(int))} -- Clauses
-        F_prime {iterable(int)} -- List of clauses, Hitting set to grow
-        literals {iterable(int)} -- List of literals that are yet to be validated in the remaining clauses
-
-    Returns:
-        dict(int, iterable(int)) -- Dictionary of literals with corresponding clauses validated
-    """
-    literal_coverage = {literal:set() for literal in literals}
-
-    for clause_id, clause in enumerate(clauses):
-        if clause_id not in F_prime:
-            for literal in clause.intersection(literals):
-                literal_coverage[literal].add(clause_id)
-    return literal_coverage
-
 def defaultExtension(cnf_clauses, F_prime, model):
     return F_prime
 
@@ -211,8 +191,6 @@ def extension1(clauses, F_prime, model):
 
     assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
     return new_F_prime, lit_true
-
-
 
 def extension2(clauses, F_prime, model, random_literal = False):
     all_literals = frozenset.union(*clauses)
@@ -274,15 +252,6 @@ def extension2(clauses, F_prime, model, random_literal = False):
     assert all([True if -l not in lit_true else False for l in lit_true])
 
     return t_F_prime, lit_true
-
-# t_F_prime, t_model = greedySearch(clauses, t_F_prime, remaining_literals, t_model)
-
-def validated_clauses(clauses, F_prime, literals):
-    t_F_prime = set(F_prime)
-    for i, clause in enumerate(clauses):
-        if i not in F_prime and (clause.intersection(literals)):
-            t_F_prime.add(i)
-    return t_F_prime
 
 def extension3(clauses, F_prime, model, diff= True):
     # literals
@@ -355,7 +324,6 @@ def extension4(clauses, F_prime, model):
     # print("t_F_prime:", t_F_prime, "t_model:",  t_model)
     return t_F_prime, t_model
 
-
 def gurobiModel(clauses, weights):
     # create gurobi model
     g_model = gp.Model('MipOptimalHittingSet')
@@ -387,9 +355,6 @@ def addSetGurobiModel(clauses, gurobi_model, C):
     # gurobi_model.addConstr(gp.quicksum(x[i] * h[i] for i in range(len(clauses))) >= 1)
     gurobi_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
 
-    # update model
-    gurobi_model.update()
-
 def gurobiOptimalHittingSet(clauses, gurobi_model, C):
     # trivial case
     if len(C) == 0:
@@ -406,7 +371,6 @@ def gurobiOptimalHittingSet(clauses, gurobi_model, C):
     hs = set(i for i in range(len(clauses)) if x[i].x == 1)
 
     return hs
-
 
 def gurobiOptimalHittingSetCold(clauses, weights,  H):
     gurobi_model = gurobiModel(clauses, weights)
@@ -784,6 +748,6 @@ def main():
     cnf.append([-n])    # c6: ¬n
     cnf.append([-m, l]) # c7 ¬m or l
     cnf.append([-l])    # c8 ¬l
-    assert sorted(omusGurobi(cnf, 3 )) == sorted([0, 1, 2]), "SMUS error"
+    assert sorted(omusGurobiCold(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
 if __name__ == "__main__":
     main()

@@ -204,7 +204,7 @@ def benchmark_code():
 
     cnf_files = sorted(unsatInstances, key=lambda item: item.stat().st_size)
     cnf_instances = list(map(lambda cnf_file: CNF(from_file=cnf_file), cnf_files))
-    extensions = [3,2 , 4,1]
+    extensions = [4, 3, 2, 1]
 
     folder = 'results/2020_05_07/'
     for extension in extensions:
@@ -220,7 +220,7 @@ def benchmark_code():
             omusOrTools(cnf, extension = extension, outputfile=orToolsOutput)
 
 def main():
-    benchmark_code()
+    # benchmark_code()
     # print(Difficulty.EASY < Difficulty.MEDIUM)
 
 if __name__ == "__main__":

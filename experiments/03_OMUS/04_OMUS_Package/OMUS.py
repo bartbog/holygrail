@@ -12,7 +12,7 @@ import json
 import time
 from collections import Counter
 from datetime import datetime
-import statistics
+from statistics import mean
 # pysat library
 from pysat.solvers import Solver, SolverNames
 from pysat.formula import CNF, WCNF
@@ -277,41 +277,65 @@ def extension2(clauses, F_prime, model, random_literal = False):
 
 # t_F_prime, t_model = greedySearch(clauses, t_F_prime, remaining_literals, t_model)
 
+def validated_clauses(clauses, F_prime, literals):
+    t_F_prime = set(F_prime)
+    for i, clause in enumerate(clauses):
+        if i not in F_prime and (clause.intersection(literals)):
+            t_F_prime.add(i)
+    return t_F_prime
+
 def extension3(clauses, F_prime, model, diff= True):
     # literals
     all_literals = frozenset.union(*clauses)
+    t_F_prime = set(F_prime)
+    lit_true = set(model)
+    lit_false = set(-l for l in model)
 
     # unit propagate existing model
-    t_F_prime, t_model = extension1(clauses, F_prime, model)
-    lit_true = set(t_model)
-    lit_false = set(-l for l in t_model)
+    for i, clause in enumerate(clauses):
+        if i not in t_F_prime and len(clause.intersection(lit_true)) > 0:
+            t_F_prime.add(i)
 
     remaining_literals = set(all_literals - lit_true - lit_false)
-    # TODO : add all conflict-free literals
-    # TODO : remove unit propagation
+
+    # unit propagate conflict free clauses
+    conflict_free_literals = set(l for l in remaining_literals if -l not in remaining_literals)
+    lit_true |= conflict_free_literals
+    lit_false |= set(-l for l in conflict_free_literals)
+
+    for i, clause in enumerate(clauses):
+        if i not in t_F_prime and len(clause.intersection(lit_true)) > 0:
+            t_F_prime.add(i)
+
+    remaining_literals -= conflict_free_literals
 
     while(len(remaining_literals) > 0):
-        literal = findBestLiteral(clauses, t_F_prime, remaining_literals, diff=diff)
+        # Build counter for literal to clause coverage
+        literal_count = Counter({literal:0 for literal in remaining_literals})
+        neg_literal_count = Counter({literal:0 for literal in remaining_literals})
 
-        remaining_literals.remove(literal)
+        for i, clause in enumerate(clauses):
+            if i not in t_F_prime:
+                if len(clause.intersection(lit_true)) > 0:
+                    t_F_prime.add(i)
+                else:
+                    literal_count.update(clause.intersection(remaining_literals))
+                    neg_literal_count.update([-l for l in clause.intersection(remaining_literals)])
+
+        literal_diff = Counter(literal_count)
+        literal_diff.subtract(neg_literal_count)
+        best_literal = literal_diff.most_common(1)[0][0] if literal_diff else None
+
+        lit_true.add(best_literal)
+        lit_false.add(-best_literal)
+
+        remaining_literals.remove(best_literal)
 
         # because the unit prop created a conflict-free one, we must check
-        if -literal in remaining_literals:
-            remaining_literals.remove(-literal)
+        if -best_literal in remaining_literals:
+            remaining_literals.remove(-best_literal)
 
-        lit_true.add(literal)
-        lit_false.add(-literal)
-
-        # unit propagate new literal
-        t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
-
-        lit_true = set(t_model)
-        lit_false = set(-l for l in t_model)
-
-        # code was probably not finished because the latter was missing
-        remaining_literals = set(all_literals - lit_true - lit_false)
-
-    return t_F_prime, t_model
+    return t_F_prime, lit_true
 
 def extension4(clauses, F_prime, model):
 
@@ -329,7 +353,7 @@ def extension4(clauses, F_prime, model):
     # print("F_prime:", F_prime, "model:",  model)
     t_F_prime, t_model = extension1(clauses, F_prime, t_model)
     # print("t_F_prime:", t_F_prime, "t_model:",  t_model)
-    return F_prime, t_model
+    return t_F_prime, t_model
 
 
 def gurobiModel(clauses, weights):
@@ -360,7 +384,8 @@ def addSetGurobiModel(clauses, gurobi_model, C):
     x = gurobi_model.getVars()
 
     # add new constraint sum x[j] * hij >= 1
-    gurobi_model.addConstr(gp.quicksum(x[i] * h[i] for i in range(len(clauses))) >= 1)
+    # gurobi_model.addConstr(gp.quicksum(x[i] * h[i] for i in range(len(clauses))) >= 1)
+    gurobi_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
 
     # update model
     gurobi_model.update()
@@ -383,7 +408,8 @@ def gurobiOptimalHittingSet(clauses, gurobi_model, C):
     return hs
 
 
-def gurobiOptimalHittingSetCold(clauses, gurobi_model, H):
+def gurobiOptimalHittingSetCold(clauses, weights,  H):
+    gurobi_model = gurobiModel(clauses, weights)
     # trivial case
     if len(H) == 0:
         return []
@@ -398,6 +424,7 @@ def gurobiOptimalHittingSetCold(clauses, gurobi_model, H):
     # output hitting set
     x = gurobi_model.getVars()
     hs = set(i for i in range(len(clauses)) if x[i].x == 1)
+    gurobi_model.dispose()
 
     return hs
 
@@ -610,7 +637,7 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
             raise f"{hs} {C} is already in {H}"
         H.append(C)
 
-def omusGurobiWarm(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt'):
+def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt'):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
@@ -633,13 +660,14 @@ def omusGurobiWarm(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
     # H = [] # the complement of a max-sat call
     C = []
 
-
     gurobi_model = gurobiModel(cnf.clauses, weights)
     while(True):
         # compute optimal hitting set
         # F_prime =  optimalHittingSet(H, weights)
         t_hs_start = time.time()
         hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        print(hs)
+
         t_hs_end = time.time()
         t_hitting_set.append(t_hs_end - t_hs_start)
         # check satisfiability of clauses
@@ -697,16 +725,14 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
 
     weights = clauses_weights(cnf.clauses, f)
 
-    # H = [] # the complement of a max-sat call
-    C = []
+    H = [] # the complement of a max-sat call
+    # C = []
 
-
-    gurobi_model = gurobiModel(cnf.clauses, weights)
     while(True):
         # compute optimal hitting set
         # F_prime =  optimalHittingSet(H, weights)
         t_hs_start = time.time()
-        hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        hs =  gurobiOptimalHittingSetCold(cnf.clauses, weights, H)
         t_hs_end = time.time()
         t_hitting_set.append(t_hs_end - t_hs_start)
         # check satisfiability of clauses
@@ -721,7 +747,6 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
         t_sat_check.append(t_sat_end-t_sat_start)
 
         if not sat:
-            gurobi_model.dispose()
             print("OMUS:", hs)
             t_end_omus = time.time()
             benchmark_data['steps'] = steps
@@ -742,4 +767,23 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
         steps += 1
+        H.append(C)
 
+def main():
+    l = 1
+    m = 2
+    n = 3
+    p = 4
+    s = 5
+    cnf = CNF()
+    cnf.append([-s])    # c1: ¬s
+    cnf.append([s, -p]) # c2: s or ¬p
+    cnf.append([p])     # c3: p
+    cnf.append([-p, m]) # c4: ¬p or m
+    cnf.append([-m, n]) # c5: ¬m or n
+    cnf.append([-n])    # c6: ¬n
+    cnf.append([-m, l]) # c7 ¬m or l
+    cnf.append([-l])    # c8 ¬l
+    assert sorted(omusGurobi(cnf, 3 )) == sorted([0, 1, 2]), "SMUS error"
+if __name__ == "__main__":
+    main()

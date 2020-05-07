@@ -215,6 +215,7 @@ def benchmark_code():
             orToolsOutput = folder+ 'OrTools/' + basefileName + '_ortools.json'
             print(gurobiOutput)
             print(orToolsOutput)
+            omusGurobiCold(cnf, extension = extension, outputfile=gurobiOutput)
             omusGurobi(cnf, extension = extension, outputfile=gurobiOutput)
             omusOrTools(cnf, extension = extension, outputfile=orToolsOutput)
 

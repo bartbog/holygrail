@@ -8,6 +8,7 @@ import re
 import sys
 from pathlib import Path
 from enum import Enum
+from datetime import datetime, date
 import json
 
 # pysat library
@@ -190,6 +191,26 @@ def test_cnf_instances():
             break
 
 def benchmark_code():
+    user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package'
+    folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
+    gurobiFolder = folder + "Gurobi/"
+    gurobiColdFolder = folder + "GurobiCold/"
+    orToolsFolder = folder + "OrTools/"
+
+    solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
+    # extensions = [4, 3, 2]
+    extensions = [3, 2]
+
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    for f in solverFolders:
+        if not os.path.exists(f):
+            os.mkdir(f)
+        for extension in extensions:
+            ext_path = f + f"ext{extension}"
+            if not os.path.exists(ext_path):
+                os.mkdir(ext_path)
+
     # easy instances
     easy_unsatInstances = cnfUnsatInstances(difficulty=Difficulty.EASY)
     unsatInstances = easy_unsatInstances #+ medium_unsatInstances
@@ -203,24 +224,86 @@ def benchmark_code():
     # unsatInstances += hard_unsatInstances
 
     cnf_files = sorted(unsatInstances, key=lambda item: item.stat().st_size)
-    cnf_instances = list(map(lambda cnf_file: CNF(from_file=cnf_file), cnf_files))
-    extensions = [4, 3, 2, 1]
+    cnf_instances = []
+    for cnf_file in cnf_files:
+        clauses = []
+        t_clauses = []
+        for clause in CNF(from_file=cnf_file).clauses:
+            if clause not in t_clauses and len(clause) > 0:
+                clauses.append(frozenset(clause))
+                t_clauses.append(clause)
+        cnf_instances.append(CNF(from_clauses=clauses))
+        print(clauses)
 
-    folder = 'results/2020_05_07/'
     for extension in extensions:
         for i, cnf in enumerate(cnf_instances):
-            print(f"\nCNF File Example: {cnf_files[i].name} ({CNFisUnsat(cnf_files[i])}) - clauses = {len(cnf.clauses)}")
-            basefileName = f'Extension{extension}/' + cnf_files[i].name.replace('.cnf', '')
-            gurobiOutput = folder + 'Gurobi/' + basefileName + '_gurobi.json'
-            orToolsOutput = folder+ 'OrTools/' + basefileName + '_ortools.json'
-            print(gurobiOutput)
-            print(orToolsOutput)
-            omusGurobiCold(cnf, extension = extension, outputfile=gurobiOutput)
+            # if cnf_files[i].name == "par8-1-c.cnf":
+            print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
+
+            # file name
+            f_name = cnf_files[i].name.replace('.cnf', '')
+            basefileName = f'ext{extension}/{f_name}'
+
+            # output folders
+            gurobiOutput = gurobiFolder +  basefileName + '.json'
+            # gurobiColdOutput = gurobiColdFolder  + basefileName + '.json'
+            # orToolsOutput = orToolsFolder + basefileName + '.json'
+
+
+            # run benchmark
+            print("Gurobi Warm - extension", extension, "output=",gurobiOutput)
             omusGurobi(cnf, extension = extension, outputfile=gurobiOutput)
+            # print("Gurobi Cold - extension", extension, "output=",gurobiColdOutput)
+            # omusGurobiCold(cnf, extension = extension, outputfile=gurobiColdOutput)
+
+    for extension in extensions:
+        for i, cnf in enumerate(cnf_instances):
+            # if cnf_files[i].name == "par8-1-c.cnf":
+            print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
+
+            # file name
+            f_name = cnf_files[i].name.replace('.cnf', '')
+            basefileName = f'ext{extension}/{f_name}'
+
+            # output folders
+            # gurobiOutput = gurobiFolder +  basefileName + '.json'
+            gurobiColdOutput = gurobiColdFolder  + basefileName + '.json'
+            # orToolsOutput = orToolsFolder + basefileName + '.json'
+
+
+            # run benchmark
+            # print("Gurobi Warm - extension", extension, "output=",gurobiOutput)
+            # omusGurobi(cnf, extension = extension, outputfile=gurobiOutput)
+            print("Gurobi Cold - extension", extension, "output=",gurobiColdOutput)
+            omusGurobiCold(cnf, extension = extension, outputfile=gurobiColdOutput)
+
+    for extension in extensions:
+        for i, cnf in enumerate(cnf_instances):
+
+            f_name = cnf_files[i].name.replace('.cnf', '')
+            basefileName = f'ext{extension}/{f_name}'
+
+            # output folders
+            orToolsOutput = orToolsFolder + basefileName + '.json'
+            print("OrTools - extension", extension, "output=",orToolsOutput)
             omusOrTools(cnf, extension = extension, outputfile=orToolsOutput)
 
+def test_instance():
+    f_path = "data/easy_instances/dubois20.cnf"
+    clauses = []
+    t_clauses = []
+    for clause in CNF(from_file=f_path).clauses:
+        if clause not in t_clauses and len(clause) > 0:
+            clauses.append(frozenset(clause))
+            t_clauses.append(clause)
+    cnf = CNF(from_clauses=clauses)
+    omusGurobi(cnf, extension=3)
+
 def main():
-    # benchmark_code()
+    # test_instance()
+    # omusGurobiCold(smus_CNF(),extension=3 )
+    # omusOrTools("")
+    benchmark_code()
     # print(Difficulty.EASY < Difficulty.MEDIUM)
 
 if __name__ == "__main__":

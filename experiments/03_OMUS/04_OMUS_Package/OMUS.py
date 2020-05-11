@@ -192,7 +192,7 @@ def extension1(clauses, F_prime, model):
     assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
     return new_F_prime, lit_true
 
-def extension2(clauses, F_prime, model, random_literal = False):
+def extension2(clauses, F_prime, model, random_literal = False, maxcoverage=True):
     all_literals = frozenset.union(*clauses)
     t_F_prime, t_model = extension1(clauses, F_prime, model)
     lit_true = set(t_model)
@@ -207,8 +207,7 @@ def extension2(clauses, F_prime, model, random_literal = False):
             if random_literal:
                 lit = next(iter(conflict_free_literals))
             else:
-                lit = findBestLiteral(clauses, t_F_prime, conflict_free_literals)
-
+                lit = findBestLiteral(clauses, t_F_prime, conflict_free_literals, maxcoverage)
             lit_true.add(lit)
             lit_false.add(-lit)
 
@@ -229,8 +228,7 @@ def extension2(clauses, F_prime, model, random_literal = False):
         if random_literal:
             literal = next(iter(conflictual_literals))
         else:
-            literal = findBestLiteral(clauses, t_F_prime, conflictual_literals)
-
+            literal = findBestLiteral(clauses, t_F_prime, conflictual_literals, maxcoverage)
         conflictual_literals.remove(literal)
         # because the unit prop created a conflict-free one, we must check
         if -literal in conflictual_literals:
@@ -253,60 +251,381 @@ def extension2(clauses, F_prime, model, random_literal = False):
 
     return t_F_prime, lit_true
 
-def extension3(clauses, F_prime, model, diff= True):
-    # literals
-    all_literals = frozenset.union(*clauses)
-    t_F_prime = set(F_prime)
+def propmodel(clauses, F_prime, model):
+    new_F_prime = set(F_prime)
+    # precompute both
     lit_true = set(model)
     lit_false = set(-l for l in model)
+    clause_added = True
 
-    # unit propagate existing model
+    while(clause_added):
+        literals_consider = set()
+        clause_added = False
+        t_F_prime = set(new_F_prime)
+        for i, clause in enumerate(clauses):
+            if i in t_F_prime:
+                continue # already in F_prime
+
+            # Similar alternative:
+            if len(clause.intersection(lit_true)) > 0:
+                # a true literal, clause is true
+                t_F_prime.add(i)
+                clause_added = True
+            else:
+                unassigned = clause - lit_false
+                if len(unassigned) == 1:
+                    # t_F_prime.add(i)
+                    # # add literal to the model
+                    lit = next(iter(unassigned))
+                    literals_consider.add(lit)
+                    # lit_true.add(lit)
+                    # lit_false.add(-lit)
+                    # clause_added = True
+        # if len(t_F_prime) > len(new_F_prime):
+        new_F_prime = t_F_prime
+        literal = findBestLiteral(clauses, t_F_prime, literals_consider, diff=True)
+        if literal != None:
+            lit_true.add(literal)
+            lit_false.add(-literal)
+            # check for unit propagation
+
+    c = set(l for l in lit_true if -l in lit_true)
+    assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {c}"
+    return new_F_prime, lit_true
+
+
+def propmodel_old(clauses, F_prime, model):
+    if len(F_prime) == 0:
+        return F_prime, model
+
+    new_F_prime = set(F_prime)
+    t_model = set(model)
     for i, clause in enumerate(clauses):
-        if i not in t_F_prime and len(clause.intersection(lit_true)) > 0:
-            t_F_prime.add(i)
+        if i in F_prime:
+            continue
+        if len(t_model.intersection(clause)) > 0:
+            new_F_prime.add(i)
 
-    remaining_literals = set(all_literals - lit_true - lit_false)
 
-    # unit propagate conflict free clauses
-    conflict_free_literals = set(l for l in remaining_literals if -l not in remaining_literals)
-    lit_true |= conflict_free_literals
-    lit_false |= set(-l for l in conflict_free_literals)
+    removable_literals = frozenset.union(*[clause for i,clause in enumerate(clauses) if i in new_F_prime])
+    removable_literals -= set(model)
+    removable_literals -= set(-l for l in model)
+    removable_literals -= frozenset.union(*[clause for i,clause in enumerate(clauses) if i not in new_F_prime])
+    conflict_free = set(l  for l in removable_literals if -l not in removable_literals)
+    conflictual = set(l  for l in removable_literals if -l in removable_literals)
+    t_model |= conflict_free
 
+    while(len(conflictual)> 0):
+        literal = findBestLiteral(clauses, new_F_prime, conflictual, diff=True)
+        conflictual.remove(literal)
+        conflictual.remove(-literal)
+        t_model.add(literal)
+
+    while(len(removable_literals) > 0):
+        # print("removable literals")
+        for i, clause in enumerate(clauses):
+            if i in new_F_prime:
+                continue
+            if len(t_model.intersection(clause)) > 0:
+                new_F_prime.add(i)
+
+        removable_literals = frozenset.union(*[clause for i,clause in enumerate(clauses) if i in new_F_prime])
+        removable_literals -= set(t_model)
+        removable_literals -= set(-l for l in t_model)
+        removable_literals -= frozenset.union(*[clause for i,clause in enumerate(clauses) if i not in new_F_prime])
+
+        conflict_free = set(l  for l in removable_literals if -l not in removable_literals)
+        conflictual = set(l  for l in removable_literals if -l in removable_literals)
+        t_model |= conflict_free
+
+        while(len(conflictual)> 0):
+            literal = findBestLiteral(clauses, new_F_prime, conflictual, diff=True)
+            conflictual.remove(literal)
+            conflictual.remove(-literal)
+            t_model.add(literal)
     for i, clause in enumerate(clauses):
-        if i not in t_F_prime and len(clause.intersection(lit_true)) > 0:
-            t_F_prime.add(i)
+        if i in new_F_prime:
+            continue
+        if len(t_model.intersection(clause)) > 0:
+            new_F_prime.add(i)
 
-    remaining_literals -= conflict_free_literals
+    return new_F_prime, t_model
+
+def extension3(clauses, F_prime, model, diff= True):
+    random_literal = False
+    maxcoverage = True
+    all_literals = frozenset.union(*clauses)
+    t_F_prime, t_model = propmodel(clauses, F_prime, model)
+    lit_true = set(t_model)
+    lit_false = set(-l for l in t_model)
+    clause_added = False
+
+    # alternative, over all literals
+    remaining_literals = all_literals - lit_true - lit_false
+    # conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
     while(len(remaining_literals) > 0):
-        # Build counter for literal to clause coverage
-        literal_count = Counter({literal:0 for literal in remaining_literals})
-        neg_literal_count = Counter({literal:0 for literal in remaining_literals})
+        if random_literal:
+            lit = next(iter(remaining_literals))
+        else:
+            lit = findBestLiteral(clauses, t_F_prime, remaining_literals, maxcoverage)
+        lit_true.add(lit)
+        lit_false.add(-lit)
 
-        for i, clause in enumerate(clauses):
-            if i not in t_F_prime:
-                if len(clause.intersection(lit_true)) > 0:
-                    t_F_prime.add(i)
-                else:
-                    literal_count.update(clause.intersection(remaining_literals))
-                    neg_literal_count.update([-l for l in clause.intersection(remaining_literals)])
+        t_F_prime, t_model = propmodel(clauses, t_F_prime, lit_true)
 
-        literal_diff = Counter(literal_count)
-        literal_diff.subtract(neg_literal_count)
-        best_literal = literal_diff.most_common(1)[0][0] if literal_diff else None
+        lit_true = set(t_model)
+        lit_false = set(-l for l in t_model)
 
-        lit_true.add(best_literal)
-        lit_false.add(-best_literal)
+        remaining_literals = all_literals - lit_true - lit_false
+    #         conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
-        remaining_literals.remove(best_literal)
+    # conflictual_literals = set(remaining_literals)
 
-        # because the unit prop created a conflict-free one, we must check
-        if -best_literal in remaining_literals:
-            remaining_literals.remove(-best_literal)
+    # assert all([True if -l in conflictual_literals else False for l in conflictual_literals])
+
+    # # propagate all remaining literals
+    # while len(conflictual_literals) > 0:
+    #     if random_literal:
+    #         literal = next(iter(conflictual_literals))
+    #     else:
+    #         literal = findBestLiteral(clauses, t_F_prime, conflictual_literals, maxcoverage)
+    #     conflictual_literals.remove(literal)
+    #     # because the unit prop created a conflict-free one, we must check
+    #     if -literal in conflictual_literals:
+    #         conflictual_literals.remove(-literal)
+
+    #     lit_true.add(literal)
+    #     lit_false.add(-literal)
+
+    #     # unit propagate new literal
+    #     t_F_prime, t_model = propmodel(clauses, t_F_prime, lit_true)
+
+    #     lit_true = set(t_model)
+    #     lit_false = set(-l for l in t_model)
+
+    #     # code was probably not finished because the latter was missing
+    #     remaining_literals = all_literals - lit_true - lit_false
+    #     conflictual_literals = set(remaining_literals)
+
+    assert all([True if -l not in lit_true else False for l in lit_true])
 
     return t_F_prime, lit_true
 
+def extension3_slow(clauses, F_prime, model, diff= True):
+    # literals
+    all_literals = frozenset.union(*clauses)
+
+    # unit propagate existing model
+    # t_F_prime, t_model = extension1(clauses, F_prime, model)
+    t_F_prime,t_model = propmodel(clauses, F_prime, model)
+
+    lit_true = set(t_model)
+    lit_false = set(-l for l in t_model)
+
+    remaining_literals = set(all_literals) - lit_true
+    remaining_literals -= lit_false
+
+    while(len(remaining_literals) > 0):
+        literal = findBestLiteral(clauses, t_F_prime, remaining_literals, diff=True)
+
+        remaining_literals.remove(literal)
+
+        # because the unit prop created a conflict-free one, we must check
+        if -literal in remaining_literals:
+            remaining_literals.remove(-literal)
+
+        lit_true.add(literal)
+        lit_false.add(-literal)
+
+        # unit propagate new literal
+        t_F_prime, t_model = propmodel(clauses, t_F_prime, lit_true)
+
+        lit_true = set(t_model)
+        lit_false = set(-l for l in t_model)
+
+        # code was probably not finished because the latter was missing
+        remaining_literals = set(all_literals) - lit_true
+        remaining_literals -= lit_false
+
+    return t_F_prime, t_model
+
+def extension3_old(clauses, F_prime, model, diff= True):
+    # literals
+    all_literals = frozenset.union(*clauses)
+
+    # unit propagate existing model
+    t_F_prime, t_model = extension1(clauses, F_prime, model)
+    lit_true = set(t_model)
+    lit_false = set(-l for l in t_model)
+
+    remaining_literals = set(all_literals - lit_true - lit_false)
+
+    while(len(remaining_literals) > 0):
+        literal = findBestLiteral(clauses, t_F_prime, remaining_literals, diff=diff)
+
+        remaining_literals.remove(literal)
+
+        # because the unit prop created a conflict-free one, we must check
+        if -literal in remaining_literals:
+            remaining_literals.remove(-literal)
+
+        lit_true.add(literal)
+        lit_false.add(-literal)
+
+        # unit propagate new literal
+        t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
+
+        lit_true = set(t_model)
+        lit_false = set(-l for l in t_model)
+
+        # code was probably not finished because the latter was missing
+        remaining_literals = set(all_literals - lit_true - lit_false)
+
+    return t_F_prime, t_model
+
+# def extension3(clauses, F_prime, model, diff= True):
+#     # literals
+#     all_literals = frozenset.union(*clauses)
+#     t_F_prime = set(F_prime)
+#     lit_true = set(model)
+#     lit_false = set(-l for l in model)
+
+#     # unit propagate existing model
+#     for i, clause in enumerate(clauses):
+#         if i not in t_F_prime and len(clause.intersection(lit_true)) > 0:
+#             t_F_prime.add(i)
+
+#     remaining_literals = set(all_literals - lit_true - lit_false)
+
+#     # unit propagate conflict free clauses
+#     conflict_free_literals = set(l for l in remaining_literals if -l not in remaining_literals)
+#     lit_true |= conflict_free_literals
+#     lit_false |= set(-l for l in conflict_free_literals)
+
+#     for i, clause in enumerate(clauses):
+#         if i not in t_F_prime and len(clause.intersection(lit_true)) > 0:
+#             t_F_prime.add(i)
+
+#     remaining_literals -= conflict_free_literals
+
+#     while(len(remaining_literals) > 0):
+#         # Build counter for literal to clause coverage
+#         literal_count = Counter({literal:0 for literal in remaining_literals})
+#         neg_literal_count = Counter({literal:0 for literal in remaining_literals})
+
+#         for i, clause in enumerate(clauses):
+#             if i not in t_F_prime:
+#                 if len(clause.intersection(lit_true)) > 0:
+#                     t_F_prime.add(i)
+#                 else:
+#                     literal_count.update(clause.intersection(remaining_literals))
+#                     neg_literal_count.update([-l for l in clause.intersection(remaining_literals)])
+
+#         literal_diff = Counter(literal_count)
+#         literal_diff.subtract(neg_literal_count)
+#         best_literal = literal_diff.most_common(1)[0][0] if literal_diff else None
+#         # best_literal = literal_count.most_common(1)[0][0] if literal_count else None
+
+#         lit_true.add(best_literal)
+#         lit_false.add(-best_literal)
+
+#         remaining_literals.remove(best_literal)
+
+#         # because the unit prop created a conflict-free one, we must check
+#         if -best_literal in remaining_literals:
+#             remaining_literals.remove(-best_literal)
+#         if len(t_F_prime) > 0:
+#             removable_literals =  frozenset.union(*[clause for i, clause in enumerate(clauses) if i in t_F_prime])
+#             removable_literals -= lit_true
+#             removable_literals -= lit_false
+#             removable_literals -= frozenset.union(*[clause for i, clause in enumerate(clauses) if i not in t_F_prime])
+#             remaining_literals -= removable_literals
+#             if len(removable_literals) > 0:
+#                 # conflict_free literals
+#                 for literal in removable_literals:
+#                     if -literal not in removable_literals:
+#                         lit_true.add(best_literal)
+#                         lit_false.add(-best_literal)
+#                 removable_literals -= set(literal for literal in removable_literals if -literal not in removable_literals)
+#                 while(len(removable_literals) > 0):
+#                     lit = next(iter(removable_literals))
+#                     lit_true.add(lit)
+#                     lit_false.add(-lit)
+#                     removable_literals.remove(lit)
+
+#         conflict_free_literals = {l for l in remaining_literals if -l not in remaining_literals}
+#         lit_true |= {l for l in conflict_free_literals}
+#         lit_false |= {-l for l in conflict_free_literals}
+#         remaining_literals -= conflict_free_literals
+#     return t_F_prime, lit_true
+
+
+# def extension3(clauses, F_prime, model, diff= True):
+#     # literals
+#     all_literals = frozenset.union(*clauses)
+#     t_F_prime = set(F_prime)
+#     lit_true = set(model)
+#     lit_false = set(-l for l in model)
+
+#     # unit propagate existing model
+#     for i, clause in enumerate(clauses):
+#         if i not in t_F_prime and len(clause.intersection(lit_true)) > 0:
+#             t_F_prime.add(i)
+
+#     remaining_literals = set(all_literals - lit_true - lit_false)
+
+#     # unit propagate conflict free clauses
+#     conflict_free_literals = set(l for l in remaining_literals if -l not in remaining_literals)
+#     lit_true |= conflict_free_literals
+#     lit_false |= set(-l for l in conflict_free_literals)
+
+#     for i, clause in enumerate(clauses):
+#         if i not in t_F_prime and len(clause.intersection(lit_true)) > 0:
+#             t_F_prime.add(i)
+
+#     remaining_literals = frozenset.union(*[clause for i, clause in enumerate(clauses) if i not in t_F_prime]) - lit_true - lit_false
+
+#     while(len(remaining_literals) > 0):
+#         # Build counter for literal to clause coverage
+#         literal_count = Counter({literal:0 for literal in remaining_literals})
+#         neg_literal_count = Counter({literal:0 for literal in remaining_literals})
+
+#         for i, clause in enumerate(clauses):
+#             if i not in t_F_prime:
+#                 if len(clause.intersection(lit_true)) > 0:
+#                     t_F_prime.add(i)
+#                 else:
+#                     literal_count.update(clause.intersection(remaining_literals))
+#                     neg_literal_count.update([-l for l in clause.intersection(remaining_literals)])
+
+#         literal_diff = Counter(literal_count)
+#         literal_diff.subtract(neg_literal_count)
+#         best_literal = literal_diff.most_common(1)[0][0] if literal_diff else None
+
+#         lit_true.add(best_literal)
+#         lit_false.add(-best_literal)
+
+#         remaining_literals = frozenset.union(*[clause for i, clause in enumerate(clauses) if i not in t_F_prime]) - lit_true - lit_false
+
+#         conflict_free_literals = set(l for l in remaining_literals if -l not in remaining_literals)
+#         lit_true |= conflict_free_literals
+#         lit_false |= set(-l for l in conflict_free_literals)
+#         remaining_literals -= lit_true
+#         remaining_literals -= lit_false
+#         # print(len(remaining_literals))
+
+#         # remaining_literals.remove(best_literal)
+
+#         # # because the unit prop created a conflict-free one, we must check
+#         # if -best_literal in remaining_literals:
+#         #     remaining_literals.remove(-best_literal)
+
+
+#     return t_F_prime, lit_true
+
 def extension4(clauses, F_prime, model):
+    t_F_prime = set(F_prime)
 
     # t_F_prime, t_model = extension3(clauses, F_prime, model)
     wcnf = WCNF()
@@ -320,7 +639,10 @@ def extension4(clauses, F_prime, model):
         t_model = rc2.compute()
 
     # print("F_prime:", F_prime, "model:",  model)
-    t_F_prime, t_model = extension1(clauses, F_prime, t_model)
+    for i, clause in enumerate(clauses):
+        if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
+            t_F_prime.add(i)
+
     # print("t_F_prime:", t_F_prime, "t_model:",  t_model)
     return t_F_prime, t_model
 
@@ -329,7 +651,8 @@ def gurobiModel(clauses, weights):
     g_model = gp.Model('MipOptimalHittingSet')
 
     # model parameters
-    g_model.Params.LogFile = 'logs/'+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+'.log'
+    # g_model.Params.LogFile = 'logs/'+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+'.log'
+    g_model.Params.OutputFlag = 0
     g_model.Params.LogToConsole = 0
     g_model.Params.Threads = 8
 
@@ -440,8 +763,8 @@ def optimalHittingSet(H, weights):
     data = create_data_model(H, weights)
     # [START solver]
     # Create the mip solver with the CBC backend.
-    solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.BOP_INTEGER_PROGRAMMING)
-    # solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+    # solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.BOP_INTEGER_PROGRAMMING)
+    solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
     # [END solver]
 
     # [START variables]
@@ -537,7 +860,7 @@ def grow(clauses, F_prime, model, extension = 0):
     return complement(clauses, new_F_prime)
 
 ## OMUS algorithm
-def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt'):
+def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', greedy = False, maxcoverage = False):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
@@ -555,12 +878,14 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
 
     while(True):
         # compute optimal hitting set
+        print("OrTools -", len(H), "Optimal Hitting Set" )
         t_hs_start = time.time()
         hs =  optimalHittingSet(H, weights)
         t_hs_end = time.time()
         t_hitting_set.append(t_hs_end - t_hs_start)
 
         # hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        print("OrTools -", len(H), "Check Sat" )
 
         # check satisfiability of clauses
         if sat_model:
@@ -576,7 +901,7 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
         # model, sat = getAllModels(frozen_clauses, hs)
 
         if not sat:
-            print("OMUS:", hs)
+            # print("OMUS:", hs)
             t_end_omus = time.time()
             benchmark_data['steps'] = steps
             benchmark_data['t_hitting_set'] = t_hitting_set
@@ -589,9 +914,13 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
             with open(outputfile, 'w') as file:
                 file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             return hs
+        print("OrTools -", len(H), "Growing")
 
         # add all clauses ny building complement
         t_grow_start = time.time()
+        # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
+        # C = complement(frozen_clauses, new_F_prime)
+
         C = grow(frozen_clauses, hs, model,  extension=extension)
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
@@ -601,7 +930,7 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
             raise f"{hs} {C} is already in {H}"
         H.append(C)
 
-def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt'):
+def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', greedy = False, maxcoverage = False):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
@@ -628,12 +957,14 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
     while(True):
         # compute optimal hitting set
         # F_prime =  optimalHittingSet(H, weights)
+        # print("omusGurobi -", steps, "gurobiOptimalHittingSet" )
         t_hs_start = time.time()
         hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
-        print(hs)
+        # print(hs)
 
         t_hs_end = time.time()
         t_hitting_set.append(t_hs_end - t_hs_start)
+        
         # check satisfiability of clauses
         if sat_model:
             t_sat_start = time.time()
@@ -647,7 +978,7 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
 
         if not sat:
             gurobi_model.dispose()
-            print("OMUS:", hs)
+            # print("OMUS:", hs)
             t_end_omus = time.time()
             benchmark_data['steps'] = steps
             benchmark_data['t_hitting_set'] = t_hitting_set
@@ -660,16 +991,20 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
             with open(outputfile, 'w') as file:
                 file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             return hs
-
+        # print("omusGurobi -", steps, "grow" )
         # add all clauses ny building complement
         t_grow_start = time.time()
+        # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
+        # C = complement(frozen_clauses, new_F_prime)
+
         C = grow(frozen_clauses, hs, model,  extension=extension)
+        print(steps, " - ", hs )
+        print(steps, " - ", len(C) , len(frozen_clauses))
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
         steps += 1
 
-
-def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt'):
+def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', greedy = False, maxcoverage = False):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
@@ -695,11 +1030,13 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
     while(True):
         # compute optimal hitting set
         # F_prime =  optimalHittingSet(H, weights)
+        print("omusGurobiCold -", len(H), "Optimal Hitting Set" )
         t_hs_start = time.time()
         hs =  gurobiOptimalHittingSetCold(cnf.clauses, weights, H)
         t_hs_end = time.time()
         t_hitting_set.append(t_hs_end - t_hs_start)
         # check satisfiability of clauses
+        print("omusGurobiCold -", len(H), "Check Sat" )
         if sat_model:
             t_sat_start = time.time()
             model, sat = checkSatClauses(frozen_clauses, hs)
@@ -711,7 +1048,7 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
         t_sat_check.append(t_sat_end-t_sat_start)
 
         if not sat:
-            print("OMUS:", hs)
+            # print("OMUS:", hs)
             t_end_omus = time.time()
             benchmark_data['steps'] = steps
             benchmark_data['t_hitting_set'] = t_hitting_set
@@ -726,8 +1063,11 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
             return hs
 
         # add all clauses ny building complement
+        print("omusGurobiCold -", len(H), "Growing" )
         t_grow_start = time.time()
         C = grow(frozen_clauses, hs, model,  extension=extension)
+        # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
+        # C = complement(frozen_clauses, new_F_prime)
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
         steps += 1
@@ -748,6 +1088,8 @@ def main():
     cnf.append([-n])    # c6: ¬n
     cnf.append([-m, l]) # c7 ¬m or l
     cnf.append([-l])    # c8 ¬l
-    assert sorted(omusGurobiCold(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
+    # assert sorted(omusGurobiCold(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
+    assert sorted(omusGurobi(cnf, 3 )) == sorted([0, 1, 2]), "SMUS error"
+    # assert sorted(omusGurobi(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
 if __name__ == "__main__":
     main()

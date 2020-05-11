@@ -190,16 +190,21 @@ def test_cnf_instances():
             # omus(cnf = CNF(from_clauses=cnf_clauses), extension =    extension )
             break
 
+
+
 def benchmark_code():
-    user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package'
-    folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
+    # user_folder = '/home/emilio/OMUS/'
+    user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package/'
+    # folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
+    folder = f'{user_folder}results/{date.today().strftime("%Y_%m_%d")}_ext3_2/'
     gurobiFolder = folder + "Gurobi/"
     gurobiColdFolder = folder + "GurobiCold/"
     orToolsFolder = folder + "OrTools/"
 
+    # solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
     solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
     # extensions = [4, 3, 2]
-    extensions = [3, 2]
+    extensions = [4,3]
 
     if not os.path.exists(folder):
         os.mkdir(folder)
@@ -216,8 +221,8 @@ def benchmark_code():
     unsatInstances = easy_unsatInstances #+ medium_unsatInstances
 
     # medium instances
-    # medium_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.MEDIUM)
-    # unsatInstances += medium_unsatInstances
+    medium_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.MEDIUM)
+    unsatInstances += medium_unsatInstances
 
     # HARD instances
     # hard_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.HARD)
@@ -248,7 +253,6 @@ def benchmark_code():
             gurobiOutput = gurobiFolder +  basefileName + '.json'
             # gurobiColdOutput = gurobiColdFolder  + basefileName + '.json'
             # orToolsOutput = orToolsFolder + basefileName + '.json'
-
 
             # run benchmark
             print("Gurobi Warm - extension", extension, "output=",gurobiOutput)
@@ -301,10 +305,10 @@ def test_instance():
     print(omusGurobi(cnf, extension = 3, greedy = True, maxcoverage=True))
 
 def main():
-    test_instance()
+    # test_instance()
     # omusGurobiCold(smus_CNF(),extension=3 )
     # omusOrTools("")
-    # benchmark_code()
+    benchmark_code()
     # print(Difficulty.EASY < Difficulty.MEDIUM)
 
 if __name__ == "__main__":

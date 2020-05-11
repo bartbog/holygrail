@@ -578,7 +578,8 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
     t_grow = []
     steps = 0
     t_start_omus = time.time()
-
+    s_hs = []
+    s_grow = []
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf.clauses]
     weights = clauses_weights(cnf.clauses, f)
 
@@ -591,7 +592,7 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
         hs =  optimalHittingSet(H, weights)
         t_hs_end = time.time()
         t_hitting_set.append(t_hs_end - t_hs_start)
-
+        s_hs.append(len(hs))
         # hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
         print("OrTools -", len(H), "Check Sat" )
 
@@ -618,7 +619,8 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
             benchmark_data['total_time'] = t_end_omus - t_start_omus
             benchmark_data['extension'] = extension
             benchmark_data['sat'] = 1 if sat_model else 0
-
+            benchmark_data['s_hs'] = s_hs
+            benchmark_data['s_grow'] = s_grow
             with open(outputfile, 'w') as file:
                 file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             return hs
@@ -633,6 +635,7 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
         steps += 1
+        s_grow.append(len(C))
 
         if C in H:
             raise f"{hs} {C} is already in {H}"
@@ -648,6 +651,8 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
     t_grow = []
     steps = 0
     t_start_omus = time.time()
+    s_hs = []
+    s_grow = []
 
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf.clauses]
 
@@ -669,9 +674,9 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
         t_hs_start = time.time()
         hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
         # print(hs)
-
         t_hs_end = time.time()
         t_hitting_set.append(t_hs_end - t_hs_start)
+        s_hs.append(len(hs))
 
         # check satisfiability of clauses
         if sat_model:
@@ -695,7 +700,8 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
             benchmark_data['total_time'] = t_end_omus - t_start_omus
             benchmark_data['extension'] = extension
             benchmark_data['sat'] = 1 if sat_model else 0
-
+            benchmark_data['s_hs'] = s_hs
+            benchmark_data['s_grow'] = s_grow
             with open(outputfile, 'w') as file:
                 file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             return hs
@@ -710,6 +716,8 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
         print(steps, " - ", len(C) , len(frozen_clauses))
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
+        s_grow.append(len(C))
+
         steps += 1
 
 def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', greedy = False, maxcoverage = False):
@@ -722,7 +730,8 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
     t_grow = []
     steps = 0
     t_start_omus = time.time()
-
+    s_hs = []
+    s_grow = []
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf.clauses]
 
     # sanity check
@@ -743,6 +752,7 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
         hs =  gurobiOptimalHittingSetCold(cnf.clauses, weights, H)
         t_hs_end = time.time()
         t_hitting_set.append(t_hs_end - t_hs_start)
+        s_hs.append(len(hs))
         # check satisfiability of clauses
         print("omusGurobiCold -", len(H), "Check Sat" )
         if sat_model:
@@ -765,6 +775,9 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
             benchmark_data['total_time'] = t_end_omus - t_start_omus
             benchmark_data['extension'] = extension
             benchmark_data['sat'] = 1 if sat_model else 0
+            benchmark_data['s_hs'] = s_hs
+            benchmark_data['s_grow'] = s_grow
+
 
             with open(outputfile, 'w') as file:
                 file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
@@ -778,6 +791,7 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
         # C = complement(frozen_clauses, new_F_prime)
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
+        s_grow.append(len(C))
         steps += 1
         H.append(C)
 

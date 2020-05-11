@@ -307,7 +307,7 @@ def benchmark_code():
 
 
 def test_instance():
-    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
+    f_path = "data/easy_instances/bf0432-007.cnf"
     clauses = []
     t_clauses = []
     for clause in CNF(from_file=f_path).clauses:

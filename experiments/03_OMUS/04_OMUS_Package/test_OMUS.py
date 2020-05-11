@@ -289,7 +289,8 @@ def benchmark_code():
             omusOrTools(cnf, extension = extension, outputfile=orToolsOutput)
 
 def test_instance():
-    f_path = "data/easy_instances/dubois20.cnf"
+    # f_path = "data/easy_instances/bf0432-007.cnf"
+    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
     clauses = []
     t_clauses = []
     for clause in CNF(from_file=f_path).clauses:
@@ -297,13 +298,13 @@ def test_instance():
             clauses.append(frozenset(clause))
             t_clauses.append(clause)
     cnf = CNF(from_clauses=clauses)
-    omusGurobi(cnf, extension=3)
+    print(omusGurobi(cnf, extension = 3, greedy = True, maxcoverage=True))
 
 def main():
-    # test_instance()
+    test_instance()
     # omusGurobiCold(smus_CNF(),extension=3 )
     # omusOrTools("")
-    benchmark_code()
+    # benchmark_code()
     # print(Difficulty.EASY < Difficulty.MEDIUM)
 
 if __name__ == "__main__":

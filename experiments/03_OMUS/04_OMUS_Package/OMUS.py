@@ -132,14 +132,52 @@ def findBestLiteral(clauses, F_prime, literals, diff = True):
         if i not in F_prime:
             literal_count.update(clause.intersection(literals))
             neg_literal_count.update([-l for l in clause.intersection(literals) if -l in literals])
-
+    # print("literal_count:\t\t", literal_count)
+    # print("neg literal_count:\t", neg_literal_count)
     if diff == True:
         # literal_diff = literal_count.copy()
         literal_count.subtract(neg_literal_count)
-
+    # print("diff literal_count:\t", literal_count)
     best_literal = literal_count.most_common(1)[0][0] if literal_count else None
 
     return best_literal
+
+def findTopBestLiterals(clauses, F_prime, literals, best = 3):
+    """Find the best literal in the list of `literals' based on the number of clauses
+    the literal hits.
+
+    Arguments:
+        clauses {iterable(set(int))} -- collection of clauses (sets of literals)
+        F_prime {iterable(int)} -- Hitting set
+        literals {iterable(int)} -- Candidate literals
+
+    Returns:
+        int -- literal hitting the most clauses in the not satisfied clauses of `clauses'
+    """
+    literal_count = Counter({literal:0 for literal in literals})
+    neg_literal_count = Counter({literal:0 for literal in literals if -literal in literals})
+
+    for i, clause in enumerate(clauses):
+        if i not in F_prime:
+            literal_count.update(clause.intersection(literals))
+            neg_literal_count.update([-l for l in clause.intersection(literals) if -l in literals])
+    # print("literal_count:\t\t", literal_count)
+    # print("neg literal_count:\t", neg_literal_count)
+    # if diff == True:
+        # literal_diff = literal_count.copy()
+    literal_count.subtract(neg_literal_count)
+    # print("diff literal_count:\t", literal_count)
+    if literal_count == None:
+        return None
+
+    best_counts = literal_count.most_common()
+
+    best_literals = set()
+    for i in range(0, min(best, round(len(literal_count)/2) ) ):
+        lit = best_counts[i][0]
+        if -lit not in best_literals:
+            best_literals.add(lit)
+    return best_literals
 
 def defaultExtension(cnf_clauses, F_prime, model):
     return F_prime
@@ -280,9 +318,9 @@ def propmodel(clauses, F_prime, model):
         new_F_prime = t_F_prime
 
         # removing lonely literals
-        conflict_free = set(l for l in literals_consider if -l not in literals_consider)
-        lit_true |= conflict_free
-        lit_false |= set(-l for l in conflict_free)
+        # conflict_free = set(l for l in literals_consider if -l not in literals_consider)
+        # lit_true |= conflict_free
+        # lit_false |= set(-l for l in conflict_free)
 
         while(len(literals_consider) > 0):
             literal = findBestLiteral(clauses, t_F_prime, literals_consider)
@@ -298,6 +336,77 @@ def propmodel(clauses, F_prime, model):
     assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {c}"
     return new_F_prime, lit_true
 
+# def extension3(clauses, F_prime, model):
+#     t_F_prime = set(F_prime)
+#     t_model = set(model)
+#     remaining_literals = frozenset.union(*clauses) - t_model - set(-l for l in t_model )
+#     t_model |= {l for l in remaining_literals if -l not in remaining_literals}
+#     remaining_literals -= t_model - set(-l for l in t_model )
+#     literal_count = Counter({literal:0 for literal in remaining_literals})
+#     neg_literal_count = Counter({literal:0 for literal in remaining_literals})
+#     for i, clause in enumerate(clauses):
+#         literal_count.update(clause.intersection(remaining_literals))
+#         neg_literal_count.update(-l for l in clause.intersection(remaining_literals))
+
+#     literal_count.subtract(neg_literal_count)
+#     d_literals = {k: v for k, v in sorted(dict(literal_count).items(), key=lambda item: item[1])}
+#     while(len(d_literals) > 0):
+#         lit = next(iter(d_literals))
+#         t_model.add(lit)
+#         del d_literals[lit]
+#         del d_literals[-lit]
+
+#     assert sorted(set( abs(l) for l in frozenset.union(*clauses))) == sorted(set(abs(l) for l in t_model))
+
+#     for i, clause in enumerate(clauses):
+#         if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
+#             t_F_prime.add(i)
+#     return t_F_prime, t_model
+
+
+# def extension3(clauses, F_prime, model, diff= True):
+#     all_literals = frozenset.union(*clauses)
+#     t_F_prime, t_model = propmodel(clauses, F_prime, model)
+#     lit_true = set(t_model)
+#     lit_false = set(-l for l in t_model)
+#     clause_added = False
+
+#     # alternative, over all literals
+#     remaining_literals = all_literals - lit_true - lit_false
+#     # conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
+
+
+
+#     while(len(remaining_literals) > 0):
+#         jmp = 0.50 *  ( len(clauses) - len(t_F_prime))
+
+#         conflict_free = set(l for l in remaining_literals if -l not in remaining_literals)
+#         lit_true |= conflict_free
+#         remaining_literals -= conflict_free
+#         cnt = jmp
+#         # while(cnt > 0 and len(remaining_literals) > 0):
+
+#         lit = findTopBestLiterals(clauses, t_F_prime, remaining_literals, jmp)
+
+#         lit_true |= lits
+#         lit_false |= {}
+
+#         remaining_literals -= set({lit})
+#         remaining_literals -= set({-lit})
+#         cnt -= 1
+
+#         t_F_prime, t_model = propmodel(clauses, t_F_prime, lit_true)
+
+#         lit_true = set(t_model)
+#         lit_false = set(-l for l in t_model)
+
+#         remaining_literals -= lit_true
+#         remaining_literals -= lit_false
+
+#     assert all([True if -l not in lit_true else False for l in lit_true])
+
+#     return t_F_prime, lit_true
+
 def extension3(clauses, F_prime, model, diff= True):
     all_literals = frozenset.union(*clauses)
     t_F_prime, t_model = propmodel(clauses, F_prime, model)
@@ -309,16 +418,25 @@ def extension3(clauses, F_prime, model, diff= True):
     remaining_literals = all_literals - lit_true - lit_false
     # conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
+
+
     while(len(remaining_literals) > 0):
+        # jmp = round(0.20 *  ( len(clauses) - len(t_F_prime)))
+        jmp = max(round(0.20*  len(remaining_literals)), 3)
+        # jmp = 5
 
         conflict_free = set(l for l in remaining_literals if -l not in remaining_literals)
         lit_true |= conflict_free
         remaining_literals -= conflict_free
+        # while(cnt > 0 and len(remaining_literals) > 0):
 
-        lit = findBestLiteral(clauses, t_F_prime, remaining_literals)
+        lits = findTopBestLiterals(clauses, t_F_prime, remaining_literals, jmp)
 
-        lit_true.add(lit)
-        lit_false.add(-lit)
+        lit_true |= lits
+        lit_false |= set(-l for l in lits)
+
+        remaining_literals -= lit_true
+        remaining_literals -= lit_false
 
         t_F_prime, t_model = propmodel(clauses, t_F_prime, lit_true)
 
@@ -712,11 +830,11 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
         # C = complement(frozen_clauses, new_F_prime)
 
         C = grow(frozen_clauses, hs, model,  extension=extension)
-        print(steps, " - ", hs )
-        print(steps, " - ", len(C) , len(frozen_clauses))
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
         s_grow.append(len(C))
+        print(f"{steps}: t_hs={round(t_hs_end - t_hs_start, 2)}s t_C={round(t_grow_end- t_grow_start, 2)}s  |C|={len(C)} |clauses|={len(frozen_clauses)}")
+        print(f"\t{hs}")
 
         steps += 1
 
@@ -794,8 +912,35 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
         s_grow.append(len(C))
         steps += 1
         H.append(C)
+def bacchus_cnf():
+    cnf = CNF()
+    cnf.append([6, 2])    # c1: ¬s
+    cnf.append([-6, 2])    # c1: ¬s
+    cnf.append([-2, 1])    # c1: ¬s
+    cnf.append([-1])    # c1: ¬s
+    cnf.append([-6,8])    # c1: ¬s
+    cnf.append([6, 8])    # c1: ¬s
+    cnf.append([2, 4])    # c1: ¬s
+    cnf.append([-4, 5])    # c1: ¬s
+    cnf.append([7, 5])    # c1: ¬s
+    cnf.append([-7, 5])    # c1: ¬s
+    cnf.append([-5, 3])    # c1: ¬s
+    cnf.append([-3])    # c1: ¬s
+    return cnf
 
-def main():
+def zebra_instance():
+    # f_path = "data/easy_instances/bf0432-007.cnf"
+    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
+    clauses = []
+    t_clauses = []
+    for clause in CNF(from_file=f_path).clauses:
+        if clause not in t_clauses and len(clause) > 0:
+            clauses.append(frozenset(clause))
+            t_clauses.append(clause)
+    cnf = CNF(from_clauses=clauses)
+    print(omusGurobi(cnf, extension = 3, greedy = True, maxcoverage=True))
+
+def omus_cnf():
     l = 1
     m = 2
     n = 3
@@ -810,8 +955,14 @@ def main():
     cnf.append([-n])    # c6: ¬n
     cnf.append([-m, l]) # c7 ¬m or l
     cnf.append([-l])    # c8 ¬l
+    return cnf
+
+def main():
+
     # assert sorted(omusGurobiCold(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
-    assert sorted(omusGurobi(cnf, 3 )) == sorted([0, 1, 2]), "SMUS error"
+    print(omusGurobi(bacchus_cnf(), 3))
+    assert sorted(omusGurobi(omus_cnf(), 3 )) == sorted([0, 1, 2]), "SMUS error"
+    zebra_instance()
     # assert sorted(omusGurobi(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
 if __name__ == "__main__":
     main()

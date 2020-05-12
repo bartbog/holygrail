@@ -30,7 +30,7 @@ from OMUS_utils import *
 import pprint
 
 sign = lambda x: (1, -1)[x < 0]
-
+ppprint = pprint.PrettyPrinter(indent=4).pprint
 # # Pysat pre-processing
 folderPaths={
     'easyInstances':'data/easy_instances/',
@@ -304,11 +304,39 @@ def test_instance():
     cnf = CNF(from_clauses=clauses)
     print(omusGurobi(cnf, extension = 3, greedy = True, maxcoverage=True))
 
+def bacchus_cnf():
+    cnf = CNF()
+    cnf.append([6, 2])    # c1: ¬s
+    cnf.append([-6, 2])    # c1: ¬s
+    cnf.append([-2, 1])    # c1: ¬s
+    cnf.append([-1])    # c1: ¬s
+    cnf.append([-6,8])    # c1: ¬s
+    cnf.append([6, 8])    # c1: ¬s
+    cnf.append([2, 4])    # c1: ¬s
+    cnf.append([-4, 5])    # c1: ¬s
+    cnf.append([7, 5])    # c1: ¬s
+    cnf.append([-7, 5])    # c1: ¬s
+    cnf.append([-5, 3])    # c1: ¬s
+    cnf.append([-3])    # c1: ¬s
+
+    return cnf
+def test_findBestLiteral():
+    clauses = [frozenset(clause) for clause in bacchus_cnf().clauses]
+    literals = frozenset.union(*clauses)
+    ppprint(bacchus_cnf().clauses)
+    print(literals)
+    best_literal = findTopBestLiterals(clauses, set(), literals, 10)
+    print(best_literal)
+
+
+
+
 def main():
-    # test_instance()
+    test_instance()
     # omusGurobiCold(smus_CNF(),extension=3 )
     # omusOrTools("")
-    benchmark_code()
+    # benchmark_code()
+    # test_findBestLiteral()
     # print(Difficulty.EASY < Difficulty.MEDIUM)
 
 if __name__ == "__main__":

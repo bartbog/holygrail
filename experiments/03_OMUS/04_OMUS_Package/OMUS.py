@@ -173,7 +173,7 @@ def findTopBestLiterals(clauses, F_prime, literals, best = 3):
     best_counts = literal_count.most_common()
 
     best_literals = set()
-    for i in range(0, min(best, round(len(literal_count)/2) ) ):
+    for i in range(0, min(best, round(len(literal_count)) ) ):
         lit = best_counts[i][0]
         if -lit not in best_literals:
             best_literals.add(lit)
@@ -318,23 +318,160 @@ def propmodel(clauses, F_prime, model):
         new_F_prime = t_F_prime
 
         # removing lonely literals
-        # conflict_free = set(l for l in literals_consider if -l not in literals_consider)
-        # lit_true |= conflict_free
-        # lit_false |= set(-l for l in conflict_free)
+        conflict_free = set(l for l in literals_consider if -l not in literals_consider)
+        lit_true |= conflict_free
+        lit_false |= set(-l for l in conflict_free)
+        literals_consider -= conflict_free
 
-        while(len(literals_consider) > 0):
-            literal = findBestLiteral(clauses, t_F_prime, literals_consider)
-            if literal != None:
-                lit_true.add(literal)
-                lit_false.add(-literal)
-            literals_consider.remove(literal)
-            if(-literal in literals_consider):
-                literals_consider.remove(-literal)
-            # check for unit propagation
+        # Literals to add
+        lits = findTopBestLiterals(clauses, t_F_prime, literals_consider, len(literals_consider))
+        lit_true |= lits
+        lit_false |= set(-l for l in lits)
 
     c = set(l for l in lit_true if -l in lit_true)
     assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {c}"
     return new_F_prime, lit_true
+
+def extension3(clauses, F_prime, model, diff= True):
+    all_literals = frozenset.union(*clauses)
+    t_F_prime, t_model = propmodel(clauses, F_prime, model)
+    lit_true = set(t_model)
+    lit_false = set(-l for l in t_model)
+    clause_added = False
+
+    # alternative, over all literals
+    remaining_literals = all_literals - lit_true - lit_false
+
+    while(len(remaining_literals) > 0):
+
+        conflict_free = set(l for l in remaining_literals if -l not in remaining_literals)
+        lit_true |= conflict_free
+        remaining_literals -= conflict_free
+
+        lits = findTopBestLiterals(clauses, t_F_prime, remaining_literals, 1)
+
+        lit_true |= lits
+        lit_false |= set(-l for l in lits)
+
+        remaining_literals -= lit_true
+        remaining_literals -= lit_false
+
+        t_F_prime, t_model = propmodel(clauses, t_F_prime, lit_true)
+
+        lit_true = set(t_model)
+        lit_false = set(-l for l in t_model)
+
+        remaining_literals -= lit_true
+        remaining_literals -= lit_false
+
+    assert all([True if -l not in lit_true else False for l in lit_true])
+
+
+    return t_F_prime, lit_true
+
+def extension5(clauses, F_prime, model):
+    t_F_prime = set(F_prime)
+    lit_true = set(model)
+    # create gurobi model
+    g_model = gp.Model('mipMaxSat')
+
+    # model parameters
+    # g_model.Params.LogFile = 'logs/'+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+'.log'
+    g_model.Params.OutputFlag = 0
+    g_model.Params.LogToConsole = 0
+    g_model.Params.Threads = 8
+
+    clause_literals = set(frozenset.union(*clauses))
+    all_literals = clause_literals | set(-l for l in clause_literals)
+    # dup_literals = [l for l in all_literals if -l in all_literals]
+
+    n_literals = len(all_literals)
+    # print("n_literals=", n_literals)
+    distinct_literals = set(abs(l) for l in all_literals)
+    # print("n_distinct_literals=", distinct_literals)
+
+    # n_distinct_literals = len(distinct_literals)
+
+    literal_count = Counter({literal:0 for literal in all_literals})
+
+    for clause in clauses:
+        literal_count.update(clause)
+
+    d_literal_count = dict(literal_count)
+    literal_coverage = {k: d_literal_count[k] for k in sorted(d_literal_count)}
+
+    pos_literals = {key:i for i, key in enumerate([*literal_coverage])}
+
+    # create the variables
+    l = g_model.addMVar(shape= n_literals, vtype=GRB.BINARY, name="l")
+
+    # weights = []
+    max_sum = sum( [ v for k,v in literal_coverage.items()])
+    # set objective : min sum xi*wi
+    g_model.setObjective(sum( l[i] * literal_coverage[key] for i, key in enumerate([*literal_coverage]) if literal_coverage[key] > 0), GRB.MAXIMIZE)
+
+    # g_model.addConstr(sum( l[i] * literal_coverage[key] for i, key in enumerate([*literal_coverage])) <= max_sum )
+
+    # update the model
+    g_model.addConstr(sum(l[i] for i in range(n_literals)) >= n_literals/2)
+    g_model.addConstr(sum(l[i] for i in range(n_literals)) <= n_literals/2)
+
+    # l_i + l_-i > 0
+    # l_i + l_-i < 2
+    # print("literal_coverage=",literal_coverage)
+    # print("pos_literals=",pos_literals)
+    # print("literal_coverage=",*literal_coverage)
+    for literal in distinct_literals:
+        pos_literal = pos_literals[literal]
+        pos_neg_literal = pos_literals[-literal]
+        # print(f"l[{pos_literal}] + l[{pos_neg_literal}] >= 1 ")
+        # print(f"{literal} + {-literal} >= 1")
+        # print(f"{literal} + {-literal} <= 1")
+        # print(f"{pos_literal,l[pos_neg_literal] ]) >= 1)
+        g_model.addConstr(sum([l[pos_literal],l[pos_neg_literal] ]) >= 1)
+        g_model.addConstr(sum([l[pos_literal],l[pos_neg_literal] ]) <= 1)
+
+
+    for i, clause in enumerate(clauses):
+        if i not in F_prime :
+            # print( " + ".join([f"l[{pos_literals[literal]}]" for literal in clause]), ">= 1")
+            # print( " + ".join([str(literal) for literal in clause]), ">= 1")
+            g_model.addConstr(sum(l[pos_literals[literal]] for literal in clause ) >= 1)
+    for literal in model:
+        g_model.addConstr(l[pos_literals[literal]] >= 1)
+        g_model.addConstr(l[pos_literals[literal]] <= 1)
+        # g_model.addConstr(sum([l[pos_literal],l[pos_neg_literal] ]) <= 1)
+        # else:
+    # for i, clause in enumerate(clauses):
+    #     # if i not in F_prime :
+    #     g_model.addConstr(sum(l[pos_literals[literal]] for literal in clause ) >= 1)
+        #     g_model.addConstr()
+    g_model.optimize()
+
+    status = g_model.status
+    if status in (GRB.INF_OR_UNBD, GRB.INFEASIBLE, GRB.UNBOUNDED):
+        print('The model cannot be solved because it is infeasible or unbounded')
+        return F_prime, model
+        # sys.exit(1)
+
+    if status == GRB.OPTIMAL:
+        print('Optimization was stopped with status %d' % status)
+        # sys.exit(0)
+
+    # output hitting set
+    for i,v in enumerate(g_model.getVars()):
+        # print('%s %g' % (v.varName, v.x))
+        print(f'l[{i}]\t{[*literal_coverage][i]}\t= {v.x}')
+    # print(x)
+    lit_true = set( key for i, key in enumerate([*literal_coverage]) if g_model.getVars()[i].x == 1)
+
+    for i, clause in enumerate(clauses):
+        # if i in t_F_prime:
+        #     continue # already in F_prime
+        if len(clause.intersection(lit_true)) > 0:
+            t_F_prime.add(i)
+
+    return t_F_prime, lit_true
 
 # def extension3(clauses, F_prime, model):
 #     t_F_prime = set(F_prime)
@@ -407,48 +544,6 @@ def propmodel(clauses, F_prime, model):
 
 #     return t_F_prime, lit_true
 
-def extension3(clauses, F_prime, model, diff= True):
-    all_literals = frozenset.union(*clauses)
-    t_F_prime, t_model = propmodel(clauses, F_prime, model)
-    lit_true = set(t_model)
-    lit_false = set(-l for l in t_model)
-    clause_added = False
-
-    # alternative, over all literals
-    remaining_literals = all_literals - lit_true - lit_false
-    # conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
-
-
-
-    while(len(remaining_literals) > 0):
-        # jmp = round(0.20 *  ( len(clauses) - len(t_F_prime)))
-        jmp = max(round(0.20*  len(remaining_literals)), 3)
-        # jmp = 5
-
-        conflict_free = set(l for l in remaining_literals if -l not in remaining_literals)
-        lit_true |= conflict_free
-        remaining_literals -= conflict_free
-        # while(cnt > 0 and len(remaining_literals) > 0):
-
-        lits = findTopBestLiterals(clauses, t_F_prime, remaining_literals, jmp)
-
-        lit_true |= lits
-        lit_false |= set(-l for l in lits)
-
-        remaining_literals -= lit_true
-        remaining_literals -= lit_false
-
-        t_F_prime, t_model = propmodel(clauses, t_F_prime, lit_true)
-
-        lit_true = set(t_model)
-        lit_false = set(-l for l in t_model)
-
-        remaining_literals -= lit_true
-        remaining_literals -= lit_false
-
-    assert all([True if -l not in lit_true else False for l in lit_true])
-
-    return t_F_prime, lit_true
 
 def extension4(clauses, F_prime, model):
     t_F_prime = set(F_prime)
@@ -676,12 +771,13 @@ def grow(clauses, F_prime, model, extension = 0):
         1 : extension1,
         2 : extension2,
         3 : extension3,
-        4 : extension4
+        4 : extension4,
+        5 : extension5
     }
 
-    new_F_prime = frozenset(F_prime)
+    # new_F_prime = frozenset(F_prime)
 
-    new_F_prime, new_model = extensions[extension](clauses, new_F_prime, model)
+    new_F_prime, new_model = extensions[extension](clauses, F_prime, model)
 
     return complement(clauses, new_F_prime)
 
@@ -809,7 +905,7 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
 
         if not sat:
             gurobi_model.dispose()
-            # print("OMUS:", hs)
+            print("OMUS:", hs)
             t_end_omus = time.time()
             benchmark_data['steps'] = steps
             benchmark_data['t_hitting_set'] = t_hitting_set
@@ -833,7 +929,7 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
         s_grow.append(len(C))
-        print(f"{steps}: t_hs={round(t_hs_end - t_hs_start, 2)}s t_C={round(t_grow_end- t_grow_start, 2)}s  |C|={len(C)} |clauses|={len(frozen_clauses)}")
+        print(f"{steps}: t_hs={round(t_hs_end - t_hs_start, 2)}s t_C={round(t_grow_end- t_grow_start, 2)}s t_Sat = {round(t_sat_end-t_sat_start, 2)}  |C|={len(C)} |clauses|={len(frozen_clauses)}")
         print(f"\t{hs}")
 
         steps += 1
@@ -929,8 +1025,8 @@ def bacchus_cnf():
     return cnf
 
 def zebra_instance():
-    # f_path = "data/easy_instances/bf0432-007.cnf"
-    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
+    f_path = "data/easy_instances/bf0432-007.cnf"
+    # f_path = "data/easy_instances/zebra_v155_c1135.cnf"
     clauses = []
     t_clauses = []
     for clause in CNF(from_file=f_path).clauses:
@@ -938,7 +1034,7 @@ def zebra_instance():
             clauses.append(frozenset(clause))
             t_clauses.append(clause)
     cnf = CNF(from_clauses=clauses)
-    print(omusGurobi(cnf, extension = 3, greedy = True, maxcoverage=True))
+    print(omusGurobi(cnf, extension = 3))
 
 def omus_cnf():
     l = 1
@@ -958,10 +1054,20 @@ def omus_cnf():
     return cnf
 
 def main():
-
+    # f_clauses = [frozenset(clause) for clause in omus_cnf().clauses]
+    # c = [
+    #     [1, 2, 3],
+    #     [-1, -2],
+    #     [1, -2],
+    #     [-2],
+    #     [-2, -1]
+    # ]
+    # f_c = [frozenset(clause) for clause in c]
+    # print(f_c)
+    # print(extension5(f_c, [], [-3]))
     # assert sorted(omusGurobiCold(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
-    print(omusGurobi(bacchus_cnf(), 3))
-    assert sorted(omusGurobi(omus_cnf(), 3 )) == sorted([0, 1, 2]), "SMUS error"
+    # print(omusGurobi(bacchus_cnf(), 3))
+    # assert sorted(omusGurobi(omus_cnf(), 5 )) == sorted([0, 1, 2]), "SMUS error"
     zebra_instance()
     # assert sorted(omusGurobi(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
 if __name__ == "__main__":

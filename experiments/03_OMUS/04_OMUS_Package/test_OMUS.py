@@ -293,8 +293,8 @@ def benchmark_code():
             omusOrTools(cnf, extension = extension, outputfile=orToolsOutput)
 
 def test_instance():
-    # f_path = "data/easy_instances/bf0432-007.cnf"
-    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
+    f_path = "data/easy_instances/bf0432-007.cnf"
+    # f_path = "data/easy_instances/zebra_v155_c1135.cnf"
     clauses = []
     t_clauses = []
     for clause in CNF(from_file=f_path).clauses:
@@ -327,9 +327,6 @@ def test_findBestLiteral():
     print(literals)
     best_literal = findTopBestLiterals(clauses, set(), literals, 10)
     print(best_literal)
-
-
-
 
 def main():
     test_instance()

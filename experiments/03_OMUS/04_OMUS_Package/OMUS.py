@@ -1098,6 +1098,38 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
         s_grow.append(len(C))
         steps += 1
         H.append(C)
+
+
+def omus(cnf: CNF, extension = 3, f = clause_length, outputfile = 'log.txt'):
+
+    frozen_clauses = [frozenset(c for c in clause) for clause in cnf.clauses]
+
+    # sanity check
+    _, solved = checkSatClauses(frozen_clauses, {i for i in range(len(frozen_clauses))})
+
+    # TODO : check if all literals are in the clauses else need to be mapped 
+    assert solved == False, "Cnf is satisfiable"
+
+    weights = clauses_weights(cnf.clauses, f)
+
+    C = []
+
+    gurobi_model = gurobiModel(cnf.clauses, weights)
+
+    while(True):
+        # compute optimal hitting set
+        hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+
+        # check satisfiability of clauses
+        model, sat = checkSatClauses(frozen_clauses, hs)
+
+        if not sat:
+            gurobi_model.dispose()
+            print("OMUS:", hs)
+            return hs
+
+        C = grow(frozen_clauses, hs, model,  extension=extension)
+
 def bacchus_cnf():
     cnf = CNF()
     cnf.append([6, 2])    # c1: ¬s

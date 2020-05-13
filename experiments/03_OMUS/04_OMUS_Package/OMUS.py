@@ -1020,7 +1020,7 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
         t_grow.append(t_grow_end- t_grow_start)
         s_grow.append(len(C))
         print(f"{steps}: t_hs={round(t_hs_end - t_hs_start, 2)}s t_C={round(t_grow_end- t_grow_start, 2)}s t_Sat = {round(t_sat_end-t_sat_start, 2)}  |C|={len(C)} |clauses|={len(frozen_clauses)}")
-        print(f"\t{hs}")
+        print(f"\n\t{hs}\n")
 
         steps += 1
 
@@ -1115,8 +1115,8 @@ def bacchus_cnf():
     return cnf
 
 def zebra_instance():
-    f_path = "data/easy_instances/bf0432-007.cnf"
-    # f_path = "data/easy_instances/zebra_v155_c1135.cnf"
+    # f_path = "data/easy_instances/bf0432-007.cnf"
+    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
     clauses = []
     t_clauses = []
     for clause in CNF(from_file=f_path).clauses:

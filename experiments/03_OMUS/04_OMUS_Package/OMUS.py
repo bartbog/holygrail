@@ -179,6 +179,50 @@ def findTopBestLiterals(clauses, F_prime, literals, best = 3):
             best_literals.add(lit)
     return best_literals
 
+def findTopBestLiteralsWithCounter(literal_count, neg_literal_count,literals, best = 3):
+    """Find the best literal in the list of `literals' based on the number of clauses
+    the literal hits.
+
+    Arguments:
+        clauses {iterable(set(int))} -- collection of clauses (sets of literals)
+        F_prime {iterable(int)} -- Hitting set
+        literals {iterable(int)} -- Candidate literals
+
+    Returns:
+        int -- literal hitting the most clauses in the not satisfied clauses of `clauses'
+    """
+    # literal_count = Counter({literal:0 for literal in literals})
+    # neg_literal_count = Counter({literal:0 for literal in literals if -literal in literals})
+
+    # for i, clause in enumerate(clauses):
+    #     if i not in F_prime:
+    #         literal_count.update(clause.intersection(literals))
+    #         neg_literal_count.update([-l for l in clause.intersection(literals) if -l in literals])
+    # print("literal_count:\t\t", literal_count)
+    # print("neg literal_count:\t", neg_literal_count)
+    # if diff == True:
+        # literal_diff = literal_count.copy()
+    # print(literal_count, neg_literal_count, literals, best)
+    diffcount = Counter(literal_count)
+    diffcount.subtract(neg_literal_count)
+    # print("diff literal_count:\t", literal_count)
+    if diffcount ==None:
+        return None
+
+    best_counts = dict(diffcount.most_common())
+
+    best_literals = set()
+    best_cnt = 0
+    for i, (lit, _) in enumerate(best_counts.items()):
+        if lit not in literals:
+            continue
+        if best_cnt == best:
+            return best_literals
+        if -lit not in best_literals:
+            best_literals.add(lit)
+            best_cnt += 1
+    return best_literals
+
 def defaultExtension(cnf_clauses, F_prime, model):
     return F_prime
 
@@ -327,68 +371,126 @@ def propmodel(clauses, F_prime, model):
             lit_true |= lits
             lit_false |= set(-l for l in lits)
 
-            # for i, clause in enumerate(clauses):
-            #     if i in t_F_prime:
-            #         continue # already in F_prime
-
-            #     # Similar alternative:
-            #     if len(clause.intersection(lit_true)) > 0:
-            #         # a true literal, clause is true
-            #         t_F_prime.add(i)
-            #         clause_added = True
-
-        # # if len(t_F_prime) > len(new_F_prime):
-        # new_F_prime = t_F_prime
-
     c = set(l for l in lit_true if -l in lit_true)
     assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {c}"
     return t_F_prime, lit_true
 
-# def sillypropmodel(clauses, F_prime, model):
-#     new_F_prime = set(F_prime)
-#     # precompute both
-#     lit_true = set(model)
-#     lit_false = set(-l for l in model)
-#     clause_added = True
-
-#     while(clause_added):
-#         literals_consider = set()
-#         clause_added = False
-#         t_F_prime = set(new_F_prime)
-#         for i, clause in enumerate(clauses):
-#             if i in t_F_prime:
-#                 continue # already in F_prime
-
-#             # Similar alternative:
-#             if len(clause.intersection(lit_true)) > 0:
-#                 # a true literal, clause is true
-#                 t_F_prime.add(i)
-#                 clause_added = True
-#             else:
-#                 unassigned = clause - lit_false
-#                 if len(unassigned) == 1:
-#                     lit = next(iter(unassigned))
-#                     literals_consider.add(lit)
-
-#         # if len(t_F_prime) > len(new_F_prime):
-#         new_F_prime = t_F_prime
-
-#         # removing lonely literals
-#         conflict_free = set(l for l in literals_consider if -l not in literals_consider)
-#         lit_true |= conflict_free
-#         lit_false |= set(-l for l in conflict_free)
-#         literals_consider -= conflict_free
-
-#         # Literals to add
-#         lits = findTopBestLiterals(clauses, t_F_prime, literals_consider, len(literals_consider))
-#         lit_true |= lits
-#         lit_false |= set(-l for l in lits)
-
-#     # c = set(l for l in lit_true if -l in lit_true)
-#     # assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {c}"
-#     return new_F_prime, lit_true
-
 def extension3(clauses, F_prime, model, diff= True):
+    all_literals = frozenset.union(*clauses)
+
+    # t_F_prime = set(F_prime)
+    # t_model = set(model)
+    if len(F_prime) == 0:
+        lits = findTopBestLiterals(clauses, set(), all_literals, 1)
+        t_F_prime, t_model = propmodel(clauses, set(), lits)
+    else:
+        t_F_prime, t_model = propmodel(clauses, F_prime, model)
+
+    lit_true = set(t_model)
+    lit_false = set(-l for l in t_model)
+
+    # alternative, over all literals
+    remaining_literals = all_literals - lit_true - lit_false
+    if len(remaining_literals) == 0:
+        return t_F_prime, t_model
+
+    # counter with remaining literals coverage
+    literal_counter = Counter({literal:0 for literal in remaining_literals})
+    # counter with negated literals coverage
+    neg_literal_counter = Counter({literal:0 for literal in remaining_literals if -literal in remaining_literals})
+
+    for i, clause in enumerate(clauses):
+        if i not in t_F_prime:
+            intersect = clause.intersection(remaining_literals)
+            literal_counter.update(intersect)
+            neg_literal_counter.update([-l for l in intersect if -l in remaining_literals])
+
+    while(len(remaining_literals) > 0):
+        # removal of conflict free elements
+        conflict_free = set(l for l in remaining_literals if -l not in remaining_literals)
+        lit_true |= conflict_free
+        remaining_literals -= conflict_free
+
+        for l in conflict_free:
+            del literal_counter[l]
+            del literal_counter[-l]
+            del neg_literal_counter[l]
+            del neg_literal_counter[-l]
+
+        lits = findTopBestLiteralsWithCounter(literal_counter, neg_literal_counter, remaining_literals, best = 1)
+
+        lit_true |= lits
+        lit_false |= set(-l for l in lits)
+        remaining_literals -= ( lit_true | lit_false)
+
+        for l in lits:
+            del literal_counter[l]
+            del literal_counter[-l]
+            del neg_literal_counter[l]
+            del neg_literal_counter[-l]
+
+        clause_added = True
+
+        while(clause_added):
+
+            literals_consider = set()
+            clause_added = False
+            # t_F_prime = set(new_F_prime)
+            for i, clause in enumerate(clauses):
+                if i in t_F_prime:
+                    continue # already in F_prime
+
+                # Similar alternative:
+                clause_literal_intersection = clause.intersection(lit_true)
+                if len(clause_literal_intersection) > 0:
+                    # a true literal, clause is true
+                    t_F_prime.add(i)
+                    clause_added = True
+
+                    literal_counter.subtract(Counter([l for l in clause - clause_literal_intersection if l in remaining_literals]))
+                    neg_literal_counter.subtract(Counter([-l for l in  clause - clause_literal_intersection if -l in remaining_literals]))
+                else:
+                    unassigned = clause - lit_false
+                    if len(unassigned) == 1:
+                        lit = next(iter(unassigned))
+                        literals_consider.add(lit)
+
+            if len(literals_consider) > 0:
+                # removing lonely literals
+                conflict_free = set(l for l in literals_consider if -l not in literals_consider)
+                lit_true |= conflict_free
+                lit_false |= set(-l for l in conflict_free)
+                literals_consider -= conflict_free
+
+                for l in conflict_free:
+                    del literal_counter[l]
+                    del literal_counter[-l]
+                    del neg_literal_counter[l]
+                    del neg_literal_counter[-l]
+
+                # Literals to add
+                lits = findTopBestLiteralsWithCounter(literal_counter, neg_literal_counter, literals_consider, best = 1)
+                lit_true |= lits
+                lit_false |= set(-l for l in lits)
+                remaining_literals -= (lits | set(-l for l in lits) )
+
+                for l in lits:
+                    del literal_counter[l]
+                    del literal_counter[-l]
+                    del neg_literal_counter[l]
+                    del neg_literal_counter[-l]
+
+        # lit_true = set(t_model)
+        # lit_false = set(-l for l in t_model)
+
+        # remaining_literals -= lit_true
+        # remaining_literals -= lit_false
+
+    assert all([True if -l not in lit_true else False for l in lit_true])
+
+    return t_F_prime, lit_true
+
+def extension3withCounter(clauses, F_prime, model, diff= True):
 
     all_literals = frozenset.union(*clauses)
     t_F_prime = set(F_prime)
@@ -429,8 +531,8 @@ def extension3(clauses, F_prime, model, diff= True):
 
     assert all([True if -l not in lit_true else False for l in lit_true])
 
-
     return t_F_prime, lit_true
+
 
 def extension5(clauses, F_prime, model):
     t_F_prime = set(F_prime)
@@ -1088,8 +1190,8 @@ def bacchus_cnf():
     return cnf
 
 def zebra_instance():
-    f_path = "data/easy_instances/bf0432-007.cnf"
-    # f_path = "data/easy_instances/zebra_v155_c1135.cnf"
+    # f_path = "data/easy_instances/bf0432-007.cnf"
+    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
     clauses = []
     t_clauses = []
     for clause in CNF(from_file=f_path).clauses:
@@ -1130,7 +1232,7 @@ def main():
     # print(extension5(f_c, [], [-3]))
     # assert sorted(omusGurobiCold(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
     # print(omusGurobi(bacchus_cnf(), 3))
-    # assert sorted(omusGurobi(omus_cnf(), 5 )) == sorted([0, 1, 2]), "SMUS error"
+    # assert sorted(omusGurobi(omus_cnf(), 3 )) == sorted([0, 1, 2]), "SMUS error"
     zebra_instance()
     # assert sorted(omusGurobi(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
 if __name__ == "__main__":

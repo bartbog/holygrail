@@ -289,7 +289,7 @@ def extension2(clauses, F_prime, model, random_literal = False, maxcoverage=True
     return t_F_prime, lit_true
 
 def propmodel(clauses, F_prime, model):
-    new_F_prime = set(F_prime)
+    t_F_prime = set(F_prime)
     # precompute both
     lit_true = set(model)
     lit_false = set(-l for l in model)
@@ -298,7 +298,7 @@ def propmodel(clauses, F_prime, model):
     while(clause_added):
         literals_consider = set()
         clause_added = False
-        t_F_prime = set(new_F_prime)
+        # t_F_prime = set(new_F_prime)
         for i, clause in enumerate(clauses):
             if i in t_F_prime:
                 continue # already in F_prime
@@ -314,30 +314,93 @@ def propmodel(clauses, F_prime, model):
                     lit = next(iter(unassigned))
                     literals_consider.add(lit)
 
-        # if len(t_F_prime) > len(new_F_prime):
-        new_F_prime = t_F_prime
 
-        # removing lonely literals
-        conflict_free = set(l for l in literals_consider if -l not in literals_consider)
-        lit_true |= conflict_free
-        lit_false |= set(-l for l in conflict_free)
-        literals_consider -= conflict_free
+        if len(literals_consider) > 0:
+            # removing lonely literals
+            conflict_free = set(l for l in literals_consider if -l not in literals_consider)
+            lit_true |= conflict_free
+            lit_false |= set(-l for l in conflict_free)
+            literals_consider -= conflict_free
 
-        # Literals to add
-        lits = findTopBestLiterals(clauses, t_F_prime, literals_consider, len(literals_consider))
-        lit_true |= lits
-        lit_false |= set(-l for l in lits)
+            # Literals to add
+            lits = findTopBestLiterals(clauses, t_F_prime, literals_consider, 1)
+            lit_true |= lits
+            lit_false |= set(-l for l in lits)
+
+            # for i, clause in enumerate(clauses):
+            #     if i in t_F_prime:
+            #         continue # already in F_prime
+
+            #     # Similar alternative:
+            #     if len(clause.intersection(lit_true)) > 0:
+            #         # a true literal, clause is true
+            #         t_F_prime.add(i)
+            #         clause_added = True
+
+        # # if len(t_F_prime) > len(new_F_prime):
+        # new_F_prime = t_F_prime
 
     c = set(l for l in lit_true if -l in lit_true)
     assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {c}"
-    return new_F_prime, lit_true
+    return t_F_prime, lit_true
+
+# def sillypropmodel(clauses, F_prime, model):
+#     new_F_prime = set(F_prime)
+#     # precompute both
+#     lit_true = set(model)
+#     lit_false = set(-l for l in model)
+#     clause_added = True
+
+#     while(clause_added):
+#         literals_consider = set()
+#         clause_added = False
+#         t_F_prime = set(new_F_prime)
+#         for i, clause in enumerate(clauses):
+#             if i in t_F_prime:
+#                 continue # already in F_prime
+
+#             # Similar alternative:
+#             if len(clause.intersection(lit_true)) > 0:
+#                 # a true literal, clause is true
+#                 t_F_prime.add(i)
+#                 clause_added = True
+#             else:
+#                 unassigned = clause - lit_false
+#                 if len(unassigned) == 1:
+#                     lit = next(iter(unassigned))
+#                     literals_consider.add(lit)
+
+#         # if len(t_F_prime) > len(new_F_prime):
+#         new_F_prime = t_F_prime
+
+#         # removing lonely literals
+#         conflict_free = set(l for l in literals_consider if -l not in literals_consider)
+#         lit_true |= conflict_free
+#         lit_false |= set(-l for l in conflict_free)
+#         literals_consider -= conflict_free
+
+#         # Literals to add
+#         lits = findTopBestLiterals(clauses, t_F_prime, literals_consider, len(literals_consider))
+#         lit_true |= lits
+#         lit_false |= set(-l for l in lits)
+
+#     # c = set(l for l in lit_true if -l in lit_true)
+#     # assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {c}"
+#     return new_F_prime, lit_true
 
 def extension3(clauses, F_prime, model, diff= True):
+
     all_literals = frozenset.union(*clauses)
-    t_F_prime, t_model = propmodel(clauses, F_prime, model)
+    t_F_prime = set(F_prime)
+    t_model = set(model)
+    if len(F_prime) == 0:
+        lits = findTopBestLiterals(clauses, set(), all_literals, 1)
+        t_F_prime, t_model = propmodel(clauses, set(), lits)
+    else:
+        t_F_prime, t_model = propmodel(clauses, t_F_prime, t_model)
+
     lit_true = set(t_model)
     lit_false = set(-l for l in t_model)
-    clause_added = False
 
     # alternative, over all literals
     remaining_literals = all_literals - lit_true - lit_false

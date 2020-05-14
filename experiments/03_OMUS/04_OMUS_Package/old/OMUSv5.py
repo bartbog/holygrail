@@ -385,55 +385,45 @@ def extension3(clauses, F_prime, model):
 
     # init counter
     cnt = Counter({literal:0 for literal in lit_unk})
-    for i in cl_unk:
-        cnt.update(clauses[i])
-        # if lit_true.intersection(clause):
-        #     cl_true.add(i)
-        #     cl_unk.remove(i)
-        # else:
-        #     unassigned = clause - lit_false
-        #     cnt.update(clause)
+    for i, clause in enumerate(clauses):
+        if i in cl_true:
+            continue
+        cnt.update(clause)
 
     # as long as some clauses are unassigned
     while len(cl_unk) > 0:
+        print(cnt)
         # check single polarity literals
-        
         tofix = set()
         for lit in set(abs(lit) for lit in lit_unk):
-            if not lit in cnt or cnt[lit] == 0:
+            if cnt[lit] == 0 and cnt[-lit] == 0:
+                raise(cnt, tofix)
+                continue
+            elif not lit in cnt or cnt[lit] == 0:
                 tofix.add(-lit)
             elif not -lit in cnt or cnt[-lit] == 0:
                 tofix.add(lit)
 
-        #print(cl_unk, tofix, lit_true, lit_false)
         if len(tofix) > 0:
-            #print("Tofix", tofix)
             # fix all single polarity literals
             lit_true |= tofix
+            lit_false |= set(-l for l in tofix)
             lit_unk -= tofix
-            tofix_neg = set(-l for l in tofix)
-            lit_false |= tofix_neg
-            lit_unk -= tofix_neg
-        elif len(lit_unk) > 0:
-            # print(cnt, lit_unk, cl_unk)
+        else:
             # choose best
             # bestlit = max(lit_unk, key=lambda i: cnt[i])
             # other definition of 'best'
             bestlit = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
-            #print("Best", bestlit, cnt[bestlit], cnt[-bestlit])
 
             lit_true.add(bestlit)
-            lit_unk.remove(bestlit)
             lit_false.add(-bestlit)
-            lit_unk.remove(-bestlit)
-            del cnt[bestlit]
-            del cnt[-bestlit]
+            lit_unk.remove(bestlit)
+        # print("cnt=", cnt, "lit_true=", lit_true, "lit_false=", lit_false )
 
         # update clauses (cl_unk will be modified in place)
         for idx in list(cl_unk):
             clause = clauses[idx]
-            unassgn = clause - lit_false
-            if len(unassgn) == 0:
+            if len(clause - lit_false) == 0:
                 # false, no need to check again
                 cl_unk.remove(idx)
             # print(idx, clause, cl_unk, clause.intersection(lit_false))
@@ -441,20 +431,11 @@ def extension3(clauses, F_prime, model):
                 # true, store and remove from counter
                 cl_unk.remove(idx)
                 cl_true.add(idx)
-                cnt = cnt - Counter(clause)
-            elif len(unassgn) == 1:
-                # unit...
-                # print(lit_true, unassgn)
-                bestlit = next(iter(unassgn))
-                lit_true.add(bestlit)
-                lit_unk.remove(bestlit)
-                lit_false.add(-bestlit)
-                lit_unk.remove(-bestlit)
-                del cnt[bestlit]
-                del cnt[-bestlit]
-                cl_unk.remove(idx)
-                cl_true.add(idx)
-
+                cnt.subtract(clause)
+                # cnt = cnt - Counter(clause)
+                # cnt.subtract(clause.intersection(lit_true))
+                # # cnt.subtract(clause.intersection(lit_false))
+                # cnt.subtract(clause.intersection(lit_true))
 
     return cl_true, lit_true
 
@@ -1330,10 +1311,10 @@ def omus_cnf():
     return cnf
 
 def main():
+    # omusGurobi(omus_cnf(), 3 )
     omusGurobi(bacchus_cnf(), 3 )
-    omusGurobi(omus_cnf(), 3 )
     # assert sorted(omusGurobiCold(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
     # assert sorted(omusGurobi(omus_cnf(), 3 )) == sorted([0, 1, 2]), "SMUS error"
-    zebra_instance()
+    # zebra_instance()
 if __name__ == "__main__":
     main()

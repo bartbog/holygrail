@@ -315,12 +315,12 @@ def benchmark_code():
                 os.mkdir(ext_path)
 
     # easy instances
-    easy_unsatInstances = cnfUnsatInstances(difficulty=Difficulty.EASY)
-    unsatInstances = easy_unsatInstances #+ medium_unsatInstances
+    # easy_unsatInstances = cnfUnsatInstances(difficulty=Difficulty.EASY)
+    # unsatInstances = easy_unsatInstances #+ medium_unsatInstances
 
     # medium instances
     medium_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.MEDIUM)
-    unsatInstances += medium_unsatInstances
+    unsatInstances = medium_unsatInstances
 
     # # HARD instances
     # # hard_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.HARD)

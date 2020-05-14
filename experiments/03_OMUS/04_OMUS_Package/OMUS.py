@@ -285,20 +285,20 @@ def extension2(clauses, F_prime, model, random_literal = False, maxcoverage=True
     conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
     while(len(conflict_free_literals) > 0):
-            if random_literal:
-                lit = next(iter(conflict_free_literals))
-            else:
-                lit = findBestLiteral(clauses, t_F_prime, conflict_free_literals, maxcoverage)
-            lit_true.add(lit)
-            lit_false.add(-lit)
+        if random_literal:
+            lit = next(iter(conflict_free_literals))
+        else:
+            lit = findBestLiteral(clauses, t_F_prime, conflict_free_literals, maxcoverage)
+        lit_true.add(lit)
+        lit_false.add(-lit)
 
-            t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
+        t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
 
-            lit_true = set(t_model)
-            lit_false = set(-l for l in t_model)
+        lit_true = set(t_model)
+        lit_false = set(-l for l in t_model)
 
-            remaining_literals = all_literals - lit_true - lit_false
-            conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
+        remaining_literals = all_literals - lit_true - lit_false
+        conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
     conflictual_literals = set(remaining_literals)
 
@@ -504,14 +504,14 @@ def extension3bis(clauses, F_prime, model):
         lit_most_common = literal_counter.most_common()
         conflict_free = list(filter(lambda i: -i not in literal_counter, literal_counter))
 
-        if(len(conflict_free) > 0):
-            best_literal = max(conflict_free, key=lambda i: literal_counter[i])
-        else:
-            # find literal with best polarity coverage
-            # dup_counter = Counter(literal_counter)
-            # dup_counter.subtract(Counter([-i for i in literal_counter.elements()]))
-            # best_literal = dup_counter.most_common(1)[0][0]
-            best_literal = max(literal_counter, key=lambda i: literal_counter[i] - literal_counter[-i])
+        # if(len(conflict_free) > 0):
+        #     best_literal = max(conflict_free, key=lambda i: literal_counter[i])
+        # else:
+        #     # find literal with best polarity coverage
+        #     # dup_counter = Counter(literal_counter)
+        #     # dup_counter.subtract(Counter([-i for i in literal_counter.elements()]))
+        #     # best_literal = dup_counter.most_common(1)[0][0]
+        best_literal = max(literal_counter, key=lambda i: literal_counter[i] - literal_counter[-i])
 
         lit_true.add(best_literal)
         lit_false.add(-best_literal)
@@ -1023,7 +1023,7 @@ def grow(clauses, F_prime, model, extension = 0):
     return complement(clauses, new_F_prime)
 
 ## OMUS algorithm
-def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', greedy = False, maxcoverage = False):
+def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', random_literal = False, maxcoverage = False):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
@@ -1085,8 +1085,11 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
         t_grow_start = time.time()
         # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
         # C = complement(frozen_clauses, new_F_prime)
-
-        C = grow(frozen_clauses, hs, model,  extension=extension)
+        if extension == 2:
+            new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal = random_literal, maxcoverage = maxcoverage)
+            C = complement(frozen_clauses, new_F_prime)
+        else:
+            C = grow(frozen_clauses, hs, model,  extension=extension)
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
         steps += 1
@@ -1096,7 +1099,7 @@ def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, ou
             raise f"{hs} {C} is already in {H}"
         H.append(C)
 
-def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', greedy = False, maxcoverage = False):
+def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', random_literal = False, maxcoverage = False):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
@@ -1166,7 +1169,11 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
         # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
         # C = complement(frozen_clauses, new_F_prime)
 
-        C = grow(frozen_clauses, hs, model,  extension=extension)
+        if extension == 2:
+            new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal = random_literal, maxcoverage = maxcoverage)
+            C = complement(frozen_clauses, new_F_prime)
+        else:
+            C = grow(frozen_clauses, hs, model,  extension=extension)
 
         if C in H:
             raise f"{hs} {C} is already in {H}"
@@ -1179,7 +1186,7 @@ def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, out
 
         steps += 1
 
-def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', greedy = False, maxcoverage = False):
+def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', random_literal = False, maxcoverage = False):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
@@ -1245,7 +1252,11 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
         # add all clauses ny building complement
         print("omusGurobiCold -", len(H), "Growing" )
         t_grow_start = time.time()
-        C = grow(frozen_clauses, hs, model,  extension=extension)
+        if extension == 2:
+            new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal = random_literal, maxcoverage = maxcoverage)
+            C = complement(frozen_clauses, new_F_prime)
+        else:
+            C = grow(frozen_clauses, hs, model,  extension=extension)
         # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
         # C = complement(frozen_clauses, new_F_prime)
         t_grow_end = time.time()

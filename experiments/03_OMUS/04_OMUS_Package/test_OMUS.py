@@ -196,7 +196,7 @@ def benchmark_code():
     # user_folder = '/home/emilio/OMUS/'
     # user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package/'
     # folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
-    folder = f'results/{date.today().strftime("%Y_%m_%d")}v2/'
+    folder = f'results/{date.today().strftime("%Y_%m_%d")}v3/'
     gurobiFolder = folder + "Gurobi/"
     gurobiColdFolder = folder + "GurobiCold/"
     orToolsFolder = folder + "OrTools/"
@@ -204,14 +204,14 @@ def benchmark_code():
     # solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
     solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
     # extensions = [4, 3, 2]
-    extensions = [3]
+    extensions = [4, 3]
 
     if not os.path.exists(folder):
         os.mkdir(folder)
     for f in solverFolders:
         if not os.path.exists(f):
             os.mkdir(f)
-        for extension in extensions:
+        for extension in extensions + [2]:
             ext_path = f + f"ext{extension}"
             if not os.path.exists(ext_path):
                 os.mkdir(ext_path)
@@ -238,7 +238,30 @@ def benchmark_code():
                 clauses.append(frozenset(clause))
                 t_clauses.append(clause)
         cnf_instances.append(CNF(from_clauses=clauses))
-        print(clauses)
+        # print(clauses)
+
+    for i, cnf in enumerate(cnf_instances):
+        if "bf0432-007" in cnf_files[i].name:
+            continue
+
+        print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
+
+        # file name
+        f_name = cnf_files[i].name.replace('.cnf', '')
+        basefileName = f'ext{2}/{f_name}'
+
+        # output folders
+        orToolsOutputRandom = orToolsFolder +  basefileName + "_random"+ '.json'
+        print("OrTools - extension", 2, "output=",orToolsOutputRandom)
+        omusOrTools(cnf, extension = 2, outputfile=orToolsOutputRandom, random_literal=True, maxcoverage=False)
+
+        orToolsOutputBestLiteral = orToolsFolder +  basefileName + "bestliteral"+ '.json'
+        print("OrTools - extension", 2, "output=",orToolsOutputBestLiteral)
+        omusOrTools(cnf, extension = 2, outputfile=orToolsOutputBestLiteral, random_literal=False, maxcoverage=False)
+
+        orToolsOutputBestLiteralNeg = orToolsFolder +  basefileName + "bestliteral_neg"+ '.json'
+        print("OrTools - extension", 2, "output=",orToolsOutputBestLiteralNeg)
+        omusOrTools(cnf, extension = 2, outputfile=orToolsOutputBestLiteralNeg, random_literal=False, maxcoverage=True)
 
     for extension in extensions:
         for i, cnf in enumerate(cnf_instances):
@@ -267,6 +290,7 @@ def benchmark_code():
             # output folders
             print("OrTools - extension", extension, "output=",orToolsOutput)
             omusOrTools(cnf, extension = extension, outputfile=orToolsOutput)
+
 
 def test_instance():
     f_path = "data/easy_instances/bf0432-007.cnf"

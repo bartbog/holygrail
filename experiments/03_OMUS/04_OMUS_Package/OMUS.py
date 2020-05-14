@@ -406,7 +406,6 @@ def extension3(clauses, F_prime, model):
             elif not -lit in cnt or cnt[-lit] == 0:
                 tofix.add(lit)
 
-        print(cl_unk, tofix, lit_true, lit_false)
         if len(tofix) > 0:
             # fix all single polarity literals
             lit_true |= tofix
@@ -415,6 +414,7 @@ def extension3(clauses, F_prime, model):
         else:
             # choose best
             # bestlit = max(lit_unk, key=lambda i: cnt[i])
+            # other definition of 'best'
             # other definition of 'best'
             bestlit = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
 
@@ -425,7 +425,7 @@ def extension3(clauses, F_prime, model):
         # update clauses (cl_unk will be modified in place)
         for idx in list(cl_unk):
             clause = clauses[idx]
-            if len(clause - lit_false - lit_true) == 0:
+            if len(clause - lit_false) == 0:
                 # false, no need to check again
                 cl_unk.remove(idx)
             # print(idx, clause, cl_unk, clause.intersection(lit_false))
@@ -435,8 +435,9 @@ def extension3(clauses, F_prime, model):
                 cl_unk.remove(idx)
                 cl_true.add(idx)
                 # cnt = cnt - Counter(clause)
-                cnt.subtract(clause.intersection(lit_true))
-                cnt.subtract(clause.intersection(lit_false))
+                # cnt.subtract(clause.intersection(lit_true))
+                # cnt.subtract(clause.intersection(lit_false))
+                cnt.subtract(clause - lit_true - lit_false)
 
     return cl_true, lit_true
 
@@ -1313,9 +1314,9 @@ def omus_cnf():
 
 def main():
     # omusGurobi(bacchus_cnf(), 3 )
-    # omusGurobi(omus_cnf(), 3 )
+    omusGurobi(omus_cnf(), 3 )
     # assert sorted(omusGurobiCold(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
     # assert sorted(omusGurobi(omus_cnf(), 3 )) == sorted([0, 1, 2]), "SMUS error"
-    zebra_instance()
+    # zebra_instance()
 if __name__ == "__main__":
     main()

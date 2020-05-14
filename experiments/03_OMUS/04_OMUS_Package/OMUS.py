@@ -388,13 +388,13 @@ def extension3(clauses, F_prime, model):
     for i, clause in enumerate(clauses):
         if i in cl_true:
             continue
-
-        if lit_true.intersection(clause):
-            cl_true.add(i)
-            cl_unk.remove(i)
-        else:
-            unassigned = clause - lit_false
-            cnt.update(clause)
+        cnt.update(clause)
+        # if lit_true.intersection(clause):
+        #     cl_true.add(i)
+        #     cl_unk.remove(i)
+        # else:
+        #     unassigned = clause - lit_false
+        #     cnt.update(clause)
 
     # as long as some clauses are unassigned
     while len(cl_unk) > 0:
@@ -406,6 +406,7 @@ def extension3(clauses, F_prime, model):
             elif not -lit in cnt or cnt[-lit] == 0:
                 tofix.add(lit)
 
+        print(cl_unk, tofix, lit_true, lit_false)
         if len(tofix) > 0:
             # fix all single polarity literals
             lit_true |= tofix
@@ -413,9 +414,9 @@ def extension3(clauses, F_prime, model):
             lit_unk -= tofix
         else:
             # choose best
-            bestlit = max(lit_unk, key=lambda i: cnt[i])
+            # bestlit = max(lit_unk, key=lambda i: cnt[i])
             # other definition of 'best'
-            # bestlit = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
+            bestlit = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
 
             lit_true.add(bestlit)
             lit_false.add(-bestlit)
@@ -430,9 +431,9 @@ def extension3(clauses, F_prime, model):
             # print(idx, clause, cl_unk, clause.intersection(lit_false))
             elif len(clause.intersection(lit_true)) > 0:
                 # true, store and remove from counter
-                if idx in cl_unk:
-                    cl_unk.remove(idx)
-                    cl_true.add(idx)
+                # if idx in cl_unk:
+                cl_unk.remove(idx)
+                cl_true.add(idx)
                 # cnt = cnt - Counter(clause)
                 cnt.subtract(clause.intersection(lit_true))
                 cnt.subtract(clause.intersection(lit_false))
@@ -1312,9 +1313,9 @@ def omus_cnf():
 
 def main():
     # omusGurobi(bacchus_cnf(), 3 )
-    omusGurobi(omus_cnf(), 3 )
+    # omusGurobi(omus_cnf(), 3 )
     # assert sorted(omusGurobiCold(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"
     # assert sorted(omusGurobi(omus_cnf(), 3 )) == sorted([0, 1, 2]), "SMUS error"
-    # zebra_instance()
+    zebra_instance()
 if __name__ == "__main__":
     main()

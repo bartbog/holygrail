@@ -194,9 +194,9 @@ def test_cnf_instances():
 
 def benchmark_code():
     # user_folder = '/home/emilio/OMUS/'
-    user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package/'
+    # user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package/'
     # folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
-    folder = f'{user_folder}results/{date.today().strftime("%Y_%m_%d")}_ext3_2/'
+    folder = f'results/{date.today().strftime("%Y_%m_%d")}/'
     gurobiFolder = folder + "Gurobi/"
     gurobiColdFolder = folder + "GurobiCold/"
     orToolsFolder = folder + "OrTools/"
@@ -204,7 +204,7 @@ def benchmark_code():
     # solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
     solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
     # extensions = [4, 3, 2]
-    extensions = [4,3]
+    extensions = [3]
 
     if not os.path.exists(folder):
         os.mkdir(folder)
@@ -242,7 +242,9 @@ def benchmark_code():
 
     for extension in extensions:
         for i, cnf in enumerate(cnf_instances):
-            # if cnf_files[i].name == "par8-1-c.cnf":
+            if "bf0432-007" in cnf_files[i].name:
+                continue
+
             print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
 
             # file name
@@ -251,44 +253,18 @@ def benchmark_code():
 
             # output folders
             gurobiOutput = gurobiFolder +  basefileName + '.json'
-            # gurobiColdOutput = gurobiColdFolder  + basefileName + '.json'
-            # orToolsOutput = orToolsFolder + basefileName + '.json'
+            gurobiColdOutput = gurobiColdFolder  + basefileName + '.json'
+            orToolsOutput = orToolsFolder + basefileName + '.json'
 
             # run benchmark
             print("Gurobi Warm - extension", extension, "output=",gurobiOutput)
             omusGurobi(cnf, extension = extension, outputfile=gurobiOutput)
-            # print("Gurobi Cold - extension", extension, "output=",gurobiColdOutput)
-            # omusGurobiCold(cnf, extension = extension, outputfile=gurobiColdOutput)
-
-    for extension in extensions:
-        for i, cnf in enumerate(cnf_instances):
-            # if cnf_files[i].name == "par8-1-c.cnf":
-            print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
-
-            # file name
-            f_name = cnf_files[i].name.replace('.cnf', '')
-            basefileName = f'ext{extension}/{f_name}'
-
-            # output folders
-            # gurobiOutput = gurobiFolder +  basefileName + '.json'
-            gurobiColdOutput = gurobiColdFolder  + basefileName + '.json'
-            # orToolsOutput = orToolsFolder + basefileName + '.json'
-
 
             # run benchmark
-            # print("Gurobi Warm - extension", extension, "output=",gurobiOutput)
-            # omusGurobi(cnf, extension = extension, outputfile=gurobiOutput)
             print("Gurobi Cold - extension", extension, "output=",gurobiColdOutput)
             omusGurobiCold(cnf, extension = extension, outputfile=gurobiColdOutput)
 
-    for extension in extensions:
-        for i, cnf in enumerate(cnf_instances):
-
-            f_name = cnf_files[i].name.replace('.cnf', '')
-            basefileName = f'ext{extension}/{f_name}'
-
             # output folders
-            orToolsOutput = orToolsFolder + basefileName + '.json'
             print("OrTools - extension", extension, "output=",orToolsOutput)
             omusOrTools(cnf, extension = extension, outputfile=orToolsOutput)
 
@@ -329,10 +305,10 @@ def test_findBestLiteral():
     print(best_literal)
 
 def main():
-    test_instance()
+    # test_instance()
     # omusGurobiCold(smus_CNF(),extension=3 )
     # omusOrTools("")
-    # benchmark_code()
+    benchmark_code()
     # test_findBestLiteral()
     # print(Difficulty.EASY < Difficulty.MEDIUM)
 

@@ -1099,7 +1099,6 @@ def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length,
         steps += 1
         H.append(C)
 
-
 def omus(cnf: CNF, extension = 3, f = clause_length, outputfile = 'log.txt'):
 
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf.clauses]

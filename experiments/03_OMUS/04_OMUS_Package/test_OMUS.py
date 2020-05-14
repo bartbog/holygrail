@@ -278,7 +278,7 @@ def test_instance():
             clauses.append(frozenset(clause))
             t_clauses.append(clause)
     cnf = CNF(from_clauses=clauses)
-    print(omusGurobi(cnf, extension = 3, greedy = True, maxcoverage=True))
+    print(omusOrTools(cnf, extension = 3, greedy = True, maxcoverage=True))
 
 def bacchus_cnf():
     cnf = CNF()
@@ -305,10 +305,10 @@ def test_findBestLiteral():
     print(best_literal)
 
 def main():
-    # test_instance()
+    test_instance()
     # omusGurobiCold(smus_CNF(),extension=3 )
     # omusOrTools("")
-    benchmark_code()
+    # benchmark_code()
     # test_findBestLiteral()
     # print(Difficulty.EASY < Difficulty.MEDIUM)
 

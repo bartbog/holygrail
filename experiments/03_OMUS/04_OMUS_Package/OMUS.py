@@ -385,10 +385,8 @@ def extension3(clauses, F_prime, model):
 
     # init counter
     cnt = Counter({literal:0 for literal in lit_unk})
-    for i, clause in enumerate(clauses):
-        if i in cl_true:
-            continue
-        cnt.update(clause)
+    for i in cl_unk:
+        cnt.update(clauses[i])
         # if lit_true.intersection(clause):
         #     cl_true.add(i)
         #     cl_unk.remove(i)
@@ -406,26 +404,31 @@ def extension3(clauses, F_prime, model):
             elif not -lit in cnt or cnt[-lit] == 0:
                 tofix.add(lit)
 
-        print(cl_unk, tofix, lit_true, lit_false)
+        #print(cl_unk, tofix, lit_true, lit_false)
         if len(tofix) > 0:
+            #print("Tofix", tofix)
             # fix all single polarity literals
             lit_true |= tofix
-            lit_false |= set(-l for l in tofix)
             lit_unk -= tofix
+            tofix_neg = set(-l for l in tofix)
+            lit_false |= tofix_neg
+            lit_unk -= tofix_neg
         else:
             # choose best
             # bestlit = max(lit_unk, key=lambda i: cnt[i])
             # other definition of 'best'
             bestlit = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
+            #print("Best", bestlit, cnt[bestlit], cnt[-bestlit])
 
             lit_true.add(bestlit)
-            lit_false.add(-bestlit)
             lit_unk.remove(bestlit)
+            lit_false.add(-bestlit)
+            lit_unk.remove(-bestlit)
 
         # update clauses (cl_unk will be modified in place)
         for idx in list(cl_unk):
             clause = clauses[idx]
-            if len(clause - lit_false - lit_true) == 0:
+            if len(clause - lit_false) == 0:
                 # false, no need to check again
                 cl_unk.remove(idx)
             # print(idx, clause, cl_unk, clause.intersection(lit_false))
@@ -434,9 +437,10 @@ def extension3(clauses, F_prime, model):
                 # if idx in cl_unk:
                 cl_unk.remove(idx)
                 cl_true.add(idx)
-                # cnt = cnt - Counter(clause)
-                cnt.subtract(clause.intersection(lit_true))
-                cnt.subtract(clause.intersection(lit_false))
+                cnt = cnt - Counter(clause)
+                #cnt.subtract(clause.intersection(lit_true))
+                #cnt.subtract(clause.intersection(lit_false))
+        #print("unk after:", len(cl_unk))
 
     return cl_true, lit_true
 

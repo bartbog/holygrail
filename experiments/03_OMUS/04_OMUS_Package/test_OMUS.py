@@ -196,7 +196,7 @@ def benchmark_code():
     # user_folder = '/home/emilio/OMUS/'
     # user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package/'
     # folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
-    folder = f'results/{date.today().strftime("%Y_%m_%d")}/'
+    folder = f'results/{date.today().strftime("%Y_%m_%d")}v2/'
     gurobiFolder = folder + "Gurobi/"
     gurobiColdFolder = folder + "GurobiCold/"
     orToolsFolder = folder + "OrTools/"
@@ -305,7 +305,7 @@ def test_findBestLiteral():
     print(best_literal)
 
 def main():
-    test_instance()
+    # test_instance()
     # omusGurobiCold(smus_CNF(),extension=3 )
     # omusOrTools("")
     # benchmark_code()

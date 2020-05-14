@@ -394,7 +394,7 @@ def extension3(clauses, F_prime, model):
             cl_unk.remove(i)
         else:
             unassigned = clause - lit_false
-            cnt.update(unassigned)
+            cnt.update(clause)
 
     # as long as some clauses are unassigned
     while len(cl_unk) > 0:
@@ -413,29 +413,29 @@ def extension3(clauses, F_prime, model):
             lit_unk -= tofix
         else:
             # choose best
-            # bestlit = max(lit_unk, key=lambda i: cnt[i])
+            bestlit = max(lit_unk, key=lambda i: cnt[i])
             # other definition of 'best'
-            bestlit = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
+            # bestlit = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
 
             lit_true.add(bestlit)
             lit_false.add(-bestlit)
             lit_unk.remove(bestlit)
 
         # update clauses (cl_unk will be modified in place)
-        print(list(cl_unk))
         for idx in list(cl_unk):
             clause = clauses[idx]
-            print(idx, clause, cl_unk)
-            if len(clause - lit_false) == 0:
+            if len(clause - lit_false - lit_true) == 0:
                 # false, no need to check again
                 cl_unk.remove(idx)
-                cl_true.add(idx)
             # print(idx, clause, cl_unk, clause.intersection(lit_false))
-            if len(clause.intersection(lit_false)) > 0:
+            elif len(clause.intersection(lit_true)) > 0:
                 # true, store and remove from counter
-                cl_unk.remove(idx)
-                cl_true.add(idx)
-                cnt = cnt - Counter(clause)
+                if idx in cl_unk:
+                    cl_unk.remove(idx)
+                    cl_true.add(idx)
+                # cnt = cnt - Counter(clause)
+                cnt.subtract(clause.intersection(lit_true))
+                cnt.subtract(clause.intersection(lit_false))
 
     return cl_true, lit_true
 

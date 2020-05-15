@@ -430,11 +430,30 @@ def test_findBestLiteral():
     best_literal = findTopBestLiterals(clauses, set(), literals, 10)
     print(best_literal)
 
+def test_getAllModels():    
+    clauses = [frozenset(clause) for clause in bacchus_cnf().clauses]
+    # F_prime = [i for i in range(0,3)]
+    F_prime = [i for i in range(0,3)]
+    print(clauses, F_prime)
+    models = getAllModels(clauses, F_prime)
+    coverage = {}
+    for idx, model in enumerate(models):
+        coverage[idx] = {}
+        c = 0
+        for i, clause in enumerate(clauses):
+            if i in F_prime:
+                continue
+            if len(clause.intersection(model)) > 0:
+                c += 1
+        coverage[idx]['model'] = model
+        coverage[idx]['coverage'] = c
+    print(coverage)
 def main():
+    test_getAllModels()
     # test_instance()
     # omusGurobiCold(smus_CNF(),extension=3 )
     # omusOrTools("")
-    benchmark_code()
+    # benchmark_code()
     # benchmark_code_hard()
     # test_findBestLiteral()
     # print(Difficulty.EASY < Difficulty.MEDIUM)

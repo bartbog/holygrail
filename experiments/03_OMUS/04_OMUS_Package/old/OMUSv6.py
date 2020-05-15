@@ -64,11 +64,12 @@ def checkSatClauses(clauses, F_prime):
 
     mapping, reverse_mapping = mapping_clauses(cnf_clauses)
     mapped_clauses = map_clauses(cnf_clauses, mapping)
-    print(mapped_clauses)
+
     with Solver() as s:
         added = s.append_formula(mapped_clauses, no_return=False)
         solved = s.solve()
         model = s.get_model()
+
     if solved:
         mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , model))
         return mapped_model, solved
@@ -96,27 +97,23 @@ def getAllModels(clauses, F_prime):
 
     mapping, reverse_mapping = mapping_clauses(cnf_clauses)
     mapped_clauses = map_clauses(cnf_clauses, mapping)
-    # models = []
-    mapped_models = []
+    model = []
 
     with Solver() as s:
         added = s.append_formula(mapped_clauses, no_return=False)
         solved = s.solve()
+        models = [set(l for l in m) for m in s.enum_models()]
 
         if solved:
-            for m in s.enum_models():
-                mapped_models.append(frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , m)))
-            return mapped_models
-        else:
-            return None, solved
+            model = getBestModel(clauses, models)
 
-    # if solved:
-    #     mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , model))
-    #     return mapped_model, solved
-    # else:
-    #     return None, solved
+    if solved:
+        mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , model))
+        return mapped_model, solved
+    else:
+        return None, solved
 
-def findBestLiteral(clauses, F_prime, literals, parameters):
+def findBestLiteral(clauses, F_prime, literals, diff = True):
     """Find the best literal in the list of `literals' based on the number of clauses
     the literal hits.
 
@@ -128,23 +125,108 @@ def findBestLiteral(clauses, F_prime, literals, parameters):
     Returns:
         int -- literal hitting the most clauses in the not satisfied clauses of `clauses'
     """
-    polarity_clauses = parameters['polarity_literals']
-    unassigned_clauses = parameters['unassigned_clauses']
-    weighted_clauses = parameters['weighted_clauses']
-
     literal_count = Counter({literal:0 for literal in literals})
+    neg_literal_count = Counter({literal:0 for literal in literals if -literal in literals})
 
     for i, clause in enumerate(clauses):
         if i not in F_prime:
             literal_count.update(clause.intersection(literals))
+            neg_literal_count.update([-l for l in clause.intersection(literals) if -l in literals])
+    # print("literal_count:\t\t", literal_count)
+    # print("neg literal_count:\t", neg_literal_count)
+    if diff == True:
+        # literal_diff = literal_count.copy()
+        literal_count.subtract(neg_literal_count)
+    # print("diff literal_count:\t", literal_count)
+    best_literal = literal_count.most_common(1)[0][0] if literal_count else None
 
-    return max(literals, key=lambda i: literal_count[i] - literal_count[-i])
+    return best_literal
 
+def findTopBestLiterals(clauses, F_prime, literals, best = 3):
+    """Find the best literal in the list of `literals' based on the number of clauses
+    the literal hits.
 
-def defaultExtension(cnf_clauses, F_prime, model, parameters):
+    Arguments:
+        clauses {iterable(set(int))} -- collection of clauses (sets of literals)
+        F_prime {iterable(int)} -- Hitting set
+        literals {iterable(int)} -- Candidate literals
+
+    Returns:
+        int -- literal hitting the most clauses in the not satisfied clauses of `clauses'
+    """
+    literal_count = Counter({literal:0 for literal in literals})
+    neg_literal_count = Counter({literal:0 for literal in literals if -literal in literals})
+
+    for i, clause in enumerate(clauses):
+        if i not in F_prime:
+            literal_count.update(clause.intersection(literals))
+            neg_literal_count.update([-l for l in clause.intersection(literals) if -l in literals])
+    # print("literal_count:\t\t", literal_count)
+    # print("neg literal_count:\t", neg_literal_count)
+    # if diff == True:
+        # literal_diff = literal_count.copy()
+    literal_count.subtract(neg_literal_count)
+    # print("diff literal_count:\t", literal_count)
+    if literal_count == None:
+        return None
+
+    best_counts = literal_count.most_common()
+
+    best_literals = set()
+    for i in range(0, min(best, round(len(literal_count)) ) ):
+        lit = best_counts[i][0]
+        if -lit not in best_literals:
+            best_literals.add(lit)
+    return best_literals
+
+def findTopBestLiteralsWithCounter(literal_count, neg_literal_count,literals, best = 3):
+    """Find the best literal in the list of `literals' based on the number of clauses
+    the literal hits.
+
+    Arguments:
+        clauses {iterable(set(int))} -- collection of clauses (sets of literals)
+        F_prime {iterable(int)} -- Hitting set
+        literals {iterable(int)} -- Candidate literals
+
+    Returns:
+        int -- literal hitting the most clauses in the not satisfied clauses of `clauses'
+    """
+    # literal_count = Counter({literal:0 for literal in literals})
+    # neg_literal_count = Counter({literal:0 for literal in literals if -literal in literals})
+
+    # for i, clause in enumerate(clauses):
+    #     if i not in F_prime:
+    #         literal_count.update(clause.intersection(literals))
+    #         neg_literal_count.update([-l for l in clause.intersection(literals) if -l in literals])
+    # print("literal_count:\t\t", literal_count)
+    # print("neg literal_count:\t", neg_literal_count)
+    # if diff == True:
+        # literal_diff = literal_count.copy()
+    # print(literal_count, neg_literal_count, literals, best)
+    diffcount = Counter(literal_count)
+    diffcount.subtract(neg_literal_count)
+    # print("diff literal_count:\t", literal_count)
+    if diffcount ==None:
+        return None
+
+    best_counts = dict(diffcount.most_common())
+
+    best_literals = set()
+    best_cnt = 0
+    for i, (lit, _) in enumerate(best_counts.items()):
+        if lit not in literals:
+            continue
+        if best_cnt == best:
+            return best_literals
+        if -lit not in best_literals:
+            best_literals.add(lit)
+            best_cnt += 1
+    return best_literals
+
+def defaultExtension(cnf_clauses, F_prime, model):
     return F_prime
 
-def extension1(clauses, F_prime, model, parameters):
+def extension1(clauses, F_prime, model):
     """`Extension1' unit propagate the model to find all clauses hit by the current
     assignment of F_prime.
 
@@ -191,7 +273,7 @@ def extension1(clauses, F_prime, model, parameters):
     assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
     return new_F_prime, lit_true
 
-def extension2(clauses, F_prime, model, parameters):
+def extension2(clauses, F_prime, model, random_literal = False, maxcoverage=True):
     all_literals = frozenset.union(*clauses)
     t_F_prime, t_model = extension1(clauses, F_prime, model)
     lit_true = set(t_model)
@@ -250,160 +332,50 @@ def extension2(clauses, F_prime, model, parameters):
 
     return t_F_prime, lit_true
 
-def extension3(clauses, F_prime, model, weights, parameters):
-    # parameters
-    count_clauses = parameters['count_clauses']
-    clause_weights = parameters['clause_weights']
-    clause_weights_unassigned=  parameters['clause_weights_unassigned']
-    sorting = parameters['sorting']
-    validate_unit_literals = parameters['validate_unit_literals']
-    best_unit_literal = parameters['best_unit_literal']
-
-    # preprocessing
+def propmodel(clauses, F_prime, model):
+    t_F_prime = set(F_prime)
+    # precompute both
     lit_true = set(model)
     lit_false = set(-l for l in model)
-    cl_true = set(F_prime)
-    lit_unk = set(frozenset.union(*clauses)) - lit_true - lit_false
-    # clause ordering
-    # Pre-processing is necessary
-    cl_unk = {i for i in range(len(clauses)) if i not in F_prime}
+    clause_added = True
 
-    if sorting:
-        # clause sorting based on weights
-        cl_unk.sort(reverse=True, key= lambda clause: weights[i])
-        # clause sorting based on # unassigned literals
-        cl_unk.sort(reverse=True, key= lambda clause: len(clauses[i] - lit_true - lit_false))
-        # clause sorting based on # unassigned literals
-        cl_unk.sort(reverse=True, key= lambda clause: weights[i] / len(clauses[i] - lit_true - lit_false) )
+    while(clause_added):
+        literals_consider = set()
+        clause_added = False
+        # t_F_prime = set(new_F_prime)
+        for i, clause in enumerate(clauses):
+            if i in t_F_prime:
+                continue # already in F_prime
 
-    # literal- clause counter
-    cnt = {lit:0 for lit in lit_unk}
-
-    for i in cl_unk:
-        clause = clauses[i]
-        unassgn_lit = clause.intersection(lit_unk)
-        for lit in unassgn_lit:
-            if count_clauses:
-                # check if count number of clauses
-                cnt[lit] += 1
-            elif clause_weights:
-                # clause weight
-                cnt[lit] += weights[i]
-            elif clause_weights_unassigned:
-                # clause weight/# litterals assigned
-                cnt[lit] += weights[i]/len(unassgn_lit)
-
-    while(len(cl_unk) > 0):
-        # check single polarity literals
-        tofix = set()
-        for lit in set(abs(lit) for lit in lit_unk):
-            if not lit in cnt or cnt[lit] == 0:
-                tofix.add(-lit)
-            elif not -lit in cnt or cnt[-lit] == 0:
-                tofix.add(lit)
-
-        #print(cl_unk, tofix, lit_true, lit_false)
-        if len(tofix) > 0:
-            #print("Tofix", tofix)
-            # fix all single polarity literals
-            lit_true |= tofix
-            lit_unk -= tofix
-            tofix_neg = set(-l for l in tofix)
-            lit_false |= tofix_neg
-            lit_unk -= tofix_neg
-
-        # check if clauses need reordering (only useful for unit literal)
-        if sorting:
-            # clause sorting based on weights
-            cl_unk.sort(reverse=True, key= lambda i: weights[i])
-            # clause sorting based on # unassigned literals
-            cl_unk.sort(reverse=True, key= lambda i: len(clauses[i] - lit_true - lit_false))
-            # clause sorting based on # unassigned literals
-            cl_unk.sort(reverse=True, key= lambda i: weights[i] / len(clauses[i] - lit_true - lit_false) )
-
-        # Validated all pure literals
-        pure_lits = {lit for lit in lit_unk if -lit not in lit_unk}
-
-        for lit in pure_lits:
-            lit_true.add(lit)
-            lit_true.add(-lit)
-            lit_unk.remove(lit)
-            del cnt[lit]
-
-        if len(lit_unk) > 0:
-            # 4. Literal choice
-            # 4.1 Literal with highest [clause count] / [sum clause weights] / [ (sum of clause weights)/#unassigned]
-            best_lit = max(lit_unk, key=lambda i: cnt[i])
-
-            # 4.2 Literal with highest polarity clause count / sum of clause weights / sum of clause weights/#unassigned
-            best_lit = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
-
-            del cnt[best_lit]
-            del cnt[-best_lit]
-
-            lit_unk.remove(best_lit)
-            lit_unk.remove(-best_lit)
-
-        cnt = {lit:0 for lit in lit_unk}
-
-        unit_literals = set()
-
-        for i in set(cl_unk):
-            clause = clauses[i]
-            unassign_lits = clause - lit_false
-
-            # clause is false, remove it
-            if len(unassign_lits) == 0:
-                cl_unk.remove(i)
-            # validated clause
-            elif lit_true.intersection(clause):
-                cl_true.add(i)
-                cl_unk.remove(i)
-            # validate unit literals
-            elif len(unassign_lits) == 1 and validate_unit_literals:
-                lit = next(iter(unassign_lits))
-                if not best_unit_literal:
-                    cl_true.add(i)
-                    cl_unk.remove(i)
-                    # literal
-                    lit_true.add(lit)
-                    lit_false.add(-lit)
-                    lit_unk.remove(lit)
-                    if -lit in lit_unk:
-                        lit_unk.remove(-lit)
-                else:
-                    unit_literals.add(lit)
+            # Similar alternative:
+            if len(clause.intersection(lit_true)) > 0:
+                # a true literal, clause is true
+                t_F_prime.add(i)
+                clause_added = True
             else:
-                for lit in unassign_lits:
-                    if count_clauses:
-                        # check if count number of clauses
-                        cnt[lit] += 1
-                    elif clause_weights:
-                        # clause weight
-                        cnt[lit] += weights[i]
-                    elif clause_weights_unassigned:
-                        # clause weight/# litterals assigned
-                        cnt[lit] += weights[i]/len(unassign_lits)
+                unassigned = clause - lit_false
+                if len(unassigned) == 1:
+                    lit = next(iter(unassigned))
+                    literals_consider.add(lit)
 
-        if validate_unit_literals and best_unit_literal and len(unit_literals) > 0:
-            # 4. Literal choice
-            # 4.1 Random literal
-            best_lit = next(iter(unit_literals))
 
-            # 4.2 Literal with highest [clause count] / [sum clause weights] / [ (sum of clause weights)/#unassigned]
-            best_lit = max(unit_literals, key=lambda i: cnt[i])
+        if len(literals_consider) > 0:
+            # removing lonely literals
+            conflict_free = set(l for l in literals_consider if -l not in literals_consider)
+            lit_true |= conflict_free
+            lit_false |= set(-l for l in conflict_free)
+            literals_consider -= conflict_free
 
-            # 4.3 Literal with highest polarity clause count / sum of clause weights / sum of clause weights/#unassigned
-            best_lit = max(unit_literals, key=lambda i: cnt[i] - cnt[-i])
-            # literal
-            lit_true.add(best_lit)
-            lit_false.add(-best_lit)
-            lit_unk.remove(best_lit)
-            if -lit in lit_unk:
-                lit_unk.remove(-best_lit)
-    return cl_true, lit_true
+            # Literals to add
+            lits = findTopBestLiterals(clauses, t_F_prime, literals_consider, 1)
+            lit_true |= lits
+            lit_false |= set(-l for l in lits)
 
-def unknown_clauses(clauses, F_prime, model, parameters):
+    c = set(l for l in lit_true if -l in lit_true)
+    assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {c}"
+    return t_F_prime, lit_true
+
+def extension3(clauses, F_prime, model):
     cl_true = set(F_prime)
     cl_unk = set( range(len(clauses)) ) - cl_true
 
@@ -415,10 +387,17 @@ def unknown_clauses(clauses, F_prime, model, parameters):
     cnt = Counter({literal:0 for literal in lit_unk})
     for i in cl_unk:
         cnt.update(clauses[i])
+        # if lit_true.intersection(clause):
+        #     cl_true.add(i)
+        #     cl_unk.remove(i)
+        # else:
+        #     unassigned = clause - lit_false
+        #     cnt.update(clause)
 
     # as long as some clauses are unassigned
     while len(cl_unk) > 0:
         # check single polarity literals
+        
         tofix = set()
         for lit in set(abs(lit) for lit in lit_unk):
             if not lit in cnt or cnt[lit] == 0:
@@ -476,11 +455,334 @@ def unknown_clauses(clauses, F_prime, model, parameters):
                 cl_unk.remove(idx)
                 cl_true.add(idx)
 
+
     return cl_true, lit_true
+
+def extension3bis(clauses, F_prime, model):
+    t_F_prime = set(F_prime)
+    all_literals = set(frozenset.union(*clauses))
+
+    lit_true = set(model)
+    lit_false = set(-l for l in model)
+
+    # alternative, over all literals
+    remaining_literals = all_literals - lit_true - lit_false
+
+    # counter with remaining literals coverage
+    literal_counter = Counter({literal:0 for literal in remaining_literals})
+    for i, clause in enumerate(clauses):
+        if i in t_F_prime:
+            continue
+
+        if lit_true.intersection(clause):
+            t_F_prime.add(i)
+
+        else:
+            unassigned = clause - lit_false
+            literal_counter.update(unassigned)
+    # for literal in remaining_literals:
+    #     if literal not in literal_counter:
+    conflict_free = list(filter(lambda i: literal_counter[i] == 0  and -i not in literal_counter, literal_counter))
+    if(len(conflict_free) > 0):
+        raise(conflict_free)
+
+    while(len(remaining_literals) > 0):
+        conflict_free = list(filter(lambda i: literal_counter[i] == 0 and -i not in literal_counter, literal_counter))
+        if(len(conflict_free) > 0):
+            raise(conflict_free)
+        for i, clause in enumerate(clauses):
+            if i in t_F_prime:
+                continue
+
+            if lit_true.intersection(clause):
+                t_F_prime.add(i)
+                unassigned = clause - lit_true - lit_false
+                literal_counter.subtract(Counter(unassigned))
+            # else:
+            #     unassigned = clause - lit_false
+
+        lit_most_common = literal_counter.most_common()
+        conflict_free = list(filter(lambda i: -i not in literal_counter, literal_counter))
+
+        best_literal = max(literal_counter, key=lambda i: literal_counter[i] - literal_counter[-i])
+
+        lit_true.add(best_literal)
+        lit_false.add(-best_literal)
+
+        remaining_literals.remove(best_literal)
+        if(-best_literal in remaining_literals):
+            remaining_literals.remove(-best_literal)
+
+        del literal_counter[best_literal]
+        if(-best_literal in literal_counter):
+            del literal_counter[-best_literal]
+
+    return t_F_prime, lit_true
+
+def extension3withCounter(clauses, F_prime, model, diff= True):
+    all_literals = frozenset.union(*clauses)
+
+    if len(F_prime) == 0:
+        lits = findTopBestLiterals(clauses, set(), all_literals, 1)
+        t_F_prime, t_model = propmodel(clauses, set(), lits)
+    else:
+        t_F_prime, t_model = propmodel(clauses, F_prime, model)
+
+    lit_true = set(t_model)
+    lit_false = set(-l for l in t_model)
+
+    # alternative, over all literals
+    remaining_literals = all_literals - lit_true - lit_false
+    if len(remaining_literals) == 0:
+        return t_F_prime, t_model
+
+    # counter with remaining literals coverage
+    literal_counter = Counter({literal:0 for literal in remaining_literals})
+    # counter with negated literals coverage
+    neg_literal_counter = Counter({literal:0 for literal in remaining_literals if -literal in remaining_literals})
+
+    for i, clause in enumerate(clauses):
+        if i not in t_F_prime:
+            intersect = clause.intersection(remaining_literals)
+            literal_counter.update(intersect)
+            neg_literal_counter.update([-l for l in intersect if -l in remaining_literals])
+
+    while(len(remaining_literals) > 0):
+        # removal of conflict free elements
+        conflict_free = set(l for l in remaining_literals if -l not in remaining_literals)
+        lit_true |= conflict_free
+        remaining_literals -= conflict_free
+
+        for l in conflict_free:
+            del literal_counter[l]
+            del literal_counter[-l]
+            del neg_literal_counter[l]
+            del neg_literal_counter[-l]
+
+        lits = findTopBestLiteralsWithCounter(literal_counter, neg_literal_counter, remaining_literals, best = 1)
+
+        lit_true |= lits
+        lit_false |= set(-l for l in lits)
+        remaining_literals -= ( lit_true | lit_false)
+
+        for l in lits:
+            del literal_counter[l]
+            del literal_counter[-l]
+            del neg_literal_counter[l]
+            del neg_literal_counter[-l]
+
+        clause_added = True
+
+        while(clause_added):
+
+            literals_consider = set()
+            clause_added = False
+
+            for i, clause in enumerate(clauses):
+                if i in t_F_prime:
+                    continue # already in F_prime
+
+                # Similar alternative:
+                clause_literal_intersection = clause.intersection(lit_true)
+                if len(clause_literal_intersection) > 0:
+                    # a true literal, clause is true
+                    t_F_prime.add(i)
+                    clause_added = True
+
+                    literal_counter.subtract(Counter([l for l in clause - clause_literal_intersection if l in remaining_literals]))
+                    neg_literal_counter.subtract(Counter([-l for l in  clause - clause_literal_intersection if -l in remaining_literals]))
+                else:
+                    unassigned = clause - lit_false
+                    if len(unassigned) == 1:
+                        lit = next(iter(unassigned))
+                        literals_consider.add(lit)
+
+            if len(literals_consider) > 0:
+                # removing lonely literals
+                conflict_free = set(l for l in literals_consider if -l not in literals_consider)
+                lit_true |= conflict_free
+                lit_false |= set(-l for l in conflict_free)
+                literals_consider -= conflict_free
+
+                for l in conflict_free:
+                    del literal_counter[l]
+                    del literal_counter[-l]
+                    del neg_literal_counter[l]
+                    del neg_literal_counter[-l]
+
+                # Literals to add
+                lits = findTopBestLiteralsWithCounter(literal_counter, neg_literal_counter, literals_consider, best = 1)
+                lit_true |= lits
+                lit_false |= set(-l for l in lits)
+                remaining_literals -= (lits | set(-l for l in lits) )
+
+                for l in lits:
+                    del literal_counter[l]
+                    del literal_counter[-l]
+                    del neg_literal_counter[l]
+                    del neg_literal_counter[-l]
+
+        # lit_true = set(t_model)
+        # lit_false = set(-l for l in t_model)
+
+        # remaining_literals -= lit_true
+        # remaining_literals -= lit_false
+
+    assert all([True if -l not in lit_true else False for l in lit_true])
+
+    return t_F_prime, lit_true
+
+def extension3withoutCounter(clauses, F_prime, model, diff= True):
+
+    all_literals = frozenset.union(*clauses)
+    t_F_prime = set(F_prime)
+    t_model = set(model)
+    if len(F_prime) == 0:
+        lits = findTopBestLiterals(clauses, set(), all_literals, 1)
+        t_F_prime, t_model = propmodel(clauses, set(), lits)
+    else:
+        t_F_prime, t_model = propmodel(clauses, t_F_prime, t_model)
+
+    lit_true = set(t_model)
+    lit_false = set(-l for l in t_model)
+
+    # alternative, over all literals
+    remaining_literals = all_literals - lit_true - lit_false
+
+    while(len(remaining_literals) > 0):
+
+        conflict_free = set(l for l in remaining_literals if -l not in remaining_literals)
+        lit_true |= conflict_free
+        remaining_literals -= conflict_free
+
+        lits = findTopBestLiterals(clauses, t_F_prime, remaining_literals, 1)
+
+        lit_true |= lits
+        lit_false |= set(-l for l in lits)
+
+        remaining_literals -= lit_true
+        remaining_literals -= lit_false
+
+        t_F_prime, t_model = propmodel(clauses, t_F_prime, lit_true)
+
+        lit_true = set(t_model)
+        lit_false = set(-l for l in t_model)
+
+        remaining_literals -= lit_true
+        remaining_literals -= lit_false
+
+    assert all([True if -l not in lit_true else False for l in lit_true])
+
+    return t_F_prime, lit_true
+
+def extension5(clauses, F_prime, model):
+    t_F_prime = set(F_prime)
+    lit_true = set(model)
+    # create gurobi model
+    g_model = gp.Model('mipMaxSat')
+
+    # model parameters
+    # g_model.Params.LogFile = 'logs/'+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+'.log'
+    g_model.Params.OutputFlag = 0
+    g_model.Params.LogToConsole = 0
+    g_model.Params.Threads = 8
+
+    clause_literals = set(frozenset.union(*clauses))
+    all_literals = clause_literals | set(-l for l in clause_literals)
+    # dup_literals = [l for l in all_literals if -l in all_literals]
+
+    n_literals = len(all_literals)
+    # print("n_literals=", n_literals)
+    distinct_literals = set(abs(l) for l in all_literals)
+    # print("n_distinct_literals=", distinct_literals)
+
+    # n_distinct_literals = len(distinct_literals)
+
+    literal_count = Counter({literal:0 for literal in all_literals})
+
+    for clause in clauses:
+        literal_count.update(clause)
+
+    d_literal_count = dict(literal_count)
+    literal_coverage = {k: d_literal_count[k] for k in sorted(d_literal_count)}
+
+    pos_literals = {key:i for i, key in enumerate([*literal_coverage])}
+
+    # create the variables
+    l = g_model.addMVar(shape= n_literals, vtype=GRB.BINARY, name="l")
+
+    # weights = []
+    max_sum = sum( [ v for k,v in literal_coverage.items()])
+    # set objective : min sum xi*wi
+    g_model.setObjective(sum( l[i] * literal_coverage[key] for i, key in enumerate([*literal_coverage]) if literal_coverage[key] > 0), GRB.MAXIMIZE)
+
+    # g_model.addConstr(sum( l[i] * literal_coverage[key] for i, key in enumerate([*literal_coverage])) <= max_sum )
+
+    # update the model
+    g_model.addConstr(sum(l[i] for i in range(n_literals)) >= n_literals/2)
+    g_model.addConstr(sum(l[i] for i in range(n_literals)) <= n_literals/2)
+
+    # l_i + l_-i > 0
+    # l_i + l_-i < 2
+    # print("literal_coverage=",literal_coverage)
+    # print("pos_literals=",pos_literals)
+    # print("literal_coverage=",*literal_coverage)
+    for literal in distinct_literals:
+        pos_literal = pos_literals[literal]
+        pos_neg_literal = pos_literals[-literal]
+        # print(f"l[{pos_literal}] + l[{pos_neg_literal}] >= 1 ")
+        # print(f"{literal} + {-literal} >= 1")
+        # print(f"{literal} + {-literal} <= 1")
+        # print(f"{pos_literal,l[pos_neg_literal] ]) >= 1)
+        g_model.addConstr(sum([l[pos_literal],l[pos_neg_literal] ]) >= 1)
+        g_model.addConstr(sum([l[pos_literal],l[pos_neg_literal] ]) <= 1)
+
+
+    for i, clause in enumerate(clauses):
+        if i not in F_prime :
+            # print( " + ".join([f"l[{pos_literals[literal]}]" for literal in clause]), ">= 1")
+            # print( " + ".join([str(literal) for literal in clause]), ">= 1")
+            g_model.addConstr(sum(l[pos_literals[literal]] for literal in clause ) >= 1)
+    for literal in model:
+        g_model.addConstr(l[pos_literals[literal]] >= 1)
+        g_model.addConstr(l[pos_literals[literal]] <= 1)
+        # g_model.addConstr(sum([l[pos_literal],l[pos_neg_literal] ]) <= 1)
+        # else:
+    # for i, clause in enumerate(clauses):
+    #     # if i not in F_prime :
+    #     g_model.addConstr(sum(l[pos_literals[literal]] for literal in clause ) >= 1)
+        #     g_model.addConstr()
+    g_model.optimize()
+
+    status = g_model.status
+    if status in (GRB.INF_OR_UNBD, GRB.INFEASIBLE, GRB.UNBOUNDED):
+        print('The model cannot be solved because it is infeasible or unbounded')
+        return F_prime, model
+        # sys.exit(1)
+
+    if status == GRB.OPTIMAL:
+        print('Optimization was stopped with status %d' % status)
+        # sys.exit(0)
+
+    # output hitting set
+    for i,v in enumerate(g_model.getVars()):
+        # print('%s %g' % (v.varName, v.x))
+        print(f'l[{i}]\t{[*literal_coverage][i]}\t= {v.x}')
+    # print(x)
+    lit_true = set( key for i, key in enumerate([*literal_coverage]) if g_model.getVars()[i].x == 1)
+
+    for i, clause in enumerate(clauses):
+        # if i in t_F_prime:
+        #     continue # already in F_prime
+        if len(clause.intersection(lit_true)) > 0:
+            t_F_prime.add(i)
+
+    return t_F_prime, lit_true
 
 def extension4(clauses, F_prime, model):
     t_F_prime = set(F_prime)
 
+    # t_F_prime, t_model = extension3(clauses, F_prime, model)
     wcnf = WCNF()
     for i, clause in enumerate(clauses):
         if i in F_prime:
@@ -491,10 +793,12 @@ def extension4(clauses, F_prime, model):
     with RC2(wcnf) as rc2:
         t_model = rc2.compute()
 
+    # print("F_prime:", F_prime, "model:",  model)
     for i, clause in enumerate(clauses):
         if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
             t_F_prime.add(i)
 
+    # print("t_F_prime:", t_F_prime, "t_model:",  t_model)
     return t_F_prime, t_model
 
 def gurobiModel(clauses, weights):
@@ -659,7 +963,7 @@ def optimalHittingSet(H, weights):
         return []
     # [END print_solution]
 
-def grow(clauses, F_prime, model, parameters, extension = 0):
+def grow(clauses, F_prime, model, extension = 0):
     """
 
         Procedure to efficiently grow the list clauses in ``F_prime``. The complement of F_prime is a correction
@@ -701,17 +1005,18 @@ def grow(clauses, F_prime, model, parameters, extension = 0):
         1 : extension1,
         2 : extension2,
         3 : extension3,
-        4 : extension4
+        4 : extension4,
+        5 : extension5
     }
 
     # new_F_prime = frozenset(F_prime)
 
-    new_F_prime, new_model = extensions[extension](clauses, F_prime, model, parameters)
+    new_F_prime, new_model = extensions[extension](clauses, F_prime, model)
 
     return complement(clauses, new_F_prime)
 
 ## OMUS algorithm
-def omusOrTools(cnf: CNF, parameters,  f = clause_length):
+def omusOrTools(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', random_literal = False, maxcoverage = False):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
@@ -773,8 +1078,11 @@ def omusOrTools(cnf: CNF, parameters,  f = clause_length):
         t_grow_start = time.time()
         # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
         # C = complement(frozen_clauses, new_F_prime)
-        C = grow(frozen_clauses, hs, model, parameters)
-        
+        if extension == 2:
+            new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal = random_literal, maxcoverage = maxcoverage)
+            C = complement(frozen_clauses, new_F_prime)
+        else:
+            C = grow(frozen_clauses, hs, model,  extension=extension)
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
         steps += 1
@@ -784,7 +1092,7 @@ def omusOrTools(cnf: CNF, parameters,  f = clause_length):
             raise f"{hs} {C} is already in {H}"
         H.append(C)
 
-def omusGurobi(cnf: CNF, parameters, f = clause_length):
+def omusGurobi(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', random_literal = False, maxcoverage = False):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
@@ -854,7 +1162,11 @@ def omusGurobi(cnf: CNF, parameters, f = clause_length):
         # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
         # C = complement(frozen_clauses, new_F_prime)
 
-        C = grow(frozen_clauses, hs, model, parameters, extension=extension)
+        if extension == 2:
+            new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal = random_literal, maxcoverage = maxcoverage)
+            C = complement(frozen_clauses, new_F_prime)
+        else:
+            C = grow(frozen_clauses, hs, model,  extension=extension)
 
         if C in H:
             raise f"{hs} {C} is already in {H}"
@@ -867,7 +1179,7 @@ def omusGurobi(cnf: CNF, parameters, f = clause_length):
 
         steps += 1
 
-def omusGurobiCold(cnf: CNF, parameters, extension = 3, f = clause_length):
+def omusGurobiCold(cnf: CNF, extension = 3, sat_model = True, f = clause_length, outputfile = 'log.txt', random_literal = False, maxcoverage = False):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
@@ -933,8 +1245,11 @@ def omusGurobiCold(cnf: CNF, parameters, extension = 3, f = clause_length):
         # add all clauses ny building complement
         print("omusGurobiCold -", len(H), "Growing" )
         t_grow_start = time.time()
-        
-        C = grow(frozen_clauses, hs, model, parameters, extension=extension)
+        if extension == 2:
+            new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal = random_literal, maxcoverage = maxcoverage)
+            C = complement(frozen_clauses, new_F_prime)
+        else:
+            C = grow(frozen_clauses, hs, model,  extension=extension)
         # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
         # C = complement(frozen_clauses, new_F_prime)
         t_grow_end = time.time()
@@ -943,7 +1258,7 @@ def omusGurobiCold(cnf: CNF, parameters, extension = 3, f = clause_length):
         steps += 1
         H.append(C)
 
-def omus(cnf: CNF, parameters, f = clause_length):
+def omus(cnf: CNF, extension = 3, f = clause_length, outputfile = 'log.txt'):
 
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf.clauses]
 
@@ -971,7 +1286,7 @@ def omus(cnf: CNF, parameters, f = clause_length):
             print("OMUS:", hs)
             return hs
 
-        C = grow(frozen_clauses, hs, model,  parameters, extension=extension)
+        C = grow(frozen_clauses, hs, model,  extension=extension)
 
 def bacchus_cnf():
     cnf = CNF()

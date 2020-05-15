@@ -380,8 +380,8 @@ def benchmark_code():
             # run benchmark
             print("Gurobi Warm - extension", extension, "output=",gurobiOutput)
             if extension == 2:
-                gurobiOutput = gurobiFolder +  basefileName + "bestliteral" + '.json'
-                omusGurobi(cnf, extension = 2, outputfile=gurobiOutput, random_literal=False, maxcoverage=False)
+                gurobiOutput = gurobiFolder +  basefileName + "bestliteral_neg" + '.json'
+                omusGurobi(cnf, extension = 2, outputfile=gurobiOutput, random_literal=False, maxcoverage=True)
             else:
                 omusGurobi(cnf, extension = extension, outputfile=gurobiOutput)
 

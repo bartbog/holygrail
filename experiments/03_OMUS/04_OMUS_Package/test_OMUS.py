@@ -294,7 +294,7 @@ def benchmark_code():
     # user_folder = '/home/emilio/OMUS/'
     # user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package/'
     # folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
-    folder = f'results/{date.today().strftime("%Y_%m_%d")}v3/'
+    folder = f'results/{date.today().strftime("%Y_%m_%d")}v4/'
     gurobiFolder = folder + "Gurobi/"
     gurobiColdFolder = folder + "GurobiCold/"
     orToolsFolder = folder + "OrTools/"
@@ -302,7 +302,7 @@ def benchmark_code():
     # solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
     solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
     # extensions = [4, 3, 2]
-    extensions = [4,3]
+    extensions = [2]
 
     if not os.path.exists(folder):
         os.mkdir(folder)
@@ -363,7 +363,7 @@ def benchmark_code():
 
     for extension in extensions:
         for i, cnf in enumerate(cnf_instances):
-            if "bf0432-007" not in cnf_files[i].name:
+            if "zebra_v155_c1135" not in cnf_files[i].name:
                 continue
 
             print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
@@ -379,7 +379,11 @@ def benchmark_code():
 
             # run benchmark
             print("Gurobi Warm - extension", extension, "output=",gurobiOutput)
-            omusGurobi(cnf, extension = extension, outputfile=gurobiOutput)
+            if extension == 2:
+                gurobiOutput = gurobiFolder +  basefileName + "bestliteral" + '.json'
+                omusGurobi(cnf, extension = 2, outputfile=gurobiOutput, random_literal=False, maxcoverage=False)
+            else:
+                omusGurobi(cnf, extension = extension, outputfile=gurobiOutput)
 
             # # run benchmark
             # print("Gurobi Cold - extension", extension, "output=",gurobiColdOutput)

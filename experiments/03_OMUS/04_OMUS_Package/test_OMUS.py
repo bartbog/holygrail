@@ -435,7 +435,7 @@ def main():
     # omusGurobiCold(smus_CNF(),extension=3 )
     # omusOrTools("")
     benchmark_code()
-    benchmark_code_hard()
+    # benchmark_code_hard()
     # test_findBestLiteral()
     # print(Difficulty.EASY < Difficulty.MEDIUM)
 

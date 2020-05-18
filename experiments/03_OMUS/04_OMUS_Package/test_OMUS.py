@@ -394,17 +394,16 @@ def benchmark_code():
             # omusOrTools(cnf, extension = extension, outputfile=orToolsOutput)
 
 
-def test_instance():
-    f_path = "data/easy_instances/bf0432-007.cnf"
-    # f_path = "data/easy_instances/zebra_v155_c1135.cnf"
+def medium_instance():
+    # f_path = "data/easy_instances/bf0432-007.cnf"
+    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
     clauses = []
     t_clauses = []
     for clause in CNF(from_file=f_path).clauses:
         if clause not in t_clauses and len(clause) > 0:
             clauses.append(frozenset(clause))
             t_clauses.append(clause)
-    cnf = CNF(from_clauses=clauses)
-    print(omusOrTools(cnf, extension = 3, greedy = True, maxcoverage=True))
+    return  CNF(from_clauses=clauses)
 
 def bacchus_cnf():
     cnf = CNF()
@@ -431,42 +430,40 @@ def test_findBestLiteral():
     print(best_literal)
 
 
-def validate(f):
-    @functools.wraps(f)
-    def decor(*args, **kwargs):
-        x, y = args
-        print('--- validated value', x)
-        print('--- validated value y', y)
-        x = x+2
-        y = y+1
-        start = time.time()
-        res = f(x, y, **kwargs)
-        end_time = time.time()
-        return end_time-start, res
-    return decor
-
-@validate
-def child(x, y):
-    print('child got value x:', x)
-    print('child got value y:', y)
-    return x, y
-
 def test_extension():
+    # Execution parameters
+    parameters = {
+        # clause counting
+        'count_clauses' : ClauseCounting.WEIGHTED_UNASSIGNED,
+        # 'count_clauses' : ClauseCounting.WEIGHTS,
+        # 'count_clauses' : ClauseCounting.VALIDATED,
+        # clause sorting
+        # 'sorting':ClauseSorting.IGNORE,
+        'sorting':ClauseSorting.WEIGHTS,
+        # 'sorting':ClauseSorting.UNASSIGNED,
+        # 'sorting':ClauseSorting.WEIGHTED_UNASSIGNED,
+        # Unit Literal propagation
+        # 'best_unit_literal': UnitLiteral.IMMEDIATE,
+        # 'best_unit_literal': UnitLiteral.RANDOM,
+        # 'best_unit_literal': UnitLiteral.PURE,
+        'best_unit_literal': UnitLiteral.POLARITY,
+        'best_counter_literal': BestCounterLiteral.POLARITY,
+        # 'best_counter_literal': BestCounterLiteral.PURE_ONLY,
+        # 'sat_model' :SatModel.RANDOM,
+        'sat_model' :SatModel.BEST,
+        # 'sat_model' :SatModel.ALL,
+        # 'bestModel' :SatModel.RANDOM,
+        'extension': 3,
+        'output': 'log.json'
+    }
 
-    # parameters
-    parameters['count_clauses']
-    parameters['clause_weights']
-    parameters['clause_weights_unassigned']
-    parameters['validate_unit_literals'] = True
-
-    parameters['sorting'] = 'weights'
-    parameters['sorting'] = 'unassigned'
-    parameters['sorting'] = 'weighted unassigned'
-
-    parameters['best_unit_literal'] = 'random'
-    parameters['best_unit_literal'] = 'pure'
-    parameters['best_unit_literal'] = 'polarity'
-
+    clauses = [frozenset(clause) for clause in bacchus_cnf().clauses]
+    model = set()
+    F_prime = set()
+    weights = [len(clause) for clause in clauses]
+    # omus(omus_cnf(), parameters)
+    omus(medium_instance(), parameters)
+    # print(new_F_prime, new_model)
 
 def test_getAllModels():
     clauses = [frozenset(clause) for clause in bacchus_cnf().clauses]
@@ -486,7 +483,8 @@ def test_getAllModels():
     #             coverage[idx] += 1
     # print(coverage)
 def main():
-    test_getAllModels()
+    test_extension()
+    # test_getAllModels()
     # test_instance()
     # omusGurobiCold(smus_CNF(),extension=3 )
     # omusOrTools("")
@@ -496,5 +494,4 @@ def main():
     # print(Difficulty.EASY < Difficulty.MEDIUM)
 
 if __name__ == "__main__":
-    print(child(3, 6))
-    print(child(0, 0))
+    main()

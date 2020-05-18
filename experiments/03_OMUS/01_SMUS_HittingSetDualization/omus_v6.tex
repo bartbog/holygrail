@@ -63,7 +63,6 @@ To do so, we first define the  objective function f:
 
 For an unsatisfiable CNF formula $\m{F}$, a subset of clauses that are still unsatisfiable, but if any of the clauses are removed then the reduced formula becomes satisfiable. 
 Formally, we define this set as a Minimum unsatisfiable Subset (MUS):
-% Ignatiev et al. present in \cite{ignatiev2015smallest} a novel algorithm for computing the smallest minimal unsatisfiable subset with regard to set cardinality.
 
 \begin{definition}
   A subset $\m{U} \subseteq \m{F}$ is a \textbf{minimal unsatisfiable subset} (MUS) if $\m{U}$ \emph{unsatisfiable} and $\forall \ \m{U}' \subset \m{U}$, $\m{U}'$ is \emph{satisfiable}. An MUS of $\m{F}$ with an optimal value w.r.t an \emph{objective function $f$} is called an \textbf{optimal MUS} (OMUS).
@@ -92,13 +91,6 @@ An MSS can also be defined as the complement of an MCS (and vice versa). If $\m{
 \end{proposition}
 
 \section{Explanation Generation}
-For each node $(E$, $\m{S}$, $n)$ of the graph, we have a structure that contains four components:
-\begin{itemize}
-  \item $n$.\texttt{state} a partial interpretation
-  \item $n$.\texttt{Parent} parent explanation
-  \item $n$.\texttt{Action} E (\textit{facts used}), S (\textit{Constraint used})
-  \item $n$.\texttt{Path-Cost} the cost denoted by f(E, S, n) + \# elements until goal
-\end{itemize}
 
 \begin{algorithm}
   %  \begin{algorithmic}
@@ -115,14 +107,12 @@ For each node $(E$, $\m{S}$, $n)$ of the graph, we have a structure that contain
    
     $\m{I} \gets \m{I}_0$  \tcp{Initial partial interpretation}
     $\m{I}_{end} \gets$ \texttt{propagate($\m{I}$, $\m{T}$ )}    \tcp{Goal state}
-    % \tcp{nodes to expand}
-    % $frontier \gets$ \textit{Priority queue ordered by Path-Cost + cost to goal, with $\m{I}$ as only element} \;
     $Seq \gets$ \textit{empty set}     \tcp{explanation sequence}
-    % $explored \gets$ \textit{empty set} \;
     \While{  $\m{I} == \m{I}_{end}$ }{
       $\m{F} \gets \m{I}_{end} \setminus \m{I}$ \;
       \tcp{Set with all negated literals of $\m{F}$}
       $\m{F}' \gets \{\neg \m{F} \}$ \;
+      \tcp{Propagate all negated literals, OMUS finds the smallest explanation }
       $X \gets$ \texttt{OMUS($\m{F}' \wedge \m{I} \wedge \m{S}$)} \;
       $E \gets$ $\m{I} \cap X$\;
       % $S \gets$ $\m{T} \cap X$\;
@@ -139,64 +129,6 @@ For each node $(E$, $\m{S}$, $n)$ of the graph, we have a structure that contain
   \caption{CSP-Explain($\m{T} ,\ f \ [,  \ \m{I}_0 ]$)}
   \label{alg:cspExplain}
 \end{algorithm}
-
-% \begin{algorithm}
-%   %  \begin{algorithmic}
-%   \SetKwInOut{Input}{input}
-%   \SetKwInOut{OptInput}{optional input}
-%   \SetKwInOut{Output}{output}
-%   \SetKwComment{command}{/*}{*/}
-
-%   \Input{$\m{T}$  \textit{set of constraints } }
-%   \Input{$f$ \textit{a consistent objective function} }
-%   \OptInput{$\m{I}_0$ \textit{a partial interpretation}}
-%   \Output{\textit{Explanation sequence}}
-%   \Begin{
-%     \tcp{State with current interpretation}
-%     $\m{I} \gets \m{I}_0$ \;
-%     \tcp{Goal state}
-%     $\m{I}_{end} \gets$ \texttt{propagate($\m{I}$, $\m{T}$ )} \;
-%     \tcp{nodes to expand}
-%     $frontier \gets$ \textit{Priority queue ordered by Path-Cost + cost to goal, with $\m{I}$ as only element} \;
-%     \tcp{explanation sequence}
-%     $Seq \gets$ \textit{empty set} \;
-%     % $explored \gets$ \textit{empty set} \;
-%     \While{  true ? }{
-%       $(E_n$, $\m{S}_n$, $n) \gets$ \texttt{POP($frontier$)} \;
-%       \emilio{$nested \gets$ \texttt{nested-explanation($E_n$, $\m{S}_n$, $n$)}}\;  
-%       \emilio{append $((E_n$, $\m{S}_n$, $n), nested)$ to $Seq$} \;
-%       $\m{I} \gets$ $\m{I} \ \cup n$  \;
-%       \If{$\m{I} == \m{I}_{end}$}{
-%         \Return $Seq$
-%       }
-%       \tcp{for every subset of cosntraints}
-%       \For{$\m{S} \subseteq \m{T}$ ordered ascending by g($\m{S}$)}{
-%         $\m{J} \gets$ \texttt{propagate($\m{I}$, $\m{S}$)} \;
-%         \tcp{For every newly derivable fact}
-%         \For{$n_j \in \m{J} \setminus \m{I}$}{
-%           \emilio{$\neg n_j$ has to be in initialisation of H, as well as S} \;
-%           $X \gets$ \texttt{OMUS($\neg n_j \wedge \m{I} \wedge \m{S}$)} \;
-%           $E \gets$ $\m{I} \cap X$\;
-%           % $S \gets$ $\m{T} \cap X$\;
-%           $N \gets$ \texttt{propagate($E \wedge \m{S}$)} \;
-%           \For{$n' \in \m{N} $}{
-%             \uIf{$n' \notin frontier$}{
-%               add ($E$, $\m{S}$, $n'$) to frontier \;
-%             }
-%             \uElseIf{$n' \in  frontier$ with higher \texttt{Path-Cost}}{
-%               replace previous explanation with ($E$, $\m{S}$, $n'$) in Frontier \;
-%             }
-%           }
-%         }
-%       }
-
-%     }
-
-%   }
-%   % \end{algorithmic}
-%   \caption{CSP-Explain($\m{T} ,\ f \ [,  \ \m{I}_0 ]$)}
-%   \label{alg:cspExplain}
-% \end{algorithm}
 
 \section{OMUS Algorithm}
 
@@ -217,23 +149,11 @@ The algorithm is based on the following observation:
   A set $\m{U} \subseteq \m{F}$ is an OMUS of $\m{F}$ if and only if $\m{U}$ is an optimal hitting set of MCSes($\m{F}$)
 \end{proposition}
 
-% Algorithm \ref{alg:omus} can be seen as the dual of the algorithm presented in \cite{davies2011solving}. $\m{H}$ represents a collection of sets, where each set is a Minimal Correction Set on $\m{F}$. The algorithm is given $\m{F}$ is a CNF formula of sets, f a valid objective function and optionally a set of MCSes $\m{H}_0$.
-% Each element in $\m{H}$ is a clause from $\m{F}$. At the beginning,  $\m{H}$ is empty of initialised with a collection of MCSes. 
-% At every iteration, the optimal hitting set is computed on $\m{H}$ guided by objective function f (line \todo{ref line}) and all clauses are added into $\m{F}'$  (line \todo{ref line}). 
-% The resulting formula is tested for satisfiability at line \todo{ref line}. 
-% If $\m{F}'$ is satisfiable, it is grown to a maximum satisfiable subset with and its complement, MCS C is added to $\m{H}$.
-% If instead $\m{F}'$ is unsatisfiable, then $\m{F}'$ is guaranteed to be an OMUS of $\m{F}$ as the following lemma states:
-
 \begin{lemma}\label{lemma:K}
   Let $\m{K}  \subseteq$ MCSes($\m{F}$). Then a subset $\m{U}$ of $\m{F}$ is an OMUS if $\m{U}$ is a optimal hitting set on $\m{K}$ and $\m{U}$ is unsatisfiable
 \end{lemma}
 
-% \begin{proof}
-%   Since $\m{U}$ is unsatisfiable it means it means it already hits every MCS in MCSes($\m{F}$) \ref{prop:duality_MCS_MUS}. $\m{U}$ is also an optimal hitting set on MCSes($\m{F}$), since it is an optimal hitting set for $\m{K}$ and no other added MCS can reduce its optimality criterion. Moreover, all other hittings sets can have their objective value stay equal or increase. Thus, by proposition \ref{prop:optimal-hitting-set} $\m{U}$ must be an OMUS.
-% \end{proof}
-
 \begin{algorithm}
-  %  \begin{algorithmic}
   \SetKwInOut{Input}{input}
   \SetKwInOut{OptInput}{optional input}
   \SetKwInOut{Output}{output}
@@ -257,10 +177,7 @@ The algorithm is based on the following observation:
       %\Else{
       \tcp{\small written as \texttt{grow($\m{F}'$)} which is Minimum Correction Set of $\m{F}'$}
       \tcp{\small find the biggest one with the biggest cost}
-      %$\m{C} \gets \m{F} \setminus grow(\m{F}', \m{F}, f)$ \;  
-      % $\m{C} \gets grow(\m{F}', \m{F}, f)$ \;
       $\m{C} \gets \m{F} \setminus \m{F}'$ \;
-      %}
 
       $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
 
@@ -272,41 +189,9 @@ The algorithm is based on the following observation:
   \label{alg:omus}
 \end{algorithm}
 
-% \begin{algorithm}
-%   %  \begin{algorithmic}
-%   \SetKwInOut{Input}{input}
-%   \SetKwInOut{OptInput}{optional input}
-%   \SetKwInOut{Output}{output}
-%   \SetKwComment{command}{/*}{*/}
-
-%   \Input{$\m{F}'$ \textit{a CNF formula to grow} }
-%   \Input{$\m{F}$ \textit{the original CNF formula} }
-%   \Input{$f$ \textit{a cost function} }
-%   \Output{MCS}
-%   \Begin{
-%     $\m{MSS} \gets \m{F}'$\;
-%     $\bar{\m{F}} \gets$ \texttt{sort\_decreasing($\m{F} \setminus \m{F}' $)}\;
-%     \While{\texttt{SAT($\m{MSS}$)}}{
-%       $clause  \gets$ \texttt{pop($\bar{\m{F}}$)}\;
-%       $\m{MSS} \gets \m{F}' \ \cup \ clause$ \;
-%     }
-%     \Return{$\bar{\m{F}}$}
-%   }
-%   % \end{algorithmic}
-%   \caption{grow($\m{F}',\m{F}', f$)}
-%   % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
-%   \label{alg:omus2}
-% \end{algorithm}
-
-
-% \end{algorithm}
 \newpage
 For the set of clauses $ \m{C} = \{c_1, ... c_{|C|}\}$ with weights $\m{W} = \{w_1, ... w_{|C|}\}$ in the collection of sets $\m{H}$. For Example:
-% \begin{itemize}
-%   \item $\m{C} = \{c_1, ... c_6 \}$
-%   \item $\m{W} = \{w_1 = 20, w_2 = 20,  w_3 = 10,  w_4 = 10,  w_5 = 10,  w_6 = 20\}$
-%   \item $\m{H} = \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_6\} $
-% \end{itemize}
+
 \begin{equation} \label{mip:example}
   \begin{split}
     \m{C} &= \{c_1, ... c_6 \}  \\
@@ -314,7 +199,6 @@ For the set of clauses $ \m{C} = \{c_1, ... c_{|C|}\}$ with weights $\m{W} = \{w
     \m{H} &= \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_6\} 
   \end{split}
   \end{equation}
-
 
 The optimal hitting set can be formulated as an integer linear program.
 \begin{equation} \label{eq:ILP:objective}
@@ -326,9 +210,7 @@ The optimal hitting set can be formulated as an integer linear program.
 \begin{equation} \label{eq:ILP:bool:xi}
   x_i = \{0,1\}
 \end{equation}
-% \begin{equation} \label{eq:ILP:bool:wij}
-%   w_{ij} = \{0, 1\}
-% \end{equation}
+
 \begin{itemize}
   \item $w_i$ is the input cost/weight associated with clause i in
   \item $x_i$ is a boolean decision variable if constraint/clause $c_i$ is chosen or not.
@@ -338,54 +220,8 @@ The optimal hitting set can be formulated as an integer linear program.
 \newpage
 \section{Future Work}
 
-% \begin{itemize}
-%   \item \todo{@holygrail : for every literal }
-%   \item \todo{@holygrail : efficient computation}
-%   \item \todo{Can we derive any properties from OCS and OSS for the algorithm ?}
-%   \item \todo{Can we engineer it to be faster, parallelize parts ?}
-% \end{itemize}
-
-% \begin{definition}
-%   A \emph{minimal correction subset} $\m{C}$ of $\m{F}$ is an \textbf{Optimal Correction Subset} of $\m{F}$, OCS($\m{F}$) if $\forall \ \m{C}' \in MCSes(\m{F}'): f(\m{C}) \leq f(\m{C}')$.
-% \end{definition}
-
-% \begin{definition}
-%   A \emph{maximal satisfiable subset} $\m{S} \subseteq \m{F}$ is an \textbf{Optimal Satisfiable Subset} (OSS) if $\forall \ \m{S}' \in MSSes(\m{F}'): f(\m{S}) \leq f(\m{S}')$.
-% \end{definition}
-
-
-
 \newpage
 
 \bibliography{omusrefs}
 
 \end{document}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-% \begin{algorithm}
-%   %  \begin{algorithmic}
-%   \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
-%   \SetKwComment{command}{/*}{*/}
-
-%   \Input{A set of constraint sets $\m{H}$}
-%   \Begin{
-
-%   }
-%   % \end{algorithmic}
-%   \caption{OMHS($\m{H}, f_o$)}
-%   \label{alg:ominhs}
-
-
-% \begin{enumerate}
-%   \item Engineering Parallelize OMUS with parallel calls to OMHS
-%   \item Ideas from \cite{davies2011solving} and from \cite{de2014future}:
-%   \begin{enumerate}
-%     \item Formalize : Dissociate SAT from from minimum cost hitting set using Design model
-%     \item OMHS can be written as a Integer Linear Program:
-%   \end{enumerate}
-%   \item Ideas from \cite{ignatiev2015smallest}:
-%   \begin{enumerate}
-%     \item Reducing the number of SAT Calls
-%   \end{enumerate}
-% \end{enumerate}

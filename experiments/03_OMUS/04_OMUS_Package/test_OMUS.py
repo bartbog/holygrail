@@ -430,24 +430,61 @@ def test_findBestLiteral():
     best_literal = findTopBestLiterals(clauses, set(), literals, 10)
     print(best_literal)
 
-def test_getAllModels():    
+
+def validate(f):
+    @functools.wraps(f)
+    def decor(*args, **kwargs):
+        x, y = args
+        print('--- validated value', x)
+        print('--- validated value y', y)
+        x = x+2
+        y = y+1
+        start = time.time()
+        res = f(x, y, **kwargs)
+        end_time = time.time()
+        return end_time-start, res
+    return decor
+
+@validate
+def child(x, y):
+    print('child got value x:', x)
+    print('child got value y:', y)
+    return x, y
+
+def test_extension():
+
+    # parameters
+    parameters['count_clauses']
+    parameters['clause_weights']
+    parameters['clause_weights_unassigned']
+    parameters['validate_unit_literals'] = True
+
+    parameters['sorting'] = 'weights'
+    parameters['sorting'] = 'unassigned'
+    parameters['sorting'] = 'weighted unassigned'
+
+    parameters['best_unit_literal'] = 'random'
+    parameters['best_unit_literal'] = 'pure'
+    parameters['best_unit_literal'] = 'polarity'
+
+
+def test_getAllModels():
     clauses = [frozenset(clause) for clause in bacchus_cnf().clauses]
     # F_prime = [i for i in range(0,3)]
     F_prime = [i for i in range(0,3)]
     print(clauses, F_prime)
-    models = getAllModels(clauses, F_prime)
-    coverage = {}
-    for idx, model in enumerate(models):
-        coverage[idx] = {}
-        c = 0
-        for i, clause in enumerate(clauses):
-            if i in F_prime:
-                continue
-            if len(clause.intersection(model)) > 0:
-                c += 1
-        coverage[idx]['model'] = model
-        coverage[idx]['coverage'] = c
-    print(coverage)
+    models = getBestModel(clauses, F_prime)
+    print(models)
+    # coverage = {}
+    # for idx, model in enumerate(models):
+    #     coverage[idx] = 0
+    #     # c = 0firef
+    #     for i, clause in enumerate(clauses):
+    #         if i in F_prime:
+    #             continue
+    #         if len(clause.intersection(model)) > 0:
+    #             coverage[idx] += 1
+    # print(coverage)
 def main():
     test_getAllModels()
     # test_instance()
@@ -459,4 +496,5 @@ def main():
     # print(Difficulty.EASY < Difficulty.MEDIUM)
 
 if __name__ == "__main__":
-    main()
+    print(child(3, 6))
+    print(child(0, 0))

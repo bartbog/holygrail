@@ -35,6 +35,51 @@ import pprint
 # utilities
 ppprint = pprint.PrettyPrinter(indent=4).pprint
 
+class ClauseCounting(Enum):
+    VALIDATED = 1
+    WEIGHTS = 2
+    WEIGHTED_UNASSIGNED = 3
+
+class ClauseSorting(Enum):
+    WEIGHTS = 1
+    UNASSIGNED = 2
+    WEIGHTED_UNASSIGNED = 3
+
+class UnitLiteral(Enum):
+    RANDOM = 1
+    PURE = 2
+    POLARITY = 3
+    IMMEDIATE = 4
+
+def time_func(f):
+    @wraps(f)
+    def decor(*args, **kwargs):
+        start = time.time()
+        res = f(*args, **kwargs)
+        end_time = time.time()
+        return end_time-start, res
+    return decor
+
+def time_func3(f):
+    @wraps(f)
+    def decor(*args, **kwargs):
+        x, y, z = args
+        start = time.time()
+        res = f(x, y, z, **kwargs)
+        end_time = time.time()
+        return end_time-start, res
+    return decor
+
+def time_func4(f):
+    @wraps(f)
+    def decor(*args, **kwargs):
+        x, y, z, w = args
+        start = time.time()
+        res = f( x, y, z, w, **kwargs)
+        end_time = time.time()
+        return end_time-start, res
+    return decor
+
 def debug(info, verbose=True):
     if verbose:
         print(info)
@@ -56,6 +101,7 @@ def cnf_weights(cnf, weight = clause_length):
 def clauses_weights(clauses, weight = clause_length):
     return [weight(clause) for clause in clauses]
 
+@time_func
 def checkSatClauses(clauses, F_prime):
     if len(F_prime) == 0 :
         return [], True
@@ -75,19 +121,7 @@ def checkSatClauses(clauses, F_prime):
     else:
         return None, solved
 
-def getBestModel(clauses, models):
-    bestmodel = None
-    reachability = {id:0 for id, _ in enumerate(models)}
-
-    for id, model in enumerate(models):
-        reachability[id] = sum([1 if len(model.intersection(clause)) > 0 else 0 for clause in clauses])
-
-    sorted_reachability = {k: v for k, v in sorted(reachability.items(), key=lambda item: item[1])}
-
-    bestmodel = models[next(iter(sorted_reachability))]
-
-    return bestmodel
-
+@time_func
 def getAllModels(clauses, F_prime):
     if not F_prime :
         return [], True
@@ -96,25 +130,49 @@ def getAllModels(clauses, F_prime):
 
     mapping, reverse_mapping = mapping_clauses(cnf_clauses)
     mapped_clauses = map_clauses(cnf_clauses, mapping)
-    # models = []
-    mapped_models = []
 
     with Solver() as s:
         added = s.append_formula(mapped_clauses, no_return=False)
         solved = s.solve()
 
         if solved:
-            for m in s.enum_models():
-                mapped_models.append(frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , m)))
+            mapped_models = {}
+            for i, m in enumerate(s.enum_models()):
+                mapped_models[i] = {}
+                mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , m))
+                mapped_models[i]['model'] = mapped_model
+                mapped_models[i]['coverage'] = sum([1 for idx, clause in  enumerate(clauses) if idx not in F_prime and len(clause.intersection(mapped_model)) > 0])
             return mapped_models
         else:
             return None, solved
 
-    # if solved:
-    #     mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , model))
-    #     return mapped_model, solved
-    # else:
-    #     return None, solved
+@time_func
+def getBestModel(clauses, F_prime):
+    if not F_prime :
+        return [], True
+
+    cnf_clauses = [clauses[i] for i in F_prime]
+
+    mapping, reverse_mapping = mapping_clauses(cnf_clauses)
+    mapped_clauses = map_clauses(cnf_clauses, mapping)
+
+    with Solver() as s:
+        added = s.append_formula(mapped_clauses, no_return=False)
+        solved = s.solve()
+
+        if solved:
+            best_model = 0
+            best_coverage = 0
+            for i, m in enumerate(s.enum_models()):
+                model_coverage = 0
+                mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , m))
+                coverage = sum([1 for idx, clause in  enumerate(clauses) if idx not in F_prime and len(clause.intersection(mapped_model)) > 0 ])
+                if coverage > best_coverage:
+                    best_coverage = coverage
+                    best_model = mapped_model
+            return best_model
+        else:
+            return None, solved
 
 def findBestLiteral(clauses, F_prime, literals, parameters):
     """Find the best literal in the list of `literals' based on the number of clauses
@@ -253,11 +311,16 @@ def extension2(clauses, F_prime, model, parameters):
 def extension3(clauses, F_prime, model, weights, parameters):
     # parameters
     count_clauses = parameters['count_clauses']
-    clause_weights = parameters['clause_weights']
-    clause_weights_unassigned=  parameters['clause_weights_unassigned']
     sorting = parameters['sorting']
-    validate_unit_literals = parameters['validate_unit_literals']
     best_unit_literal = parameters['best_unit_literal']
+
+    if not isinstance(count_clauses, ClauseCounting):
+        print(f"Wong input = {count_clauses}. Defaulting to # validated clauses")
+        count_clauses = ClauseCounting.VALIDATED
+
+    if best_unit_literal != None and not isinstance(best_unit_literal, UnitLiteral):
+        print(f"Wong input = {best_unit_literal}. Defaulting to random literal choice")
+        best_unit_literal = UnitLiteral.RANDOM
 
     # preprocessing
     lit_true = set(model)
@@ -268,30 +331,33 @@ def extension3(clauses, F_prime, model, weights, parameters):
     # Pre-processing is necessary
     cl_unk = {i for i in range(len(clauses)) if i not in F_prime}
 
-    if sorting:
+    if isinstance(sorting, ClauseSorting):
         # clause sorting based on weights
-        cl_unk.sort(reverse=True, key= lambda clause: weights[i])
+        if sorting == ClauseSorting.WEIGHTS:
+            cl_unk.sort(reverse=True, key= lambda clause: weights[i])
         # clause sorting based on # unassigned literals
-        cl_unk.sort(reverse=True, key= lambda clause: len(clauses[i] - lit_true - lit_false))
-        # clause sorting based on # unassigned literals
-        cl_unk.sort(reverse=True, key= lambda clause: weights[i] / len(clauses[i] - lit_true - lit_false) )
+        elif sorting == ClauseSorting.UNASSIGNED:
+            cl_unk.sort(reverse=True, key= lambda clause: len(clauses[i] - lit_true - lit_false))
+        # clause sorting based on weight of clause /# unassigned literals
+        elif sorting == ClauseSorting.WEIGHTED_UNASSIGNED:
+            cl_unk.sort(reverse=True, key= lambda clause: weights[i] / len(clauses[i] - lit_true - lit_false) )
 
     # literal- clause counter
     cnt = {lit:0 for lit in lit_unk}
 
     for i in cl_unk:
         clause = clauses[i]
-        unassgn_lit = clause.intersection(lit_unk)
-        for lit in unassgn_lit:
-            if count_clauses:
+        unassgn_lits = clause.intersection(lit_unk)
+        for lit in unassgn_lits:
+            if count_clauses == ClauseCounting.VALIDATED:
                 # check if count number of clauses
                 cnt[lit] += 1
-            elif clause_weights:
+            elif count_clauses == ClauseCounting.WEIGHTS:
                 # clause weight
                 cnt[lit] += weights[i]
-            elif clause_weights_unassigned:
+            elif count_clauses == ClauseCounting.WEIGHTED_UNASSIGNED:
                 # clause weight/# litterals assigned
-                cnt[lit] += weights[i]/len(unassgn_lit)
+                cnt[lit] += weights[i]/len(unassgn_lits)
 
     while(len(cl_unk) > 0):
         # check single polarity literals
@@ -313,13 +379,16 @@ def extension3(clauses, F_prime, model, weights, parameters):
             lit_unk -= tofix_neg
 
         # check if clauses need reordering (only useful for unit literal)
-        if sorting:
+        if isinstance(sorting, ClauseSorting):
             # clause sorting based on weights
-            cl_unk.sort(reverse=True, key= lambda i: weights[i])
+            if sorting == ClauseSorting.WEIGHTS:
+                cl_unk.sort(reverse=True, key= lambda i: weights[i])
             # clause sorting based on # unassigned literals
-            cl_unk.sort(reverse=True, key= lambda i: len(clauses[i] - lit_true - lit_false))
+            elif sorting == ClauseSorting.UNASSIGNED:
+                cl_unk.sort(reverse=True, key= lambda i: len(clauses[i] - lit_true - lit_false))
             # clause sorting based on # unassigned literals
-            cl_unk.sort(reverse=True, key= lambda i: weights[i] / len(clauses[i] - lit_true - lit_false) )
+            elif sorting == ClauseSorting.WEIGHTED_UNASSIGNED:
+                cl_unk.sort(reverse=True, key= lambda i: weights[i] / len(clauses[i] - lit_true - lit_false) )
 
         # Validated all pure literals
         pure_lits = {lit for lit in lit_unk if -lit not in lit_unk}
@@ -360,9 +429,9 @@ def extension3(clauses, F_prime, model, weights, parameters):
                 cl_true.add(i)
                 cl_unk.remove(i)
             # validate unit literals
-            elif len(unassign_lits) == 1 and validate_unit_literals:
+            elif len(unassign_lits) == 1 and best_unit_literal != None:
                 lit = next(iter(unassign_lits))
-                if not best_unit_literal:
+                if best_unit_literal == UnitLiteral.IMMEDIATE:
                     cl_true.add(i)
                     cl_unk.remove(i)
                     # literal
@@ -375,30 +444,34 @@ def extension3(clauses, F_prime, model, weights, parameters):
                     unit_literals.add(lit)
             else:
                 for lit in unassign_lits:
-                    if count_clauses:
-                        # check if count number of clauses
+                    # check if count number of clauses
+                    if count_clauses == ClauseCounting.VALIDATED:
                         cnt[lit] += 1
-                    elif clause_weights:
-                        # clause weight
+                    # clause weight
+                    elif count_clauses == ClauseCounting.WEIGHTS:
                         cnt[lit] += weights[i]
-                    elif clause_weights_unassigned:
-                        # clause weight/# litterals assigned
+                    # clause weight/# litterals assigned
+                    elif count_clauses == ClauseCounting.WEIGHTED_UNASSIGNED:
                         cnt[lit] += weights[i]/len(unassign_lits)
 
-        if validate_unit_literals and best_unit_literal and len(unit_literals) > 0:
+        if  len(unit_literals) > 0 and best_unit_literal in [UnitLiteral.RANDOM,  UnitLiteral.PURE, UnitLiteral.POLARITY]:
             # 4. Literal choice
             # 4.1 Random literal
-            best_lit = next(iter(unit_literals))
+            if best_unit_literal == UnitLiteral.RANDOM:
+                best_lit = next(iter(unit_literals))
 
             # 4.2 Literal with highest [clause count] / [sum clause weights] / [ (sum of clause weights)/#unassigned]
-            best_lit = max(unit_literals, key=lambda i: cnt[i])
+            elif best_unit_literal == UnitLiteral.PURE:
+                best_lit = max(unit_literals, key=lambda i: cnt[i])
 
+            elif best_unit_literal == UnitLiteral.POLARITY:
             # 4.3 Literal with highest polarity clause count / sum of clause weights / sum of clause weights/#unassigned
-            best_lit = max(unit_literals, key=lambda i: cnt[i] - cnt[-i])
+                best_lit = max(unit_literals, key=lambda i: cnt[i] - cnt[-i])
             # literal
             lit_true.add(best_lit)
             lit_false.add(-best_lit)
             lit_unk.remove(best_lit)
+
             if -lit in lit_unk:
                 lit_unk.remove(-best_lit)
     return cl_true, lit_true
@@ -529,6 +602,7 @@ def addSetGurobiModel(clauses, gurobi_model, C):
     # gurobi_model.addConstr(gp.quicksum(x[i] * h[i] for i in range(len(clauses))) >= 1)
     gurobi_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
 
+@time_func
 def gurobiOptimalHittingSet(clauses, gurobi_model, C):
     # trivial case
     if len(C) == 0:
@@ -545,7 +619,7 @@ def gurobiOptimalHittingSet(clauses, gurobi_model, C):
     hs = set(i for i in range(len(clauses)) if x[i].x == 1)
 
     return hs
-
+@time_func
 def gurobiOptimalHittingSetCold(clauses, weights,  H):
     gurobi_model = gurobiModel(clauses, weights)
     # trivial case
@@ -606,6 +680,7 @@ def create_data_model(H, weights):
     return data
 
 ## OR tools Optimal Hitting set MIP implementation
+@time_func
 def optimalHittingSet(H, weights):
     # trivial case
     if len(H) == 0:
@@ -659,7 +734,8 @@ def optimalHittingSet(H, weights):
         return []
     # [END print_solution]
 
-def grow(clauses, F_prime, model, parameters, extension = 0):
+@time_func
+def grow(clauses, F_prime, model, parameters):
     """
 
         Procedure to efficiently grow the list clauses in ``F_prime``. The complement of F_prime is a correction
@@ -695,6 +771,7 @@ def grow(clauses, F_prime, model, parameters, extension = 0):
 
             Maxsat
     """
+    extension = parameters['extension']
 
     extensions = {
         0 : defaultExtension,
@@ -749,8 +826,6 @@ def omusOrTools(cnf: CNF, parameters,  f = clause_length):
             model, sat = getAllModels(frozen_clauses, hs)
             t_sat_end = time.time()
         t_sat_check.append(t_sat_end-t_sat_start)
-        # model, sat = checkSatClauses(frozen_clauses, hs)
-        # model, sat = getAllModels(frozen_clauses, hs)
 
         if not sat:
             # print("OMUS:", hs)
@@ -774,7 +849,7 @@ def omusOrTools(cnf: CNF, parameters,  f = clause_length):
         # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
         # C = complement(frozen_clauses, new_F_prime)
         C = grow(frozen_clauses, hs, model, parameters)
-        
+
         t_grow_end = time.time()
         t_grow.append(t_grow_end- t_grow_start)
         steps += 1
@@ -788,6 +863,7 @@ def omusGurobi(cnf: CNF, parameters, f = clause_length):
     benchmark_data = {}
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
+
 
     t_hitting_set = []
     t_sat_check = []
@@ -812,13 +888,8 @@ def omusGurobi(cnf: CNF, parameters, f = clause_length):
     gurobi_model = gurobiModel(cnf.clauses, weights)
     while(True):
         # compute optimal hitting set
-        # F_prime =  optimalHittingSet(H, weights)
-        # print("omusGurobi -", steps, "gurobiOptimalHittingSet" )
-        t_hs_start = time.time()
-        hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
-        # print(hs)
-        t_hs_end = time.time()
-        t_hitting_set.append(t_hs_end - t_hs_start)
+        t_exec, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        t_hitting_set.append(t_exec)
         s_hs.append(len(hs))
 
         # check satisfiability of clauses
@@ -842,7 +913,7 @@ def omusGurobi(cnf: CNF, parameters, f = clause_length):
             benchmark_data['t_grow'] = t_grow
             benchmark_data['total_time'] = t_end_omus - t_start_omus
             benchmark_data['extension'] = extension
-            benchmark_data['sat'] = 1 if sat_model else 0
+            # benchmark_data['sat'] = 1 if sat_model else 0
             benchmark_data['s_hs'] = s_hs
             benchmark_data['s_grow'] = s_grow
             with open(outputfile, 'w') as file:
@@ -872,10 +943,10 @@ def omusGurobiCold(cnf: CNF, parameters, extension = 3, f = clause_length):
     benchmark_data['clauses'] = len(cnf.clauses)
     benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
 
+    steps = 0
     t_hitting_set = []
     t_sat_check = []
     t_grow = []
-    steps = 0
     t_start_omus = time.time()
     s_hs = []
     s_grow = []
@@ -921,7 +992,6 @@ def omusGurobiCold(cnf: CNF, parameters, extension = 3, f = clause_length):
             benchmark_data['t_grow'] = t_grow
             benchmark_data['total_time'] = t_end_omus - t_start_omus
             benchmark_data['extension'] = extension
-            benchmark_data['sat'] = 1 if sat_model else 0
             benchmark_data['s_hs'] = s_hs
             benchmark_data['s_grow'] = s_grow
 
@@ -933,7 +1003,7 @@ def omusGurobiCold(cnf: CNF, parameters, extension = 3, f = clause_length):
         # add all clauses ny building complement
         print("omusGurobiCold -", len(H), "Growing" )
         t_grow_start = time.time()
-        
+
         C = grow(frozen_clauses, hs, model, parameters, extension=extension)
         # new_F_prime, new_model = extension2(frozen_clauses, hs, model, random_literal =(not greedy), maxcoverage=maxcoverage )
         # C = complement(frozen_clauses, new_F_prime)
@@ -943,35 +1013,100 @@ def omusGurobiCold(cnf: CNF, parameters, extension = 3, f = clause_length):
         steps += 1
         H.append(C)
 
-def omus(cnf: CNF, parameters, f = clause_length):
+def checkVariableNaming(clauses):
+    lits = set(abs(l) for l in frozenset.union(*clauses))
+    min_lit = min(lits)
+    assert min_lit == 1, f"First Literal at {min_lit}"
+    max_lit = max(lits)
+    assert sorted(set(i for i in range(min_lit, max_lit))) == sorted(lits), "Be careful missing literals"
 
+def omus(cnf: CNF, parameters,f = clause_length ):
+    # Benchmark data
+    benchmark_data = {}
+    benchmark_data['clauses'] = len(cnf.clauses)
+    benchmark_data['avg_clause_len'] = mean([len(clause) for clause in cnf.clauses])
+    benchmark_data['parameters'] = parameters
+    benchmark_data['clause_length'] = f.__name__
+
+    # benchmark variables
+    steps = 0
+    t_hitting_set = []
+    t_sat_check = []
+    t_grow = []
+    t_start_omus = time.time()
+    s_hs = []
+    s_grow = []
+
+    # parameters
+    bestModel = parameters['bestModel']
+    allModels = parameters['allModels']
+    randomModel = parameters['randomModel']
+    extension = parameters['extension']
+    outputfile = parameters['output']
+
+    # Performance
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf.clauses]
+
+    # check if all literals are in the clauses else need to be mapped
+    checkVariableNaming(frozen_clauses)
 
     # sanity check
     _, solved = checkSatClauses(frozen_clauses, {i for i in range(len(frozen_clauses))})
 
-    # TODO : check if all literals are in the clauses else need to be mapped 
     assert solved == False, "Cnf is satisfiable"
 
     weights = clauses_weights(cnf.clauses, f)
 
-    C = []
-
     gurobi_model = gurobiModel(cnf.clauses, weights)
+
+    C = []
 
     while(True):
         # compute optimal hitting set
-        hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        t_hitting_set.append(t_exec_hs)
+        s_hs.append(len(hs))
 
         # check satisfiability of clauses
-        model, sat = checkSatClauses(frozen_clauses, hs)
+        if bestModel:
+            t_exec_model, model, sat = getBestModel(frozen_clauses, hs)
+        elif allModels:
+            t_exec_model, models, sat = getAllModels(frozen_clauses, hs)
+        else:
+            t_exec_model, models, sat = checkSatClauses(frozen_clauses, hs)
+        t_sat_check.append(t_exec_model)
 
         if not sat:
             gurobi_model.dispose()
-            print("OMUS:", hs)
+            benchmark_data['steps'] = steps
+            benchmark_data['t_hitting_set'] = t_hitting_set
+            benchmark_data['t_sat_check'] = t_sat_check
+            benchmark_data['t_grow'] = t_grow
+            benchmark_data['extension'] = extension
+            benchmark_data['s_hs'] = s_hs
+            benchmark_data['s_grow'] = s_grow
+
+            if outputfile != None :
+                with open(outputfile, 'w') as file:
+                    file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             return hs
 
-        C = grow(frozen_clauses, hs, model,  parameters, extension=extension)
+        if allModels:
+            tot_grow = 0
+            t_exec_grow, C  = grow(frozen_clauses, hs, models[0],  parameters, extension=extension)
+            # keep model with best coverage
+            for model in models[1:]:
+                t_exec_grow, C_grow = grow(frozen_clauses, hs, model,  parameters, extension=extension)
+
+                if len(C_grow) < len(C):
+                    C = C_grow
+            t_exec_grow = tot_grow/len(models)
+        else:
+            t_exec_grow, C = grow(frozen_clauses, hs, model,  parameters, extension=extension)
+
+        t_grow.append(t_exec_grow)
+        s_grow.append(len(C))
+
 
 def bacchus_cnf():
     cnf = CNF()
@@ -1019,6 +1154,12 @@ def omus_cnf():
     return cnf
 
 def main():
+    parameters = {
+        'bestModel':True,
+        'allModels':True,
+        'randomModel':False,
+        'extension':3
+    }
     omusGurobi(bacchus_cnf(), 3 )
     omusGurobi(omus_cnf(), 3 )
     # assert sorted(omusGurobiCold(cnf, 4 )) == sorted([0, 1, 2]), "SMUS error"

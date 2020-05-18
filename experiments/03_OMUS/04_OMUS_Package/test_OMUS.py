@@ -509,7 +509,7 @@ def benchmark_parameter_omus():
                                     'extension': 3,
                                     'output': gurobiOutput
                                 }
-                                ppprint(parameters)
+                                # ppprint(parameters)
 
                                 omus(cnf, parameters)
                                 counter+=1

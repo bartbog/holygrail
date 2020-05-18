@@ -1140,13 +1140,13 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
             C_sz = len(frozen_clauses)
             for idx, model in enumerate(models):
                 t_model_grow, C_grown = grow(frozen_clauses, weights, hs, model,  parameters)
-                # w_grown = sum([weight for i, weight in enumerate(weights) if i in C_grown])
-                # if w_grown <= best_weight:
-                #     best_weight = w_grown
-                #     C = C_grown
-                if len(C_grown) < C_sz:
-                    C_sz = len(C_grown)
+                w_grown = sum([weight for i, weight in enumerate(weights) if i in C_grown])
+                if w_grown <= best_weight:
+                    best_weight = w_grown
                     C = C_grown
+                # if len(C_grown) < C_sz:
+                #     C_sz = len(C_grown)
+                #     C = C_grown
                 #     Cbis = C_grown
                 # else:
                 #     Crest.append(C_grown)

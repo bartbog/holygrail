@@ -429,6 +429,90 @@ def test_findBestLiteral():
     best_literal = findTopBestLiterals(clauses, set(), literals, 10)
     print(best_literal)
 
+def benchmark_parameter_omus():
+    # user_folder = '/home/emilio/OMUS/'
+    # user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package/'
+    # folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
+    folder = f'results/{date.today().strftime("%Y_%m_%d")}/'
+    gurobiFolder = folder + "Gurobi/"
+
+    solverFolders = [gurobiFolder]
+    extensions = [3]
+
+    # easy instances
+    easy_unsatInstances = cnfUnsatInstances(difficulty=Difficulty.EASY)
+    unsatInstances = easy_unsatInstances #+ medium_unsatInstances
+
+    # medium instances
+    medium_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.MEDIUM)
+    unsatInstances += medium_unsatInstances
+
+    # # HARD instances
+    # # hard_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.HARD)
+    # # unsatInstances += hard_unsatInstances
+
+    cnf_files = sorted(unsatInstances, key=lambda item: item.stat().st_size)
+    cnf_instances = []
+    for cnf_file in cnf_files:
+        clauses = []
+        t_clauses = []
+        for clause in CNF(from_file=cnf_file).clauses:
+            if clause not in t_clauses and len(clause) > 0:
+                clauses.append(frozenset(clause))
+                t_clauses.append(clause)
+        cnf_instances.append(CNF(from_clauses=clauses))
+
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    for f in solverFolders:
+        if not os.path.exists(f):
+            os.mkdir(f)
+        for extension in extensions:
+            ext_path = f + f"ext{extension}"
+            if not os.path.exists(ext_path):
+                os.mkdir(ext_path)
+            for fpath in cnf_files:
+                f_name = fpath.name.replace('.cnf', '')
+                if "bf0432-007" in f_name:
+                    continue
+                f_ext_path = f + f"ext{extension}/{f_name}/"
+                if not os.path.exists(f_ext_path):
+                    os.mkdir(f_ext_path)
+
+    extension = 3
+    for i, cnf in enumerate(cnf_instances):
+        counter = 0
+        if "bf0432-007" in cnf_files[i].name:
+            continue
+        print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
+
+        # file name
+        f_name = cnf_files[i].name.replace('.cnf', '')
+        basefileName = f'ext{extension}/{f_name}/'
+
+        # run benchmark
+        for clause_counting in ClauseCounting:
+                for clause_sorting in ClauseSorting:
+                    for unit_prop in UnitLiteral:
+                        for best_literal in BestCounterLiteral:
+                            for sat_model in SatModel:
+                                # output folders
+                                gurobiOutput = gurobiFolder +  basefileName+f"{counter}.json"
+                                print("OMUS - extension {extension}", "output=",gurobiOutput)
+                                parameters = {
+                                    'count_clauses' : clause_counting,
+                                    'sorting':clause_sorting,
+                                    'best_unit_literal': unit_prop,
+                                    'best_counter_literal': best_literal,
+                                    'sat_model' :sat_model,
+                                    'extension': 3,
+                                    'output': gurobiOutput
+                                }
+                                ppprint(parameters)
+
+                                omus(cnf, parameters)
+                                counter+=1
 
 def test_extension():
     # Execution parameters
@@ -462,7 +546,30 @@ def test_extension():
     F_prime = set()
     weights = [len(clause) for clause in clauses]
     # omus(omus_cnf(), parameters)
-    omus(medium_instance(), parameters)
+
+        # run benchmark
+    for clause_counting in ClauseCounting:
+            for clause_sorting in ClauseSorting:
+                for unit_prop in UnitLiteral:
+                    for best_literal in BestCounterLiteral:
+                        for sat_model in SatModel:
+                            # output folders
+                            gurobiOutput = gurobiFolder +  basefileName+f"{counter}.json"
+                            print(f"OMUS - extension {extension}", "output=",gurobiOutput)
+                            parameters = {
+                                'count_clauses' : clause_counting,
+                                'sorting':clause_sorting,
+                                'best_unit_literal': unit_prop,
+                                'best_counter_literal': best_literal,
+                                'sat_model' :sat_model,
+                                'extension': 3,
+                                'output': gurobiOutput
+                            }
+                            ppprint(parameters)
+                            omus(cnf, parameters)
+                            counter+=1
+    omus(omus_cnf(), parameters)
+    omus(bacchus_cnf(), parameters)
     # print(new_F_prime, new_model)
 
 def test_getAllModels():
@@ -483,7 +590,12 @@ def test_getAllModels():
     #             coverage[idx] += 1
     # print(coverage)
 def main():
-    test_extension()
+    benchmark_parameter_omus()
+    # test_extension()
+    # for c in ClauseCounting:
+    #     if c == ClauseCounting.WEIGHTED_UNASSIGNED:
+    #         print(c)
+        # print(c)
     # test_getAllModels()
     # test_instance()
     # omusGurobiCold(smus_CNF(),extension=3 )

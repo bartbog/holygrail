@@ -1089,7 +1089,7 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     while(True):
         # compute optimal hitting set
         t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
-        print(f"Steps={steps}\tOptimal Hitting Set={hs}")
+
         t_hitting_set.append(t_exec_hs)
         s_hs.append(len(hs))
 
@@ -1158,7 +1158,7 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
             t_exec_grow, C = grow(frozen_clauses, weights, hs, model,  parameters)
         t_grow.append(t_exec_grow)
         s_grow.append(len(C))
-
+        print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}")
         steps += 1
 
 

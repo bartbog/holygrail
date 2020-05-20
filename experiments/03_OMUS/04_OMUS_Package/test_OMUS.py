@@ -515,6 +515,7 @@ def benchmark_parameter_omus():
                                 counter+=1
 
 def test_extension():
+
     # Execution parameters
     parameters = {
         # clause counting
@@ -523,74 +524,41 @@ def test_extension():
         # 'count_clauses' : ClauseCounting.VALIDATED,
         # clause sorting
         # 'sorting':ClauseSorting.IGNORE,
-        'sorting':ClauseSorting.WEIGHTS,
+        # 'sorting':ClauseSorting.WEIGHTS,
         # 'sorting':ClauseSorting.UNASSIGNED,
-        # 'sorting':ClauseSorting.WEIGHTED_UNASSIGNED,
+        'sorting':ClauseSorting.WEIGHTED_UNASSIGNED,
         # Unit Literal propagation
-        # 'best_unit_literal': UnitLiteral.IMMEDIATE,
+        'best_unit_literal': UnitLiteral.IMMEDIATE,
+        # 'best_unit_literal': UnitLiteral.INGORE,
         # 'best_unit_literal': UnitLiteral.RANDOM,
         # 'best_unit_literal': UnitLiteral.PURE,
-        'best_unit_literal': UnitLiteral.POLARITY,
-        'best_counter_literal': BestCounterLiteral.POLARITY,
-        # 'best_counter_literal': BestCounterLiteral.PURE_ONLY,
+        # 'best_unit_literal': UnitLiteral.POLARITY,
+        'best_counter_literal': BestLiteral.COUNT_POLARITY,
+        # 'best_counter_literal': BestLiteral.COUNT_PURE_ONLY,
         # 'sat_model' :SatModel.RANDOM,
-        'sat_model' :SatModel.BEST,
-        # 'sat_model' :SatModel.ALL,
+        # 'sat_model' :SatModel.BEST,
+        'sat_model' :SatModel.ALL,
+        'sat_model_top': 3,
         # 'bestModel' :SatModel.RANDOM,
         'extension': 3,
         'output': 'log.json'
     }
+    f_path = "data/easy_instances/bf0432-007.cnf"
+    # f_path = "data/easy_instances/aim-100-1_6-no-1.cnf"
+    # f_path = "data/easy_instances/zebra_v155_c1135.cnf"
+    clauses = []
+    t_clauses = []
+    for clause in CNF(from_file=f_path).clauses:
+        if clause not in t_clauses and len(clause) > 0:
+            clauses.append(frozenset(clause))
+            t_clauses.append(clause)
+    cnf = CNF(from_clauses=clauses)
+    omus(cnf, parameters=parameters)
 
-    clauses = [frozenset(clause) for clause in bacchus_cnf().clauses]
-    model = set()
-    F_prime = set()
-    weights = [len(clause) for clause in clauses]
-    # omus(omus_cnf(), parameters)
-
-        # run benchmark
-    for clause_counting in ClauseCounting:
-            for clause_sorting in ClauseSorting:
-                for unit_prop in UnitLiteral:
-                    for best_literal in BestCounterLiteral:
-                        for sat_model in SatModel:
-                            # output folders
-                            gurobiOutput = gurobiFolder +  basefileName+f"{counter}.json"
-                            print(f"OMUS - extension {extension}", "output=",gurobiOutput)
-                            parameters = {
-                                'count_clauses' : clause_counting,
-                                'sorting':clause_sorting,
-                                'best_unit_literal': unit_prop,
-                                'best_counter_literal': best_literal,
-                                'sat_model' :sat_model,
-                                'extension': 3,
-                                'output': gurobiOutput
-                            }
-                            ppprint(parameters)
-                            omus(cnf, parameters)
-                            counter+=1
-    omus(omus_cnf(), parameters)
-    omus(bacchus_cnf(), parameters)
-    # print(new_F_prime, new_model)
-
-def test_getAllModels():
-    clauses = [frozenset(clause) for clause in bacchus_cnf().clauses]
-    # F_prime = [i for i in range(0,3)]
-    F_prime = [i for i in range(0,3)]
-    print(clauses, F_prime)
-    models = getBestModel(clauses, F_prime)
-    print(models)
-    # coverage = {}
-    # for idx, model in enumerate(models):
-    #     coverage[idx] = 0
-    #     # c = 0firef
-    #     for i, clause in enumerate(clauses):
-    #         if i in F_prime:
-    #             continue
-    #         if len(clause.intersection(model)) > 0:
-    #             coverage[idx] += 1
-    # print(coverage)
 def main():
-    benchmark_parameter_omus()
+    # test_extension()
+    d = [('a', 1), ('b', 2), ('c', 1.5)]
+    print(max(d, key=lambda tup: tup[1]))
     # test_extension()
     # for c in ClauseCounting:
     #     if c == ClauseCounting.WEIGHTED_UNASSIGNED:

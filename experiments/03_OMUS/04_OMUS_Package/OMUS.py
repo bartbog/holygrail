@@ -48,11 +48,12 @@ class ClauseSorting(IntEnum):
     UNASSIGNED = 2
     WEIGHTED_UNASSIGNED = 3
 
-class BestCounterLiteral(IntEnum):
-    PURE_ONLY = 1
-    POLARITY = 2
+class BestLiteral(IntEnum):
+    COUNT_PURE_ONLY = 1
+    COUNT_POLARITY = 2
 
 class UnitLiteral(IntEnum):
+    IGNORE = 0
     RANDOM = 1
     PURE = 2
     POLARITY = 3
@@ -60,8 +61,10 @@ class UnitLiteral(IntEnum):
 
 class SatModel(IntEnum):
     RANDOM = 1
-    BEST = 2
-    ALL = 3
+    BEST_CLAUSES_VALIDATED = 2
+    BEST_CLAUSE_WEIGHTS_COVERAGE = 3
+    BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE = 4
+    ALL = 5
 
 def time_func(f):
     @wraps(f)
@@ -134,9 +137,11 @@ def checkSatClauses(clauses, F_prime):
         return None, solved
 
 @time_func
-def getAllModels(clauses, F_prime):
+def getTopModels(clauses, F_prime, weights, parameters):
     if not F_prime :
         return [], True
+
+    sat_model = parameters['count_clauses']
 
     cnf_clauses = [clauses[i] for i in F_prime]
 
@@ -148,17 +153,40 @@ def getAllModels(clauses, F_prime):
         solved = s.solve()
 
         if solved:
-            mapped_models = []
-            for i, m in enumerate(s.enum_models()):
-                mapped_models.append(frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , m)))
-            return mapped_models, solved
+            # 
+            all_models = []
+
+            for m in s.enum_models():
+                # mapping back model to input literals
+                mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , m))
+                if sat_model == ClauseCounting.VALIDATED:
+                    coverage = sum([1 for idx, clause in  enumerate(clauses) if len(clause.intersection(mapped_model)) > 0 and idx not in F_prime])
+                elif sat_model == ClauseCounting.WEIGHTS:
+                    coverage = sum([weights[idx] for idx, clause in  enumerate(clauses) if len(clause.intersection(mapped_model)) > 0 and idx not in F_prime ])
+                elif sat_model == ClauseCounting.WEIGHTED_UNASSIGNED:
+                    coverage = 0
+                    for idx, clause in  enumerate(clauses):
+                        if idx in F_prime:
+                            continue
+                        if len(clause.intersection(mapped_model)) > 0:
+                            unassgn_lits = clause - mapped_model - set(-l for l in mapped_model)
+                            coverage += weights[idx]/max(1, len(unassgn_lits))
+                all_models.append((mapped_model, coverage))
+            # sort and get top k models
+            sorted(all_models, key=lambda tup: tup[1], reverse=True)   # sort on coverage
+            top_k = min(len(all_models), parameters['sat_model_top'))
+            best_models = all_models[:top_k]
+            return best_models, solved
         else:
             return None, solved
 
 @time_func
-def getBestModel(clauses, F_prime):
+def getBestModel(clauses, F_prime, weights, parameters):
+
     if not F_prime :
         return [], True
+
+    sat_model = parameters['sat_model']
 
     cnf_clauses = [clauses[i] for i in F_prime]
 
@@ -172,10 +200,21 @@ def getBestModel(clauses, F_prime):
         if solved:
             best_model = None
             best_coverage = 0
-            for i, m in enumerate(s.enum_models()):
-                model_coverage = 0
+            for m in s.enum_models():
+                # mapping back model to input literals
                 mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , m))
-                coverage = sum([1 for idx, clause in  enumerate(clauses) if idx not in F_prime and len(clause.intersection(mapped_model)) > 0 ])
+                if sat_model == SatModel.BEST_CLAUSES_VALIDATED:
+                    coverage = sum([1 for idx, clause in  enumerate(clauses) if len(clause.intersection(mapped_model)) > 0 and idx not in F_prime])
+                elif sat_model == SatModel.BEST_CLAUSE_WEIGHTS_COVERAGE:
+                    coverage = sum([weights[idx] for idx, clause in  enumerate(clauses) if len(clause.intersection(mapped_model)) > 0 and idx not in F_prime ])
+                elif sat_model == SatModel.BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE:
+                    coverage = 0
+                    for idx, clause in  enumerate(clauses):
+                        if idx in F_prime:
+                            continue
+                        if len(clause.intersection(mapped_model)) > 0:
+                            unassgn_lits = clause - mapped_model - set(-l for l in mapped_model)
+                            coverage += weights[idx]/max(1, len(unassgn_lits))
                 if coverage >= best_coverage:
                     best_coverage = coverage
                     best_model = mapped_model
@@ -423,7 +462,7 @@ def extension3(clauses, weights, F_prime, model, parameters):
         if len(lit_unk) > 0:
             # 4. Literal choice
             # 4.1 Literal with highest [clause count] / [sum clause weights] / [ (sum of clause weights)/#unassigned]
-            if best_literal_counter == BestCounterLiteral.PURE_ONLY:
+            if best_literal_counter == BestLiteral.COUNT_PURE_ONLY:
                 best_lit = max(lit_unk, key=lambda i: cnt[i])
             else:
                 # 4.2 Literal with highest polarity clause count / sum of clause weights / sum of clause weights/#unassigned
@@ -454,7 +493,7 @@ def extension3(clauses, weights, F_prime, model, parameters):
                 cl_true.add(i)
                 cl_unk.remove(i)
             # validate unit literals
-            elif len(unassign_lits) == 1 and best_unit_literal != None:
+            elif len(unassign_lits) == 1 and best_unit_literal != UnitLiteral.IGNORE:
                 lit = next(iter(unassign_lits))
                 if best_unit_literal == UnitLiteral.IMMEDIATE:
                     cl_true.add(i)
@@ -648,6 +687,28 @@ def gurobiOptimalHittingSet(clauses, gurobi_model, C):
     hs = set(i for i in range(len(clauses)) if x[i].x == 1)
 
     return hs
+
+@time_func
+def gurobiOptimalHittingSetAll(clauses, gurobi_model, C):
+    # trivial case
+    if len(C) == 0:
+        return []
+
+    # print(C)
+    for ci in C:
+        # print(ci)
+        # add new constraint sum x[j] * hij >= 1
+        addSetGurobiModel(clauses, gurobi_model, ci)
+
+    # solve optimization problem
+    gurobi_model.optimize()
+
+    # output hitting set
+    x = gurobi_model.getVars()
+    hs = set(i for i in range(len(clauses)) if x[i].x == 1)
+
+    return hs
+
 @time_func
 def gurobiOptimalHittingSetCold(clauses, weights,  H):
     gurobi_model = gurobiModel(clauses, weights)
@@ -1085,29 +1146,35 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     gurobi_model = gurobiModel(cnf.clauses, weights)
 
     C = []
-
     while(True):
+        print("Step=", steps)
         # compute optimal hitting set
-        t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        if bestModel == SatModel.ALL:
+            t_exec_hs, hs =  gurobiOptimalHittingSetAll(cnf.clauses, gurobi_model, C)
+        else:
+            t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        print("\t hs=", hs)
 
         t_hitting_set.append(t_exec_hs)
         s_hs.append(len(hs))
 
         # check satisfiability of clauses
         if bestModel == SatModel.BEST:
-            (t_exec_model, (model, sat)) = getBestModel(frozen_clauses, hs)
+            (t_exec_model, (model, sat)) = getBestModel(frozen_clauses, hs, weights, parameters)
+            print("\t model=", model)
             # print(model, sat)
         elif bestModel == SatModel.ALL:
             (t_exec_model, (models, sat)) = getAllModels(frozen_clauses, hs)
+            print("\t models=", models)
             # print(models, sat)
         else:
             (t_exec_model, (model, sat)) = checkSatClauses(frozen_clauses, hs)
+            print("\t model=", model)
         t_sat_check.append(t_exec_model)
         # print(f"Sat check={t_exec_model}: {model}")
 
-
         if not sat:
-            # print("Steps=", steps, "OMUS=", hs)
+            print("Steps=", steps, "OMUS=", hs)
             gurobi_model.dispose()
 
             # Benchmark data
@@ -1124,26 +1191,32 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
             benchmark_data['extension'] = extension
             benchmark_data['s_hs'] = s_hs
             benchmark_data['s_grow'] = s_grow
-            ppprint(benchmark_data)
+            # ppprint(benchmark_data)
             if outputfile != None :
                 with open(outputfile, 'w') as file:
                     file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             return hs
+        
         if bestModel == SatModel.ALL and len(models) == 0:
-            t_exec_grow, C = grow(frozen_clauses, weights, hs, set(),  parameters)
+            t_exec_grow, C_grow = grow(frozen_clauses, weights, hs, set(),  parameters)
+            C = []
+            C.append(C_grow)
+            s_grow.append(len(C))
         elif bestModel == SatModel.ALL:
-            C = None
-            # Cbis = None
-            # Crest = []
-            t_exec_grow = 0
-            best_weight = sum(weights)
-            C_sz = len(frozen_clauses)
+            C = []
             for idx, model in enumerate(models):
                 t_model_grow, C_grown = grow(frozen_clauses, weights, hs, model,  parameters)
                 w_grown = sum([weight for i, weight in enumerate(weights) if i in C_grown])
-                if w_grown <= best_weight:
-                    best_weight = w_grown
-                    C = C_grown
+                # print("C_grown=", C_grown)
+                C.append(C_grown)
+                s_grow.append(len(C_grown))
+                # if w_grown <= best_weight:
+                #     best_weight = w_grown
+                # if idx == 0:
+                #     Cbis = C_grown
+                # else:
+                #     Crest.append(C_grown)
+                    # C = C_grown
                 # if len(C_grown) < C_sz:
                 #     C_sz = len(C_grown)
                 #     C = C_grown
@@ -1153,12 +1226,13 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
                 # print(C_grown)
                 t_exec_grow += t_model_grow
             t_exec_grow = t_exec_grow/len(models)
-            # C = Cbis.intersection(*Crest)
+            # print("C=", C)
         else:
             t_exec_grow, C = grow(frozen_clauses, weights, hs, model,  parameters)
+            s_grow.append(len(C))
         t_grow.append(t_exec_grow)
-        s_grow.append(len(C))
-        print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}")
+        print("\t C=", C)
+        # print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}", end='\r')
         steps += 1
 
 

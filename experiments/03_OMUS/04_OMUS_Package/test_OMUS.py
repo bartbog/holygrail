@@ -39,7 +39,56 @@ folderPaths={
     'isingModel':'data/hard_instances/Generalized_Ising_model',
     'maxSat':'data/hard_instances/maxsat_staffscheduling_instances',
     'circuitDebugging':'data/hard_instances/ms_industrial/circuit-debugging-problems',
-    'safarpour':'data/hard_instances/ms_industrial/sean-safarpour'
+    'safarpour':'data/hard_instances/ms_industrial/sean-safarpour',
+    'data/mse19-complete-unweighted/aes': 'data/mse19-complete-unweighted/aes',
+    'data/mse19-complete-unweighted/aes-key-recovery': 'data/mse19-complete-unweighted/aes-key-recovery',
+    'data/mse19-complete-unweighted/atcoss': 'data/mse19-complete-unweighted/atcoss',
+    'data/mse19-complete-unweighted/bcp': 'data/mse19-complete-unweighted/bcp',
+    'data/mse19-complete-unweighted/biorepair': 'data/mse19-complete-unweighted/biorepair',
+    'data/mse19-complete-unweighted/causal-discovery': 'data/mse19-complete-unweighted/causal-discovery',
+    'data/mse19-complete-unweighted/CircuitDebuggingProblems': 'data/mse19-complete-unweighted/CircuitDebuggingProblems',
+    'data/mse19-complete-unweighted/CircuitTraceCompaction': 'data/mse19-complete-unweighted/CircuitTraceCompaction',
+    'data/mse19-complete-unweighted/close_solutions': 'data/mse19-complete-unweighted/close_solutions',
+    'data/mse19-complete-unweighted/ConsistentQueryAnswering': 'data/mse19-complete-unweighted/ConsistentQueryAnswering',
+    'data/mse19-complete-unweighted/des': 'data/mse19-complete-unweighted/des',
+    'data/mse19-complete-unweighted/drmx-atmostk': 'data/mse19-complete-unweighted/drmx-atmostk',
+    'data/mse19-complete-unweighted/drmx-cryptogen': 'data/mse19-complete-unweighted/drmx-cryptogen',
+    'data/mse19-complete-unweighted/extension-enforcement': 'data/mse19-complete-unweighted/extension-enforcement',
+    'data/mse19-complete-unweighted/fault-diagnosis': 'data/mse19-complete-unweighted/fault-diagnosis',
+    'data/mse19-complete-unweighted/frb': 'data/mse19-complete-unweighted/frb',
+    'data/mse19-complete-unweighted/gen-hyper-tw': 'data/mse19-complete-unweighted/gen-hyper-tw',
+    'data/mse19-complete-unweighted/HaplotypeAssembly': 'data/mse19-complete-unweighted/HaplotypeAssembly',
+    'data/mse19-complete-unweighted/hs-timetabling': 'data/mse19-complete-unweighted/hs-timetabling',
+    'data/mse19-complete-unweighted/jobshop': 'data/mse19-complete-unweighted/jobshop',
+    'data/mse19-complete-unweighted/kbtree': 'data/mse19-complete-unweighted/kbtree',
+    'data/mse19-complete-unweighted/logic-synthesis': 'data/mse19-complete-unweighted/logic-synthesis',
+    'data/mse19-complete-unweighted/maxclique': 'data/mse19-complete-unweighted/maxclique',
+    'data/mse19-complete-unweighted/maxcut': 'data/mse19-complete-unweighted/maxcut',
+    'data/mse19-complete-unweighted/MaximumCommonSub-GraphExtraction': 'data/mse19-complete-unweighted/MaximumCommonSub-GraphExtraction',
+    'data/mse19-complete-unweighted/maxone': 'data/mse19-complete-unweighted/maxone',
+    'data/mse19-complete-unweighted/MaxSATQueriesinInterpretableClassifiers': 'data/mse19-complete-unweighted/MaxSATQueriesinInterpretableClassifiers',
+    'data/mse19-complete-unweighted/mbd': 'data/mse19-complete-unweighted/mbd',
+    'data/mse19-complete-unweighted/min-fill': 'data/mse19-complete-unweighted/min-fill',
+    'data/mse19-complete-unweighted/mqc': 'data/mse19-complete-unweighted/mqc',
+    'data/mse19-complete-unweighted/optic': 'data/mse19-complete-unweighted/optic',
+    'data/mse19-complete-unweighted/packup': 'data/mse19-complete-unweighted/packup',
+    'data/mse19-complete-unweighted/protein_ins': 'data/mse19-complete-unweighted/protein_ins',
+    'data/mse19-complete-unweighted/pseudoBoolean': 'data/mse19-complete-unweighted/pseudoBoolean',
+    'data/mse19-complete-unweighted/railway-transport': 'data/mse19-complete-unweighted/railway-transport',
+    'data/mse19-complete-unweighted/ramsey': 'data/mse19-complete-unweighted/ramsey',
+    'data/mse19-complete-unweighted/reversi': 'data/mse19-complete-unweighted/reversi',
+    'data/mse19-complete-unweighted/rna-alignment': 'data/mse19-complete-unweighted/rna-alignment',
+    'data/mse19-complete-unweighted/routing': 'data/mse19-complete-unweighted/routing',
+    'data/mse19-complete-unweighted/scheduling': 'data/mse19-complete-unweighted/scheduling',
+    'data/mse19-complete-unweighted/SeanSafarpour': 'data/mse19-complete-unweighted/SeanSafarpour',
+    'data/mse19-complete-unweighted/set-covering': 'data/mse19-complete-unweighted/set-covering',
+    'data/mse19-complete-unweighted/tpr': 'data/mse19-complete-unweighted/tpr',
+    'data/mse19-complete-unweighted/treewidth-computation': 'data/mse19-complete-unweighted/treewidth-computation',
+    'data/mse19-complete-unweighted/uaq': 'data/mse19-complete-unweighted/uaq',
+    'data/mse19-complete-unweighted/vpa': 'data/mse19-complete-unweighted/vpa',
+    'data/mse19-complete-unweighted/wqueens': 'data/mse19-complete-unweighted/wqueens',
+    'data/mse19-complete-unweighted/xai-mindset2': 'data/mse19-complete-unweighted/xai-mindset2'
+
 }
 
 class Difficulty(Enum):
@@ -525,8 +574,8 @@ def test_extension():
         # clause sorting
         # 'sorting':ClauseSorting.IGNORE,
         # 'sorting':ClauseSorting.WEIGHTS,
-        # 'sorting':ClauseSorting.UNASSIGNED,
-        'sorting':ClauseSorting.WEIGHTED_UNASSIGNED,
+        'sorting':ClauseSorting.UNASSIGNED,
+        # 'sorting':ClauseSorting.WEIGHTED_UNASSIGNED,
         # Unit Literal propagation
         'best_unit_literal': UnitLiteral.IMMEDIATE,
         # 'best_unit_literal': UnitLiteral.INGORE,
@@ -535,17 +584,15 @@ def test_extension():
         # 'best_unit_literal': UnitLiteral.POLARITY,
         'best_counter_literal': BestLiteral.COUNT_POLARITY,
         # 'best_counter_literal': BestLiteral.COUNT_PURE_ONLY,
-        # 'sat_model' :SatModel.RANDOM,
-        # 'sat_model' :SatModel.BEST,
-        'sat_model' :SatModel.ALL,
-        'sat_model_top': 3,
+        'sat_model' :SatModel.BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE,
+        # 'top_k_models': 10,
         # 'bestModel' :SatModel.RANDOM,
         'extension': 3,
         'output': 'log.json'
     }
-    f_path = "data/easy_instances/bf0432-007.cnf"
+    # f_path = "data/easy_instances/bf0432-007.cnf"
     # f_path = "data/easy_instances/aim-100-1_6-no-1.cnf"
-    # f_path = "data/easy_instances/zebra_v155_c1135.cnf"
+    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
     clauses = []
     t_clauses = []
     for clause in CNF(from_file=f_path).clauses:
@@ -553,12 +600,14 @@ def test_extension():
             clauses.append(frozenset(clause))
             t_clauses.append(clause)
     cnf = CNF(from_clauses=clauses)
-    omus(cnf, parameters=parameters)
+    print(omus(bacchus_cnf(), parameters=parameters))
+    print(omus(omus_cnf(), parameters=parameters))
+    print(omus(cnf, parameters=parameters))
 
 def main():
-    # test_extension()
-    d = [('a', 1), ('b', 2), ('c', 1.5)]
-    print(max(d, key=lambda tup: tup[1]))
+    test_extension()
+    # d = [('a', 1), ('b', 2), ('c', 1.5)]
+    # d.sort()
     # test_extension()
     # for c in ClauseCounting:
     #     if c == ClauseCounting.WEIGHTED_UNASSIGNED:

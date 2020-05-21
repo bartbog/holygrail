@@ -47,6 +47,7 @@ class ClauseSorting(IntEnum):
     WEIGHTS = 1
     UNASSIGNED = 2
     WEIGHTED_UNASSIGNED = 3
+    LITERAL_ORDERING = 4
 
 class BestLiteral(IntEnum):
     COUNT_PURE_ONLY = 1
@@ -141,7 +142,9 @@ def getTopModels(clauses, F_prime, weights, parameters):
     if not F_prime :
         return [], True
 
-    sat_model = parameters['count_clauses']
+    sat_model = parameters['sat_model']
+    #TODO: check the number of models
+    topK_models = top_k = min(len(F_prime), parameters['top_k_models'])
 
     cnf_clauses = [clauses[i] for i in F_prime]
 
@@ -155,15 +158,16 @@ def getTopModels(clauses, F_prime, weights, parameters):
         if solved:
             # 
             all_models = []
-
-            for m in s.enum_models():
+            for mi, m in enumerate(s.enum_models()):
+                print(f"model {mi} = {m}")
                 # mapping back model to input literals
                 mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , m))
-                if sat_model == ClauseCounting.VALIDATED:
+                coverage = 0
+                if sat_model == SatModel.BEST_CLAUSES_VALIDATED:
                     coverage = sum([1 for idx, clause in  enumerate(clauses) if len(clause.intersection(mapped_model)) > 0 and idx not in F_prime])
-                elif sat_model == ClauseCounting.WEIGHTS:
+                elif sat_model == SatModel.BEST_CLAUSE_WEIGHTS_COVERAGE:
                     coverage = sum([weights[idx] for idx, clause in  enumerate(clauses) if len(clause.intersection(mapped_model)) > 0 and idx not in F_prime ])
-                elif sat_model == ClauseCounting.WEIGHTED_UNASSIGNED:
+                elif sat_model == SatModel.BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE:
                     coverage = 0
                     for idx, clause in  enumerate(clauses):
                         if idx in F_prime:
@@ -172,11 +176,13 @@ def getTopModels(clauses, F_prime, weights, parameters):
                             unassgn_lits = clause - mapped_model - set(-l for l in mapped_model)
                             coverage += weights[idx]/max(1, len(unassgn_lits))
                 all_models.append((mapped_model, coverage))
+                if(mi > topK_models):
+                    break
             # sort and get top k models
             sorted(all_models, key=lambda tup: tup[1], reverse=True)   # sort on coverage
-            top_k = min(len(all_models), parameters['sat_model_top'))
+            # top_k = min(len(F_prime), topK_models)
             best_models = all_models[:top_k]
-            return best_models, solved
+            return [model[0] for model in best_models], solved
         else:
             return None, solved
 
@@ -198,9 +204,10 @@ def getBestModel(clauses, F_prime, weights, parameters):
         solved = s.solve()
 
         if solved:
-            best_model = None
+            best_model = s.get_model()
             best_coverage = 0
-            for m in s.enum_models():
+            k = 0
+            for mi,  m in enumerate(s.enum_models()):
                 # mapping back model to input literals
                 mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , m))
                 if sat_model == SatModel.BEST_CLAUSES_VALIDATED:
@@ -215,9 +222,12 @@ def getBestModel(clauses, F_prime, weights, parameters):
                         if len(clause.intersection(mapped_model)) > 0:
                             unassgn_lits = clause - mapped_model - set(-l for l in mapped_model)
                             coverage += weights[idx]/max(1, len(unassgn_lits))
-                if coverage >= best_coverage:
+                if coverage > best_coverage:
                     best_coverage = coverage
                     best_model = mapped_model
+                # TODO: Define a treshold on the number of models 
+                if(mi > len(mapped_model)):
+                    break
             return best_model, solved
         else:
             return None, solved
@@ -1122,13 +1132,13 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     s_hs = []
     s_grow = []
 
-    # parameters
+    # default parameters
     bestModel = parameters['sat_model']
     extension = parameters['extension']
-    outputfile = parameters['output']
-    # print("Parameters:")
-    # ppprint(parameters)
-
+    outputfile = 'log.json' if 'output' not in parameters else  parameters['output']
+    top_k_model = 0 if 'top_k_models' not in parameters else parameters['top_k_models']
+    param_ext4 = dict(parameters)
+    param_ext4['extension'] = 4
     # Performance
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf.clauses]
 
@@ -1149,27 +1159,25 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     while(True):
         print("Step=", steps)
         # compute optimal hitting set
-        if bestModel == SatModel.ALL:
+        if top_k_model > 0:
             t_exec_hs, hs =  gurobiOptimalHittingSetAll(cnf.clauses, gurobi_model, C)
         else:
             t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
-        print("\t hs=", hs)
+        # print("\t hs=", hs)
 
         t_hitting_set.append(t_exec_hs)
         s_hs.append(len(hs))
 
         # check satisfiability of clauses
-        if bestModel == SatModel.BEST:
+        if top_k_model > 0:
+            (t_exec_model, (models, sat)) = getTopModels(frozen_clauses, hs, weights, parameters)
+        elif bestModel in [
+            SatModel.BEST_CLAUSES_VALIDATED,
+            SatModel.BEST_CLAUSE_WEIGHTS_COVERAGE,
+            SatModel.BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE]:
             (t_exec_model, (model, sat)) = getBestModel(frozen_clauses, hs, weights, parameters)
-            print("\t model=", model)
-            # print(model, sat)
-        elif bestModel == SatModel.ALL:
-            (t_exec_model, (models, sat)) = getAllModels(frozen_clauses, hs)
-            print("\t models=", models)
-            # print(models, sat)
         else:
             (t_exec_model, (model, sat)) = checkSatClauses(frozen_clauses, hs)
-            print("\t model=", model)
         t_sat_check.append(t_exec_model)
         # print(f"Sat check={t_exec_model}: {model}")
 
@@ -1197,42 +1205,32 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
                     file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             return hs
         
-        if bestModel == SatModel.ALL and len(models) == 0:
+        if top_k_model > 0 and len(models) == 0:
             t_exec_grow, C_grow = grow(frozen_clauses, weights, hs, set(),  parameters)
             C = []
             C.append(C_grow)
             s_grow.append(len(C))
-        elif bestModel == SatModel.ALL:
+        elif top_k_model > 0:
             C = []
             for idx, model in enumerate(models):
                 t_model_grow, C_grown = grow(frozen_clauses, weights, hs, model,  parameters)
                 w_grown = sum([weight for i, weight in enumerate(weights) if i in C_grown])
-                # print("C_grown=", C_grown)
-                C.append(C_grown)
+                if C_grown not in C:
+                    C.append(C_grown)
                 s_grow.append(len(C_grown))
-                # if w_grown <= best_weight:
-                #     best_weight = w_grown
-                # if idx == 0:
-                #     Cbis = C_grown
-                # else:
-                #     Crest.append(C_grown)
-                    # C = C_grown
-                # if len(C_grown) < C_sz:
-                #     C_sz = len(C_grown)
-                #     C = C_grown
-                #     Cbis = C_grown
-                # else:
-                #     Crest.append(C_grown)
-                # print(C_grown)
                 t_exec_grow += t_model_grow
             t_exec_grow = t_exec_grow/len(models)
-            # print("C=", C)
         else:
             t_exec_grow, C = grow(frozen_clauses, weights, hs, model,  parameters)
+
+            # t_exec_grow, C2 = grow(frozen_clauses, weights, hs, model,  param_ext4)
+            # C = C1.union(C2)
+
+            # print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}, |C1| ={len(C1)},  |C2|={len(C2)}, ", end='\r')
+            print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}", end='\r')
             s_grow.append(len(C))
         t_grow.append(t_exec_grow)
-        print("\t C=", C)
-        # print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}", end='\r')
+        # print("\t C=", C)
         steps += 1
 
 

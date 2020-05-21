@@ -272,6 +272,13 @@ def extension1(clauses, weights, F_prime, model, parameters):
     Returns:
         iterable(int), iterable(int) -- Grown hitting set, new model of hitting set
     """
+    # parameters
+    count_clauses = parameters['count_clauses']
+    sorting = parameters['sorting']
+    best_unit_literal = parameters['best_unit_literal']
+
+    best_literal_counter = parameters['best_counter_literal']
+
     new_F_prime = set(F_prime)
     # precompute both
     lit_true = set(model)
@@ -293,7 +300,7 @@ def extension1(clauses, weights, F_prime, model, parameters):
 
             else:
                 unassigned = clause - lit_false
-                if len(unassigned) == 1:
+                if len(unassigned) == 1 and best_unit_literal == UnitLiteral.IMMEDIATE:
                     t_F_prime.add(i)
                     # add literal to the model
                     lit = next(iter(unassigned))
@@ -308,25 +315,40 @@ def extension1(clauses, weights, F_prime, model, parameters):
     return new_F_prime, lit_true
 
 def extension2(clauses, weights, F_prime, model, parameters):
+    # parameters
+    count_clauses = parameters['count_clauses']
+    sorting = parameters['sorting']
+    best_unit_literal = parameters['best_unit_literal']
+    best_literal_counter = parameters['best_counter_literal']
+
+    # init counter
     all_literals = frozenset.union(*clauses)
-    t_F_prime, t_model = extension1(clauses, F_prime, model)
+    t_F_prime, t_model = extension1(clauses,weights, F_prime, model, parameters)
     lit_true = set(t_model)
     lit_false = set(-l for l in t_model)
-    clause_added = False
 
     # alternative, over all literals
     remaining_literals = all_literals - lit_true - lit_false
     conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
 
-    while(len(conflict_free_literals) > 0):
-        if random_literal:
-            lit = next(iter(conflict_free_literals))
-        else:
-            lit = findBestLiteral(clauses, t_F_prime, conflict_free_literals, maxcoverage)
-        lit_true.add(lit)
-        lit_false.add(-lit)
+    cnt = Counter({literal:0 for literal in remaining_literals})
+    for i,clause in enumerate(clauses):
+        if i not in t_F_prime:
+            lit_intersect_cl = remaining_literals.intersection(clause)
+            cnt.update(lit_intersect_cl)
 
-        t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)
+    while(len(conflict_free_literals) > 0):
+
+        if best_literal_counter == BestLiteral.COUNT_PURE_ONLY:
+            best_lit = max(conflict_free_literals, key=lambda i: cnt[i])
+        else:
+            # 4.2 Literal with highest polarity clause count / sum of clause weights / sum of clause weights/#unassigned
+            best_lit = max(conflict_free_literals, key=lambda i: cnt[i] - cnt[-i])
+
+        lit_true.add(best_lit)
+        lit_false.add(-best_lit)
+
+        t_F_prime, t_model = extension1(clauses, weights, t_F_prime, lit_true, parameters)
 
         lit_true = set(t_model)
         lit_false = set(-l for l in t_model)
@@ -340,17 +362,19 @@ def extension2(clauses, weights, F_prime, model, parameters):
 
     # propagate all remaining literals
     while len(conflictual_literals) > 0:
-        if random_literal:
-            literal = next(iter(conflictual_literals))
+        if best_literal_counter == BestLiteral.COUNT_PURE_ONLY:
+            best_lit = max(conflict_free_literals, key=lambda i: cnt[i])
         else:
-            literal = findBestLiteral(clauses, t_F_prime, conflictual_literals, maxcoverage)
-        conflictual_literals.remove(literal)
-        # because the unit prop created a conflict-free one, we must check
-        if -literal in conflictual_literals:
-            conflictual_literals.remove(-literal)
+            # 4.2 Literal with highest polarity clause count / sum of clause weights / sum of clause weights/#unassigned
+            best_lit = max(conflict_free_literals, key=lambda i: cnt[i] - cnt[-i])
 
-        lit_true.add(literal)
-        lit_false.add(-literal)
+        conflictual_literals.remove(best_lit)
+        # because the unit prop created a conflict-free one, we must check
+        if -best_lit in conflictual_literals:
+            conflictual_literals.remove(-best_lit)
+
+        lit_true.add(best_lit)
+        lit_false.add(-best_lit)
 
         # unit propagate new literal
         t_F_prime, t_model = extension1(clauses, t_F_prime, lit_true)

@@ -56,7 +56,7 @@ class BestLiteral(IntEnum):
 class UnitLiteral(IntEnum):
     IGNORE = 0
     RANDOM = 1
-    PURE = 2
+    SINGLE_POLARITY = 2
     POLARITY = 3
     IMMEDIATE = 4
 
@@ -554,27 +554,30 @@ def extension3(clauses, weights, F_prime, model, parameters):
                     # clause weight/# litterals assigned
                     elif count_clauses == ClauseCounting.WEIGHTED_UNASSIGNED:
                         cnt[lit] += weights[i]/len(unassign_lits)
-        # Todo: go to fixpoint or fullpass
-        if  len(unit_literals) > 0 and best_unit_literal in [UnitLiteral.RANDOM,  UnitLiteral.PURE, UnitLiteral.POLARITY]:
+        while  len(unit_literals) > 0:
             # 4. Literal choice
             # 4.1 Random literal
-            if best_unit_literal == UnitLiteral.RANDOM:
-                best_lit = next(iter(unit_literals))
+            # if best_unit_literal == UnitLiteral.RANDOM:
             # 4.2 Literal with highest [clause count] / [sum clause weights] / [ (sum of clause weights)/#unassigned]
-            elif best_unit_literal == UnitLiteral.PURE:
+            if best_unit_literal == UnitLiteral.SINGLE_POLARITY:
                 best_lit = max(unit_literals, key=lambda i: cnt[i])
             elif best_unit_literal == UnitLiteral.POLARITY:
             # 4.3 Literal with highest polarity clause count / sum of clause weights / sum of clause weights/#unassigned
                 best_lit = max(unit_literals, key=lambda i: cnt[i] - cnt[-i])
+            else:
+                best_lit = next(iter(unit_literals))
             # literal
             lit_true.add(best_lit)
             lit_false.add(-best_lit)
             lit_unk.remove(best_lit)
+            unit_literals.remove(best_lit)
             del cnt[best_lit]
 
-            if -lit in lit_unk:
+            if -best_lit in lit_unk:
                 lit_unk.remove(-best_lit)
                 del cnt[-best_lit]
+            if -best_lit in unit_literals:
+                unit_literals.remove(-best_lit)
 
     return cl_true, lit_true
 

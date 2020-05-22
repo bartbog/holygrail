@@ -32,64 +32,9 @@ import pprint
 sign = lambda x: (1, -1)[x < 0]
 ppprint = pprint.PrettyPrinter(indent=4).pprint
 # # Pysat pre-processing
-folderPaths={
-    'easyInstances':'data/easy_instances/',
-    'instance':'data/instance/',
-    'aaaiInstances':'data/hard_instances/aaai_instances',
-    'isingModel':'data/hard_instances/Generalized_Ising_model',
-    'maxSat':'data/hard_instances/maxsat_staffscheduling_instances',
-    'circuitDebugging':'data/hard_instances/ms_industrial/circuit-debugging-problems',
-    'safarpour':'data/hard_instances/ms_industrial/sean-safarpour',
-    'data/mse19-complete-unweighted/aes': 'data/mse19-complete-unweighted/aes',
-    'data/mse19-complete-unweighted/aes-key-recovery': 'data/mse19-complete-unweighted/aes-key-recovery',
-    'data/mse19-complete-unweighted/atcoss': 'data/mse19-complete-unweighted/atcoss',
-    'data/mse19-complete-unweighted/bcp': 'data/mse19-complete-unweighted/bcp',
-    'data/mse19-complete-unweighted/biorepair': 'data/mse19-complete-unweighted/biorepair',
-    'data/mse19-complete-unweighted/causal-discovery': 'data/mse19-complete-unweighted/causal-discovery',
-    'data/mse19-complete-unweighted/CircuitDebuggingProblems': 'data/mse19-complete-unweighted/CircuitDebuggingProblems',
-    'data/mse19-complete-unweighted/CircuitTraceCompaction': 'data/mse19-complete-unweighted/CircuitTraceCompaction',
-    'data/mse19-complete-unweighted/close_solutions': 'data/mse19-complete-unweighted/close_solutions',
-    'data/mse19-complete-unweighted/ConsistentQueryAnswering': 'data/mse19-complete-unweighted/ConsistentQueryAnswering',
-    'data/mse19-complete-unweighted/des': 'data/mse19-complete-unweighted/des',
-    'data/mse19-complete-unweighted/drmx-atmostk': 'data/mse19-complete-unweighted/drmx-atmostk',
-    'data/mse19-complete-unweighted/drmx-cryptogen': 'data/mse19-complete-unweighted/drmx-cryptogen',
-    'data/mse19-complete-unweighted/extension-enforcement': 'data/mse19-complete-unweighted/extension-enforcement',
-    'data/mse19-complete-unweighted/fault-diagnosis': 'data/mse19-complete-unweighted/fault-diagnosis',
-    'data/mse19-complete-unweighted/frb': 'data/mse19-complete-unweighted/frb',
-    'data/mse19-complete-unweighted/gen-hyper-tw': 'data/mse19-complete-unweighted/gen-hyper-tw',
-    'data/mse19-complete-unweighted/HaplotypeAssembly': 'data/mse19-complete-unweighted/HaplotypeAssembly',
-    'data/mse19-complete-unweighted/hs-timetabling': 'data/mse19-complete-unweighted/hs-timetabling',
-    'data/mse19-complete-unweighted/jobshop': 'data/mse19-complete-unweighted/jobshop',
-    'data/mse19-complete-unweighted/kbtree': 'data/mse19-complete-unweighted/kbtree',
-    'data/mse19-complete-unweighted/logic-synthesis': 'data/mse19-complete-unweighted/logic-synthesis',
-    'data/mse19-complete-unweighted/maxclique': 'data/mse19-complete-unweighted/maxclique',
-    'data/mse19-complete-unweighted/maxcut': 'data/mse19-complete-unweighted/maxcut',
-    'data/mse19-complete-unweighted/MaximumCommonSub-GraphExtraction': 'data/mse19-complete-unweighted/MaximumCommonSub-GraphExtraction',
-    'data/mse19-complete-unweighted/maxone': 'data/mse19-complete-unweighted/maxone',
-    'data/mse19-complete-unweighted/MaxSATQueriesinInterpretableClassifiers': 'data/mse19-complete-unweighted/MaxSATQueriesinInterpretableClassifiers',
-    'data/mse19-complete-unweighted/mbd': 'data/mse19-complete-unweighted/mbd',
-    'data/mse19-complete-unweighted/min-fill': 'data/mse19-complete-unweighted/min-fill',
-    'data/mse19-complete-unweighted/mqc': 'data/mse19-complete-unweighted/mqc',
-    'data/mse19-complete-unweighted/optic': 'data/mse19-complete-unweighted/optic',
-    'data/mse19-complete-unweighted/packup': 'data/mse19-complete-unweighted/packup',
-    'data/mse19-complete-unweighted/protein_ins': 'data/mse19-complete-unweighted/protein_ins',
-    'data/mse19-complete-unweighted/pseudoBoolean': 'data/mse19-complete-unweighted/pseudoBoolean',
-    'data/mse19-complete-unweighted/railway-transport': 'data/mse19-complete-unweighted/railway-transport',
-    'data/mse19-complete-unweighted/ramsey': 'data/mse19-complete-unweighted/ramsey',
-    'data/mse19-complete-unweighted/reversi': 'data/mse19-complete-unweighted/reversi',
-    'data/mse19-complete-unweighted/rna-alignment': 'data/mse19-complete-unweighted/rna-alignment',
-    'data/mse19-complete-unweighted/routing': 'data/mse19-complete-unweighted/routing',
-    'data/mse19-complete-unweighted/scheduling': 'data/mse19-complete-unweighted/scheduling',
-    'data/mse19-complete-unweighted/SeanSafarpour': 'data/mse19-complete-unweighted/SeanSafarpour',
-    'data/mse19-complete-unweighted/set-covering': 'data/mse19-complete-unweighted/set-covering',
-    'data/mse19-complete-unweighted/tpr': 'data/mse19-complete-unweighted/tpr',
-    'data/mse19-complete-unweighted/treewidth-computation': 'data/mse19-complete-unweighted/treewidth-computation',
-    'data/mse19-complete-unweighted/uaq': 'data/mse19-complete-unweighted/uaq',
-    'data/mse19-complete-unweighted/vpa': 'data/mse19-complete-unweighted/vpa',
-    'data/mse19-complete-unweighted/wqueens': 'data/mse19-complete-unweighted/wqueens',
-    'data/mse19-complete-unweighted/xai-mindset2': 'data/mse19-complete-unweighted/xai-mindset2'
-
-}
+# folderPaths={
+#     'easyInstances':'data/easy_instances/'
+# }
 
 class Difficulty(Enum):
     EASY = 1
@@ -113,60 +58,22 @@ def instanceDiff(fileSize):
     else:
         return Difficulty.HARD
 
-def allInstances(difficulty, cnfExtensions=['.cnf', '.wcnf']):
-    instances = []
-    for folder in folderPaths:
-        instanceFolder = Path(folderPaths[folder])
-        instances += [x for x in instanceFolder.iterdir() if x.is_file() and x.suffix in cnfExtensions]
-
-    if difficulty is Difficulty.ALL:
-        return instances
-    else:
-        sizeFilteredInstances = list(filter(lambda x: instanceDiff(x.stat().st_size) is difficulty, instances))
-        return sizeFilteredInstances
-
-def getDataPaths(cnfExtensions=['.cnf', '.wcnf'], difficulty= Difficulty.EASY):
-    if difficulty not in Difficulty:
-        print('Difficulty must be in ' +str(Difficulty.list()) + ' defaulting to easy.')
-        difficulty = Difficulty.EASY
-
-    return allInstances(difficulty, cnfExtensions)
-
-def cnfInstances(difficulty=Difficulty.EASY):
-    instances = [instance for instance in getDataPaths(cnfExtensions=['.cnf'], difficulty= difficulty)]
-    return instances
-
-
 def CNFisUnsat(instance, verbose=True):
-    clauses = []
-    for clause in CNF(from_file=instance).clauses:
-        if clause not in clauses and len(clause) > 0:
-            clauses.append(frozenset(clause))
-
-    mapping, _ = mapping_clauses(clauses)
-    mapped_clauses = map_clauses(clauses, mapping)
-
+    cnf = CNF(from_file=instance)
     with Solver() as s:
-        added = s.append_formula(mapped_clauses, no_return=False)
+        added = s.append_formula(cnf, no_return=False)
         solved = s.solve()
-    return not solved
+        model = s.get_model()
+    return not solved, model
 
-def cnfUnsatInstances(difficulty=Difficulty.EASY):
-    return [instance  for instance in cnfInstances(difficulty) if CNFisUnsat(instance)]
-
-def wcnfInstances(difficulty=Difficulty.EASY):
-    instances = [instance for instance in getDataPaths(cnfExtensions=['.wcnf'], difficulty= difficulty)]
-    return instances
 
 def WCNFisUnsat(instance, verbose=True):
-    with Solver(name = SolverNames.minisat22[0]) as s:
-        wcnf = WCNF(from_file=instance)
-        added = s.append_formula(wcnf.clauses, no_return=False)
+    cnf = WCNF(from_file=instance).unweighted()
+    with Solver() as s:
+        added = s.append_formula(cnf, no_return=False)
         solved = s.solve()
-    return not solved
-
-def wcnfUnsatInstances():
-    return [instance  for instance in wcnfInstances()]
+        model = s.get_model()
+    return not solved, model
 
 def smus_CNF():
     l = 1
@@ -185,60 +92,9 @@ def smus_CNF():
     cnf.append([-l])    # c8 ¬l
     return cnf
 
-def mapping_clauses(clauses):
-
-    union_clauses = frozenset.union(*clauses)
-    sorted_vars = sorted(map(abs, union_clauses))
-
-    mapping = {elem:i+1 for i, elem in enumerate(sorted_vars)}
-    reversemapping = {i+1:elem for i, elem in enumerate(sorted_vars)}
-
-    return mapping, reversemapping
-
-def map_clauses(clauses, mapping):
-    return [[mapping[abs(literal)]*sign(literal) for literal in clause] for clause in clauses]
-
-def myCheckSatClauses(clauses):
-    # cnf_clauses = [clauses[i] for i in F_prime]
-
-    mapping, reverse_mapping = mapping_clauses(clauses)
-    mapped_clauses = map_clauses(clauses, mapping)
-
-    with Solver() as s:
-        added = s.append_formula(mapped_clauses, no_return=False)
-        solved = s.solve()
-        model = s.get_model()
-
-    if solved:
-        mapped_model = frozenset(map(lambda literal: reverse_mapping[abs(literal)]*sign(literal) , model))
-        return mapped_model, solved
-    else:
-        return None, solved
-
 def test_omus(extension):
     smus_cnf = smus_CNF()
     assert sorted(omus(smus_cnf, extension )) == sorted([0, 1, 2]), "SMUS error"
-
-def test_cnf_instances():
-    extension = 4
-
-    cnf_files = sorted(cnfUnsatInstances(), key=lambda item: item.stat().st_size)
-    cnf_instances = list(map(lambda cnf_file: CNF(from_file=cnf_file), cnf_files))
-    cnt = 0
-    for i, cnf in enumerate(cnf_instances):
-        # print("helllooooo")
-        cnf_clauses = []
-        [cnf_clauses.append(frozenset(clause)) for clause in cnf.clauses if clause not in cnf_clauses and len(clause) > 0 ]
-
-        model, solved = myCheckSatClauses(cnf_clauses)
-
-        if not solved:
-            print("Not solvable", solved )
-            print(f"\nCNF File Example: {cnf_files[i].name} ({CNFisUnsat(cnf_files[i])}) - clauses = {len(cnf_clauses)}")
-            # ppprint(cnf_clauses)
-            # omus(cnf = CNF(from_clauses=cnf_clauses), extension =    extension )
-            break
-
 
 def benchmark_code_hard():
     # user_folder = '/home/emilio/OMUS/'
@@ -604,23 +460,23 @@ def test_extension():
     print(omus(omus_cnf(), parameters=parameters))
     print(omus(cnf, parameters=parameters))
 
+
 def main():
-    test_extension()
-    # d = [('a', 1), ('b', 2), ('c', 1.5)]
-    # d.sort()
-    # test_extension()
-    # for c in ClauseCounting:
-    #     if c == ClauseCounting.WEIGHTED_UNASSIGNED:
-    #         print(c)
-        # print(c)
-    # test_getAllModels()
-    # test_instance()
-    # omusGurobiCold(smus_CNF(),extension=3 )
-    # omusOrTools("")
-    # benchmark_code()
-    # benchmark_code_hard()
-    # test_findBestLiteral()
-    # print(Difficulty.EASY < Difficulty.MEDIUM)
+    wncfFiles = []
+    cnfFiles = []
+    # r=root, d=directories, f = files
+    path = 'data/easy_instances/'
+    for r, d, f in os.walk(path):
+        for file in f:
+            if '.wcnf' in file:
+                wncfFiles.append(os.path.join(r, file))
+            elif '.cnf' in file:
+                cnfFiles.append(os.path.join(r, file))
+
+    for f in wncfFiles:
+        print(f, WCNFisUnsat(f) )
+    for f in cnfFiles:
+        print(f, CNFisUnsat(f))
 
 if __name__ == "__main__":
     main()

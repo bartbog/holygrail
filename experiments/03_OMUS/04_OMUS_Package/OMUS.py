@@ -530,7 +530,7 @@ def extension3(clauses, weights, F_prime, model, parameters):
                     # clause weight/# litterals assigned
                     elif count_clauses == ClauseCounting.WEIGHTED_UNASSIGNED:
                         cnt[lit] += weights[i]/len(unassign_lits)
-
+        # Todo: go to fixpoint or fullpass
         if  len(unit_literals) > 0 and best_unit_literal in [UnitLiteral.RANDOM,  UnitLiteral.PURE, UnitLiteral.POLARITY]:
             # 4. Literal choice
             # 4.1 Random literal

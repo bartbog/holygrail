@@ -245,7 +245,7 @@ def test_extension():
         # 'bestModel' :SatModel.RANDOM,
         'extension': 3,
         'output': 'log.json',
-        'local_search': True,
+        'local_search': False,
         'cutoff' : 15,
         'h_inc' : 3,
         'S_inc' : 1

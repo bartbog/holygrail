@@ -14,8 +14,6 @@ from collections import Counter
 from datetime import datetime
 from statistics import mean
 from functools import wraps
-import math
-import random
 
 # pysat library
 from pysat.solvers import Solver, SolverNames
@@ -50,7 +48,6 @@ class ClauseSorting(IntEnum):
     UNASSIGNED = 2
     WEIGHTED_UNASSIGNED = 3
     LITERAL_ORDERING = 4
-    
 
 class BestLiteral(IntEnum):
     COUNT_PURE_ONLY = 1
@@ -257,8 +254,6 @@ def extension3(clauses, weights, F_prime, model, parameters):
     sorting = parameters['sorting']
     best_unit_literal = parameters['best_unit_literal']
     best_literal_counter = parameters['best_counter_literal']
-    local_search = parameters['local_search']
-    cutoff = parameters['cutoff']
 
     if not isinstance(count_clauses, ClauseCounting):
         print(f"Wong input = {count_clauses}. Defaulting to # validated clauses")
@@ -273,6 +268,7 @@ def extension3(clauses, weights, F_prime, model, parameters):
     lit_false = set(-l for l in model)
     cl_true = set(F_prime)
     lit_unk = set(frozenset.union(*clauses)) - lit_true - lit_false
+    # clause ordering
     # Pre-processing is necessary
     cl_unk = [i for i in range(len(clauses)) if i not in F_prime]
 
@@ -281,7 +277,7 @@ def extension3(clauses, weights, F_prime, model, parameters):
 
     for i in list(cl_unk):
         clause = clauses[i]
-        unassign_lits = clause - lit_false - lit_true
+        unassign_lits = clause - lit_false
         # clause is false, remove it
         if len(unassign_lits) == 0:
             cl_unk.remove(i)
@@ -290,7 +286,10 @@ def extension3(clauses, weights, F_prime, model, parameters):
             cl_true.add(i)
             cl_unk.remove(i)
         else:
-            for lit in unassign_lits:
+            # unassign_lits = clause - lit_false - lit_true
+            # clause = clauses[i]
+            unassgn_lits = clause.intersection(lit_unk)
+            for lit in unassgn_lits:
                 if count_clauses == ClauseCounting.VALIDATED:
                     # check if count number of clauses
                     cnt[lit] += 1
@@ -299,22 +298,20 @@ def extension3(clauses, weights, F_prime, model, parameters):
                     cnt[lit] += weights[i]
                 elif count_clauses == ClauseCounting.WEIGHTED_UNASSIGNED:
                     # clause weight/# litterals assigned
-                    cnt[lit] += weights[i]/len(unassign_lits)
+                    cnt[lit] += weights[i]/len(unassgn_lits)
+
+    if isinstance(sorting, ClauseSorting):
+        # clause sorting based on weights
+        if sorting == ClauseSorting.WEIGHTS:
+            cl_unk.sort(reverse=True, key= lambda i: weights[i])
+        # clause sorting based on # unassigned literals
+        elif sorting == ClauseSorting.UNASSIGNED:
+            cl_unk.sort(reverse=True, key= lambda i: len(clauses[i] - lit_true - lit_false))
+        # clause sorting based on weight of clause /# unassigned literals
+        elif sorting == ClauseSorting.WEIGHTED_UNASSIGNED:
+            cl_unk.sort(reverse=True, key= lambda i: weights[i] / len(clauses[i] - lit_true - lit_false) )
 
     while(len(cl_unk) > 0):
-        # check if clauses need reordering (only useful for unit literal)
-        if isinstance(sorting, ClauseSorting):
-            # clause sorting based on weights
-            if sorting == ClauseSorting.WEIGHTS:
-                cl_unk.sort(reverse=False, key= lambda i: weights[i])
-            # clause sorting based on # unassigned literals
-            elif sorting == ClauseSorting.UNASSIGNED:
-                cl_unk.sort(reverse=False, key= lambda i: len(clauses[i] - lit_true - lit_false))
-            # clause sorting based on # unassigned literals
-            elif sorting == ClauseSorting.WEIGHTED_UNASSIGNED:
-                # cl_unk.sort(reverse=True, key= lambda i: weights[i] / max(1, len(clauses[i] - lit_true - lit_false)) )
-                cl_unk.sort(reverse=False, key= lambda i: weights[i] / len(clauses[i] - lit_true - lit_false) if len(clauses[i] - lit_true - lit_false)> 0 else math.inf )
-
         # check single polarity literals
         tofix = set()
         for lit in set(abs(lit) for lit in lit_unk):
@@ -323,6 +320,17 @@ def extension3(clauses, weights, F_prime, model, parameters):
             elif not -lit in cnt or cnt[-lit] == 0:
                 tofix.add(lit)
 
+        # check if clauses need reordering (only useful for unit literal)
+        if isinstance(sorting, ClauseSorting):
+            # clause sorting based on weights
+            if sorting == ClauseSorting.WEIGHTS:
+                cl_unk.sort(reverse=True, key= lambda i: weights[i])
+            # clause sorting based on # unassigned literals
+            elif sorting == ClauseSorting.UNASSIGNED:
+                cl_unk.sort(reverse=True, key= lambda i: len(clauses[i] - lit_true - lit_false))
+            # clause sorting based on # unassigned literals
+            elif sorting == ClauseSorting.WEIGHTED_UNASSIGNED:
+                cl_unk.sort(reverse=True, key= lambda i: weights[i] / max(1, len(clauses[i] - lit_true - lit_false)) )
 
         #print(cl_unk, tofix, lit_true, lit_false)
         if len(tofix) > 0:
@@ -347,18 +355,10 @@ def extension3(clauses, weights, F_prime, model, parameters):
             # 4. Literal choice
             # 4.1 Literal with highest [clause count] / [sum clause weights] / [ (sum of clause weights)/#unassigned]
             if best_literal_counter == BestLiteral.COUNT_PURE_ONLY:
-                # best_lit = max(lit_unk, key=lambda i: cnt[i])
-                # print(lit_unk)
-                # print(cnt)
-                lit_max_val = max(lit_unk, key=lambda i: cnt[i])
-                best_lit = random.choice([lit for lit in lit_unk if cnt[lit] == cnt[lit_max_val]])
-                # best_lit = min(lit_unk, key=lambda i: cnt[-i])
+                best_lit = max(lit_unk, key=lambda i: cnt[i])
             else:
                 # 4.2 Literal with highest polarity clause count / sum of clause weights / sum of clause weights/#unassigned
-                # best_lit = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
-                lit_max_val = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
-                best_lit = random.choice([lit for lit in lit_unk if (cnt[lit] - cnt[-lit]) == (cnt[lit_max_val] - cnt[-lit_max_val])])
-                # best_lit = min(lit_unk, key=lambda i: cnt[-i] - cnt[i])
+                best_lit = max(lit_unk, key=lambda i: cnt[i] - cnt[-i])
 
             del cnt[best_lit]
             del cnt[-best_lit]
@@ -412,20 +412,14 @@ def extension3(clauses, weights, F_prime, model, parameters):
                     # clause weight/# litterals assigned
                     elif count_clauses == ClauseCounting.WEIGHTED_UNASSIGNED:
                         cnt[lit] += weights[i]/len(unassign_lits)
-
         while len(unit_literals) > 0:
             # 4. Literal choice
             # 4.2 Literal with highest [clause count] / [sum clause weights] / [ (sum of clause weights)/#unassigned]
             if best_unit_literal == UnitLiteral.SINGLE_POLARITY:
-                # best_lit = max(unit_literals, key=lambda i: cnt[i])
-                lit_max_val = max(unit_literals, key=lambda i: cnt[i])
-                best_lit = random.choice([lit for lit in unit_literals if cnt[lit] == cnt[lit_max_val]])
-                # best_lit = min(unit_literals, key=lambda i: cnt[-i])
+                best_lit = max(unit_literals, key=lambda i: cnt[i])
             elif best_unit_literal == UnitLiteral.POLARITY:
             # 4.3 Literal with highest polarity clause count / sum of clause weights / sum of clause weights/#unassigned
-                lit_max_val = max(unit_literals, key=lambda i: cnt[i] - cnt[-i])
-                best_lit = random.choice([lit for lit in unit_literals if (cnt[lit] - cnt[-lit]) == (cnt[lit_max_val] - cnt[-lit_max_val])])
-                # best_lit = min(unit_literals, key=lambda i: cnt[-i] - cnt[i])
+                best_lit = max(unit_literals, key=lambda i: cnt[i] - cnt[-i])
             else:
                 best_lit = next(iter(unit_literals))
             # literal
@@ -441,151 +435,7 @@ def extension3(clauses, weights, F_prime, model, parameters):
             if -best_lit in unit_literals:
                 unit_literals.remove(-best_lit)
 
-    if not local_search:
-        return cl_true, lit_true
-
-    #     # preprocessing
-    # lit_true = set(model)
-    # lit_false = set(-l for l in model)
-    # cl_true = set(F_prime)
-    # lit_unk = set(frozenset.union(*clauses)) - lit_true - lit_false
-    # # Pre-processing is necessary
-    # cl_unk = [i for i in range(len(clauses)) if i not in F_prime]
-
-    # # literal- clause counter
-    # cnt = {lit:0 for lit in lit_unk}
-
-    # for i in list(cl_unk):
-    #     clause = clauses[i]
-    #     unassign_lits = clause - lit_false - lit_true
-    #     # clause is false, remove it
-    #     if len(unassign_lits) > 0:
-    #         for lit in unassign_lits:
-    #             if count_clauses == ClauseCounting.VALIDATED:
-    #                 # check if count number of clauses
-    #                 cnt[lit] += 1
-    #             elif count_clauses == ClauseCounting.WEIGHTS:
-    #                 # clause weight
-    #                 cnt[lit] += weights[i]
-    #             elif count_clauses == ClauseCounting.WEIGHTED_UNASSIGNED:
-    #                 # clause weight/# litterals assigned
-    #                 cnt[lit] += weights[i]/len(unassign_lits)
-
-    # while(len(lit_unk) > 0):
-    #     # best_lit = max(lit_unk, key=lambda i: cnt[i])
-    #     lit_max_val = max(lit_unk, key=lambda i: cnt[i])
-    #     best_lit = random.choice([lit for lit in lit_unk if cnt[lit] == cnt[lit_max_val]])
-    #     lit_unk.remove(best_lit)
-    #     del cnt[best_lit]
-    #     if - best_lit in lit_unk:
-    #         lit_unk.remove(-best_lit)
-    #         del cnt[-best_lit]
-    #     lit_true.add(best_lit)
-    #     lit_false.add(-best_lit)
-
-
-    ## Dist : Tailoring local Search for Partial MaxSat (Shaowei Cai, Chuan Luo, Joh, Thornton, Kaile Su)
-    # optimizing using local search
-    maxsteps = 1000
-    # already good assignment
-    assignment = set(lit_true)
-    best_assignment = set(lit_true)
-
-    sp = 0.001
-    soft_clauses = set(i for i in range(len(clauses)) if i not in F_prime)
-    hard_clauses = set(i for i in F_prime)
-    # h_score
-    h_weights = {i:1 for i in hard_clauses}
-
-    # Dist adopts the weighted version of hard score and the unweighted version of soft score, as it employs a clause weighting scheme 
-    # that works only for hard clauses.
-    h_score = lambda x: sum(h_weights[i] for i in hard_clauses if -x in clauses[i]) - sum(h_weights[i]  for i in hard_clauses if x in clauses[i])
-    s_score = lambda x: sum(1 for i in soft_clauses if -x in clauses[i]) - sum(1 for i in soft_clauses if x in clauses[i])
-
-    # The increase of the number/total weight of satisfied soft clauses by flipping x
-    # h_score = lambda x: sum(h_weights[i] for i in hard_clauses if -x in clauses[i]) - sum(h_weights[i]  for i in hard_clauses if x in clauses[i])
-    # s_score = lambda x: sum(1 for i in soft_clauses if -x in clauses[i]) - sum(1 for i in soft_clauses if x in clauses[i])Z
-
-    # total weight of validated clauses
-    cost = lambda x: sum(1 for i in soft_clauses if len(x.intersection(clauses[i])) == 0 )
-
-    # initilization best cost
-    cost_best_sol = cost(best_assignment)
-    t_best_sol = cost_best_sol
-
-    falsified_hard_clause = lambda x: list(i for i in hard_clauses if len(x.intersection(clauses[i])) == 0)
-    falsified_soft_clause = lambda x: list(i for i in soft_clauses if len(x.intersection(clauses[i])) == 0)
-
-    start_time = time.time()
-    steps_not_updating = 0
-
-    # Dist Algorithm
-    for step in range(maxsteps):
-        print(step, end= '\r')
-        # print(cost(assignment), cost_best_sol)
-        falsified_hard = falsified_hard_clause(assignment)
-
-        if len(falsified_hard) == 0 and cost(assignment) < cost_best_sol:
-            print(f"\t \t Improving {cost_best_sol} => {cost(assignment)}", end='\r')
-            best_assignment = assignment
-            cost_best_sol = cost(assignment)
-            steps_not_updating = 0
-        else:
-            steps_not_updating += 1
-
-        if(time.time() - start_time > cutoff or steps_not_updating > 50):
-            break
-
-        H = list()
-        S = dict()
-        for x in assignment:
-            h_score_x = h_score(x)
-            s_score_x = s_score(x)
-            if h_score_x > 0:
-                H.append(x)
-            elif s_score_x > 0 and h_score_x == 0:
-                S[x] = s_score_x
-
-        # S = {x: s_score(x) for x in assignment if s_score(x) > 0 and h_score(x) > 0}
-        if len(H) > 0:
-            # variable randomly picked from H
-            v = random.choice(H)
-        elif len(S) > 0:
-            # variable in S with greatest sscore
-            v = max(S, key=lambda lit: S[lit])
-        else:
-            # TODO: add smoothing factor
-            for cl in h_weights:
-                clause = clauses[cl]
-                if len(assignment.intersection(clause)) > 0 and h_weights[cl] > 1:
-                    h_weights[cl] -= 1
-                elif len(assignment.intersection(clause)) == 0:
-                    h_weights[cl] += 1
-
-            falsified_hard = falsified_hard_clause(assignment)
-            if len(falsified_hard) > 0:
-                ci = random.choice(falsified_hard)
-            else:
-                falsified_soft = falsified_soft_clause(assignment)
-                ci = random.choice(falsified_soft)
-            clause = clauses[ci]
-            v = max(clause, key=lambda lit: s_score(lit))
-
-        assignment = set(-lit if abs(lit) == abs(v) else lit for lit in assignment)
-
-    if (cost_best_sol < t_best_sol):
-        print("diff:", cost_best_sol, t_best_sol )
-
-    print("\t\t\t\t\t\tTime local_search = ", time.time() - start_time)
-    if cost_best_sol <= sum(weights[i] for i, clause in enumerate(clauses) if i not in F_prime):
-        cl_true = {i for i, clause in enumerate(clauses) if len(best_assignment.intersection(clause))  > 0}
-        return  cl_true, best_assignment
-    else:
-        return cl_true, lit_true
-
-def SATLike(clauses, weights, F_prime, model, parameters):
-
-    return F_prime, model
+    return cl_true, lit_true
 
 def unknown_clauses(clauses,weights,  F_prime, model, parameters):
     cl_true = set(F_prime)
@@ -911,8 +761,7 @@ def grow(clauses, weights, F_prime, model, parameters):
         1 : extension1,
         2 : extension2,
         3 : extension3,
-        4 : extension4,
-        5 : SATLike
+        4 : extension4
     }
     # print("clauses=", clauses)
     # print("weights=",weights)
@@ -1167,15 +1016,14 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     s_grow = []
 
     # default parameters
+    bestModel = parameters['sat_model']
     extension = parameters['extension']
     outputfile = 'log.json' if 'output' not in parameters else  parameters['output']
     top_k_model = 0 if 'top_k_models' not in parameters else parameters['top_k_models']
     param_ext4 = dict(parameters)
     param_ext4['extension'] = 4
     # Performance
-    cnf_clauses = cnf.clauses
-    # random.shuffle(cnf_clauses)
-    frozen_clauses = [frozenset(c for c in clause) for clause in cnf_clauses]
+    frozen_clauses = [frozenset(c for c in clause) for clause in cnf.clauses]
 
     # check if all literals are in the clauses else need to be mapped
     # checkVariableNaming(frozen_clauses)
@@ -1192,14 +1040,27 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
 
     C = []
     while(True):
+        print("Step=", steps)
         # compute optimal hitting set
-        t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        if top_k_model > 0:
+            t_exec_hs, hs =  gurobiOptimalHittingSetAll(cnf.clauses, gurobi_model, C)
+        else:
+            t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        # print("\t hs=", hs)
 
         t_hitting_set.append(t_exec_hs)
         s_hs.append(len(hs))
 
         # check satisfiability of clauses
-        (t_exec_model, (model, sat)) = checkSatClauses(frozen_clauses, hs)
+        if top_k_model > 0:
+            (t_exec_model, (models, sat)) = getTopModels(frozen_clauses, hs, weights, parameters)
+        elif bestModel in [
+            SatModel.BEST_CLAUSES_VALIDATED,
+            SatModel.BEST_CLAUSE_WEIGHTS_COVERAGE,
+            SatModel.BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE]:
+            (t_exec_model, (model, sat)) = getBestModel(frozen_clauses, hs, weights, parameters)
+        else:
+            (t_exec_model, (model, sat)) = checkSatClauses(frozen_clauses, hs)
         t_sat_check.append(t_exec_model)
         # print(f"Sat check={t_exec_model}: {model}")
 
@@ -1226,11 +1087,31 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
                 with open(outputfile, 'w') as file:
                     file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             return hs
+        
+        if top_k_model > 0 and len(models) == 0:
+            t_exec_grow, C_grow = grow(frozen_clauses, weights, hs, set(),  parameters)
+            C = []
+            C.append(C_grow)
+            s_grow.append(len(C))
+        elif top_k_model > 0:
+            C = []
+            for idx, model in enumerate(models):
+                t_model_grow, C_grown = grow(frozen_clauses, weights, hs, model,  parameters)
+                w_grown = sum([weight for i, weight in enumerate(weights) if i in C_grown])
+                if C_grown not in C:
+                    C.append(C_grown)
+                s_grow.append(len(C_grown))
+                t_exec_grow += t_model_grow
+            t_exec_grow = t_exec_grow/len(models)
+        else:
+            t_exec_grow, C = grow(frozen_clauses, weights, hs, model,  parameters)
 
-        t_exec_grow, C = grow(frozen_clauses, weights, hs, model,  parameters)
+            # t_exec_grow, C2 = grow(frozen_clauses, weights, hs, model,  param_ext4)
+            # C = C1.union(C2)
 
-        print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}")
-        s_grow.append(len(C))
+            # print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}, |C1| ={len(C1)},  |C2|={len(C2)}, ", end='\r')
+            print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}", end='\r')
+            s_grow.append(len(C))
         t_grow.append(t_exec_grow)
         # print("\t C=", C)
         steps += 1

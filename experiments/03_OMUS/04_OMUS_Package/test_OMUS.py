@@ -29,51 +29,24 @@ from OMUS_utils import *
 # configs
 import pprint
 
-sign = lambda x: (1, -1)[x < 0]
 ppprint = pprint.PrettyPrinter(indent=4).pprint
-# # Pysat pre-processing
-# folderPaths={
-#     'easyInstances':'data/easy_instances/'
-# }
 
-class Difficulty(Enum):
-    EASY = 1
-    MEDIUM = 2
-    HARD = 3
-    ALL = 0
-
-    @staticmethod
-    def list():
-        return list(map(lambda c: c.value, Difficulty))
-
-def instanceDiff(fileSize):
-
-    mb = 10* 1024 ** 1
-    mediumUb = 10 * mb
-
-    if fileSize < mb:
-        return Difficulty.EASY
-    elif fileSize < mediumUb:
-        return Difficulty.MEDIUM
-    else:
-        return Difficulty.HARD
-
-def CNFisUnsat(instance, verbose=True):
-    cnf = CNF(from_file=instance)
-    with Solver() as s:
-        added = s.append_formula(cnf, no_return=False)
-        solved = s.solve()
-        model = s.get_model()
-    return not solved, model
-
-
-def WCNFisUnsat(instance, verbose=True):
-    cnf = WCNF(from_file=instance).unweighted()
-    with Solver() as s:
-        added = s.append_formula(cnf, no_return=False)
-        solved = s.solve()
-        model = s.get_model()
-    return not solved, model
+# CNF Paper Instances
+def bacchus_cnf():
+    cnf = CNF()
+    cnf.append([6, 2])    # c1: ¬s
+    cnf.append([-6, 2])    # c1: ¬s
+    cnf.append([-2, 1])    # c1: ¬s
+    cnf.append([-1])    # c1: ¬s
+    cnf.append([-6,8])    # c1: ¬s
+    cnf.append([6, 8])    # c1: ¬s
+    cnf.append([2, 4])    # c1: ¬s
+    cnf.append([-4, 5])    # c1: ¬s
+    cnf.append([7, 5])    # c1: ¬s
+    cnf.append([-7, 5])    # c1: ¬s
+    cnf.append([-5, 3])    # c1: ¬s
+    cnf.append([-3])    # c1: ¬s
+    return cnf
 
 def smus_CNF():
     l = 1
@@ -92,21 +65,85 @@ def smus_CNF():
     cnf.append([-l])    # c8 ¬l
     return cnf
 
-def test_omus(extension):
-    smus_cnf = smus_CNF()
-    assert sorted(omus(smus_cnf, extension )) == sorted([0, 1, 2]), "SMUS error"
+class Difficulty(Enum):
+    EASY = 1
+    MEDIUM = 2
+    HARD = 3
+    ALL = 0
 
-def benchmark_code_hard():
-    # user_folder = '/home/emilio/OMUS/'
-    # user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package/'
-    # folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
+    @staticmethod
+    def list():
+        return list(map(lambda c: c.value, Difficulty))
+
+def instanceDiff(fileSize):
+
+    kb =  1024 ** 1
+    easyUb = 100*kb
+    mediumUb = 1000 * kb
+
+    if fileSize < easyUb:
+        return Difficulty.EASY
+    elif fileSize < mediumUb:
+        return Difficulty.MEDIUM
+    else:
+        return Difficulty.HARD
+
+def CNFisUnsat(instance):
+    cnf = CNF(from_file=instance)
+    with Solver() as s:
+        added = s.append_formula(cnf, no_return=False)
+        solved = s.solve()
+        model = s.get_model()
+    return not solved
+
+def WCNFisUnsat(instance):
+    cnf = WCNF(from_file=instance).unweighted()
+    with Solver() as s:
+        added = s.append_formula(cnf, no_return=False)
+        solved = s.solve()
+        model = s.get_model()
+    return not solved
+
+def cnfInstances(difficulty= Difficulty.EASY):
+    cnf_unsat_files = []
+    folder_path = 'data/cnf-instances/'
+    for r, d, f in os.walk(folder_path):
+        for file in f:
+            f_path = os.path.join(r, file)
+            f_size = os.stat(f_path).st_size
+            f_difficulty = instanceDiff(f_size )
+            if difficulty == Difficulty.ALL and '.cnf' in file and CNFisUnsat(f_path) :
+                cnf_unsat_files.append(f_path)
+            elif instanceDiff(f_size) != difficulty:
+                continue
+            elif '.cnf' in file and CNFisUnsat(f_path):
+                cnf_unsat_files.append(f_path)
+    return cnf_unsat_files
+
+def wcnfInstances(difficulty= Difficulty.EASY):
+    wcnf_unsat_files = []
+    folder_path = 'data/wcnf-instances/'
+    for r, d, f in os.walk(folder_path):
+        for file in f:
+            f_path = os.path.join(r, file)
+            f_size = os.stat(f_path).st_size
+            f_difficulty = instanceDiff(f_size )
+            if difficulty == Difficulty.ALL and '.wcnf' in file and CNFisUnsat(f_path):
+                wcnf_unsat_files.append(f_path)
+            elif f_difficulty != difficulty:
+                continue
+            elif '.wcnf' in file and WCNFisUnsat(f_path):
+                wcnf_unsat_files.append(f_path)
+    return wcnf_unsat_files
+
+def benchmark_code():
+
     folder = f'results/{date.today().strftime("%Y_%m_%d")}v4/'
     gurobiFolder = folder + "Gurobi/"
     gurobiColdFolder = folder + "GurobiCold/"
     orToolsFolder = folder + "OrTools/"
 
-    # solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
-    solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
+    solverFolders = [gurobiFolder] # [gurobiFolder, gurobiColdFolder, orToolsFolder]
     # extensions = [4, 3, 2]
     extensions = [3, 4]
 
@@ -120,252 +157,12 @@ def benchmark_code_hard():
             if not os.path.exists(ext_path):
                 os.mkdir(ext_path)
 
-    # easy instances
-    # easy_unsatInstances = cnfUnsatInstances(difficulty=Difficulty.EASY)
-    # unsatInstances = easy_unsatInstances #+ medium_unsatInstances
-
-    # # medium instances
-    # medium_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.MEDIUM)
-    # unsatInstances += medium_unsatInstances
-
-    # HARD instances
-    hard_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.HARD)
-    unsatInstances = hard_unsatInstances
-
-    cnf_files = sorted(unsatInstances, key=lambda item: item.stat().st_size)
-    cnf_instances = []
-    for cnf_file in cnf_files:
-        clauses = []
-        t_clauses = []
-        for clause in CNF(from_file=cnf_file).clauses:
-            if clause not in t_clauses and len(clause) > 0:
-                clauses.append(frozenset(clause))
-                t_clauses.append(clause)
-        cnf_instances.append(CNF(from_clauses=clauses))
-        # print(clauses)
-
-    # for i, cnf in enumerate(cnf_instances):
-    #     if "bf0432-007" in cnf_files[i].name:
-    #         continue
-
-    #     print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
-
-    #     # file name
-    #     f_name = cnf_files[i].name.replace('.cnf', '')
-    #     basefileName = f'ext{2}/{f_name}'
-
-    #     # output folders
-    #     orToolsOutputRandom = orToolsFolder +  basefileName + "_random"+ '.json'
-    #     print("OrTools - extension", 2, "output=",orToolsOutputRandom)
-    #     omusOrTools(cnf, extension = 2, outputfile=orToolsOutputRandom, random_literal=True, maxcoverage=False)
-
-    #     orToolsOutputBestLiteral = orToolsFolder +  basefileName + "bestliteral"+ '.json'
-    #     print("OrTools - extension", 2, "output=",orToolsOutputBestLiteral)
-    #     omusOrTools(cnf, extension = 2, outputfile=orToolsOutputBestLiteral, random_literal=False, maxcoverage=False)
-
-    #     orToolsOutputBestLiteralNeg = orToolsFolder +  basefileName + "bestliteral_neg"+ '.json'
-    #     print("OrTools - extension", 2, "output=",orToolsOutputBestLiteralNeg)
-    #     omusOrTools(cnf, extension = 2, outputfile=orToolsOutputBestLiteralNeg, random_literal=False, maxcoverage=True)
-
-    for extension in extensions:
-        for i, cnf in enumerate(cnf_instances):
-            # if "bf0432-007" not in cnf_files[i].name:
-            #     continue
-
-            print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
-
-            # file name
-            f_name = cnf_files[i].name.replace('.cnf', '')
-            basefileName = f'ext{extension}/{f_name}'
-
-            # output folders
-            gurobiOutput = gurobiFolder +  basefileName + '.json'
-            # gurobiColdOutput = gurobiColdFolder  + basefileName + '.json'
-            # orToolsOutput = orToolsFolder + basefileName + '.json'
-
-            # run benchmark
-            print("Gurobi Warm - extension", extension, "output=",gurobiOutput)
-            omusGurobi(cnf, extension = extension, outputfile=gurobiOutput)
-
-            # # run benchmark
-            # print("Gurobi Cold - extension", extension, "output=",gurobiColdOutput)
-            # omusGurobiCold(cnf, extension = extension, outputfile=gurobiColdOutput)
-
-            # # output folders
-            # print("OrTools - extension", extension, "output=",orToolsOutput)
-            # omusOrTools(cnf, extension = extension, outputfile=orToolsOutput)
-
-def benchmark_code():
-    # user_folder = '/home/emilio/OMUS/'
-    # user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package/'
-    # folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
-    folder = f'results/{date.today().strftime("%Y_%m_%d")}v4/'
-    gurobiFolder = folder + "Gurobi/"
-    gurobiColdFolder = folder + "GurobiCold/"
-    orToolsFolder = folder + "OrTools/"
-
-    # solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
-    solverFolders = [gurobiFolder, gurobiColdFolder, orToolsFolder]
-    # extensions = [4, 3, 2]
-    extensions = [2]
-
-    if not os.path.exists(folder):
-        os.mkdir(folder)
-    for f in solverFolders:
-        if not os.path.exists(f):
-            os.mkdir(f)
-        for extension in extensions + [2]:
-            ext_path = f + f"ext{extension}"
-            if not os.path.exists(ext_path):
-                os.mkdir(ext_path)
-
-    # easy instances
-    # easy_unsatInstances = cnfUnsatInstances(difficulty=Difficulty.EASY)
-    # unsatInstances = easy_unsatInstances #+ medium_unsatInstances
-
-    # medium instances
-    medium_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.MEDIUM)
-    unsatInstances = medium_unsatInstances
-
-    # # HARD instances
-    # # hard_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.HARD)
-    # # unsatInstances += hard_unsatInstances
-
-    cnf_files = sorted(unsatInstances, key=lambda item: item.stat().st_size)
-    cnf_instances = []
-    for cnf_file in cnf_files:
-        clauses = []
-        t_clauses = []
-        for clause in CNF(from_file=cnf_file).clauses:
-            if clause not in t_clauses and len(clause) > 0:
-                clauses.append(frozenset(clause))
-                t_clauses.append(clause)
-        cnf_instances.append(CNF(from_clauses=clauses))
-        # print(clauses)
-
-    # for i, cnf in enumerate(cnf_instances):
-    #     if "bf0432-007" in cnf_files[i].name:
-    #         continue
-
-    #     print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
-
-    #     # file name
-    #     f_name = cnf_files[i].name.replace('.cnf', '')
-    #     basefileName = f'ext{2}/{f_name}'
-
-    #     # output folders
-    #     orToolsOutputRandom = orToolsFolder +  basefileName + "_random"+ '.json'
-    #     print("OrTools - extension", 2, "output=",orToolsOutputRandom)
-    #     omusOrTools(cnf, extension = 2, outputfile=orToolsOutputRandom, random_literal=True, maxcoverage=False)
-
-    #     orToolsOutputBestLiteral = orToolsFolder +  basefileName + "bestliteral"+ '.json'
-    #     print("OrTools - extension", 2, "output=",orToolsOutputBestLiteral)
-    #     omusOrTools(cnf, extension = 2, outputfile=orToolsOutputBestLiteral, random_literal=False, maxcoverage=False)
-
-    #     orToolsOutputBestLiteralNeg = orToolsFolder +  basefileName + "bestliteral_neg"+ '.json'
-    #     print("OrTools - extension", 2, "output=",orToolsOutputBestLiteralNeg)
-    #     omusOrTools(cnf, extension = 2, outputfile=orToolsOutputBestLiteralNeg, random_literal=False, maxcoverage=True)
-
-    for extension in extensions:
-        for i, cnf in enumerate(cnf_instances):
-            if "zebra_v155_c1135" not in cnf_files[i].name:
-                continue
-
-            print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
-
-            # file name
-            f_name = cnf_files[i].name.replace('.cnf', '')
-            basefileName = f'ext{extension}/{f_name}'
-
-            # output folders
-            gurobiOutput = gurobiFolder +  basefileName + '.json'
-            # gurobiColdOutput = gurobiColdFolder  + basefileName + '.json'
-            # orToolsOutput = orToolsFolder + basefileName + '.json'
-
-            # run benchmark
-            print("Gurobi Warm - extension", extension, "output=",gurobiOutput)
-            if extension == 2:
-                gurobiOutput = gurobiFolder +  basefileName + "bestliteral_neg" + '.json'
-                omusGurobi(cnf, extension = 2, outputfile=gurobiOutput, random_literal=False, maxcoverage=True)
-            else:
-                omusGurobi(cnf, extension = extension, outputfile=gurobiOutput)
-
-            # # run benchmark
-            # print("Gurobi Cold - extension", extension, "output=",gurobiColdOutput)
-            # omusGurobiCold(cnf, extension = extension, outputfile=gurobiColdOutput)
-
-            # # output folders
-            # print("OrTools - extension", extension, "output=",orToolsOutput)
-            # omusOrTools(cnf, extension = extension, outputfile=orToolsOutput)
-
-
-def medium_instance():
-    # f_path = "data/easy_instances/bf0432-007.cnf"
-    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
-    clauses = []
-    t_clauses = []
-    for clause in CNF(from_file=f_path).clauses:
-        if clause not in t_clauses and len(clause) > 0:
-            clauses.append(frozenset(clause))
-            t_clauses.append(clause)
-    return  CNF(from_clauses=clauses)
-
-def bacchus_cnf():
-    cnf = CNF()
-    cnf.append([6, 2])    # c1: ¬s
-    cnf.append([-6, 2])    # c1: ¬s
-    cnf.append([-2, 1])    # c1: ¬s
-    cnf.append([-1])    # c1: ¬s
-    cnf.append([-6,8])    # c1: ¬s
-    cnf.append([6, 8])    # c1: ¬s
-    cnf.append([2, 4])    # c1: ¬s
-    cnf.append([-4, 5])    # c1: ¬s
-    cnf.append([7, 5])    # c1: ¬s
-    cnf.append([-7, 5])    # c1: ¬s
-    cnf.append([-5, 3])    # c1: ¬s
-    cnf.append([-3])    # c1: ¬s
-
-    return cnf
-def test_findBestLiteral():
-    clauses = [frozenset(clause) for clause in bacchus_cnf().clauses]
-    literals = frozenset.union(*clauses)
-    ppprint(bacchus_cnf().clauses)
-    print(literals)
-    best_literal = findTopBestLiterals(clauses, set(), literals, 10)
-    print(best_literal)
-
 def benchmark_parameter_omus():
-    # user_folder = '/home/emilio/OMUS/'
-    # user_folder = '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/04_OMUS_Package/'
-    # folder = f'{user_folder}/results/{date.today().strftime("%Y_%m_%d")}/'
     folder = f'results/{date.today().strftime("%Y_%m_%d")}/'
     gurobiFolder = folder + "Gurobi/"
 
     solverFolders = [gurobiFolder]
     extensions = [3]
-
-    # easy instances
-    easy_unsatInstances = cnfUnsatInstances(difficulty=Difficulty.EASY)
-    unsatInstances = easy_unsatInstances #+ medium_unsatInstances
-
-    # medium instances
-    medium_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.MEDIUM)
-    unsatInstances += medium_unsatInstances
-
-    # # HARD instances
-    # # hard_unsatInstances= cnfUnsatInstances(difficulty = Difficulty.HARD)
-    # # unsatInstances += hard_unsatInstances
-
-    cnf_files = sorted(unsatInstances, key=lambda item: item.stat().st_size)
-    cnf_instances = []
-    for cnf_file in cnf_files:
-        clauses = []
-        t_clauses = []
-        for clause in CNF(from_file=cnf_file).clauses:
-            if clause not in t_clauses and len(clause) > 0:
-                clauses.append(frozenset(clause))
-                t_clauses.append(clause)
-        cnf_instances.append(CNF(from_clauses=clauses))
 
     if not os.path.exists(folder):
         os.mkdir(folder)
@@ -385,22 +182,22 @@ def benchmark_parameter_omus():
                 if not os.path.exists(f_ext_path):
                     os.mkdir(f_ext_path)
 
-    extension = 3
-    for i, cnf in enumerate(cnf_instances):
-        counter = 0
-        if "bf0432-007" in cnf_files[i].name:
-            continue
-        print(f"\nCNF File Example: {cnf_files[i]} - clauses = {len(cnf.clauses)}")
+    easy_cnf_instances = cnfInstances(difficulty= Difficulty.EASY)
+    medium_cnf_instances = cnfInstances(difficulty= Difficulty.MEDIUM)
+    cnf_instances = easy_cnf_instances + medium_cnf_instances
 
+    for instance in cnf_instances:
+        counter = 0
         # file name
-        f_name = cnf_files[i].name.replace('.cnf', '')
+        cnf = CNF(from_file=instance)
+        f_name = instance.replace('.cnf', '')
         basefileName = f'ext{extension}/{f_name}/'
 
         # run benchmark
         for clause_counting in ClauseCounting:
                 for clause_sorting in ClauseSorting:
                     for unit_prop in UnitLiteral:
-                        for best_literal in BestCounterLiteral:
+                        for best_literal in BestLiteral:
                             for sat_model in SatModel:
                                 # output folders
                                 gurobiOutput = gurobiFolder +  basefileName+f"{counter}.json"
@@ -420,6 +217,8 @@ def benchmark_parameter_omus():
                                 counter+=1
 
 def test_extension():
+    medium_instance = CNF(from_file="data/cnf-instances/zebra_v155_c1135.cnf")
+    # medium_instance = CNF(from_file="data/cnf-instances/bf0432-007.cnf")
 
     # Execution parameters
     parameters = {
@@ -430,8 +229,9 @@ def test_extension():
         # clause sorting
         # 'sorting':ClauseSorting.IGNORE,
         # 'sorting':ClauseSorting.WEIGHTS,
-        'sorting':ClauseSorting.UNASSIGNED,
-        # 'sorting':ClauseSorting.WEIGHTED_UNASSIGNED,
+        # 'sorting':ClauseSorting.UNASSIGNED,
+        # 'reverse_sorting': True,
+        'sorting':ClauseSorting.WEIGHTED_UNASSIGNED,
         # Unit Literal propagation
         'best_unit_literal': UnitLiteral.IMMEDIATE,
         # 'best_unit_literal': UnitLiteral.INGORE,
@@ -440,43 +240,22 @@ def test_extension():
         # 'best_unit_literal': UnitLiteral.POLARITY,
         'best_counter_literal': BestLiteral.COUNT_POLARITY,
         # 'best_counter_literal': BestLiteral.COUNT_PURE_ONLY,
-        'sat_model' :SatModel.BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE,
+        # 'sat_model' :SatModel.BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE,
         # 'top_k_models': 10,
         # 'bestModel' :SatModel.RANDOM,
         'extension': 3,
-        'output': 'log.json'
+        'output': 'log.json',
+        'local_search': True,
+        'cutoff' : 15,
+        'h_inc' : 3,
+        'S_inc' : 1
     }
-    # f_path = "data/easy_instances/bf0432-007.cnf"
-    # f_path = "data/easy_instances/aim-100-1_6-no-1.cnf"
-    f_path = "data/easy_instances/zebra_v155_c1135.cnf"
-    clauses = []
-    t_clauses = []
-    for clause in CNF(from_file=f_path).clauses:
-        if clause not in t_clauses and len(clause) > 0:
-            clauses.append(frozenset(clause))
-            t_clauses.append(clause)
-    cnf = CNF(from_clauses=clauses)
     print(omus(bacchus_cnf(), parameters=parameters))
     print(omus(omus_cnf(), parameters=parameters))
-    print(omus(cnf, parameters=parameters))
-
+    print(omus(medium_instance, parameters=parameters))
 
 def main():
-    wncfFiles = []
-    cnfFiles = []
-    # r=root, d=directories, f = files
-    path = 'data/easy_instances/'
-    for r, d, f in os.walk(path):
-        for file in f:
-            if '.wcnf' in file:
-                wncfFiles.append(os.path.join(r, file))
-            elif '.cnf' in file:
-                cnfFiles.append(os.path.join(r, file))
-
-    for f in wncfFiles:
-        print(f, WCNFisUnsat(f) )
-    for f in cnfFiles:
-        print(f, CNFisUnsat(f))
+    test_extension()
 
 if __name__ == "__main__":
     main()

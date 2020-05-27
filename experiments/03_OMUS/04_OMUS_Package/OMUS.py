@@ -584,18 +584,22 @@ def extension3(clauses, weights, F_prime, model, parameters):
         return cl_true, lit_true
 
 def SATLike(clauses, weights, F_prime, model, parameters):
-
+    # Things tested:
+    # - Add already visited assignment => when that happens, we generate new initial assignment
     # parameters
     cutoff = parameters['cutoff']
-    sp = 0.001
+    sp = 0.01
     max_steps = 10000000 # very big number
     h_inc = parameters['h_inc'] # Paper value = 3
     s_inc = parameters['s_inc'] # Paper value = 1
+    # optimziation parameters
+    max_iters_no_change = 100
+    max_restarts = 3
     # Paper : Unit Propagation-based initilization is not useful for SATLike on WPMS
     # initial assignment is generated randomly for WPMS
 
-    assignment = set()
-    # assignment = set(model)
+    # assignment = set()
+    assignment = set(model)
     # cl_true = set(F_prime)
 
     all_lits = set(frozenset.union(*clauses))
@@ -662,8 +666,13 @@ def SATLike(clauses, weights, F_prime, model, parameters):
                 falsified_soft_clauses.add(clause_id)
 
     v = 0
+
+    # variabels 
+    useless_iterations = 0
+    total_iterations = 0
     iters_no_change = 0
-    max_iters_no_change = 50
+    longest_iterations =0
+    restarts = 0
     # Cut off timer
     start_time = time.time()
     for step in range(max_steps):
@@ -674,15 +683,19 @@ def SATLike(clauses, weights, F_prime, model, parameters):
         cost_assignment = sum(weights[i] for i in falsified_soft_clauses)
 
         if len(falsified_hard_clauses) == 0 and cost_assignment < best_cost:
-            print(f"{best_cost} => {cost_assignment}")
+            # print(f"{best_cost} => {cost_assignment}")
+            if iters_no_change > longest_iterations:
+                longest_iterations = iters_no_change
             iters_no_change = 0
             best_assignment = assignment
             best_cost = cost_assignment
+        else:
+            useless_iterations += 1
 
+        # update score only on clauses impacted by variable v
         if v != 0:
             # variable flipped to -v
             lit = -v
-            # compute score of lit
             scores[lit] = 0
             scores[-lit] = 0
             # score_lit = 0
@@ -709,10 +722,10 @@ def SATLike(clauses, weights, F_prime, model, parameters):
             p = random.uniform(0, 1)
             if p > sp:
                 for cl in falsified_hard_clauses:
-                    w[cl] += 1
+                    w[cl] += h_inc
                 for cl in falsified_soft_clauses:
                     if w[cl] < s_inc:
-                        w[cl] += h_inc
+                        w[cl] += 1
             else:
                 satisfied_hard_clauses = hard_clauses - falsified_hard_clauses
                 satisfied_soft_clauses = soft_clauses - falsified_soft_clauses
@@ -733,12 +746,17 @@ def SATLike(clauses, weights, F_prime, model, parameters):
 
         assignment = set(-lit if abs(v) == abs(lit) else lit for lit in assignment)
 
+        total_iterations += 1
         if time.time() - start_time > cutoff:
+            if iters_no_change > longest_iterations:
+                longest_iterations = iters_no_change
             break
 
-        if iters_no_change > max_iters_no_change and best_assignment == None:
+        if (iters_no_change > max_iters_no_change):
+            # restarts +=1
             iters_no_change = 0
             # Force new valid assignment
+            # assignment = set()
             assignment = set(model)
             lit_unk = list(all_lits - assignment - set(-l for l in assignment))
 
@@ -748,8 +766,6 @@ def SATLike(clauses, weights, F_prime, model, parameters):
                 # lit_false.add(-lit)
                 lit_unk.remove(lit)
                 lit_unk.remove(-lit)
-                # optimization of scores usage
-            # scores = {}
             for lit in assignment:
                 scores[lit] = 0
                 scores[-lit] = 0
@@ -768,8 +784,14 @@ def SATLike(clauses, weights, F_prime, model, parameters):
 
         iters_no_change += 1
 
+    print(f"Useful iterations [%] {round((1 - useless_iterations/total_iterations)*100, 2)} on total_iterations={total_iterations}")
+    print(f"Longest iterations without progress {longest_iterations}")
+
     if best_assignment == None:
         cl_true = set(i for i, clause in enumerate(clauses) if len(clause.intersection(assignment)) > 0)
+        if(not F_prime <= cl_true):
+            raise f"F_prime not validated {F_prime}, {cl_true}"
+
         return cl_true, assignment
     else:
         cl_true = set(i for i, clause in enumerate(clauses) if len(clause.intersection(best_assignment)) > 0)

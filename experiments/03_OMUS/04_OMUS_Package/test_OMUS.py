@@ -246,13 +246,14 @@ def test_extension():
         'extension': 5,
         'output': 'log.json',
         'local_search': False,
-        'cutoff' : 1,
+        'cutoff' : 3,
         'h_inc' : 3,
-        's_inc' : 1
+        's_inc' : 1,
+        'sp': 0.01
     }
-    print(omus(omus_cnf(), parameters=parameters))
-    print(omus(bacchus_cnf(), parameters=parameters))
-    # print(omus(medium_instance, parameters=parameters))
+    # print(omus(omus_cnf(), parameters=parameters))
+    # print(omus(bacchus_cnf(), parameters=parameters))
+    print(omus(medium_instance, parameters=parameters))
 
 def main():
     test_extension()

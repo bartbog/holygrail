@@ -585,7 +585,195 @@ def extension3(clauses, weights, F_prime, model, parameters):
 
 def SATLike(clauses, weights, F_prime, model, parameters):
 
-    return F_prime, model
+    # parameters
+    cutoff = parameters['cutoff']
+    sp = 0.001
+    max_steps = 10000000 # very big number
+    h_inc = parameters['h_inc'] # Paper value = 3
+    s_inc = parameters['s_inc'] # Paper value = 1
+    # Paper : Unit Propagation-based initilization is not useful for SATLike on WPMS
+    # initial assignment is generated randomly for WPMS
+
+    assignment = set()
+    # assignment = set(model)
+    # cl_true = set(F_prime)
+
+    all_lits = set(frozenset.union(*clauses))
+    all_lits |= set(-lit for lit in all_lits)
+
+    hard_clauses = frozenset(F_prime)
+    soft_clauses = frozenset(i for i in range(len(clauses))) - hard_clauses
+
+    lit_clauses_neighborhood = dict.fromkeys(all_lits, [])
+    w = [0 for i in range(len(clauses))]
+
+    lit_unk = list(all_lits - assignment - set(-l for l in assignment))
+    # lit_unk = list(all_lits)
+
+    # literals and their negation
+
+    while(len(lit_unk) > 0):
+        lit = random.choice(lit_unk)
+        assignment.add(lit)
+        # lit_false.add(-lit)
+        lit_unk.remove(lit)
+        lit_unk.remove(-lit)
+
+    # assignment = set(lit_true)
+    best_assignment = None
+    best_cost = sum(weights[i] for i in soft_clauses)
+
+    falsified_hard_clauses = set()
+    falsified_soft_clauses = set()
+
+    # optimization of scores usage
+    scores = {}
+    for lit in assignment:
+        scores[lit] = 0
+        scores[-lit] = 0
+        # score_lit = 0
+        lit_clauses = lit_clauses_neighborhood[lit]
+        for clause_id in lit_clauses:
+            clause = clauses[clause_id]
+            scores[lit] -= weights[clause_id]
+            scores[-lit] += weights[clause_id]
+
+        neg_lit_clauses = lit_clauses_neighborhood[-lit]
+        for clause_id in neg_lit_clauses:
+            clause = clauses[clause_id]
+            scores[-lit] -= weights[clause_id]
+            scores[lit] += weights[clause_id]
+
+
+    for clause_id, clause in enumerate(clauses):
+        # filling lit -> clause edge
+        for lit in clause:
+            lit_clauses_neighborhood[lit].append(clause_id)
+
+        if clause_id in hard_clauses:
+            # for each hard clause, we associate an integer number as its weight which is initiliazed to 1
+            w[clause_id] = 1
+            if len(clause.intersection(assignment)) == 0:
+                falsified_hard_clauses.add(clause_id)
+        else:
+            # for each soft clause we use the original weight
+            w[clause_id] = weights[clause_id]
+            if len(clause.intersection(assignment)) == 0:
+                falsified_soft_clauses.add(clause_id)
+
+    v = 0
+    iters_no_change = 0
+    max_iters_no_change = 50
+    # Cut off timer
+    start_time = time.time()
+    for step in range(max_steps):
+        falsified_hard_clauses = set(i for i in hard_clauses if len(clauses[i].intersection(assignment)) == 0 )
+        falsified_soft_clauses = set(i for i in soft_clauses if len(clauses[i].intersection(assignment)) == 0 )
+
+        # cost_assignment = sum(weights[i] for i in falsified_soft_clauses)
+        cost_assignment = sum(weights[i] for i in falsified_soft_clauses)
+
+        if len(falsified_hard_clauses) == 0 and cost_assignment < best_cost:
+            print(f"{best_cost} => {cost_assignment}")
+            iters_no_change = 0
+            best_assignment = assignment
+            best_cost = cost_assignment
+
+        if v != 0:
+            # variable flipped to -v
+            lit = -v
+            # compute score of lit
+            scores[lit] = 0
+            scores[-lit] = 0
+            # score_lit = 0
+            lit_clauses = lit_clauses_neighborhood[lit]
+            for clause_id in lit_clauses:
+                clause = clauses[clause_id]
+                scores[lit] -= weights[clause_id]
+                scores[-lit] += weights[clause_id]
+
+            neg_lit_clauses = lit_clauses_neighborhood[-lit]
+            for clause_id in neg_lit_clauses:
+                clause = clauses[clause_id]
+                scores[-lit] -= weights[clause_id]
+                scores[lit] += weights[clause_id]
+
+        D = [lit for lit in scores if scores[lit] > 0]
+        if len(D) > 0:
+            # BMS =  best from multiple selections
+            # t random variables with replacement and returns the one with the highest score
+            vars_D = set(random.choices(D, k=50))
+            v = max(vars_D, key= lambda lit: scores[lit])
+        else:
+            # udpate weights of clauses by Weighting-PMS
+            p = random.uniform(0, 1)
+            if p > sp:
+                for cl in falsified_hard_clauses:
+                    w[cl] += 1
+                for cl in falsified_soft_clauses:
+                    if w[cl] < s_inc:
+                        w[cl] += h_inc
+            else:
+                satisfied_hard_clauses = hard_clauses - falsified_hard_clauses
+                satisfied_soft_clauses = soft_clauses - falsified_soft_clauses
+                for cl in satisfied_hard_clauses:
+                    if w[cl] > 1:
+                        w[cl] -= h_inc
+                for cl in satisfied_soft_clauses:
+                    if w[cl] > 1:
+                        w[cl] -= 1
+            if len(falsified_hard_clauses) > 0:
+                c = random.choice(list(falsified_hard_clauses))
+            else:
+                c = random.choice(list(falsified_soft_clauses))
+            clause = clauses[c]
+
+            v = max(clause, key=lambda lit: scores[lit])
+        # flip sign of variable v in assignment
+
+        assignment = set(-lit if abs(v) == abs(lit) else lit for lit in assignment)
+
+        if time.time() - start_time > cutoff:
+            break
+
+        if iters_no_change > max_iters_no_change and best_assignment == None:
+            iters_no_change = 0
+            # Force new valid assignment
+            assignment = set(model)
+            lit_unk = list(all_lits - assignment - set(-l for l in assignment))
+
+            while(len(lit_unk) > 0):
+                lit = random.choice(lit_unk)
+                assignment.add(lit)
+                # lit_false.add(-lit)
+                lit_unk.remove(lit)
+                lit_unk.remove(-lit)
+                # optimization of scores usage
+            # scores = {}
+            for lit in assignment:
+                scores[lit] = 0
+                scores[-lit] = 0
+                # score_lit = 0
+                lit_clauses = lit_clauses_neighborhood[lit]
+                for clause_id in lit_clauses:
+                    clause = clauses[clause_id]
+                    scores[lit] -= weights[clause_id]
+                    scores[-lit] += weights[clause_id]
+
+                neg_lit_clauses = lit_clauses_neighborhood[-lit]
+                for clause_id in neg_lit_clauses:
+                    clause = clauses[clause_id]
+                    scores[-lit] -= weights[clause_id]
+                    scores[lit] += weights[clause_id]
+
+        iters_no_change += 1
+
+    if best_assignment == None:
+        cl_true = set(i for i, clause in enumerate(clauses) if len(clause.intersection(assignment)) > 0)
+        return cl_true, assignment
+    else:
+        cl_true = set(i for i, clause in enumerate(clauses) if len(clause.intersection(best_assignment)) > 0)
+        return cl_true, best_assignment
 
 def unknown_clauses(clauses,weights,  F_prime, model, parameters):
     cl_true = set(F_prime)

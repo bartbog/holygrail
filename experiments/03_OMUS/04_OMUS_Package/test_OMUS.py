@@ -227,11 +227,11 @@ def test_extension():
         # 'count_clauses' : ClauseCounting.WEIGHTS,
         # 'count_clauses' : ClauseCounting.VALIDATED,
         # clause sorting
-        # 'sorting':ClauseSorting.IGNORE,
+        'sorting':ClauseSorting.IGNORE,
         # 'sorting':ClauseSorting.WEIGHTS,
         # 'sorting':ClauseSorting.UNASSIGNED,
         # 'reverse_sorting': True,
-        'sorting':ClauseSorting.WEIGHTED_UNASSIGNED,
+        # 'sorting':ClauseSorting.WEIGHTED_UNASSIGNED,
         # Unit Literal propagation
         'best_unit_literal': UnitLiteral.IMMEDIATE,
         # 'best_unit_literal': UnitLiteral.INGORE,
@@ -243,16 +243,16 @@ def test_extension():
         # 'sat_model' :SatModel.BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE,
         # 'top_k_models': 10,
         # 'bestModel' :SatModel.RANDOM,
-        'extension': 3,
+        'extension': 5,
         'output': 'log.json',
         'local_search': False,
-        'cutoff' : 15,
+        'cutoff' : 1,
         'h_inc' : 3,
-        'S_inc' : 1
+        's_inc' : 1
     }
-    print(omus(bacchus_cnf(), parameters=parameters))
     print(omus(omus_cnf(), parameters=parameters))
-    print(omus(medium_instance, parameters=parameters))
+    print(omus(bacchus_cnf(), parameters=parameters))
+    # print(omus(medium_instance, parameters=parameters))
 
 def main():
     test_extension()

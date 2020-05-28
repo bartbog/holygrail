@@ -1111,7 +1111,7 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
         t_sat_check.append(t_exec_model)
 
         # if not sat or steps > max_steps_main:
-        if not sat or time.time() > cutoff_main:
+        if not sat or (time.time()-t_start_omus) > cutoff_main:
             print("Steps=", steps, "OMUS=", hs)
             gurobi_model.dispose()
 

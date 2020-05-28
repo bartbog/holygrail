@@ -18,53 +18,46 @@ class HittingSetSolver(Exception):
         for i in range(data['num_constraints']):
             self.message += " ".join([f"{data['constraint_coefficients'][i][j]} * x[{idx}]" for j, idx in enumerate(data['indices'])])
             self.message + " >= " + str(data['bounds'][i]) + "\n\n"
-def debug(info, verbose=True):
-    if verbose:
-        print(info)
 
-def debug_ppprint(info, verbose=False):
-    if verbose:
-        print(json.dumps(info, indent=4))
+# def mapping_clauses(clauses):
 
-def mapping_clauses(clauses):
+#     union_clauses = frozenset.union(*clauses)
 
-    union_clauses = frozenset.union(*clauses)
+#     sorted_vars = frozenset(sorted(map(abs, union_clauses)))
 
-    sorted_vars = frozenset(sorted(map(abs, union_clauses)))
+#     mapping = {elem:i+1 for i, elem in enumerate(sorted_vars)}
+#     reversemapping = {i+1:elem for i, elem in enumerate(sorted_vars)}
 
-    mapping = {elem:i+1 for i, elem in enumerate(sorted_vars)}
-    reversemapping = {i+1:elem for i, elem in enumerate(sorted_vars)}
+#     return mapping, reversemapping
 
-    return mapping, reversemapping
+# def map_clauses(clauses, mapping):
 
-def map_clauses(clauses, mapping):
+#     newclauses = [[mapping[abs(literal)]*sign(literal) for literal in clause] for clause in clauses]
 
-    newclauses = [[mapping[abs(literal)]*sign(literal) for literal in clause] for clause in clauses]
-
-    return newclauses
+#     return newclauses
 
 
-def checkConflict(literals):
-    for l in literals:
-        assert -l not in literals, f"conflicting literals are present {l}, {-l}"
+# def checkConflict(literals):
+#     for l in literals:
+#         assert -l not in literals, f"conflicting literals are present {l}, {-l}"
 
-def getLiteralsSubsetClauses(cnf_clauses, subsetClauses):
+# def getLiteralsSubsetClauses(cnf_clauses, subsetClauses):
 
-    s = set()
+#     s = set()
 
-    for c in subsetClauses:
-        clause = cnf_clauses[c]
-        for literal in clause:
-            s.add(literal)
-    return s
+#     for c in subsetClauses:
+#         clause = cnf_clauses[c]
+#         for literal in clause:
+#             s.add(literal)
+#     return s
 
-def getClausesValidatedByLiterals(cnf_clauses, subset_clauses, literals):
-    validated_clauses = set()
+# def getClausesValidatedByLiterals(cnf_clauses, subset_clauses, literals):
+#     validated_clauses = set()
 
-    for literal in literals:
-        for c in subset_clauses:
-            clause = cnf_clauses[c]
-            if literal in clause:
-                validated_clauses.add(c)
-    return validated_clauses
+#     for literal in literals:
+#         for c in subset_clauses:
+#             clause = cnf_clauses[c]
+#             if literal in clause:
+#                 validated_clauses.add(c)
+#     return validated_clauses
 

@@ -31,7 +31,7 @@ from gurobipy import GRB
 
 # or-tools library
 from ortools.linear_solver import pywraplp
-from OMUS_utils import *
+from OMUS_utils import HittingSetSolver
 
 # configs
 import pprint
@@ -50,7 +50,6 @@ class ClauseSorting(IntEnum):
     UNASSIGNED = 2
     WEIGHTED_UNASSIGNED = 3
     LITERAL_ORDERING = 4
-    
 
 class BestLiteral(IntEnum):
     COUNT_PURE_ONLY = 1
@@ -264,7 +263,10 @@ def greedy_param(clauses, weights, F_prime, model, parameters):
     cl_true = set(F_prime)
     lit_unk = set(frozenset.union(*clauses)) - lit_true - lit_false
     # Pre-processing is necessary
-    cl_unk = set(range(len(clauses))) - cl_true
+    if sorting in [ClauseSorting.UNASSIGNED,ClauseSorting.WEIGHTED_UNASSIGNED, ClauseSorting.WEIGHTS ]:
+        cl_unk = list(set(range(len(clauses))) - cl_true)
+    else:
+        cl_unk = set(range(len(clauses))) - cl_true
 
     # literal- clause counter
     cnt = {lit:0 for lit in lit_unk}
@@ -296,14 +298,16 @@ def greedy_param(clauses, weights, F_prime, model, parameters):
         if isinstance(sorting, ClauseSorting):
             # clause sorting based on weights
             if sorting == ClauseSorting.WEIGHTS:
-                cl_unk.sort(reverse=False, key= lambda i: weights[i])
+                cl_unk.sort(reverse=True, key= lambda i: weights[i])
             # clause sorting based on # unassigned literals
             elif sorting == ClauseSorting.UNASSIGNED:
-                cl_unk.sort(reverse=False, key= lambda i: len(clauses[i] - lit_true - lit_false))
+                cl_unk.sort(reverse=True, key= lambda i: len(clauses[i] - lit_true - lit_false))
             # clause sorting based on # unassigned literals
             elif sorting == ClauseSorting.WEIGHTED_UNASSIGNED:
                 # cl_unk.sort(reverse=True, key= lambda i: weights[i] / max(1, len(clauses[i] - lit_true - lit_false)) )
-                cl_unk.sort(reverse=False, key= lambda i: weights[i] / len(clauses[i] - lit_true - lit_false) if len(clauses[i] - lit_true - lit_false)> 0 else math.inf )
+                cl_unk.sort(reverse=True, key= lambda i: weights[i] / len(clauses[i] - lit_true - lit_false) if len(clauses[i] - lit_true - lit_false)> 0 else 0 )
+            elif sorting == ClauseSorting.LITERAL_ORDERING:
+                cl_unk.sort(reverse=False, key= lambda cl_id: min(abs(lit) for lit in clauses[cl_id]))
 
         # check single polarity literals
         tofix = set()

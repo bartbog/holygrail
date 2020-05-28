@@ -260,38 +260,39 @@ def benchmark_wcnf_files():
         omus(cnf, parameters=parameters, weights=weights)
 
         ## Local Search : SATLike
-        parameters = {
-            'extension': 'satlike',
-            'output': f"{folder_path}{instance_name}_satlike.json",
-            'cutoff' : len(clauses)/100,
-            'h_inc' : 3,
-            's_inc' : 1,
-            'sp': 0.0001
-        }
-        print(f"SATLike: {folder_path}{instance_name}_satlike.json")
-        omus(cnf, parameters=parameters, weights=weights)
+        # parameters = {
+        #     'extension': 'satlike',
+        #     'output': f"{folder_path}{instance_name}_satlike.json",
+        #     'cutoff' : len(clauses)/100,
+        #     'h_inc' : 3,
+        #     's_inc' : 1,
+        #     'sp': 0.0001
+        # }
+        # print(f"SATLike: {folder_path}{instance_name}_satlike.json")
+        # omus(cnf, parameters=parameters, weights=weights)
 
         ## execution extension 3 with different parameters combinations
         # variables
         cnt = 1
-        for clause_counting in ClauseCounting:
-            for unit_literal in UnitLiteral:
-                for best_literal in BestLiteral:
-                    outputfile = f"{folder_path}{instance_name}_greedy_param_{cnt}.json"
-                    print(f"Greedy with parameters: {outputfile}")
-                    print("---- ClauseCounting=", clause_counting, "UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
-                    parameters = {
-                        # clause counting
-                        'count_clauses' : clause_counting,
-                        'best_unit_literal': unit_literal,
-                        'best_counter_literal': best_literal,
-                        'sorting': ClauseSorting.IGNORE,
-                        'extension': 'greedy_param',
-                        'cutoff_main': 15 * 60,
-                        'output': outputfile,
-                    }
-                    omus(cnf, parameters=parameters, weights=weights)
-                    cnt += 1
+        for sorting in ClauseSorting:
+            for clause_counting in ClauseCounting:
+                for unit_literal in UnitLiteral:
+                    for best_literal in BestLiteral:
+                        outputfile = f"{folder_path}{instance_name}_greedy_param_{cnt}.json"
+                        print(f"Greedy with parameters: {outputfile}")
+                        print("---- ClauseCounting=", clause_counting, "UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
+                        parameters = {
+                            # clause counting
+                            'count_clauses' : clause_counting,
+                            'best_unit_literal': unit_literal,
+                            'best_counter_literal': best_literal,
+                            'sorting': sorting,
+                            'extension': 'greedy_param',
+                            'cutoff_main': 15 * 60,
+                            'output': outputfile,
+                        }
+                        omus(cnf, parameters=parameters, weights=weights)
+                        cnt += 1
 
 def test_wcnf_instance():
     parameters = {

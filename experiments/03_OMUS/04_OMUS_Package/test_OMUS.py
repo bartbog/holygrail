@@ -65,16 +65,6 @@ def smus_CNF():
     cnf.append([-l])    # c8 ¬l
     return cnf
 
-class Difficulty(Enum):
-    EASY = 1
-    MEDIUM = 2
-    HARD = 3
-    ALL = 0
-
-    @staticmethod
-    def list():
-        return list(map(lambda c: c.value, Difficulty))
-
 def instanceDiff(fileSize):
 
     kb =  1024 ** 1
@@ -310,11 +300,37 @@ def benchmark_wcnf_files():
             's_inc' : softclause_weight_threshold,
             'pb_restarts': 0.001,
             # 'pb_restarts': 0,
-            'cutoff_main': 15 * 60,
+            'cutoff_main': 60 * 60,
             'sp': 0.01 # smooth probability found in code.... not realy the one in the paper
         }
         print(f"SATLike: {folder_path}{instance_name}_satlike.json")
         omus(cnf, parameters=parameters, weights=weights)
+
+    for instance in easy_cnf_instances:
+        # instance variables
+        instance_name = instance.replace('data/wcnf-instances/','')
+        instance_name = instance_name.replace('.wcnf','')
+        # convert instance file to WCNF
+        wcnf = WCNF(from_file=instance)
+        weights = wcnf.wght
+        clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
+        cnf = CNF(from_clauses=clauses)
+        print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
+        ## Maxprop with or with unit prop
+        cnt = 1
+        for unit_literal in UnitLiteral:
+            for best_literal in BestLiteral:
+                print("UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
+                parameters = {
+                    'extension': 'maxprop',
+                    'output': f"{folder_path}{instance_name}_maxprop_{cnt}.json",
+                    'cutoff_main': 15 * 60,
+                    'best_counter_literal': best_literal,
+                    'best_unit_literal': unit_literal
+                }
+                print(f"{folder_path}{instance_name}_maxprop_{cnt}.json")
+                omus(cnf, parameters=parameters, weights=weights)
+                cnt +=1
 
 def test_wcnf_instance():
     parameters = {

@@ -31,7 +31,7 @@ from gurobipy import GRB
 
 # or-tools library
 from ortools.linear_solver import pywraplp
-from OMUS_utils import HittingSetSolver
+from OMUS_utils import *
 
 # configs
 import pprint
@@ -39,35 +39,6 @@ import pprint
 # utilities
 ppprint = pprint.PrettyPrinter(indent=4).pprint
 
-class ClauseCounting(IntEnum):
-    VALIDATED = 1
-    WEIGHTS = 2
-    WEIGHTED_UNASSIGNED = 3
-
-class ClauseSorting(IntEnum):
-    IGNORE = 0
-    WEIGHTS = 1
-    UNASSIGNED = 2
-    WEIGHTED_UNASSIGNED = 3
-    LITERAL_ORDERING = 4
-
-class BestLiteral(IntEnum):
-    COUNT_PURE_ONLY = 1
-    COUNT_POLARITY = 2
-
-class UnitLiteral(IntEnum):
-    IGNORE = 0
-    RANDOM = 1
-    SINGLE_POLARITY = 2
-    POLARITY = 3
-    IMMEDIATE = 4
-
-class SatModel(IntEnum):
-    RANDOM = 1
-    BEST_CLAUSES_VALIDATED = 2
-    BEST_CLAUSE_WEIGHTS_COVERAGE = 3
-    BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE = 4
-    ALL = 5
 
 def time_func(f):
     @wraps(f)
@@ -133,11 +104,7 @@ def unitprop(clauses, weights, F_prime, model, parameters):
         iterable(int), iterable(int) -- Grown hitting set, new model of hitting set
     """
     # parameters
-    count_clauses = parameters['count_clauses']
-    sorting = parameters['sorting']
     best_unit_literal = parameters['best_unit_literal']
-
-    best_literal_counter = parameters['best_counter_literal']
 
     new_F_prime = set(F_prime)
     # precompute both

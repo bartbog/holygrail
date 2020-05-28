@@ -7,7 +7,6 @@ import os
 import re
 import sys
 from pathlib import Path
-from enum import Enum
 from datetime import datetime, date
 import json
 

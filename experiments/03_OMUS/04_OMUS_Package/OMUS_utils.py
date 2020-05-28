@@ -1,4 +1,5 @@
 import json
+from enum import Enum
 
 sign = lambda x: (1, -1)[x < 0]
 

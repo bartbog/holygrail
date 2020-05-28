@@ -6,7 +6,7 @@ Based on... to check originally, currently part of ZebraTutor
 Probably part of Jens Claes' master thesis, from a 'Byron...' booklet
 """
 import sys
-sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/cppy/')
+sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 from cppy import *
 import numpy
 import pandas as pd
@@ -117,15 +117,43 @@ clues.append( [implies(lives_in[p,'Tehama'],
                        ((native['Mattie','Alaska'] & native[p,'Kansas']) |
                         (native[p,'Alaska'] & native['Mattie','Kansas']))) for p in person] )
 
-     
+print("clues=")
+for i, clue in enumerate(clues):
+    print(i, clue)
+    print("\t[")
+    if type(clue) == list:
+        for lit in clue:
+            if type(lit)  == bool:
+                print(f"\t\t{type(lit)}")
+            else:
+                print(f"\t\t{type(lit)}:{lit.name}:{lit.args}")
+        # for lit in clue:
+        #     print(type(lit), lit.name, lit.args)
+        # print("]")
+    else:
+        print(f"\t\t{clue}")
+    print("\t]")
 
-model = Model([bij, trans, clues])
-stats = model.solve(solver = "ortools") #solver="minizinc_text")
 
-for p in person:
-    lst = [p]
-    for rel,other in zip([is_old, lives_in, native], [age, city, birthplace]):
-        for x in other:
-            if rel[p,x].value():
-                lst.append(x)
-    print(",".join(lst))
+
+# print("bij=")
+# for bi in bij:
+#     print(type(bi))
+
+# print("Trans=")
+# for tr in trans:
+#     if type(tr) == type(list):
+#         print([lit for lit in tr])
+#     else:
+#         print(tr)
+
+# model = Model([bij, trans, clues])
+# stats = model.solve(solver = "ortools") #solver="minizinc_text")
+
+# for p in person:
+#     lst = [p]
+#     for rel,other in zip([is_old, lives_in, native], [age, city, birthplace]):
+#         for x in other:
+#             if rel[p,x].value():
+#                 lst.append(x)
+#     print(",".join(lst))

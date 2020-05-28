@@ -230,7 +230,7 @@ def greedy_param(clauses, weights, F_prime, model, parameters):
     cl_true = set(F_prime)
     lit_unk = set(frozenset.union(*clauses)) - lit_true - lit_false
     # Pre-processing is necessary
-    if sorting in [ClauseSorting.UNASSIGNED,ClauseSorting.WEIGHTED_UNASSIGNED, ClauseSorting.WEIGHTS ]:
+    if sorting != ClauseSorting.IGNORE:
         cl_unk = list(set(range(len(clauses))) - cl_true)
     else:
         cl_unk = set(range(len(clauses))) - cl_true

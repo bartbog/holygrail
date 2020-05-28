@@ -1,5 +1,5 @@
 import json
-from enum import Enum
+from enum import Enum, IntEnum
 
 sign = lambda x: (1, -1)[x < 0]
 

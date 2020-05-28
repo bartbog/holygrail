@@ -134,6 +134,9 @@ def wcnfInstances(difficulty= Difficulty.EASY):
                 continue
             elif '.wcnf' in file and WCNFisUnsat(f_path):
                 wcnf_unsat_files.append(f_path)
+    wcnf_unsat_files.sort(key=lambda file_path: os.path.getsize(file_path))
+    # for f in wcnf_unsat_files:
+    #     print("File=", f, "size=", os.path.getsize(f))
     return wcnf_unsat_files
 
 def benchmark_code():
@@ -216,11 +219,81 @@ def benchmark_parameter_omus():
                                 omus(cnf, parameters)
                                 counter+=1
 
-def test_extension():
-    medium_instance = CNF(from_file="data/cnf-instances/zebra_v155_c1135.cnf")
-    # medium_instance = CNF(from_file="data/cnf-instances/bf0432-007.cnf")
+def benchmark_wcnf_files():
+    folder = f'results/{date.today().strftime("%Y_%m_%d")}/'
+    gurobiFolder = folder + "Gurobi/"
 
-    # Execution parameters
+    solverFolders = [gurobiFolder]
+    # extensions = [3, 5, 6]
+
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    for f in solverFolders:
+        if not os.path.exists(f):
+            os.mkdir(f)
+
+    num_instances = 7
+    easy_cnf_instances = wcnfInstances(difficulty= Difficulty.EASY)[:num_instances]
+    folder_path = f"{gurobiFolder}"
+    if not os.path.exists(folder_path):
+        raise f"path = {folder_path} does not exist"
+    for instance in easy_cnf_instances:
+        # instance variables
+        instance_name = instance.replace('data/wcnf-instances/','')
+        instance_name = instance_name.replace('.wcnf','')
+
+        # convert instance file to WCNF
+        wcnf = WCNF(from_file=instance)
+        weights = wcnf.wght
+        clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
+        cnf = CNF(from_clauses=clauses)
+        print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
+
+        ## execution extension 6 (tias code)
+        parameters = {
+            'extension': 'greedy_no_param',
+            'output':f"{folder_path}{instance_name}_greedy_no_param.json",
+            'cutoff_main': 15 * 60,
+        }
+        print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
+        omus(cnf, parameters=parameters, weights=weights)
+
+        ## Local Search : SATLike
+        parameters = {
+            'extension': 'satlike',
+            'output': f"{folder_path}{instance_name}_satlike.json",
+            'cutoff' : len(clauses)/100,
+            'h_inc' : 3,
+            's_inc' : 1,
+            'sp': 0.0001
+        }
+        print(f"SATLike: {folder_path}{instance_name}_satlike.json")
+        omus(cnf, parameters=parameters, weights=weights)
+
+        ## execution extension 3 with different parameters combinations
+        # variables
+        cnt = 1
+        for clause_counting in ClauseCounting:
+            for unit_literal in UnitLiteral:
+                for best_literal in BestLiteral:
+                    outputfile = f"{folder_path}{instance_name}_greedy_param_{cnt}.json"
+                    print(f"Greedy with parameters: {outputfile}")
+                    print("---- ClauseCounting=", clause_counting, "UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
+                    parameters = {
+                        # clause counting
+                        'count_clauses' : clause_counting,
+                        'best_unit_literal': unit_literal,
+                        'best_counter_literal': best_literal,
+                        'sorting': ClauseSorting.IGNORE,
+                        'extension': 'greedy_param',
+                        'cutoff_main': 15 * 60,
+                        'output': outputfile,
+                    }
+                    omus(cnf, parameters=parameters, weights=weights)
+                    cnt += 1
+
+def test_wcnf_instance():
     parameters = {
         # clause counting
         'count_clauses' : ClauseCounting.WEIGHTED_UNASSIGNED,
@@ -243,20 +316,84 @@ def test_extension():
         # 'sat_model' :SatModel.BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE,
         # 'top_k_models': 10,
         # 'bestModel' :SatModel.RANDOM,
+        'max_steps_main': 1000,
         'extension': 5,
+        'output': 'log.json',
+        'cutoff' : 1,
+        'h_inc' : 3,
+        's_inc' : 1,
+        'sp': 0.0001
+        }
+    instance = 'data/wcnf-instances/wBF_100_400.wcnf'
+    weights = WCNF(from_file=instance).wght
+    clauses = [clause for clause in WCNF(from_file=instance).unweighted().clauses if len(clause) > 0]
+    cnf = CNF(from_clauses=clauses)
+    print("nv:", cnf.nv, "#clauses=", len(clauses), "hard=", len(WCNF(from_file=instance).hard), "soft=",len(WCNF(from_file=instance).soft)  )
+    print(omus(cnf, parameters=parameters, weights=weights))
+
+def test_extension():
+    easy_cnf_instances = wcnfInstances(difficulty= Difficulty.EASY)
+
+    # easy_wcnf_instances = wcnfInstances(difficulty= Difficulty.EASY)
+    # print(len(easy_cnf_instances) + len(easy_wcnf_instances))
+    # medium_cnf_instances = cnfInstances(difficulty= Difficulty.MEDIUM)
+    # print(medium_cnf_instances)
+    # medium_wcnf_instances = wcnfInstances(difficulty= Difficulty.MEDIUM)
+    # cnf_instances = easy_cnf_instances
+    # print(medium_wcnf_instances)
+    parameters = {
+        # clause counting
+        'count_clauses' : ClauseCounting.WEIGHTED_UNASSIGNED,
+        # 'count_clauses' : ClauseCounting.WEIGHTS,
+        # 'count_clauses' : ClauseCounting.VALIDATED,
+        # clause sorting
+        'sorting':ClauseSorting.IGNORE,
+        # 'sorting':ClauseSorting.WEIGHTS,
+        # 'sorting':ClauseSorting.UNASSIGNED,
+        # 'reverse_sorting': True,
+        # 'sorting':ClauseSorting.WEIGHTED_UNASSIGNED,
+        # Unit Literal propagation
+        'best_unit_literal': UnitLiteral.IMMEDIATE,
+        # 'best_unit_literal': UnitLiteral.INGORE,
+        # 'best_unit_literal': UnitLiteral.RANDOM,
+        # 'best_unit_literal': UnitLiteral.PURE,
+        # 'best_unit_literal': UnitLiteral.POLARITY,
+        'best_counter_literal': BestLiteral.COUNT_POLARITY,
+        # 'best_counter_literal': BestLiteral.COUNT_PURE_ONLY,
+        # 'sat_model' :SatModel.BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE,
+        # 'top_k_models': 10,
+        # 'bestModel' :SatModel.RANDOM,
+        'max_steps_main': 1000,
+        'extension': 3,
         'output': 'log.json',
         'local_search': False,
         'cutoff' : 3,
         'h_inc' : 3,
         's_inc' : 1,
-        'sp': 0.01
-    }
-    # print(omus(omus_cnf(), parameters=parameters))
-    # print(omus(bacchus_cnf(), parameters=parameters))
-    print(omus(medium_instance, parameters=parameters))
+        'sp': 0.0001
+            }
+    print(omus(omus_cnf(), parameters=parameters))
+    print(omus(bacchus_cnf(), parameters=parameters))
+
+    for instance in easy_cnf_instances[:10]:
+        # print(instance)
+        if instance in ['data/cnf-instances/zebra_v155_c1135.cnf', 'data/cnf-instances/bf0432-007.cnf']:
+            continue
+        # wcnf = 
+        # print(WCNF(from_file=instance).unweighted().clauses )
+        weights = WCNF(from_file=instance).wght
+        clauses = [clause for clause in WCNF(from_file=instance).unweighted().clauses if len(clause) > 0]
+        cnf = CNF(from_clauses=clauses)
+        print("nv:", cnf.nv, "#clauses=", len(clauses), "hard=", len(WCNF(from_file=instance).hard), "soft=",len(WCNF(from_file=instance).soft)  )
+        print(omus(cnf, parameters=parameters, weights=weights))
+        # print(len(WCNF(from_file=instance).wght))
+        # print(len(WCNF(from_file=instance).unweighted().clauses))
+        # cnf = CNF(from_clauses=clauses)
+
+    # print(omus(medium_instance, parameters=parameters))
 
 def main():
-    test_extension()
+    benchmark_wcnf_files()
 
 if __name__ == "__main__":
     main()

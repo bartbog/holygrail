@@ -68,7 +68,3 @@ def getClausesValidatedByLiterals(cnf_clauses, subset_clauses, literals):
                 validated_clauses.add(c)
     return validated_clauses
 
-def maxsat_fprime(cnf_clauses, F_prime):
-    new_F_prime = set(F_prime)
-
-    return new_F_prime

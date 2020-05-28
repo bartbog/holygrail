@@ -548,22 +548,25 @@ def SATLike(clauses, weights, F_prime, model, parameters):
     # - Add already visited assignment => when that happens, we generate new initial assignment
     # parameters
     cutoff = parameters['cutoff']
-    sp = 0.01
-    max_steps = 100000 # very big number
+    sp = parameters['sp']
+    pb_restarts = parameters['pb_restarts']
+    max_steps = 100000000 # very big number
+    # max_flips = len(clauses)
     h_inc = parameters['h_inc'] # Paper value = 3
     s_inc = parameters['s_inc'] # Paper value = 1
     # optimziation parameters
-    max_iters_no_change = 100
-    max_restarts = 3
+    max_iters_no_change = len(clauses)
+    max_restarts = len(clauses)
     # Paper : Unit Propagation-based initilization is not useful for SATLike on WPMS
     # initial assignment is generated randomly for WPMS
 
     # assignment = set()
-    assignment = set(model)
+    # assignment = set(model)
     # cl_true = set(F_prime)
 
     all_lits = set(frozenset.union(*clauses))
     all_lits |= set(-lit for lit in all_lits)
+    all_vars = set(abs(lit) for lit in frozenset.union(*clauses))
 
     hard_clauses = frozenset(F_prime)
     soft_clauses = frozenset(i for i in range(len(clauses))) - hard_clauses
@@ -571,18 +574,18 @@ def SATLike(clauses, weights, F_prime, model, parameters):
     lit_clauses_neighborhood = dict.fromkeys(all_lits, [])
     w = [0 for i in range(len(clauses))]
 
-    lit_unk = list(all_lits - assignment - set(-l for l in assignment))
-    # lit_unk = list(all_lits)
+    # lit_unk = list(all_lits - assignment - set(-l for l in assignment))
+    # # lit_unk = list(all_lits)
 
-    # literals and their negation
+    # # literals and their negation
 
-    while(len(lit_unk) > 0):
-        lit = random.choice(lit_unk)
-        assignment.add(lit)
-        # lit_false.add(-lit)
-        lit_unk.remove(lit)
-        lit_unk.remove(-lit)
-
+    # while(len(lit_unk) > 0):
+    #     lit = random.choice(lit_unk)
+    #     assignment.add(lit)
+    #     # lit_false.add(-lit)
+    #     lit_unk.remove(lit)
+    #     lit_unk.remove(-lit)
+    assignment = set(map(lambda x,y:x*y,random.choices([-1, 1], k=len(all_vars)),all_vars))
     # assignment = set(lit_true)
     best_assignment = None
     best_cost = sum(weights[i] for i in soft_clauses)
@@ -627,7 +630,7 @@ def SATLike(clauses, weights, F_prime, model, parameters):
 
     v = 0
 
-    # variabels 
+    # variabels
     useless_iterations = 0
     total_iterations = 0
     iters_no_change = 0
@@ -643,7 +646,7 @@ def SATLike(clauses, weights, F_prime, model, parameters):
         cost_assignment = sum(weights[i] for i in falsified_soft_clauses)
 
         if len(falsified_hard_clauses) == 0 and cost_assignment < best_cost:
-            # print(f"{best_cost} => {cost_assignment}")
+            print(f"{total_iterations}: {best_cost} => {cost_assignment}, restarts:{restarts}")
             if iters_no_change > longest_iterations:
                 longest_iterations = iters_no_change
             iters_no_change = 0
@@ -680,13 +683,17 @@ def SATLike(clauses, weights, F_prime, model, parameters):
         else:
             # udpate weights of clauses by Weighting-PMS
             p = random.uniform(0, 1)
+            # increase the weights
             if p > sp:
                 for cl in falsified_hard_clauses:
                     w[cl] += h_inc
                 for cl in falsified_soft_clauses:
-                    if w[cl] < s_inc:
+                    if w[cl] > s_inc:
+                        continue
+                    else:
                         w[cl] += 1
             else:
+                # smooth the weights
                 satisfied_hard_clauses = hard_clauses - falsified_hard_clauses
                 satisfied_soft_clauses = soft_clauses - falsified_soft_clauses
                 for cl in satisfied_hard_clauses:
@@ -703,7 +710,6 @@ def SATLike(clauses, weights, F_prime, model, parameters):
 
             v = max(clause, key=lambda lit: scores[lit])
         # flip sign of variable v in assignment
-
         assignment = set(-lit if abs(v) == abs(lit) else lit for lit in assignment)
 
         total_iterations += 1
@@ -711,21 +717,13 @@ def SATLike(clauses, weights, F_prime, model, parameters):
             if iters_no_change > longest_iterations:
                 longest_iterations = iters_no_change
             break
-
-        if (iters_no_change > max_iters_no_change):
-            # restarts +=1
-            iters_no_change = 0
+        # p = random.uniform(0, 1)
+        if (p < pb_restarts):
+            restarts+=1
             # Force new valid assignment
-            # assignment = set()
-            assignment = set(model)
-            lit_unk = list(all_lits - assignment - set(-l for l in assignment))
 
-            while(len(lit_unk) > 0):
-                lit = random.choice(lit_unk)
-                assignment.add(lit)
-                # lit_false.add(-lit)
-                lit_unk.remove(lit)
-                lit_unk.remove(-lit)
+            assignment = set(map(lambda x,y:x*y,random.choices([-1, 1], k=len(all_vars)),all_vars))
+
             for lit in assignment:
                 scores[lit] = 0
                 scores[-lit] = 0
@@ -744,7 +742,7 @@ def SATLike(clauses, weights, F_prime, model, parameters):
 
         iters_no_change += 1
 
-    # print(f"Useful iterations [%] {round((1 - useless_iterations/total_iterations)*100, 2)} on total_iterations={total_iterations}")
+    print(f"Useful iterations [%] {round((1 - useless_iterations/total_iterations)*100, 2)} on total_iterations={total_iterations}, restarts={restarts}")
     # print(f"Longest iterations without progress {longest_iterations}")
 
     if best_assignment == None:
@@ -1113,6 +1111,7 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     # default parameters
     extension = parameters['extension']
     outputfile = parameters['output']
+    cutoff_main = parameters['cutoff_main']
     # Performance
     cnf_clauses = cnf.clauses
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf_clauses]
@@ -1127,7 +1126,7 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
 
     if weights == None:
         weights = clauses_weights(cnf.clauses, f)
-    
+
     assert len(weights) == len(cnf_clauses), "clauses and weights of same length"
 
     gurobi_model = gurobiModel(cnf.clauses, weights)
@@ -1136,7 +1135,6 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     while(True):
         # compute optimal hitting set
         t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
-        # print(f"Steps={steps}\t, |hs|={len(hs)}")
 
         t_hitting_set.append(t_exec_hs)
         s_hs.append(len(hs))
@@ -1144,10 +1142,9 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
         # check satisfiability of clauses
         (t_exec_model, (model, sat)) = checkSatClauses(frozen_clauses, hs)
         t_sat_check.append(t_exec_model)
-        # print(f"Sat check={t_exec_model}: {model}")
 
         # if not sat or steps > max_steps_main:
-        if not sat:
+        if not sat or time.time() > cutoff_main:
             print("Steps=", steps, "OMUS=", hs)
             gurobi_model.dispose()
 

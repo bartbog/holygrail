@@ -534,6 +534,7 @@ def SATLike(clauses, weights, F_prime, model, parameters):
     all_lits = set(frozenset.union(*clauses))
     all_lits |= set(-lit for lit in all_lits)
     all_vars = set(abs(lit) for lit in frozenset.union(*clauses))
+    vars_without_model = all_vars - set(abs(lit) for lit in model)
 
     hard_clauses = frozenset(F_prime)
     soft_clauses = frozenset(i for i in range(len(clauses))) - hard_clauses
@@ -688,8 +689,8 @@ def SATLike(clauses, weights, F_prime, model, parameters):
         if (p < pb_restarts):
             restarts+=1
             # Force new valid assignment
-
-            assignment = set(map(lambda x,y:x*y,random.choices([-1, 1], k=len(all_vars)),all_vars))
+            assignment = set(model)
+            assignment |= set(map(lambda x,y:x*y,random.choices([-1, 1], k=len(vars_without_model)),vars_without_model))
 
             for lit in assignment:
                 scores[lit] = 0
@@ -715,7 +716,7 @@ def SATLike(clauses, weights, F_prime, model, parameters):
     if best_assignment == None:
         cl_true = set(i for i, clause in enumerate(clauses) if len(clause.intersection(assignment)) > 0)
         if(not F_prime <= cl_true):
-            raise f"F_prime not validated {F_prime}, {cl_true}"
+            cl_true, assignment = greedy_no_param(clauses,weights,  F_prime, model, parameters)
 
         return cl_true, assignment
     else:

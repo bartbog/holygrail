@@ -227,49 +227,77 @@ def benchmark_wcnf_files():
     folder_path = f"{gurobiFolder}"
     if not os.path.exists(folder_path):
         raise f"path = {folder_path} does not exist"
+    # for instance in easy_cnf_instances:
+    #     # instance variables
+    #     instance_name = instance.replace('data/wcnf-instances/','')
+    #     instance_name = instance_name.replace('.wcnf','')
+
+    #     # convert instance file to WCNF
+    #     wcnf = WCNF(from_file=instance)
+    #     weights = wcnf.wght
+    #     clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
+    #     cnf = CNF(from_clauses=clauses)
+    #     print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
+
+    #     ## execution extension 6 (tias code)
+    #     parameters = {
+    #         'extension': 'greedy_no_param',
+    #         'output':f"{folder_path}{instance_name}_greedy_no_param.json",
+    #         'cutoff_main': 15 * 60,
+    #     }
+    #     print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
+    #     omus(cnf, parameters=parameters, weights=weights)
+
+    #     ## execution extension 3 with different parameters combinations
+    #     # variables
+    #     cnt = 1
+    #     for sorting in ClauseSorting:
+    #         for clause_counting in ClauseCounting:
+    #             for unit_literal in UnitLiteral:
+    #                 for best_literal in BestLiteral:
+    #                     outputfile = f"{folder_path}{instance_name}_greedy_param_{cnt}.json"
+    #                     print(f"Greedy with parameters: {outputfile}")
+    #                     print("---- ClauseCounting=", clause_counting, "UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
+    #                     parameters = {
+    #                         # clause counting
+    #                         'count_clauses' : clause_counting,
+    #                         'best_unit_literal': unit_literal,
+    #                         'best_counter_literal': best_literal,
+    #                         'sorting': sorting,
+    #                         'extension': 'greedy_param',
+    #                         'cutoff_main': 15 * 60,
+    #                         'output': outputfile,
+    #                     }
+    #                     omus(cnf, parameters=parameters, weights=weights)
+    #                     cnt += 1
+
+
     for instance in easy_cnf_instances:
         # instance variables
         instance_name = instance.replace('data/wcnf-instances/','')
         instance_name = instance_name.replace('.wcnf','')
-
         # convert instance file to WCNF
         wcnf = WCNF(from_file=instance)
         weights = wcnf.wght
         clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
         cnf = CNF(from_clauses=clauses)
         print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
-
-        ## execution extension 6 (tias code)
-        parameters = {
-            'extension': 'greedy_no_param',
-            'output':f"{folder_path}{instance_name}_greedy_no_param.json",
-            'cutoff_main': 15 * 60,
-        }
-        print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
-        omus(cnf, parameters=parameters, weights=weights)
-
-        ## execution extension 3 with different parameters combinations
-        # variables
+        ## Maxprop with or with unit prop
         cnt = 1
-        for sorting in ClauseSorting:
-            for clause_counting in ClauseCounting:
-                for unit_literal in UnitLiteral:
-                    for best_literal in BestLiteral:
-                        outputfile = f"{folder_path}{instance_name}_greedy_param_{cnt}.json"
-                        print(f"Greedy with parameters: {outputfile}")
-                        print("---- ClauseCounting=", clause_counting, "UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
-                        parameters = {
-                            # clause counting
-                            'count_clauses' : clause_counting,
-                            'best_unit_literal': unit_literal,
-                            'best_counter_literal': best_literal,
-                            'sorting': sorting,
-                            'extension': 'greedy_param',
-                            'cutoff_main': 15 * 60,
-                            'output': outputfile,
-                        }
-                        omus(cnf, parameters=parameters, weights=weights)
-                        cnt += 1
+        for unit_literal in UnitLiteral:
+            for best_literal in BestLiteral:
+                print("UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
+                parameters = {
+                    'extension': 'maxprop',
+                    'output': f"{folder_path}{instance_name}_maxprop_{cnt}.json",
+                    'cutoff_main': 15 * 60,
+                    'best_counter_literal': best_literal,
+                    'best_unit_literal': unit_literal
+                }
+                print(f"{folder_path}{instance_name}_maxprop_{cnt}.json")
+                omus(cnf, parameters=parameters, weights=weights)
+                cnt +=1
+
     for instance in easy_cnf_instances:
         # instance variables
         instance_name = instance.replace('data/wcnf-instances/','')
@@ -304,32 +332,6 @@ def benchmark_wcnf_files():
         }
         print(f"SATLike: {folder_path}{instance_name}_satlike.json")
         omus(cnf, parameters=parameters, weights=weights)
-
-    for instance in easy_cnf_instances:
-        # instance variables
-        instance_name = instance.replace('data/wcnf-instances/','')
-        instance_name = instance_name.replace('.wcnf','')
-        # convert instance file to WCNF
-        wcnf = WCNF(from_file=instance)
-        weights = wcnf.wght
-        clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
-        cnf = CNF(from_clauses=clauses)
-        print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
-        ## Maxprop with or with unit prop
-        cnt = 1
-        for unit_literal in UnitLiteral:
-            for best_literal in BestLiteral:
-                print("UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
-                parameters = {
-                    'extension': 'maxprop',
-                    'output': f"{folder_path}{instance_name}_maxprop_{cnt}.json",
-                    'cutoff_main': 15 * 60,
-                    'best_counter_literal': best_literal,
-                    'best_unit_literal': unit_literal
-                }
-                print(f"{folder_path}{instance_name}_maxprop_{cnt}.json")
-                omus(cnf, parameters=parameters, weights=weights)
-                cnt +=1
 
 def test_wcnf_instance():
     parameters = {

@@ -179,9 +179,21 @@ def maxprop(clauses, weights, F_prime, model, parameters):
         lit_false = set(-l for l in t_model)
 
         remaining_literals = all_literals - lit_true - lit_false
-        conflict_free_literals = remaining_literals - set(-l for l in remaining_literals)
+        conflict_free_literals = remaining_literals - set(-l for l in remaining_literals if -l in remaining_literals)
+
+        cnt = Counter({literal:0 for literal in conflict_free_literals})
+        for i,clause in enumerate(clauses):
+            if i not in t_F_prime:
+                lit_intersect_cl = conflict_free_literals.intersection(clause)
+                cnt.update(lit_intersect_cl)
 
     conflictual_literals = set(remaining_literals)
+
+    cnt = Counter({literal:0 for literal in conflictual_literals})
+    for i,clause in enumerate(clauses):
+        if i not in t_F_prime:
+            lit_intersect_cl = conflictual_literals.intersection(clause)
+            cnt.update(lit_intersect_cl)
 
     assert all([True if -l in conflictual_literals else False for l in conflictual_literals])
 
@@ -210,6 +222,12 @@ def maxprop(clauses, weights, F_prime, model, parameters):
         # code was probably not finished because the latter was missing
         remaining_literals = all_literals - lit_true - lit_false
         conflictual_literals = set(remaining_literals)
+
+        cnt = Counter({literal:0 for literal in conflictual_literals})
+        for i,clause in enumerate(clauses):
+            if i not in t_F_prime:
+                lit_intersect_cl = conflictual_literals.intersection(clause)
+                cnt.update(lit_intersect_cl)
 
     assert all([True if -l not in lit_true else False for l in lit_true])
 

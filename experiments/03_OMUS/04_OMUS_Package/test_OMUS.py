@@ -208,6 +208,126 @@ def benchmark_parameter_omus():
                                 omus(cnf, parameters)
                                 counter+=1
 
+def benchmark_cnf_files():
+    folder = f'results/{date.today().strftime("%Y_%m_%d")}/'
+    gurobiFolder = folder + "Gurobi/"
+
+    solverFolders = [gurobiFolder]
+    # extensions = [3, 5, 6]
+
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+    for f in solverFolders:
+        if not os.path.exists(f):
+            os.mkdir(f)
+
+    num_instances = 7
+    easy_cnf_instances = cnfInstances(difficulty= Difficulty.EASY) + cnfInstances(difficulty= Difficulty.MEDIUM)#[:num_instances] + 
+    folder_path = f"{gurobiFolder}"
+    if not os.path.exists(folder_path):
+        raise f"path = {folder_path} does not exist"
+    for instance in easy_cnf_instances:
+        # instance variables
+        instance_name = instance.replace('data/cnf-instances/','')
+        instance_name = instance_name.replace('.cnf','')
+
+        # convert instance file to WCNF
+        cnf = CNF(from_file=instance)
+        clauses = cnf.clauses
+        print(f"nv={cnf.nv} #clauses={len(clauses)}")
+
+        ## execution extension 6 (tias code)
+        parameters = {
+            'extension': 'greedy_no_param',
+            'output':f"{folder_path}{instance_name}_greedy_no_param.json",
+            'cutoff_main': 15 * 60,
+        }
+        print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
+        omus(cnf, parameters=parameters)
+
+        ## execution extension 3 with different parameters combinations
+        # variables
+        cnt = 1
+        for sorting in ClauseSorting:
+            for clause_counting in ClauseCounting:
+                for unit_literal in UnitLiteral:
+                    for best_literal in BestLiteral:
+                        outputfile = f"{folder_path}{instance_name}_greedy_param_{cnt}.json"
+                        print(f"Greedy with parameters: {outputfile}")
+                        print("---- ClauseCounting=", clause_counting, "UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
+                        parameters = {
+                            # clause counting
+                            'count_clauses' : clause_counting,
+                            'best_unit_literal': unit_literal,
+                            'best_counter_literal': best_literal,
+                            'sorting': sorting,
+                            'extension': 'greedy_param',
+                            'cutoff_main': 15 * 60,
+                            'output': outputfile,
+                        }
+                        omus(cnf, parameters=parameters)
+                        cnt += 1
+
+
+    for instance in easy_cnf_instances:
+        # instance variables
+        instance_name = instance.replace('data/cnf-instances/','')
+        instance_name = instance_name.replace('.cnf','')
+
+        # convert instance file to WCNF
+        cnf = CNF(from_file=instance)
+        clauses = cnf.clauses
+        print(f"nv={cnf.nv} #clauses={len(clauses)}")
+        ## Local Search : SATLike
+        ## parameters found in code
+        # if mean(weights[i] for i in range(len(wcnf.soft))) > 10000:
+        #     h_inc=300
+        #     softclause_weight_threshold=500
+        # else:
+        h_inc=3
+        softclause_weight_threshold=0
+
+        parameters = {
+            'extension': 'satlike',
+            'output': f"{folder_path}{instance_name}_satlike.json",
+            'cutoff' : 15,
+            'h_inc' : 3,
+            'max_restart':5,
+            's_inc' : softclause_weight_threshold,
+            'pb_restarts': 0.001,
+            # 'pb_restarts': 0,
+            'cutoff_main': 30 * 60,
+            'sp': 0.01 # smooth probability found in code.... not realy the one in the paper
+        }
+        print(f"SATLike: {folder_path}{instance_name}_satlike.json")
+        omus(cnf, parameters=parameters)
+
+    for instance in easy_cnf_instances:
+        # instance variables
+        instance_name = instance.replace('data/cnf-instances/','')
+        instance_name = instance_name.replace('.cnf','')
+
+        # convert instance file to WCNF
+        cnf = CNF(from_file=instance)
+        clauses = cnf.clauses
+        print(f"nv={cnf.nv} #clauses={len(clauses)}")
+        ## Maxprop with or with unit prop
+        cnt = 1
+        for unit_literal in UnitLiteral:
+            for best_literal in BestLiteral:
+                print("UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
+                parameters = {
+                    'extension': 'maxprop',
+                    'output': f"{folder_path}{instance_name}_maxprop_{cnt}.json",
+                    'cutoff_main': 15 * 60,
+                    'best_counter_literal': best_literal,
+                    'best_unit_literal': unit_literal
+                }
+                print(f"{folder_path}{instance_name}_maxprop_{cnt}.json")
+                omus(cnf, parameters=parameters)
+                cnt +=1
+
 def benchmark_wcnf_files():
     folder = f'results/{date.today().strftime("%Y_%m_%d")}/'
     gurobiFolder = folder + "Gurobi/"
@@ -434,6 +554,7 @@ def test_extension():
 
 def main():
     benchmark_wcnf_files()
+    benchmark_cnf_files()
 
 if __name__ == "__main__":
     main()

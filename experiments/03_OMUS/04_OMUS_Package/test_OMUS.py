@@ -272,40 +272,40 @@ def benchmark_wcnf_files():
     #                     cnt += 1
 
 
-    for instance in easy_cnf_instances:
-        # instance variables
-        instance_name = instance.replace('data/wcnf-instances/','')
-        instance_name = instance_name.replace('.wcnf','')
-        # convert instance file to WCNF
-        wcnf = WCNF(from_file=instance)
-        weights = wcnf.wght
-        clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
-        cnf = CNF(from_clauses=clauses)
-        print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
-        ## Local Search : SATLike
-        ## parameters found in code
-        print(wcnf.soft)
-        if mean(weights[i] for i in range(len(wcnf.soft))) > 10000:
-            h_inc=300
-            softclause_weight_threshold=500
-        else:
-            h_inc=3
-            softclause_weight_threshold=0
+    # for instance in easy_cnf_instances:
+    #     # instance variables
+    #     instance_name = instance.replace('data/wcnf-instances/','')
+    #     instance_name = instance_name.replace('.wcnf','')
+    #     # convert instance file to WCNF
+    #     wcnf = WCNF(from_file=instance)
+    #     weights = wcnf.wght
+    #     clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
+    #     cnf = CNF(from_clauses=clauses)
+    #     print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
+    #     ## Local Search : SATLike
+    #     ## parameters found in code
+    #     print(wcnf.soft)
+    #     if mean(weights[i] for i in range(len(wcnf.soft))) > 10000:
+    #         h_inc=300
+    #         softclause_weight_threshold=500
+    #     else:
+    #         h_inc=3
+    #         softclause_weight_threshold=0
 
-        parameters = {
-            'extension': 'satlike',
-            'output': f"{folder_path}{instance_name}_satlike.json",
-            'cutoff' : 15,
-            'h_inc' : 3,
-            'max_restart':5,
-            's_inc' : softclause_weight_threshold,
-            'pb_restarts': 0.001,
-            # 'pb_restarts': 0,
-            'cutoff_main': 60 * 60,
-            'sp': 0.01 # smooth probability found in code.... not realy the one in the paper
-        }
-        print(f"SATLike: {folder_path}{instance_name}_satlike.json")
-        omus(cnf, parameters=parameters, weights=weights)
+    #     parameters = {
+    #         'extension': 'satlike',
+    #         'output': f"{folder_path}{instance_name}_satlike.json",
+    #         'cutoff' : 15,
+    #         'h_inc' : 3,
+    #         'max_restart':5,
+    #         's_inc' : softclause_weight_threshold,
+    #         'pb_restarts': 0.001,
+    #         # 'pb_restarts': 0,
+    #         'cutoff_main': 60 * 60,
+    #         'sp': 0.01 # smooth probability found in code.... not realy the one in the paper
+    #     }
+    #     print(f"SATLike: {folder_path}{instance_name}_satlike.json")
+    #     omus(cnf, parameters=parameters, weights=weights)
 
     for instance in easy_cnf_instances:
         # instance variables

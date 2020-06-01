@@ -188,10 +188,10 @@ def maxprop(clauses, weights, F_prime, model, parameters):
     # propagate all remaining literals
     while len(conflictual_literals) > 0:
         if best_literal_counter == BestLiteral.COUNT_PURE_ONLY:
-            best_lit = max(conflict_free_literals, key=lambda i: cnt[i])
+            best_lit = max(conflictual_literals, key=lambda i: cnt[i])
         else:
             # 4.2 Literal with highest polarity clause count / sum of clause weights / sum of clause weights/#unassigned
-            best_lit = max(conflict_free_literals, key=lambda i: cnt[i] - cnt[-i])
+            best_lit = max(conflictual_literals, key=lambda i: cnt[i] - cnt[-i])
 
         conflictual_literals.remove(best_lit)
         # because the unit prop created a conflict-free one, we must check

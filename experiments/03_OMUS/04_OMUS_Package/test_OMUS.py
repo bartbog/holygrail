@@ -532,7 +532,7 @@ def test_extension():
         's_inc' : 1,
         'sp': 0.0001
             }
-    print(omus(omus_cnf(), parameters=parameters))
+    # print(omus(omus_cnf(), parameters=parameters))
     print(omus(bacchus_cnf(), parameters=parameters))
 
     for instance in easy_cnf_instances[:10]:

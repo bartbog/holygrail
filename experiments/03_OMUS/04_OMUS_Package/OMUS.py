@@ -143,8 +143,6 @@ def unitprop(clauses, weights, F_prime, model, parameters):
 
 def maxprop(clauses, weights, F_prime, model, parameters):
     # parameters
-    count_clauses = parameters['count_clauses']
-    sorting = parameters['sorting']
     best_unit_literal = parameters['best_unit_literal']
     best_literal_counter = parameters['best_counter_literal']
 

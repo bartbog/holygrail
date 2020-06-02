@@ -222,7 +222,7 @@ def benchmark_cnf_files():
         if not os.path.exists(f):
             os.mkdir(f)
 
-    num_instances = 7
+    # num_instances = 7
     easy_cnf_instances = cnfInstances(difficulty= Difficulty.EASY) + cnfInstances(difficulty= Difficulty.MEDIUM)#[:num_instances] + 
     folder_path = f"{gurobiFolder}"
     if not os.path.exists(folder_path):
@@ -269,40 +269,6 @@ def benchmark_cnf_files():
                         omus(cnf, parameters=parameters)
                         cnt += 1
 
-
-    for instance in easy_cnf_instances:
-        # instance variables
-        instance_name = instance.replace('data/cnf-instances/','')
-        instance_name = instance_name.replace('.cnf','')
-
-        # convert instance file to WCNF
-        cnf = CNF(from_file=instance)
-        clauses = cnf.clauses
-        print(f"nv={cnf.nv} #clauses={len(clauses)}")
-        ## Local Search : SATLike
-        ## parameters found in code
-        # if mean(weights[i] for i in range(len(wcnf.soft))) > 10000:
-        #     h_inc=300
-        #     softclause_weight_threshold=500
-        # else:
-        h_inc=3
-        softclause_weight_threshold=0
-
-        parameters = {
-            'extension': 'satlike',
-            'output': f"{folder_path}{instance_name}_satlike.json",
-            'cutoff' : 15,
-            'h_inc' : 3,
-            'max_restart':5,
-            's_inc' : softclause_weight_threshold,
-            'pb_restarts': 0.001,
-            # 'pb_restarts': 0,
-            'cutoff_main': 30 * 60,
-            'sp': 0.01 # smooth probability found in code.... not realy the one in the paper
-        }
-        print(f"SATLike: {folder_path}{instance_name}_satlike.json")
-        omus(cnf, parameters=parameters)
-
     for instance in easy_cnf_instances:
         # instance variables
         instance_name = instance.replace('data/cnf-instances/','')
@@ -327,6 +293,40 @@ def benchmark_cnf_files():
                 print(f"{folder_path}{instance_name}_maxprop_{cnt}.json")
                 omus(cnf, parameters=parameters)
                 cnt +=1
+
+    # for instance in easy_cnf_instances:
+    #     # instance variables
+    #     instance_name = instance.replace('data/cnf-instances/','')
+    #     instance_name = instance_name.replace('.cnf','')
+
+    #     # convert instance file to WCNF
+    #     cnf = CNF(from_file=instance)
+    #     clauses = cnf.clauses
+    #     print(f"nv={cnf.nv} #clauses={len(clauses)}")
+    #     ## Local Search : SATLike
+    #     ## parameters found in code
+    #     # if mean(weights[i] for i in range(len(wcnf.soft))) > 10000:
+    #     #     h_inc=300
+    #     #     softclause_weight_threshold=500
+    #     # else:
+    #     h_inc=3
+    #     softclause_weight_threshold=0
+
+    #     parameters = {
+    #         'extension': 'satlike',
+    #         'output': f"{folder_path}{instance_name}_satlike.json",
+    #         'cutoff' : 15,
+    #         'h_inc' : 3,
+    #         'max_restart':5,
+    #         's_inc' : softclause_weight_threshold,
+    #         'pb_restarts': 0.001,
+    #         # 'pb_restarts': 0,
+    #         'cutoff_main': 30 * 60,
+    #         'sp': 0.01 # smooth probability found in code.... not realy the one in the paper
+    #     }
+    #     print(f"SATLike: {folder_path}{instance_name}_satlike.json")
+    #     omus(cnf, parameters=parameters)
+
 
 def benchmark_wcnf_files():
     folder = f'results/{date.today().strftime("%Y_%m_%d")}/'
@@ -553,7 +553,7 @@ def test_extension():
     # print(omus(medium_instance, parameters=parameters))
 
 def main():
-    benchmark_wcnf_files()
+    # benchmark_wcnf_files()
     benchmark_cnf_files()
 
 if __name__ == "__main__":

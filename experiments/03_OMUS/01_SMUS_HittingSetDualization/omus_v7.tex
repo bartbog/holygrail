@@ -9,6 +9,7 @@
 \usepackage{amsthm}
 \usepackage{thmtools} 
 \usepackage[parfill]{parskip}
+\usepackage[normalem]{ulem}
 
 \definecolor{vuborange}{rgb}{1.0,0.40,0.0}
 \newcommand\m[1]{\mathcal{#1}}
@@ -35,7 +36,7 @@
 
 
 \begin{document}
-\section{Introduction}
+% \section{Introduction}
 % \subsection{Ideas}
 % \begin{itemize}
 %   % \item explanations in constraint satisfaction problems \todo{cite: xai special issue} easy, understandable, human-interpretable
@@ -46,49 +47,49 @@
 %   \item approach tested on Boolean Satisfiability instances and on a high level problem
 % \end{itemize}
 % \subsection{Todo}
-\begin{itemize}
-  \item \todo{which complexity is extracting an OMUS ?}
-\end{itemize}
+% \begin{itemize}
+%   \item \todo{which complexity is extracting an OMUS ?}
+% \end{itemize}
 
-\section{Background}
+% \section{Background}
 
-The algorithm presented in this section is based on the key ideas and observations of Ignatiev et al. presented in \cite{ignatiev2015smallest}.
-The algorithm is adapted to incorporate an optimality criterion in order to guide the search not in the direction of the SMUS, but towards the OMUS. 
-To do so, we first define the  objective function f:
+% The algorithm presented in this section is based on the key ideas and observations of Ignatiev et al. presented in \cite{ignatiev2015smallest}.
+% The algorithm is adapted to incorporate an optimality criterion in order to guide the search not in the direction of the SMUS, but towards the OMUS. 
+% To do so, we first define the  objective function f:
 
-\begin{definition}
-  Given a CNF Formula $\m{F}$, let $f : 2^{\m{F}} \rightarrow \mathbb{R}$ be a mapping of a set of clauses to a real number. f is said to be a \textit{consistent} objective function if for any subsets $\m{A}$, $\m{B}$ of $\m{F}$ if $\m{A} \subseteq \m{B}$ then $f(\m{A}) \leq f(\m{B})$.
-  \emilio{function f is said to be set increasing if ...}
-\end{definition}
+% \begin{definition}
+%   Given a CNF Formula $\m{F}$, let $f : 2^{\m{F}} \rightarrow \mathbb{R}$ be a mapping of a set of clauses to a real number. f is said to be a \textit{consistent} objective function if for any subsets $\m{A}$, $\m{B}$ of $\m{F}$ if $\m{A} \subseteq \m{B}$ then $f(\m{A}) \leq f(\m{B})$.
+%   \emilio{function f is said to be set increasing if ...}
+% \end{definition}
 
-For an unsatisfiable CNF formula $\m{F}$, a subset of clauses that are still unsatisfiable, but if any of the clauses are removed then the reduced formula becomes satisfiable. 
-Formally, we define this set as a Minimum unsatisfiable Subset (MUS):
+% For an unsatisfiable CNF formula $\m{F}$, a subset of clauses that are still unsatisfiable, but if any of the clauses are removed then the reduced formula becomes satisfiable. 
+% Formally, we define this set as a Minimum unsatisfiable Subset (MUS):
 
-\begin{definition}
-  A subset $\m{U} \subseteq \m{F}$ is a \textbf{minimal unsatisfiable subset} (MUS) if $\m{U}$ \emph{unsatisfiable} and $\forall \ \m{U}' \subset \m{U}$, $\m{U}'$ is \emph{satisfiable}. An MUS of $\m{F}$ with an optimal value w.r.t an \emph{objective function $f$} is called an \textbf{optimal MUS} (OMUS).
-\end{definition}
+% \begin{definition}
+%   A subset $\m{U} \subseteq \m{F}$ is a \textbf{minimal unsatisfiable subset} (MUS) if $\m{U}$ \emph{unsatisfiable} and $\forall \ \m{U}' \subset \m{U}$, $\m{U}'$ is \emph{satisfiable}. An MUS of $\m{F}$ with an optimal value w.r.t an \emph{objective function $f$} is called an \textbf{optimal MUS} (OMUS).
+% \end{definition}
 
-\begin{definition}
-  A subset $\m{C}$ of $\m{F}$ is an \textbf{minimal correction subset} (MCS) if $\m{F}  \setminus \m{C}$ is \emph{satisfiable} and $\forall \m{C}' \subseteq \m{C} \wedge \m{C}' \neq \emptyset$, $(\m{F} \setminus \m{C}) \cup \m{C}'$ is \emph{unsatisfiable}.
-\end{definition}
+% \begin{definition}
+%   A subset $\m{C}$ of $\m{F}$ is an \textbf{minimal correction subset} (MCS) if $\m{F}  \setminus \m{C}$ is \emph{satisfiable} and $\forall \m{C}' \subseteq \m{C} \wedge \m{C}' \neq \emptyset$, $(\m{F} \setminus \m{C}) \cup \m{C}'$ is \emph{unsatisfiable}.
+% \end{definition}
 
-\begin{definition}
-  A \emph{satisfiable subset} $\m{S} \subseteq \m{F}$ is a \textbf{Maximal Satisfiable Subset} (MSS) if  $\forall \ \m{S}' \subseteq \m{F}'$ s.t $ \m{S} \subseteq \m{S}'$, $\m{S}'$ is \emph{unsatisfiable}.
-\end{definition}
+% \begin{definition}
+%   A \emph{satisfiable subset} $\m{S} \subseteq \m{F}$ is a \textbf{Maximal Satisfiable Subset} (MSS) if  $\forall \ \m{S}' \subseteq \m{F}'$ s.t $ \m{S} \subseteq \m{S}'$, $\m{S}'$ is \emph{unsatisfiable}.
+% \end{definition}
 
-An MSS can also be defined as the complement of an MCS (and vice versa). If $\m{C}$ is a MCS then $ \m{S} = \m{F} \setminus \m{C}$ is a MSS. On the other hand, MUSes and MCSes are related by the concept of minimal hitting set.
+% An MSS can also be defined as the complement of an MCS (and vice versa). If $\m{C}$ is a MCS then $ \m{S} = \m{F} \setminus \m{C}$ is a MSS. On the other hand, MUSes and MCSes are related by the concept of minimal hitting set.
 
-\begin{definition}
-  Given a collection of sets $\Gamma$ from a universe $\mathbb{U}$, a hitting set on $\Gamma$ is a set such that $\forall \ \m{S} \in \Gamma, h \cap S \neq \emptyset$.
-\end{definition}
+% \begin{definition}
+%   Given a collection of sets $\Gamma$ from a universe $\mathbb{U}$, a hitting set on $\Gamma$ is a set such that $\forall \ \m{S} \in \Gamma, h \cap S \neq \emptyset$.
+% \end{definition}
 
-\begin{proposition}\label{prop:duality_MCS_MUS}
-  Given a CNF formula $\m{F}$, let MUSes($\m{F}$) and MCSes($\m{F}$) be the set of all MUSes and MCSes of $\m{F}$ respectively. Then the following holds:
-  \begin{enumerate}
-    \item A subset $\m{U}$ of $\m{F}$ is an MUS iff $\m{U}$ is a minimal hitting set of MCSes($\m{F}$)
-    \item A subset $\m{C}$ of $\m{F}$ is an MCS iff $\m{U}$ is a minimal hitting set of MUSes($\m{F}$)
-  \end{enumerate}
-\end{proposition}
+% \begin{proposition}\label{prop:duality_MCS_MUS}
+%   Given a CNF formula $\m{F}$, let MUSes($\m{F}$) and MCSes($\m{F}$) be the set of all MUSes and MCSes of $\m{F}$ respectively. Then the following holds:
+%   \begin{enumerate}
+%     \item A subset $\m{U}$ of $\m{F}$ is an MUS iff $\m{U}$ is a minimal hitting set of MCSes($\m{F}$)
+%     \item A subset $\m{C}$ of $\m{F}$ is an MCS iff $\m{U}$ is a minimal hitting set of MUSes($\m{F}$)
+%   \end{enumerate}
+% \end{proposition}
 
 \section{Explanation Generation}
 
@@ -157,42 +158,78 @@ The algorithm is based on the following observation:
 \end{lemma}
 
 \begin{algorithm}
+  \DontPrintSemicolon
   \SetKwInOut{Input}{input}
   \SetKwInOut{OptInput}{optional input}
   \SetKwInOut{Output}{output}
   \SetKwComment{command}{/*}{*/}
+  \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
 
   \Input{$\m{F}$ \textit{a CNF formula } }
-  \Input{$f$ \textit{a cost function} }
+  \Input{$cost$ \textit{a cost function} }
   \OptInput{$\m{H}_0$ \textit{initial collection of disjoint Minimum Correction Sets}}
   \Output{$\m{OMUS}(\m{F})$}
   \Begin{
-    $\m{H} \gets \m{H}_0$ \;
+    $\m{H} \gets $ \texttt{DisjointMCS($\m{F}$)} \;
+    % \sout{$\m{H} \gets \m{H}_0$} \;
     \While{true}{
-      \tcp{\small cost minimal hitting set w.r.t cost function f}
-      $h \gets$ \texttt{OHS}($\m{H}, f$)\;
+      $hs \gets$ \texttt{OptimalHittingSet}($\m{H}, cost$) \tcp*{\small Find \textbf{optimal} solution}
+      % \tcp{\small set with all unique clauses from hitting set}
+      $\m{F}' \gets \{ c_i | e_i \in hs\}$ \;
+      (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($\m{F}'$)\;
+      \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+      \tcp{IF UNSAT, $\m{F}'$ is the OMUS }
+      \If{ not sat?}{
+        \textbf{break} \;
 
-      \tcp{\small set with all unique clauses from hitting set}
-      $\m{F}' \gets \{ c_i | e_i \in h\}$ \;
-
-      \If{\textbf{not} \texttt{SAT($\m{F}'$)} }{
-        \Return{$\m{OMUS} \gets \m{F}' $} \;}
-      %\Else{
-      \tcp{\small written as \texttt{grow($\m{F}'$)} which is Minimum Correction Set of $\m{F}'$}
-      \tcp{\small find the biggest one with the biggest cost}
-      $\m{C} \gets \m{F} \setminus \m{F}'$ \;
-
+      % \tcp{\small written as \texttt{grow($\m{F}'$)} which is Minimum Correction Set of $\m{F}'$}
+      % \tcp{\small find the biggest one with the biggest cost}
+      $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($\m{F}'$) \;
       $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
+      $nonOptLevel \gets 0$ \;
+      \tcp{Find a series of non-optimal solutions}
+      \While{true}{
+        \Switch{$nonOptLevel$}{
+            \Case{0}{
+              \tcp{adds clause to current core to the current hitting set}
+              $hs \gets$ \texttt{FindIncrementalHittingSet}($H$, $\m{F}'$, $hs$)\;
+              }
+              \Case{1}{
+                $hs \gets$ \texttt{FindGreedyHittingSet}($\m{H}$)\;
+            }
+        }
+        $\m{F}' \gets \{ c_i | e_i \in hs\}$ \;
+        (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($\m{F}'$)\;
+        \uIf{ not sat?}{
+          \Switch{$nonOptLevel$}{
+            \Case{0}{
+              $nonOptLevel \gets 1$ \;
+              }
+              \Case{1}{
+                \textbf{break} \;
+             }
+          }
+        }
+        \uElse{
+          $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($\m{F}'$) \;
+          $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
+          $nonOptLevel \gets 0$ \;
+        }
+      }
 
     }
   }
+  \Return{$(\m{F}', \ cost(\m{F}')) $} \;}
   % \end{algorithmic}
-  \caption{OMUS($\m{F},\ f \ [, \m{H}_0]$) \cite{ignatiev2015smallest}}
+  \caption{OMUS-Delayed($\m{F},\ [ f \ , \m{H}_0]$)}
   % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
   \label{alg:omus}
 \end{algorithm}
 
+
+
 \newpage
+\section{MIP hitting set problem specification}
 For the set of clauses $ \m{C} = \{c_1, ... c_{|C|}\}$ with weights $\m{W} = \{w_1, ... w_{|C|}\}$ in the collection of sets $\m{H}$. For Example:
 
 \begin{equation} \label{mip:example}

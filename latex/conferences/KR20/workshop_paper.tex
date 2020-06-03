@@ -1,16 +1,9 @@
-% This is samplepaper.tex, a sample chapter demonstrating the
-% LLNCS macro package for Springer Computer Science proceedings;
-% Version 2.20 of 2017/10/04
-%
 \documentclass[runningheads]{llncs}
 %
 \usepackage{graphicx}
-% Used for displaying a sample figure. If possible, figure files should
-% be included in EPS format.
-%
-% If you use the hyperref package, please uncomment the following line
-% to display URLs in blue roman font according to Springer's eBook style:
-% \renewcommand\UrlFont{\color{blue}\rmfamily}
+\usepackage{hyperref}
+
+\renewcommand\UrlFont{\color{blue}\rmfamily}
 
 \begin{document}
 %
@@ -27,45 +20,38 @@ Tias Guns\inst{1}\orcidID{0000-0002-2156-2155}}
 }
 %
 \maketitle              % typeset the header of the contribution
-%
+
 \begin{abstract}
 % The abstract should briefly summarize the contents of the paper in
 % 150--250 words.
-
+We investigate the problem of step-wise explaining how to solve constraint satisfaction problems, with a use case on logic grid puzzles.
+More specifically, we study how to explain the inference steps that one can take during propagation.
+The main challenge is finding a sequence of \textit{simple} explanations, where each explanation should aim to be as cognitively easy as possible for a human to verify and understand.
+This contrasts with the arbitrary combination of facts and constraints that the solver may use  when propagating.
+We propose the use of a cost function to quantify how simple an individual explanation of an inference step is, and identify the explanation-production problem of finding the best sequence of explanations for a CSP.
+Our proposed algorithm iteratively constructs the explanation sequence, agnostic of the underlying constraint propagation mechanisms, by using an optimistic estimate of the cost function, to guide the search for the best explanation at each step. 
+For difficult inference steps, i.e when multiple constraints are involved, we also develop a mechanism that allows to break the most difficult steps up and thus gives the user the ability to \emph{zoom in} on specific parts of the explanation. 
+Our experiments on logic grid puzzles show the feasibility of the approach in terms of the quality of an individual explanation and the resulting explanation sequences obtained.
 \keywords{Artificial Intelligence \and Constraint Solving  \and Explanation \and Automated Reasoning}
 \end{abstract}
 %
+%Ò
 %
-%
-\section{First Section}
-
+\section{Introduction}\end{itemize}
+\input{01_intro}
+\section{Background and Problem definition}
+\input{02_background_problem}
+\section{Explanation-Producing search}
+\input{03_explanation}
+\section{Experiments}
+\input{04_experiments}
+\section{Conclusion}
+\input{05_conclusion}
 % ---- Bibliography ----
 %
 % BibTeX users should specify bibliography style 'splncs04'.
 % References will then be sorted and formatted in the correct style.
 %
-% \bibliographystyle{splncs04}
-% \bibliography{mybibliography}
-%
-\begin{thebibliography}{8}
-\bibitem{ref_article1}
-Author, F.: Article title. Journal \textbf{2}(5), 99--110 (2016)
-
-\bibitem{ref_lncs1}
-Author, F., Author, S.: Title of a proceedings paper. In: Editor,
-F., Editor, S. (eds.) CONFERENCE 2016, LNCS, vol. 9999, pp. 1--13.
-Springer, Heidelberg (2016). \doi{10.10007/1234567890}
-
-\bibitem{ref_book1}
-Author, F., Author, S., Author, T.: Book title. 2nd edn. Publisher,
-Location (1999)
-
-\bibitem{ref_proc1}
-Author, A.-B.: Contribution title. In: 9th International Proceedings
-on Proceedings, pp. 1--2. Publisher, Location (2010)
-
-\bibitem{ref_url1}
-LNCS Homepage, \url{http://www.springer.com/lncs}. Last accessed 4
-Oct 2017
-\end{thebibliography}
+\bibliographystyle{splncs04}
+\bibliography{ref, mybibfile, krrlib}
 \end{document}

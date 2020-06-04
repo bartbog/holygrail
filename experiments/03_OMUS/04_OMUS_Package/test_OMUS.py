@@ -228,6 +228,8 @@ def benchmark_cnf_files():
     if not os.path.exists(folder_path):
         raise f"path = {folder_path} does not exist"
     for instance in easy_cnf_instances:
+        if 'bf0432-007' not in instance :
+            continue
         # instance variables
         instance_name = instance.replace('data/cnf-instances/','')
         instance_name = instance_name.replace('.cnf','')
@@ -241,7 +243,7 @@ def benchmark_cnf_files():
         parameters = {
             'extension': 'greedy_no_param',
             'output':f"{folder_path}{instance_name}_greedy_no_param.json",
-            'cutoff_main': 15 * 60,
+            'cutoff_main': 60 * 60,
         }
         print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
         omus(cnf, parameters=parameters)
@@ -249,50 +251,51 @@ def benchmark_cnf_files():
         ## execution extension 3 with different parameters combinations
         # variables
         cnt = 1
-        for sorting in ClauseSorting:
-            for clause_counting in ClauseCounting:
-                for unit_literal in UnitLiteral:
-                    for best_literal in BestLiteral:
-                        outputfile = f"{folder_path}{instance_name}_greedy_param_{cnt}.json"
-                        print(f"Greedy with parameters: {outputfile}")
-                        print("---- ClauseCounting=", clause_counting, "UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
-                        parameters = {
-                            # clause counting
-                            'count_clauses' : clause_counting,
-                            'best_unit_literal': unit_literal,
-                            'best_counter_literal': best_literal,
-                            'sorting': sorting,
-                            'extension': 'greedy_param',
-                            'cutoff_main': 15 * 60,
-                            'output': outputfile,
-                        }
-                        omus(cnf, parameters=parameters)
-                        cnt += 1
+        # for sorting in ClauseSorting:
+        for clause_counting in ClauseCounting:
+            for unit_literal in UnitLiteral:
+                for best_literal in BestLiteral:
+                    outputfile = f"{folder_path}{instance_name}_greedy_param_{cnt}.json"
+                    print(f"Greedy with parameters: {outputfile}")
+                    print("---- ClauseCounting=", clause_counting, "UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
+                    parameters = {
+                        # clause counting
+                        'count_clauses' : clause_counting,
+                        'best_unit_literal': unit_literal,
+                        'best_counter_literal': best_literal,
+                        'sorting': ClauseSorting.IGNORE,
+                        'extension': 'greedy_param',
+                        'cutoff_main': 60 * 60,
+                        'output': outputfile,
+                    }
+                    omus(cnf, parameters=parameters)
+                    cnt += 1
 
-    for instance in easy_cnf_instances:
-        # instance variables
-        instance_name = instance.replace('data/cnf-instances/','')
-        instance_name = instance_name.replace('.cnf','')
+    # for instance in easy_cnf_instances:
 
-        # convert instance file to WCNF
-        cnf = CNF(from_file=instance)
-        clauses = cnf.clauses
-        print(f"nv={cnf.nv} #clauses={len(clauses)}")
-        ## Maxprop with or with unit prop
-        cnt = 1
-        for unit_literal in UnitLiteral:
-            for best_literal in BestLiteral:
-                print("UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
-                parameters = {
-                    'extension': 'maxprop',
-                    'output': f"{folder_path}{instance_name}_maxprop_{cnt}.json",
-                    'cutoff_main': 15 * 60,
-                    'best_counter_literal': best_literal,
-                    'best_unit_literal': unit_literal
-                }
-                print(f"{folder_path}{instance_name}_maxprop_{cnt}.json")
-                omus(cnf, parameters=parameters)
-                cnt +=1
+    #     # instance variables
+    #     instance_name = instance.replace('data/cnf-instances/','')
+    #     instance_name = instance_name.replace('.cnf','')
+
+    #     # convert instance file to WCNF
+    #     cnf = CNF(from_file=instance)
+    #     clauses = cnf.clauses
+    #     print(f"nv={cnf.nv} #clauses={len(clauses)}")
+    #     ## Maxprop with or with unit prop
+    #     cnt = 1
+    #     for unit_literal in UnitLiteral:
+    #         for best_literal in BestLiteral:
+    #             print("UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
+    #             parameters = {
+    #                 'extension': 'maxprop',
+    #                 'output': f"{folder_path}{instance_name}_maxprop_{cnt}.json",
+    #                 'cutoff_main': 15 * 60,
+    #                 'best_counter_literal': best_literal,
+    #                 'best_unit_literal': unit_literal
+    #             }
+    #             print(f"{folder_path}{instance_name}_maxprop_{cnt}.json")
+    #             omus(cnf, parameters=parameters)
+    #             cnt +=1
 
     # for instance in easy_cnf_instances:
     #     # instance variables

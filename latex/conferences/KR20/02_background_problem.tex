@@ -18,6 +18,20 @@ We say that $(E_i,S_i,N_i)$ \emph{explains} the derivation of $I_{i}$ from $I_{i
    \item $S_i \cup E_i \entails N_i$ (i.e., all newly derived information indeed follows from this explanation).
 \end{itemize}
 
-Given a theory $\allconstraints$ and initial partial interpretation $I_0$, the \textbf{explanation-production problem} consist of finding a non-redundant explanation sequence
+Part of our goal of finding easy to interpret explanations is to avoid redundancy. 
+That is, we want a non-redundant explanation $(E_i,S_i,N_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed while still explaining the derivation of $I_i$ from $I_{i-1}$; in other word: the explanation must be \textit{subset-minimal}.
+
+While subset-minimality ensures that an explanation is non-redundant, it does not quantify how \textit{interpretable} a explanation is. 
+% This quantification is problem-specific and is often designed in a subjective manner. 
+For this, we will assume the existence of a cost function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation.
+
+Given a theory $\allconstraints$, a cost function $f$ and initial partial interpretation $I_0$, the \textbf{explanation-production problem} consists of finding a non-redundant explanation sequence
 \[\langle(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_1)), \dots ,(I_n,(E_n,S_n,N_n))\rangle\]
 such that a predefined aggregate over the sequence $\left(f(E_i,S_i,N_i)\right)_{i\leq n}$ is minimised.
+
+\subsection{Nested explanation}
+Each explanation in the sequence will be non-redundant and hence as small as possible. Yet, in our earlier work some explanations were still quite hard to understand, mainly since multiple constraints had to be combined with a number of previously derived facts. 
+We propose the use of simple \textit{nested} explanations using reasoning by contraction, hence reusing the techniques from previous section. 
+
+Given a non-trivial explanation $(E,S,N)$, a nested explanation starts from the explaining facts $E$, augmented with the counterfactual assumption of a newly derived fact $n \in N$. At each step, it only uses clues from $S$ and each step is easier to understand (has a strictly lower cost) than the parent explanation which has cost $f(E,S,N)$. A contradiction is then derived from the counterfactual assumption.
+

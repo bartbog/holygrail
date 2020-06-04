@@ -1,0 +1,57 @@
+\documentclass[runningheads]{llncs}
+%
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+
+\begin{document}
+%
+\title{Step-wise explaining how to solve constraint satisfaction problems}
+%
+%\titlerunning{Abbreviated paper title}
+%
+\author{Emilio Gamba\inst{1}\orcidID{0000-0003-1720-9428} \and
+Bart Bogaerts\inst{1}\orcidID{0000-0003-3460-4251} \and
+Tias Guns\inst{1}\orcidID{0000-0002-2156-2155}}
+
+\institute{Vrije Universiteit Brussel, Pleinlaan 2, 1050 Brussel, Belgium
+\email{\{firstname.lastname\}@vub.be}
+}
+%
+\maketitle              % typeset the header of the contribution
+
+\begin{abstract}
+% The abstract should briefly summarize the contents of the paper in
+% 150--250 words.
+We investigate the problem of step-wise explaining how to solve constraint satisfaction problems, with a use case on logic grid puzzles.
+More specifically, we study how to explain the inference steps that one can take during propagation.
+The main challenge is finding a sequence of \textit{simple} explanations, where each explanation should aim to be as cognitively easy as possible for a human to verify and understand.
+This contrasts with the arbitrary combination of facts and constraints that the solver may use  when propagating.
+We propose the use of a cost function to quantify how simple an individual explanation of an inference step is, and identify the explanation-production problem of finding the best sequence of explanations for a CSP.
+Our proposed algorithm iteratively constructs the explanation sequence, agnostic of the underlying constraint propagation mechanisms, by using an optimistic estimate of the cost function, to guide the search for the best explanation at each step. 
+For difficult inference steps, i.e when multiple constraints are involved, we also develop a mechanism that allows to break the most difficult steps up and thus gives the user the ability to \emph{zoom in} on specific parts of the explanation. 
+Our experiments on logic grid puzzles show the feasibility of the approach in terms of the quality of an individual explanation and the resulting explanation sequences obtained.
+\keywords{Artificial Intelligence \and Constraint Solving  \and Explanation \and Automated Reasoning}
+\end{abstract}
+%
+%Ò
+%
+\section{Introduction}\end{itemize}
+\input{01_intro}
+\section{Background and Problem definition}
+\input{02_background_problem}
+\section{Explanation-Producing search}
+\input{03_explanation}
+\section{Experiments}
+\input{04_experiments}
+\section{Conclusion}
+\input{05_conclusion}
+% ---- Bibliography ----
+%
+% BibTeX users should specify bibliography style 'splncs04'.
+% References will then be sorted and formatted in the correct style.
+%
+\bibliographystyle{splncs04}
+\bibliography{ref, mybibfile, krrlib}
+\end{document}

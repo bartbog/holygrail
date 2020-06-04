@@ -1,13 +1,12 @@
 % !TeX root = ./workshop_paper.tex
-A \emph{(partial) interpretation} is defined as a finite set of literals, i.e., expressions of the form $P(\ddd)$ or $\lnot P(\ddd)$ where $P$ is a relation symbol typed $T_1\times\dots \times T_n$ and $\ddd$ is a tuple of domain elements where each $d_i$ is of type $T_i$.
+% The overarching goal of this paper is to generate a sequence of small reasoning steps, each with an interpretable explanation, for that we introduce the necessary background.
 
+A \emph{(partial) interpretation} is defined as a finite set of literals, i.e., expressions of the form $P(\ddd)$ or $\lnot P(\ddd)$ where $P$ is a relation symbol typed $T_1\times\dots \times T_n$ and $\ddd$ is a tuple of domain elements where each $d_i$ is of type $T_i$. 
 A partial interpretation is \emph{consistent} if it does not contain both an atom and its negation, it is called a \emph{full} interpretation if it either contains $P(\ddd)$ or $\lnot P(\ddd)$ for each well-typed atom $P(\ddd)$. 
 
 In the context of first-order logic, the task of finite-domain constraint solving is better known as \emph{model expansion} \cite{MitchellTHM06}: given a logical theory $T$ (corresponding to the constraint specification) and a partial interpretation $I$ with a finite domain (corresponding to the initial domain of the variables), find a model $M$ more precise than $I$ (a partial solution that satisfies $T$).
 
 We define the \textbf{maximal consequence} of a theory $\allconstraints$ and partial interpretation $I$ (denoted $max(I,T)$) as the precision-maximal partial interpretation $J$ such that  $I \wedge \allconstraints \entails J$.
-
-\subsection{Explanation of reasoning steps}
 
 Let $I_{i-1}$ and $I_i$ be partial interpretations such that $I_{i-1}\land \allconstraints \models I_i$.
 We say that $(E_i,S_i,N_i)$ \emph{explains} the derivation of $I_{i}$ from $I_{i-1}$ if the following hold:
@@ -18,20 +17,21 @@ We say that $(E_i,S_i,N_i)$ \emph{explains} the derivation of $I_{i}$ from $I_{i
    \item $S_i \cup E_i \entails N_i$ (i.e., all newly derived information indeed follows from this explanation).
 \end{itemize}
 
-Part of our goal of finding easy to interpret explanations is to avoid redundancy. 
-That is, we want a non-redundant explanation $(E_i,S_i,N_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed while still explaining the derivation of $I_i$ from $I_{i-1}$; in other word: the explanation must be \textit{subset-minimal}.
-
+Part of our goal of finding easy to interpret explanations is to avoid redundancy.
+That is, we want a non-redundant explanation $(E_i,S_i,N_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed while still explaining the derivation of $I_i$ from $I_{i-1}$; in other word: the explanation must be \textit{subset-minimal}. 
 While subset-minimality ensures that an explanation is non-redundant, it does not quantify how \textit{interpretable} a explanation is.
-% This quantification is problem-specific and is often designed in a subjective manner. 
 For this, we will assume the existence of a cost function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation.
 
-Given a theory $\allconstraints$, a cost function $f$ and initial partial interpretation $I_0$, the \textbf{explanation-production problem} consists of finding a non-redundant explanation sequence
+Formally, for a given theory $\allconstraints$, a cost function $f$ and initial partial interpretation $I_0$, the \textbf{explanation-production problem} consists of finding a non-redundant explanation sequence
 \[\langle(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_1)), \dots ,(I_n,(E_n,S_n,N_n))\rangle\]
 such that a predefined aggregate over the sequence $\left(f(E_i,S_i,N_i)\right)_{i\leq n}$ is minimised.
 
 \subsection{Nested explanation}
-Each explanation in the sequence will be non-redundant and hence as small as possible. Yet, in our earlier work some explanations were still quite hard to understand, mainly since multiple constraints had to be combined with a number of previously derived facts. 
+Each explanation in the sequence will be non-redundant and hence as small as possible. 
+Yet, in our earlier work some explanations were still quite hard to understand, mainly since multiple constraints had to be combined with a number of previously derived facts. 
 We propose the use of simple \textit{nested} explanations using reasoning by contraction, hence reusing the techniques from previous section. 
 
-Given a non-trivial explanation $(E,S,N)$, a nested explanation starts from the explaining facts $E$, augmented with the counterfactual assumption of a newly derived fact $n \in N$. At each step, it only uses clues from $S$ and each step is easier to understand (has a strictly lower cost) than the parent explanation which has cost $f(E,S,N)$. A contradiction is then derived from the counterfactual assumption.
-
+Given a non-trivial explanation $(E,S,N)$, a nested explanation starts from the explaining facts $E$, augmented with the counterfactual assumption of a newly derived fact $n \in N$. 
+At each step, it only uses clues from $S$ and each step is easier to understand (has a strictly lower cost) than the parent explanation which has cost $f(E,S,N)$. 
+A contradiction is then derived from the counterfactual assumption.
+Each of the reasoning steps leading to the contradiction are what constitutes the nested explanation sequence.

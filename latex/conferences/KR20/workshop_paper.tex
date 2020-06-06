@@ -4,7 +4,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{xspace}
-\usepackage{amssymb}
+\usepackage{amsmath, amssymb}
 \usepackage{xcolor}
 \usepackage[ruled,linesnumbered]{algorithm2e}
 % \usepackage{caption}
@@ -26,6 +26,15 @@
 \newcommand\ourtool{\textsc{ZebraTutor}\xspace}
 \newcommand\idp{\textsc{IDP}\xspace}
 \newcommand\allconstraints{\m{T}}
+
+\makeatletter
+\newcommand{\xRrightarrow}[2][]{\ext@arrow 0359\Rrightarrowfill@{#1}{#2}}
+\newcommand{\Rrightarrowfill@}{\arrowfill@\equiv\equiv\Rrightarrow}
+\newcommand{\xLleftarrow}[2][]{\ext@arrow 3095\Lleftarrowfill@{#1}{#2}}
+\newcommand{\Lleftarrowfill@}{\arrowfill@\Lleftarrow\equiv\equiv}
+\newcommand{\xLleftRrightarrow}[2][]{\ext@arrow 3399\LleftRrightarrowfill@{#1}{#2}}
+\newcommand{\LleftRrightarrowfill@}{\arrowfill@\Lleftarrow\equiv\Rrightarrow}
+\makeatother
 
 \begin{document}
 %
@@ -53,11 +62,10 @@ This contrasts with the arbitrary combination of facts and constraints that the 
 We propose the use of a cost function to quantify how simple an individual explanation of an inference step is, and identify the explanation-production problem of finding the best sequence of explanations for a CSP.
 Our proposed algorithm iteratively constructs the explanation sequence, agnostic of the underlying constraint propagation mechanisms, by using an optimistic estimate of the cost function, to guide the search for the best explanation at each step.
 For difficult inference steps, i.e when multiple constraints are involved, we also develop a mechanism that allows to break the most difficult steps up and thus gives the user the ability to \emph{zoom in} on specific parts of the explanation.
-Our experiments on logic grid puzzles show the feasibility of the approach in terms of the quality of an individual explanation and the resulting explanation sequences obtained.
+% Our experiments on logic grid puzzles show the feasibility of the approach in terms of the quality of an individual explanation and the resulting explanation sequences obtained.
 \keywords{Artificial Intelligence \and Constraint Solving  \and Explanation \and Automated Reasoning}
 \end{abstract}
 %
-%Ò
 %
 \section{Introduction}\label{sec:intro}
 \input{01_intro}
@@ -65,10 +73,10 @@ Our experiments on logic grid puzzles show the feasibility of the approach in te
 \input{02_background_problem}
 \section{Explanation-Producing search}\label{sec:explanation}
 \input{03_explanation}
-% \section{Experiments}\label{sec:experiments}
-% \input{04_experiments}
-\section{Conclusion}\label{sec:conclusiion}
-\input{05_conclusion}
+\section{Discussion and Future work}\label{sec:experiments}
+\input{04_challenges_futurework}
+% \section{Conclusion}\label{sec:conclusiion}
+% \input{05_conclusion}
 % ---- Bibliography ----
 %
 % BibTeX users should specify bibliography style 'splncs04'.

@@ -208,6 +208,8 @@ def benchmark_parameter_omus():
                                 omus(cnf, parameters)
                                 counter+=1
 
+
+
 def benchmark_cnf_files():
     folder = f'results/{date.today().strftime("%Y_%m_%d")}/'
     gurobiFolder = folder + "Gurobi/"
@@ -234,28 +236,29 @@ def benchmark_cnf_files():
         instance_name = instance.replace('data/cnf-instances/','')
         instance_name = instance_name.replace('.cnf','')
 
-        # convert instance file to WCNF
+        # # convert instance file to WCNF
         cnf = CNF(from_file=instance)
-        clauses = cnf.clauses
-        print(f"nv={cnf.nv} #clauses={len(clauses)}")
+        # clauses = cnf.clauses
+        # print(f"nv={cnf.nv} #clauses={len(clauses)}")
 
-        ## execution extension 6 (tias code)
-        parameters = {
-            'extension': 'greedy_no_param',
-            'output':f"{folder_path}{instance_name}_greedy_no_param.json",
-            'cutoff_main': 60 * 60,
-        }
-        print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
-        omus(cnf, parameters=parameters)
+        # ## execution extension 6 (tias code)
+        # parameters = {
+        #     'extension': 'greedy_no_param',
+        #     'output':f"{folder_path}{instance_name}_greedy_no_param.json",
+        #     'cutoff_main': 120 * 60,
+        # }
+
+        # print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
+        # omus(cnf, parameters=parameters)
 
         ## execution extension 3 with different parameters combinations
         # variables
         cnt = 1
         # for sorting in ClauseSorting:
-        for clause_counting in ClauseCounting:
-            for unit_literal in UnitLiteral:
-                for best_literal in BestLiteral:
-                    outputfile = f"{folder_path}{instance_name}_greedy_param_{cnt}.json"
+        for clause_counting in [ClauseCounting.WEIGHTED_UNASSIGNED, ClauseCounting.VALIDATED]:
+            for unit_literal in [UnitLiteral.IMMEDIATE]:
+                for best_literal in [BestLiteral.COUNT_POLARITY, BestLiteral.COUNT_PURE_ONLY]:
+                    outputfile = f"{folder_path}{instance_name}_greedy_param_hard_{cnt}.json"
                     print(f"Greedy with parameters: {outputfile}")
                     print("---- ClauseCounting=", clause_counting, "UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
                     parameters = {
@@ -265,7 +268,7 @@ def benchmark_cnf_files():
                         'best_counter_literal': best_literal,
                         'sorting': ClauseSorting.IGNORE,
                         'extension': 'greedy_param',
-                        'cutoff_main': 60 * 60,
+                        'cutoff_main': 120 * 60,
                         'output': outputfile,
                     }
                     omus(cnf, parameters=parameters)
@@ -430,31 +433,31 @@ def benchmark_wcnf_files():
     #     print(f"SATLike: {folder_path}{instance_name}_satlike.json")
     #     omus(cnf, parameters=parameters, weights=weights)
 
-    for instance in easy_cnf_instances:
-        # instance variables
-        instance_name = instance.replace('data/wcnf-instances/','')
-        instance_name = instance_name.replace('.wcnf','')
-        # convert instance file to WCNF
-        wcnf = WCNF(from_file=instance)
-        weights = wcnf.wght
-        clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
-        cnf = CNF(from_clauses=clauses)
-        print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
-        ## Maxprop with or with unit prop
-        cnt = 1
-        for unit_literal in UnitLiteral:
-            for best_literal in BestLiteral:
-                print("UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
-                parameters = {
-                    'extension': 'maxprop',
-                    'output': f"{folder_path}{instance_name}_maxprop_{cnt}.json",
-                    'cutoff_main': 15 * 60,
-                    'best_counter_literal': best_literal,
-                    'best_unit_literal': unit_literal
-                }
-                print(f"{folder_path}{instance_name}_maxprop_{cnt}.json")
-                omus(cnf, parameters=parameters, weights=weights)
-                cnt +=1
+    # for instance in easy_cnf_instances:
+    #     # instance variables
+    #     instance_name = instance.replace('data/wcnf-instances/','')
+    #     instance_name = instance_name.replace('.wcnf','')
+    #     # convert instance file to WCNF
+    #     wcnf = WCNF(from_file=instance)
+    #     weights = wcnf.wght
+    #     clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
+    #     cnf = CNF(from_clauses=clauses)
+    #     print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
+    #     ## Maxprop with or with unit prop
+    #     cnt = 1
+    #     for unit_literal in UnitLiteral:
+    #         for best_literal in BestLiteral:
+    #             print("UnitLiteral=", unit_literal, "BestLiteral=", best_literal)
+    #             parameters = {
+    #                 'extension': 'maxprop',
+    #                 'output': f"{folder_path}{instance_name}_maxprop_{cnt}.json",
+    #                 'cutoff_main': 15 * 60,
+    #                 'best_counter_literal': best_literal,
+    #                 'best_unit_literal': unit_literal
+    #             }
+    #             print(f"{folder_path}{instance_name}_maxprop_{cnt}.json")
+    #             omus(cnf, parameters=parameters, weights=weights)
+    #             cnt +=1
 
 def test_wcnf_instance():
     parameters = {
@@ -554,6 +557,63 @@ def test_extension():
         # cnf = CNF(from_clauses=clauses)
 
     # print(omus(medium_instance, parameters=parameters))
+
+def add_nv_json_files():
+    results_folder = 'data/benchmark/'
+    cnf_path = 'data/cnf-instances/'
+    wcnf_path = 'data/wcnf-instances/'
+    f_paths = None
+
+    # extension
+    if os.path.exists(results_folder):
+        f_paths = [f"{results_folder}{f}" for f in os.listdir(results_folder) if f.endswith('.json')]
+
+    cnf_files = [f.replace('.cnf', '') for f in os.listdir(cnf_path) if f.endswith('.cnf')]
+    wcnf_files = [f.replace('.wcnf', '') for f in os.listdir(wcnf_path) if f.endswith('.wcnf')]
+
+    cnf_problems = [f for f in f_paths if any(cnf_file in f for cnf_file in cnf_files)]
+    wcnf_problems = [f for f in f_paths if any(wcnf_file in f for wcnf_file in wcnf_files)]
+
+    # for r, d, f in os.walk(folder_path):
+    #     for file in f:
+    #         if file.endswith('.json'):
+    #             with open(file) as f_pt:
+                        # if f_path in cnf_problems:
+    data_instance_nv = {}
+    easy_wcnf_instances = wcnfInstances(difficulty= Difficulty.EASY)[:7]
+    for instance in easy_wcnf_instances:
+        wcnf = WCNF(from_file=instance)
+        clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
+        cnf = CNF(from_clauses=clauses)
+        data_instance_nv[instance.replace('data/wcnf-instances/','').replace('.wcnf', '')] = cnf.nv
+    easy_cnf_instances = cnfInstances(difficulty= Difficulty.EASY) + cnfInstances(difficulty= Difficulty.MEDIUM)#[:num_instances] + 
+    for instance in easy_cnf_instances:
+        cnf = CNF(from_file=instance)
+        data_instance_nv[instance.replace('data/cnf-instances/','').replace('.cnf', '')] = cnf.nv
+    # ppprint(data_instance_nv)
+
+
+    for f_path in f_paths:
+        p_name = f_path.replace('data/benchmark/','') 
+        matching_problem = [cnf_file for cnf_file in cnf_files + wcnf_files if cnf_file in f_path][0]
+
+        # print(p_name, matching_problem)
+        with open(f_path) as f:
+            parsed_json = json.load(f)
+
+        parsed_json['nv'] = data_instance_nv[matching_problem]
+
+        with open(f_path, 'w') as f:
+            f.write(json.dumps(parsed_json)) # use `json.loads` to do the reverse
+        # print()
+        # nv = 0
+        # if f_path in cnf_problems:
+        #     # data['type'].append('cnf')
+        #     # data['p'].append([cnf_file for cnf_file in cnf_files if cnf_file in f_path][0])
+        # else:
+        #     # data['type'].append('wcnf')
+        #     # data['p'].append([wcnf_file for wcnf_file in wcnf_files if wcnf_file in f_path][0])
+
 
 def main():
     # benchmark_wcnf_files()

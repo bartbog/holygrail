@@ -1115,20 +1115,39 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
 
     gurobi_model = gurobiModel(cnf.clauses, weights)
 
-    C = []
+    C = [] # last added 'set-to-hit'
+    hs = None # last computed hitting set
+    mode_incr, mode_opt = (1,2)
+    mode = mode_opt
     while(True):
-        # compute optimal hitting set
-        t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        if mode == mode_incr:
+            # test implementation, add sets-to-hit incrementally until unsat then continue with optimal method
+            # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
+            # then hs + any element of 'C' is a valid hitting set of CC + C
 
-        t_hitting_set.append(t_exec_hs)
-        s_hs.append(len(hs))
+            # choose element from C with smallest weight
+            c = min(C, key=lambda i: weights[i])
+            hs.append(c)
+        elif mode == mode_opt:
+            # compute optimal hitting set
+            t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+
+            t_hitting_set.append(t_exec_hs)
+            s_hs.append(len(hs))
+        else:
+            raise "no such mode"
 
         # check satisfiability of clauses
         (t_exec_model, (model, sat)) = checkSatClauses(frozen_clauses, hs)
         t_sat_check.append(t_exec_model)
 
         # if not sat or steps > max_steps_main:
-        if not sat or (time.time()-t_start_omus) > cutoff_main:
+        if not sat and mode == mode_incr:
+            # incremental hs is unsat, switch to optimal method
+            mode = mode_opt
+            hs = None
+            continue # skip grow
+        elif not sat or (time.time()-t_start_omus) > cutoff_main:
             print("Steps=", steps, "OMUS=", hs)
             gurobi_model.dispose()
 

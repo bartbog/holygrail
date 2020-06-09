@@ -175,32 +175,30 @@ The algorithm is based on the following observation:
     \While{true}{
       $hs \gets$ \texttt{OptimalHittingSet}($\m{H}, cost$) \tcp*{\small Find \textbf{optimal} solution}
       % \tcp{\small set with all unique clauses from hitting set}
-      $\m{F}' \gets \{ c_i | e_i \in hs\}$ \;
-      (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($\m{F}'$)\;
-      \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-      \tcp{IF UNSAT, $\m{F}'$ is the OMUS }
+      (sat?, $\mu$) $\gets$ \texttt{SatSolver}($hs$)\;
+      \tcp{If SAT, $\mu$ contains the satisfying truth assignment}
+      \tcp{IF UNSAT, $hs$ is the OMUS }
       \If{ not sat?}{
         \textbf{break} \;
-
-      % \tcp{\small written as \texttt{grow($\m{F}'$)} which is Minimum Correction Set of $\m{F}'$}
-      % \tcp{\small find the biggest one with the biggest cost}
-      $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($\m{F}'$) \;
+      }
+      $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($hs$) \;
       $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
       $nonOptLevel \gets 0$ \;
       \tcp{Find a series of non-optimal solutions}
       \While{true}{
         \Switch{$nonOptLevel$}{
             \Case{0}{
-              \tcp{adds clause to current core to the current hitting set}
-              $hs \gets$ \texttt{FindIncrementalHittingSet}($H$, $\m{F}'$, $hs$)\;
+              \tcp{Add/Remove clause (choose clause appears most frequently in the set of hitting sets so far)}
+              $hs \gets$ \texttt{FindIncrementalHittingSet}($H$, $\m{C}$, $hs$)\;
               }
               \Case{1}{
-                \tcp{greedy algorithm}
+                \tcp{Greedy algorithm}
+                \tcp{`Approximation algorithms for combinatorial problems' (1973)}
                 $hs \gets$ \texttt{FindGreedyHittingSet}($\m{H}$)\;
             }
         }
-        $\m{F}' \gets \{ c_i | e_i \in hs\}$ \;
-        (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($\m{F}'$)\;
+
+        (sat?, $\mu$) $\gets$ \texttt{SatSolver}($hs$)\;
         \uIf{ not sat?}{
           \Switch{$nonOptLevel$}{
             \Case{0}{
@@ -212,15 +210,14 @@ The algorithm is based on the following observation:
           }
         }
         \uElse{
-          $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($\m{F}'$) \;
+          $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($hs$) \;
           $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
           $nonOptLevel \gets 0$ \;
         }
       }
 
-    }
   }
-  \Return{$(\m{F}', \ cost(\m{F}')) $} \;}
+  \Return{$(hs', \ cost(hs)) $} \;}
   % \end{algorithmic}
   \caption{OMUS-Delayed($\m{F},\ [ f \ , \m{H}_0]$)}
   % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}

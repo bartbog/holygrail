@@ -1120,9 +1120,6 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     steps_opt  = 0
     H = []
     while(True):
-        if steps > 50:
-            break
-
         if mode == mode_incr:
             # print("mode_incr")
             # test implementation, add sets-to-hit incrementally until unsat then continue with optimal method
@@ -1250,6 +1247,7 @@ def smus():
 
 def main():
     smus()
+    bacchus()
     # omusGurobi(bacchus_cnf(), 3 )
     # omusGurobi(omus_cnf(), 3 
 if __name__ == "__main__":

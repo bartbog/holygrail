@@ -868,7 +868,7 @@ def addSetGurobiModel(clauses, gurobi_model, C):
 def gurobiOptimalHittingSet(clauses, gurobi_model, C):
     # trivial case
     if len(C) == 0:
-        return []
+        return set()
 
     # add new constraint sum x[j] * hij >= 1
     addSetGurobiModel(clauses, gurobi_model, C)
@@ -1093,15 +1093,12 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     s_grow = []
 
     # default parameters
-    extension = parameters['extension']
-    outputfile = parameters['output']
-    cutoff_main = parameters['cutoff_main']
+    extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
+    outputfile = parameters['output'] if 'output' in parameters else 'log.json'
+    cutoff_main = parameters['cutoff_main'] if 'cutoff_main' in parameters else 15*60
     # Performance
     cnf_clauses = cnf.clauses
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf_clauses]
-
-    # check if all literals are in the clauses else need to be mapped
-    # checkVariableNaming(frozen_clauses)
 
     # sanity check
     (_, (_, solved)) = checkSatClauses(frozen_clauses, {i for i in range(len(frozen_clauses))})
@@ -1119,27 +1116,37 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     hs = None # last computed hitting set
     mode_incr, mode_opt = (1,2)
     mode = mode_opt
+    steps_incr = 0
+    steps_opt  = 0
+
     while(True):
+        if steps > 50:
+            break
+
         if mode == mode_incr:
+            # print("mode_incr")
             # test implementation, add sets-to-hit incrementally until unsat then continue with optimal method
             # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
             # then hs + any element of 'C' is a valid hitting set of CC + C
-
+            steps_incr += 1
             # choose element from C with smallest weight
             c = min(C, key=lambda i: weights[i])
-            hs.append(c)
+            # C.remove(c)
+            hs.add(c)
         elif mode == mode_opt:
+            steps_opt += 1
+            # print("mode_opt")
             # compute optimal hitting set
             t_exec_hs, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
 
-            t_hitting_set.append(t_exec_hs)
-            s_hs.append(len(hs))
+            # t_hitting_set.append(t_exec_hs)
+            # s_hs.append(len(hs))
         else:
             raise "no such mode"
-
+        print(hs)
         # check satisfiability of clauses
         (t_exec_model, (model, sat)) = checkSatClauses(frozen_clauses, hs)
-        t_sat_check.append(t_exec_model)
+        # t_sat_check.append(t_exec_model)
 
         # if not sat or steps > max_steps_main:
         if not sat and mode == mode_incr:
@@ -1148,7 +1155,8 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
             hs = None
             continue # skip grow
         elif not sat or (time.time()-t_start_omus) > cutoff_main:
-            print("Steps=", steps, "OMUS=", hs)
+            print("OMUS=", hs)
+            print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr)
             gurobi_model.dispose()
 
             # Benchmark data
@@ -1171,16 +1179,20 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
                 with open(outputfile, 'w') as file:
                     file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             return hs
+        elif mode == mode_opt:
+            mode = mode_incr
 
         t_exec_grow, C = grow(frozen_clauses, weights, hs, model,  parameters)
 
-        print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}", end='\r')
-        s_grow.append(len(C))
-        t_grow.append(t_exec_grow)
+        if mode == mode_incr:
+            addSetGurobiModel(cnf.clauses, gurobi_model, C)
+        # print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}")
+        # s_grow.append(len(C))
+        # t_grow.append(t_exec_grow)
         # print("\t C=", C)
         steps += 1
 
-def bacchus_cnf():
+def bacchus():
     cnf = CNF()
     cnf.append([6, 2])    # c1: ¬s
     cnf.append([-6, 2])    # c1: ¬s
@@ -1194,7 +1206,15 @@ def bacchus_cnf():
     cnf.append([-7, 5])    # c1: ¬s
     cnf.append([-5, 3])    # c1: ¬s
     cnf.append([-3])    # c1: ¬s
-    return cnf
+    parameters = {
+        'extension': 'greedy_no_param',
+        'output': "smus_log.json",
+        'cutoff' : 5,
+        'h_inc' : 3,
+        's_inc' : 1,
+        'sp': 0.0001
+    }
+    return omus(cnf, parameters)
 
 def smus():
     l = 1
@@ -1213,7 +1233,7 @@ def smus():
     cnf.append([-l])    # c8 ¬l
 
     parameters = {
-        'extension': 'satlike',
+        'extension': 'greedy_no_param',
         'output': "smus_log.json",
         'cutoff' : 5,
         'h_inc' : 3,
@@ -1223,7 +1243,7 @@ def smus():
     return omus(cnf, parameters)
 
 def main():
-    smus()
+    bacchus()
     # omusGurobi(bacchus_cnf(), 3 )
     # omusGurobi(omus_cnf(), 3 
 if __name__ == "__main__":

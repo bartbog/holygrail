@@ -615,9 +615,61 @@ def add_nv_json_files():
         #     # data['p'].append([wcnf_file for wcnf_file in wcnf_files if wcnf_file in f_path][0])
 
 
+def mip_itemset_example():
+    cnf = smus_CNF()
+    clauses = cnf.clauses
+    nv = cnf.nv
+    F = set(range(len(clauses)))
+    hard  = set({2, 3})
+    soft = F - hard
+    weights = [len(clause) if i in soft else 100 for i, clause in enumerate(clauses)]
+    # print(cnf.clauses)
+    # print(cnf.nv)
+
+        # create gurobi model
+    g_model = gp.Model('MipOptimalHittingSet')
+
+    # model parameters
+    # g_model.Params.LogFile = 'logs/'+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+'.log'
+    g_model.Params.OutputFlag = 0
+    g_model.Params.LogToConsole = 0
+    g_model.Params.Threads = 8
+
+    # create the variables
+    # literals
+    x = g_model.addMVar(shape=cnf.nv, vtype=GRB.BINARY, name="x")
+    # blocking variables
+    b = g_model.addMVar(shape=len(soft), vtype=GRB.BINARY, name="b")
+
+    # set objective : min sum xi*wi
+    # g_model.setOb
+    g_model.setObjective(sum( b[i] * weights[i] for i in soft ) + sum(weights[i] ), GRB.MINIMIZE)
+
+    # update the model
+    # gurobi_model = gurobiModel(clauses, weights)
+    # trivial case
+    if len(H) == 0:
+        return []
+
+    # add new constraint sum x[j] * hij >= 1
+    # for C in H:
+    #     addSetGurobiModel(clauses, gurobi_model, C)
+
+    # solve optimization problem
+    g_model.optimize()
+
+    # output hitting set
+    x = g_model.getVars()
+    hs = set(i for i in range(len(clauses)) if x[i].x == 1)
+    g_model.dispose()
+
+    # return hs
+
+
 def main():
     # benchmark_wcnf_files()
-    benchmark_cnf_files()
+    # benchmark_cnf_files()
+    mip_itemset_example()
 
 if __name__ == "__main__":
     main()

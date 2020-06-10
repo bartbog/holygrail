@@ -95,6 +95,8 @@
 
 \begin{algorithm}
   %  \begin{algorithmic}
+    \DontPrintSemicolon
+
   \SetKwInOut{Input}{input}
   \SetKwInOut{OptInput}{optional input}
   \SetKwInOut{Output}{output}
@@ -106,25 +108,28 @@
   \Output{\textit{Explanation sequence}}
   \Begin{
    
-    $\m{I} \gets \m{I}_0$  \tcp{Initial partial interpretation}
-    $\m{I}_{end} \gets$ \texttt{propagate($\m{I}$, $\m{T}$)}  \tcp{Goal state}
-    $Seq \gets$ \textit{empty set}     \tcp{explanation sequence}
+    $\m{I} \gets \m{I}_0$  \tcp*{Initial partial interpretation}
+    $\m{I}_{end} \gets$ \texttt{propagate($\m{I}$, $\m{T}$)}  \tcp*{Goal state}
+    $Seq \gets$ \textit{empty set}     \tcp*{explanation sequence}
+    $H \gets$ \textit{Empty collection}     \tcp*{Collection of hitting sets}
+
     \While{  $\m{I} \neq \m{I}_{end}$ }{
-      $\m{F} \gets \m{I}_{end} \setminus \m{I}$ \tcp*{Facts to be derived}
-      $\m{F}' \gets \{\neg \m{F} \}$ \tcp*{Set with all negated literals of $\m{F}$}
-      \tcp{}
-      \tcp{Propagate all negated literals OMUS finds the smallest explanation }
-      \tcp{}
-      $X \gets$ \texttt{OMUS($\m{F}' \wedge \m{I} \wedge \m{S}$)} \;
+      % $\m{F} \gets \m{I}_{end} \setminus \m{I}$ \tcp*{Facts to be derived}
+      % $\m{F}' \gets \{\neg \m{F} \}$ \tcp*{Set with all negated literals of $\m{F}$}
+      \;
+      $X \gets$ \texttt{OMUS($\m{F}' \wedge \m{I} \wedge \m{S}$, $\m{H}$)} \;
+      \;
       $E \gets$ $\m{I} \cap X$ \tcp*{Explanation used}
+      \;
       $\m{N} \gets$ \texttt{propagate($E \wedge \m{S}$)} \tcp*{Newly derived facts}
+      \;
       $\m{I} \gets$ $\m{I} \cup \m{N}$ \tcp*{Update known facts}
-      \tcp{}
-      \tcp{Add explanation for newly derived facts to explanation sequence}
-      \tcp{}
+      \;
+
       \For{$n \in \m{N}$}{
         $(E_n$, $\m{S}_n$, $n)$ to $Seq$ \;
       }
+      \;
 
     }
 
@@ -134,6 +139,7 @@
   \label{alg:cspExplain}
 \end{algorithm}
 
+\clearpage
 \section{OMUS Algorithm}
 
 Note that if we assign a unit weight to every element in the subset, we reduce the problem of finding an OMUS to finding a SMUS.

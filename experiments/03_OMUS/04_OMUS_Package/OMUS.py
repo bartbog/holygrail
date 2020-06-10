@@ -1118,7 +1118,7 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     mode = mode_opt
     steps_incr = 0
     steps_opt  = 0
-
+    H = []
     while(True):
         if steps > 50:
             break
@@ -1131,8 +1131,13 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
             steps_incr += 1
             # choose element from C with smallest weight
             c = min(C, key=lambda i: weights[i])
+            m = [ci for ci in C if weights[ci] == weights[c]]
+            # print(H)
+            h_counter = Counter([item for sublist in H for item in sublist])
+            c_best = max(m,key=lambda ci: h_counter[ci])
             # C.remove(c)
-            hs.add(c)
+            # hs.add(c)
+            hs.add(c_best)
         elif mode == mode_opt:
             steps_opt += 1
             # print("mode_opt")
@@ -1186,6 +1191,7 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
 
         if mode == mode_incr:
             addSetGurobiModel(cnf.clauses, gurobi_model, C)
+        H.append(C)
         # print(f"Steps={steps}\t, |hs|={len(hs)}, |C|={len(C)}")
         # s_grow.append(len(C))
         # t_grow.append(t_exec_grow)
@@ -1243,7 +1249,7 @@ def smus():
     return omus(cnf, parameters)
 
 def main():
-    bacchus()
+    smus()
     # omusGurobi(bacchus_cnf(), 3 )
     # omusGurobi(omus_cnf(), 3 
 if __name__ == "__main__":

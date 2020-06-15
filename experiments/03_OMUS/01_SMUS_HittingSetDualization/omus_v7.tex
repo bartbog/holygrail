@@ -108,28 +108,56 @@
   \Output{\textit{Explanation sequence}}
   \Begin{
    
+    $\m{I}_{end} \gets$ \texttt{propagate($\m{I}_0$, $\m{T}$)}  \tcp*{Goal state}
     $\m{I} \gets \m{I}_0$  \tcp*{Initial partial interpretation}
-    $\m{I}_{end} \gets$ \texttt{propagate($\m{I}$, $\m{T}$)}  \tcp*{Goal state}
     $Seq \gets$ \textit{empty set}     \tcp*{explanation sequence}
-    $H \gets$ \textit{Empty collection}     \tcp*{Collection of hitting sets}
-
+    % $E_{facts} \gets$ \textit{empty dict}  \tcp*{explanation sequence}
     \While{  $\m{I} \neq \m{I}_{end}$ }{
+      
+      % \For{$i \in \m{I}_{end} \setminus \m{I}$}{
+
+      %   $X_i \gets$ \texttt{OMUS($\{\neg i\} \wedge \m{I} \wedge \m{S} \wedge E_{facts}[i] $)} \;
+      %   $E_i \gets$ $\m{I} \cap X_i$ \tcp*{Facts used}
+      %   $S_i \gets$ $\m{T} \cap X_i$ \tcp*{Constraint used}
+      %   $\m{N}_i \gets$ \texttt{propagate($E_i \wedge \m{S}_i$)} \tcp*{Newly derived facts}
+      %   \;
+      %   \For{$n_i \in \m{N}_i$}{
+      %       append $(E_i  \wedge S_i)$ to $E_{facts}[n_i] $ \;
+      %   }
+      % }
+      % $\m{N}_{best} \gets \emptyset$\;
+      % $e_{best} \gets \emptyset$\;
+      \For{$i \in \m{I}_{end} \setminus \m{I}$}{
+
+        $X_i \gets$ \texttt{OMUS($\{\neg i\} \wedge \m{I} \wedge \m{S}$)} \;
+        $E_i \gets$ $\m{I} \cap X_i$ \tcp*{Facts used}
+        $S_i \gets$ $\m{T} \cap X_i$ \tcp*{Constraint used}
+        $\m{N}_i \gets$ \texttt{propagate($E_i \wedge \m{S}_i$)} \tcp*{Newly derived facts}
+        % \;
+        % \For{$n_i \in \m{N}_i$}{
+        %     append $(E_i  \wedge S_i)$ to $E_{facts}[n_i] $ \;
+        % }
+        }
+        $(E_{best}, S_{best}, N_{best}) \gets (E_i,S_i,N_i)$ with lowest $f(E_i,S_i,N_i)$ \;
+        append $( E_{best}, S_{best}, N_{best})$ to $Seq$ \;
+        $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
+      % $\m{I} \gets$ $\m{I} \cup \{i_{best}\}$ \tcp*{Update known facts}
       % $\m{F} \gets \m{I}_{end} \setminus \m{I}$ \tcp*{Facts to be derived}
       % $\m{F}' \gets \{\neg \m{F} \}$ \tcp*{Set with all negated literals of $\m{F}$}
-      \;
-      $X \gets$ \texttt{OMUS($\m{F}' \wedge \m{I} \wedge \m{S}$, $\m{H}$)} \;
-      \;
-      $E \gets$ $\m{I} \cap X$ \tcp*{Explanation used}
-      \;
-      $\m{N} \gets$ \texttt{propagate($E \wedge \m{S}$)} \tcp*{Newly derived facts}
-      \;
-      $\m{I} \gets$ $\m{I} \cup \m{N}$ \tcp*{Update known facts}
-      \;
+      % \;
+      % $X \gets$ \texttt{OMUS($\m{F}' \wedge \m{I} \wedge \m{S}$, $\m{H}$)} \;
+      % \;
+      % $E \gets$ $\m{I} \cap X$ \tcp*{Explanation used}
+      % \;
+      % $\m{N} \gets$ \texttt{propagate($E \wedge \m{S}$)} \tcp*{Newly derived facts}
+      % \;
+      % $\m{I} \gets$ $\m{I} \cup \m{N}$ \tcp*{Update known facts}
+      % \;
 
-      \For{$n \in \m{N}$}{
-        $(E_n$, $\m{S}_n$, $n)$ to $Seq$ \;
-      }
-      \;
+      % \For{$n \in \m{N}$}{
+      %   $(E_n$, $\m{S}_n$, $n)$ to $Seq$ \;
+      % }
+      % \;
 
     }
 

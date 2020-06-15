@@ -78,7 +78,7 @@ def checkSatClauses(clauses, F_prime):
     cnf_clauses = [clauses[i] for i in F_prime]
     lits = set( abs(lit) for lit in frozenset.union(*cnf_clauses))
 
-    with Solver() as s:
+    with  Solver() as s:
         added = s.append_formula(cnf_clauses, no_return=False)
         solved = s.solve()
         model = s.get_model()
@@ -87,6 +87,42 @@ def checkSatClauses(clauses, F_prime):
         return mapped_model, solved
     else:
         return None, solved
+
+def checkSatClausesSolver(clauses, F_prime):
+    s = Solver()
+
+    if len(F_prime) == 0 :
+        return [], True, s
+
+    cnf_clauses = [clauses[i] for i in F_prime]
+    lits = set( abs(lit) for lit in frozenset.union(*cnf_clauses))
+
+    added = s.append_formula(cnf_clauses, no_return=False)
+    solved = s.solve()
+    model = s.get_model()
+
+    if solved:
+        mapped_model = set(lit for lit in model if abs(lit) in lits )
+        return mapped_model, solved, s
+    else:
+        return None, solved, s
+
+def checkSatClausesIncremental(clauses, hs, solver, c):
+    # s = Solver()
+    # with Solver() as s:
+    cnf_clauses = [clauses[i] for i in hs]
+    lits = set( abs(lit) for lit in frozenset.union(*cnf_clauses))
+    clause = clauses[c]
+    added = solver.add_clause(clause, no_return=False)
+    solved = solver.solve()
+    model = solver.get_model()
+
+    if solved:
+        mapped_model = set(lit for lit in model if abs(lit) in lits )
+        return mapped_model, solved, solver
+    else:
+        solver.delete()
+        return None, solved, solver
 
 def defaultExtension(cnf_clauses, F_prime, model, parameters):
     return F_prime
@@ -1082,6 +1118,153 @@ def checkVariableNaming(clauses):
     max_lit = max(lits)
     assert sorted(set(i for i in range(min_lit, max_lit))) == sorted(lits), "Be careful missing literals"
 
+def greedyHittingSet(H, weights):
+    # trivial case: empty
+    # print(H)
+    if len(H) == 0:
+        return set()
+
+    C = set() # the hitting set
+
+    # build vertical sets
+    V = dict() # for each element in H: which sets it is in
+    for i,h in enumerate(H):
+        # special case: only one element in the set, must be in hitting set
+        if len(h) == 1:
+            C.add( next(iter(h)) )
+        else:
+            for e in h:
+                if not e in V:
+                    V[e] = set([i])
+                else:
+                    V[e].add(i)
+
+    # special cases, remove from V so they are not picked again
+    for c in C:
+        if c in V:
+            del V[c]
+
+    while len(V) > 0:
+        # special case, one element left
+        if len(V) == 1:
+            C.add( next(iter(V.keys())) )
+            break
+
+        # get element that is in most sets, using the vertical views
+        (c, cover) = max(V.items(), key=lambda tpl: len(tpl[1]))
+        c_covers = [tpl for tpl in V.items() if len(tpl[1]) == len(cover)]
+
+        if len(c_covers) > 1:
+            # OMUS : find set of unsatisfiable clauses in hitting set with least total cost
+            # => get the clause with the most coverage but with the least total weight
+            # print(c_covers, weights)
+            (c, cover) = min(c_covers, key=lambda tpl: weights[tpl[0]])
+
+        del V[c]
+        C.add(c)
+
+        # update vertical views, remove covered sets
+        for e in list(V): # V will be changed in this loop
+            V[e] -= cover
+            # no sets remaining with this element?
+            if len(V[e]) == 0:
+                del V[e]
+
+    return C
+
+def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
+    # benchmark variables
+    # default parameters
+    extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
+    outputfile = parameters['output'] if 'output' in parameters else 'log.json'
+    cutoff_main = parameters['cutoff_main'] if 'cutoff_main' in parameters else 15*60
+    # Performance
+    cnf_clauses = cnf.clauses
+    frozen_clauses = [frozenset(c for c in clause) for clause in cnf_clauses]
+
+    # sanity check
+    (_, (_, solved)) = checkSatClauses(frozen_clauses, {i for i in range(len(frozen_clauses))})
+
+    assert solved == False, "Cnf is satisfiable"
+
+    if weights == None:
+        weights = clauses_weights(cnf.clauses, f)
+
+    assert len(weights) == len(cnf_clauses), "clauses and weights of same length"
+
+    gurobi_model = gurobiModel(cnf.clauses, weights)
+    H = []
+    C = [] # last added 'set-to-hit'
+    hs = None # last computed hitting set
+    steps_opt,  steps_incr, steps_greedy = (0,0,0)
+    mode_opt, mode_incr, mode_greedy  = (1,2,3)
+    mode = mode_opt
+    h_counter = Counter()
+
+    satsolver = None
+
+    while(True):
+        # add sets-to-hit incrementally until unsat then continue with optimal method
+        # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
+        # then hs + any element of 'C' is a valid hitting set of CC + C
+        print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+        _, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        model, sat, satsolver = checkSatClausesSolver(frozen_clauses, hs)
+        steps_opt+=1
+        if not sat:
+            # print("OMUS=", hs)
+            print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy)
+            gurobi_model.dispose()
+            return hs
+
+        _, C = grow(frozen_clauses, weights, hs, model,  parameters)
+        H.append(C)
+        h_counter.update(list(C))
+
+        mode = mode_incr
+        while(True):
+            if mode == mode_incr:
+                print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+
+                steps_incr+=1
+                # choose element from C with smallest weight
+                c = min(C, key=lambda i: weights[i])
+                # find all elements with smallest weight
+                m = [ci for ci in C if weights[ci] == weights[c]]
+                # choose clause with smallest weight appearing most in H
+                c_best = max(m,key=lambda ci: h_counter[ci])
+                # c_best = c
+                hs.add(c_best)
+            elif mode == mode_greedy:
+                print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+                steps_greedy+=1
+                hs = greedyHittingSet(H, weights)
+
+            # check satisfiability of clauses
+            if mode == mode_incr:
+                model, sat, satsolver = checkSatClausesIncremental(frozen_clauses, hs, satsolver, c_best)
+            elif mode == mode_greedy:
+                model, sat, satsolver = checkSatClausesSolver(frozen_clauses, hs)
+
+            if not sat:
+                # incremental hs is unsat, switch to optimal method
+                hs = None
+                if mode == mode_incr:
+                    satsolver.delete()
+                    mode = mode_greedy
+                    continue
+                elif mode == mode_greedy:
+                    mode = mode_opt
+                    break
+                # break # skip grow
+
+            _, C = grow(frozen_clauses, weights, hs, model,  parameters)
+            addSetGurobiModel(cnf.clauses, gurobi_model, C)
+            h_counter.update(list(C))
+            H.append(C)
+            mode = mode_incr
+
+
 def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     # benchmark variables
     steps = 0
@@ -1121,7 +1304,6 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     h_counter = Counter()
     while(True):
         if mode == mode_incr:
-            # print("mode_incr")
             # test implementation, add sets-to-hit incrementally until unsat then continue with optimal method
             # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
             # then hs + any element of 'C' is a valid hitting set of CC + C
@@ -1143,7 +1325,7 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
             # s_hs.append(len(hs))
         else:
             raise "no such mode"
-        print(hs)
+        # print(hs)
         # check satisfiability of clauses
         (t_exec_model, (model, sat)) = checkSatClauses(frozen_clauses, hs)
         # t_sat_check.append(t_exec_model)
@@ -1216,7 +1398,7 @@ def bacchus():
         's_inc' : 1,
         'sp': 0.0001
     }
-    return omus(cnf, parameters)
+    return omusIncremental(cnf, parameters)
 
 def smus():
     l = 1
@@ -1236,13 +1418,9 @@ def smus():
 
     parameters = {
         'extension': 'greedy_no_param',
-        'output': "smus_log.json",
-        'cutoff' : 5,
-        'h_inc' : 3,
-        's_inc' : 1,
-        'sp': 0.0001
+        'output': "smus_log.json"
     }
-    return omus(cnf, parameters)
+    return omusIncremental(cnf, parameters)
 
 def main():
     smus()

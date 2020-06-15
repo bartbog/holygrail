@@ -1,0 +1,62 @@
+The demo system we developed, called \ourtool, is named after Einstein's zebra puzzle, which is an integrated solution for solving logic grid puzzles, and for explaining, \textit{in a human-understandable way}, how the solution can be obtained from the clues. 
+The input to \ourtool is a plain English language representation of the clues and the names of the \textit{entities} that make up the puzzle, e.g  ``Angie'' , ``arrabiata''. 
+
+In typical logic grid puzzles, the entity names are present in the grid that is supplied with the puzzle. For some puzzles, not all entities are named or required to know in advance; a prototypical example is Einstein's Zebra puzzle, which ends with the question ``Who owns the zebra?'', while the clues do not name the zebra entity and the puzzle can be solved without knowledge of the fact there is a zebra in the first place.
+
+The complete specification undergoes the following steps, starting from the input:
+
+\begin{enumerate}
+	\item[\bf A]\label{pipeline:stepA:POS} \textbf{Part-Of-Speech tagging}: A Part-Of-Speech (POS) tag is associated with each word using an out-of-the-box POS tagger \cite{DBLP:journals/coling/MarcusSM94}.
+	\item[\bf B]\label{pipeline:stepB:chukingLexicon} \textbf{Chunking and lexicon building}: A problem-specific lexicon is constructed.
+	\item[\bf C]\label{pipeline:stepC:ChunkedToLogic} \textbf{From chunked sentences to logic}: Using a custom grammar and semantics a logical representation of the clues is constructed
+	\item[\bf D]\label{pipeline:stepD:logicToIDP} \textbf{From logic to a complete IDP specification}: The logical representation is translated into the IDP language and augmented with logic-grid-specific information.
+	\item[\bf E]\label{pipeline:stepE:explanationGeneration} \textbf{Explanation-producing search in \idp}: This is the main contribution of this paper, as explained in Section~\ref{sec:expl-gen-prod}.
+	\item[\bf F]\label{pipeline:stepF:visualisation} \textbf{Visualisation}: The step-by-step explanation is visualised. 
+\end{enumerate}
+
+The first three of these steps are related to Natural Language Processing (NLP) and are detailed in section \ref{sec:pipeline:nlp} hereafter. 
+Next, we explain in section \ref{sec:pipeline:IDPtoExplanations} how the IDP specification formed in step \ref{pipeline:stepD:logicToIDP} is used to generate the explanations and visualisations in steps \ref{pipeline:stepE:explanationGeneration} and \ref{pipeline:stepF:visualisation} respectively.
+An online demo of our system can be found on \url{http://bartbog.github.io/zebra}, containing examples of all the steps (bottom of demo page). 
+
+\subsection{Natural Language Processing}\label{sec:pipeline:nlp}
+
+\subsubsection*{Step A. POS tagging} The standard procedure in Natural Language Processing is to start by tagging each word with its estimated Part-Of-Speech tag (POS tag).
+We use the standard English Penn treebank Pos tagset \cite{marcus1993building} together with NLTK's built-in perceptron tagger \footnote{\url{http://www.nltk.org/}} as POS tagger. 
+It uses a statistical inference mechanism trained on a standard training set from the Wall Street Journal. 
+Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are tagged as \textit{noun}.
+
+\subsubsection*{Step B. Chunking and lexicon building} From a natural language processing point of view, the hardest part is step B: automatically deriving the lexicon and building the grammar.
+The lexicon assigns a role to different sets of words, while the grammar is a set of rules describing how words can be combined into sentences. 
+The goal of this second step is to group the POS-tagged words of the clues into \textit{chunks} that are tagged with lexical categories of which 3 are puzzle-specific: proper nouns for the individual entities that are central to the puzzle, other nouns to groups of entities (like \textit{pasta, sauce}) and transitive verbs that link two entities to each other (e.g Claudia did not \textit{choose} puttanesca sauce). 
+The other categories are determiner, number, preposition, auxiliary verb etc.  and contain a built-in list of possible members.  We refer to \cite{msc/Claes17} for full details on the categories.
+
+This process of grouping words is referred to as \textit{chunking}. 
+We use NLTK and a custom set of regular expressions for chunking the proper nouns and different types of transitive verbs.
+The result is a lexicon where each word or set of words (chunk) is assigned a role based on the POS tags.  
+On top of these roles, we defined a puzzle-independent grammar in the Blackburn and Bos framework \cite{Blackburn2005,Blackburn2006}.
+The grammar itself was created based on 10 example training puzzles, and tested on 10 different puzzles to ensure genericity \cite{msc/Claes17}. 
+
+\subsubsection*{Step C. From chunked sentences to logic} Next in \ref{pipeline:stepC:ChunkedToLogic}, the lexicon, partly problem agnostic and partly puzzle-specific, is fed into a type-aware variant of the semantical framework of Blackburn \& Bos \cite{Blackburn2005,Blackburn2006}, which translates the clues into Discourse Representation Theory \cite{DRT}.
+The typed extension allows us to discover the case where different verbs are used as synonyms for the same inherent relation between two types, e.g. `$ate(person, pasta)$' and `$ordered(person, pasta)$'.
+
+In our system, this is a semi-automated method that suggests a lexicon and lets a user modify and approve it, to compensate for possible ``creativity'' of the puzzle designers who tend to insert ambiguous words, or use implicit background knowledge such as using ``in the morning'' when there is only one time slot before 12:00.
+
+\subsection{From logic to visual explanations}\label{sec:pipeline:IDPtoExplanations}
+Once the types are built, we generate a complete specification which is used by the reasoner, the IDP system~\cite{IDP}, to solve the problem. 
+
+\subsubsection*{Step D. From logic to a complete IDP specification}
+From the types built in \ref{pipeline:stepC:ChunkedToLogic}, we construct the IDP vocabulary containing: all the types and a relation for each transitive verb or preposition. 
+For instance, if the clues contain a sentence ``Claudia did not choose puttanesca sauce'', then the vocabulary will contain a binary relation chose(.,.) with the first argument of type \textit{person} and the second argument of type \textit{sauce}.
+
+After the vocabulary, we construct IDP theories: we translate each clue into IDP language, and  we add implicit constraints and present in logic grid puzzles.
+The implicit constraints are stemming from the translation of the clues : our translation might generate multiple relations between two types. 
+For instance, if there are clues ``The person who ate taglioni paid more than Angie'' and ``The person who ordered farfalle chose the arrabiata sauce'', then the translation will create two relation \textit{ate} and \textit{ordered} between persons and pasta.
+However we know that there is only one relation between two types, hence we add a theory containing synonymy axioms; for this case concretely:
+\[ \forall \ x \in person \ \forall \ y \in pasta : ate(x, y) \leftrightarrow ordered(x, y) \]
+Similarly, if two relations have an inverse signature, they represent inversion functions, for instance \textit{isLikeBy} and \textit{ordered} in the clues ``Taglioni is liked by Elisa'' and ``Damon ordered capellini''. 
+In this case we add constraints of the form 
+\[ \forall \ x \in person \ \forall \ y \in pasta : liked(y, x) \leftrightarrow ordered(x, y)\]
+Next, we refer back to the end of section \ref{sec:prelims} for examples of the bijectivity and transitivity axioms that link the different relations.
+
+The underlying solver, \idp\cite{IDP} uses this formal representation of the clues both to solve the puzzle and to explain the solution. 
+We chose the \idp system as an underlying solver since it natively offers different inference methods to be applied on logic theories, including model expansion (searching for solutions), different types of propagation (we used optimal-propagate here to find $max(I,\allconstraints)$), and unsat-core extraction and offers a lua interface to glue these inference steps together seamlessly \cite{IDP}.

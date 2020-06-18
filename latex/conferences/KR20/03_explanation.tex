@@ -1,16 +1,16 @@
 % !TeX root = ./workshop_paper.tex
 Ideally, we could generate all explanations of each fact in $max(I_0,\allconstraints)$, and search for the lowest scoring sequence among those explanations.
 However, the number of explanations for each fact quickly explodes with the number of constraints, and is hence not feasible to compute.
-Instead, we will iteratively construct the sequence, by generating candidates for a given partial interpretation and searching for the smallest one among those.
+Instead, we will iteratively construct the sequence, by generating candidates for a given partial interpretation and searching for the smallest one among those (line \ref{alg:min-explanation} in algorithm \ref{alg:nested-main}).
 
 \begin{algorithm}[ht]
   $I_{end} \gets$ propagate$(I_0\land \allconstraints)$\;
   $Seq \gets$ empty sequence\;
   $I \gets I_0$\;
   \While{$I \neq I_{end}$}{
-  $(E, S, N) \gets $min-explanation$(I, \allconstraints)$\;
+  $(E, S, N) \gets $min-explanation$(I, \allconstraints)$\;\label{alg:min-explanation}
   {\color{gray}
-  $nested \gets$ nested-explanations$(E, S, N)$\;
+  $nested \gets$ nested-explanations$(E, S, N)$\;\label{alg:nested-explanation}
   append $((E, S, N),nested)$ to $Seq$\;
   }
   $I \gets I \cup N$\;
@@ -18,19 +18,27 @@ Instead, we will iteratively construct the sequence, by generating candidates fo
   \caption{greedy-explain$(I_0,$ $\allconstraints)$}
   \label{alg:nested-main}
 \end{algorithm}
-
-At every iteration, algorithm \ref{alg:nested-main} relies on \textit{min-explanation$(I,\allconstraints)$} (line 5) to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints T using propagation.
-Then, the next cost-minimal non-redundant explanation $(E \subseteq I, S \subseteq \allconstraints,\{n\})$ is computed that explains $n$ (and possibly explains more).
+\textit{min-explanation$(I,\allconstraints)$} uses an optimistic estmate of the cost function $f$ to compute the next cost-minimal non-redundant explanation $(E \subseteq I, S \subseteq \allconstraints,\{n\})$ that explains $n$ (and possibly explains more).
 This means, that whenever one of the facts in $E$ or constraints in $\allconstraints$ is removed, the result is no longer an explanation.
-This task is equivalent to finding a Minimal Unsat Core (or Minimal Unsat Subset, MUS):
-% To see this, consider the theory
-\[ I \wedge \allconstraints \wedge \lnot n. \xLleftRrightarrow{} \lnot (I \wedge T \Rightarrow n) \]
-We refer to \cite{ecai2020} for further details on the 
+This task is equivalent to finding Minimal Unsat Subset (MUS):
+% $ I \wedge \allconstraints \wedge \lnot n. \xLleftRrightarrow{} \lnot (I \wedge T \Rightarrow n)$
+\[ I \wedge \allconstraints \wedge \lnot n \xLleftRrightarrow{} \lnot (I \wedge T \Rightarrow n) \]
+The nested explanation sequence computed by \textit{nested-explanations$(E,S, N)$} (line \ref{alg:nested-explanation}) exploits \textit{min-explanations}; but it can only use the constraints (and facts) from the original explanation, and the cost of the parent explanation is an upper bound on the acceptable costs at the nested level.
 
-We must point out that MUS algorithms typically find \textit{an} unsatisfiable core that is \textit{subset-minimal}, but not \textit{cardinality-minimal}.
-That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller.
-That means that if size is taken as a measure of simplicity of explanations, we do not have the guarantee to find the optimal ones.
-And definitely, when a cost function kicks, optimality is also not guaranteed.
+We refer to \cite{ecai/BogaertsGCG20} for further details on the explanation-production algorithm and \cite{bogaerts2020framework} introducing the concept of what we call nested explanation sequences.
+
+% At every iteration, algorithm \ref{alg:nested-main} relies on \textit{min-explanation$(I,\allconstraints)$} (line 5) to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints T using propagation.
+% Then, the next cost-minimal non-redundant explanation $(E \subseteq I, S \subseteq \allconstraints,\{n\})$ is computed that explains $n$ (and possibly explains more).
+% This means, that whenever one of the facts in $E$ or constraints in $\allconstraints$ is removed, the result is no longer an explanation.
+% This task is equivalent to finding a Minimal Unsat Core (or Minimal Unsat Subset, MUS):
+% % To see this, consider the theory
+% \[ I \wedge \allconstraints \wedge \lnot n. \xLleftRrightarrow{} \lnot (I \wedge T \Rightarrow n) \]
+% We refer to \cite{ecai2020} for further details on the 
+
+% We must point out that MUS algorithms typically find \textit{an} unsatisfiable core that is \textit{subset-minimal}, but not \textit{cardinality-minimal}.
+% That is, the unsat core can not be reduced further, but there could be another minimal unsat core whose size is smaller.
+% That means that if size is taken as a measure of simplicity of explanations, we do not have the guarantee to find the optimal ones.
+% And definitely, when a cost function kicks, optimality is also not guaranteed.
 
 
 % At line 5 of the algorithm, \textit{min-explanation} uses propagation to get the set of new facts that can be derived from a given partial interpretation $I$ and the constraints T. 

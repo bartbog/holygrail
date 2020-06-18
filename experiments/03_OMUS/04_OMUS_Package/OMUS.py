@@ -1198,7 +1198,7 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
     hs = None # last computed hitting set
     steps_opt,  steps_incr, steps_greedy = (0,0,0)
     mode_opt, mode_incr, mode_greedy  = (1,2,3)
-    mode = mode_opt
+    mode = mode_greedy
     h_counter = Counter()
 
     satsolver = None
@@ -1207,21 +1207,6 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
         # add sets-to-hit incrementally until unsat then continue with optimal method
         # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
         # then hs + any element of 'C' is a valid hitting set of CC + C
-        print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
-        _, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
-        model, sat, satsolver = checkSatClausesSolver(frozen_clauses, hs)
-        steps_opt+=1
-        if not sat:
-            # print("OMUS=", hs)
-            print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy)
-            gurobi_model.dispose()
-            return hs
-
-        _, C = grow(frozen_clauses, weights, hs, model,  parameters)
-        H.append(C)
-        h_counter.update(list(C))
-
-        mode = mode_incr
         while(True):
             if mode == mode_incr:
                 print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
@@ -1263,7 +1248,22 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
             h_counter.update(list(C))
             H.append(C)
             mode = mode_incr
+        
+        # TODO: change order => first greedy then rest
+        print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+        _, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        model, sat, satsolver = checkSatClausesSolver(frozen_clauses, hs)
+        steps_opt+=1
+        if not sat:
+            # print("OMUS=", hs)
+            print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy)
+            gurobi_model.dispose()
+            return hs
 
+        _, C = grow(frozen_clauses, weights, hs, model,  parameters)
+        H.append(C)
+        h_counter.update(list(C))
+        mode = mode_incr
 
 def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     # benchmark variables

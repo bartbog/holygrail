@@ -205,8 +205,42 @@ The algorithm is based on the following observation:
   \Output{$\m{OMUS}(\m{F})$}
   \Begin{
     $\m{H} \gets $ \texttt{DisjointMCS($\m{F}$)} \;
+    mode $\gets$ mode\_greedy \;
     % \sout{$\m{H} \gets \m{H}_0$} \;
     \While{true}{
+      
+      \tcp{Find a series of non-optimal solutions}
+      \While{true}{
+        \Switch{$nonOptLevel$}{
+            \Case{mode\_incr}{
+              \tcp{Add/Remove clause (choose clause appears most frequently in the set of hitting sets so far)}
+              $hs \gets$ \texttt{FindIncrementalHittingSet}($H$, $\m{C}$, $hs$)\;
+              }
+              \Case{mode\_greedy}{
+                \tcp{Greedy algorithm}
+                \tcp{`Approximation algorithms for combinatorial problems' (1973)}
+                $hs \gets$ \texttt{FindGreedyHittingSet}($\m{H}$)\;
+            }
+        }
+
+        (sat?, $\mu$) $\gets$ \texttt{SatSolver}($hs$)\;
+        \uIf{ not sat?}{
+          \Switch{$nonOptLevel$}{
+            \Case{mode\_incr}{
+              mode $\gets$  mode\_greedy \;
+              }
+              \Case{mode\_greedy}{
+                mode $\gets$  mode\_opt \;
+                \textbf{break} \;
+             }
+          }
+        }
+        \uElse{
+          $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($hs$) \;
+          $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
+          mode $\gets$  mode\_incr \;
+        }
+      }
       $hs \gets$ \texttt{OptimalHittingSet}($\m{H}, cost$) \tcp*{\small Find \textbf{optimal} solution}
       % \tcp{\small set with all unique clauses from hitting set}
       (sat?, $\mu$) $\gets$ \texttt{SatSolver}($hs$)\;
@@ -217,38 +251,6 @@ The algorithm is based on the following observation:
       }
       $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($hs$) \;
       $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
-      $nonOptLevel \gets 0$ \;
-      \tcp{Find a series of non-optimal solutions}
-      \While{true}{
-        \Switch{$nonOptLevel$}{
-            \Case{0}{
-              \tcp{Add/Remove clause (choose clause appears most frequently in the set of hitting sets so far)}
-              $hs \gets$ \texttt{FindIncrementalHittingSet}($H$, $\m{C}$, $hs$)\;
-              }
-              \Case{1}{
-                \tcp{Greedy algorithm}
-                \tcp{`Approximation algorithms for combinatorial problems' (1973)}
-                $hs \gets$ \texttt{FindGreedyHittingSet}($\m{H}$)\;
-            }
-        }
-
-        (sat?, $\mu$) $\gets$ \texttt{SatSolver}($hs$)\;
-        \uIf{ not sat?}{
-          \Switch{$nonOptLevel$}{
-            \Case{0}{
-              $nonOptLevel \gets 1$ \;
-              }
-              \Case{1}{
-                \textbf{break} \;
-             }
-          }
-        }
-        \uElse{
-          $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($hs$) \;
-          $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
-          $nonOptLevel \gets 0$ \;
-        }
-      }
 
   }
   \Return{$(hs', \ cost(hs)) $} \;}

@@ -19,11 +19,12 @@ Instead, we will iteratively construct the sequence, by generating candidates fo
   \label{alg:nested-main}
 \end{algorithm}
 \textit{min-explanation$(I,\allconstraints)$} uses an optimistic estmate of the cost function $f$ to compute the next cost-minimal non-redundant explanation $(E \subseteq I, S \subseteq \allconstraints,\{n\})$ that explains $n$ (and possibly explains more).
-This means, that whenever one of the facts in $E$ or constraints in $\allconstraints$ is removed, the result is no longer an explanation.
-This task is equivalent to finding Minimal Unsat Subset (MUS):
+This means, that whenever one of the facts in $E$ or constraints in $S$ is removed, the result is no longer an explanation.
+This task is equivalent to finding a Minimal Unsat Subset (MUS).
 % $ I \wedge \allconstraints \wedge \lnot n. \xLleftRrightarrow{} \lnot (I \wedge T \Rightarrow n)$
-\[ I \wedge \allconstraints \wedge \lnot n \xLleftRrightarrow{} \lnot (I \wedge T \Rightarrow n) \]
-The nested explanation sequence computed by \textit{nested-explanations$(E,S, N)$} (line \ref{alg:nested-explanation}) exploits \textit{min-explanations}; but it can only use the constraints (and facts) from the original explanation, and the cost of the parent explanation is an upper bound on the acceptable costs at the nested level.
+More formally, $E$ and $S$ form a minimal set that entail $n$ if and only if  $\{E \land S \land \lnot n\}$ is a minimal unsatisfiable set.
+
+The nested explanation sequence computed by \textit{nested-explanations$(E,S, N)$} (line \ref{alg:nested-explanation}) exploits \textit{min-explanations}; but it can only use the constraints S (and facts E) from the original explanation, and the cost of the parent explanation $f(E,S,N)$ is an upper bound on the acceptable costs at the nested level.
 
 We refer to \cite{ecai/BogaertsGCG20} for further details on the explanation-production algorithm and \cite{bogaerts2020framework} introducing the concept of what we call nested explanation sequences.
 

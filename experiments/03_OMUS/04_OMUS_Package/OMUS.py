@@ -1178,6 +1178,7 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
     extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
     outputfile = parameters['output'] if 'output' in parameters else 'log.json'
     cutoff_main = parameters['cutoff_main'] if 'cutoff_main' in parameters else 15*60
+
     # Performance
     cnf_clauses = cnf.clauses
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf_clauses]
@@ -1200,13 +1201,18 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
     mode_opt, mode_incr, mode_greedy  = (1,2,3)
     mode = mode_greedy
     h_counter = Counter()
-
+    t_nonopt = []
+    t_opt = []
+    t_grow = []
+    t_sat = []
     satsolver = None
+    tot_time = time.time()
 
     while(True):
         # add sets-to-hit incrementally until unsat then continue with optimal method
         # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
         # then hs + any element of 'C' is a valid hitting set of CC + C
+        time_nonopt = time.time()
         while(True):
             if mode == mode_incr:
                 print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
@@ -1226,6 +1232,7 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
                 hs = greedyHittingSet(H, weights)
 
             # check satisfiability of clauses
+
             if mode == mode_incr:
                 model, sat, satsolver = checkSatClausesIncremental(frozen_clauses, hs, satsolver, c_best)
             elif mode == mode_greedy:
@@ -1248,19 +1255,36 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
             h_counter.update(list(C))
             H.append(C)
             mode = mode_incr
-        
-        # TODO: change order => first greedy then rest
+
+        time_nonopt = time.time() - time_nonopt
+        t_nonopt.append(time_nonopt)
+
         print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
-        _, hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        time_hs , hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
+        t_opt.append(time_hs)
         model, sat, satsolver = checkSatClausesSolver(frozen_clauses, hs)
         steps_opt+=1
         if not sat:
+            tot_time = time.time() - tot_time
             # print("OMUS=", hs)
+            benchmark_data = {
+                    't_nonopt' : t_nonopt,
+                    't_opt': t_opt,
+                    'tot_time': tot_time,
+                    # 't_grow' : t_grow,
+                    # t_sat = [],
+                    'steps_opt' : steps_opt,
+                    'steps_incr': steps_incr,
+                    'stps_greedy': steps_greedy
+            }
             print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy)
+            if outputfile != None :
+                with open(outputfile, 'w') as file:
+                    file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             gurobi_model.dispose()
             return hs
 
-        _, C = grow(frozen_clauses, weights, hs, model,  parameters)
+        time_grow , C = grow(frozen_clauses, weights, hs, model,  parameters)
         H.append(C)
         h_counter.update(list(C))
         mode = mode_incr
@@ -1279,6 +1303,7 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
     outputfile = parameters['output'] if 'output' in parameters else 'log.json'
     cutoff_main = parameters['cutoff_main'] if 'cutoff_main' in parameters else 15*60
+
     # Performance
     cnf_clauses = cnf.clauses
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf_clauses]

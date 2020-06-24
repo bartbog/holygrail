@@ -230,7 +230,7 @@ def benchmark_cnf_files():
     if not os.path.exists(folder_path):
         raise f"path = {folder_path} does not exist"
     for instance in easy_cnf_instances:
-        if 'bf0432-007' not in instance :
+        if 'bf0432-007' in instance :
             continue
         # instance variables
         instance_name = instance.replace('data/cnf-instances/','')
@@ -353,8 +353,34 @@ def benchmark_wcnf_files():
     folder_path = f"{gurobiFolder}"
     if not os.path.exists(folder_path):
         raise f"path = {folder_path} does not exist"
+
+    for instance in cnfInstances(difficulty= Difficulty.EASY) + cnfInstances(difficulty= Difficulty.MEDIUM):
+        # instance variables
+        if 'bf0432-007' in instance :
+            continue
+        instance_name = instance.replace('data/cnf-instances/','')
+        instance_name = instance_name.replace('.cnf','')
+
+        # convert instance file to WCNF
+        cnf = CNF(from_file=instance)
+        # weights = wcnf.wght
+        # clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
+        # cnf = CNF(from_clauses=clauses)
+        # print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
+
+        ## execution extension 6 (tias code)
+        parameters = {
+            'extension': 'greedy_no_param',
+            'output':f"{folder_path}{instance_name}_greedy_no_param.json",
+            'cutoff_main': 15 * 60,
+        }
+        print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
+        omusIncremental(cnf, parameters=parameters)
+
     # for instance in easy_cnf_instances:
     #     # instance variables
+    #     if 'bf0432-007' in instance :
+    #         continue
     #     instance_name = instance.replace('data/wcnf-instances/','')
     #     instance_name = instance_name.replace('.wcnf','')
 
@@ -372,7 +398,7 @@ def benchmark_wcnf_files():
     #         'cutoff_main': 15 * 60,
     #     }
     #     print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
-    #     omus(cnf, parameters=parameters, weights=weights)
+    #     omusIncremental(cnf, parameters=parameters, weights=weights)
 
     #     ## execution extension 3 with different parameters combinations
     #     # variables
@@ -645,7 +671,7 @@ def mip_itemset_example():
 def main():
     # benchmark_wcnf_files()
     # benchmark_cnf_files()
-    test_instance()
+    benchmark_wcnf_files()
 
 if __name__ == "__main__":
     main()

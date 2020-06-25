@@ -3,3 +3,84 @@
     \item OMUS v1
     \item OMUS v2
 \end{itemize}
+
+\begin{algorithm}[ht]
+    \DontPrintSemicolon
+    $\m{K} \gets \emptyset$  \label{omus-line1} \;
+    \While{true}{
+        % \tcp{\small Find \textbf{optimal} solution}
+      $hs \gets$ \textsc{FindMinCostHittingSet}($\m{K}, f_{cost}$) \label{omus-hs} \;
+      % \tcp{\small set with all unique clauses from hitting set}
+      (sat?, $\kappa$) $\gets$ \textsc{SatSolver}($hs$)\;
+    %   \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+    %   \tcp{IF UNSAT, $hs$ is the OMUS }
+      \If{ not sat?}{
+        \Return{$hs$,  $\m{K}$} \;
+      }
+      $MSS \gets $ \textsc{Grow}($hs$) \;
+      $\m{K} \gets \m{K} \cup \{  \m{F}$ $\setminus MSS\}$ \;
+      % $\m{C} \gets \m{F}$ $\setminus MSS $ \;
+    }
+  
+    % \end{algorithmic}
+    \caption{\textsc{OMUS($\m{F}, f_{cost}, \m{M}$)}}
+    % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
+    \label{alg:omus}
+  \end{algorithm}
+
+  \begin{algorithm*}
+    \DontPrintSemicolon
+    \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
+    \Begin{
+      $\m{K} \gets $ $\emptyset$ \;
+      mode $\gets$ mode\_greedy \;
+      % \sout{$\m{H} \gets \m{H}_0$} \;
+      \While{true}{
+        % \tcp{Find a series of non-optimal solutions}
+        \While{true \label{alg:omus-nonOPT-nested-start}}{
+          \Switch{$nonOptLevel$}{
+            \Case{mode\_incr}{
+              $hs \gets$ \textsc{FindIncrementalHittingSet}($\m{K}$, $\m{C}$, $hs$)\;
+            }
+            \Case{mode\_greedy}{
+              $hs \gets$ \textsc{FindGreedyHittingSet}($\m{K}$)\;
+            }
+          }
+
+          (sat?, $\kappa$) $\gets$ \textsc{SatSolver}($hs$)\;
+          \uIf{ not sat?}{
+            \Switch{$nonOptLevel$}{
+              \Case{mode\_incr}{
+                mode $\gets$  mode\_greedy \;
+              }
+              \Case{mode\_greedy}{
+                mode $\gets$  mode\_opt \;
+                \textbf{break} \;
+              }
+            }
+          }
+          \uElse{
+            $MSS \gets $ \textsc{Grow}($hs$) \;
+            $\m{K} \gets \m{K} \cup \{  \m{F}$ $\setminus MSS\}$ \;
+            mode $\gets$  mode\_incr \;
+          }
+        }
+        $hs \gets$ \textsc{OptimalHittingSet}($\m{K}, f_{cost}$) \;
+        % \tcp{\small set with all unique clauses from hitting set}
+        (sat?, $\kappa$) $\gets$ \textsc{SatSolver}($hs$)\;
+        % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+        % \tcp{IF UNSAT, $hs$ is the OMUS }
+        \If{ not sat?}{
+          \textbf{break} \;
+        }
+        $MSS \gets $ \textsc{Grow}($hs$) \;
+        $\m{K} \gets \m{K} \cup \{  \m{F}$ $\setminus MSS\}$ \;
+        mode $\gets$ mode\_incr \;
+        \label{alg:omus-nonOPT-nested-end}
+      }
+      \Return{$(hs', \ f_{cost}(hs)) $} \;}
+    % \end{algorithmic}
+    \caption{\textsc{OMUS-Delayed($\m{F}, f_{cost}$)}}
+    % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
+    \label{alg:omus-nonOPT}
+  \end{algorithm*}

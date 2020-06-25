@@ -13,11 +13,24 @@
 \frenchspacing  % DO NOT CHANGE THIS
 \setlength{\pdfpagewidth}{8.5in}  % DO NOT CHANGE THIS
 \setlength{\pdfpageheight}{11in}  % DO NOT CHANGE THIS
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+% \usepackage{color (if used in text)
 
  \pdfinfo{
 /Title (AAAI Press Formatting Instructions for Authors Using LaTeX -- A Guide)
 /Author (AAAI Press Staff, Pater Patel Schneider, Sunil Issar, J. Scott Penberthy, George Ferguson, Hans Guesgen)
 } 
+\newcommand\m[1]{\mathcal{#1}}
+
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}#1}}}
+\newcommand{\bart}[1]{{\comment{\color{green}#1}}}
+\newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1}}}
+
 
 % DISALLOWED PACKAGES
 % \usepackage{authblk} -- This package is specifically forbidden
@@ -71,7 +84,7 @@
 % command to correct it. You may not alter the value below 2.5 in
 \title{Efficient, Incremental OMUS Generation For Explaining CSPs}
 
-\author{Emilio Gamba, Tias Guns, Bart Bogaerts\\ % All authors must be in the same font size and format. Use \Large and \textbf to achieve this result when breaking a line
+\author{Emilio Gamba, Bart Bogaerts, Tias Guns\\ % All authors must be in the same font size and format. Use \Large and \textbf to achieve this result when breaking a line
 \textsuperscript{\rm 1}Vrije Universiteit Brussel\\
 Pleinlaan 2, 1050 Brussels, Belgium\\
 \{firstname.lastname\}@vub.be % email address must be in roman text type, not monospace or sans serif
@@ -96,10 +109,12 @@ Pleinlaan 2, 1050 Brussels, Belgium\\
 \input{02-related-work.tex}
 \section{Background}
 \input{03-background.tex}
-\section{Optimal Minimal Unsatisfiable Subset}
-\input{04-omus.tex}
+\section{Greedy Explain with OMUS}
+\input{03b-greedy-explain.tex}
 \section{Efficient, Incremental Explanations}
 \input{05-opt-explain.tex}
+\section{Optimal Minimal Unsatisfiable Subset}
+\input{04-omus.tex}
 \section{Experiments}
 \input{06-experiments.tex}
 \section{Discussion}

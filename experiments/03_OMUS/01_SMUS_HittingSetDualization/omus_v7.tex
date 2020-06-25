@@ -96,7 +96,7 @@
 
 \begin{algorithm}
   %  \begin{algorithmic}
-    \DontPrintSemicolon
+  \DontPrintSemicolon
 
   \SetKwInOut{Input}{input}
   \SetKwInOut{OptInput}{optional input}
@@ -108,13 +108,13 @@
   \OptInput{$\m{I}_0$ \textit{a partial interpretation}}
   \Output{\textit{Explanation sequence}}
   \Begin{
-   
+
     $\m{I}_{end} \gets$ \texttt{propagate($\m{I}_0$, $\m{T}$)}  \tcp*{Goal state}
     $\m{I} \gets \m{I}_0$  \tcp*{Initial partial interpretation}
     $Seq \gets$ \textit{empty set}     \tcp*{explanation sequence}
     % $E_{facts} \gets$ \textit{empty dict}  \tcp*{explanation sequence}
     \While{  $\m{I} \neq \m{I}_{end}$ }{
-      
+
       % \For{$i \in \m{I}_{end} \setminus \m{I}$}{
 
       %   $X_i \gets$ \texttt{OMUS($\{\neg i\} \wedge \m{I} \wedge \m{S} \wedge E_{facts}[i] $)} \;
@@ -138,10 +138,10 @@
         % \For{$n_i \in \m{N}_i$}{
         %     append $(E_i  \wedge S_i)$ to $E_{facts}[n_i] $ \;
         % }
-        }
-        $(E_{best}, S_{best}, N_{best}) \gets (E_i,S_i,N_i)$ with lowest $f(E_i,S_i,N_i)$ \;
-        append $( E_{best}, S_{best}, N_{best})$ to $Seq$ \;
-        $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
+      }
+      $(E_{best}, S_{best}, N_{best}) \gets (E_i,S_i,N_i)$ with lowest $f(E_i,S_i,N_i)$ \;
+      append $( E_{best}, S_{best}, N_{best})$ to $Seq$ \;
+      $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
       % $\m{I} \gets$ $\m{I} \cup \{i_{best}\}$ \tcp*{Update known facts}
       % $\m{F} \gets \m{I}_{end} \setminus \m{I}$ \tcp*{Facts to be derived}
       % $\m{F}' \gets \{\neg \m{F} \}$ \tcp*{Set with all negated literals of $\m{F}$}
@@ -168,100 +168,189 @@
   \label{alg:cspExplain}
 \end{algorithm}
 
-\clearpage
-\section{OMUS Algorithm}
-
-Note that if we assign a unit weight to every element in the subset, we reduce the problem of finding an OMUS to finding a SMUS.
-
-\begin{definition}
-  Let $\Gamma$ be a collection of sets and HS($\Gamma$) the set of all hitting sets on $\Gamma$ and let $f$ be an valid objective function. Then a hitting set $ h \in \Gamma$ is said to be an \textbf{optimal} hitting set if $\forall$ $h' \in HS(\Gamma)$ we have that %$|h| \leq |h'|$ and 
-  $f(h) \leq f(h')$. %\cite{davies2011solving}.
-\end{definition}
-
-\begin{property}
-  The \textbf{optimal} hitting set of a collection of sets $\Gamma$ is denoted by $OHS(\Gamma)$.
-\end{property}
-
-The algorithm is based on the following observation:
-
-\begin{proposition}\label{prop:optimal-hitting-set}
-  A set $\m{U} \subseteq \m{F}$ is an OMUS of $\m{F}$ if and only if $\m{U}$ is an optimal hitting set of MCSes($\m{F}$)
-\end{proposition}
-
-\begin{lemma}\label{lemma:K}
-  Let $\m{K}  \subseteq$ MCSes($\m{F}$). Then a subset $\m{U}$ of $\m{F}$ is an OMUS if $\m{U}$ is a optimal hitting set on $\m{K}$ and $\m{U}$ is unsatisfiable
-\end{lemma}
-
 \begin{algorithm}
   \DontPrintSemicolon
-  \SetKwInOut{Input}{input}
-  \SetKwInOut{OptInput}{optional input}
-  \SetKwInOut{Output}{output}
-  \SetKwComment{command}{/*}{*/}
-  \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
+  $\m{I}_{end} \gets$ \textsc{propagate($\m{I}_0$, $\m{T}$)} \;
+  $\m{I} \gets \m{I}_0$  \;
+  $Seq \gets \emptyset$  \;
+  $\m{M} \gets \emptyset$ \;
+  \While{  $\m{I} \neq \m{I}_{end}$ }{
+    \For{$i \in \m{I}_{end} \setminus \m{I}$}{
+      $X_i,\  \m{MSS} \gets$ \textsc{OMUS-DELAYED($\{\neg i\} \wedge \m{I} \wedge \m{S}$, $\m{M}$)} \;
+      $E_i \gets$ $\m{I} \cap X_i$  \;
+      $S_i \gets$ $\m{T} \cap X_i$  \;
+      $\m{N}_i \gets$ \textsc{propagate($E_i \wedge \m{S}_i$)} \;
+      $\m{M} \gets \m{M} \cup \m{MSS}$\;
+    }
+    $(E_{best}, S_{best}, N_{best}) \gets (E_i,S_i,N_i)$ with lowest $f(E_i,S_i,N_i)$ \;
+    append $( E_{best}, S_{best}, N_{best})$ to $Seq$ \;
+    $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
+  }
+  \caption{CSP-Explain-Incremental($\m{T} ,\ f \ [,  \ \m{I}_0 ]$)}
+  \label{alg:cspExplain}
+\end{algorithm}
 
-  \Input{$\m{F}$ \textit{a CNF formula } }
-  \Input{$cost$ \textit{a cost function} }
-  \OptInput{$\m{H}_0$ \textit{initial collection of disjoint Minimum Correction Sets}}
-  \Output{$\m{OMUS}(\m{F})$}
+\clearpage
+% \section{OMUS Algorithm}
+
+% Note that if we assign a unit weight to every element in the subset, we reduce the problem of finding an OMUS to finding a SMUS.
+
+% \begin{definition}
+%   Let $\Gamma$ be a collection of sets and HS($\Gamma$) the set of all hitting sets on $\Gamma$ and let $f$ be an valid objective function. Then a hitting set $ h \in \Gamma$ is said to be an \textbf{optimal} hitting set if $\forall$ $h' \in HS(\Gamma)$ we have that %$|h| \leq |h'|$ and 
+%   $f(h) \leq f(h')$. %\cite{davies2011solving}.
+% \end{definition}
+
+% \begin{property}
+%   The \textbf{optimal} hitting set of a collection of sets $\Gamma$ is denoted by $OHS(\Gamma)$.
+% \end{property}
+
+% The algorithm is based on the following observation:
+
+% \begin{proposition}\label{prop:optimal-hitting-set}
+%   A set $\m{U} \subseteq \m{F}$ is an OMUS of $\m{F}$ if and only if $\m{U}$ is an optimal hitting set of MCSes($\m{F}$)
+% \end{proposition}
+
+% \begin{lemma}\label{lemma:K}
+%   Let $\m{K}  \subseteq$ MCSes($\m{F}$). Then a subset $\m{U}$ of $\m{F}$ is an OMUS if $\m{U}$ is a optimal hitting set on $\m{K}$ and $\m{U}$ is unsatisfiable
+% \end{lemma}
+
+% \begin{algorithm}
+%   \DontPrintSemicolon
+%   \SetKwInOut{Input}{input}
+%   \SetKwInOut{OptInput}{optional input}
+%   \SetKwInOut{Output}{output}
+%   \SetKwComment{command}{/*}{*/}
+%   \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
+
+%   \Input{$\m{F}$ \textit{a CNF formula } }
+%   \Input{$cost$ \textit{a cost function} }
+%   \OptInput{$\m{H}_0$ \textit{initial collection of disjoint Minimum Correction Sets}}
+%   \Output{$\m{OMUS}(\m{F})$}
+%   \Begin{
+%     $\m{H} \gets $ \texttt{DisjointMCS($\m{F}$)} \;
+%     mode $\gets$ mode\_greedy \;
+%     % \sout{$\m{H} \gets \m{H}_0$} \;
+%     \While{true}{
+
+%       \tcp{Find a series of non-optimal solutions}
+%       \While{true}{
+%         \Switch{$nonOptLevel$}{
+%             \Case{mode\_incr}{
+%               \tcp{Add/Remove clause (choose clause appears most frequently in the set of hitting sets so far)}
+%               $hs \gets$ \texttt{FindIncrementalHittingSet}($H$, $\m{C}$, $hs$)\;
+%               }
+%               \Case{mode\_greedy}{
+%                 \tcp{Greedy algorithm}
+%                 \tcp{`Approximation algorithms for combinatorial problems' (1973)}
+%                 $hs \gets$ \texttt{FindGreedyHittingSet}($\m{H}$)\;
+%             }
+%         }
+
+%         (sat?, $\mu$) $\gets$ \texttt{SatSolver}($hs$)\;
+%         \uIf{ not sat?}{
+%           \Switch{$nonOptLevel$}{
+%             \Case{mode\_incr}{
+%               mode $\gets$  mode\_greedy \;
+%               }
+%               \Case{mode\_greedy}{
+%                 mode $\gets$  mode\_opt \;
+%                 \textbf{break} \;
+%              }
+%           }
+%         }
+%         \uElse{
+%           $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($hs$) \;
+%           $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
+%           mode $\gets$  mode\_incr \;
+%         }
+%       }
+%       $hs \gets$ \texttt{OptimalHittingSet}($\m{H}, cost$) \tcp*{\small Find \textbf{optimal} solution}
+%       % \tcp{\small set with all unique clauses from hitting set}
+%       (sat?, $\mu$) $\gets$ \texttt{SatSolver}($hs$)\;
+%       \tcp{If SAT, $\mu$ contains the satisfying truth assignment}
+%       \tcp{IF UNSAT, $hs$ is the OMUS }
+%       \If{ not sat?}{
+%         \textbf{break} \;
+%       }
+%       $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($hs$) \;
+%       $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
+
+%   }
+%   \Return{$(hs', \ cost(hs)) $} \;}
+%   % \end{algorithmic}
+%   \caption{OMUS-Delayed($\m{F},\ [ f \ , \m{H}_0]$)}
+%   % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
+%   \label{alg:omus}
+% \end{algorithm}
+
+\begin{algorithm*}
+  \DontPrintSemicolon
+  \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
   \Begin{
-    $\m{H} \gets $ \texttt{DisjointMCS($\m{F}$)} \;
+  \tcp{grow mss from input mss}
+  
+  $\m{K} \gets $ $\emptyset$ \;
+  \ForEach(){$\m{MSS} \in \m{M}$}{
+    $\m{MSS}' \gets$ \textsc{Grow($\m{F} \cap \m{MSS}$)} \;
+    % $\m{MSS} \gets $  \;
+    $\m{K} \gets \m{K} \cup \{  \m{F} \setminus \m{MSS}'\}$ \;
+  }
+
+    % $\m{M} \gets \emptyset$ \;
     mode $\gets$ mode\_greedy \;
     % \sout{$\m{H} \gets \m{H}_0$} \;
     \While{true}{
-      
-      \tcp{Find a series of non-optimal solutions}
-      \While{true}{
+      % \tcp{Find a series of non-optimal solutions}
+      \While{true \label{alg:omus-nonOPT-nested-start}}{
         \Switch{$nonOptLevel$}{
-            \Case{mode\_incr}{
-              \tcp{Add/Remove clause (choose clause appears most frequently in the set of hitting sets so far)}
-              $hs \gets$ \texttt{FindIncrementalHittingSet}($H$, $\m{C}$, $hs$)\;
-              }
-              \Case{mode\_greedy}{
-                \tcp{Greedy algorithm}
-                \tcp{`Approximation algorithms for combinatorial problems' (1973)}
-                $hs \gets$ \texttt{FindGreedyHittingSet}($\m{H}$)\;
-            }
+          \Case{mode\_incr}{
+            $hs \gets$ \textsc{FindIncrementalHittingSet}($\m{K}$, $\m{C}$, $hs$)\;
+          }
+          \Case{mode\_greedy}{
+            $hs \gets$ \textsc{FindGreedyHittingSet}($\m{K}$)\;
+          }
         }
 
-        (sat?, $\mu$) $\gets$ \texttt{SatSolver}($hs$)\;
+        (sat?, $\kappa$) $\gets$ \textsc{SatSolver}($hs$)\;
         \uIf{ not sat?}{
           \Switch{$nonOptLevel$}{
             \Case{mode\_incr}{
               mode $\gets$  mode\_greedy \;
-              }
-              \Case{mode\_greedy}{
-                mode $\gets$  mode\_opt \;
-                \textbf{break} \;
-             }
+            }
+            \Case{mode\_greedy}{
+              mode $\gets$  mode\_opt \;
+              \textbf{break} \;
+            }
           }
         }
         \uElse{
-          $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($hs$) \;
-          $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
+          $MSS \gets $ \textsc{Grow}($hs$) \;
+          $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+          $\m{M} \gets \m{M} \cup \{  MSS \}$ \;
           mode $\gets$  mode\_incr \;
         }
       }
-      $hs \gets$ \texttt{OptimalHittingSet}($\m{H}, cost$) \tcp*{\small Find \textbf{optimal} solution}
+      $hs \gets$ \textsc{OptimalHittingSet}($\m{K}, f_{cost}$) \;
       % \tcp{\small set with all unique clauses from hitting set}
-      (sat?, $\mu$) $\gets$ \texttt{SatSolver}($hs$)\;
-      \tcp{If SAT, $\mu$ contains the satisfying truth assignment}
-      \tcp{IF UNSAT, $hs$ is the OMUS }
+      (sat?, $\kappa$) $\gets$ \textsc{SatSolver}($hs$)\;
+      % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+      % \tcp{IF UNSAT, $hs$ is the OMUS }
       \If{ not sat?}{
-        \textbf{break} \;
+        \Return{$hs$,  $\m{M}$}
       }
-      $\m{C} \gets \m{F}$ $\setminus $ \texttt{Grow}($hs$) \;
-      $\m{H} \gets \m{H} \cup \{ \m{C}\}$ \;
-
+      $MSS \gets $ \textsc{Grow}($hs$) \;
+      $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+      $\m{M} \gets \m{M} \cup \{  MSS \} $\;
+      mode $\gets$ mode\_incr \;
+      \label{alg:omus-nonOPT-nested-end}
+    }
+    % \Return{$(hs', \ f_{cost}(hs)) $} \;
   }
-  \Return{$(hs', \ cost(hs)) $} \;}
   % \end{algorithmic}
-  \caption{OMUS-Delayed($\m{F},\ [ f \ , \m{H}_0]$)}
+  \caption{\textsc{OMUS-Delayed($\m{F}, f_{cost}$)}}
   % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
-  \label{alg:omus}
-\end{algorithm}
-
-
+  \label{alg:omus-nonOPT}
+\end{algorithm*}
 
 \newpage
 \section{MIP hitting set problem specification}
@@ -271,9 +360,9 @@ For the set of clauses $ \m{C} = \{c_1, ... c_{|C|}\}$ with weights $\m{W} = \{w
   \begin{split}
     \m{C} &= \{c_1, ... c_6 \}  \\
     \m{W} &= \{w_1 = 20, w_2 = 20,  w_3 = 10,  w_4 = 10,  w_5 = 10,  w_6 = 20\} \\
-    \m{H} &= \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_6\} 
+    \m{H} &= \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_6\}
   \end{split}
-  \end{equation}
+\end{equation}
 
 The optimal hitting set can be formulated as an integer linear program.
 \begin{equation} \label{eq:ILP:objective}

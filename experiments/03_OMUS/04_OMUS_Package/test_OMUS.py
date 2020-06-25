@@ -377,28 +377,28 @@ def benchmark_wcnf_files():
         print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
         omusIncremental(cnf, parameters=parameters)
 
-    # for instance in easy_cnf_instances:
-    #     # instance variables
-    #     if 'bf0432-007' in instance :
-    #         continue
-    #     instance_name = instance.replace('data/wcnf-instances/','')
-    #     instance_name = instance_name.replace('.wcnf','')
+    for instance in easy_cnf_instances:
+        # instance variables
+        if 'bf0432-007' in instance :
+            continue
+        instance_name = instance.replace('data/wcnf-instances/','')
+        instance_name = instance_name.replace('.wcnf','')
 
-    #     # convert instance file to WCNF
-    #     wcnf = WCNF(from_file=instance)
-    #     weights = wcnf.wght
-    #     clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
-    #     cnf = CNF(from_clauses=clauses)
-    #     print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
+        # convert instance file to WCNF
+        wcnf = WCNF(from_file=instance)
+        weights = wcnf.wght
+        clauses = [clause for clause in wcnf.unweighted().clauses if len(clause) > 0]
+        cnf = CNF(from_clauses=clauses)
+        print(f"nv={cnf.nv} #clauses={len(clauses)} #hard={len(WCNF(from_file=instance).hard)} #soft={len(WCNF(from_file=instance).soft)}")
 
-    #     ## execution extension 6 (tias code)
-    #     parameters = {
-    #         'extension': 'greedy_no_param',
-    #         'output':f"{folder_path}{instance_name}_greedy_no_param.json",
-    #         'cutoff_main': 15 * 60,
-    #     }
-    #     print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
-    #     omusIncremental(cnf, parameters=parameters, weights=weights)
+        ## execution extension 6 (tias code)
+        parameters = {
+            'extension': 'greedy_no_param',
+            'output':f"{folder_path}{instance_name}_greedy_no_param.json",
+            'cutoff_main': 15 * 60,
+        }
+        print(f"Greedy no parameters: {folder_path}{instance_name}_greedy_no_param.json")
+        omusIncremental(cnf, parameters=parameters, weights=weights)
 
     #     ## execution extension 3 with different parameters combinations
     #     # variables

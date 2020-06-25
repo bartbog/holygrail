@@ -87,7 +87,7 @@ def checkSatClauses(clauses, F_prime):
         return mapped_model, solved
     else:
         return None, solved
-
+@time_func
 def checkSatClausesSolver(clauses, F_prime):
     s = Solver()
 
@@ -106,7 +106,7 @@ def checkSatClausesSolver(clauses, F_prime):
         return mapped_model, solved, s
     else:
         return None, solved, s
-
+@time_func
 def checkSatClausesIncremental(clauses, hs, solver, c):
     # s = Solver()
     # with Solver() as s:
@@ -1117,7 +1117,7 @@ def checkVariableNaming(clauses):
     assert min_lit == 1, f"First Literal at {min_lit}"
     max_lit = max(lits)
     assert sorted(set(i for i in range(min_lit, max_lit))) == sorted(lits), "Be careful missing literals"
-
+@time_func
 def greedyHittingSet(H, weights):
     # trivial case: empty
     # print(H)
@@ -1184,7 +1184,7 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
     frozen_clauses = [frozenset(c for c in clause) for clause in cnf_clauses]
 
     # sanity check
-    (_, (_, solved)) = checkSatClauses(frozen_clauses, {i for i in range(len(frozen_clauses))})
+    _, (_, solved) = checkSatClauses(frozen_clauses, {i for i in range(len(frozen_clauses))})
 
     assert solved == False, "Cnf is satisfiable"
 
@@ -1197,26 +1197,50 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
     H = []
     C = [] # last added 'set-to-hit'
     hs = None # last computed hitting set
-    steps_opt,  steps_incr, steps_greedy = (0,0,0)
     mode_opt, mode_incr, mode_greedy  = (1,2,3)
     mode = mode_greedy
     h_counter = Counter()
-    t_nonopt = []
+    satsolver = None
+
+    # Benchmark variables
     t_opt = []
+    t_non_opt = []
+    t_opt_hs = []
+    t_incr = []
+    t_greedy = []
     t_grow = []
     t_sat = []
-    satsolver = None
     tot_time = time.time()
+    steps_opt,  steps_incr, steps_greedy = (0,0,0)
+
+    sat = True
+
+    # while(sat):
+    #     print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+    #     # ----- Greedy compute hitting set
+    #     _, hs = greedyHittingSet(H, weights)
+    #     _, (model, sat, satsolver) = checkSatClausesSolver(frozen_clauses, hs)
+    #     if not sat:
+    #         break
+    #     # ------ Grow
+    #     _, C = grow(frozen_clauses, weights, hs, model,  parameters)
+    #     addSetGurobiModel(cnf.clauses, gurobi_model, C)
+    #     h_counter.update(list(C))
+    #     H.append(C)
+    #     steps_greedy += 1
 
     while(True):
-        # add sets-to-hit incrementally until unsat then continue with optimal method
-        # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
-        # then hs + any element of 'C' is a valid hitting set of CC + C
-        time_nonopt = time.time()
-        while(True):
-            if mode == mode_incr:
-                print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+        print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
 
+        time_non_opt = time.time()
+        while(True):
+            print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+
+            if mode == mode_incr:
+                # add sets-to-hit incrementally until unsat then continue with optimal method
+                # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
+                # then hs + any element of 'C' is a valid hitting set of CC + C
+                time_incr = time.time()
                 steps_incr+=1
                 # choose element from C with smallest weight
                 c = min(C, key=lambda i: weights[i])
@@ -1224,55 +1248,85 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
                 m = [ci for ci in C if weights[ci] == weights[c]]
                 # choose clause with smallest weight appearing most in H
                 c_best = max(m,key=lambda ci: h_counter[ci])
-                # c_best = c
                 hs.add(c_best)
+
+                # Benchmark
+                time_incr = time.time() - time_incr
+                t_incr.append(time_incr)
             elif mode == mode_greedy:
-                print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+                # ----- Greedy compute hitting set
+                time_greedy, hs = greedyHittingSet(H, weights)
+
+                # Benchmark
+                t_greedy.append(time_greedy)
                 steps_greedy+=1
-                hs = greedyHittingSet(H, weights)
 
-            # check satisfiability of clauses
-
+            # ----- check satisfiability of hitting set
             if mode == mode_incr:
-                model, sat, satsolver = checkSatClausesIncremental(frozen_clauses, hs, satsolver, c_best)
+                time_sat, (model, sat, satsolver) = checkSatClausesIncremental(frozen_clauses, hs, satsolver, c_best)
             elif mode == mode_greedy:
-                model, sat, satsolver = checkSatClausesSolver(frozen_clauses, hs)
+                time_sat, (model, sat, satsolver) = checkSatClausesSolver(frozen_clauses, hs)
+
+            # Benchmark
+            t_sat.append(time_sat)
 
             if not sat:
                 # incremental hs is unsat, switch to optimal method
                 hs = None
                 if mode == mode_incr:
-                    satsolver.delete()
                     mode = mode_greedy
+                    satsolver.delete()
                     continue
                 elif mode == mode_greedy:
                     mode = mode_opt
                     break
                 # break # skip grow
 
-            _, C = grow(frozen_clauses, weights, hs, model,  parameters)
+            # ------ Grow
+            time_grow, C = grow(frozen_clauses, weights, hs, model,  parameters)
             addSetGurobiModel(cnf.clauses, gurobi_model, C)
             h_counter.update(list(C))
             H.append(C)
+
+            # Sat => Back to incremental mode 
             mode = mode_incr
 
-        time_nonopt = time.time() - time_nonopt
-        t_nonopt.append(time_nonopt)
+            # Benchmark
+            t_grow.append(time_grow)
 
-        print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+
+        # Benchmark
+        time_non_opt = time.time() - time_non_opt
+        t_non_opt.append(time_non_opt)
+        time_opt = time.time()
+
+        # ----- Compute Optimal Hitting Set
         time_hs , hs =  gurobiOptimalHittingSet(cnf.clauses, gurobi_model, C)
-        t_opt.append(time_hs)
-        model, sat, satsolver = checkSatClausesSolver(frozen_clauses, hs)
+
+        # Benchmark
+        t_opt_hs.append(time_hs)
+
+        # ------ Sat check
+        time_sat, (model, sat, satsolver) = checkSatClausesSolver(frozen_clauses, hs)
+
+        # Benchmark
+        t_sat.append(time_sat)
         steps_opt+=1
+
         if not sat:
+            # benchmark
+            time_opt = time.time() - time_opt
+            t_opt.append(time_opt)
             tot_time = time.time() - tot_time
-            # print("OMUS=", hs)
             benchmark_data = {
-                    't_nonopt' : t_nonopt,
                     't_opt': t_opt,
+                    't_opt_hs': t_opt_hs,
+                    't_non_opt': t_non_opt,
+                    't_grow': t_grow,
+                    't_incr': t_incr,
+                    't_greedy': t_greedy,
+                    't_sat': t_sat,
                     'tot_time': tot_time,
-                    # 't_grow' : t_grow,
-                    # t_sat = [],
                     'steps_opt' : steps_opt,
                     'steps_incr': steps_incr,
                     'stps_greedy': steps_greedy
@@ -1284,10 +1338,16 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
             gurobi_model.dispose()
             return hs
 
+        # ------ Grow
         time_grow , C = grow(frozen_clauses, weights, hs, model,  parameters)
         H.append(C)
         h_counter.update(list(C))
         mode = mode_incr
+
+        # Benchmark
+        t_grow.append(time_grow)
+        time_opt = time.time() - time_opt
+        t_opt.append(time_opt)
 
 def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
     # benchmark variables

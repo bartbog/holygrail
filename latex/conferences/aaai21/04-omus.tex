@@ -1,86 +1,171 @@
+% !TeX root = ./main.tex
+
+
 \begin{itemize}
-    \item Davies'MaxSAT version ? (takes a lot of space on paper)
-    \item OMUS v1
-    \item OMUS v2
+  \item Davies'MaxSAT version ? (takes a lot of space on paper)
+  \item OMUS v1
+  \item OMUS v2
 \end{itemize}
 
-\begin{algorithm}[ht]
-    \DontPrintSemicolon
-    $\m{K} \gets \emptyset$  \label{omus-line1} \;
-    \While{true}{
-        % \tcp{\small Find \textbf{optimal} solution}
-      $hs \gets$ \textsc{FindMinCostHittingSet}($\m{K}, f_{cost}$) \label{omus-hs} \;
-      % \tcp{\small set with all unique clauses from hitting set}
-      (sat?, $\kappa$) $\gets$ \textsc{SatSolver}($hs$)\;
-    %   \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-    %   \tcp{IF UNSAT, $hs$ is the OMUS }
-      \If{ not sat?}{
-        \Return{$hs$,  $\m{K}$} \;
-      }
-      $MSS \gets $ \textsc{Grow}($hs$) \;
-      $\m{K} \gets \m{K} \cup \{  \m{F}$ $\setminus MSS\}$ \;
-      % $\m{C} \gets \m{F}$ $\setminus MSS $ \;
+\begin{algorithm*}
+  \DontPrintSemicolon
+  $\m{I}_{end} \gets$ {propagate($\m{I}_0$, $\m{T}$)} \;
+  $\m{I} \gets \m{I}_0$  \;
+  $, \m{W} \gets \emptyset$ \tcp*{Collection of MSSes generated during OMUS}
+  $Seq \gets \emptyset$  \;
+  \While{  $\m{I} \neq \m{I}_{end}$ }{
+    \For{$i \in \m{I}_{end} \setminus \m{I}$}{
+      $X_i,\  \m{MSS} \gets$ {OMUS-DELAYED($\{\neg i\} \wedge \m{I} \wedge \m{S}$, $\m{M}$)} \;
+      $E_i \gets$ $\m{I} \cap X_i$  \;
+      $S_i \gets$ $\m{T} \cap X_i$  \;
+      $\m{N}_i \gets$ {propagate($E_i \wedge \m{S}_i$)} \;
+      $\m{M} \gets \m{M} \cup \m{MSS}$\;
     }
-  
-    % \end{algorithmic}
-    \caption{\textsc{OMUS($\m{F}, f_{cost}, \m{M}$)}}
-    % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
-    \label{alg:omus}
-  \end{algorithm}
+    $(E_{best}, S_{best}, N_{best}) \gets (E_i,S_i,N_i)$ with lowest $f(E_i,S_i,N_i)$ \;
+    append $( E_{best}, S_{best}, N_{best})$ to $Seq$ \;
+    $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
+  }
+  \caption{CSP-Explain-Incremental($\m{T} ,\ f \ [,  \ \m{I}_0 ]$)}
+  \label{alg:cspExplain}
+\end{algorithm*}
 
-  \begin{algorithm*}
-    \DontPrintSemicolon
-    \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
-    \Begin{
-      $\m{K} \gets $ $\emptyset$ \;
-      mode $\gets$ mode\_greedy \;
-      % \sout{$\m{H} \gets \m{H}_0$} \;
-      \While{true}{
-        % \tcp{Find a series of non-optimal solutions}
-        \While{true \label{alg:omus-nonOPT-nested-start}}{
+
+\begin{algorithm*}
+  \DontPrintSemicolon
+  \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
+  \Begin{
+    \tcp{F = unsatisfiable CNF formula; M = Collection of MSSes; $f_{cost}$ = cost function}
+
+    $\m{K} \gets $ $\emptyset$ \;
+    \tcp{grow mss from input mss}
+    \ForEach(){$\m{MSS} \in \m{M}$}{
+      $\m{MSS}' \gets$ {Grow($\m{F} \cap \m{MSS}$)} \;
+      % $\m{MSS} \gets $  \;
+      $\m{K} \gets \m{K} \cup \{  \m{F} \setminus \m{MSS}'\}$ \;
+    }
+
+    % $\m{M} \gets \emptyset$ \;
+    mode $\gets$ mode\_greedy \;
+    % \sout{$\m{H} \gets \m{H}_0$} \;
+    \While{true}{
+      % \tcp{Find a series of non-optimal solutions}
+      \While{true \label{alg:omus-nonOPT-nested-start}}{
+        \Switch{$nonOptLevel$}{
+          \Case{mode\_incr}{
+            $hs \gets$ {FindIncrementalHittingSet}($\m{K}$, $\m{C}$, $hs$)\;
+          }
+          \Case{mode\_greedy}{
+            $hs \gets$ {FindGreedyHittingSet}($\m{K}$)\;
+          }
+        }
+
+        (sat?, $\kappa$) $\gets$ {SatSolver}($hs$)\;
+        \uIf{ not sat?}{
           \Switch{$nonOptLevel$}{
             \Case{mode\_incr}{
-              $hs \gets$ \textsc{FindIncrementalHittingSet}($\m{K}$, $\m{C}$, $hs$)\;
+              mode $\gets$  mode\_greedy \;
             }
             \Case{mode\_greedy}{
-              $hs \gets$ \textsc{FindGreedyHittingSet}($\m{K}$)\;
+              mode $\gets$  mode\_opt \;
+              \textbf{break} \;
             }
           }
-
-          (sat?, $\kappa$) $\gets$ \textsc{SatSolver}($hs$)\;
-          \uIf{ not sat?}{
-            \Switch{$nonOptLevel$}{
-              \Case{mode\_incr}{
-                mode $\gets$  mode\_greedy \;
-              }
-              \Case{mode\_greedy}{
-                mode $\gets$  mode\_opt \;
-                \textbf{break} \;
-              }
-            }
-          }
-          \uElse{
-            $MSS \gets $ \textsc{Grow}($hs$) \;
-            $\m{K} \gets \m{K} \cup \{  \m{F}$ $\setminus MSS\}$ \;
-            mode $\gets$  mode\_incr \;
-          }
         }
-        $hs \gets$ \textsc{OptimalHittingSet}($\m{K}, f_{cost}$) \;
-        % \tcp{\small set with all unique clauses from hitting set}
-        (sat?, $\kappa$) $\gets$ \textsc{SatSolver}($hs$)\;
-        % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-        % \tcp{IF UNSAT, $hs$ is the OMUS }
-        \If{ not sat?}{
-          \textbf{break} \;
+        \uElse{
+          % \todo{is this really correct to add it to MSS ? }\;
+          $MSS \gets $ {Grow}($hs$) \;
+          $\m{M} \gets \m{M} \cup \{  MSS \}$ \;
+          $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+          mode $\gets$  mode\_incr \;
         }
-        $MSS \gets $ \textsc{Grow}($hs$) \;
-        $\m{K} \gets \m{K} \cup \{  \m{F}$ $\setminus MSS\}$ \;
-        mode $\gets$ mode\_incr \;
-        \label{alg:omus-nonOPT-nested-end}
       }
-      \Return{$(hs', \ f_{cost}(hs)) $} \;}
-    % \end{algorithmic}
-    \caption{\textsc{OMUS-Delayed($\m{F}, f_{cost}$)}}
-    % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
-    \label{alg:omus-nonOPT}
-  \end{algorithm*}
+      $hs \gets$ {OptimalHittingSet}($\m{K}, f_{cost}$) \;
+
+      (sat?, $\kappa$) $\gets$ {SatSolver}($hs$)\;
+
+      \If{ not sat?}{
+        \Return{$hs$,  $\m{M}$}
+      }
+      $MSS \gets $ {Grow}($hs$) \;
+      $\m{M} \gets \m{M} \cup \{  MSS \} $\;
+      $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+      mode $\gets$ mode\_incr \;
+      \label{alg:omus-nonOPT-nested-end}
+    }
+  }
+  \caption{OMUS-Delayed($\m{F}, \m{M}, f_{cost}$)}
+  \label{alg:omus-nonOPT}
+\end{algorithm*}
+
+\begin{algorithm*}
+  \DontPrintSemicolon
+  \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
+  \Begin{
+    \tcp{F = unsatisfiable CNF formula; M = Collection of MSSes; $f_{cost}$ = cost function}
+    $\m{K} \gets $ $\emptyset$ \;
+    \tcp{grow mss from input mss}
+    \ForEach(){$\m{MSS} \in \m{M}$}{
+      $\m{MSS}' \gets$ {Grow($\m{F} \cap \m{MSS}$)} \;
+      % $\m{MSS} \gets $  \;
+      $\m{K} \gets \m{K} \cup \{  \m{F} \setminus \m{MSS}'\}$ \;
+    }
+
+    mode $\gets$ mode\_greedy \;
+    % $\m{M} \gets \emptyset$ \;
+    % \sout{$\m{H} \gets \m{H}_0$} \;
+    % \While{true}{
+    % \tcp{Find a series of non-optimal solutions}
+    \While{true \label{alg:omus-nonOPT-nested-start}}{
+      \Switch{$nonOptLevel$}{
+        \Case{mode\_incr}{
+          $\m{MCS} \gets \{  \m{F} \setminus MSS\}$ \;
+          $hs \gets$ {FindIncrementalHittingSet}($\m{K}$, $\m{MCS}$, $hs$)\;
+        }
+        \Case{mode\_greedy}{
+          $hs \gets$ {FindGreedyHittingSet}($\m{K}$)\;
+        }
+        \Case{mode\_opt}{
+          $hs \gets$ {OptimalHittingSet}($\m{K}, \m{W}$) \;
+        }
+      }
+
+      (sat?, $\kappa$) $\gets$ {SatSolver}($hs$)\;
+      \uIf{ not sat?}{
+        \Switch{$nonOptLevel$}{
+          \Case{mode\_incr}{
+            mode $\gets$  mode\_greedy \;
+          }
+          \Case{mode\_greedy}{
+            mode $\gets$  mode\_opt \;
+            \textbf{break} \;
+          }
+          \Case{mode\_opt}{
+            \Return{$hs$,  $\m{M}$}
+          }
+        }
+      }
+      \uElse{
+        % \todo{is this really correct to add it to MSS ? }\;
+        $MSS \gets $ {Grow}($hs$) \;
+        $\m{M} \gets \m{M} \cup \{  MSS \}$ \;
+        $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+        mode $\gets$  mode\_incr \;
+      }
+    }
+    % $hs \gets$ {OptimalHittingSet}($\m{K}, f_{cost}$) \;
+
+    % (sat?, $\kappa$) $\gets$ {SatSolver}($hs$)\;
+
+    % \If{ not sat?}{
+    %   \Return{$hs$,  $\m{M}$}
+    % }
+    % $MSS \gets $ {Grow}($hs$) \;
+    % $\m{M} \gets \m{M} \cup \{  MSS \} $\;
+    % $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+    % mode $\gets$ mode\_incr \;
+    % \label{alg:omus-nonOPT-nested-end}
+    % }
+  }
+  \caption{OMUS-Delayed($\m{F}, \m{M}, f_{cost}$)}
+  \label{alg:omus-nonOPT}
+\end{algorithm*}

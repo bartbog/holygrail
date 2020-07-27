@@ -1,0 +1,120 @@
+\documentclass{article}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{float}
+\usepackage{amsthm}
+\usepackage{thmtools} 
+\usepackage[parfill]{parskip}
+\usepackage[normalem]{ulem}
+
+\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+\newcommand\m[1]{\mathcal{#1}}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{lem}{Lemma}
+\newtheorem{lemma}[lem]{Lemma}
+\newtheorem{propo}{Proposition}
+\newtheorem{proposition}[propo]{Proposition}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+
+\bibliographystyle{apalike}
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}#1}}}
+\newcommand{\bart}[1]{{\comment{\color{green}#1}}}
+\newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1}}}
+
+
+
+\begin{document}
+% \section{Introduction}
+\section{Ideas}
+\begin{itemize}
+  \item
+  \item
+\end{itemize}
+% \subsection{Todo}
+
+
+\section{Problem Formulation: OMUS as QMaxSAT}
+\begin{itemize}
+  \item Original Formula $\phi = \{c_1, ..., c_m\}$
+  \item QBF Formulation of OMUS:
+        \begin{itemize}
+          \item $S = \phi_R$
+          \item $\phi_R = \{\lnot s_1 \vee c_1, ..., \lnot s_m \vee c_m\}$
+          \item $\phi_{unsat} = \exists S \forall X. \lnot \phi_R$
+          \item $f(s_1, ..., s_m) = \sum^{m}_{i=1} s_i \cdot$ \emilio{$a_i$}
+          \item \textbf{Goal:} $\mathcal{A}_S \in \mathcal{M}(\phi_{unsat})$ s.t. $\forall \mathcal{B}_S \in \mathcal{M}(\phi_{unsat}): f(\mathcal{A}_S) \leq f(\mathcal{B}_S)$
+        \end{itemize}
+  \item Result QBF to decide iteratively
+        \begin{itemize}
+          \item $\phi_{unsat} = \exists S \forall X. \lnot \phi_R \wedge ( f(s_1, ..., s_m)  \leq k)$
+          \item $\phi_{unsat} = \exists S \forall X. \lnot \phi_R \wedge \phi_S$, where $\phi_S = \{\lnot s_1, ..., \lnot s_m\}$
+        \end{itemize}
+\end{itemize}
+
+\subsection{Digger - SOA SMUS}
+\begin{minipage}[t]{0.48\linewidth}
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+    $R_{all} \gets \emptyset$ \;
+    \While{true}{
+      $\phi_R' = \exists E \exists R_{all} \overrightarrow{Q} \cdot \phi$ \;
+      \tcp{CEGAR 2 (or n) QBF oracle}
+      (sat, $\phi_c$, $\mathcal{A}_E$) $\gets$ \texttt{QBF($\phi_R'$)} \;
+      \If{sat}{
+        \Return{$\mathcal{A}_E$}
+      }
+      $R \gets \emptyset$ \;
+      \ForEach{c $\in$ $\phi_c$ }{
+        \textbf{let} $r$ be a new relaxation variable\;
+        $R \gets R \cup r$ \;
+        $\phi_S \gets \phi_S \setminus \{ c\} \cup \{c \wedge r \}$
+      }
+      $\phi \gets \phi \wedge$ \texttt{CNF($\sum_{r \in R} \leq 1$)} \;
+      $R_{all} \gets R_{all} \cup R$ \;
+    }
+    \caption{QMSU1 algorithm}
+    \label{alg:cspExplain}
+  \end{algorithm}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\linewidth}
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+    $\omega \gets \emptyset$
+    \While{true}{
+    $\phi_S \gets$ \texttt{CNF($\bigwedge_{\nu \in \omega} \phi_H |_{\nu}$)} $\cup$ \texttt{CNF($\bigwedge_{\nu \in \omega} \phi_S |_{\nu}$)}\;
+    ($sat_1$, $\mu$, $\phi_C$) $\gets$ \texttt{SAT($\phi$)} \;
+
+    \If{not $sat_1$}{
+    $\phi_S' \gets \{ c  \in \phi_S | c'  \in \phi_C, \ \nu \in \omega c' = c|_{\nu}\}$ \;
+    \Return{(false, $\phi_H \wedge \phi_S$)}
+    }
+
+    ($sat_2$, $\mu$, $\phi_C$) $\gets$ \texttt{SAT($\lnot(\phi_H \wedge \phi_S))|_{\nu}$} \;
+    \If{not $sat_2$}{
+    $\phi_S' \gets \{ c  \in \phi_S | c'  \in \phi_C, \ \nu \in \omega c' = c|_{\mu}\}$ \;
+    \Return{(true, $\mu$)}
+    }
+    $\omega \gets \omega \cup \{\nu\}$
+
+    }
+    \caption{CEGAR}
+    \label{alg:cspExplain}
+  \end{algorithm}
+\end{minipage}
+
+
+
+\end{document}

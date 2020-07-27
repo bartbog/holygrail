@@ -111,7 +111,7 @@
 
     $\m{I}_{end} \gets$ \texttt{propagate($\m{I}_0$, $\m{T}$)}  \tcp*{Goal state}
     $\m{I} \gets \m{I}_0$  \tcp*{Initial partial interpretation}
-    $Seq \gets$ \textit{empty set}     \tcp*{explanation sequence}
+    $Seq \gets \emptyset$      \tcp*{explanation sequence}
     % $E_{facts} \gets$ \textit{empty dict}  \tcp*{explanation sequence}
     \While{  $\m{I} \neq \m{I}_{end}$ }{
 
@@ -170,16 +170,16 @@
 
 \begin{algorithm}
   \DontPrintSemicolon
-  $\m{I}_{end} \gets$ \textsc{propagate($\m{I}_0$, $\m{T}$)} \;
+  $\m{I}_{end} \gets$ \texttt{propagate($\m{I}_0$, $\m{T}$)} \;
   $\m{I} \gets \m{I}_0$  \;
+  $, \m{W} \gets \emptyset$ \tcp*{Collection of MSSes generated during OMUS}
   $Seq \gets \emptyset$  \;
-  $\m{M} \gets \emptyset$ \;
   \While{  $\m{I} \neq \m{I}_{end}$ }{
     \For{$i \in \m{I}_{end} \setminus \m{I}$}{
-      $X_i,\  \m{MSS} \gets$ \textsc{OMUS-DELAYED($\{\neg i\} \wedge \m{I} \wedge \m{S}$, $\m{M}$)} \;
+      $X_i,\  \m{MSS} \gets$ \texttt{OMUS-DELAYED($\{\neg i\} \wedge \m{I} \wedge \m{S}$, $\m{M}$)} \;
       $E_i \gets$ $\m{I} \cap X_i$  \;
       $S_i \gets$ $\m{T} \cap X_i$  \;
-      $\m{N}_i \gets$ \textsc{propagate($E_i \wedge \m{S}_i$)} \;
+      $\m{N}_i \gets$ \texttt{propagate($E_i \wedge \m{S}_i$)} \;
       $\m{M} \gets \m{M} \cup \m{MSS}$\;
     }
     $(E_{best}, S_{best}, N_{best}) \gets (E_i,S_i,N_i)$ with lowest $f(E_i,S_i,N_i)$ \;
@@ -287,31 +287,32 @@
   \DontPrintSemicolon
   \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
   \Begin{
-  \tcp{grow mss from input mss}
-  
-  $\m{K} \gets $ $\emptyset$ \;
+    \tcp{F = unsatisfiable CNF formula; M = Collection of MSSes; $f_{cost}$ = cost function}
+
+    $\m{K} \gets $ $\emptyset$ \;
+    \tcp{grow mss from input mss}
   \ForEach(){$\m{MSS} \in \m{M}$}{
-    $\m{MSS}' \gets$ \textsc{Grow($\m{F} \cap \m{MSS}$)} \;
+    $\m{MSS}' \gets$ \texttt{Grow($\m{F} \cap \m{MSS}$)} \;
     % $\m{MSS} \gets $  \;
     $\m{K} \gets \m{K} \cup \{  \m{F} \setminus \m{MSS}'\}$ \;
   }
 
-    % $\m{M} \gets \emptyset$ \;
-    mode $\gets$ mode\_greedy \;
+  % $\m{M} \gets \emptyset$ \;
+  mode $\gets$ mode\_greedy \;
     % \sout{$\m{H} \gets \m{H}_0$} \;
     \While{true}{
       % \tcp{Find a series of non-optimal solutions}
       \While{true \label{alg:omus-nonOPT-nested-start}}{
         \Switch{$nonOptLevel$}{
           \Case{mode\_incr}{
-            $hs \gets$ \textsc{FindIncrementalHittingSet}($\m{K}$, $\m{C}$, $hs$)\;
+            $hs \gets$ \texttt{FindIncrementalHittingSet}($\m{K}$, $\m{C}$, $hs$)\;
           }
           \Case{mode\_greedy}{
-            $hs \gets$ \textsc{FindGreedyHittingSet}($\m{K}$)\;
+            $hs \gets$ \texttt{FindGreedyHittingSet}($\m{K}$)\;
           }
         }
 
-        (sat?, $\kappa$) $\gets$ \textsc{SatSolver}($hs$)\;
+        (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
         \uIf{ not sat?}{
           \Switch{$nonOptLevel$}{
             \Case{mode\_incr}{
@@ -324,68 +325,139 @@
           }
         }
         \uElse{
-          $MSS \gets $ \textsc{Grow}($hs$) \;
-          $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+          % \todo{is this really correct to add it to MSS ? }\;
+          $MSS \gets $ \texttt{Grow}($hs$) \;
           $\m{M} \gets \m{M} \cup \{  MSS \}$ \;
+          $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
           mode $\gets$  mode\_incr \;
         }
       }
-      $hs \gets$ \textsc{OptimalHittingSet}($\m{K}, f_{cost}$) \;
-      % \tcp{\small set with all unique clauses from hitting set}
-      (sat?, $\kappa$) $\gets$ \textsc{SatSolver}($hs$)\;
-      % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-      % \tcp{IF UNSAT, $hs$ is the OMUS }
+      $hs \gets$ \texttt{OptimalHittingSet}($\m{K}, f_{cost}$) \;
+
+      (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+
       \If{ not sat?}{
         \Return{$hs$,  $\m{M}$}
       }
-      $MSS \gets $ \textsc{Grow}($hs$) \;
-      $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+      $MSS \gets $ \texttt{Grow}($hs$) \;
       $\m{M} \gets \m{M} \cup \{  MSS \} $\;
+      $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
       mode $\gets$ mode\_incr \;
       \label{alg:omus-nonOPT-nested-end}
     }
-    % \Return{$(hs', \ f_{cost}(hs)) $} \;
   }
-  % \end{algorithmic}
-  \caption{\textsc{OMUS-Delayed($\m{F}, f_{cost}$)}}
-  % \caption{OMUS($\m{F},\m{H}_0 = \emptyset ,f_o$)}
+  \caption{\texttt{OMUS-Delayed($\m{F}, \m{M}, f_{cost}$)}}
   \label{alg:omus-nonOPT}
 \end{algorithm*}
 
-\newpage
-\section{MIP hitting set problem specification}
-For the set of clauses $ \m{C} = \{c_1, ... c_{|C|}\}$ with weights $\m{W} = \{w_1, ... w_{|C|}\}$ in the collection of sets $\m{H}$. For Example:
 
-\begin{equation} \label{mip:example}
-  \begin{split}
-    \m{C} &= \{c_1, ... c_6 \}  \\
-    \m{W} &= \{w_1 = 20, w_2 = 20,  w_3 = 10,  w_4 = 10,  w_5 = 10,  w_6 = 20\} \\
-    \m{H} &= \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_6\}
-  \end{split}
-\end{equation}
+\begin{algorithm*}
+  \DontPrintSemicolon
+  \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
+  \Begin{
+    \tcp{F = unsatisfiable CNF formula; M = Collection of MSSes; $f_{cost}$ = cost function}
+    $\m{K} \gets $ $\emptyset$ \;
+    \tcp{grow mss from input mss}
+    \ForEach(){$\m{MSS} \in \m{M}$}{
+      $\m{MSS}' \gets$ \texttt{Grow($\m{F} \cap \m{MSS}$)} \;
+      % $\m{MSS} \gets $  \;
+      $\m{K} \gets \m{K} \cup \{  \m{F} \setminus \m{MSS}'\}$ \;
+      }
+      
+      mode $\gets$ mode\_greedy \;
+    % $\m{M} \gets \emptyset$ \;
+    % \sout{$\m{H} \gets \m{H}_0$} \;
+    % \While{true}{
+      % \tcp{Find a series of non-optimal solutions}
+      \While{true \label{alg:omus-nonOPT-nested-start}}{
+        \Switch{$nonOptLevel$}{
+          \Case{mode\_incr}{
+            $\m{MCS} \gets \{  \m{F} \setminus MSS\}$ \;
+            $hs \gets$ \texttt{FindIncrementalHittingSet}($\m{K}$, $\m{MCS}$, $hs$)\;
+          }
+          \Case{mode\_greedy}{
+            $hs \gets$ \texttt{FindGreedyHittingSet}($\m{K}$)\;
+          }
+          \Case{mode\_opt}{
+            $hs \gets$ \texttt{OptimalHittingSet}($\m{K}, \m{W}$) \;
+          }
+        }
 
-The optimal hitting set can be formulated as an integer linear program.
-\begin{equation} \label{eq:ILP:objective}
-  min \sum_{ i \in \{1..|C|\}} w_i \cdot x_i
-\end{equation}
-\begin{equation} \label{eq:ILP:hittingset}
-  \sum_{i \in \{1..|C|\}} x_i \cdot h_{ij} \geq 1, \  \forall \ j \in \{1..|\m{H}|\}
-\end{equation}
-\begin{equation} \label{eq:ILP:bool:xi}
-  x_i = \{0,1\}
-\end{equation}
+        (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+        \uIf{ not sat?}{
+          \Switch{$nonOptLevel$}{
+            \Case{mode\_incr}{
+              mode $\gets$  mode\_greedy \;
+            }
+            \Case{mode\_greedy}{
+              mode $\gets$  mode\_opt \;
+              \textbf{break} \;
+            }
+            \Case{mode\_opt}{
+              \Return{$hs$,  $\m{M}$}
+            }
+          }
+        }
+        \uElse{
+          % \todo{is this really correct to add it to MSS ? }\;
+          $MSS \gets $ \texttt{Grow}($hs$) \;
+          $\m{M} \gets \m{M} \cup \{  MSS \}$ \;
+          $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+          mode $\gets$  mode\_incr \;
+        }
+      }
+      % $hs \gets$ \texttt{OptimalHittingSet}($\m{K}, f_{cost}$) \;
 
-\begin{itemize}
-  \item $w_i$ is the input cost/weight associated with clause i in
-  \item $x_i$ is a boolean decision variable if constraint/clause $c_i$ is chosen or not.
-  \item Equation \ref{eq:ILP:hittingset}, $h_{ij}$ is a boolean input variable corresponding to if constraint/clause i is in set to hit j.
-\end{itemize}
+      % (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
 
-\newpage
-\section{Future Work}
+      % \If{ not sat?}{
+      %   \Return{$hs$,  $\m{M}$}
+      % }
+      % $MSS \gets $ \texttt{Grow}($hs$) \;
+      % $\m{M} \gets \m{M} \cup \{  MSS \} $\;
+      % $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+      % mode $\gets$ mode\_incr \;
+      % \label{alg:omus-nonOPT-nested-end}
+    % }
+  }
+  \caption{\texttt{OMUS-Delayed($\m{F}, \m{M}, f_{cost}$)}}
+  \label{alg:omus-nonOPT}
+\end{algorithm*}
 
-\newpage
+% \newpage
+% \section{MIP hitting set problem specification}
+% For the set of clauses $ \m{C} = \{c_1, ... c_{|C|}\}$ with weights $\m{W} = \{w_1, ... w_{|C|}\}$ in the collection of sets $\m{H}$. For Example:
 
-\bibliography{omusrefs}
+% \begin{equation} \label{mip:example}
+%   \begin{split}
+%     \m{C} &= \{c_1, ... c_6 \}  \\
+%     \m{W} &= \{w_1 = 20, w_2 = 20,  w_3 = 10,  w_4 = 10,  w_5 = 10,  w_6 = 20\} \\
+%     \m{H} &= \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_6\}
+%   \end{split}
+% \end{equation}
+
+% The optimal hitting set can be formulated as an integer linear program.
+% \begin{equation} \label{eq:ILP:objective}
+%   min \sum_{ i \in \{1..|C|\}} w_i \cdot x_i
+% \end{equation}
+% \begin{equation} \label{eq:ILP:hittingset}
+%   \sum_{i \in \{1..|C|\}} x_i \cdot h_{ij} \geq 1, \  \forall \ j \in \{1..|\m{H}|\}
+% \end{equation}
+% \begin{equation} \label{eq:ILP:bool:xi}
+%   x_i = \{0,1\}
+% \end{equation}
+
+% \begin{itemize}
+%   \item $w_i$ is the input cost/weight associated with clause i in
+%   \item $x_i$ is a boolean decision variable if constraint/clause $c_i$ is chosen or not.
+%   \item Equation \ref{eq:ILP:hittingset}, $h_{ij}$ is a boolean input variable corresponding to if constraint/clause i is in set to hit j.
+% \end{itemize}
+
+% \newpage
+% \section{Future Work}
+
+% \newpage
+
+% \bibliography{omusrefs}
 
 \end{document}

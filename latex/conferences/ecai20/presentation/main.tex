@@ -69,7 +69,7 @@
 
 \begin{frame}{Motivation}
     % \textbf{Why logic grid puzzles?}
-    \begin{itemize}
+    \only<2>{\begin{itemize}
         \item 2019 Holy Grail Challenge: Zebra puzzles \footnote{\tiny\url{https://freuder.wordpress.com/pthg-19-the-third-workshop-on-progress-towards-the-holy-grail/}}
               \begin{itemize}
                   \item Parse puzzle clues and translate these into CSP\pause
@@ -77,23 +77,27 @@
                   \item Explain in a \textbf{\underline{human-understandable}} way how to solve this puzzle
               \end{itemize}
     \end{itemize}
-    \begin{minipage}[t]{0.48\linewidth}
-        \centering
-        \vspace{0.46cm}
-        \begin{figure}[h]
-            \includegraphics[width=\textwidth]{figures/meme_clues}
-            \label{clues}
-        \end{figure}
-    \end{minipage}\hfill
-    \begin{minipage}[t]{0.48\linewidth}
-        \centering
-        \begin{figure}[h]
-            \includegraphics[width=\textwidth]{figures/meme}
-            \label{grid}
-        \end{figure}
+    }
+    \only<1-2>{
 
-    \end{minipage}
-    \footnote{\tiny Figure src: \url{https://www.jing.fm/iclipt/bRTTbx/}}
+        \begin{minipage}[t]{0.48\linewidth}
+            \centering
+            \vspace{0.46cm}
+            \begin{figure}[h]
+                \includegraphics[width=\textwidth]{figures/meme_clues}
+                \label{clues}
+            \end{figure}
+        \end{minipage}\hfill
+        \begin{minipage}[t]{0.48\linewidth}
+            \centering
+            \begin{figure}[h]
+                \includegraphics[width=\textwidth]{figures/meme}
+                \label{grid}
+            \end{figure}
+            
+        \end{minipage}
+        \footnote{\tiny Figure src: \url{https://www.jing.fm/iclipt/bRTTbx/}}
+        }
 \end{frame}
 
 \begin{frame}{Motivation}
@@ -162,7 +166,8 @@
                   \item Explanation algorithm
               \end{itemize}
               % \item 
-        \item Experimental results
+        \item Example explanation
+        \item Conclusion \& Future work
     \end{itemize}
     % \vfill
 \end{frame}
@@ -171,8 +176,8 @@
     \begin{itemize}
         \item A logic grid puzzle instance consists of:
               \begin{itemize}
+                \item Set of \textbf{Clues}
                   \item Sets of entities that need to be linked
-                  \item Set of \textbf{Clues}
                   \item Each entity of one type is linked to \textit{exactly one} entity of each other type (\textbf{Bijectivity})
                   \item The links are \textit{consistent} (\textbf{Transitivity})
               \end{itemize}\pause
@@ -258,7 +263,7 @@
         % \begin{itemize}
             \item Generate candidate explanations using unsat-core extraction (one at a time)
             \item Iteratively grow the number of constraints used
-            \item Prune search based on optimistic approximation of cost $g(C)$
+            \item Prune search based on optimistic approximation of cost
         % \end{itemize}
     \end{itemize}
  

@@ -86,7 +86,7 @@
     \end{minipage}
     \pause
     \begin{itemize}
-        \item 2019 Holy Grail Challenge: Zebra puzzles \footnote{\tiny\url{https://freuder.wordpress.com/pthg-19-the-third-workshop-on-progress-towards-the-holy-grail/}}
+        \item 2019 Holy Grail Challenge: Zebra puzzles \footnote{\tiny\url{https://freuder.wordpress.com/pthg-19-the-third-workshop-on-progress-towards-the-holy-grail/}}\footnote{\tiny Figure src: \url{https://www.jing.fm/iclipt/bRTTbx/}}
               \begin{itemize}
                   \item Parse puzzle clues and translate these into CSP\pause
                   \item Solve CSP automatically\pause
@@ -95,7 +95,7 @@
     \end{itemize}
     % }
     % \only<1-2>{
-        \footnote{\tiny Figure src: \url{https://www.jing.fm/iclipt/bRTTbx/}}
+        
         % }
 \end{frame}
 
@@ -180,10 +180,12 @@
                   \item Each entity of one type is linked to \textit{exactly one} entity of each other type (\textbf{Bijectivity})
                   \item The links are \textit{consistent} (\textbf{Transitivity})
               \end{itemize}\pause
-        \item  \textbf{Objective:}
+              \vfill
+              \item  \textbf{Objective:}
               \begin{itemize}\small
-                  \item Find the \textit{unique} assignment $I$ that satisfies all of the constraints $T$ (clues, bijectivity \& transitivity)
-              \end{itemize}\pause
+                \item Find the \textit{unique} assignment $I$ that satisfies all of the constraints $T$ (clues, bijectivity \& transitivity)
+            \end{itemize}\pause
+            \vfill
         \item \textit{Example}
               \begin{center}
                   \small``\textit{Angie chose arrabiate sauce and Elisa did not chose pesto}'' \\
@@ -196,30 +198,42 @@
 \begin{frame}{Problem Definition}
     \framesubtitle{Explaining an inference step}
 
+    \vfill
     \textbf{Properties}%: %of explanations for an inference step:
+    \vfill
     \begin{itemize}
         \item Combination of {\color{vuborange}\textit{already derived facts}} \textbf{E} and {\color{vuborange}\textit{clues+constraints}} \textbf{S}
+        \vfill
         \item \textit{\underline{Non-Redundant}}
         \begin{itemize}
             \item \textit{None} of the facts or constraints can be removed while still explaining the newly derived information
         \end{itemize}
+        \vfill
         \item \underline{Interpretability} (difficulty) quantified by cost function $f$, ex:
-              \begin{itemize}
-                  \item Promote the use of simple constraints
-                  \item Penalize the use of multiple constraints (combination of constraints)
-              \end{itemize}
+        \begin{itemize}
+            \item Promote the use of simple constraints
+            \item Penalize the use of multiple constraints (combination of constraints)
+        \end{itemize}
     \end{itemize}
+    \vfill
+    
 \end{frame}
 
 \begin{frame}{Problem Definition}
     \framesubtitle{Explanation-Production Problem}
+    \vfill
     \textbf{Generating the explanation sequence}
+    \vfill
     \begin{itemize}
         \item Given a \textit{theory} (clues+constraints),
+        \vfill
         \item Starting from an \textit{initial assignment} $I_0$ (empty or partially filled grid),
+        \vfill
         \item Find a non-redundant explanation sequence:
     \end{itemize}
+    \vfill
     \[  I_0 \hspace{0.25cm} \xrightarrow[(E_1, S_1)]{expl.} \hspace{0.25cm} I_1 \hspace{0.25cm} \xrightarrow[(E_2, S_2)]{expl.} \hspace{0.25cm} ... \hspace{0.25cm}  \xrightarrow[(E_{n}, S_{n})]{expl.} \hspace{0.25cm} I_{n} \]
+    \vfill
     \begin{itemize}
         \item Minimize a predefined aggregate (max, average) over the costs of the explanation sequence
     \end{itemize}
@@ -229,27 +243,30 @@
 
 \begin{frame}{Non-redundant explanation}
     \framesubtitle{...in practice}
-
+    \vfill
     \begin{itemize}
         % \item \textit{Goal:} Find a non-redundant explanation
         %   \begin{itemize}
-        %   \item Find a non-redundant explanation $(E \subseteq I,\ S \subseteq C, \{a\})$ that explains a new fact $a$.
-        \item Smallest set of constraints and facts together explain a new fact
-        \item Can be reduced to finding a Minimal Unsat Core/Subset (a.k.a MUC or MUS)
-              %   , consider:
-              %         \[ E\wedge S \wedge \lnot n \]
-              %         \begin{itemize}
-              %             \item New fact n
-              %             \item $E\wedge S$ consistent
-              %             \item Each unsatisfiable subset formed by $ E\wedge S \wedge \lnot n$ forms the explanation $(E ,\ S , \{a\})$
-              %         \end{itemize}
-              %   \end{itemize}
-        \item Standard MUS extraction algorithm:
-              \begin{itemize}
-                %   \item If there is no satisfying solution, the unsat Core is shrunk to a Minimum Unsat Core \textsuperscript{\cite{liffiton2013enumerating}}
-                  \item Subset Minimal (not further reducable), but not cardinality-minimal (the smallest one or optimal one)
-              \end{itemize}
-    \end{itemize}
+            %   \item Find a non-redundant explanation $(E \subseteq I,\ S \subseteq C, \{a\})$ that explains a new fact $a$.
+            \item Smallest set of constraints and facts together explain a new fact
+            \vfill
+            \item Can be reduced to finding a Minimal Unsat Core/Subset (a.k.a MUC or MUS)
+            \vfill
+            %   , consider:
+            %         \[ E\wedge S \wedge \lnot n \]
+            %         \begin{itemize}
+                %             \item New fact n
+                %             \item $E\wedge S$ consistent
+                %             \item Each unsatisfiable subset formed by $ E\wedge S \wedge \lnot n$ forms the explanation $(E ,\ S , \{a\})$
+                %         \end{itemize}
+                %   \end{itemize}
+                \item Standard MUS extraction algorithm:
+                \begin{itemize}
+                    %   \item If there is no satisfying solution, the unsat Core is shrunk to a Minimum Unsat Core \textsuperscript{\cite{liffiton2013enumerating}}
+                    \item Subset Minimal (not further reducable), but not cardinality-minimal (the smallest one or optimal one)
+                \end{itemize}
+            \end{itemize}
+            \vfill
 \end{frame}
 
 \begin{frame}{(Greedy) Algorithm}
@@ -257,6 +274,7 @@
     % {\small
     % \begin{minipage}[t]{0.58\linewidth}
     % \vfill
+    
     \begin{itemize}
         % \item Greedy algorithm (max aggregate)
         % \begin{itemize}
@@ -274,6 +292,7 @@
     \vfill
     \begin{itemize}
         \item Visual explanation interface
+         \vfill
         \item Cost function:
               \begin{itemize}
                   \item Single implicit axiom: very cheap
@@ -423,13 +442,16 @@
 
 \begin{frame}{Contributions}
     % \textbf{Contributions}\\
+    \vfill
     In this paper, we
+    \vfill
     \begin{itemize}
         \item ... formalize the \emph{step-wise explanation problem},
         \item ... propose a greedy algorithm (agnostic of actual propagators, consistency level, etc.),
         \item ... propose heuristics for \emph{guiding} and \emph{speeding-up the search for \underline{easy-to-understand} explanations},
         \item ... use logic grid puzzle to show the feasibility of the approach.
     \end{itemize}
+    \vfill
 \end{frame}
 
 \begin{frame}{Use cases}

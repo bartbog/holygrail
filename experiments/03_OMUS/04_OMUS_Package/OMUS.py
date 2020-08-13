@@ -49,49 +49,58 @@ def time_func(f):
         return end_time-start, res
     return decor
 
+
 def debug(info, verbose=True):
     if verbose:
         print(info)
+
 
 def debug_ppprint(info, verbose=False):
     if verbose:
         print(json.dumps(info, indent=4))
 
+
 def complement(F, F_prime):
     return set(i for i in range(len(F))) - set(i for i in F_prime)
+
 
 def clause_length(clause):
     # weighted based on the number of literals inside the clause
     return len(clause)
 
+
 def cnf_weights(cnf, weight = clause_length):
     return [weight(clause) for clause in cnf.clauses]
+
 
 def clauses_weights(clauses, weight = clause_length):
     return [weight(clause) for clause in clauses]
 
+
 @time_func
 def checkSatClauses(clauses, F_prime):
-    if len(F_prime) == 0 :
+    if len(F_prime) == 0:
         return [], True
 
     cnf_clauses = [clauses[i] for i in F_prime]
     lits = set( abs(lit) for lit in frozenset.union(*cnf_clauses))
 
-    with  Solver() as s:
-        added = s.append_formula(cnf_clauses, no_return=False)
+    with Solver() as s:
+        s.append_formula(cnf_clauses, no_return=False)
         solved = s.solve()
         model = s.get_model()
     if solved:
-        mapped_model = set(lit for lit in model if abs(lit) in lits )
+        mapped_model = set(lit for lit in model if abs(lit) in lits)
         return mapped_model, solved
     else:
         return None, solved
+
+
 @time_func
 def checkSatClausesSolver(clauses, F_prime):
     s = Solver()
 
-    if len(F_prime) == 0 :
+    if len(F_prime) == 0:
         return [], True, s
 
     cnf_clauses = [clauses[i] for i in F_prime]
@@ -1117,6 +1126,7 @@ def checkVariableNaming(clauses):
     assert min_lit == 1, f"First Literal at {min_lit}"
     max_lit = max(lits)
     assert sorted(set(i for i in range(min_lit, max_lit))) == sorted(lits), "Be careful missing literals"
+
 @time_func
 def greedyHittingSet(H, weights):
     # trivial case: empty
@@ -1172,7 +1182,7 @@ def greedyHittingSet(H, weights):
 
     return C
 
-def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
+def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None, M=None):
     # benchmark variables
     # default parameters
     extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
@@ -1230,11 +1240,11 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
     #     steps_greedy += 1
 
     while(True):
-        print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+        # print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
 
         time_non_opt = time.time()
         while(True):
-            print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
+            # print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy, end='\r')
 
             if mode == mode_incr:
                 # add sets-to-hit incrementally until unsat then continue with optimal method
@@ -1331,7 +1341,7 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None ):
                     'steps_incr': steps_incr,
                     'stps_greedy': steps_greedy
             }
-            print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy)
+            # print("Steps - opt=", steps_opt, "Steps - incr=", steps_incr, "Steps - greedy=", steps_greedy)
             if outputfile != None :
                 with open(outputfile, 'w') as file:
                     file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse

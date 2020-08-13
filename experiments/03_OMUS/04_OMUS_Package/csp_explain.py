@@ -160,11 +160,7 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             # new fact
             N_i = {i}
 
-            # print("cnf=", unsat_cnf)
-            # print("expl=", explanation)
-            # print("S_i=", S_i)
-            # print("E_i=", E_i, "\n")
-            if cost_best == None or cost((E_i, S_i, N_i)) < cost_best:
+            if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost((E_i, S_i, N_i))
 

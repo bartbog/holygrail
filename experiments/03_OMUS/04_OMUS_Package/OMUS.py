@@ -1346,7 +1346,7 @@ def omusIncremental(cnf: CNF, parameters, f = clause_length, weights = None, M=N
                 with open(outputfile, 'w') as file:
                     file.write(json.dumps(benchmark_data)) # use `json.loads` to do the reverse
             gurobi_model.dispose()
-            return hs
+            return [list(cnf_clauses[idx]) for idx in hs]
 
         # ------ Grow
         time_grow , C = grow(frozen_clauses, weights, hs, model,  parameters)

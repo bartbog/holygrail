@@ -5,7 +5,7 @@ from pysat.solvers import Solver
 from pysat.formula import CNF
 import sys
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
-from cppy import Model, tseitin, BoolVarImpl, Operator, Comparison, cnf_to_pysat
+from cppy import Model,  BoolVarImpl, Operator, Comparison, cnf_to_pysat
 
 # TODO : 
 # - OMUS without incremental
@@ -121,7 +121,7 @@ def propagate(cnf, I=list()):
 
 def optimalPropagate(cnf, I):
     I_prop = set(I)
-    
+
     return I_prop
 
 
@@ -135,23 +135,21 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
     print(I_end - I)
     # clausesUsed = set()
     while len(I_end - I) > 0:
-        # expls = []
-        unsat_cnf = list(cnf)
-        w_cnf = list(weights)
-
-        if len(I) > 0:
-            unsat_cnf += [[li] for li in I]
-            w_cnf += [1 for li in I]
+        I_cnf = [[li] for li in I]
+        w_I = [1 for _ in range(len(I))]
 
         E_best, S_best, N_best = None, None, None
-        cost_best = 100000
+        cost_best = None
 
         for i in I_end - I:
             unsat_cnf = cnf + [[-i]]
             w_cnf = weights + [1]
+            if len(I) > 0:
+                unsat_cnf += I_cnf
+                w_cnf += w_I
 
-            omus_idx = omusIncremental(CNF(from_clauses=unsat_cnf), parameters=parameters, weights=w_cnf)
-            explanation = [unsat_cnf[idx] for idx in omus_idx]
+            explanation = omusIncremental(CNF(from_clauses=unsat_cnf), parameters=parameters, weights=w_cnf)
+            # print(omus_idx)
 
             # constraint used
             S_i = [ci for ci in explanation if ci in cnf]
@@ -166,7 +164,7 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             # print("expl=", explanation)
             # print("S_i=", S_i)
             # print("E_i=", E_i, "\n")
-            if cost((E_i, S_i, N_i)) < cost_best:
+            if cost_best == None or cost((E_i, S_i, N_i)) < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost((E_i, S_i, N_i))
 

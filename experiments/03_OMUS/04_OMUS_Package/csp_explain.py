@@ -91,7 +91,8 @@ def maxPropagate(cnf, I=list()):
 
 
 def basecost(constraints, clues):
-    nClues = len(constraints.intersection(clues))
+    # nClues = len(constraints.intersection(clues))
+    nClues =  0
     nOthers = len(constraints) - nClues
     if nClues == 0 and nOthers == 1:
         return 0
@@ -102,7 +103,7 @@ def basecost(constraints, clues):
 
 
 def cost(explanation):
-    facts, constraints = explanation
+    facts, constraints, new = explanation
     return basecost(constraints, set()) + len(facts) + len(constraints)
 
 
@@ -111,15 +112,21 @@ def propagate(cnf, I=list()):
 
     with Solver() as s:
         s.append_formula(cnf, no_return=False)
-        solved = s.solve(assumptions=I)
+        s.solve(assumptions=I)
         model = set(s.get_model())
 
     cnf_lits = lits.intersection(model)
 
     return cnf_lits
 
+def optimalPropagate(cnf, I):
+    I_prop = set(I)
+    
+    return I_prop
+
 
 def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanation.json'):
+    cnf_idx = set(i for i in range(len(cnf)))
     I_end = frozenset(maxPropagate(cnf, I_0))
     I = I_0
     seq = []
@@ -128,39 +135,55 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
     print(I_end - I)
     # clausesUsed = set()
     while len(I_end - I) > 0:
-        expls = []
+        # expls = []
+        unsat_cnf = list(cnf)
+        w_cnf = list(weights)
+
+        if len(I) > 0:
+            unsat_cnf += [[li] for li in I]
+            w_cnf += [1 for li in I]
+
+        E_best, S_best, N_best = None, None, None
+        cost_best = 100000
+
         for i in I_end - I:
             unsat_cnf = cnf + [[-i]]
             w_cnf = weights + [1]
 
-            if len(I) > 0:
-                unsat_cnf += [list(I)]
-                w_cnf += [1]
-            explanation = omusIncremental(CNF(from_clauses=unsat_cnf), parameters=parameters, weights=w_cnf)
+            omus_idx = omusIncremental(CNF(from_clauses=unsat_cnf), parameters=parameters, weights=w_cnf)
+            explanation = [unsat_cnf[idx] for idx in omus_idx]
 
             # constraint used
-            S_i = explanation - {len(cnf), len(cnf) + 1}
+            S_i = [ci for ci in explanation if ci in cnf]
 
             # explaining facts
-            E_i = set(lit for ci in S_i for lit in cnf[ci]).intersection(I)
+            E_i = [ci for ci in explanation if ci in [[li] for li in I]]
 
-            expls.append((E_i, S_i))
-            # print(E_i, S_i, N_i)
+            # new fact
+            N_i = {i}
+
+            # print("cnf=", unsat_cnf)
+            # print("expl=", explanation)
+            # print("S_i=", S_i)
+            # print("E_i=", E_i, "\n")
+            if cost((E_i, S_i, N_i)) < cost_best:
+                E_best, S_best, N_best = E_i, S_i, N_i
+                cost_best = cost((E_i, S_i, N_i))
+
         # find min cost explanation
-        (E_best, S_best) = min(expls, key=cost)
-
-        S_cnf = [ci for i, ci in enumerate(cnf) if i in S_best]
+        # print(E_best,"----", explanation,"----", S_best)
+        # print(I, E_best)
+        # S_cnf = [ci for i, ci in enumerate(cnf) if i in S_best]
         # propagate to find new information covered by current assignment
-        N_best = propagate(S_cnf, I=list(E_best))
+        # N_best = propagate(S_cnf, I=list(E_best))
 
         I |= N_best
-
         seq.append((E_best, S_best, N_best))
 
 
     for (E_i, S_i, N_i) in seq:
 
-        print(f"Clause:\n\t{[ci for i, ci in enumerate(cnf) if i in S_i]}  \nfacts\n\t{list(E_i)} \n=> Derive \n\t{N_i}")
+        print(f"Facts:\n\t{E_i}  \nClause:\n\t{S_i} \n=> Derive \n\t{N_i}")
         # print((E_i, S_i, N_i))
     assert all(False if -lit in I else True for lit in I)
     # I = I.union(N_best)

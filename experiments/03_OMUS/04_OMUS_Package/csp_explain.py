@@ -92,7 +92,7 @@ def maxPropagate(cnf, I=list()):
 
 def basecost(constraints, clues):
     # nClues = len(constraints.intersection(clues))
-    nClues =  0
+    nClues =  len(constraints)
     nOthers = len(constraints) - nClues
     # print("constraints = ", constraints)
     if nClues == 0 and nOthers == 1:
@@ -160,12 +160,12 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
                 w_cnf += w_I
 
             explanation = omusIncremental(CNF(from_clauses=unsat_cnf), parameters=parameters, weights=w_cnf)
-        
-            # constraint used without clauses with unit literals already in derived info
-            S_i = [ci for ci in explanation if ci in cnf and ci not in I_cnf]
 
             # explaining facts
-            E_i = set(lit for ci in explanation if ci in I_cnf for lit in ci)
+            E_i = [ci for ci in explanation if ci in I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in explanation if ci in cnf and ci not in E_i]
 
             # new fact
             N_i = {i}
@@ -192,11 +192,8 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
         # I |= (N_i - model)
         seq.append((E_best, S_best, N_best))
 
+        print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
-    for (E_i, S_i, N_i) in seq:
-
-        print(f"Facts:\n\t{E_i}  \nClause:\n\t{S_i} \n=> Derive \n\t{N_i}")
-        # print((E_i, S_i, N_i))
     assert all(False if -lit in I else True for lit in I)
     # I = I.union(N_best)
 

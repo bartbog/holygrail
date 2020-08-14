@@ -149,7 +149,7 @@ def unitprop(clauses, weights, F_prime, model, parameters):
         iterable(int), iterable(int) -- Grown hitting set, new model of hitting set
     """
     # parameters
-    best_unit_literal = parameters['best_unit_literal']
+    best_unit_literal = parameters['best_unit_literal'] if 'best_unit_literal' in parameters else UnitLiteral.IMMEDIATE
 
     new_F_prime = set(F_prime)
     # precompute both
@@ -1470,6 +1470,9 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
         # t_grow.append(t_exec_grow)
         # print("\t C=", C)
         steps += 1
+
+
+
 
 def bacchus():
     cnf = CNF()

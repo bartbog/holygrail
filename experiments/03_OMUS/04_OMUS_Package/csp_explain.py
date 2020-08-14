@@ -1,4 +1,4 @@
-from OMUS import omus, omusIncremental
+from OMUS import omus, omusIncremental, unitprop
 import json
 from frietkot import frietKotProblem
 from pysat.solvers import Solver
@@ -94,6 +94,7 @@ def basecost(constraints, clues):
     # nClues = len(constraints.intersection(clues))
     nClues =  0
     nOthers = len(constraints) - nClues
+    # print("constraints = ", constraints)
     if nClues == 0 and nOthers == 1:
         return 0
     elif nClues == 0 and nOthers > 1:
@@ -119,14 +120,23 @@ def propagate(cnf, I=list()):
 
     return cnf_lits
 
-def optimalPropagate(cnf, I):
-    I_prop = set(I)
 
-    return I_prop
+def optimalPropagate(cnf, I):
+    # The most precise and most expensive version returns the partial structure in which atoms are unknown 
+    # iff they do not have the same truth value in all models
+    # I_prop = set(I)
+    all_models = set()
+    with Solver() as s:
+        s.append_formula(cnf, no_return=False)
+        for m in s.enum_models():
+            all_models |= set(m)
+    lits = set(lit for lit in all_models if -lit not in all_models and lit not in I)
+    return lits
 
 
 def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanation.json'):
-    cnf_idx = set(i for i in range(len(cnf)))
+    # clauses = [frozenset(ci) for ci in cnf]
+    # print(cnf)
     I_end = frozenset(maxPropagate(cnf, I_0))
     I = I_0
     seq = []
@@ -140,6 +150,7 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
 
         E_best, S_best, N_best = None, None, None
         cost_best = None
+        best_explanation = None
 
         for i in I_end - I:
             unsat_cnf = cnf + [[-i]]
@@ -149,13 +160,12 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
                 w_cnf += w_I
 
             explanation = omusIncremental(CNF(from_clauses=unsat_cnf), parameters=parameters, weights=w_cnf)
-            # print(omus_idx)
-
-            # constraint used
-            S_i = [ci for ci in explanation if ci in cnf]
+        
+            # constraint used without clauses with unit literals already in derived info
+            S_i = [ci for ci in explanation if ci in cnf and ci not in I_cnf]
 
             # explaining facts
-            E_i = [ci for ci in explanation if ci in [[li] for li in I]]
+            E_i = set(lit for ci in explanation if ci in I_cnf for lit in ci)
 
             # new fact
             N_i = {i}
@@ -163,15 +173,23 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost((E_i, S_i, N_i))
+                best_explanation = explanation
+        print(cost_best, best_explanation)
+        print('\n\t', E_best, S_best, N_best, '\n')
 
-        # find min cost explanation
-        # print(E_best,"----", explanation,"----", S_best)
-        # print(I, E_best)
-        # S_cnf = [ci for i, ci in enumerate(cnf) if i in S_best]
+
         # propagate to find new information covered by current assignment
         # N_best = propagate(S_cnf, I=list(E_best))
+        # print(E_best)
+        # model = set(lit for ci in E_best for lit in ci)
+        # f_prime = []
+        # _, N_unit = unitprop(clauses, weights, f_prime, E_best, parameters)
+        # print("unitprop", N_i, E_best, f_prime)
+        # opt_prop = optimalPropagate(S_best, E_best)
+        # print("optprop", S_best, E_best, "=>", opt_prop)
 
         I |= N_best
+        # I |= (N_i - model)
         seq.append((E_best, S_best, N_best))
 
 

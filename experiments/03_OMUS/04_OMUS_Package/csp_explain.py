@@ -151,11 +151,11 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             explanation = omusIncremental(CNF(from_clauses=unsat_cnf), parameters=parameters, weights=w_cnf)
             # print(omus_idx)
 
-            # constraint used
-            S_i = [ci for ci in explanation if ci in cnf]
-
             # explaining facts
-            E_i = [ci for ci in explanation if ci in [[li] for li in I]]
+            E_i = [ci for ci in explanation if ci in I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in explanation if ci in cnf and not ci in E_i]
 
             # new fact
             N_i = {i}

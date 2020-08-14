@@ -92,7 +92,7 @@ def maxPropagate(cnf, I=list()):
 
 def basecost(constraints, clues):
     # nClues = len(constraints.intersection(clues))
-    nClues =  0
+    nClues =  len(constraints)
     nOthers = len(constraints) - nClues
     if nClues == 0 and nOthers == 1:
         return 0
@@ -174,7 +174,7 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
         I |= N_best
         seq.append((E_best, S_best, N_best))
 
-        print(f"Facts:\n\t{E_i}  \nClause:\n\t{S_i} \n=> Derive (at cost {cost_best}) \n\t{N_i}")
+        print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
     assert all(False if -lit in I else True for lit in I)
     # I = I.union(N_best)

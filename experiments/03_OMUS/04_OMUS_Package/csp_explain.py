@@ -174,11 +174,8 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
         I |= N_best
         seq.append((E_best, S_best, N_best))
 
-
-    for (E_i, S_i, N_i) in seq:
-
         print(f"Facts:\n\t{E_i}  \nClause:\n\t{S_i} \n=> Derive (at cost {cost_best}) \n\t{N_i}")
-        # print((E_i, S_i, N_i))
+
     assert all(False if -lit in I else True for lit in I)
     # I = I.union(N_best)
 

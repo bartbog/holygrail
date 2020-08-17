@@ -60,7 +60,6 @@ class SatModel(IntEnum):
     BEST_WEIGHTED_UNASSIGNED_CLAUSE_COVERAGE = 4
     ALL = 5
 
-
 # def mapping_clauses(clauses):
 
 #     union_clauses = frozenset.union(*clauses)

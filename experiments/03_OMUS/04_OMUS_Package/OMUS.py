@@ -1471,9 +1471,6 @@ def omus(cnf: CNF, parameters, f = clause_length, weights = None ):
         # print("\t C=", C)
         steps += 1
 
-
-
-
 def bacchus():
     cnf = CNF()
     cnf.append([6, 2])    # c1: ¬s

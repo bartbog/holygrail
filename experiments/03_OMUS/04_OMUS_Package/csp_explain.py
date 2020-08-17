@@ -92,7 +92,7 @@ def maxPropagate(cnf, I=list()):
 
 def basecost(constraints, clues):
     # nClues = len(constraints.intersection(clues))
-    nClues =  len(constraints)
+    nClues = 0
     nOthers = len(constraints) - nClues
     # print("constraints = ", constraints)
     if nClues == 0 and nOthers == 1:
@@ -141,8 +141,6 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
     I = I_0
     seq = []
 
-    # print(set(I_end) - set(I))
-    print(I_end - I)
     # clausesUsed = set()
     while len(I_end - I) > 0:
         I_cnf = [[li] for li in I]
@@ -150,7 +148,6 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
 
         E_best, S_best, N_best = None, None, None
         cost_best = None
-        best_explanation = None
 
         for i in I_end - I:
             unsat_cnf = cnf + [[-i]]
@@ -173,10 +170,6 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost((E_i, S_i, N_i))
-                best_explanation = explanation
-        print(cost_best, best_explanation)
-        print('\n\t', E_best, S_best, N_best, '\n')
-
 
         # propagate to find new information covered by current assignment
         # N_best = propagate(S_cnf, I=list(E_best))

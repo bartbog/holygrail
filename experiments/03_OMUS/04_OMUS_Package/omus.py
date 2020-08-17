@@ -74,7 +74,8 @@ class OMUS(object):
         self.parameters = parameters
 
         if from_clauses is not None:
-            self.cnf = CNF(from_clauses=from_clauses)
+            clauses  = [ci for ci in from_clauses if ci is not None and len(ci) > 0]
+            self.cnf = CNF(from_clauses=clauses)
         elif from_CNF is not None:
             self.cnf = from_CNF
         else:
@@ -794,8 +795,8 @@ class OMUS(object):
 
         if MSSes is not None:
             for mss, model in MSSes:
-                hs = F.intersection(mss)
-                C = self.grow(hs, model)
+                MSS, _ = self.grow(mss, model)
+                C = F - MSS
                 self.H.append(C)
 
         mode = MODE_GREEDY
@@ -854,7 +855,7 @@ class OMUS(object):
 
             if not sat:
                 gurobi_model.dispose()
-                return [list(self.clauses[idx]) for idx in hs]
+                return hs, [list(self.clauses[idx]) for idx in hs]
 
             # ------ Grow
             mss, mss_model = self.grow(hs, model)
@@ -911,6 +912,9 @@ if __name__ == "__main__":
     # print(o.omus())
     print(o.omusIncr())
     print(o.MSSes)
+
+
+
 # class OMUSSolver(object):
 #     def __init__(self, name):
 #         self.name = name

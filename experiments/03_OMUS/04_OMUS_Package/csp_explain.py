@@ -132,34 +132,50 @@ def optimalPropagate(cnf, I):
     return lits
 
 
-def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanation.json'):
+def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanation.json', incremental=False):
     # clauses = [frozenset(ci) for ci in cnf]
     # print(cnf)
     I_end = frozenset(maxPropagate(cnf, I_0))
     I = I_0
-    M = []
+    M = {i: [] for i in I_end - I}
     seq = []
+    cnf_idx = {i for i in range(len(cnf))}
 
     # clausesUsed = set()
     while len(I_end - I) > 0:
         I_cnf = [[li] for li in I]
-        w_I = [1 for _ in range(len(I))]
+        I_idx = {len(cnf) + i for i in range(len(I))}
+        w_I = [1 for _ in I]
 
+        cost_best, i_best = None, None
         E_best, S_best, N_best = None, None, None
-        cost_best = None
 
         for i in I_end - I:
-            unsat_cnf = cnf + [[-i]]
-            w_cnf = weights + [1]
-            if len(I) > 0:
-                unsat_cnf += I_cnf
-                w_cnf += w_I
+            unsat_cnf = cnf + I_cnf + [[-i]]
+            w_cnf = weights + w_I + [1]
 
+            # Match MSS
             o = OMUS(from_clauses=unsat_cnf, parameters=parameters, weights=w_cnf)
-            # print(o)
-            explanation = o.omusIncr()
-            MSSes = o.MSSes
-            
+            if incremental:
+                MSS_i = []
+                for mss_cnf_idx, mss_I, model in M[i]:
+                    # mss = MSS[cnf] + MSS[mss_I] + pos(-i)
+                    mss_i = mss_cnf_idx | set({len(cnf) + I_cnf.index(li) for li in mss_I}) | set({len(cnf) + len(I)})
+                    mss_cnf_lits = {abs(lit) for clause_idx in mss_cnf_idx for lit in cnf[clause_idx]}
+                    model_i = set()
+                    # elements of I are set to true
+                    for lit in model:
+                        # lit in already derived facts must be true because added as single literals
+                        if [lit] in I_cnf:
+                            model_i.add(lit)
+                        # lit in remaining cnfs of MSS
+                        elif abs(lit) in mss_cnf_lits:
+                            model_i.add(lit)
+                    MSS_i.append((mss_i, model_i))
+                    
+                hs, explanation = o.omusIncr(MSSes=MSS_i)
+            else:
+                hs, explanation = o.omusIncr()
 
             # explaining facts
             E_i = [ci for ci in explanation if ci in I_cnf]
@@ -173,17 +189,20 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost((E_i, S_i, N_i))
+                i_best = i
 
-        # propagate to find new information covered by current assignment
-        # N_best = propagate(S_cnf, I=list(E_best))
-        # print(E_best)
-        # model = set(lit for ci in E_best for lit in ci)
-        # f_prime = []
-        # _, N_unit = unitprop(clauses, weights, f_prime, E_best, parameters)
-        # print("unitprop", N_i, E_best, f_prime)
-        # opt_prop = optimalPropagate(S_best, E_best)
-        # print("optprop", S_best, E_best, "=>", opt_prop)
+            MSSes = o.MSSes
+            # M[i].append()
+            for mss, mss_model in MSSes:
+                # seperate components mss [cnf, I, -i]
+                # order of cnf part will never change!
+                mss_cnf = mss.intersection(cnf_idx)
+                # order of I might change!
+                mss_I = [unsat_cnf[idx] for idx in mss.intersection(I_idx)]
 
+                M[i].append((mss_cnf, mss_I, mss_model))
+
+        del M[i_best]
         I |= N_best
         # I |= (N_i - model)
         seq.append((E_best, S_best, N_best))
@@ -191,48 +210,8 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
         print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
     assert all(False if -lit in I else True for lit in I)
-    # I = I.union(N_best)
-
-    # while I != I_end:
-    #     expls = []
-        # for i in I_end - I:
-        #     omus_cnf = [[-i], [I]] + cnf
-        #     X_i = omus(omus_cnf, parameters, f=f)
-        #     lits = X_i
-        #     E_i = I.intersection(X_i)
-        #     S_i = X_i
-        #     N_i = propagate(S_i, E_i)
-        #     expls.append((E_i, S_i, N_i))
-
-        # seq.append((E_best, S_best, N_best))
-        # I.add({N_best})
 
     return seq
-
-
-# def omusExplainIncr(cnf, f, i0, parameters=None, output='explanation.json'):
-#     I_end = propagate(cnf, I_0)
-#     I = I_0
-#     seq = []
-#     M = []
-
-#     while I != I_end:
-#         expls = []
-#         for i in I_end - I:
-#             omus_cnf = [[-i], [I]] + cnf
-#             X_i, MSSes = omusIncremental(omus_cnf, parameters, f=f, M=None)
-#             lits = X_i
-#             E_i = I.intersection(X_i)
-#             S_i = X_i
-#             N_i = propagate(S_i, E_i)
-#             expls.append((E_i, S_i, N_i))
-#             M += MSSes
-
-#         (E_best, S_best, N_best) = min(expls, lambda e: f(e[0], e[1], e[2]))
-#         seq.append((E_best, S_best, N_best))
-#         I.add({N_best})
-
-#     return seq
 
 
 def main():
@@ -240,7 +219,7 @@ def main():
     parameters = {'extension': 'greedy_no_param','output': 'log.json'}
     cppy_model = frietKotProblem()
     cnf = cnf_to_pysat(cppy_model.constraints)
-    seq = omusExplain(cnf, weights=[len(c) for c in cnf], parameters=parameters)
+    seq = omusExplain(cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
     # print(seq)
 
 

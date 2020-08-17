@@ -37,7 +37,7 @@ def bacchus():
     }
     o = OMUS(from_CNF=cnf, parameters=parameters)
     print(o.omus())
-    print(o.omusIncr())
+    print(o.omusIncr(), o.H)
 
 
 def smus():
@@ -83,9 +83,9 @@ class OMUS(object):
         self.clauses = [frozenset(c for c in clause) for clause in self.cnf.clauses]
         self.nClauses = len(self.clauses)
 
-        solved = self.checkSat({i for i in range(len(self.nClauses))})
-
-        assert solved == False, "Cnf is satisfiable"
+        _, solved = self.checkSatNoSolver({i for i in range(self.nClauses)})
+        # print(solved)
+        assert solved is False, "Cnf is satisfiable"
 
         # self.solver = solver
         self.H = []
@@ -97,6 +97,25 @@ class OMUS(object):
             assert len(weights) == len(self.clauses), f"# clauses ({self.nClauses}) != # weights ({len(weights)})"
 
         self.mode = MODE_GREEDY
+
+    def checkSatNoSolver(self, f_prime):
+        if len(f_prime) == 0:
+            return [], True
+
+        # print(f_prime)
+        validated_clauses = [self.clauses[i] for i in f_prime]
+        lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
+
+        with Solver() as s:
+            s.append_formula(validated_clauses, no_return=False)
+            solved = s.solve()
+            model = s.get_model()
+        print(solved, model)
+        if solved:
+            mapped_model = set(lit for lit in model if abs(lit) in lits)
+            return mapped_model, solved
+        else:
+            return None, solved
 
     def checkSat(self, f_prime):
         satsolver = Solver()
@@ -222,7 +241,7 @@ class OMUS(object):
             return set()
 
         # add new constraint sum x[j] * hij >= 1
-        self.addSetGurobiModel(self.clauses, gurobi_model, C)
+        self.addSetGurobiModel(gurobi_model, C)
 
         # solve optimization problem
         gurobi_model.optimize()
@@ -850,7 +869,7 @@ class OMUS(object):
 
             hs = self.gurobiOptimalHittingSet(gurobi_model, C)
 
-            model, sat, _ = self.checkSatClauses(hs)
+            model, sat = self.checkSatNoSolver(hs)
 
             # if not sat or steps > max_steps_main:
             if not sat:
@@ -862,6 +881,28 @@ class OMUS(object):
             self.addSetGurobiModel(gurobi_model, C)
             self.H.append(C)
 
+
+if __name__ == "__main__":
+    cnf = CNF()
+    cnf.append([6, 2])    # c1: ¬s
+    cnf.append([-6, 2])    # c1: ¬s
+    cnf.append([-2, 1])    # c1: ¬s
+    cnf.append([-1])    # c1: ¬s
+    cnf.append([-6,8])    # c1: ¬s
+    cnf.append([6, 8])    # c1: ¬s
+    cnf.append([2, 4])    # c1: ¬s
+    cnf.append([-4, 5])    # c1: ¬s
+    cnf.append([7, 5])    # c1: ¬s
+    cnf.append([-7, 5])    # c1: ¬s
+    cnf.append([-5, 3])    # c1: ¬s
+    cnf.append([-3])    # c1: ¬s
+    parameters = {
+        'extension': 'greedy_no_param',
+        'output': "bacchus_log.json",
+    }
+    o = OMUS(from_CNF=cnf, parameters=parameters)
+    print(o.omus())
+    print(o.omusIncr(), o.H)
 # class OMUSSolver(object):
 #     def __init__(self, name):
 #         self.name = name

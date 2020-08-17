@@ -89,12 +89,14 @@ class OMUS(object):
 
         # self.solver = solver
         self.H = []
+        self.MSSes = []
         # self.C = []
 
         if weights is None:
             self.weights = [f(clause) for clause in self.clauses]
         else:
             assert len(weights) == len(self.clauses), f"# clauses ({self.nClauses}) != # weights ({len(weights)})"
+            self.weights = weights
 
         self.mode = MODE_GREEDY
 
@@ -110,7 +112,7 @@ class OMUS(object):
             s.append_formula(validated_clauses, no_return=False)
             solved = s.solve()
             model = s.get_model()
-        print(solved, model)
+        # print(solved, model)
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
             return mapped_model, solved
@@ -345,9 +347,8 @@ class OMUS(object):
         # print("model=", model)
         # print("parameters=", parameters)
         new_F_prime, new_model = extensions[extension](F_prime, model)
-        complement = set(i for i in range(self.nClauses)) - new_F_prime
 
-        return complement
+        return new_F_prime, new_model
 
     def defaultExtension(self, F_prime, model):
         return F_prime
@@ -780,7 +781,7 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, MSS=None):
+    def omusIncr(self, MSSes=None):
         self.H = []
 
         gurobi_model = self.gurobiModel()
@@ -791,8 +792,8 @@ class OMUS(object):
         sat = True
         F = set(range(self.nClauses))
 
-        if MSS is not None:
-            for mss, model in MSS:
+        if MSSes is not None:
+            for mss, model in MSSes:
                 hs = F.intersection(mss)
                 C = self.grow(hs, model)
                 self.H.append(C)
@@ -834,10 +835,13 @@ class OMUS(object):
                     # break # skip grow
 
                 # ------ Grow
-                C = self.grow(hs, model)
+                mss, mss_model = self.grow(hs, model)
+                C = F - mss
+
                 self.addSetGurobiModel(gurobi_model, C)
                 h_counter.update(list(C))
                 self.H.append(C)
+                self.MSSes.append((mss, mss_model))
 
                 # Sat => Back to incremental mode 
                 mode = MODE_INCR
@@ -853,9 +857,11 @@ class OMUS(object):
                 return [list(self.clauses[idx]) for idx in hs]
 
             # ------ Grow
-            C = self.grow(hs, model)
-            self.H.append(C)
+            mss, mss_model = self.grow(hs, model)
+            C = F - mss
             h_counter.update(list(C))
+            self.H.append(C)
+            self.MSSes.append((mss, mss_model))
             mode = MODE_INCR
 
     def omus(self):
@@ -874,7 +880,8 @@ class OMUS(object):
             # if not sat or steps > max_steps_main:
             if not sat:
                 gurobi_model.dispose()
-                return hs
+                # return hs
+                return [list(self.clauses[idx]) for idx in hs]
 
             C = self.grow(hs, model)
 
@@ -901,8 +908,9 @@ if __name__ == "__main__":
         'output': "bacchus_log.json",
     }
     o = OMUS(from_CNF=cnf, parameters=parameters)
-    print(o.omus())
-    print(o.omusIncr(), o.H)
+    # print(o.omus())
+    print(o.omusIncr())
+    print(o.MSSes)
 # class OMUSSolver(object):
 #     def __init__(self, name):
 #         self.name = name

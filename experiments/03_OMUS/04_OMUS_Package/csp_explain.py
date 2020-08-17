@@ -1,4 +1,4 @@
-from OMUS import omus, omusIncremental, unitprop
+from omus import OMUS
 import json
 from frietkot import frietKotProblem
 from pysat.solvers import Solver
@@ -12,8 +12,6 @@ from cppy import Model,  BoolVarImpl, Operator, Comparison, cnf_to_pysat
 # - OMUS with incremental
 # - OMUS w/o reuse of MSS 
 # - OMUS with reuse of MSS (w/ or w/o models)
-
-
 
 
 def literalstoDict(literals, literal_match):
@@ -139,6 +137,7 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
     # print(cnf)
     I_end = frozenset(maxPropagate(cnf, I_0))
     I = I_0
+    M = []
     seq = []
 
     # clausesUsed = set()
@@ -156,7 +155,11 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
                 unsat_cnf += I_cnf
                 w_cnf += w_I
 
-            explanation = omusIncremental(CNF(from_clauses=unsat_cnf), parameters=parameters, weights=w_cnf)
+            o = OMUS(from_clauses=unsat_cnf, parameters=parameters, weights=w_cnf)
+            # print(o)
+            explanation = o.omusIncr()
+            MSSes = o.MSSes
+            
 
             # explaining facts
             E_i = [ci for ci in explanation if ci in I_cnf]

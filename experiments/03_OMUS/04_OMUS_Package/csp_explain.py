@@ -135,7 +135,7 @@ def optimalPropagate(cnf, I):
 def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanation.json', incremental=False):
     # clauses = [frozenset(ci) for ci in cnf]
     # print(cnf)
-    I_end = frozenset(maxPropagate(cnf, I_0))
+    I_end = set(maxPropagate(cnf, I_0))
     I = I_0
     M = {i: [] for i in I_end - I}
     seq = []
@@ -143,7 +143,7 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
 
     # clausesUsed = set()
     while len(I_end - I) > 0:
-        I_cnf = [[li] for li in I]
+        I_cnf = [set({li}) for li in I]
         I_idx = {len(cnf) + i for i in range(len(I))}
         w_I = [1 for _ in I]
 
@@ -181,8 +181,8 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             E_i = [ci for ci in explanation if ci in I_cnf]
 
             # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            # TODO: aanpassen constraints
             S_i = [ci for ci in explanation if ci in cnf and ci not in E_i]
-
             # new fact
             N_i = {i}
 

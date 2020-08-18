@@ -1,17 +1,17 @@
 # system utilities
 from collections import Counter
-
-# Pysat Utilities
-from pysat.solvers import Solver
-from pysat.formula import CNF, WCNF
-from pysat.examples.rc2 import RC2
+import time
 
 # Gurobi utilities
 import gurobipy as gp
 from gurobipy import GRB
+# Pysat Utilities
+from pysat.examples.rc2 import RC2
+from pysat.formula import CNF, WCNF
+from pysat.solvers import Solver
 
 # OMUS Utilities
-from OMUS_utils import ClauseCounting, ClauseSorting, BestLiteral, UnitLiteral
+from OMUS_utils import BestLiteral, ClauseCounting, ClauseSorting, UnitLiteral
 
 # GLOBAL VARIABELS
 MODE_OPT, MODE_INCR, MODE_GREEDY = (1, 2, 3)
@@ -65,16 +65,39 @@ def smus():
     print(o.omusIncr())
 
 
+class BenchmarkInfo(object):
+    def __init__(self):
+        self.steps = Steps()
+        # self.timings = Timings()
+
+
+class Steps(object):
+    def __init__(self):
+        self.incremental = 0
+        self.greedy = 0
+        self.optimal = 0
+
+
+class Timings(object):
+    def __init__(self):
+        self.greedy = []
+        self.optimal = []
+        self.incremental = []
+        self.sat = []
+        self.growMss = []
+
+
 class OMUS(object):
-    def __init__(self, from_clauses=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), output='log.json'):
+    def __init__(self, from_clauses=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), output='log.json', logging=False):
         # parameters of the solver
         self.extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
         self.output = parameters['output'] if 'output' in parameters else output
         self.cutoff_main = parameters['cutoff_main'] if 'cutoff_main' in parameters else 15*60
         self.parameters = parameters
+        self.logging = logging
 
         if from_clauses is not None:
-            clauses  = [ci for ci in from_clauses if ci is not None and len(ci) > 0]
+            clauses = [ci for ci in from_clauses if ci is not None and len(ci) > 0]
             self.cnf = CNF(from_clauses=clauses)
         elif from_CNF is not None:
             self.cnf = from_CNF
@@ -100,8 +123,15 @@ class OMUS(object):
             self.weights = weights
 
         self.mode = MODE_GREEDY
+        if logging:
+            self.logging = True
+            self.steps = Steps()
+            self.timing = Timings()
 
     def checkSatNoSolver(self, f_prime):
+        if self.logging:
+            tstart = time.time()
+
         if len(f_prime) == 0:
             return [], True
 
@@ -114,6 +144,10 @@ class OMUS(object):
             solved = s.solve()
             model = s.get_model()
         # print(solved, model)
+
+        if self.logging:
+            tend = time.time()
+            self.timing.sat.append(tend - tstart)
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
             return mapped_model, solved
@@ -121,6 +155,9 @@ class OMUS(object):
             return None, solved
 
     def checkSat(self, f_prime):
+        if self.logging:
+            tstart = time.time()
+
         satsolver = Solver()
 
         if len(f_prime) == 0:
@@ -133,6 +170,10 @@ class OMUS(object):
         solved = satsolver.solve()
         model = satsolver.get_model()
 
+        if self.logging:
+            tend = time.time()
+            self.timing.sat.append(tend - tstart)
+
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
             return mapped_model, solved, satsolver
@@ -140,6 +181,9 @@ class OMUS(object):
             return None, solved, satsolver
 
     def checkSatIncr(self, satsolver, hs, c):
+        if self.logging:
+            tstart = time.time()
+
         validated_clauses = [self.clauses[i] for i in hs]
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
         clause = self.clauses[c]
@@ -147,6 +191,10 @@ class OMUS(object):
         satsolver.add_clause(clause, no_return=False)
         solved = satsolver.solve()
         model = satsolver.get_model()
+
+        if self.logging:
+            tend = time.time()
+            self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -156,12 +204,15 @@ class OMUS(object):
             return None, solved, satsolver
 
     def greedyHittingSet(self):
+        if self.logging:
+            tstart = time.time()
         # trivial case: empty
         # print(H)
         if len(self.H) == 0:
             return set()
-
-        C = set() # the hitting set
+        
+        # the hitting set
+        C = set()
 
         # build vertical sets
         V = dict() # for each element in H: which sets it is in
@@ -201,15 +252,23 @@ class OMUS(object):
             C.add(c)
 
             # update vertical views, remove covered sets
-            for e in list(V): # V will be changed in this loop
+            for e in list(V):
+                # V will be changed in this loop
                 V[e] -= cover
                 # no sets remaining with this element?
                 if len(V[e]) == 0:
                     del V[e]
 
+        if self.logging:
+            tend = time.time()
+            self.timing.greedy.append(tend-tstart)
+            self.steps.greedy += 1
+
         return C
 
     def gurobiModel(self):
+        if self.logging:
+            tstart = time.time()
         # create gurobi model
         g_model = gp.Model('MipOptimalHittingSet')
 
@@ -228,6 +287,10 @@ class OMUS(object):
         # update the model
         g_model.update()
 
+        if self.logging:
+            tend = time.time()
+            self.timing.greedy.append(tend - tstart)
+
         return g_model
 
     def addSetGurobiModel(self, gurobi_model, C):
@@ -239,6 +302,9 @@ class OMUS(object):
         gurobi_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
 
     def gurobiOptimalHittingSet(self, gurobi_model, C):
+        if self.logging:
+            tstart = time.time()
+
         # trivial case
         if len(C) == 0:
             return set()
@@ -253,9 +319,16 @@ class OMUS(object):
         x = gurobi_model.getVars()
         hs = set(i for i in range(self.nClauses) if x[i].x == 1)
 
+        if self.logging:
+            tend = time.time()
+            self.timing.greedy.append(tend - tstart)
+
         return hs
 
     def gurobiOptimalHittingSetAll(self, gurobi_model, C):
+        if self.logging:
+            tstart = time.time()
+
         # trivial case
         if len(C) == 0:
             return []
@@ -273,9 +346,16 @@ class OMUS(object):
         x = gurobi_model.getVars()
         hs = set(i for i in range(self.nClauses) if x[i].x == 1)
 
+        if self.logging:
+            tend = time.time()
+            self.timing.greedy.append(tend - tstart)
+
         return hs
 
     def gurobiOptimalHittingSetCold(self):
+        if self.logging:
+            tstart = time.time()
+
         gurobi_model = self.gurobiModel()
         # trivial case
         if len(self.H) == 0:
@@ -292,6 +372,10 @@ class OMUS(object):
         x = gurobi_model.getVars()
         hs = set(i for i in range(self.nClauses) if x[i].x == 1)
         gurobi_model.dispose()
+
+        if self.logging:
+            tend = time.time()
+            self.timing.greedy.append(tend - tstart)
 
         return hs
 
@@ -331,6 +415,8 @@ class OMUS(object):
 
                 Maxsat
         """
+        if self.logging:
+            tstart = time.time()
         extension = self.extension
 
         extensions = {
@@ -348,6 +434,10 @@ class OMUS(object):
         # print("model=", model)
         # print("parameters=", parameters)
         new_F_prime, new_model = extensions[extension](F_prime, model)
+
+        if self.logging:
+            tend = time.time()
+            self.timing.growMss.append(tend - tstart)
 
         return new_F_prime, new_model
 
@@ -803,6 +893,8 @@ class OMUS(object):
         while(True):
             while(True):
                 if mode == MODE_INCR:
+                    if self.logging:
+                        tstart = time.time()
                     # add sets-to-hit incrementally until unsat then continue with optimal method
                     # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
                     # then hs + any element of 'C' is a valid hitting set of CC + C
@@ -813,6 +905,10 @@ class OMUS(object):
                     # choose clause with smallest weight appearing most in H
                     c_best = max(m, key=lambda ci: h_counter[ci])
                     hs.add(c_best)
+                    if self.logging:
+                        tend = time.time()
+                        self.timing.incremental = tend - tstart
+                        self.steps.incremental += 1
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
                     hs = self.greedyHittingSet()
@@ -849,13 +945,15 @@ class OMUS(object):
 
             # ----- Compute Optimal Hitting Set
             hs = self.gurobiOptimalHittingSet(gurobi_model, C)
+            if self.logging:
+                self.steps.optimal += 1
 
             # ------ Sat check
             (model, sat, satsolver) = self.checkSat(hs)
 
             if not sat:
                 gurobi_model.dispose()
-                return hs, [list(self.clauses[idx]) for idx in hs]
+                return hs, [set(self.clauses[idx]) for idx in hs]
 
             # ------ Grow
             mss, mss_model = self.grow(hs, model)
@@ -912,7 +1010,6 @@ if __name__ == "__main__":
     # print(o.omus())
     print(o.omusIncr())
     print(o.MSSes)
-
 
 
 # class OMUSSolver(object):

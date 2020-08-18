@@ -111,6 +111,7 @@ def p16():
                 trans[1].append( implies( ~made_of[x, z] & object_material[y, z], ~used[x, y]) )
                 # ! x y z: from(x, z) & ~is_linked_with_1(y, z)=> ~ used(x, y).
                 trans[2].append( implies( made_of[x, z] & ~object_material[y, z], ~used[x, y]) )
+
     for x in  juggler:
         for y in  objects:
             for z in spot :
@@ -181,6 +182,8 @@ def p16():
     clues.append(used('floyd', 'rubber_balls'))
 
     # bv for tracking clues during explanation generation
+    # TODO : change implementation of bv for tr/bij/clues
+    # TODO: for every clause in 1 tr/bij/clues use same bv
     trans_bv = [implies(bv, tr) for bv, tr  in zip(bv_trans, trans) ]
     bij_bv = [implies(bv, bi) for bv, bi  in zip(bv_bij, bij) ]
     clues_bv = [implies(bv, clue) for bv, clue  in zip(bv_clues, clues) ]

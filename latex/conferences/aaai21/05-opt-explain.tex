@@ -7,24 +7,120 @@
     \item Greedy explanation
 \end{itemize}
 
+\begin{algorithm}
+  \DontPrintSemicolon
+  $\m{I}_{end} \gets$ {propagate($\m{I}_0$, $\m{T}$)} \;
+  $\m{I} \gets \m{I}_0$  \;
+  $\m{M} \gets \emptyset$ \;
+  $Seq \gets \emptyset$  \;
+  \While{  $\m{I} \neq \m{I}_{end}$ }{
+    \For{$i \in \m{I}_{end} \setminus \m{I}$}{
+      $X_i,\  \m{MSS} \gets$ {OMUS-nonOPT($\{\neg i\} \wedge \m{I} \wedge \m{S}$, $\m{M}$)} \;
+      $E_i \gets$ $\m{I} \cap X_i$  \;
+      $S_i \gets$ $\m{T} \cap X_i$  \;
+      $\m{N}_i \gets$ {propagate($E_i \wedge \m{S}_i$)} \;
+      $\m{M} \gets \m{M} \cup \m{MSS}$\;
+    }
+    $(E_{best}, S_{best}, N_{best}) \gets (E_i,S_i,N_i)$ with lowest $f(E_i,S_i,N_i)$ \;
+    append $( E_{best}, S_{best}, N_{best})$ to $Seq$ \;
+    $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
+  }
+  \caption{CSP-Explain-Incr($\m{T} ,\ f \ [,  \ \m{I}_0 ]$)}
+  \label{alg:cspExplain}
+\end{algorithm}
 
-\begin{algorithm*}
-      \DontPrintSemicolon
-      $\m{I}_{end} \gets$ \textsc{propagate($\m{I}_0$, $\m{T}$)} \;
-      $\m{I} \gets \m{I}_0$  \;
-      $Seq \gets \emptyset$  \;
-      \While{  $\m{I} \neq \m{I}_{end}$ }{
-        \For{$i \in \m{I}_{end} \setminus \m{I}$}{
-          $X_i \gets$ \textsc{OMUS($\{\neg i\} \wedge \m{I} \wedge \m{S}$)} \;
-          $E_i \gets$ $\m{I} \cap X_i$  \;
-          $S_i \gets$ $\m{T} \cap X_i$  \;
-          $\m{N}_i \gets$ \textsc{propagate($E_i \wedge \m{S}_i$)} \;
-          }
-          $(E_{best}, S_{best}, N_{best}) \gets (E_i,S_i,N_i)$ with lowest $f(E_i,S_i,N_i)$ \;
-          append $( E_{best}, S_{best}, N_{best})$ to $Seq$ \;
-          $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
+
+A preliminary empirical analysis of the execution time of the OMUS algorithm is run using boolean satisfiability instances from the MaxSAT evaluation benchmarks \cite{ansotegui2017maxsat}.
+
+Our observations show that the solving time is clearly dominated by the many calls to the MIP solver similar to the results in \cite{davies2013postponing}.
+The improved \textsc{OMUS-nonOPT} algorithm (algorithm \ref{alg:omus-nonOPT}) uses a similar approach to the \textsc{MaxHS-nonOPT} algorithm of \cite{davies2013postponing}.
+%  represented by algorithm .
+
+
+However, we choose to delay the first call to optimization solver based on the observation that we do not bootstrap $\m{H}$ with MCSes($\m{F}$), thus saving a call to the \textsc{SAT} solver.
+In practice, we observe that this helps in finding cheap hitting sets quickly especially for crafted instances of the \textsc{MaxSAT} evaluation benchmark.
+  \begin{algorithm}
+  \DontPrintSemicolon
+  \SetKwSwitch{Switchy}{Case}{Default}{swtich}{}{case}{otherwhise}{}%
+  \Begin{
+    % \tcp{F = unsatisfiable CNF formula; M = Collection of MSSes; $f_{cost}$ = cost function}
+    $\m{K} \gets $ $\emptyset$ \;
+    % \tcp{grow mss from input mss}
+    \ForEach(){$\m{MSS} \in \m{M}$}{
+      $\m{MSS}' \gets$ {Grow($\m{F} \cap \m{MSS}$)} \;
+      % $\m{MSS} \gets $  \;
+      $\m{K} \gets \m{K} \cup \{  \m{F} \setminus \m{MSS}'\}$ \;
+    }
+
+    mode $\gets$ mode\_greedy \;
+    % $\m{M} \gets \emptyset$ \;
+    % \sout{$\m{H} \gets \m{H}_0$} \;
+    % \While{true}{
+    % \tcp{Find a series of non-optimal solutions}
+    \While{true \label{alg:omus-nonOPT-nested-start}}{
+      \Switch{$nonOptLevel$}{
+        \Case{mode\_incr}{
+          $\m{MCS} \gets \{  \m{F} \setminus MSS\}$ \;
+          $hs \gets$ {IncrementalHS}($\m{K}$, $\m{MCS}$, $hs$)\;
+        }
+        \Case{mode\_greedy}{
+          $hs \gets$ {GreedyHS}($\m{K}$)\;
+        }
+        \Case{mode\_opt}{
+          $hs \gets$ {OptimalHS}($\m{K}, \m{W}$) \;
+        }
       }
-    \caption{CSP-Explain($\m{T} ,\ f \ [,  \ \m{I}_0 ]$)}
-    \label{alg:cspExplain}
-  \end{algorithm*}
 
+      (sat?, $\kappa$) $\gets$ {SatSolver}($hs$)\;
+      \uIf{ not sat?}{
+        \Switch{$nonOptLevel$}{
+          \Case{mode\_incr}{
+            mode $\gets$  mode\_greedy \;
+          }
+          \Case{mode\_greedy}{
+            mode $\gets$  mode\_opt \;
+            \textbf{break} \;
+          }
+          \Case{mode\_opt}{
+            \Return{$hs$,  $\m{M}$}
+          }
+        }
+      }
+      \uElse{
+        % \todo{is this really correct to add it to MSS ? }\;
+        $MSS \gets $ {Grow}($hs$) \;
+        $\m{M} \gets \m{M} \cup \{  MSS \}$ \;
+        $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+        mode $\gets$  mode\_incr \;
+      }
+    }
+    % $hs \gets$ {OptimalHittingSet}($\m{K}, f_{cost}$) \;
+
+    % (sat?, $\kappa$) $\gets$ {SatSolver}($hs$)\;
+
+    % \If{ not sat?}{
+    %   \Return{$hs$,  $\m{M}$}
+    % }
+    % $MSS \gets $ {Grow}($hs$) \;
+    % $\m{M} \gets \m{M} \cup \{  MSS \} $\;
+    % $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+    % mode $\gets$ mode\_incr \;
+    % \label{alg:omus-nonOPT-nested-end}
+    % }
+  }
+  \caption{OMUS-nonOPT($\m{F}, \m{M}, f_{cost}$)}
+  \label{alg:omus-nonOPT}
+\end{algorithm}
+
+The improved version starts the main loop with two approximation algorithms: incremental (line \ref{omus:incremental}) and greedy (line \ref{omus:greedy}).
+Since the hitting set has not been computed yet, we use a greedy algorithm to quickly find a hitting set.
+The algorithm then falls back on the incremental algorithm.
+
+\texttt{FindIncrementalHittingSet} could add any clause from the previous MCS to the current hitting set $hs$, but instead we choose to add the clause with highest frequency in $\m{H}$.
+Intuitively, this takes away the clauses that appear in many known MCSes, and thus the newly found grown hitting set is more likely to intersect with only a few of the known MCSes.
+Considering that we want to find the optimal MUS, i.e. the MUS with least cost, we break ties by selecting the clause with highest frequency, but with the lowest weight.
+The same reasoning can also be applied to the greedy algorithm.
+
+Once algorithm \ref{alg:omus-nonOPT} fails to find any new satisfiable hitting sets using the two approximation algorithms, the algorithm cannot postpone the optimization call any further and has to call the optimization solver.
+Likewise, the algorithm stops if the \textsc{SAT} solver is unable to find a satisfying assignment meaning that it has found the OMUS.
+Note that if we remove lines \ref{alg:omus-nonOPT-nested-start} and \ref{alg:omus-nonOPT-nested-end}, we end up with the original \textsc{OMUS} algorithm.

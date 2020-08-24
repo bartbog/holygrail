@@ -77,6 +77,8 @@ class Steps(object):
         self.greedy = 0
         self.optimal = 0
 
+    def __repr__(self):
+        return f"Steps:\n------\nIncremental=\t{self.incremental}\nGreedy=\t\t{self.greedy}\nOptimal=\t{self.optimal}"
 
 class Timings(object):
     def __init__(self):
@@ -88,7 +90,7 @@ class Timings(object):
 
 
 class OMUS(object):
-    def __init__(self, from_clauses=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), output='log.json', logging=False):
+    def __init__(self, from_clauses=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), output='log.json', logging=False, reuse_mss=True):
         # parameters of the solver
         self.extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
         self.output = parameters['output'] if 'output' in parameters else output
@@ -96,37 +98,43 @@ class OMUS(object):
         self.parameters = parameters
         self.logging = logging
 
-        if from_clauses is not None:
-            clauses = [ci for ci in from_clauses if ci is not None and len(ci) > 0]
-            self.cnf = CNF(from_clauses=clauses)
-        elif from_CNF is not None:
-            self.cnf = from_CNF
-        else:
-            raise "No cnf provided"
-
-        self.clauses = [frozenset(c for c in clause) for clause in self.cnf.clauses]
-        self.nClauses = len(self.clauses)
-
-        _, solved = self.checkSatNoSolver({i for i in range(self.nClauses)})
-        # print(solved)
-        assert solved is False, "Cnf is satisfiable"
-
-        # self.solver = solver
-        self.H = []
-        self.MSSes = []
-        # self.C = []
-
-        if weights is None:
-            self.weights = [f(clause) for clause in self.clauses]
-        else:
-            assert len(weights) == len(self.clauses), f"# clauses ({self.nClauses}) != # weights ({len(weights)})"
-            self.weights = weights
-
-        self.mode = MODE_GREEDY
         if logging:
             self.logging = True
             self.steps = Steps()
             self.timing = Timings()
+
+        if from_clauses is not None:
+            clauses = [ci for ci in from_clauses if ci is not None and len(ci) > 0]
+            self.base_cnf = CNF(from_clauses=clauses)
+        elif from_CNF is not None:
+            self.base_cnf = from_CNF
+        else:
+            raise "No cnf provided"
+
+        self.base_clauses = [frozenset(c for c in clause) for clause in self.base_cnf.clauses]
+        self.clauses = [frozenset(c for c in clause) for clause in self.base_cnf.clauses]
+        self.nClauses = len(self.clauses)
+
+        # _, solved = self.checkSatNoSolver({i for i in range(self.nClauses)})
+        # # print(solved)
+        # assert solved is False, "Cnf is satisfiable"
+
+        # self.solver = solver
+        self.H = []
+        self.reuse_mss = reuse_mss
+        if reuse_mss:
+            self.MSSes = set()
+
+        if weights is None:
+            self.f = f
+            self.base_weights = [f(clause) for clause in self.clauses]
+            self.weights = [w for w in self.self.base_weights]
+        else:
+            assert len(weights) == len(self.clauses), f"# clauses ({self.nClauses}) != # weights ({len(weights)})"
+            self.base_weights = weights 
+            self.weights = [w for w in weights]
+
+        self.mode = MODE_GREEDY
 
     def checkSatNoSolver(self, f_prime):
         if self.logging:
@@ -872,20 +880,43 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, MSSes=None):
-        self.H = []
+    def add_clauses(self, add_clauses, add_weights=None):
+        self.clauses = self.base_clauses + [frozenset(clause) for clause in add_clauses]
+        self.nClauses = len(self.clauses)
 
+        if not add_weights is None:
+            # if self.
+            self.weights = self.base_weights + add_weights
+        elif self.f is not None:
+            self.weights = self.base_weights + [f(c) for c in add_clauses]
+        else:
+            self.weights = self.base_weights + [len(c) for c in add_clauses]
+        assert len(self.weights) == self.nClauses
+
+    # def list_intersection(l1, l2):
+    #     return 
+
+    def omusIncr(self):
+        # if addt
         gurobi_model = self.gurobiModel()
-        C = [] # last added 'set-to-hit'
-        hs = None # last computed hitting set
-        h_counter = Counter()
-        satsolver = None
-        sat = True
-        F = set(range(self.nClauses))
+        F = frozenset(range(self.nClauses))
 
-        if MSSes is not None:
-            for mss, model in MSSes:
-                MSS, _ = self.grow(mss, model)
+        self.H, C = [], []
+        satsolver, sat, hs = None, None, None
+        h_counter = Counter()
+
+        # if MSSes is not None:
+        # for mss, mss_mdodel in self.MSSes:
+        # TODO: MSS - improvement: compact way to represent recurring msses+models
+        # TODO: MSS - improvement: check model if possible to reuse ?
+        if self.reuse_mss:
+            for mss_cnf in self.MSSes:
+                mss_intersection = set(self.clauses) & set(mss_cnf)
+                if len(mss_intersection) == 0:
+                    continue
+                mss = set(self.clauses.index(clause) for clause in mss_intersection)
+                MSS, _ = self.grow(mss, set())
+                # MSS, _ = self.grow(mss, model)
                 C = F - MSS
                 self.H.append(C)
 
@@ -935,16 +966,21 @@ class OMUS(object):
                 mss, mss_model = self.grow(hs, model)
                 C = F - mss
 
-                self.addSetGurobiModel(gurobi_model, C)
+                # Store the MSSes
+                if self.reuse_mss:
+                    mss_cnf = frozenset(frozenset(lit for lit in self.clauses[c]) for c in mss)
+                    self.MSSes.add(mss_cnf)
+
                 h_counter.update(list(C))
+                self.addSetGurobiModel(gurobi_model, C)
                 self.H.append(C)
-                self.MSSes.append((mss, mss_model))
 
                 # Sat => Back to incremental mode 
                 mode = MODE_INCR
 
             # ----- Compute Optimal Hitting Set
             hs = self.gurobiOptimalHittingSet(gurobi_model, C)
+
             if self.logging:
                 self.steps.optimal += 1
 
@@ -958,13 +994,18 @@ class OMUS(object):
             # ------ Grow
             mss, mss_model = self.grow(hs, model)
             C = F - mss
+
             h_counter.update(list(C))
             self.H.append(C)
-            self.MSSes.append((mss, mss_model))
             mode = MODE_INCR
+
+            if self.reuse_mss:
+                mss_cnf = frozenset(frozenset(lit for lit in self.clauses[c]) for c in mss)
+                self.MSSes.add(mss_cnf)
 
     def omus(self):
         # benchmark variables
+        F = frozenset(range(self.nClauses))
         gurobi_model = self.gurobiModel()
         self.H = []
         C = [] # last added 'set-to-hit'
@@ -980,9 +1021,11 @@ class OMUS(object):
             if not sat:
                 gurobi_model.dispose()
                 # return hs
-                return [list(self.clauses[idx]) for idx in hs]
+                return hs, [set(self.clauses[idx]) for idx in hs]
 
-            C = self.grow(hs, model)
+            MSS, _ = self.grow(hs, model)
+            C = F - MSS
+            # print(MSS, C)
 
             self.addSetGurobiModel(gurobi_model, C)
             self.H.append(C)
@@ -1010,92 +1053,3 @@ if __name__ == "__main__":
     # print(o.omus())
     print(o.omusIncr())
     print(o.MSSes)
-
-
-# class OMUSSolver(object):
-#     def __init__(self, name):
-#         self.name = name
-
-
-# class GurobiSolver(OMUSSolver):
-#     def __init__(self, warm_start, weights):
-#         self.weights = weights
-#         if warm_start:
-#             super().__init__("Gurobi-Warm")
-#         else:
-#             super().__init__("Gurobi-Cold")
-
-
-# class OrTools(OMUSSolver):
-#     def __init__(self, weights):
-#         super().__init__("OrTools")
-#         from ortools.linear_solver import pywraplp
-#         from OMUS_utils import *
-#         self.weights = weights
-
-#     def optimalHittingSet(self, H):
-#         # trivial case
-#         if len(H) == 0:
-#             return []
-#         # indices of clauses used
-#         indices_H = sorted(set.union(*H))
-#         n_constraints = len(H)
-#         n_vars = len(indices_H)
-
-#         bounds = [1 for i in range(n_constraints)]
-#         obj_coeffs = {index: self.weights[index] for index in indices_H}
-
-#         # constraint coefficients hij = 1 if variable x_j is in set h_i
-#         c_coeffs = [[None for _ in range(n_vars)] for _ in range(n_constraints)]
-
-#         for j, hj in enumerate(H):
-#             for i in range(n_vars):
-#                 c_coeffs[j][i] = 1 if indices_H[i] in hj else 0
-
-#         # data['constraint_coefficients'] = c_coeffs
-
-#         # matching clause indices with position in list of clause indices
-#         # ex: {3 : 0, 7: 1, ....} clause 3 position 0, clause 7 position 1, ...
-#         # data['matching_table'] = {idx: i for i, idx in enumerate(indices_H)}
-#         # [START solver]
-#         # Create the mip solver with the CBC backend.
-#         # solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.BOP_INTEGER_PROGRAMMING)
-#         solver = pywraplp.Solver('OptimalHittingSet', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-#         # [END solver]
-
-#         # [START variables]
-#         #infinity = solver.infinity()
-#         x = {}
-#         for j in indices_H:
-#             # x[j] = solver.IntVar(0,1,'x[%i]' % j)
-#             x[j] = solver.BoolVar('x[%i]' % j)
-#         # [END variables]
-
-#         # [START constraints]
-#         for i in range(n_constraints):
-#             # for all i in {1.. |H|}: sum x[j] * hij >= 1
-#             constraint_expr = [c_coeffs[i][j] * x[idx] for j, idx in enumerate(indices_H)]
-#             solver.Add(sum(constraint_expr) >= bounds[i])
-#         # [END constraints]
-
-#         # [START objective]
-#         # Maximize sum w[i] * x[i]
-#         objective = solver.Objective()
-#         for idx in indices_H:
-#             objective.SetCoefficient(x[idx], obj_coeffs[idx])
-#         objective.SetMinimization()
-#         # [END objective]
-
-#         # max 10 minute timeout for solution
-#         k = solver.SetNumThreads(8)
-#         solver.set_time_limit(60 * 3* 1000)
-#         # solver.set_time_limit(10 * 60 * 1000)
-
-#         # Solve the problem and print the solution.
-#         status = solver.Solve()
-#         if status == pywraplp.Solver.OPTIMAL:
-#             hs = [j for j in indices_H if x[j].solution_value() == 1]
-#             return hs
-#         else:
-#             raise f"Solution not optimal! H={H}, obj_coefs={obj_coeffs}, c={c_coeffs}"
-#             return []

@@ -1,8 +1,26 @@
 % !TeX root = ./main.tex
 
-
 \begin{enumerate}
     \item OMUS oracle
     \item Greedy sequence
 \end{enumerate}
 
+\begin{algorithm}
+    \DontPrintSemicolon
+    $\m{I}_{end} \gets$ \textsc{propagate($\m{I}_0$, $\m{T}$)} \;
+    $\m{I} \gets \m{I}_0$  \;
+    $Seq \gets \emptyset$  \;
+    \While{  $\m{I} \neq \m{I}_{end}$ }{
+      \For{$i \in \m{I}_{end} \setminus \m{I}$}{
+        $X_i \gets$ \textsc{OMUS($\{\neg i\} \wedge \m{I} \wedge \m{S}$)} \;
+        $E_i \gets$ $\m{I} \cap X_i$  \;
+        $S_i \gets$ $\m{T} \cap X_i$  \;
+        $\m{N}_i \gets$ \textsc{propagate($E_i \wedge \m{S}_i$)} \;
+        }
+        $(E_{best}, S_{best}, N_{best}) \gets (E_i,S_i,N_i)$ with lowest $f(E_i,S_i,N_i)$ \;
+        append $( E_{best}, S_{best}, N_{best})$ to $Seq$ \;
+        $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
+    }
+  \caption{CSP-Explain($\m{T} ,\ f \ [,  \ \m{I}_0 ]$)}
+  \label{alg:cspExplain}
+\end{algorithm}

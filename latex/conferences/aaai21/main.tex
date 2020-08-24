@@ -30,10 +30,13 @@
 \newcommand\comment[1]{\marginpar{\tiny #1}}
 \renewcommand\comment[1]{#1}
 \newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
-\newcommand{\emilio}[1]{{\comment{\color{red}#1}}}
-\newcommand{\bart}[1]{{\comment{\color{green}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{orange}\textsc{EG:}#1}}}
+\newcommand{\bart}[1]{{bart:\comment{\color{green}\textsc{BB:}#1}}}
 \newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1} }}
 
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
 
 % DISALLOWED PACKAGES
 % \usepackage{authblk} -- This package is specifically forbidden
@@ -79,9 +82,6 @@
 % \vskip{- -- No negative value may be used to alter spacing above or below a caption, figure, table, section, subsection, subsubsection, or reference
 
 \setcounter{secnumdepth}{0} %May be changed to 1 or 2 if section numbers are desired.
-% The file aaai21.sty is the style file for AAAI Press
-% proceedings, working notes, and technical reports.
-%
 
 % Title
 
@@ -91,6 +91,7 @@
 % articles, conjunctions, and prepositions are lower case unless they
 % directly follow a colon or long dash
 
+\title{Efficient, Incremental OMUS Generation For Explaining CSPs}
 % \title{AAAI Press Formatting Instructions \\for Authors Using \LaTeX{} --- A Guide }
 % \author{
 
@@ -159,14 +160,14 @@
 %     firstAuthor@affiliation1.com, secondAuthor@affilation2.com, thirdAuthor@affiliation1.com
 % }
 % \fi
-\title{Efficient, Incremental OMUS Generation For Explaining CSPs}
+
 
 % \author{Emilio Gamba, Bart Bogaerts, Tias Guns\\ % All authors must be in the same font size and format. Use \Large and \textbf to achieve this result when breaking a line
 % \textsuperscript{\rm 1}Vrije Universiteit Brussel\\
 % Pleinlaan 2, 1050 Brussels, Belgium\\
 % \{firstname.lastname\}@vub.be % email address must be in roman text type, not monospace or sans serif
 % }
-% \author{Anonymous}
+\author{Anonymous}
 
 % have up to 8 pages with page 8 containing nothing but references
  \begin{document}
@@ -174,12 +175,24 @@
 \maketitle
 
 \begin{abstract}
+    \emilio{Adapt DP abstract to AAAI
+    \begin{itemize}
+        \item Explaining infeasibility
+        \item Explaining CSPs
+        \item Human-interpretability, simplicity, easy,
+    \end{itemize}
+    }
+    We investigate the problem of providing the \textit{simplest} explanation for explaining over-constrained -- and hence -- unsatisfiable problems to a user.
+    % refphrase
+    Computing a simple explanation can be seen as computing a minimal unsatisfiable subset (MUS) of facts. 
+    If simplicity is defined by the size of the explanation, then many applications aim to find the smallest MUS.
+    While some techniques can extract the smallest MUSes given a set of unsatisfiable constraints, we have developed a technique to compute the optimal MUS (OMUS). 
+    The optimality criterion refers to a given objective function.
+    In this paper, we describe a novel hybrid approach for solving the OMUS problem harnassing the power of both SAT solvers and MIP solvers.
+    Preliminary results show that the bottleneck of our algorithm lies in the expensive calls to the MIP solver.
+    Inspired by recent work on \textsc{MaxSAT} solving, we observe that we can further improve the efficiency of our algorithm by postponing the calls to the MIP solver, without affecting the correctness of the approach.
     \todo{150-200 words}
-\begin{itemize}
-    \item Explaining infeasibility
-    \item Explaining CSPs
-    \item Human-interpretability, simplicity, easy,
-\end{itemize}
+
 \end{abstract}
 
 \section{Introduction}

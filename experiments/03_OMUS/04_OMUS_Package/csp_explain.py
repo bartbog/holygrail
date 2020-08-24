@@ -7,12 +7,6 @@ import sys
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 from cppy import Model,  BoolVarImpl, Operator, Comparison, cnf_to_pysat
 
-# TODO : 
-# - OMUS without incremental
-# - OMUS with incremental
-# - OMUS w/o reuse of MSS 
-# - OMUS with reuse of MSS (w/ or w/o models)
-
 
 def literalstoDict(literals, literal_match):
     # TODO match literals with their axioms in first-order logic
@@ -118,8 +112,36 @@ def propagate(cnf, I=list()):
 
     return cnf_lits
 
-
 def optimalPropagate(cnf, I):
+    # m1 = [1, 2, 3, ....]
+    # m2 = [ -1, 2, 3, ....] => [2, 3]
+    # m3 = cnf + [-2, -3] => nieuw model [ .., ....]
+    # if sat: nieuw intersection => model zoeken
+    # anders: stoppen, huidige intersection gebruike
+    s = Solver()
+    s.append_formula(cnf, no_return=False)
+    s.solve(assumptions=list(I))
+    # models = []
+    model = None
+    for i, m in enumerate(s.enum_models()):
+        if i == 2:
+            break
+        if model is None:
+            model = set(m)
+        else:
+            model.intersection(set(m))
+
+    while(True):
+        s.add_clause(list(-lit for lit in model))
+        solved = s.solve()
+        if solved:
+            new_model = set(s.get_model())
+            model = model.intersection(new_model)
+        else:
+            return model - I
+
+
+def naiveOptimalPropagate(cnf, I):
     # The most precise and most expensive version returns the partial structure in which atoms are unknown 
     # iff they do not have the same truth value in all models
     # I_prop = set(I)
@@ -133,85 +155,61 @@ def optimalPropagate(cnf, I):
 
 
 def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanation.json', incremental=False):
-    # clauses = [frozenset(ci) for ci in cnf]
-    # print(cnf)
-    I_end = set(maxPropagate(cnf, I_0))
+    # initial interpretation
     I = I_0
-    M = {i: [] for i in I_end - I}
-    seq = []
-    cnf_idx = {i for i in range(len(cnf))}
+    I_cnf = [frozenset(lit) for lit in I_0]
+    I_end = set(maxPropagate(cnf, I_0))
+    
+    # explanation sequence
+    expl_seq = []
+    o = OMUS(from_clauses=cnf, parameters=parameters, weights=weights, logging=True, reuse_mss=True)
 
-    # clausesUsed = set()
     while len(I_end - I) > 0:
-        I_cnf = [set({li}) for li in I]
-        I_idx = {len(cnf) + i for i in range(len(I))}
-        w_I = [1 for _ in I]
-
-        cost_best, i_best = None, None
+        cost_best = None
         E_best, S_best, N_best = None, None, None
 
+        # existing facts
+        w_I = [1 for _ in I] + [1]
+
         for i in I_end - I:
-            unsat_cnf = cnf + I_cnf + [[-i]]
-            w_cnf = weights + w_I + [1]
+            o.add_clauses(add_clauses=I_cnf + [[-i]], add_weights=w_I)
 
             # Match MSS
-            o = OMUS(from_clauses=unsat_cnf, parameters=parameters, weights=w_cnf)
             if incremental:
-                MSS_i = []
-                for mss_cnf_idx, mss_I, model in M[i]:
-                    # mss = MSS[cnf] + MSS[mss_I] + pos(-i)
-                    mss_i = mss_cnf_idx | set({len(cnf) + I_cnf.index(li) for li in mss_I}) | set({len(cnf) + len(I)})
-                    mss_cnf_lits = {abs(lit) for clause_idx in mss_cnf_idx for lit in cnf[clause_idx]}
-                    model_i = set()
-                    # elements of I are set to true
-                    for lit in model:
-                        # lit in already derived facts must be true because added as single literals
-                        if [lit] in I_cnf:
-                            model_i.add(lit)
-                        # lit in remaining cnfs of MSS
-                        elif abs(lit) in mss_cnf_lits:
-                            model_i.add(lit)
-                    MSS_i.append((mss_i, model_i))
-                    
-                hs, explanation = o.omusIncr(MSSes=MSS_i)
-            else:
                 hs, explanation = o.omusIncr()
+            else:
+                hs, explanation = o.omus()
 
             # explaining facts
             E_i = [ci for ci in explanation if ci in I_cnf]
 
             # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            # TODO: aanpassen constraints
             S_i = [ci for ci in explanation if ci in cnf and ci not in E_i]
+
             # new fact
             N_i = {i}
 
             if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost((E_i, S_i, N_i))
-                i_best = i
 
-            MSSes = o.MSSes
-            # M[i].append()
-            for mss, mss_model in MSSes:
-                # seperate components mss [cnf, I, -i]
-                # order of cnf part will never change!
-                mss_cnf = mss.intersection(cnf_idx)
-                # order of I might change!
-                mss_I = [unsat_cnf[idx] for idx in mss.intersection(I_idx)]
+        # propagate as much info as possible
+        print(E_best, S_best, I)
+        N_best = optimalPropagate(E_best + S_best, I) 
+        # print(N_best)
 
-                M[i].append((mss_cnf, mss_I, mss_model))
+        # add new info 
+        I = I | N_best
+        I_cnf += [frozenset({lit}) for lit in N_best]
 
-        del M[i_best]
-        I |= N_best
-        # I |= (N_i - model)
-        seq.append((E_best, S_best, N_best))
+        expl_seq.append((E_best, S_best, N_best))
 
         print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
-    assert all(False if -lit in I else True for lit in I)
+    print(o.steps)
+    assert all(False if -lit in I or lit not in I_end else True for lit in I)
 
-    return seq
+    return expl_seq
 
 
 def main():
@@ -220,8 +218,9 @@ def main():
     cppy_model = frietKotProblem()
     cnf = cnf_to_pysat(cppy_model.constraints)
     seq = omusExplain(cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
+    # print()
     # print(seq)
-
+    # optimalPropagate([[1, 2], [-1, -2], [3, 2], [3, 4]], [])
 
 if __name__ == "__main__":
     main()

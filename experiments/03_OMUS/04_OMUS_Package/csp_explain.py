@@ -1,11 +1,16 @@
-from omus import OMUS
 import json
-from frietkot import frietKotProblem
-from pysat.solvers import Solver
-from pysat.formula import CNF
 import sys
+
+from pysat.formula import CNF
+from pysat.solvers import Solver
+
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
-from cppy import Model,  BoolVarImpl, Operator, Comparison, cnf_to_pysat
+
+from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
+from cppy.model_tools.to_cnf import *
+from frietkot import frietKotProblem, originProblem, p5
+from omus import OMUS
+
 
 
 def literalstoDict(literals, literal_match):
@@ -163,7 +168,7 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
     # explanation sequence
     expl_seq = []
     o = OMUS(from_clauses=cnf, parameters=parameters, weights=weights, logging=True, reuse_mss=True)
-
+    # cnt = 0
     while len(I_end - I) > 0:
         cost_best = None
         E_best, S_best, N_best = None, None, None
@@ -172,6 +177,7 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
         w_I = [1 for _ in I] + [1]
 
         for i in I_end - I:
+            print(i)
             o.add_clauses(add_clauses=I_cnf + [[-i]], add_weights=w_I)
 
             # Match MSS
@@ -194,7 +200,6 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
                 cost_best = cost((E_i, S_i, N_i))
 
         # propagate as much info as possible
-        print(E_best, S_best, I)
         N_best = optimalPropagate(E_best + S_best, I) 
         # print(N_best)
 
@@ -212,15 +217,32 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
     return expl_seq
 
 
+def origin_test():
+    parameters = {'extension': 'greedy_no_param','output': 'log.json'}
+
+    model = originProblem()
+    constraints = model.constraints
+    cnf = to_cnf(constraints)
+    pysat_cnf = cnf_to_pysat(cnf)
+    # print(pysat_cnf)
+    seq = omusExplain(pysat_cnf, weights=[len(c) for c in pysat_cnf], parameters=parameters, incremental=False)
+
+def p5_test():
+    model, (bv_trans, bv_bij, bv_clues) = p5()
+    # model = originProblem()
+    cnf_origin = to_cnf(model.constraints)
+    cnf = cnf_to_pysat(cnf_origin)
+    # print(p5_model)
+    
+
 def main():
     # explain
     parameters = {'extension': 'greedy_no_param','output': 'log.json'}
     cppy_model = frietKotProblem()
     cnf = cnf_to_pysat(cppy_model.constraints)
     seq = omusExplain(cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
-    # print()
     # print(seq)
-    # optimalPropagate([[1, 2], [-1, -2], [3, 2], [3, 4]], [])
+
 
 if __name__ == "__main__":
     main()

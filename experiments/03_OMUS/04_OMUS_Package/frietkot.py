@@ -4,7 +4,7 @@ import sys
 # import numpy
 import pandas as pd
 
-from cppy import BoolVar, Model, cnf_to_pysat
+from cppy import *
 
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 
@@ -381,120 +381,121 @@ def p5():
     # Bijectivity
     bij = []
     bv_bij = [BoolVar() for i in range(n_bij)]
-    for rel in relations:
+    for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
         # for each relation
-        for col in rel.df:
+        for col_ids in rel.df:
             # one per column
-            #TODO: Possible to encode it as ? bij.append( sum(rel[:,col]) == 1 )
-            bij.append( implies(bv1, sum(rel[:,col]) >= 1 ))
-            bij.append( implies(bv2, sum(rel[:,col]) <= 1 ))
-
+            bij += exactly_one(rel[:,col_ids])
         for (_,row) in rel.df.iterrows():
             # one per row
-            #TODO: Possible to encode it as ? bij.append( sum(row) == 1 )
-            bij.append( implies(bv1, sum(row) >= 1 ))
-            bij.append( implies(bv2, sum(row) <= 1 ))
+            bij += exactly_one(row)
 
     # Transitivity
-    trans = [ [] for i in range(n_trans)]
+    trans = [ ]
     bv_trans = [BoolVar() for i in range(n_trans)]
 
     for x in person:
         for z in birthplace:
             for y in age:
                 # ! x y z:  from(x, z) & is_linked_with_1(y, z) => is_old(x, y).
-                trans[0].append( implies( native[x, z] & age_birth[y, z], is_old[x, y]) )
-                # ! x y z:  ~from(x, z) & is_linked_with_1(y, z) => ~is_old[x, y].
-                trans[1].append(implies( ~native[x, z] & age_birth[y, z], ~is_old[x, y]) )
-                # ! x y z:  from(x, z) & ~is_linked_with_1(y, z) => ~is_old[x, y].
-                trans[2].append(implies( native[x, z] & ~age_birth[y, z], ~is_old[x, y]) )
+                trans.append(implies( bv_trans[0], implies( native[x, z] & age_birth[y, z], is_old[x, y])) )
+    #             # ! x y z:  ~from(x, z) & is_linked_with_1(y, z) => ~is_old[x, y].
+                trans.append(implies( bv_trans[1], implies( ~native[x, z] & age_birth[y, z], ~is_old[x, y]) ))
+    #             # ! x y z:  from(x, z) & ~is_linked_with_1(y, z) => ~is_old[x, y].
+                trans.append(implies( bv_trans[2], implies( native[x, z] & ~age_birth[y, z], ~is_old[x, y]) ))
 
 
     for x in person :
         for y in age :
             for z in city :
                 # ! x y z:  lives_in(x, z) & is_linked_with_2(y, z) => is_old[x, y].
-                trans[3].append( implies( lives_in[x, z] & age_city[y, z], is_old[x, y]))
+                trans.append(implies( bv_trans[3],  implies( lives_in[x, z] & age_city[y, z], is_old[x, y])))
                 # ! x y z:  ~lives_in(x, z) & is_linked_with_2(y, z) => ~is_old(x, y).
-                trans[4].append( implies( ~lives_in[x, z] & age_city[y, z], ~is_old[x, y]))
+                trans.append(implies( bv_trans[4],  implies( ~lives_in[x, z] & age_city[y, z], ~is_old[x, y])))
                 # ! x y z:  lives_in(x, z) & ~is_linked_with_2(y, z) => ~is_old(x, y).
-                trans[5].append(implies( lives_in[x, z] & ~age_city[y, z], ~is_old[x, y]))
+                trans.append(implies( bv_trans[5], implies( lives_in[x, z] & ~age_city[y, z], ~is_old[x, y])))
+
+
+    # is_old = Relation(person, age)
+    # lives_in = Relation(person, city)
+    # native = Relation(person, birthplace)
+    # age_city = Relation(age, city)
+    # age_birth = Relation(age, birthplace)
+    # city_birth = Relation(city, birthplace)
 
     for x in person :
         for y in birthplace :
             for z in city :
+                # trans.append(implies(bv_trans[6], implies(lives_in[x, z] & city_birth[z, y], native[x, y])))
                 #  ! x y z:  lives_in(x, z) & is_linked_with_3(y, z) => from(x, y).
-                trans[6].append(implies( lives_in[x, z] & city_birth[y, z] , native[x, y] ))
+                trans.append(implies( bv_trans[6], implies( lives_in[x, z] & city_birth[z, y] , native[x, y] )))
                 # ! x y z:  ~lives_in(x, z) & is_linked_with_3(y, z) => ~from(x, y).
-                trans[7].append(implies( ~lives_in[x, z] & city_birth[y, z] , ~native[x, y]) )
+                trans.append(implies( bv_trans[7], implies( ~lives_in[x, z] & city_birth[z, y] , ~native[x, y]) ))
                 # ! x y z:  lives_in(x, z) & ~is_linked_with_3(y, z) => ~from(x, y).
-                trans[8].append(implies( lives_in[x, z] & ~city_birth[y, z] , ~native[x, y] ))
+                trans.append(implies( bv_trans[8], implies( lives_in[x, z] & ~city_birth[z, y] , ~native[x, y] )))
 
     for x in age :
         for y in birthplace:
             for z in city :
                 #  ! x y z:  is_linked_with_2(x, z) & is_linked_with_3(y, z) => is_linked_with_1(x, y).
-                trans[9].append(implies( age_city[x, z] & city_birth[y, z], age_birth[x, y]))
+                trans.append(implies( bv_trans[9], implies( age_city[x, z] & city_birth[z, y], age_birth[x, y])))
 
                 # ! x y z:  ~is_linked_with_2(x, z) & is_linked_with_3(y, z) => ~is_linked_with_1(x, y).
-                trans[10].append(implies( ~age_city[x, z] & city_birth[y, z], ~age_birth[x, y]))
+                trans.append(implies( bv_trans[10], implies( ~age_city[x, z] & city_birth[z, y], ~age_birth[x, y])))
 
                 # ! x y z:  is_linked_with_2(x, z) & ~is_linked_with_3(y, z) => ~is_linked_with_1(x, y).
-                trans[11].append(implies( age_city[x, z] & ~city_birth[y, z], ~age_birth[x, y]))
-
+                trans.append(implies( bv_trans[11], implies( age_city[x, z] & ~city_birth[z, y], ~age_birth[x, y])))
 
     # Clues
     clues = []
     bv_clues = [BoolVar() for i in range(n_clues)]
 
     # Mattie is 113 years old
-    clues.append( is_old['Mattie', '113'] )
+    clues.append( implies(bv_clues[0], is_old['Mattie', '113']) )
 
     # The person who lives in Tehama is a native of either Kansas or Oregon
-    clues.append( [implies(lives_in[p,'Tehama'],
-                        native[p,'Kansas'] | native[p,'Oregon']) for p in person] )
+    clues.append( [implies(bv_clues[1], implies(lives_in[p,'Tehama'],
+                            native[p,'Kansas'] | native[p,'Oregon'])) for p in person] )
 
     # The Washington native is 1 year older than Ernesto
-    clues.append( [implies(age_birth[a,'Washington'],
-                        is_old['Ernesto',str(int(a)-1)]) for a in age] )
+    clues.append( [implies(bv_clues[2], implies(age_birth[a,'Washington'],
+                            is_old['Ernesto',str(int(a)-1)])) for a in age] )
 
     # Roxanne is 2 years younger than the Kansas native
-    clues.append( [implies(is_old['Roxanne',a], 
-                        age_birth[str(int(a)+2), 'Kansas']) for a in age] )
+    clues.append( [implies(bv_clues[3], implies(is_old['Roxanne',a], 
+                            age_birth[str(int(a)+2), 'Kansas'])) for a in age] )
 
     # The person who lives in Zearing isn't a native of Alaska
-    clues.append( [implies(lives_in[p,'Zearing'],
-                        ~native[p,'Alaska']) for p in person] )
+    clues.append( [implies(bv_clues[4], implies(lives_in[p,'Zearing'],
+                            ~native[p,'Alaska'])) for p in person] )
 
     # The person who is 111 years old doesn't live in Plymouth
-    clues.append( [implies(is_old[p,'111'],
-                        ~lives_in[p,'Plymouth']) for p in person] )
+    clues.append( [implies(bv_clues[5], implies(is_old[p,'111'],
+                            ~lives_in[p,'Plymouth'])) for p in person] )
 
     # The Oregon native is either Zachary or the person who lives in Tehama
-    clues.append( [implies(native[p,'Oregon'],
-                        (p == 'Zachary') | lives_in[p,'Tehama']) for p in person] )
+    clues.append( [implies(bv_clues[6], implies(native[p,'Oregon'],
+                            (p == 'Zachary') | lives_in[p,'Tehama'])) for p in person] )
 
     # The person who lives in Shaver Lake is 1 year younger than Roxanne
-    clues.append( [implies(age_city[a,'Shaver Lake'],
-                        is_old['Roxanne',str(int(a)+1)]) for a in age] )
+    clues.append( [implies(bv_clues[7], implies(age_city[a,'Shaver Lake'],
+                            is_old['Roxanne',str(int(a)+1)])) for a in age] )
 
     # The centenarian who lives in Plymouth isn't a native of Alaska
-    clues.append( [implies(lives_in[p,'Plymouth'],
-                        ~native[p,'Alaska']) for p in person] )
+    clues.append( [implies(bv_clues[8], implies(lives_in[p,'Plymouth'],
+                            ~native[p,'Alaska'])) for p in person] )
 
     # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
-    clues.append( [implies(lives_in[p,'Tehama'],
-                        (p != 'Mattie') &
-                        ((native['Mattie','Alaska'] & native[p,'Kansas']) |
-                            (native[p,'Alaska'] & native['Mattie','Kansas']))) for p in person] )
+    clues.append( [implies(bv_clues[9], implies(lives_in[p,'Tehama'],
+                            (p != 'Mattie') &
+                            ((native['Mattie','Alaska'] & native[p,'Kansas']) |
+                            (native[p,'Alaska'] & native['Mattie','Kansas'])))) for p in person] )
 
     # bv for tracking clues during explanation generation
-    trans_bv = [implies(bv, tr) for bv, tr  in zip(bv_trans, trans) ]
-    bij_bv = [implies(bv, bi) for bv, bi  in zip(bv_bij, bij) ]
-    clues_bv = [implies(bv, clue) for bv, clue  in zip(bv_clues, clues) ]
+    bij_bv = [implies(bv, bi) for bv, bi  in zip(bv_bij, bij)]
 
-    model = Model([bij_bv, trans_bv, clues_bv])
-    return model
+    model = Model([clues, bij_bv, trans])
+    return model, (bv_trans, bv_bij, bv_clues)
 
 
 def originProblem():

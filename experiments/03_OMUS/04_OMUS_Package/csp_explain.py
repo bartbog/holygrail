@@ -82,7 +82,7 @@ def maxPropagate(cnf, I=list()):
         s.append_formula(cnf, no_return=False)
         solved = s.solve()
         if solved:
-            return s.get_model()
+            return set(s.get_model())
         else:
             raise "Problem"
 
@@ -162,13 +162,40 @@ def naiveOptimalPropagate(cnf, I):
 def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanation.json', incremental=False):
     # initial interpretation
     I = I_0
-    I_cnf = [frozenset(lit) for lit in I_0]
-    I_end = set(maxPropagate(cnf, I_0))
-    
+    I_cnf = [frozenset({lit}) for lit in I_0]
+    I_end = maxPropagate(cnf, list(I_0))
+
     # explanation sequence
     expl_seq = []
-    o = OMUS(from_clauses=cnf, parameters=parameters, weights=weights, logging=True, reuse_mss=True)
-    # cnt = 0
+
+    # add unit literals to Interpretation  
+    for cl in list(cnf):
+        if len(cl) == 1:
+            lit = next(iter(cl))
+            I.add(lit)
+            I_cnf.append(set({lit}))
+            cnf.remove(cl)
+
+    # unit propagate as much as possible
+    # added = True
+    # while(added):
+    #     added = False
+    #     for cl in cnf:
+    #         N_best = optimalPropagate([cl] + I_cnf, I)
+    #         if len(N_best) > 0:
+    #             added = True
+    #             # known = (cl - N_best)
+    #             # print(known)
+    #             E_best = [frozenset({lit}) for lit in known if frozenset({lit}) in I_cnf] + [frozenset({-lit}) for lit in known if frozenset({-lit}) in I_cnf]
+    #             print(E_best, cl, N_best, I_cnf, I)
+    #             S_best = cl
+    #             expl_seq.append((E_best, S_best, N_best))
+    #             I |= N_best
+    #             I_cnf += [set({lit}) for lit in N_best]
+
+    all_cnf = cnf + [frozenset({lit}) for lit in I_end] + [frozenset({-lit}) for lit in I_end]
+    o = OMUS(all_clauses=all_cnf, from_clauses=cnf, parameters=parameters, weights=weights, logging=True, reuse_mss=True)
+
     while len(I_end - I) > 0:
         cost_best = None
         E_best, S_best, N_best = None, None, None
@@ -209,9 +236,9 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
 
         expl_seq.append((E_best, S_best, N_best))
 
-        print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
+        # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
+  
 
-    print(o.steps)
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
 
     return expl_seq
@@ -240,7 +267,8 @@ def main():
     parameters = {'extension': 'greedy_no_param','output': 'log.json'}
     cppy_model = frietKotProblem()
     cnf = cnf_to_pysat(cppy_model.constraints)
-    seq = omusExplain(cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
+    frozen_cnf = [frozenset(c) for c in cnf]
+    seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
     # print(seq)
 
 

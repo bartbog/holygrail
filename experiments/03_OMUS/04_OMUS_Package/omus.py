@@ -129,7 +129,7 @@ class Timings(object):
 
 
 class OMUS(object):
-    def __init__(self, from_clauses=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), output='log.json', logging=False, reuse_mss=True):
+    def __init__(self, all_clauses, from_clauses=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), output='log.json', logging=False, reuse_mss=True, ):
         # parameters of the solver
         self.extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
         self.output = parameters['output'] if 'output' in parameters else output
@@ -161,6 +161,11 @@ class OMUS(object):
         # self.solver = solver
         self.H = []
         self.reuse_mss = reuse_mss
+        self.clauseIdxs = dict()
+
+        for idx, clause in enumerate(all_clauses):
+            self.clauseIdxs[clause] = idx
+
         if reuse_mss:
             self.MSSes = set()
 
@@ -949,11 +954,9 @@ class OMUS(object):
         # TODO: MSS - improvement: compact way to represent recurring msses+models
         # TODO: MSS - improvement: check model if possible to reuse ?
         if self.reuse_mss:
+            print("Intersection")
             for mss_cnf in self.MSSes:
-                mss_intersection = set(self.clauses) & set(mss_cnf)
-                if len(mss_intersection) == 0:
-                    continue
-                mss = set(self.clauses.index(clause) for clause in mss_intersection)
+                mss = set(self.clauses.index(clause) for clause in mss_cnf)
                 MSS, _ = self.grow(mss, set())
                 # MSS, _ = self.grow(mss, model)
                 C = F - MSS
@@ -1007,7 +1010,7 @@ class OMUS(object):
 
                 # Store the MSSes
                 if self.reuse_mss:
-                    mss_cnf = frozenset(frozenset(lit for lit in self.clauses[c]) for c in mss)
+                    mss_cnf = frozenset(frozenset(self.clauses[c]) for c in mss)
                     self.MSSes.add(mss_cnf)
 
                 h_counter.update(list(C))
@@ -1039,7 +1042,7 @@ class OMUS(object):
             mode = MODE_INCR
 
             if self.reuse_mss:
-                mss_cnf = frozenset(frozenset(lit for lit in self.clauses[c]) for c in mss)
+                mss_cnf = frozenset(frozenset(self.clauses[c]) for c in mss)
                 self.MSSes.add(mss_cnf)
 
     def omus(self):

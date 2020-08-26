@@ -9,7 +9,7 @@ sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src
 from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
 from cppy.model_tools.to_cnf import *
 from frietkot import frietKotProblem, p5, Relation, exactly_one
-from omus import OMUS
+from omus import OMUS, Steps
 
 
 
@@ -158,8 +158,7 @@ def naiveOptimalPropagate(cnf, I):
     lits = set(lit for lit in all_models if -lit not in all_models and lit not in I)
     return lits
 
-
-def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanation.json', incremental=False):
+def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanation.json', incremental=False, reuse_mss=False):
     # initial interpretation
     I = I_0
     I_cnf = [frozenset({lit}) for lit in I_0]
@@ -177,56 +176,79 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             cnf.remove(cl)
             del weights[id]
 
-    # OMUS model with all clauses 
-    o = OMUS(from_clauses=cnf, I=I_end, parameters=parameters, weights=weights, logging=True, reuse_mss=False)
+    # @TIAS: parameters for running 
+    incremental = True
+    reuse_mss = True
 
-    print(o.base_clauses)
-    print(o.base_weights)
+    # @TIAS:  OMUS model with all clauses
+    o = OMUS(from_clauses=cnf, I=I_end, parameters=parameters, weights=weights, logging=True, reuse_mss=reuse_mss)
+    t_steps = Steps(o.steps.incremental, o.steps.greedy, o.steps.optimal)
+    # @TIAS: Example of repeated calls
+    # hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-2})], add_weights=[1 for _ in I] + [1])
+    # print(o.steps)
+    # hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-2})], add_weights=[1 for _ in I] + [1])
+    # print(o.steps)
 
-    while len(I_end - I) > 0:
-        cost_best = None
-        E_best, S_best, N_best = None, None, None
+    I_duplicate = set(I)
+    I_cnf__duplicate = list(I_cnf)
 
-        # existing facts
-        w_I = [1 for _ in I] + [1]
 
-        for i in I_end - I:
-            print("Explaining:", i)
-            # Match MSS
-            if incremental:
+    # TODO: check if call for 1 is the same
+    for k in range(10):
+        I = set(I_duplicate)
+        I_cnf = list(I_cnf__duplicate)
 
-                hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
+        while len(I_end - I) > 0:
+            assert len(I) == len(I_cnf)
+            cost_best = None
+            E_best, S_best, N_best = None, None, None
+
+            # existing facts
+            w_I = [1 for _ in I] + [1]
+
+            for i in I_end - I:
+                # Match MSS
+                if incremental:
+
+                    hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
+                                                 add_weights=w_I)
+                else:
+                    hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
                                              add_weights=w_I)
-            else:
-                hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
-                                         add_weights=w_I)
 
-            # explaining facts
-            E_i = [ci for ci in explanation if ci in I_cnf]
+                # explaining facts
+                E_i = [ci for ci in explanation if ci in I_cnf]
 
-            # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            S_i = [ci for ci in explanation if ci in cnf and ci not in E_i]
+                # constraint used ('and not ci in E_i': dont repeat unit clauses)
+                S_i = [ci for ci in explanation if ci in cnf and ci not in E_i]
 
-            # new fact
-            N_i = {i}
+                # new fact
+                N_i = {i}
 
-            if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
-                E_best, S_best, N_best = E_i, S_i, N_i
-                cost_best = cost((E_i, S_i, N_i))
-                print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
+                if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
+                    E_best, S_best, N_best = E_i, S_i, N_i
+                    cost_best = cost((E_i, S_i, N_i))
 
-        # propagate as much info as possible
-        N_best = optimalPropagate(E_best + S_best, I)
+                    # @TIAS: printing explanations as they get better
+                    # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
-        # add new info
-        I = I | N_best
-        I_cnf += [frozenset({lit}) for lit in N_best]
+            # propagate as much info as possible
+            N_best = optimalPropagate(E_best + S_best, I)
 
-        expl_seq.append((E_best, S_best, N_best))
+            # add new info
+            I = I | N_best
+            I_cnf += [frozenset({lit}) for lit in N_best]
 
-        print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
+            expl_seq.append((E_best, S_best, N_best))
 
-        print(o.steps)
+            # @TIAS: printing explanations
+            # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
+
+        # Difference between previous steps and new steps for 
+        print(f"\nRun {k+1}:\n")
+        # print(o.steps, "\n")
+        print(o.steps - t_steps)
+        t_steps.incremental, t_steps.greedy, t_steps.optimal = o.steps.incremental, o.steps.greedy, o.steps.optimal
 
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
 
@@ -349,12 +371,12 @@ def test_MSSes():
     frozen_cnf = [frozenset(c) for c in cnf]
     seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
 
-def explain_frietkot(parameters, incremental):
+def explain_frietkot(parameters, incremental, reuse_mss):
     # explain
     cppy_model = frietKotProblem()
     cnf = cnf_to_pysat(cppy_model.constraints)
     frozen_cnf = [frozenset(c) for c in cnf]
-    seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
+    seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=incremental, reuse_mss=reuse_mss)
     # print(seq)
 
 def explain_origin(parameters, incremental):
@@ -370,5 +392,7 @@ def explain_origin(parameters, incremental):
 
 if __name__ == "__main__":
     parameters = {'extension': 'greedy_no_param','output': 'log.json'}
+    reuse_mss = True
+    incremental = True
     # explain_origin(parameters, False)
-    explain_frietkot(parameters, False)
+    explain_frietkot(parameters, incremental, reuse_mss)

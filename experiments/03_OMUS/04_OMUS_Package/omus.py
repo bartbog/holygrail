@@ -116,10 +116,24 @@ class BenchmarkInfo(object):
 
 
 class Steps(object):
-    def __init__(self):
-        self.incremental = 0
-        self.greedy = 0
-        self.optimal = 0
+    def __init__(self, incremental=0, greedy=0, optimal=0):
+        self.incremental = incremental
+        self.greedy = greedy
+        self.optimal = optimal
+
+    def __sub__(self, other):
+        s = Steps()
+        s.incremental = self.incremental - other.incremental
+        s.greedy = self.greedy - other.greedy
+        s.optimal = self.optimal - other.optimal
+        return s
+
+    def __add__(self, other):
+        s = Steps()
+        s.incremental = self.incremental + other.incremental
+        s.greedy = self.greedy + other.greedy
+        s.optimal = self.optimal + other.optimal
+        return s
 
     def __repr__(self):
         return f"Steps:\n------\nIncremental=\t{self.incremental}\nGreedy=\t\t{self.greedy}\nOptimal=\t{self.optimal}"
@@ -954,38 +968,43 @@ class OMUS(object):
         self.nWeights = len(self.weights)
         assert self.nClauses == self.nWeights, "Weights must be the same"
 
+
         F = frozenset(range(self.nClauses))
+        mapped_model, solved =  self.checkSatNoSolver(F)
+        assert solved == False, "CNF is satisfiable"
+
         H, C = [], []
         h_counter = Counter()
 
         if self.reuse_mss:
-            MSSes = []
+            added_MSSes = []
 
         gurobi_model = self.gurobiModel()
         satsolver, sat, hs = None, None, None
 
+
         if self.reuse_mss:
-            # clause indices for intersection with msses dict[clause id] = position in list
-            FclausePositions = {self.clauseIdxs[clause]: pos_in_F for pos_in_F, clause in enumerate(self.clauses)}
+            F_idxs = {self.clauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
+            for mss_idxs in self.MSSes:
+                mss = set()
+                for mss_idx in mss_idxs:
+                    if mss_idx in F_idxs:
+                        clause_idx = F_idxs[mss_idx]
+                        mss.add(clause_idx)
 
-            for mssIdxs in self.MSSes:
-                # translate mss indexes to index of clause in F if present
-                # intersection with active clauses
-                mss = set(FclausePositions[pos] for pos in mssIdxs if pos in FclausePositions)
+                model, solved =  self.checkSatNoSolver(mss)
+                assert solved == True, "MSS must be satisfiable!"
 
-                # check if mss is already added to the grown MSSes
-                if any([True if mss.issubset(MSS) else False for MSS in MSSes]):
+                if any(True if mss.issubset(MSS) else False for MSS in added_MSSes):
                     continue
 
-                # Grow mss into MSS
-                MSS, _ = self.grow(mss, set())
+                MSS, model = self.grow(mss, model)
                 C = F - MSS
-                assert len(C) > 0, "Start"
 
                 if C not in H:
                     h_counter.update(list(C))
                     H.append(C)
-                    MSSes.append(MSS)
+                    added_MSSes.append(MSS)
 
         mode = MODE_GREEDY
         while(True):
@@ -1037,9 +1056,9 @@ class OMUS(object):
 
                 # Store the MSSes
                 if self.reuse_mss:
-                    #
                     mssIdxs = frozenset(self.clauseIdxs[self.clauses[id]] for id in MSS)
                     self.MSSes.add(mssIdxs)
+                    # print("MSS=", MSS)
 
                 h_counter.update(list(C))
                 self.addSetGurobiModel(gurobi_model, C)

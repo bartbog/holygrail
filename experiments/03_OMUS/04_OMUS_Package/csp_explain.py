@@ -8,7 +8,7 @@ sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src
 
 from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
 from cppy.model_tools.to_cnf import *
-from frietkot import frietKotProblem, originProblem, p5
+from frietkot import frietKotProblem, p5, Relation, exactly_one
 from omus import OMUS
 
 
@@ -164,8 +164,7 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
     I = I_0
     I_cnf = [frozenset({lit}) for lit in I_0]
     I_end = maxPropagate(cnf, list(I_0))
-    print(I_end)
-    print(cnf)
+
     # explanation sequence
     expl_seq = []
 
@@ -178,11 +177,11 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             cnf.remove(cl)
             del weights[id]
 
-    # all possible formulas = cnf + valid literals + negation of valid literals
-    all_cnf = cnf + [frozenset({lit}) for lit in I_end] + [frozenset({-lit}) for lit in I_end]
-
     # OMUS model with all clauses 
-    o = OMUS(all_clauses=all_cnf, from_clauses=cnf, parameters=parameters, weights=weights, logging=True, reuse_mss=False)
+    o = OMUS(from_clauses=cnf, I=I_end, parameters=parameters, weights=weights, logging=True, reuse_mss=False)
+
+    print(o.base_clauses)
+    print(o.base_weights)
 
     while len(I_end - I) > 0:
         cost_best = None
@@ -196,9 +195,11 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             # Match MSS
             if incremental:
 
-                hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})], add_weights=w_I)
+                hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
+                                             add_weights=w_I)
             else:
-                hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})], add_weights=w_I)
+                hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
+                                         add_weights=w_I)
 
             # explaining facts
             E_i = [ci for ci in explanation if ci in I_cnf]
@@ -216,7 +217,6 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
 
         # propagate as much info as possible
         N_best = optimalPropagate(E_best + S_best, I)
-        # print(N_best)
 
         # add new info
         I = I | N_best
@@ -244,69 +244,131 @@ def origin_test():
     seq = omusExplain(pysat_cnf, weights=[len(c) for c in pysat_cnf], parameters=parameters, incremental=False)
 
 
+def originProblem():
+    """
+    Logic grid puzzle: 'origin' in CPpy
 
+    Based on... to check originally, currently part of ZebraTutor
+    Probably part of Jens Claes' master thesis, from a 'Byron...' booklet
+    """
 
-def p5_test():
-    parameters = {'extension': 'greedy_no_param','output': 'log.json'}
-    (bv_trans, bv_bij, bv_clues), (trans, bij, clues), clue_text = p5()
-    # trans_cnf = to_cnf(trans)
-    # bij_cnf = to_cnf(bij)
-    # clues_cnf = to_cnf(clues)
-    # print(len(bij))
-    # print(len(trans))
-    # print(len(clues))
-    constraintsIdx = dict()
+    person = ['Mattie', 'Ernesto', 'Roxanne', 'Zachary', 'John']
+    age = ['109', '110', '111', '112', '113']
+    city = ['Brussels', 'Tehama', 'Zearing', 'Plymouth', 'Shaver Lake']
+    birthplace = ['Mexico', 'Oregon', 'Kansas', 'Washington', 'Alaska']
 
-    cnf = []
-    weights = []
-    cnt = 0
-    clue_ids = {i for i in range(len(clues))}
-    bij_ids = {i for i in range(len(clues), len(clues)+len(bij))}
-    trans_ids = {i for i in range(len(clues)+len(bij), len(clues)+len(bij)+len(trans))}
+    types = [person, age, city, birthplace]
+    n = len(types)
+    m = len(types[0])
+    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
 
-    for clue_id, clue in zip(clue_ids, clues):
-        # Clue -> cnf
-        clue_cnf = cnf_to_pysat(to_cnf(clue))
-        cnf += clue_cnf
-        weights += [20 for _ in range(len(clue_cnf))]
+    is_old = Relation(person, age)
+    lives_in = Relation(person, city)
+    native = Relation(person, birthplace)
+    age_city = Relation(age, city)
+    age_birth = Relation(age, birthplace)
+    city_birth = Relation(city, birthplace)
 
-        # matching table clause number => constraint
-        constraintsIdx.update({i: clue_id for i in range(cnt, cnt + len(clue_cnf))})
-        cnt += len(clue_cnf)
-    
+    # Bijectivity
+    bij = []
+    for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
+        # for each relation
+        for col_ids in rel.df:
+            # one per column
+            bij += exactly_one(rel[:, col_ids])
+        for (_,row) in rel.df.iterrows():
+            # one per row
+            bij += exactly_one(row)
 
-    # for bij_id, bij_constr in zip(bij_ids, bij):
-    #     # Bijectivity constraint -> cnf
-    #     bij_cnf = cnf_to_pysat(to_cnf(bij_constr))
-    #     cnf += bij_cnf
-    #     weights += [1 for _ in range(len(bij_cnf))]
+    # Transitivity
+    trans = []
+    for p in person:
+        for c in city:
+            trans.append([implies(is_old[p, a] & age_city[a, c],
+                                  lives_in[p, c]) for a in age])
+        for b in birthplace:
+            trans.append([implies(is_old[p, a] & age_birth[a, b],
+                                  native[p, b]) for a in age])
+            trans.append([implies(lives_in[p, c] & city_birth[c, b],
+                                  native[p, b]) for c in city])
+    for a in age:
+        for b in birthplace:
+            trans.append([implies(age_city[a, c] & city_birth[c, b],
+                                  age_birth[a, b]) for c in city])
 
-    #     # matching table clause number => constraint
-    #     constraintsIdx.update({i: bij_id for i in range(cnt, cnt + len(bij_cnf))})
-    #     cnt += len(bij_cnf)
+    # Clues
+    clues = []
+    # Mattie is 113 years old
+    clues.append(is_old['Mattie', '113'])
 
-    # for trans_id, trans_constr in zip(trans_ids, trans):
-    #     # Transitivity constraint -> cnf
-    #     trans_cnf = cnf_to_pysat(to_cnf(trans_constr))
-    #     cnf += trans_cnf
-    #     weights += [1 for _ in range(len(trans_cnf))]
+    # The person who lives in Tehama is a native of either Kansas or Oregon
+    clues.append([implies(lives_in[p, 'Tehama'],
+                          native[p, 'Kansas'] | native[p, 'Oregon']) for p in person])
 
-    #     # matching table clause number => constraint
-    #     constraintsIdx.update({i: trans_id for i in range(cnt, cnt + len(trans_cnf))})
-    #     cnt += len(trans_cnf)
+    # The Washington native is 1 year older than Ernesto
+    clues.append([implies(age_birth[a, 'Washington'],
+                          is_old['Ernesto', str(int(a)-1)]) for a in age])
 
-    print(all(type(clause) == frozenset for clause in cnf))
-    frozen_cnf = [frozenset(c) for c in cnf]
-    seq = omusExplain(frozen_cnf, weights=weights, parameters=parameters, incremental=True)
-def main():
-    # explain
-    parameters = {'extension': 'greedy_no_param','output': 'log.json'}
+    # Roxanne is 2 years younger than the Kansas native
+    clues.append([implies(is_old['Roxanne', a],
+                          age_birth[str(int(a)+2), 'Kansas']) for a in age])
+
+    # The person who lives in Zearing isn't a native of Alaska
+    clues.append([implies(lives_in[p, 'Zearing'],
+                          ~native[p, 'Alaska']) for p in person])
+
+    # The person who is 111 years old doesn't live in Plymouth
+    clues.append([implies(is_old[p, '111'],
+                          ~lives_in[p, 'Plymouth']) for p in person])
+
+    # The Oregon native is either Zachary or the person who lives in Tehama
+    clues.append([implies(native[p, 'Oregon'],
+                          (p == 'Zachary') | lives_in[p, 'Tehama']) for p in person])
+
+    # The person who lives in Shaver Lake is 1 year younger than Roxanne
+    clues.append([implies(age_city[a, 'Shaver Lake'],
+                          is_old['Roxanne', str(int(a)+1)]) for a in age])
+
+    # The centenarian who lives in Plymouth isn't a native of Alaska
+    clues.append([implies(lives_in[p, 'Plymouth'],
+                          ~native[p, 'Alaska']) for p in person])
+
+    # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
+    clues.append([implies(lives_in[p, 'Tehama'],
+                          (p != 'Mattie') &
+                          ((native['Mattie', 'Alaska'] & native[p, 'Kansas']) |
+                           (native[p, 'Alaska'] & native['Mattie', 'Kansas']))) for p in person])
+
+    # model = Model(bij + trans + clues)
+    # model = Model(bij + trans + clues)
+    return bij, trans, clues
+
+def test_MSSes():
     cppy_model = frietKotProblem()
     cnf = cnf_to_pysat(cppy_model.constraints)
     frozen_cnf = [frozenset(c) for c in cnf]
-    seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=False)
+    seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
+
+def explain_frietkot(parameters, incremental):
+    # explain
+    cppy_model = frietKotProblem()
+    cnf = cnf_to_pysat(cppy_model.constraints)
+    frozen_cnf = [frozenset(c) for c in cnf]
+    seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
     # print(seq)
 
+def explain_origin(parameters, incremental):
+    # model constraints
+    bij, trans, clues = originProblem()
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+    cnf = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    weights = [5 for clause in clues_cnf] + \
+              [1 for clause in trans_cnf] + \
+              [1 for clause in bij_cnf]
 
 if __name__ == "__main__":
-    p5_test()
+    parameters = {'extension': 'greedy_no_param','output': 'log.json'}
+    # explain_origin(parameters, False)
+    explain_frietkot(parameters, False)

@@ -135,51 +135,60 @@ class Timings(object):
 
 
 class OMUS(object):
-    def __init__(self, all_clauses, from_clauses=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), logging=False, reuse_mss=True):
+    def __init__(self, from_clauses=None, I=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), logging=False, reuse_mss=True):
+        # checking input
+        assert (f is not None) or (weights is not None), "No mapping function or weights supplied."
+        assert (from_clauses is not None) or (from_CNF), "No clauses or CNF supplied."
+        assert I is not None, "No interpretation provided"
+
         # parameters of the solver
         self.extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
         self.output = parameters['output'] if 'output' in parameters else 'log.json'
         self.parameters = parameters
-        self.logging = logging
 
+        # Logging / benchmark info
+        self.logging = logging
         if logging:
-            self.logging = True
             self.steps = Steps()
             self.timing = Timings()
 
+        # clauses
         if from_clauses is not None:
             clauses = [ci for ci in from_clauses if ci is not None and len(ci) > 0]
-            self.base_cnf = CNF(from_clauses=clauses)
+            cnf = CNF(from_clauses=clauses).clauses
         elif from_CNF is not None:
-            self.base_cnf = from_CNF
+            cnf = from_CNF.clauses
+
+        self.base_clauses = [frozenset(clause) for clause in cnf]
+        self.clauses = None
+        self.nClauses = len(self.base_clauses)
+
+        # weights
+        self.f = f
+
+        if weights is None:
+            self.base_weights = [f(clause) for clause in self.clauses]
         else:
-            raise "No cnf provided"
+            self.base_weights = weights
 
-        self.base_clauses = [frozenset(c for c in clause) for clause in self.base_cnf.clauses]
-        self.clauses = [frozenset(c for c in clause) for clause in self.base_cnf.clauses]
-        self.nClauses = len(self.clauses)
+        self.weights = None
+        self.nWeights = len(self.base_weights)
 
-        # self.solver = solver
+        assert self.nClauses == self.nWeights, f"# clauses ({self.nClauses}) != # weights ({self.nClauses})"
+
+        # MSS
         self.reuse_mss = reuse_mss
-        self.clauseIdxs = dict()
-
-        for idx, clause in enumerate(all_clauses):
-            self.clauseIdxs[clause] = idx
-
         if reuse_mss:
             self.MSSes = set()
 
-        if weights is None:
-            self.f = f
-            self.base_weights = [f(clause) for clause in self.clauses]
-            self.weights = [w for w in self.self.base_weights]
-        else:
-            assert len(weights) == len(self.clauses), f"# clauses ({self.nClauses}) != # weights ({len(weights)})"
-            self.base_weights = weights
-            self.weights = [w for w in weights]
-            self.f = None
+        # Keep track of clauses troughout the different omus/omusIncr calls
+        self.clauseIdxs = dict()
 
-        self.mode = MODE_GREEDY
+        all_clauses = self.base_clauses + [frozenset({lit}) for lit in I] + [frozenset({-lit}) for lit in I]
+
+        # matching table clause to fixed id
+        for idx, clause in enumerate(all_clauses):
+            self.clauseIdxs[clause] = idx
 
     def checkSatNoSolver(self, f_prime):
         if self.logging:
@@ -268,7 +277,8 @@ class OMUS(object):
         C = set()
 
         # build vertical sets
-        V = dict() # for each element in H: which sets it is in
+        V = dict()  # for each element in H: which sets it is in
+
         for i, h in enumerate(H):
             # special case: only one element in the set, must be in hitting set
             if len(h) == 1:
@@ -375,8 +385,7 @@ class OMUS(object):
         if self.logging:
             tend = time.time()
             self.timing.greedy.append(tend - tstart)
-
-        self.steps.optimal += 1
+            self.steps.optimal += 1
 
         return hs
 
@@ -928,7 +937,12 @@ class OMUS(object):
         return new_F_prime, lit_true
 
     def omusIncr(self, add_clauses, add_weights=None):
-        # ---------- build clauses and additional weights
+
+        # TODO 1.1 MSS - improvement: compact way to represent recurring msses+models
+        # 1.2 MSS - improvement: check model if possible to reuse ?
+        # ---- getting more steps when reusing the models
+
+        # Build clauses and additional weights
         self.clauses = self.base_clauses + add_clauses
         self.nClauses = len(self.clauses)
 
@@ -936,33 +950,34 @@ class OMUS(object):
             self.weights = self.base_weights + add_weights
         elif self.f is not None:
             self.weights = self.base_weights + [f(clause) for clause in add_clauses]
-        else:
-            self.weights = self.base_weights + [len(clause) for clause in add_clauses]
 
-        assert len(self.clauses) == len(self.weights)
+        self.nWeights = len(self.weights)
+        assert self.nClauses == self.nWeights, "Weights must be the same"
 
-        gurobi_model = self.gurobiModel()
         F = frozenset(range(self.nClauses))
-        H, C, MSSes = [], [], []
-        satsolver, sat, hs = None, None, None
+        H, C = [], []
         h_counter = Counter()
 
-        # TODO 1.1 MSS - improvement: compact way to represent recurring msses+models
-        # TODO 1.2 MSS - improvement: check model if possible to reuse ?
-        # TODO 1.2 MSS - improvement: ---- getting more steps when reusing the models
+        if self.reuse_mss:
+            MSSes = []
+
+        gurobi_model = self.gurobiModel()
+        satsolver, sat, hs = None, None, None
 
         if self.reuse_mss:
             # clause indices for intersection with msses dict[clause id] = position in list
-            FclauseIdxs = {self.clauseIdxs[clause]:id for id, clause in enumerate(self.clauses)}
+            FclausePositions = {self.clauseIdxs[clause]: pos_in_F for pos_in_F, clause in enumerate(self.clauses)}
 
             for mssIdxs in self.MSSes:
                 # translate mss indexes to index of clause in F if present
-                mss = set(FclauseIdxs[id] for id in mssIdxs if id in FclauseIdxs)
+                # intersection with active clauses
+                mss = set(FclausePositions[pos] for pos in mssIdxs if pos in FclausePositions)
 
-                # Grow mss into MSS
-                if any([True if mss.issubset(_MSS) else False for _MSS in MSSes]):
+                # check if mss is already added to the grown MSSes
+                if any([True if mss.issubset(MSS) else False for MSS in MSSes]):
                     continue
 
+                # Grow mss into MSS
                 MSS, _ = self.grow(mss, set())
                 C = F - MSS
                 assert len(C) > 0, "Start"
@@ -995,6 +1010,7 @@ class OMUS(object):
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
                     hs = self.greedyHittingSet(H)
+                    # assert len(hs),"hs > {} must be"
 
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
@@ -1017,11 +1033,11 @@ class OMUS(object):
                 # ------ Grow
                 MSS, MSS_model = self.grow(hs, model)
                 C = F - MSS
-                print(self.steps)
                 assert len(C) > 0, f"Greedy: hs={hs}, model={model}"
 
                 # Store the MSSes
                 if self.reuse_mss:
+                    #
                     mssIdxs = frozenset(self.clauseIdxs[self.clauses[id]] for id in MSS)
                     self.MSSes.add(mssIdxs)
 
@@ -1035,9 +1051,6 @@ class OMUS(object):
             # ----- Compute Optimal Hitting Set
             hs = self.gurobiOptimalHittingSet(gurobi_model, C)
 
-            if self.logging:
-                self.steps.optimal += 1
-
             # ------ Sat check
             (model, sat, satsolver) = self.checkSat(hs)
 
@@ -1048,7 +1061,7 @@ class OMUS(object):
             # ------ Grow
             MSS, MSS_model = self.grow(hs, model)
             C = F - MSS
-            assert len(C) > 0, "optimal"
+            assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"
 
             h_counter.update(list(C))
             H.append(C)
@@ -1082,7 +1095,7 @@ class OMUS(object):
         while(True):
 
             hs = self.gurobiOptimalHittingSet(gurobi_model, C)
-
+            print(hs)
             model, sat = self.checkSatNoSolver(hs)
 
             # if not sat or steps > max_steps_main:
@@ -1097,6 +1110,8 @@ class OMUS(object):
 
             self.addSetGurobiModel(gurobi_model, C)
             H.append(C)
+
+
 
 if __name__ == "__main__":
     cnf = CNF()

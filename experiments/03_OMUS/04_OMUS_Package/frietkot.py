@@ -451,54 +451,96 @@ def p5():
         "The centenarian who lives in Plymouth isn't a native of Alaska",
         "Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas"
     ]
-    bv_clues = [BoolVar() for i in range(n_clues)]
+    # bv_clues = [BoolVar() for i in range(n_clues)]
+
+    # # Mattie is 113 years old
+    # clues.append( implies(bv_clues[0], is_old['Mattie', '113']) )
+
+    # # The person who lives in Tehama is a native of either Kansas or Oregon
+    # clues.append( [implies(bv_clues[1], implies(lives_in[p,'Tehama'],
+    #                         native[p,'Kansas'] | native[p,'Oregon'])) for p in person] )
+
+    # # The Washington native is 1 year older than Ernesto
+    # clues.append( [implies(bv_clues[2], implies(age_birth[a,'Washington'],
+    #                         is_old['Ernesto',str(int(a)-1)])) for a in age] )
+
+    # # Roxanne is 2 years younger than the Kansas native
+    # clues.append( [implies(bv_clues[3], implies(is_old['Roxanne',a], 
+    #                         age_birth[str(int(a)+2), 'Kansas'])) for a in age] )
+
+    # # The person who lives in Zearing isn't a native of Alaska
+    # clues.append( [implies(bv_clues[4], implies(lives_in[p,'Zearing'],
+    #                         ~native[p,'Alaska'])) for p in person] )
+
+    # # The person who is 111 years old doesn't live in Plymouth
+    # clues.append( [implies(bv_clues[5], implies(is_old[p,'111'],
+    #                         ~lives_in[p,'Plymouth'])) for p in person] )
+
+    # # The Oregon native is either Zachary or the person who lives in Tehama
+    # clues.append( [implies(bv_clues[6], implies(native[p,'Oregon'],
+    #                         (p == 'Zachary') | lives_in[p,'Tehama'])) for p in person] )
+
+    # # The person who lives in Shaver Lake is 1 year younger than Roxanne
+    # clues.append( [implies(bv_clues[7], implies(age_city[a,'Shaver Lake'],
+    #                         is_old['Roxanne',str(int(a)+1)])) for a in age] )
+
+    # # The centenarian who lives in Plymouth isn't a native of Alaska
+    # clues.append( [implies(bv_clues[8], implies(lives_in[p,'Plymouth'],
+    #                         ~native[p,'Alaska'])) for p in person] )
+
+    # # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
+    # clues.append( [implies(bv_clues[9], implies(lives_in[p,'Tehama'],
+    #                         (p != 'Mattie') &
+    #                         ((native['Mattie','Alaska'] & native[p,'Kansas']) |
+    #                         (native[p,'Alaska'] & native['Mattie','Kansas'])))) for p in person] )
 
     # Mattie is 113 years old
-    clues.append( implies(bv_clues[0], is_old['Mattie', '113']) )
+    clues.append( is_old['Mattie', '113'] )
 
     # The person who lives in Tehama is a native of either Kansas or Oregon
-    clues.append( [implies(bv_clues[1], implies(lives_in[p,'Tehama'],
-                            native[p,'Kansas'] | native[p,'Oregon'])) for p in person] )
+    clues.append( [implies(lives_in[p,'Tehama'],
+                            native[p,'Kansas'] | native[p,'Oregon']) for p in person] )
 
     # The Washington native is 1 year older than Ernesto
-    clues.append( [implies(bv_clues[2], implies(age_birth[a,'Washington'],
-                            is_old['Ernesto',str(int(a)-1)])) for a in age] )
+    clues.append( [implies(age_birth[a,'Washington'],
+                            is_old['Ernesto',str(int(a)-1)]) for a in age] )
 
     # Roxanne is 2 years younger than the Kansas native
-    clues.append( [implies(bv_clues[3], implies(is_old['Roxanne',a], 
-                            age_birth[str(int(a)+2), 'Kansas'])) for a in age] )
+    clues.append( [implies(is_old['Roxanne',a],
+                            age_birth[str(int(a)+2), 'Kansas']) for a in age] )
 
     # The person who lives in Zearing isn't a native of Alaska
-    clues.append( [implies(bv_clues[4], implies(lives_in[p,'Zearing'],
-                            ~native[p,'Alaska'])) for p in person] )
+    clues.append( [implies(lives_in[p,'Zearing'],
+                            ~native[p,'Alaska']) for p in person] )
 
     # The person who is 111 years old doesn't live in Plymouth
-    clues.append( [implies(bv_clues[5], implies(is_old[p,'111'],
-                            ~lives_in[p,'Plymouth'])) for p in person] )
+    clues.append( [implies(is_old[p,'111'],
+                            ~lives_in[p,'Plymouth']) for p in person] )
 
     # The Oregon native is either Zachary or the person who lives in Tehama
-    clues.append( [implies(bv_clues[6], implies(native[p,'Oregon'],
-                            (p == 'Zachary') | lives_in[p,'Tehama'])) for p in person] )
+    clues.append( [implies(native[p,'Oregon'],
+                            (p == 'Zachary') | lives_in[p,'Tehama']) for p in person] )
 
     # The person who lives in Shaver Lake is 1 year younger than Roxanne
-    clues.append( [implies(bv_clues[7], implies(age_city[a,'Shaver Lake'],
-                            is_old['Roxanne',str(int(a)+1)])) for a in age] )
+    clues.append( [implies(age_city[a,'Shaver Lake'],
+                            is_old['Roxanne',str(int(a)+1)]) for a in age] )
 
     # The centenarian who lives in Plymouth isn't a native of Alaska
-    clues.append( [implies(bv_clues[8], implies(lives_in[p,'Plymouth'],
-                            ~native[p,'Alaska'])) for p in person] )
+    clues.append( [implies(lives_in[p,'Plymouth'],
+                            ~native[p,'Alaska']) for p in person] )
 
     # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
-    clues.append( [implies(bv_clues[9], implies(lives_in[p,'Tehama'],
+    clues.append( [implies(lives_in[p,'Tehama'],
                             (p != 'Mattie') &
                             ((native['Mattie','Alaska'] & native[p,'Kansas']) |
-                            (native[p,'Alaska'] & native['Mattie','Kansas'])))) for p in person] )
+                            (native[p,'Alaska'] & native['Mattie','Kansas']))) for p in person] )
 
     # bv for tracking clues during explanation generation
-    bij_bv = [implies(bv, bi) for bv, bi  in zip(bv_bij, bij)]
+    # bij_bv = [implies(bv, bi) for bv, bi  in zip(bv_bij, bij)]
 
     # model = Model(clues + bij_bv + trans)
-    return (bv_trans, bv_bij, bv_clues), (trans, bij_bv, clues), clues_text
+    # return (bv_trans, bv_bij, bv_clues), (trans, bij_bv, clues), clues_text
+    return clues
 
 
 def originProblem():
@@ -597,7 +639,8 @@ def originProblem():
                             ((native['Mattie','Alaska'] & native[p,'Kansas']) |
                             (native[p,'Alaska'] & native['Mattie','Kansas']))) for p in person] )
 
-    model = Model(bij + trans + clues)
+    # model = Model(bij + trans + clues)
+    model = Model(clues)
     return model
 
 def frietKotProblem():

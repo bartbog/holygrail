@@ -415,18 +415,9 @@ def p5():
                 # ! x y z:  lives_in(x, z) & ~is_linked_with_2(y, z) => ~is_old(x, y).
                 trans.append(implies( bv_trans[5], implies( lives_in[x, z] & ~age_city[y, z], ~is_old[x, y])))
 
-
-    # is_old = Relation(person, age)
-    # lives_in = Relation(person, city)
-    # native = Relation(person, birthplace)
-    # age_city = Relation(age, city)
-    # age_birth = Relation(age, birthplace)
-    # city_birth = Relation(city, birthplace)
-
     for x in person :
         for y in birthplace :
             for z in city :
-                # trans.append(implies(bv_trans[6], implies(lives_in[x, z] & city_birth[z, y], native[x, y])))
                 #  ! x y z:  lives_in(x, z) & is_linked_with_3(y, z) => from(x, y).
                 trans.append(implies( bv_trans[6], implies( lives_in[x, z] & city_birth[z, y] , native[x, y] )))
                 # ! x y z:  ~lives_in(x, z) & is_linked_with_3(y, z) => ~from(x, y).
@@ -448,6 +439,18 @@ def p5():
 
     # Clues
     clues = []
+    clues_text = [
+        "Mattie is 113 years old", 
+        "The person who lives in Tehama is a native of either Kansas or Oregon",
+        "The Washington native is 1 year older than Ernesto",
+        "Roxanne is 2 years younger than the Kansas native",
+        "The person who lives in Zearing isn't a native of Alaska",
+        "The person who is 111 years old doesn't live in Plymouth",
+        "The Oregon native is either Zachary or the person who lives in Tehama",
+        "The person who lives in Shaver Lake is 1 year younger than Roxanne",
+        "The centenarian who lives in Plymouth isn't a native of Alaska",
+        "Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas"
+    ]
     bv_clues = [BoolVar() for i in range(n_clues)]
 
     # Mattie is 113 years old
@@ -494,8 +497,8 @@ def p5():
     # bv for tracking clues during explanation generation
     bij_bv = [implies(bv, bi) for bv, bi  in zip(bv_bij, bij)]
 
-    model = Model([clues, bij_bv, trans])
-    return model, (bv_trans, bv_bij, bv_clues)
+    # model = Model(clues + bij_bv + trans)
+    return (bv_trans, bv_bij, bv_clues), (trans, bij_bv, clues), clues_text
 
 
 def originProblem():
@@ -594,7 +597,7 @@ def originProblem():
                             ((native['Mattie','Alaska'] & native[p,'Kansas']) |
                             (native[p,'Alaska'] & native['Mattie','Kansas']))) for p in person] )
 
-    model = Model([bij, trans, clues])
+    model = Model(bij + trans + clues)
     return model
 
 def frietKotProblem():

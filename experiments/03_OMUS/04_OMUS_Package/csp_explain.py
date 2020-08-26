@@ -164,37 +164,25 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
     I = I_0
     I_cnf = [frozenset({lit}) for lit in I_0]
     I_end = maxPropagate(cnf, list(I_0))
-
+    print(I_end)
+    print(cnf)
     # explanation sequence
     expl_seq = []
 
-    # add unit literals to Interpretation  
-    for cl in list(cnf):
+    # add unit literals to Interpretation
+    for id, cl in enumerate(list(cnf)):
         if len(cl) == 1:
             lit = next(iter(cl))
             I.add(lit)
-            I_cnf.append(set({lit}))
+            I_cnf.append(frozenset({lit}))
             cnf.remove(cl)
+            del weights[id]
 
-    # unit propagate as much as possible
-    # added = True
-    # while(added):
-    #     added = False
-    #     for cl in cnf:
-    #         N_best = optimalPropagate([cl] + I_cnf, I)
-    #         if len(N_best) > 0:
-    #             added = True
-    #             # known = (cl - N_best)
-    #             # print(known)
-    #             E_best = [frozenset({lit}) for lit in known if frozenset({lit}) in I_cnf] + [frozenset({-lit}) for lit in known if frozenset({-lit}) in I_cnf]
-    #             print(E_best, cl, N_best, I_cnf, I)
-    #             S_best = cl
-    #             expl_seq.append((E_best, S_best, N_best))
-    #             I |= N_best
-    #             I_cnf += [set({lit}) for lit in N_best]
-
+    # all possible formulas = cnf + valid literals + negation of valid literals
     all_cnf = cnf + [frozenset({lit}) for lit in I_end] + [frozenset({-lit}) for lit in I_end]
-    o = OMUS(all_clauses=all_cnf, from_clauses=cnf, parameters=parameters, weights=weights, logging=True, reuse_mss=True)
+
+    # OMUS model with all clauses 
+    o = OMUS(all_clauses=all_cnf, from_clauses=cnf, parameters=parameters, weights=weights, logging=True, reuse_mss=False)
 
     while len(I_end - I) > 0:
         cost_best = None
@@ -204,14 +192,13 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
         w_I = [1 for _ in I] + [1]
 
         for i in I_end - I:
-            print(i)
-            o.add_clauses(add_clauses=I_cnf + [[-i]], add_weights=w_I)
-
+            print("Explaining:", i)
             # Match MSS
             if incremental:
-                hs, explanation = o.omusIncr()
+
+                hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})], add_weights=w_I)
             else:
-                hs, explanation = o.omus()
+                hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})], add_weights=w_I)
 
             # explaining facts
             E_i = [ci for ci in explanation if ci in I_cnf]
@@ -225,19 +212,21 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
             if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost((E_i, S_i, N_i))
+                print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
         # propagate as much info as possible
-        N_best = optimalPropagate(E_best + S_best, I) 
+        N_best = optimalPropagate(E_best + S_best, I)
         # print(N_best)
 
-        # add new info 
+        # add new info
         I = I | N_best
         I_cnf += [frozenset({lit}) for lit in N_best]
 
         expl_seq.append((E_best, S_best, N_best))
 
-        # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
-  
+        print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
+
+        print(o.steps)
 
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
 
@@ -254,23 +243,70 @@ def origin_test():
     # print(pysat_cnf)
     seq = omusExplain(pysat_cnf, weights=[len(c) for c in pysat_cnf], parameters=parameters, incremental=False)
 
+
+
+
 def p5_test():
-    model, (bv_trans, bv_bij, bv_clues) = p5()
-    # model = originProblem()
-    cnf_origin = to_cnf(model.constraints)
-    cnf = cnf_to_pysat(cnf_origin)
-    # print(p5_model)
+    parameters = {'extension': 'greedy_no_param','output': 'log.json'}
+    (bv_trans, bv_bij, bv_clues), (trans, bij, clues), clue_text = p5()
+    # trans_cnf = to_cnf(trans)
+    # bij_cnf = to_cnf(bij)
+    # clues_cnf = to_cnf(clues)
+    # print(len(bij))
+    # print(len(trans))
+    # print(len(clues))
+    constraintsIdx = dict()
+
+    cnf = []
+    weights = []
+    cnt = 0
+    clue_ids = {i for i in range(len(clues))}
+    bij_ids = {i for i in range(len(clues), len(clues)+len(bij))}
+    trans_ids = {i for i in range(len(clues)+len(bij), len(clues)+len(bij)+len(trans))}
+
+    for clue_id, clue in zip(clue_ids, clues):
+        # Clue -> cnf
+        clue_cnf = cnf_to_pysat(to_cnf(clue))
+        cnf += clue_cnf
+        weights += [20 for _ in range(len(clue_cnf))]
+
+        # matching table clause number => constraint
+        constraintsIdx.update({i: clue_id for i in range(cnt, cnt + len(clue_cnf))})
+        cnt += len(clue_cnf)
     
 
+    # for bij_id, bij_constr in zip(bij_ids, bij):
+    #     # Bijectivity constraint -> cnf
+    #     bij_cnf = cnf_to_pysat(to_cnf(bij_constr))
+    #     cnf += bij_cnf
+    #     weights += [1 for _ in range(len(bij_cnf))]
+
+    #     # matching table clause number => constraint
+    #     constraintsIdx.update({i: bij_id for i in range(cnt, cnt + len(bij_cnf))})
+    #     cnt += len(bij_cnf)
+
+    # for trans_id, trans_constr in zip(trans_ids, trans):
+    #     # Transitivity constraint -> cnf
+    #     trans_cnf = cnf_to_pysat(to_cnf(trans_constr))
+    #     cnf += trans_cnf
+    #     weights += [1 for _ in range(len(trans_cnf))]
+
+    #     # matching table clause number => constraint
+    #     constraintsIdx.update({i: trans_id for i in range(cnt, cnt + len(trans_cnf))})
+    #     cnt += len(trans_cnf)
+
+    print(all(type(clause) == frozenset for clause in cnf))
+    frozen_cnf = [frozenset(c) for c in cnf]
+    seq = omusExplain(frozen_cnf, weights=weights, parameters=parameters, incremental=True)
 def main():
     # explain
     parameters = {'extension': 'greedy_no_param','output': 'log.json'}
     cppy_model = frietKotProblem()
     cnf = cnf_to_pysat(cppy_model.constraints)
     frozen_cnf = [frozenset(c) for c in cnf]
-    seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
+    seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=False)
     # print(seq)
 
 
 if __name__ == "__main__":
-    main()
+    p5_test()

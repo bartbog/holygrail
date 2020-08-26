@@ -184,10 +184,13 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
     o = OMUS(from_clauses=cnf, I=I_end, parameters=parameters, weights=weights, logging=True, reuse_mss=reuse_mss)
     t_steps = Steps(o.steps.incremental, o.steps.greedy, o.steps.optimal)
     # @TIAS: Example of repeated calls
-    # hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-2})], add_weights=[1 for _ in I] + [1])
-    # print(o.steps)
-    # hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-2})], add_weights=[1 for _ in I] + [1])
-    # print(o.steps)
+    #hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-2})], add_weights=[1 for _ in I] + [1])
+    #print(o.steps)
+    #o.steps = Steps() # reset steps
+    #hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-2})], add_weights=[1 for _ in I] + [1])
+    #print(o.steps)
+    #sys.exit(0)
+
 
     I_duplicate = set(I)
     I_cnf__duplicate = list(I_cnf)

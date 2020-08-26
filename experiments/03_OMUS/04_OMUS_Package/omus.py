@@ -1005,6 +1005,7 @@ class OMUS(object):
                     h_counter.update(list(C))
                     H.append(C)
                     added_MSSes.append(MSS)
+                    self.addSetGurobiModel(gurobi_model, C)
 
         mode = MODE_GREEDY
         while(True):
@@ -1068,6 +1069,10 @@ class OMUS(object):
                 mode = MODE_INCR
 
             # ----- Compute Optimal Hitting Set
+            # DANGER!!! This assumes 'C' exists!!!
+            # but in case of MSS reuse, it might not?
+            # in any case, was 'C' not already 'addSetGurobiModeld' in the
+            # previous call, e.g. 4 code lines above?
             hs = self.gurobiOptimalHittingSet(gurobi_model, C)
 
             # ------ Sat check

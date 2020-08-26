@@ -992,6 +992,9 @@ class OMUS(object):
                         clause_idx = F_idxs[mss_idx]
                         mss.add(clause_idx)
 
+                # TODO: check time spent and if possible avoid SAT call...
+                # perhaps, when storing the MSS also store the model,
+                # then it needs not be recomputed here?
                 model, solved =  self.checkSatNoSolver(mss)
                 assert solved == True, "MSS must be satisfiable!"
 

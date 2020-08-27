@@ -608,17 +608,16 @@ class OMUS(object):
 
     def greedy_vertical(self,  F_prime, model):
         ts = time.time()
-        print("greedy_no_param")
         cl_true = set(F_prime)
         cl_unk = set( range(self.nClauses) ) - cl_true
-        print("cl_:", time.time()-ts, len(cl_unk))
-        print("cl t",cl_true)
+        #print("cl_:", time.time()-ts, len(cl_unk))
+        #print("cl t",cl_true)
 
         lit_true = set(model)
         lit_false = set(-l for l in model)
         lit_unk = set(frozenset.union(*self.clauses)) - lit_true - lit_false
-        print("lit_:", time.time()-ts, len(lit_unk))
-        print("lt t",lit_true)
+        #print("lit_:", time.time()-ts, len(lit_unk))
+        #print("lt t",lit_true)
 
         ts2 = time.time()
         # build vertical sets
@@ -635,23 +634,23 @@ class OMUS(object):
             if len(unks) == 1:
                 # unit
                 lit = next(iter(unks))
-                print("pre: unit",i, unks)
+                #print("pre: unit",i, unks)
                 if not -lit in new_true:
                     new_true.add(lit)
                     cl_true.add(i)
             else:
                 for lit in unks:
                     V[lit].add(i)
-        print("unk",lit_unk)
-        print(V)
+        #print("unk",lit_unk)
+        #print(V)
         # check for single polarity, add to new_true
         singpolar = [-k for (k,v) in V.items() if len(v) == 0]
-        print("singpolar", singpolar)
+        #print("singpolar", singpolar)
         for k in singpolar:
             if not -k in new_true:
                 new_true.add(k)
-        print("new_true", new_true)
-        print("Built vertical:", time.time()-ts2)
+        #print("new_true", new_true)
+        #print("Built vertical:", time.time()-ts2)
 
         while(len(V) > 0):
             # if new_true is empty, add best one
@@ -659,17 +658,17 @@ class OMUS(object):
                 # get most frequent literal
                 (lit, cover) = max(V.items(), key=lambda tpl: len(tpl[1]))
                 new_true.add(lit)
-                print("best new_true", new_true, len(cover))
+                #print("best new_true", new_true, len(cover))
 
             # prep
             # cl_newtrue = take union of new_true's in V (remove from V)
             cl_newtrue = frozenset(e for k in new_true for e in V[k])
-            print("cl_newtrue", cl_newtrue)
+            #print("cl_newtrue", cl_newtrue)
             cl_true |= cl_newtrue
-            print("cl_true", cl_true)
+            #print("cl_true", cl_true)
             # cl_newfalse = take union of -new_true's in V (remove from V)
             cl_newfalse = frozenset(e for k in new_true for e in V[-k])
-            print("cl_newfalse", cl_newfalse)
+            #print("cl_newfalse", cl_newfalse)
             for k in new_true:
                 del V[k]
                 if -k in V:
@@ -682,7 +681,7 @@ class OMUS(object):
             lit_false |= new_false
             lit_unk -= new_false
             new_true = set()
-            print(V, lit_true, lit_unk)
+            #print(V, lit_true, lit_unk)
 
             for cl in cl_newfalse - cl_newtrue:
                 # check for unit, add to new_true
@@ -690,7 +689,7 @@ class OMUS(object):
                 if len(unks) == 1:
                     # unit
                     lit = next(iter(unks))
-                    print("unit:",lit)
+                    #print("unit:",lit)
                     if not -lit in new_true:
                         new_true.add(lit)
             # update vertical views (remove true clauses)
@@ -698,11 +697,11 @@ class OMUS(object):
                 V[e] -= cl_newtrue
                 if len(V[e]) == 0 and not e in new_true:
                     # single polarity
-                    print("single polar:",-e)
+                    #print("single polar:",-e)
                     new_true.add(-e)
-            print(V, lit_true, lit_unk)
-        print("greedy_tias, t: ", time.time() - ts)
-        print("remaining unks:", cl_unk)
+            #print(V, lit_true, lit_unk)
+        #print("greedy_tias, t: ", time.time() - ts)
+        #print("remaining unks:", cl_unk)
         return cl_true, lit_true
 
 
@@ -1168,7 +1167,6 @@ class OMUS(object):
                 # ------ Grow
                 tstart = time.time()
                 MSS, MSS_model = self.grow(hs, model)
-                print("GROW:",MSS, MSS_model)
                 print("time of grow:",time.time()-tstart)
                 C = F - MSS
                 assert len(C) > 0, f"Greedy: hs={hs}, model={model}"
@@ -1244,7 +1242,6 @@ class OMUS(object):
         while(True):
 
             hs = self.gurobiOptimalHittingSet(gurobi_model, C)
-            print(hs)
             model, sat = self.checkSatNoSolver(hs)
 
             # if not sat or steps > max_steps_main:

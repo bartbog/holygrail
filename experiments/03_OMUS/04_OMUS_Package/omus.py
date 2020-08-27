@@ -378,16 +378,16 @@ class OMUS(object):
         # gurobi_model.addConstr(gp.quicksum(x[i] * h[i] for i in range(len(clauses))) >= 1)
         gurobi_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
 
-    def gurobiOptimalHittingSet(self, gurobi_model, C):
+    def gurobiOptimalHittingSet(self, gurobi_model):
         if self.logging:
             tstart = time.time()
 
         # trivial case
-        if len(C) == 0:
-            return set()
+        # if len(C) == 0:
+        #     return set()
 
         # add new constraint sum x[j] * hij >= 1
-        self.addSetGurobiModel(gurobi_model, C)
+        # self.addSetGurobiModel(gurobi_model, C)
 
         # solve optimization problem
         gurobi_model.optimize()
@@ -1072,11 +1072,7 @@ class OMUS(object):
                 mode = MODE_INCR
 
             # ----- Compute Optimal Hitting Set
-            # DANGER!!! This assumes 'C' exists!!!
-            # but in case of MSS reuse, it might not?
-            # in any case, was 'C' not already 'addSetGurobiModeld' in the
-            # previous call, e.g. 4 code lines above?
-            hs = self.gurobiOptimalHittingSet(gurobi_model, C)
+            hs = self.gurobiOptimalHittingSet(gurobi_model)
 
             # ------ Sat check
             (model, sat, satsolver) = self.checkSat(hs)
@@ -1088,6 +1084,7 @@ class OMUS(object):
             # ------ Grow
             MSS, MSS_model = self.grow(hs, model)
             C = F - MSS
+            self.addSetGurobiModel(gurobi_model, C)
             assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"
 
             h_counter.update(list(C))

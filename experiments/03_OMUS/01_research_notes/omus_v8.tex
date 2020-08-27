@@ -191,28 +191,28 @@
 \end{algorithm}
 
 \clearpage
-% \section{OMUS Algorithm}
+\section{OMUS Algorithm}
 
-% Note that if we assign a unit weight to every element in the subset, we reduce the problem of finding an OMUS to finding a SMUS.
+Note that if we assign a unit weight to every element in the subset, we reduce the problem of finding an OMUS to finding a SMUS.
 
-% \begin{definition}
-%   Let $\Gamma$ be a collection of sets and HS($\Gamma$) the set of all hitting sets on $\Gamma$ and let $f$ be an valid objective function. Then a hitting set $ h \in \Gamma$ is said to be an \textbf{optimal} hitting set if $\forall$ $h' \in HS(\Gamma)$ we have that %$|h| \leq |h'|$ and 
-%   $f(h) \leq f(h')$. %\cite{davies2011solving}.
-% \end{definition}
+\begin{definition}
+  Let $\Gamma$ be a collection of sets and HS($\Gamma$) the set of all hitting sets on $\Gamma$ and let $f$ be an valid objective function. Then a hitting set $ h \in \Gamma$ is said to be an \textbf{optimal} hitting set if $\forall$ $h' \in HS(\Gamma)$ we have that %$|h| \leq |h'|$ and 
+  $f(h) \leq f(h')$. %\cite{davies2011solving}.
+\end{definition}
 
-% \begin{property}
-%   The \textbf{optimal} hitting set of a collection of sets $\Gamma$ is denoted by $OHS(\Gamma)$.
-% \end{property}
+\begin{property}
+  The \textbf{optimal} hitting set of a collection of sets $\Gamma$ is denoted by $OHS(\Gamma)$.
+\end{property}
 
-% The algorithm is based on the following observation:
+The algorithm is based on the following observation:
 
-% \begin{proposition}\label{prop:optimal-hitting-set}
-%   A set $\m{U} \subseteq \m{F}$ is an OMUS of $\m{F}$ if and only if $\m{U}$ is an optimal hitting set of MCSes($\m{F}$)
-% \end{proposition}
+\begin{proposition}\label{prop:optimal-hitting-set}
+  A set $\m{U} \subseteq \m{F}$ is an OMUS of $\m{F}$ if and only if $\m{U}$ is an optimal hitting set of MCSes($\m{F}$)
+\end{proposition}
 
-% \begin{lemma}\label{lemma:K}
-%   Let $\m{K}  \subseteq$ MCSes($\m{F}$). Then a subset $\m{U}$ of $\m{F}$ is an OMUS if $\m{U}$ is a optimal hitting set on $\m{K}$ and $\m{U}$ is unsatisfiable
-% \end{lemma}
+\begin{lemma}\label{lemma:K}
+  Let $\m{K}  \subseteq$ MCSes($\m{F}$). Then a subset $\m{U}$ of $\m{F}$ is an OMUS if $\m{U}$ is a optimal hitting set on $\m{K}$ and $\m{U}$ is unsatisfiable
+\end{lemma}
 
 % \begin{algorithm}
 %   \DontPrintSemicolon
@@ -424,40 +424,40 @@
   \label{alg:omus-nonOPT}
 \end{algorithm*}
 
-% \newpage
-% \section{MIP hitting set problem specification}
-% For the set of clauses $ \m{C} = \{c_1, ... c_{|C|}\}$ with weights $\m{W} = \{w_1, ... w_{|C|}\}$ in the collection of sets $\m{H}$. For Example:
+\newpage
+\section{MIP hitting set problem specification}
+For the set of clauses $ \m{C} = \{c_1, ... c_{|C|}\}$ with weights $\m{W} = \{w_1, ... w_{|C|}\}$ in the collection of sets $\m{H}$. For Example:
 
-% \begin{equation} \label{mip:example}
-%   \begin{split}
-%     \m{C} &= \{c_1, ... c_6 \}  \\
-%     \m{W} &= \{w_1 = 20, w_2 = 20,  w_3 = 10,  w_4 = 10,  w_5 = 10,  w_6 = 20\} \\
-%     \m{H} &= \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_6\}
-%   \end{split}
-% \end{equation}
+\begin{equation} \label{mip:example}
+  \begin{split}
+    \m{C} &= \{c_1, ... c_6 \}  \\
+    \m{W} &= \{w_1 = 20, w_2 = 20,  w_3 = 10,  w_4 = 10,  w_5 = 10,  w_6 = 20\} \\
+    \m{H} &= \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_6\}
+  \end{split}
+\end{equation}
 
-% The optimal hitting set can be formulated as an integer linear program.
-% \begin{equation} \label{eq:ILP:objective}
-%   min \sum_{ i \in \{1..|C|\}} w_i \cdot x_i
-% \end{equation}
-% \begin{equation} \label{eq:ILP:hittingset}
-%   \sum_{i \in \{1..|C|\}} x_i \cdot h_{ij} \geq 1, \  \forall \ j \in \{1..|\m{H}|\}
-% \end{equation}
-% \begin{equation} \label{eq:ILP:bool:xi}
-%   x_i = \{0,1\}
-% \end{equation}
+The optimal hitting set can be formulated as an integer linear program.
+\begin{equation} \label{eq:ILP:objective}
+  min \sum_{ i \in \{1..|C|\}} w_i \cdot x_i
+\end{equation}
+\begin{equation} \label{eq:ILP:hittingset}
+  \sum_{i \in \{1..|C|\}} x_i \cdot h_{ij} \geq 1, \  \forall \ j \in \{1..|\m{H}|\}
+\end{equation}
+\begin{equation} \label{eq:ILP:bool:xi}
+  x_i = \{0,1\}
+\end{equation}
 
-% \begin{itemize}
-%   \item $w_i$ is the input cost/weight associated with clause i in
-%   \item $x_i$ is a boolean decision variable if constraint/clause $c_i$ is chosen or not.
-%   \item Equation \ref{eq:ILP:hittingset}, $h_{ij}$ is a boolean input variable corresponding to if constraint/clause i is in set to hit j.
-% \end{itemize}
+\begin{itemize}
+  \item $w_i$ is the input cost/weight associated with clause i in
+  \item $x_i$ is a boolean decision variable if constraint/clause $c_i$ is chosen or not.
+  \item Equation \ref{eq:ILP:hittingset}, $h_{ij}$ is a boolean input variable corresponding to if constraint/clause i is in set to hit j.
+\end{itemize}
 
-% \newpage
-% \section{Future Work}
+\newpage
+\section{Future Work}
 
-% \newpage
+\newpage
 
-% \bibliography{omusrefs}
+\bibliography{omusrefs}
 
 \end{document}

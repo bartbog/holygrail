@@ -986,23 +986,11 @@ class OMUS(object):
         if self.reuse_mss:
             F_idxs = {self.clauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
             for mss_idxs, MSS_model in self.MSSes:
-                mss = set()
-                for mss_idx in mss_idxs:
-                    if mss_idx in F_idxs:
-                        clause_idx = F_idxs[mss_idx]
-                        mss.add(clause_idx)
-
-                # TODO: check time spent and if possible avoid SAT call...
-                # perhaps, when storing the MSS also store the model,
-                # then it needs not be recomputed here?
-                # model, solved =  self.checkSatNoSolver(mss)
-                # assert solved == True, "MSS must be satisfiable!"
+                mss = set(F_idxs[mss_idx] for mss_idx in mss_idxs if mss_idx in F_idxs)
 
                 if any(True if mss.issubset(MSS) else False for MSS in added_MSSes):
                     continue
 
-                # MSS, model = self.grow(mss, set())
-                # MSS, model = self.grow(mss, model)
                 MSS, model = self.grow(mss, MSS_model)
                 C = F - MSS
 
@@ -1135,7 +1123,8 @@ class OMUS(object):
             self.addSetGurobiModel(gurobi_model, C)
             H.append(C)
 
-
+    def export_results(self):
+        
 
 if __name__ == "__main__":
     cnf = CNF()

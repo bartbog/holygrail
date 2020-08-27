@@ -8,8 +8,10 @@ import pandas as pd
 
 from csp_explain import omusExplain
 
-sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
-from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
+# sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
+sys.path.append('/home/emilio/Documents/cppy/')
+from cppy import BoolVarImpl, Comparison, Model, Operator
+from cppy.solver_interfaces.pysat_tools import cnf_to_pysat
 from cppy.model_tools.to_cnf import *
 
 
@@ -789,7 +791,11 @@ def test_MSSes():
 def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
-    # parameters = {'extension': 'greedy_no_param','output': 'log.json'}
+
+    from datetime import date, datetime
+
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
 
     # model constraints
     bij, trans, clues = originProblem()
@@ -797,22 +803,27 @@ def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.jso
     bij_cnf = cnf_to_pysat(to_cnf(bij))
     trans_cnf = cnf_to_pysat(to_cnf(trans))
     cnf = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
-    weights = [5 for clause in clues_cnf] + \
+    weights = [20 for clause in clues_cnf] + \
               [1 for clause in trans_cnf] + \
               [1 for clause in bij_cnf]
 
-    expl_seq = omusExplain(cnf, weights=weights, parameters=parameters, incremental=True, reuse_mss=True)
+    o, expl_seq = omusExplain(cnf, weights=weights, parameters=parameters, incremental=True, reuse_mss=True)
+    o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
 
-def explain_frietkot(parameters, incremental, reuse_mss):
+def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
+                   incremental=True, 
+                   reuse_mss=True):
+    from datetime import date, datetime
+
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
     # explain
     cppy_model = frietKotProblem()
     cnf = cnf_to_pysat(cppy_model.constraints)
     frozen_cnf = [frozenset(c) for c in cnf]
-    seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=incremental, reuse_mss=reuse_mss)
-    # print(seq)
-
-# def main():
-
+    o, expl_seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=incremental, reuse_mss=reuse_mss)
+    o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
 
 if __name__ == "__main__":
     explain_origin()

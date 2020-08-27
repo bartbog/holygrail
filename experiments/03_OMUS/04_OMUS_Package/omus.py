@@ -612,34 +612,33 @@ class OMUS(object):
         cl_true = set(F_prime)
         cl_unk = set( range(self.nClauses) ) - cl_true
         print("cl_:", time.time()-ts, len(cl_unk))
+        print("cl t",cl_true)
 
         lit_true = set(model)
         lit_false = set(-l for l in model)
         lit_unk = set(frozenset.union(*self.clauses)) - lit_true - lit_false
         print("lit_:", time.time()-ts, len(lit_unk))
-
-        # special case, full assignment, must construct cl_true though...
-        if len(lit_unk) == 0:
-            for i in cl_unk:
-                t = self.clauses[i].intersection(lit_true)
-                if len(t) > 0:
-                    cl_true.add(i)
-            return cl_true, lit_true
+        print("lt t",lit_true)
 
         ts2 = time.time()
         # build vertical sets
         new_true = set()
-        V = dict((e,set()) for e in lit_unk)  # for each element in H: which sets it is in
+        V = dict((e,set()) for e in lit_unk)  # for each unknown literal
         for i in cl_unk:
-            # special case: only one element in the set, must be in hitting set
+            # special case: already true
+            if len(self.clauses[i].intersection(lit_true)) > 0:
+                cl_true.add(i)
+                continue
+
+            # special case: unit literal unknown
             unks = self.clauses[i].intersection(lit_unk)
             if len(unks) == 1:
                 # unit
                 lit = next(iter(unks))
-                cl_true.add(i)
                 print("pre: unit",i, unks)
                 if not -lit in new_true:
                     new_true.add(lit)
+                    cl_true.add(i)
             else:
                 for lit in unks:
                     V[lit].add(i)

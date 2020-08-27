@@ -8,10 +8,10 @@ import pandas as pd
 
 from csp_explain import omusExplain
 
-# sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
-sys.path.append('/home/emilio/Documents/cppy/')
-from cppy import BoolVarImpl, Comparison, Model, Operator
-from cppy.solver_interfaces.pysat_tools import cnf_to_pysat
+sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
+# sys.path.append('/home/emilio/Documents/cppy/')
+from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
+# from cppy.solver_interfaces.pysat_tools import 
 from cppy.model_tools.to_cnf import *
 
 
@@ -779,7 +779,8 @@ def originProblem():
 
     # model = Model(bij + trans + clues)
     # model = Model(bij + trans + clues)
-    return bij, trans, clues
+    rels=[is_old, lives_in, native, age_city, age_birth, city_birth]
+    return bij, trans, clues, rels
 
 def test_MSSes():
     cppy_model = frietKotProblem()
@@ -798,17 +799,20 @@ def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.jso
     now = datetime.now().strftime("%H_%M_%S")
 
     # model constraints
-    bij, trans, clues = originProblem()
+    bij, trans, clues, rels = originProblem()
     clues_cnf = cnf_to_pysat(to_cnf(clues))
     bij_cnf = cnf_to_pysat(to_cnf(bij))
     trans_cnf = cnf_to_pysat(to_cnf(trans))
-    cnf = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
-    weights = [20 for clause in clues_cnf] + \
-              [1 for clause in trans_cnf] + \
-              [1 for clause in bij_cnf]
 
-    o, expl_seq = omusExplain(cnf, weights=weights, parameters=parameters, incremental=True, reuse_mss=True)
+    cnf = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    weights = [len(clause) for clause in clues_cnf] + \
+              [len(clause) for clause in trans_cnf] + \
+              [len(clause) for clause in bij_cnf]
+
+    o, expl_seq = omusExplain(cnf=cnf, rels=rels, weights=weights, parameters=parameters, incremental=True, reuse_mss=True)
+
     o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
+    del o
 
 def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
                    incremental=True, 
@@ -824,7 +828,14 @@ def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.j
     frozen_cnf = [frozenset(c) for c in cnf]
     o, expl_seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=incremental, reuse_mss=reuse_mss)
     o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
+    del o
 
 if __name__ == "__main__":
-    # explain_origin()
+    print("-------------------")
+    print("Explaining FRIETKOT")
+    print("-------------------\n")
     explain_frietkot()
+    print("\n\n-------------------")
+    print("Explaining ORIGIN")
+    print("-------------------\n")
+    explain_origin()

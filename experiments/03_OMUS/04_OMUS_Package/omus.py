@@ -1015,8 +1015,11 @@ class OMUS(object):
                     self.MSSes.add((mssIdxs, frozenset(model)))
 
         mode = MODE_GREEDY
+        print("\n")
         while(True):
+            print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}", end='\r')
             while(True):
+                print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}", end='\r')
                 if mode == MODE_INCR:
                     if self.logging:
                         tstart = time.time()
@@ -1091,7 +1094,7 @@ class OMUS(object):
                     self.optimal_steps.append(self.steps.optimal - n_optimal)
                     self.greedy_steps.append(self.steps.greedy - n_greedy)
                     self.incremental_steps.append(self.steps.incremental - n_incremental)
-
+                print("\n")
                 return hs, [set(self.clauses[idx]) for idx in hs]
 
             # ------ Grow

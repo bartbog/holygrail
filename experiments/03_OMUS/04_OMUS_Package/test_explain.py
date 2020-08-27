@@ -809,6 +809,7 @@ def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.jso
               [len(clause) for clause in trans_cnf] + \
               [len(clause) for clause in bij_cnf]
 
+    print("About to call")
     o, expl_seq = omusExplain(cnf=cnf, rels=rels, weights=weights, parameters=parameters, incremental=True, reuse_mss=True)
 
     o.export_results('results/puzzles/origin/', today + "_" + now + ".json")

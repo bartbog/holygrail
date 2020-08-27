@@ -164,11 +164,11 @@ def naiveOptimalPropagate(cnf, I):
     return lits
 
 
-def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False, reuse_mss=False, I0=set()):
+def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False, reuse_mss=False, I0=None):
     # initial interpretation
     # # TODO: match fact with table element from rels
-    print("wtf: How is this {-5} ??????", I0)
-    # I0 = set()
+    if I0 is None:
+        I0 = set()
     I = I0
     I_cnf = [frozenset({lit}) for lit in I0]
     I_end_all = maxPropagate(cnf, list(I0))

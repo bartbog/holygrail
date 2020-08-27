@@ -4,7 +4,8 @@ import sys
 from pysat.formula import CNF
 from pysat.solvers import Solver
 
-sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
+# sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
+sys.path.append('/home/emilio/Documents/cppy')
 
 from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
 from cppy.model_tools.to_cnf import *

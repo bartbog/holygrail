@@ -184,6 +184,7 @@ def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False
         I_end = set(i for i in I_end_all if abs(i) in grid_variables)
     else:
         I_end = I_end_all
+    print("Done max propagate:",I_end)
 
     # explanation sequence
     expl_seq = []
@@ -201,6 +202,7 @@ def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False
 
     print(I_cnf)
     # @TIAS:  OMUS model with all clauses
+    print("Creating OMUSable cnf with",len(cnf),"clauses")
     o = OMUS(from_clauses=cnf, I=I_end_all, parameters=parameters, weights=weights, logging=True, reuse_mss=reuse_mss)
 
     cnt = 0

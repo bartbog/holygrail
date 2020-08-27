@@ -1,6 +1,7 @@
 import json
 import sys
 import time
+import random
 
 # pysat imports
 from pysat.formula import CNF
@@ -127,27 +128,27 @@ def optimalPropagate(cnf, I):
     # m3 = cnf + [-2, -3] => nieuw model [ .., ....]
     # if sat: nieuw intersection => model zoeken
     # anders: stoppen, huidige intersection gebruike
-    s = Solver()
-    s.append_formula(cnf, no_return=False)
-    s.solve(assumptions=list(I))
-    # models = []
-    model = None
-    for i, m in enumerate(s.enum_models()):
-        if i == 2:
-            break
-        if model is None:
-            model = set(m)
-        else:
-            model.intersection(set(m))
+    with Solver() as s:
+        s.append_formula(cnf, no_return=False)
+        s.solve(assumptions=list(I))
+        # models = []
+        model = None
+        for i, m in enumerate(s.enum_models()):
+            if i == 2:
+                break
+            if model is None:
+                model = set(m)
+            else:
+                model.intersection(set(m))
 
-    while(True):
-        s.add_clause(list(-lit for lit in model))
-        solved = s.solve()
-        if solved:
-            new_model = set(s.get_model())
-            model = model.intersection(new_model)
-        else:
-            return model - I
+        while(True):
+            s.add_clause(list(-lit for lit in model))
+            solved = s.solve()
+            if solved:
+                new_model = set(s.get_model())
+                model = model.intersection(new_model)
+            else:
+                return model - I
 
 
 def naiveOptimalPropagate(cnf, I):
@@ -163,15 +164,20 @@ def naiveOptimalPropagate(cnf, I):
     return lits
 
 
-def omusExplain(cnf, I_0=set(), rels=None, weights=None, parameters=None, incremental=False, reuse_mss=False):
+def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False, reuse_mss=False, I0=set()):
     # initial interpretation
-    I = I_0
-    I_cnf = [frozenset({lit}) for lit in I_0]
-    I_end_all = maxPropagate(cnf, list(I_0))
+    # # TODO: match fact with table element from rels
+    print("wtf: How is this {-5} ??????", I0)
+    # I0 = set()
+    I = I0
+    I_cnf = [frozenset({lit}) for lit in I0]
+    I_end_all = maxPropagate(cnf, list(I0))
     # if rels != None:
     grid_variables = set()
     if rels is not None:
         for rel in rels:
+            # print("\n", rel.df, "\n")
+
             for item in rel.df.values:
                 grid_variables |= set(i.name+1 for i in item)
 
@@ -181,7 +187,7 @@ def omusExplain(cnf, I_0=set(), rels=None, weights=None, parameters=None, increm
 
     # explanation sequence
     expl_seq = []
-
+    # print(I_cnf)
     # add unit literals to Interpretation
     for id, cl in enumerate(list(cnf)):
         if len(cl) == 1:
@@ -190,9 +196,13 @@ def omusExplain(cnf, I_0=set(), rels=None, weights=None, parameters=None, increm
             I_cnf.append(frozenset({lit}))
             cnf.remove(cl)
             del weights[id]
+            expl_seq.append((set(), cl, lit))
+            print(f"UNIT explanation \t\t {set()}\t /\\ {cl}\t => {lit}\n")
 
+    print(I_cnf)
     # @TIAS:  OMUS model with all clauses
-    o = OMUS(from_clauses=cnf, I=I_end, parameters=parameters, weights=weights, logging=True, reuse_mss=reuse_mss)
+    o = OMUS(from_clauses=cnf, I=I_end_all, parameters=parameters, weights=weights, logging=True, reuse_mss=reuse_mss)
+
     cnt = 0
     while len(I_end - I) > 0:
         assert len(I) == len(I_cnf)
@@ -202,8 +212,9 @@ def omusExplain(cnf, I_0=set(), rels=None, weights=None, parameters=None, increm
         # existing facts
         w_I = [1 for _ in I] + [1]
         print(f"run {cnt}")
-
-        for i in I_end - I:
+        explainable_facts = list(I_end - I)
+        random.shuffle(explainable_facts)
+        for i in explainable_facts:
             print(f"\n\t{cnt} - Explaining fact [{i}]")
             t_start_omus = time.time()
             # Match MSS
@@ -234,6 +245,7 @@ def omusExplain(cnf, I_0=set(), rels=None, weights=None, parameters=None, increm
 
             # new fact
             N_i = {i}
+            print(E_i, S_i, N_i)
 
             if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i

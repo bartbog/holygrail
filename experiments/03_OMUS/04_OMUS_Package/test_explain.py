@@ -803,13 +803,16 @@ def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.jso
     clues_cnf = cnf_to_pysat(to_cnf(clues))
     bij_cnf = cnf_to_pysat(to_cnf(bij))
     trans_cnf = cnf_to_pysat(to_cnf(trans))
-    cnf = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
-    weights = [20 for clause in clues_cnf] + \
-              [1 for clause in trans_cnf] + \
-              [1 for clause in bij_cnf]
 
-    o, expl_seq = omusExplain(cnf, weights=weights, rels=rels, parameters=parameters, incremental=True, reuse_mss=True)
+    cnf = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    weights = [len(clause) for clause in clues_cnf] + \
+              [len(clause) for clause in trans_cnf] + \
+              [len(clause) for clause in bij_cnf]
+
+    o, expl_seq = omusExplain(cnf=cnf, rels=rels, weights=weights, parameters=parameters, incremental=True, reuse_mss=True)
+
     o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
+    del o
 
 def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
                    incremental=True, 
@@ -825,6 +828,14 @@ def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.j
     frozen_cnf = [frozenset(c) for c in cnf]
     o, expl_seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=incremental, reuse_mss=reuse_mss)
     o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
+    del o
 
 if __name__ == "__main__":
+    print("-------------------")
+    print("Explaining FRIETKOT")
+    print("-------------------\n")
     explain_frietkot()
+    print("\n\n-------------------")
+    print("Explaining ORIGIN")
+    print("-------------------\n")
+    explain_origin()

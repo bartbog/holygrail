@@ -1,5 +1,28 @@
 % !TeX root = ./main.tex
 
+In the last few years, driven by the increasingly many successes of Artificial Intelligence (AI), there is a growing need for \textbf{eXplainable Artificial Intelligence (XAI)}~\cite{miller2019explanation}.
+In the research community, this need manifests itself through the emergence of (interdisciplinary) workshops and conferences on this topic~\cite{xai-ijcai,FAT} and American and European incentives to stimulate research in the area~\cite{gunning2017explainable,hamonrobustness,chistera,fetproact}. 
+Also on the \textbf{legislation} side there is increased attention for explainability, such as in the EU GDPR 2016/679~\cite{regulation2016regulation}.
+
+While the main focus of XAI research has been on explaining black-box machine learning systems \cite{Barredo_Arrieta_2020,Adadi_2018}, also model-based systems, which are typically considered more transparent, are in need of explanation mechanisms. 
+Indeed, by advances in solving methods in research fields such as constraint programming \cite{CP} and SAT \cite{SAT}, as well as by hardware improvement, such systems now easily tackle consider millions of alternatives in short amounts of time. 
+Because of this complexity, the question arises how to generate explanations of the conclusions they make in a way that is interpretable by humans in the sense of \citet{DBLP:conf/dsaa/GilpinBYBSK18}. 
+Explanations for model-based systems are under development in various subdomains of AI \cite{fox2017explainable,vcyras2019argumentation,chakraborti2017plan,winston2004operations,putnam2019toward}.
+
+Our current work is motivated by a concrete algorithmic need that arose in this context. 
+Specifically, the work of \citet{ecai/BogaertsGCG20} shows the need for algorithms that can find optimal MUSs with respect to a given cost function, where the cost function approximates human-understandability of the corresponding explanation step.
+
+The closest related work can be found in the literature on generating or enumerating MUSs \cite{conf/sat/LynceM04}.
+Different techniques are employed to achieve this, including  manipulating resolution proofs produced by SAT solvers \cite{goldberg,DBLP:journals/fmsd/GershmanKS08,DBLP:conf/sat/DershowitzHN06}, incremental solving to enable/disable clauses and branch-and-bound search \cite{DBLP:conf/dac/OhMASM04}, or by BDD-manipulation methods \cite{huang}.
+Other methods work by means of translation into a so-called Quantified MaxSAT \cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressivity of Quantified Boolean Formulas (QBF) \mycite{QBF} with optimization as known from MaxSAT \mycite{DBLP:series/faia/LiM09}, or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest}. 
+Out of these papers, only few have considered \emph{optimizing} MUSs with respect to some cost function. Most notably, the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest,DBLP:journals/constraints/IgnatievJM16}. 
+
+Our paper builds on the algorithm of \citet{ignatiev2015smallest}, which fits in a general class of so-called \emph{implicit hitting set algorithms}.
+While these algorithms find their root in early work of \citet{reiter}, they only really boosted in popularity when applied in the context of MaxSAT solving \cite{variousBacchuspapers}, where hitting set--based solvers are often among the best solvers in the competitions. 
+SOME MORE ON THIS.
+
+
+
 \begin{itemize}
     \item XAIP
     \item Smallest MUS (QMaxSAT, Ignatiev)

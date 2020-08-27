@@ -825,4 +825,5 @@ def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.j
     o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
 
 if __name__ == "__main__":
-    explain_origin()
+    # explain_origin()
+    explain_frietkot()

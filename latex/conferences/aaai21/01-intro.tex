@@ -1,4 +1,30 @@
 % !TeX root = ./main.tex
+
+% Research
+
+In recent research, a novel method for explaining the inferences made by constraint satisfaction solver was developed \cite{ecai/BogaertsGCG20}. 
+While the techniques were developed for explaining satisfiable constraint satisfaction problems, the developed algorithms relied heavily on calls for so-called \emph{Minimal Unsatisfiable Subsets} (MUS), exploiting a one-to-one correspondence between so-called non-redundant explanations and MUSs. 
+The algorithm developed by \citet{ecai/BogaertsGCG20} has two weaknesses: first of all, it provides no guarantees about the quality of the produced explanations due to internally computing $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the quality of an explanations step. Secondly, it suffers from performance problems: the lack of optimality is partly overcome by replacing a potential single call for a cost-optimal MUS by multiple calls, but this very high number of MUS calls causes that even for simple puzzles for which the unique solution can be found in a fraction of a second, the explanation generation process takes several hours. 
+
+
+Motivated by these observations, we develop algorithms for MUS optimization (i.e., for computing cost-optimal MUSs) given some cost function. The algorithm we develop take inspiration from 
+hitting set--based %The en-dash is on purpose! 
+algorithms to compute cardinality-minimal MUSs \cite{ignatiev2015smallest} and for MAXSAT solving \cite{davies}. 
+
+Furthermore, given the fact that a single call for generation of an explanation sequence internally employs several calls OMUS calls for each explanation step, whit all OMUS calls starting from approximately the same theory, we develop \emph{incremental} algorithms that allow reusing as many results as possible from earlier calls, so as to improve the overall runtime. 
+
+We implemented these ideas in the cppy framework \cite{cppy}  and experimentally validate them on the puzzles of \citet{ecai/BogaertsGCG20} as well as on ... 
+\todo{To be filled in later}
+Our experimental results indicate that
+\begin{itemize}
+  \item confirm Davies's observations 
+  \item show that incrementality is of crucial importance for the explanation generation task
+  \item ... 
+\end{itemize}
+... \todo{To be filled in later} 
+
+
+% the very many MUS calls have as a consequence that 
 \emilio{Rephrase Intro: In the last few years, as AI systems employ more advanced reasoning mechanisms and computation power, it becomes increasingly difficult to understand why certain decisions are made.
 Explainable (XAI), a subfield of AI, aims to fulfil the need for trustworthy AI systems to understand \emph{how} and \emph{why} the system made a decision, e.g. for verifying correctness of the system, as well as to control for biased or systematically unfair decisions.
 

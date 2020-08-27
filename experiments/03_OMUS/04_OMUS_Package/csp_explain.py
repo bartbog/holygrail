@@ -230,7 +230,9 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, incremental=False
 
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
 
-    return expl_seq
+    # o.export_results('results/')
+
+    return o, expl_seq
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from pysat.examples.rc2 import RC2
 from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
 
+import json
 # GLOBAL VARIABELS
 MODE_OPT, MODE_INCR, MODE_GREEDY = (1, 2, 3)
 
@@ -21,7 +22,7 @@ def bacchus():
     cnf.append([-6, 2])    # c1: ¬s
     cnf.append([-2, 1])    # c1: ¬s
     cnf.append([-1])    # c1: ¬s
-    cnf.append([-6,8])    # c1: ¬s
+    cnf.append([-6, 8])    # c1: ¬s
     cnf.append([6, 8])    # c1: ¬s
     cnf.append([2, 4])    # c1: ¬s
     cnf.append([-4, 5])    # c1: ¬s
@@ -149,7 +150,7 @@ class Timings(object):
 
 
 class OMUS(object):
-    def __init__(self, from_clauses=None, I=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), logging=False, reuse_mss=True):
+    def __init__(self, from_clauses=None, I=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), logging=True, reuse_mss=True):
         # checking input
         assert (f is not None) or (weights is not None), "No mapping function or weights supplied."
         assert (from_clauses is not None) or (from_CNF), "No clauses or CNF supplied."
@@ -165,6 +166,10 @@ class OMUS(object):
         if logging:
             self.steps = Steps()
             self.timing = Timings()
+            self.total_timings = []
+            self.optimal_steps = []
+            self.greedy_steps = []
+            self.incremental_steps = []
 
         # clauses
         if from_clauses is not None:
@@ -194,6 +199,7 @@ class OMUS(object):
         self.reuse_mss = reuse_mss
         if reuse_mss:
             self.MSSes = set()
+            self.MSS_sizes = []
 
         # Keep track of clauses troughout the different omus/omusIncr calls
         self.clauseIdxs = dict()
@@ -398,7 +404,7 @@ class OMUS(object):
 
         if self.logging:
             tend = time.time()
-            self.timing.greedy.append(tend - tstart)
+            self.timing.optimal.append(tend - tstart)
             self.steps.optimal += 1
 
         return hs
@@ -951,11 +957,16 @@ class OMUS(object):
         return new_F_prime, lit_true
 
     def omusIncr(self, add_clauses, add_weights=None):
+        # Benchmark info
+        t_start = time.time()
+        n_msses = len(self.MSSes)
+        n_greedy = self.steps.greedy
+        n_optimal = self.steps.optimal
+        n_incremental = self.steps.incremental
 
         # TODO 1.1 MSS - improvement: compact way to represent recurring msses+models
         # 1.2 MSS - improvement: check model if possible to reuse ?
         # ---- getting more steps when reusing the models
-
         # Build clauses and additional weights
         self.clauses = self.base_clauses + add_clauses
         self.nClauses = len(self.clauses)
@@ -985,7 +996,7 @@ class OMUS(object):
 
         if self.reuse_mss:
             F_idxs = {self.clauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
-            for mss_idxs, MSS_model in self.MSSes:
+            for mss_idxs, MSS_model in set(self.MSSes):
                 mss = set(F_idxs[mss_idx] for mss_idx in mss_idxs if mss_idx in F_idxs)
 
                 if any(True if mss.issubset(MSS) else False for MSS in added_MSSes):
@@ -999,6 +1010,9 @@ class OMUS(object):
                     H.append(C)
                     added_MSSes.append(MSS)
                     self.addSetGurobiModel(gurobi_model, C)
+                    #TODO: Check wether this is a good idea or not !
+                    mssIdxs = frozenset(self.clauseIdxs[self.clauses[id]] for id in MSS)
+                    self.MSSes.add((mssIdxs, frozenset(model)))
 
         mode = MODE_GREEDY
         while(True):
@@ -1018,7 +1032,7 @@ class OMUS(object):
                     hs.add(c_best)
                     if self.logging:
                         tend = time.time()
-                        self.timing.incremental = tend - tstart
+                        self.timing.incremental.append(tend - tstart)
                         self.steps.incremental += 1
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
@@ -1066,7 +1080,18 @@ class OMUS(object):
             (model, sat, satsolver) = self.checkSat(hs)
 
             if not sat:
+                #
                 gurobi_model.dispose()
+
+                # Benchmark info
+                if self.logging:
+                    exec_time = time.time() - t_start
+                    self.total_timings.append(exec_time)
+                    self.MSS_sizes.append(len(self.MSSes) - n_msses)
+                    self.optimal_steps.append(self.steps.optimal - n_optimal)
+                    self.greedy_steps.append(self.steps.greedy - n_greedy)
+                    self.incremental_steps.append(self.steps.incremental - n_incremental)
+
                 return hs, [set(self.clauses[idx]) for idx in hs]
 
             # ------ Grow
@@ -1123,8 +1148,36 @@ class OMUS(object):
             self.addSetGurobiModel(gurobi_model, C)
             H.append(C)
 
-    def export_results(self):
-        
+    def export_results(self, outputDir, outputFile):
+        # import pathlib
+        from pathlib import Path
+        p = Path(outputDir)
+        if not p.exists():
+            p.mkdir()
+
+        results = dict()
+
+        # global 
+        results['execution_times'] = self.total_timings
+        results['MSS_sizes'] = self.MSS_sizes
+        results['MSSes'] = [ (list(MSS), list(model)) for MSS, model in self.MSSes]
+        results['nClauses'] = self.nClauses
+        results['nWeights'] = self.nWeights
+
+        # n steps for every OMUS call
+        results['optimal_steps'] = self.optimal_steps
+        results['greedy_steps'] = self.greedy_steps
+        results['incremental_steps'] = self.incremental_steps
+
+        # Individual timings of the calls
+        results['timing.optimal'] = self.timing.optimal
+        results['timing.greedy'] = self.timing.greedy
+        results['timing.sat'] = self.timing.sat
+        results['timing.incremental'] = self.timing.incremental
+        results['timing.growMss'] = self.timing.growMss
+
+        with open(outputDir + outputFile, 'w') as file:
+            file.write(json.dumps(results)) # use `json.loads` to do the reverse
 
 if __name__ == "__main__":
     cnf = CNF()

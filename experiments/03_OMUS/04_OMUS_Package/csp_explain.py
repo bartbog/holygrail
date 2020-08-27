@@ -196,62 +196,62 @@ def omusExplain(cnf, I_0=set(), weights=None, parameters=None, output='explanati
     I_cnf__duplicate = list(I_cnf)
 
 
-    # TODO: check if call for 1 is the same
-    for k in range(10):
-        I = set(I_duplicate)
-        I_cnf = list(I_cnf__duplicate)
+    # # TODO: check if call for 1 is the same
+    # for k in range(10):
+    #     I = set(I_duplicate)
+    #     I_cnf = list(I_cnf__duplicate)
 
-        while len(I_end - I) > 0:
-            assert len(I) == len(I_cnf)
-            cost_best = None
-            E_best, S_best, N_best = None, None, None
+    while len(I_end - I) > 0:
+        assert len(I) == len(I_cnf)
+        cost_best = None
+        E_best, S_best, N_best = None, None, None
 
-            # existing facts
-            w_I = [1 for _ in I] + [1]
+        # existing facts
+        w_I = [1 for _ in I] + [1]
 
-            for i in I_end - I:
-                # Match MSS
-                if incremental:
+        for i in I_end - I:
+            # Match MSS
+            if incremental:
 
-                    hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
-                                                 add_weights=w_I)
-                else:
-                    hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
-                                             add_weights=w_I)
+                hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
+                                                add_weights=w_I)
+            else:
+                hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
+                                            add_weights=w_I)
 
-                # explaining facts
-                E_i = [ci for ci in explanation if ci in I_cnf]
+            # explaining facts
+            E_i = [ci for ci in explanation if ci in I_cnf]
 
-                # constraint used ('and not ci in E_i': dont repeat unit clauses)
-                S_i = [ci for ci in explanation if ci in cnf and ci not in E_i]
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in explanation if ci in cnf and ci not in E_i]
 
-                # new fact
-                N_i = {i}
+            # new fact
+            N_i = {i}
 
-                if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
-                    E_best, S_best, N_best = E_i, S_i, N_i
-                    cost_best = cost((E_i, S_i, N_i))
+            if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
+                E_best, S_best, N_best = E_i, S_i, N_i
+                cost_best = cost((E_i, S_i, N_i))
 
-                    # @TIAS: printing explanations as they get better
-                    # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
+                # @TIAS: printing explanations as they get better
+                # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
-            # propagate as much info as possible
-            N_best = optimalPropagate(E_best + S_best, I)
+        # propagate as much info as possible
+        N_best = optimalPropagate(E_best + S_best, I)
 
-            # add new info
-            I = I | N_best
-            I_cnf += [frozenset({lit}) for lit in N_best]
+        # add new info
+        I = I | N_best
+        I_cnf += [frozenset({lit}) for lit in N_best]
 
-            expl_seq.append((E_best, S_best, N_best))
+        expl_seq.append((E_best, S_best, N_best))
 
-            # @TIAS: printing explanations
-            # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
+        # @TIAS: printing explanations
+        print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
         # Difference between previous steps and new steps for 
-        print(f"\nRun {k+1}:\n")
+        # print(f"\nRun {k+1}:\n")
         # print(o.steps, "\n")
-        print(o.steps - t_steps)
-        t_steps.incremental, t_steps.greedy, t_steps.optimal = o.steps.incremental, o.steps.greedy, o.steps.optimal
+        # print(o.steps - t_steps)
+        # t_steps.incremental, t_steps.greedy, t_steps.optimal = o.steps.incremental, o.steps.greedy, o.steps.optimal
 
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
 

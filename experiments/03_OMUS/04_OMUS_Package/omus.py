@@ -985,7 +985,7 @@ class OMUS(object):
 
         if self.reuse_mss:
             F_idxs = {self.clauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
-            for mss_idxs in self.MSSes:
+            for mss_idxs, MSS_model in self.MSSes:
                 mss = set()
                 for mss_idx in mss_idxs:
                     if mss_idx in F_idxs:
@@ -995,13 +995,15 @@ class OMUS(object):
                 # TODO: check time spent and if possible avoid SAT call...
                 # perhaps, when storing the MSS also store the model,
                 # then it needs not be recomputed here?
-                model, solved =  self.checkSatNoSolver(mss)
-                assert solved == True, "MSS must be satisfiable!"
+                # model, solved =  self.checkSatNoSolver(mss)
+                # assert solved == True, "MSS must be satisfiable!"
 
                 if any(True if mss.issubset(MSS) else False for MSS in added_MSSes):
                     continue
 
-                MSS, model = self.grow(mss, model)
+                # MSS, model = self.grow(mss, set())
+                # MSS, model = self.grow(mss, model)
+                MSS, model = self.grow(mss, MSS_model)
                 C = F - MSS
 
                 if C not in H:
@@ -1033,7 +1035,6 @@ class OMUS(object):
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
                     hs = self.greedyHittingSet(H)
-                    # assert len(hs),"hs > {} must be"
 
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
@@ -1061,8 +1062,7 @@ class OMUS(object):
                 # Store the MSSes
                 if self.reuse_mss:
                     mssIdxs = frozenset(self.clauseIdxs[self.clauses[id]] for id in MSS)
-                    self.MSSes.add(mssIdxs)
-                    # print("MSS=", MSS)
+                    self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
                 h_counter.update(list(C))
                 self.addSetGurobiModel(gurobi_model, C)
@@ -1096,7 +1096,7 @@ class OMUS(object):
 
             if self.reuse_mss:
                 mssIdxs = frozenset(self.clauseIdxs[self.clauses[id]] for id in MSS)
-                self.MSSes.add(mssIdxs)
+                self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
     def omus(self, add_clauses, add_weights=None):
         # ---------- build clauses and additional weights

@@ -371,7 +371,7 @@ def p5():
     n_types = len(types)
     n_dom = len(types[0])
     assert all(len(types[i]) == n_dom for i in range(n_types)), "all types should have equal length"
-    n_bij = 24
+    n_bij = 60
     n_trans = 12
     n_clues = 10
 
@@ -385,16 +385,21 @@ def p5():
     relations = [is_old, lives_in, native, age_city, age_birth, city_birth]
 
     # Bijectivity
+    cnt = 0
     bij = []
     bv_bij = [BoolVar() for i in range(n_bij)]
+
     for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
+
         # for each relation
         for col_ids in rel.df:
             # one per column
-            bij += exactly_one(rel[:,col_ids])
+            bij += [implies(bv_bij[cnt], clause ) for clause in exactly_one(rel[:,col_ids])]
+            cnt+=1
         for (_,row) in rel.df.iterrows():
             # one per row
-            bij += exactly_one(row)
+            bij += [implies(bv_bij[cnt], clause) for clause in exactly_one(row)]
+            cnt+=1
 
     # Transitivity
     trans = [ ]
@@ -445,213 +450,73 @@ def p5():
 
     # Clues
     clues = []
-    clues_text = [
-        "Mattie is 113 years old", 
-        "The person who lives in Tehama is a native of either Kansas or Oregon",
-        "The Washington native is 1 year older than Ernesto",
-        "Roxanne is 2 years younger than the Kansas native",
-        "The person who lives in Zearing isn't a native of Alaska",
-        "The person who is 111 years old doesn't live in Plymouth",
-        "The Oregon native is either Zachary or the person who lives in Tehama",
-        "The person who lives in Shaver Lake is 1 year younger than Roxanne",
-        "The centenarian who lives in Plymouth isn't a native of Alaska",
-        "Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas"
-    ]
-    # bv_clues = [BoolVar() for i in range(n_clues)]
-
-    # # Mattie is 113 years old
-    # clues.append( implies(bv_clues[0], is_old['Mattie', '113']) )
-
-    # # The person who lives in Tehama is a native of either Kansas or Oregon
-    # clues.append( [implies(bv_clues[1], implies(lives_in[p,'Tehama'],
-    #                         native[p,'Kansas'] | native[p,'Oregon'])) for p in person] )
-
-    # # The Washington native is 1 year older than Ernesto
-    # clues.append( [implies(bv_clues[2], implies(age_birth[a,'Washington'],
-    #                         is_old['Ernesto',str(int(a)-1)])) for a in age] )
-
-    # # Roxanne is 2 years younger than the Kansas native
-    # clues.append( [implies(bv_clues[3], implies(is_old['Roxanne',a], 
-    #                         age_birth[str(int(a)+2), 'Kansas'])) for a in age] )
-
-    # # The person who lives in Zearing isn't a native of Alaska
-    # clues.append( [implies(bv_clues[4], implies(lives_in[p,'Zearing'],
-    #                         ~native[p,'Alaska'])) for p in person] )
-
-    # # The person who is 111 years old doesn't live in Plymouth
-    # clues.append( [implies(bv_clues[5], implies(is_old[p,'111'],
-    #                         ~lives_in[p,'Plymouth'])) for p in person] )
-
-    # # The Oregon native is either Zachary or the person who lives in Tehama
-    # clues.append( [implies(bv_clues[6], implies(native[p,'Oregon'],
-    #                         (p == 'Zachary') | lives_in[p,'Tehama'])) for p in person] )
-
-    # # The person who lives in Shaver Lake is 1 year younger than Roxanne
-    # clues.append( [implies(bv_clues[7], implies(age_city[a,'Shaver Lake'],
-    #                         is_old['Roxanne',str(int(a)+1)])) for a in age] )
-
-    # # The centenarian who lives in Plymouth isn't a native of Alaska
-    # clues.append( [implies(bv_clues[8], implies(lives_in[p,'Plymouth'],
-    #                         ~native[p,'Alaska'])) for p in person] )
-
-    # # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
-    # clues.append( [implies(bv_clues[9], implies(lives_in[p,'Tehama'],
-    #                         (p != 'Mattie') &
-    #                         ((native['Mattie','Alaska'] & native[p,'Kansas']) |
-    #                         (native[p,'Alaska'] & native['Mattie','Kansas'])))) for p in person] )
+    # clues_text = [
+    #     "Mattie is 113 years old", 
+    #     "The person who lives in Tehama is a native of either Kansas or Oregon",
+    #     "The Washington native is 1 year older than Ernesto",
+    #     "Roxanne is 2 years younger than the Kansas native",
+    #     "The person who lives in Zearing isn't a native of Alaska",
+    #     "The person who is 111 years old doesn't live in Plymouth",
+    #     "The Oregon native is either Zachary or the person who lives in Tehama",
+    #     "The person who lives in Shaver Lake is 1 year younger than Roxanne",
+    #     "The centenarian who lives in Plymouth isn't a native of Alaska",
+    #     "Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas"
+    # ]
+    bv_clues = [BoolVar() for i in range(n_clues)]
 
     # Mattie is 113 years old
-    clues.append( is_old['Mattie', '113'] )
+    clues.append( implies(bv_clues[0], is_old['Mattie', '113']) )
 
     # The person who lives in Tehama is a native of either Kansas or Oregon
-    clues.append( [implies(lives_in[p,'Tehama'],
-                            native[p,'Kansas'] | native[p,'Oregon']) for p in person] )
+    clues.append( [implies(bv_clues[1], implies(lives_in[p,'Tehama'],
+                            native[p,'Kansas'] | native[p,'Oregon'])) for p in person] )
 
     # The Washington native is 1 year older than Ernesto
-    clues.append( [implies(age_birth[a,'Washington'],
-                            is_old['Ernesto',str(int(a)-1)]) for a in age] )
+    clues.append( [implies(bv_clues[2], implies(age_birth[a,'Washington'],
+                            is_old['Ernesto',str(int(a)-1)])) for a in age] )
 
     # Roxanne is 2 years younger than the Kansas native
-    clues.append( [implies(is_old['Roxanne',a],
-                            age_birth[str(int(a)+2), 'Kansas']) for a in age] )
+    clues.append( [implies(bv_clues[3], implies(is_old['Roxanne',a], 
+                            age_birth[str(int(a)+2), 'Kansas'])) for a in age] )
 
     # The person who lives in Zearing isn't a native of Alaska
-    clues.append( [implies(lives_in[p,'Zearing'],
-                            ~native[p,'Alaska']) for p in person] )
+    clues.append( [implies(bv_clues[4], implies(lives_in[p,'Zearing'],
+                            ~native[p,'Alaska'])) for p in person] )
 
     # The person who is 111 years old doesn't live in Plymouth
-    clues.append( [implies(is_old[p,'111'],
-                            ~lives_in[p,'Plymouth']) for p in person] )
+    clues.append( [implies(bv_clues[5], implies(is_old[p,'111'],
+                            ~lives_in[p,'Plymouth'])) for p in person] )
 
     # The Oregon native is either Zachary or the person who lives in Tehama
-    clues.append( [implies(native[p,'Oregon'],
-                            (p == 'Zachary') | lives_in[p,'Tehama']) for p in person] )
+    clues.append( [implies(bv_clues[6], implies(native[p,'Oregon'],
+                            (p == 'Zachary') | lives_in[p,'Tehama'])) for p in person] )
 
     # The person who lives in Shaver Lake is 1 year younger than Roxanne
-    clues.append( [implies(age_city[a,'Shaver Lake'],
-                            is_old['Roxanne',str(int(a)+1)]) for a in age] )
+    clues.append( [implies(bv_clues[7], implies(age_city[a,'Shaver Lake'],
+                            is_old['Roxanne',str(int(a)+1)])) for a in age] )
 
     # The centenarian who lives in Plymouth isn't a native of Alaska
-    clues.append( [implies(lives_in[p,'Plymouth'],
-                            ~native[p,'Alaska']) for p in person] )
+    clues.append( [implies(bv_clues[8], implies(lives_in[p,'Plymouth'],
+                            ~native[p,'Alaska'])) for p in person] )
 
     # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
-    clues.append( [implies(lives_in[p,'Tehama'],
+    clues.append( [implies(bv_clues[9], implies(lives_in[p,'Tehama'],
                             (p != 'Mattie') &
                             ((native['Mattie','Alaska'] & native[p,'Kansas']) |
-                            (native[p,'Alaska'] & native['Mattie','Kansas']))) for p in person] )
+                            (native[p,'Alaska'] & native['Mattie','Kansas'])))) for p in person] )
 
     # bv for tracking clues during explanation generation
-    # bij_bv = [implies(bv, bi) for bv, bi  in zip(bv_bij, bij)]
+    bij_bv = [implies(bv, bi) for bv, bi  in zip(bv_bij, bij)]
 
     # model = Model(clues + bij_bv + trans)
     # return (bv_trans, bv_bij, bv_clues), (trans, bij_bv, clues), clues_text
-    return clues
+    return relations, (clues, trans, bij_bv), (bv_clues, bv_trans, bv_bij)
 
-
-def originProblem():
-    """
-    Logic grid puzzle: 'origin' in CPpy
-
-    Based on... to check originally, currently part of ZebraTutor
-    Probably part of Jens Claes' master thesis, from a 'Byron...' booklet
-    """
-
-    person = ['Mattie', 'Ernesto', 'Roxanne', 'Zachary', 'John']
-    age = ['109', '110', '111', '112', '113']
-    city = ['Brussels', 'Tehama', 'Zearing', 'Plymouth', 'Shaver Lake']
-    birthplace = ['Mexico', 'Oregon', 'Kansas', 'Washington', 'Alaska']
-
-    types = [person, age, city, birthplace]
-    n = len(types)
-    m = len(types[0])
-    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
-
-    is_old = Relation(person, age)
-    lives_in = Relation(person, city)
-    native = Relation(person, birthplace)
-    age_city = Relation(age, city)
-    age_birth = Relation(age, birthplace)
-    city_birth = Relation(city, birthplace)
-
-    # Bijectivity
-    bij = []
-    for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
-        # for each relation
-        for col_ids in rel.df:
-            # one per column
-            bij += exactly_one(rel[:,col_ids])
-        for (_,row) in rel.df.iterrows():
-            # one per row
-            bij += exactly_one(row)
-
-
-    # Transitivity
-    trans = []
-    for p in person:
-        for c in city:
-            trans.append( [implies(is_old[p,a] & age_city[a,c],
-                                        lives_in[p,c]) for a in age] )
-        for b in birthplace:
-            trans.append( [implies(is_old[p,a] & age_birth[a,b],
-                                        native[p,b]) for a in age] )
-            trans.append( [implies(lives_in[p,c] & city_birth[c,b],
-                                        native[p,b]) for c in city] )
-    for a in age:
-        for b in birthplace:
-            trans.append( [implies(age_city[a,c] & city_birth[c,b],
-                                        age_birth[a,b]) for c in city] )
-
-    # Clues
-    clues = []
-    # Mattie is 113 years old
-    clues.append( is_old['Mattie', '113'] )
-
-    # The person who lives in Tehama is a native of either Kansas or Oregon
-    clues.append( [implies(lives_in[p,'Tehama'],
-                            native[p,'Kansas'] | native[p,'Oregon']) for p in person] )
-
-    # The Washington native is 1 year older than Ernesto
-    clues.append( [implies(age_birth[a,'Washington'],
-                            is_old['Ernesto',str(int(a)-1)]) for a in age] )
-
-    # Roxanne is 2 years younger than the Kansas native
-    clues.append( [implies(is_old['Roxanne',a], 
-                            age_birth[str(int(a)+2), 'Kansas']) for a in age] )
-
-    # The person who lives in Zearing isn't a native of Alaska
-    clues.append( [implies(lives_in[p,'Zearing'],
-                            ~native[p,'Alaska']) for p in person] )
-
-    # The person who is 111 years old doesn't live in Plymouth
-    clues.append( [implies(is_old[p,'111'],
-                            ~lives_in[p,'Plymouth']) for p in person] )
-
-    # The Oregon native is either Zachary or the person who lives in Tehama
-    clues.append( [implies(native[p,'Oregon'],
-                            (p == 'Zachary') | lives_in[p,'Tehama']) for p in person] )
-
-    # The person who lives in Shaver Lake is 1 year younger than Roxanne
-    clues.append( [implies(age_city[a,'Shaver Lake'],
-                            is_old['Roxanne',str(int(a)+1)]) for a in age] )
-
-    # The centenarian who lives in Plymouth isn't a native of Alaska
-    clues.append( [implies(lives_in[p,'Plymouth'],
-                            ~native[p,'Alaska']) for p in person] )
-
-    # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
-    clues.append( [implies(lives_in[p,'Tehama'],
-                            (p != 'Mattie') &
-                            ((native['Mattie','Alaska'] & native[p,'Kansas']) |
-                            (native[p,'Alaska'] & native['Mattie','Kansas']))) for p in person] )
-
-    # model = Model(bij + trans + clues)
-    model = Model(clues)
-    return model
 
 def frietKotProblem():
     # Construct the model.
     (mayo, ketchup, curry, andalouse, samurai) = BoolVar(5)
+
 
     Nora = mayo | ketchup
     Leander = ~samurai | mayo
@@ -666,20 +531,13 @@ def frietKotProblem():
 
     allwishes = [Nora, Leander, Benjamin, Behrouz, Guy, Daan, Celine, Anton, Danny, Luc]
 
-    model = Model(allwishes)
+    bv= [BoolVar() for _ in allwishes]
+    constraints = [implies(bv[id], clause) for id, clause in enumerate(allwishes)]
+
+
+    # model = Model(allwishes)
     # print(model)
-    return model
-
-
-def origin_test():
-    parameters = {'extension': 'greedy_no_param','output': 'log.json'}
-
-    model = originProblem()
-    constraints = model.constraints
-    cnf = to_cnf(constraints)
-    pysat_cnf = cnf_to_pysat(cnf)
-    # print(pysat_cnf)
-    seq = omusExplain(pysat_cnf, weights=[len(c) for c in pysat_cnf], parameters=parameters, incremental=False)
+    return constraints, bv
 
 
 def originProblem():
@@ -788,6 +646,40 @@ def test_MSSes():
     frozen_cnf = [frozenset(c) for c in cnf]
     seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
 
+def explain_p5(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
+                   incremental=True, 
+                   reuse_mss=True):
+    relations, (clues, trans, bij), (bv_clues, bv_trans, bv_bij)  = p5()
+
+    # CNF building
+    cnf_clues = [frozenset(clause) for clause in cnf_to_pysat(to_cnf(clues))]
+    cnf_trans = [frozenset(clause) for clause in cnf_to_pysat(to_cnf(trans))]
+    cnf_bij = [frozenset(clause) for clause in cnf_to_pysat(to_cnf(bij))]
+    cnf_bv = [frozenset({bv.name+1}) for bv in bv_clues+ bv_bij+ bv_trans]
+
+    # HARD constraints with "infinite" weights
+    weights_cnf = [1000 for i in range(len(cnf_clues) + len(cnf_bij) + len(cnf_trans))]
+
+    # SOFT constraints with heavy weights for clues and small weights for trans/bij
+    weights_bij_bv = [5 for _ in bv_bij]
+    weights_trans_bv = [5 for _ in bv_trans]
+    weights_clues_bv = [20 for _ in bv_clues]
+
+    # FINAL CNF
+    cnf = cnf_clues + cnf_bij + cnf_trans
+    weights = weights_cnf + weights_clues_bv + weights_bij_bv + weights_trans_bv
+    bv = set(bv.name+1 for bv in bv_clues+ bv_bij+ bv_trans)
+
+    o, exp_seq = omusExplain(
+        hard_clauses=cnf_clues + cnf_bij + cnf_trans, 
+        soft_clauses=cnf_bv,
+        weights=weights,
+        bv=bv,
+        rels=relations,
+        parameters=parameters,
+        incremental=True,
+        reuse_mss=True
+    )
 
 def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
                    incremental=True, 
@@ -810,7 +702,15 @@ def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.jso
               [len(clause) for clause in bij_cnf]
 
     print("About to call")
-    o, expl_seq = omusExplain(cnf=cnf, rels=rels, weights=weights, parameters=parameters, incremental=True, reuse_mss=True)
+    o, expl_seq = omusExplain(
+        cnf=cnf,
+        weights=weights,
+        bv=bv,
+        rels=None,
+        parameters=parameters,
+        incremental=True,
+        reuse_mss=True
+    )
 
     o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
     del o
@@ -824,19 +724,38 @@ def explain_frietkot(parameters={'extension': 'greedy_sat','output': 'log.json'}
     now = datetime.now().strftime("%H_%M_%S")
 
     # explain
-    cppy_model = frietKotProblem()
-    cnf = cnf_to_pysat(cppy_model.constraints)
-    frozen_cnf = [frozenset(c) for c in cnf]
-    o, expl_seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=incremental, reuse_mss=reuse_mss)
+    constraints, bv_constraints = frietKotProblem()
+    cnf = cnf_to_pysat(to_cnf(constraints)) 
+    bv = set(bv.name+1 for bv in bv_constraints)
+
+    weights = [2, 2, 3, 3, 3, 3,1, 3, 4, 2]
+
+    # cnf = cnf_to_pysat(cppy_model.constraints)
+    hard_clauses = [frozenset(c) for c in cnf]
+    soft_clauses=[frozenset({bv.name + 1}) for bv in bv_constraints]
+    
+    o, expl_seq = omusExplain(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        weights=weights,
+        bv=bv,
+        rels=None,
+        parameters=parameters,
+        incremental=True,
+        reuse_mss=True
+    )
+
     o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
     del o
 
 if __name__ == "__main__":
-    print("-------------------")
-    print("Explaining FRIETKOT")
-    print("-------------------\n")
+    # print("-------------------")
+    # print("Explaining FRIETKOT")
+    # print("-------------------\n")
     explain_frietkot()
-    print("\n\n-------------------")
-    print("Explaining ORIGIN")
-    print("-------------------\n")
-    explain_origin()
+    # print("\n\n-------------------")
+    # print("Explaining ORIGIN")
+    # print("-------------------\n")
+    # explain_origin()
+    # explain_p5()
+

@@ -164,30 +164,32 @@ def naiveOptimalPropagate(cnf, I):
     return lits
 
 
-def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False, reuse_mss=False, I0=None):
+def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, weights=None, bv=None, parameters=None, incremental=False, reuse_mss=False, I0=None):
     # initial interpretation
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
     # # TODO: match fact with table element from rels
     if I0 is None:
         I0 = set()
     I = I0
     I_cnf = [frozenset({lit}) for lit in I0]
     I_end_all = maxPropagate(cnf, list(I0))
+    print(I_end_all)
+
     # if rels != None:
     grid_variables = set()
     if rels is not None:
         for rel in rels:
             # print("\n", rel.df, "\n")
-
             for item in rel.df.values:
                 grid_variables |= set(i.name+1 for i in item)
-
         I_end = set(i for i in I_end_all if abs(i) in grid_variables)
     else:
         I_end = I_end_all
 
     # explanation sequence
     expl_seq = []
-    # print(I_cnf)
+    weights_ids = set()
     # add unit literals to Interpretation
     for id, cl in enumerate(list(cnf)):
         if len(cl) == 1:
@@ -195,13 +197,15 @@ def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False
             I.add(lit)
             I_cnf.append(frozenset({lit}))
             cnf.remove(cl)
-            del weights[id]
+            # del weights[id]
+            weights_ids.add(id)
             expl_seq.append((set(), cl, lit))
             print(f"UNIT explanation \t\t {set()}\t /\\ {cl}\t => {lit}\n")
+    weights = [w for id, w in enumerate(weights) if id not in weights_ids]
 
-    print(I_cnf)
     # @TIAS:  OMUS model with all clauses
-    o = OMUS(from_clauses=cnf, I=I_end_all, parameters=parameters, weights=weights, logging=True, reuse_mss=reuse_mss)
+    # o = OMUS(from_clauses=cnf, I=I_end_all, bv=bv, parameters=parameters, weights=weights, logging=True, reuse_mss=reuse_mss)
+    o = OMUS(hard_clauses=hard_clauses, soft_clauses=soft_clauses, I=I_end_all, bv=bv, soft_weights=weights, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=reuse_mss)
 
     cnt = 0
     while len(I_end - I) > 0:
@@ -209,33 +213,30 @@ def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False
         cost_best = None
         E_best, S_best, N_best = None, None, None
 
-        # existing facts
+        # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
-        print(f"run {cnt}")
-        explainable_facts = list(I_end - I)
-        random.shuffle(explainable_facts)
-        for i in explainable_facts:
-            print(f"\n\t{cnt} - Explaining fact [{i}]")
-            t_start_omus = time.time()
+
+        for i in I_end - I:
             # Match MSS
             if incremental:
-
                 hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
-                                                add_weights=w_I)
+                                             add_weights=w_I)
             else:
                 hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
-                                            add_weights=w_I)
-            t_end_omus = time.time()
-            print(f"\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
-            print("\t\t\t - #Steps OptHS\t\t\t", o.optimal_steps[-1])
-            print("\t\t\t - #Steps Greedy HS\t\t", o.greedy_steps[-1])
-            print("\t\t\t - #Steps Incremental HS\t", o.incremental_steps[-1])
+                                         add_weights=w_I)
 
-            print("\t\t\t - Time OptHS\t\t\t", round(sum(o.timing.optimal[-1:-(1+o.optimal_steps[-1]):-1]),3), "s")
-            print("\t\t\t - Time Greedy HS\t\t", round(sum(o.timing.greedy[-1:-(1+o.greedy_steps[-1]):-1]),3), "s")
-            print("\t\t\t - Time Incremental HS\t\t", round(sum(o.timing.incremental[-1:-(1+o.incremental_steps[-1]):-1]),3), "s")
-            # print(f"\t OMUS: {round(t_end_omus - t_start_omus, 2)}")
-            print(f"\t\t MSS size={o.MSS_sizes[-1]}\n")
+            # t_end_omus = time.time()
+
+            # print(f"\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
+            # print("\t\t\t - #Steps OptHS\t\t\t", o.optimal_steps[-1])
+            # print("\t\t\t - #Steps Greedy HS\t\t", o.greedy_steps[-1])
+            # print("\t\t\t - #Steps Incremental HS\t", o.incremental_steps[-1])
+
+            # print("\t\t\t - Time OptHS\t\t\t", round(sum(o.timing.optimal[-1:-(1+o.optimal_steps[-1]):-1]),3), "s")
+            # print("\t\t\t - Time Greedy HS\t\t", round(sum(o.timing.greedy[-1:-(1+o.greedy_steps[-1]):-1]),3), "s")
+            # print("\t\t\t - Time Incremental HS\t\t", round(sum(o.timing.incremental[-1:-(1+o.incremental_steps[-1]):-1]),3), "s")
+            # # print(f"\t OMUS: {round(t_end_omus - t_start_omus, 2)}")
+            # print(f"\t\t MSS size={o.MSS_sizes[-1]}\n")
 
             # explaining facts
             E_i = [ci for ci in explanation if ci in I_cnf]
@@ -253,7 +254,7 @@ def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False
 
                 # @TIAS: printing explanations as they get better
                 # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
-        
+
         # propagate as much info as possible
         N_best = optimalPropagate(E_best + S_best, I)
 

@@ -151,11 +151,12 @@ class Timings(object):
 
 
 class OMUS(object):
-    def __init__(self, from_clauses=None, I=None, from_CNF=None, solver="Gurobi-Warm", parameters={}, weights=None, f=lambda x: len(x), logging=True, reuse_mss=True):
+    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, bv=None, soft_weights=None, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=True):
         # checking input
         assert (f is not None) or (weights is not None), "No mapping function or weights supplied."
-        assert (from_clauses is not None) or (from_CNF), "No clauses or CNF supplied."
+        assert (hard_clauses is not None), "No clauses or CNF supplied."
         assert I is not None, "No interpretation provided"
+        assert bv is not None, "Please add indication variables"
 
         # parameters of the solver
         self.extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
@@ -173,28 +174,26 @@ class OMUS(object):
             self.incremental_steps = []
 
         # clauses
-        if from_clauses is not None:
-            clauses = [ci for ci in from_clauses if ci is not None and len(ci) > 0]
-            cnf = CNF(from_clauses=clauses).clauses
-        elif from_CNF is not None:
-            cnf = from_CNF.clauses
-
-        self.base_clauses = [frozenset(clause) for clause in cnf]
+        self.hard_clauses = [frozenset(clause) for clause in hard_clauses]
+        self.soft_clauses = [frozenset(clause) for clause in soft_clauses]
         self.clauses = None
-        self.nClauses = len(self.base_clauses)
+        self.nClauses = len(self.soft_clauses)
+
+        # indicator variables
+        self.bv = bv
+        self.nBv = len(bv)
 
         # weights
         self.f = f
-
-        if weights is None:
-            self.base_weights = [f(clause) for clause in self.clauses]
+        if f is not None:
+            self.soft_weights = [f(clause) for clause in soft_clauses]
         else:
-            self.base_weights = weights
+            self.soft_weights = soft_weights
 
         self.weights = None
-        self.nWeights = len(self.base_weights)
+        self.nWeights = len(self.soft_weights)
 
-        assert self.nClauses == self.nWeights, f"# clauses ({self.nClauses}) != # weights ({self.nClauses})"
+        assert self.nClauses == self.nWeights, f"# clauses ({self.nClauses}) != #weights ({self.nClauses})"
 
         # MSS
         self.reuse_mss = reuse_mss
@@ -202,24 +201,26 @@ class OMUS(object):
             self.MSSes = set()
             self.MSS_sizes = []
 
-        # Keep track of clauses troughout the different omus/omusIncr calls
+        # Keep track of soft clauses troughout the different omus/omusIncr calls
         self.clauseIdxs = dict()
 
-        all_clauses = self.base_clauses + [frozenset({lit}) for lit in I] + [frozenset({-lit}) for lit in I]
+        all_clauses = self.soft_clauses + [frozenset({lit}) for lit in I] + [frozenset({-lit}) for lit in I]
 
         # matching table clause to fixed id
         for idx, clause in enumerate(all_clauses):
             self.clauseIdxs[clause] = idx
 
-    def checkSatNoSolver(self, f_prime):
+    def checkSatNoSolver(self, f_prime=None):
         if self.logging:
             tstart = time.time()
-
-        if len(f_prime) == 0:
+        
+        if f_prime is not None and len(f_prime) == 0:
             return [], True
 
-        # print(f_prime)
-        validated_clauses = [self.clauses[i] for i in f_prime]
+        if f_prime is None:
+            validated_clauses = self.clauses + self.hard_clauses
+        else:
+            validated_clauses = [self.clauses[i] for i in f_prime]
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
 
         with Solver() as s:
@@ -246,7 +247,7 @@ class OMUS(object):
         if len(f_prime) == 0:
             return [], True, satsolver
 
-        validated_clauses = [self.clauses[i] for i in f_prime]
+        validated_clauses = [self.clauses[i] for i in f_prime] + self.hard_clauses
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
 
         satsolver.append_formula(validated_clauses, no_return=False)
@@ -267,7 +268,7 @@ class OMUS(object):
         if self.logging:
             tstart = time.time()
 
-        validated_clauses = [self.clauses[i] for i in hs]
+        validated_clauses = [self.clauses[i] for i in hs] + self.hard_clauses
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
         clause = self.clauses[c]
 
@@ -410,7 +411,7 @@ class OMUS(object):
 
         return hs
 
-    def gurobiOptimalHittingSetAll(self, gurobi_model, C):
+    # def gurobiOptimalHittingSetAll(self, gurobi_model, C):
         if self.logging:
             tstart = time.time()
 
@@ -531,12 +532,13 @@ class OMUS(object):
         return F_prime
 
     def greedy_no_param(self,  F_prime, model):
+        all_clauses = self.clauses + self.hard_clauses
         cl_true = set(F_prime)
         cl_unk = set( range(self.nClauses) ) - cl_true
 
         lit_true = set(model)
         lit_false = set(-l for l in model)
-        lit_unk = set(frozenset.union(*self.clauses)) - lit_true - lit_false
+        lit_unk = set(frozenset.union(*all_clauses)) - lit_true - lit_false
 
         # init counter
         cnt = Counter({literal:0 for literal in lit_unk})
@@ -817,7 +819,6 @@ class OMUS(object):
                     new_model = s.get_model()
         return new_F_prime, new_model
 
-
     def greedy_vertical(self,  F_prime, model):
         ts = time.time()
         cl_true = set(F_prime)
@@ -1085,24 +1086,22 @@ class OMUS(object):
         n_optimal = self.steps.optimal
         n_incremental = self.steps.incremental
 
-        # TODO 1.1 MSS - improvement: compact way to represent recurring msses+models
-        # 1.2 MSS - improvement: check model if possible to reuse ?
-        # ---- getting more steps when reusing the models
         # Build clauses and additional weights
-        self.clauses = self.base_clauses + add_clauses
+        self.clauses = self.soft_clauses + add_clauses
         self.nClauses = len(self.clauses)
 
         if add_weights is not None:
-            self.weights = self.base_weights + add_weights
+            self.weights = self.soft_weights + add_weights
         elif self.f is not None:
-            self.weights = self.base_weights + [f(clause) for clause in add_clauses]
+            self.weights = self.soft_weights + [f(clause) for clause in add_clauses]
 
+        # ---- getting more steps when reusing the models
         self.nWeights = len(self.weights)
+
         assert self.nClauses == self.nWeights, "Weights must be the same"
 
-
         F = frozenset(range(self.nClauses))
-        mapped_model, solved =  self.checkSatNoSolver(F)
+        mapped_model, solved =  self.checkSatNoSolver()
         assert solved == False, "CNF is satisfiable"
 
         H, C = [], []

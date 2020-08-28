@@ -1059,7 +1059,7 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, add_clauses, add_weights=None):
+    def omusIncr(self, add_clauses, add_weights=None, limit=20):
         # Benchmark info
         t_start = time.time()
         n_msses = len(self.MSSes)
@@ -1122,6 +1122,10 @@ class OMUS(object):
         while(True):
             print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}", end='\r')
             while(True):
+                if self.steps.greedy - n_greedy + self.steps.optimal - n_optimal + self.steps.incremental - n_incremental > limit:
+                    print("early stopping")
+                    return None, None
+
                 print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}", end='\r')
                 if mode == MODE_INCR:
                     if self.logging:
@@ -1139,7 +1143,7 @@ class OMUS(object):
                     if self.logging:
                         tend = time.time()
                         self.timing.incremental.append(tend - tstart)
-                        # print("time incr:",tend-tstart)
+                        print("time incr:",tend-tstart)
                         self.steps.incremental += 1
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
@@ -1148,7 +1152,7 @@ class OMUS(object):
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
                     (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c_best)
-                    # print("time incr w sat:",time.time()-tstart)
+                    print("time incr w sat:",time.time()-tstart)
                 elif mode == MODE_GREEDY:
                     (model, sat, satsolver) = self.checkSat(hs)
 
@@ -1167,7 +1171,7 @@ class OMUS(object):
                 # ------ Grow
                 tstart = time.time()
                 MSS, MSS_model = self.grow(hs, model)
-                # print("time of grow:",time.time()-tstart)
+                print("time of grow:",time.time()-tstart)
                 C = F - MSS
                 assert len(C) > 0, f"Greedy: hs={hs}, model={model}"
 

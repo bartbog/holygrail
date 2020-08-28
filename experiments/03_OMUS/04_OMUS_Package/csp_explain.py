@@ -164,7 +164,7 @@ def naiveOptimalPropagate(cnf, I):
     return lits
 
 
-def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False, reuse_mss=False, I0=None):
+def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False, reuse_mss=False, I0=None, limit=10, limit_step=10):
     # initial interpretation
     # # TODO: match fact with table element from rels
     if I0 is None:
@@ -223,7 +223,11 @@ def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False
             if incremental:
 
                 hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
-                                                add_weights=w_I)
+                                                add_weights=w_I, limit=limit)
+                if explanation is None:
+                    # early stopping
+                    print("Skipping",i,"for now")
+                    continue
             else:
                 hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
                                             add_weights=w_I)
@@ -255,6 +259,11 @@ def omusExplain(cnf, rels=None, weights=None, parameters=None, incremental=False
 
                 # @TIAS: printing explanations as they get better
                 # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
+
+        if cost_best is None:
+            # all early stopping
+            limit = limit + limit_step
+            continue
         
         # propagate as much info as possible
         N_best = optimalPropagate(E_best + S_best, I)

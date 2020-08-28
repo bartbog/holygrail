@@ -795,6 +795,104 @@ class OMUS(object):
         cl_true = set(i for i, clause in enumerate(self.clauses) if len(clause.intersection(lit_true)) > 0)
         return cl_true, lit_true
 
+    def greedy_vertical(self,  F_prime, model):
+        ts = time.time()
+        cl_true = set(F_prime)
+        cl_unk = set( range(self.nClauses) ) - cl_true
+        #print("cl_:", time.time()-ts, len(cl_unk))
+        #print("cl t",cl_true)
+
+        lit_true = set(model)
+        lit_false = set(-l for l in model)
+        lit_unk = set(frozenset.union(*self.clauses)) - lit_true - lit_false
+        #print("lit_:", time.time()-ts, len(lit_unk))
+        #print("lt t",lit_true)
+
+        ts2 = time.time()
+        # build vertical sets
+        new_true = set()
+        V = dict((e,set()) for e in lit_unk)  # for each unknown literal
+        for i in cl_unk:
+            # special case: already true
+            if len(self.clauses[i].intersection(lit_true)) > 0:
+                cl_true.add(i)
+                continue
+
+            # special case: unit literal unknown
+            unks = self.clauses[i].intersection(lit_unk)
+            if len(unks) == 1:
+                # unit
+                lit = next(iter(unks))
+                #print("pre: unit",i, unks)
+                if not -lit in new_true:
+                    new_true.add(lit)
+                    cl_true.add(i)
+            else:
+                for lit in unks:
+                    V[lit].add(i)
+        #print("unk",lit_unk)
+        #print(V)
+        # check for single polarity, add to new_true
+        singpolar = [-k for (k,v) in V.items() if len(v) == 0]
+        #print("singpolar", singpolar)
+        for k in singpolar:
+            if not -k in new_true:
+                new_true.add(k)
+        #print("new_true", new_true)
+        #print("Built vertical:", time.time()-ts2)
+
+        while(len(V) > 0):
+            # if new_true is empty, add best one
+            if len(new_true) == 0:
+                # get most frequent literal
+                (lit, cover) = max(V.items(), key=lambda tpl: len(tpl[1]))
+                new_true.add(lit)
+                #print("best new_true", new_true, len(cover))
+
+            # prep
+            # cl_newtrue = take union of new_true's in V (remove from V)
+            cl_newtrue = frozenset(e for k in new_true for e in V[k])
+            #print("cl_newtrue", cl_newtrue)
+            cl_true |= cl_newtrue
+            #print("cl_true", cl_true)
+            # cl_newfalse = take union of -new_true's in V (remove from V)
+            cl_newfalse = frozenset(e for k in new_true for e in V[-k])
+            #print("cl_newfalse", cl_newfalse)
+            for k in new_true:
+                del V[k]
+                if -k in V:
+                    del V[-k]
+
+            # update known literals, reset new_true
+            lit_true |= new_true
+            lit_unk -= new_true
+            new_false = frozenset(-k for k in new_true)
+            lit_false |= new_false
+            lit_unk -= new_false
+            new_true = set()
+            #print(V, lit_true, lit_unk)
+
+            for cl in cl_newfalse - cl_newtrue:
+                # check for unit, add to new_true
+                unks = self.clauses[cl].intersection(lit_unk)
+                if len(unks) == 1:
+                    # unit
+                    lit = next(iter(unks))
+                    #print("unit:",lit)
+                    if not -lit in new_true:
+                        new_true.add(lit)
+            # update vertical views (remove true clauses)
+            for e in list(V):
+                V[e] -= cl_newtrue
+                if len(V[e]) == 0 and not e in new_true:
+                    # single polarity
+                    #print("single polar:",-e)
+                    new_true.add(-e)
+            #print(V, lit_true, lit_unk)
+        #print("greedy_tias, t: ", time.time() - ts)
+        #print("remaining unks:", cl_unk)
+        return cl_true, lit_true
+
     def maxprop(self, F_prime, model):
         # parameters
         # best_unit_literal = self.parameters['best_unit_literal']

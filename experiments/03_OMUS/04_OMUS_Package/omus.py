@@ -1139,7 +1139,7 @@ class OMUS(object):
                     if self.logging:
                         tend = time.time()
                         self.timing.incremental.append(tend - tstart)
-                        print("time incr:",tend-tstart)
+                        # print("time incr:",tend-tstart)
                         self.steps.incremental += 1
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
@@ -1148,7 +1148,7 @@ class OMUS(object):
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
                     (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c_best)
-                    print("time incr w sat:",time.time()-tstart)
+                    # print("time incr w sat:",time.time()-tstart)
                 elif mode == MODE_GREEDY:
                     (model, sat, satsolver) = self.checkSat(hs)
 
@@ -1167,7 +1167,7 @@ class OMUS(object):
                 # ------ Grow
                 tstart = time.time()
                 MSS, MSS_model = self.grow(hs, model)
-                print("time of grow:",time.time()-tstart)
+                # print("time of grow:",time.time()-tstart)
                 C = F - MSS
                 assert len(C) > 0, f"Greedy: hs={hs}, model={model}"
 

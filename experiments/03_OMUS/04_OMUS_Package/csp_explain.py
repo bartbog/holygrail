@@ -7,7 +7,7 @@ import random
 from pysat.formula import CNF
 from pysat.solvers import Solver
 
-# sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
+sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 sys.path.append('/home/emilio/Documents/cppy_src/')
 
 from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat

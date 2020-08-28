@@ -2,6 +2,7 @@
 from collections import Counter
 from enum import Enum, IntEnum
 import time
+import random
 
 # Gurobi utilities
 import gurobipy as gp
@@ -509,6 +510,7 @@ class OMUS(object):
             'maxprop': self.maxprop,
             'greedy_param': self.greedy_param,
             'greedy_no_param': self.greedy_no_param,
+            'greedy_sat': self.greedy_sat,
             'maxsat': self.maxsat_fprime,
             # 'satlike': SATLike
         }
@@ -794,6 +796,27 @@ class OMUS(object):
         # assert all(False if -lit in lit_true else True for lit in lit_true)
         cl_true = set(i for i, clause in enumerate(self.clauses) if len(clause.intersection(lit_true)) > 0)
         return cl_true, lit_true
+
+    def greedy_sat(self, F_prime, model):
+        F = set(range(self.nClauses))
+        C = list(F - F_prime)
+        new_F_prime = set(F_prime)
+        new_model = set(model)
+        random.shuffle(C)
+        with Solver() as s:
+            for i in F_prime:
+                s.add_clause(self.clauses[i])
+            solved = s.solve()
+            while(solved):
+                c = C[0]
+                del C[0]
+                s.add_clause(self.clauses[c])
+                solved = s.solve()
+                if solved:
+                    new_F_prime.add(c)
+                    new_model = s.get_model()
+        return new_F_prime, new_model
+
 
     def greedy_vertical(self,  F_prime, model):
         ts = time.time()

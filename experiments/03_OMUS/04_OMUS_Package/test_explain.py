@@ -815,7 +815,7 @@ def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.jso
     o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
     del o
 
-def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
+def explain_frietkot(parameters={'extension': 'greedy_sat','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
     from datetime import date, datetime

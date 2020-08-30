@@ -530,9 +530,16 @@ class OMUS(object):
         return F_prime
 
     def greedy_no_param(self,  F_prime, model):
+        # XXX Tias thinks it has to be over all clause (filter back alter)
+        # XXX Tias: SHIT! 'grow' assumes all clauses are soft...
+        # XXX so it returns a solution with a violated hard constraint
+        # so F - that_thing = empty.
+        # how to overcome? 
+        # -> we should first grow the hard clauses (or call a SAT solver to be sure)
+        # -> only then 'grow' the soft clauses as we do!
         all_clauses = self.clauses + self.hard_clauses
         cl_true = set(F_prime)
-        cl_unk = set( range(self.nSoftClauses) ) - cl_true
+        cl_unk = set( range(len(all_clauses)) ) - cl_true
 
         lit_true = set(model)
         lit_false = set(-l for l in model)
@@ -541,7 +548,7 @@ class OMUS(object):
         # init counter
         cnt = Counter({literal:0 for literal in lit_unk})
         for i in cl_unk:
-            cnt.update(self.clauses[i])
+            cnt.update(all_clauses[i])
 
         # as long as some clauses are unassigned
         while len(cl_unk) > 0:
@@ -578,7 +585,8 @@ class OMUS(object):
 
             # update clauses (cl_unk will be modified in place)
             for idx in list(cl_unk):
-                clause = self.clauses[idx]
+                clause = all_clauses[idx]
+                print(idx, clause, lit_true)
                 unassgn = clause - lit_false
                 if len(unassgn) == 0:
                     # false, no need to check again
@@ -1179,7 +1187,10 @@ class OMUS(object):
 
                 # ------ Grow
                 MSS, MSS_model = self.grow(hs, model)
+                print("F",F)
+                print("MSS",MSS)
                 C = F - MSS
+                print("C",C)
                 assert len(C) > 0, f"Greedy: hs={hs}, model={model}"
 
                 # Store the MSSes

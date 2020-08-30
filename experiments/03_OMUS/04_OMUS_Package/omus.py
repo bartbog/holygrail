@@ -176,8 +176,8 @@ class OMUS(object):
         # clauses
         self.hard_clauses = [frozenset(clause) for clause in hard_clauses]
         self.soft_clauses = [frozenset(clause) for clause in soft_clauses]
-        self.clauses = None
-        self.nClauses = len(self.soft_clauses)
+        self.clauses = self.soft_clauses # soft + omus 'added' ones
+        self.nSoftClauses = len(self.soft_clauses)
 
         # indicator variables
         self.bv = bv
@@ -193,7 +193,7 @@ class OMUS(object):
         self.weights = None
         self.nWeights = len(self.soft_weights)
 
-        assert self.nClauses == self.nWeights, f"# clauses ({self.nClauses}) != #weights ({self.nClauses})"
+        assert self.nSoftClauses == self.nWeights, f"# clauses ({self.nSoftClauses}) != #weights ({self.nSoftClauses})"
 
         # MSS
         self.reuse_mss = reuse_mss
@@ -202,13 +202,11 @@ class OMUS(object):
             self.MSS_sizes = []
 
         # Keep track of soft clauses troughout the different omus/omusIncr calls
-        self.clauseIdxs = dict()
-
-        all_clauses = self.soft_clauses + [frozenset({lit}) for lit in I] + [frozenset({-lit}) for lit in I]
-
+        self.softClauseIdxs = dict()
         # matching table clause to fixed id
-        for idx, clause in enumerate(all_clauses):
-            self.clauseIdxs[clause] = idx
+        all_soft_clauses = self.soft_clauses + [frozenset({lit}) for lit in I] + [frozenset({-lit}) for lit in I]
+        for idx, clause in enumerate(all_soft_clauses):
+            self.softClauseIdxs[clause] = idx
 
     def checkSatNoSolver(self, f_prime=None):
         if self.logging:
@@ -364,10 +362,10 @@ class OMUS(object):
         g_model.Params.Threads = 8
 
         # create the variables
-        x = g_model.addMVar(shape=self.nClauses, vtype=GRB.BINARY, name="x")
+        x = g_model.addMVar(shape=self.nSoftClauses, vtype=GRB.BINARY, name="x")
 
         # set objective : min sum xi*wi
-        g_model.setObjective(sum(x[i] * self.weights[i] for i in range(self.nClauses)), GRB.MINIMIZE)
+        g_model.setObjective(sum(x[i] * self.weights[i] for i in range(self.nSoftClauses)), GRB.MINIMIZE)
 
         # update the model
         g_model.update()
@@ -402,7 +400,7 @@ class OMUS(object):
 
         # output hitting set
         x = gurobi_model.getVars()
-        hs = set(i for i in range(self.nClauses) if x[i].x == 1)
+        hs = set(i for i in range(self.nSoftClauses) if x[i].x == 1)
 
         if self.logging:
             tend = time.time()
@@ -430,7 +428,7 @@ class OMUS(object):
 
         # output hitting set
         x = gurobi_model.getVars()
-        hs = set(i for i in range(self.nClauses) if x[i].x == 1)
+        hs = set(i for i in range(self.nSoftClauses) if x[i].x == 1)
 
         if self.logging:
             tend = time.time()
@@ -456,7 +454,7 @@ class OMUS(object):
 
         # output hitting set
         x = gurobi_model.getVars()
-        hs = set(i for i in range(self.nClauses) if x[i].x == 1)
+        hs = set(i for i in range(self.nSoftClauses) if x[i].x == 1)
         gurobi_model.dispose()
 
         if self.logging:
@@ -534,7 +532,7 @@ class OMUS(object):
     def greedy_no_param(self,  F_prime, model):
         all_clauses = self.clauses + self.hard_clauses
         cl_true = set(F_prime)
-        cl_unk = set( range(self.nClauses) ) - cl_true
+        cl_unk = set( range(self.nSoftClauses) ) - cl_true
 
         lit_true = set(model)
         lit_false = set(-l for l in model)
@@ -620,9 +618,9 @@ class OMUS(object):
         lit_unk = set(frozenset.union(*self.clauses)) - lit_true - lit_false
         # Pre-processing is necessary
         if sorting != ClauseSorting.IGNORE:
-            cl_unk = list(set(range(self.nClauses)) - cl_true)
+            cl_unk = list(set(range(self.nSoftClauses)) - cl_true)
         else:
-            cl_unk = set(range(self.nClauses)) - cl_true
+            cl_unk = set(range(self.nSoftClauses)) - cl_true
 
         # literal- clause counter
         cnt = {lit:0 for lit in lit_unk}
@@ -800,7 +798,7 @@ class OMUS(object):
         return cl_true, lit_true
 
     def greedy_sat(self, F_prime, model):
-        F = set(range(self.nClauses))
+        F = set(range(self.nSoftClauses))
         C = list(F - F_prime)
         new_F_prime = set(F_prime)
         new_model = set(model)
@@ -822,7 +820,7 @@ class OMUS(object):
     def greedy_vertical(self,  F_prime, model):
         ts = time.time()
         cl_true = set(F_prime)
-        cl_unk = set( range(self.nClauses) ) - cl_true
+        cl_unk = set( range(self.nSoftClauses) ) - cl_true
         #print("cl_:", time.time()-ts, len(cl_unk))
         #print("cl t",cl_true)
 
@@ -1088,7 +1086,7 @@ class OMUS(object):
 
         # Build clauses and additional weights
         self.clauses = self.soft_clauses + add_clauses
-        self.nClauses = len(self.clauses)
+        self.nSoftClauses = len(self.clauses)
 
         if add_weights is not None:
             self.weights = self.soft_weights + add_weights
@@ -1098,9 +1096,9 @@ class OMUS(object):
         # ---- getting more steps when reusing the models
         self.nWeights = len(self.weights)
 
-        assert self.nClauses == self.nWeights, "Weights must be the same"
+        assert self.nSoftClauses == self.nWeights, "Weights must be the same"
 
-        F = frozenset(range(self.nClauses))
+        F = frozenset(range(self.nSoftClauses))
         mapped_model, solved =  self.checkSatNoSolver()
         assert solved == False, "CNF is satisfiable"
 
@@ -1115,7 +1113,7 @@ class OMUS(object):
 
 
         if self.reuse_mss:
-            F_idxs = {self.clauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
+            F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
             for mss_idxs, MSS_model in set(self.MSSes):
                 mss = set(F_idxs[mss_idx] for mss_idx in mss_idxs if mss_idx in F_idxs)
 
@@ -1131,7 +1129,7 @@ class OMUS(object):
                     added_MSSes.append(MSS)
                     self.addSetGurobiModel(gurobi_model, C)
                     #TODO: Check wether this is a good idea or not !
-                    mssIdxs = frozenset(self.clauseIdxs[self.clauses[id]] for id in MSS)
+                    mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
                     self.MSSes.add((mssIdxs, frozenset(model)))
 
         mode = MODE_GREEDY
@@ -1186,7 +1184,7 @@ class OMUS(object):
 
                 # Store the MSSes
                 if self.reuse_mss:
-                    mssIdxs = frozenset(self.clauseIdxs[self.clauses[id]] for id in MSS)
+                    mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
                     self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
                 h_counter.update(list(C))
@@ -1228,13 +1226,13 @@ class OMUS(object):
             mode = MODE_INCR
 
             if self.reuse_mss:
-                mssIdxs = frozenset(self.clauseIdxs[self.clauses[id]] for id in MSS)
+                mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
                 self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
     def omus(self, add_clauses, add_weights=None):
         # ---------- build clauses and additional weights
         self.clauses = self.base_clauses + add_clauses
-        self.nClauses = len(self.clauses)
+        self.nSoftClauses = len(self.clauses)
 
         if add_weights is not None:
             self.weights = self.base_weights + add_weights
@@ -1246,7 +1244,7 @@ class OMUS(object):
         assert len(self.clauses) == len(self.weights)
 
         # benchmark variables
-        F = frozenset(range(self.nClauses))
+        F = frozenset(range(self.nSoftClauses))
         gurobi_model = self.gurobiModel()
         H = []
         C = [] # last added 'set-to-hit'
@@ -1284,7 +1282,7 @@ class OMUS(object):
         results['execution_times'] = self.total_timings
         results['MSS_sizes'] = self.MSS_sizes
         results['MSSes'] = [ (list(MSS), list(model)) for MSS, model in self.MSSes]
-        results['nClauses'] = self.nClauses
+        results['nSoftClauses'] = self.nSoftClauses
         results['nWeights'] = self.nWeights
 
         # n steps for every OMUS call

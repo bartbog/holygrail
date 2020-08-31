@@ -191,16 +191,16 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
     expl_seq = []
     weights_ids = set()
     # add unit literals to Interpretation
-    for id, cl in enumerate(list(cnf)):
-        if len(cl) == 1:
-            lit = next(iter(cl))
-            I.add(lit)
-            I_cnf.append(frozenset({lit}))
-            cnf.remove(cl)
-            # del weights[id]
-            weights_ids.add(id)
-            expl_seq.append((set(), cl, lit))
-            print(f"UNIT explanation \t\t {set()}\t /\\ {cl}\t => {lit}\n")
+    #for id, cl in enumerate(list(cnf)):
+    #    if len(cl) == 1:
+    #        lit = next(iter(cl))
+    #        I.add(lit)
+    #        I_cnf.append(frozenset({lit}))
+    #        cnf.remove(cl)
+    #        # del weights[id]
+    #        weights_ids.add(id)
+    #        expl_seq.append((set(), cl, lit))
+    #        print(f"UNIT explanation \t\t {set()}\t /\\ {cl}\t => {lit}\n")
     weights = [w for id, w in enumerate(weights) if id not in weights_ids]
 
     # @TIAS:  OMUS model with all clauses
@@ -224,6 +224,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
             else:
                 hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
                                          add_weights=w_I)
+            print("hs",hs,"expl",explanation)
 
             # t_end_omus = time.time()
 
@@ -242,11 +243,13 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
             E_i = [ci for ci in explanation if ci in I_cnf]
 
             # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            S_i = [ci for ci in explanation if ci in cnf and ci not in E_i]
+            print("cnf",cnf)
+            S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
+            print("S_i",S_i)
 
             # new fact
             N_i = {i}
-            print(E_i, S_i, N_i)
+            print(f"Candidate explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
 
             if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
@@ -256,7 +259,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
                 # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
         # propagate as much info as possible
-        N_best = optimalPropagate(E_best + S_best, I)
+        N_best = optimalPropagate(hard_clauses + E_best + S_best, I)
 
         # add new info
         I = I | N_best

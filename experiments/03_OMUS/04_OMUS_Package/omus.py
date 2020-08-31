@@ -1176,7 +1176,6 @@ class OMUS(object):
                     (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c_best)
                 elif mode == MODE_GREEDY:
                     (model, sat, satsolver) = self.checkSat(hs)
-                    print("sat:",model)
 
                 if not sat:
                     # incremental hs is unsat, switch to optimal method

@@ -197,7 +197,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         I=I_end,
         bv=bv,
         soft_weights=soft_weights,
-        parameters={},  # default parameters
+        parameters=parameters,  # default parameters
         logging=True,
         reuse_mss=reuse_mss)
 

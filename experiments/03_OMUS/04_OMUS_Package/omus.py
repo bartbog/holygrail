@@ -159,11 +159,11 @@ class OMUS(object):
         assert bv is not None, "Please add indication variables"
 
         # parameters of the solver
-        self.extension = parameters['extension'] if 'extension' in parameters else 'maxsat'
-        # self.extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
+        # self.extension = parameters['extension'] if 'extension' in parameters else 'maxsat'
+        self.extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
         self.output = parameters['output'] if 'output' in parameters else 'log.json'
         self.parameters = parameters
-        # print("Extension")
+        print("Extension", self.extension)
 
         # Logging / benchmark info
         self.logging = logging

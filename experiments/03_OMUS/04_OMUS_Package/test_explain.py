@@ -817,7 +817,7 @@ def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.j
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
         soft_weights=weights,
-        # bv=bv,
+        bv=bv,
         parameters=parameters,
         incremental=True,
         reuse_mss=True,
@@ -831,7 +831,7 @@ if __name__ == "__main__":
     # print("-------------------")
     # print("Explaining FRIETKOT")
     # print("-------------------\n")
-    # explain_frietkot()
+    explain_frietkot()
     # print("\n\n-------------------")
     # print("Explaining ORIGIN")
     # print("-------------------\n")

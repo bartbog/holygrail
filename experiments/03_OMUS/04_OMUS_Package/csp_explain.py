@@ -227,7 +227,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
                     print("Does this ever happen ???")
                     best_cost_i = best_costs[i]
                 else:
-                    best_cost_i = min(cost_best, best_costs[i])
+                    best_cost_i = min([cost_best, best_costs[i]])
             else:
                 best_cost_i = cost_best
 

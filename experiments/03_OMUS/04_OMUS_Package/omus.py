@@ -482,7 +482,7 @@ class OMUS(object):
             'greedy_no_param': self.greedy_no_param,
             'greedy_sat': self.greedy_sat,
             'maxsat': self.maxsat_fprime,
-            # 'greedy_vertical': self.greedy_vertical,
+            'greedy_vertical': self.greedy_vertical,
             # 'satlike': SATLike
         }
         # print("clauses=", clauses)
@@ -815,7 +815,7 @@ class OMUS(object):
         ts2 = time.time()
         # build vertical sets
         new_true = set()
-        V = dict((e,set()) for e in lit_unk)  # for each unknown literal
+        V = dict((e, set()) for e in lit_unk)  # for each unknown literal
         for i in cl_unk:
             # special case: already true
             if len(self.clauses[i].intersection(lit_true)) > 0:

@@ -227,7 +227,8 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
             # t_end_omus = time.time()
             assert len(hs) > 0, "OMUS shoudl be non empty"
-            print(explanation)
+            # print([o.clauses[i] for i in hs], explanation)
+            print([f'{o.clauses[i]}: soft\n' if o.clauses[i] in soft_clauses else f'{o.clauses[i]}: hard\n' for i in hs])
             # print(f"\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
             # print("\t\t\t - #Steps OptHS\t\t\t", o.optimal_steps[-1])
             # print("\t\t\t - #Steps Greedy HS\t\t", o.greedy_steps[-1])

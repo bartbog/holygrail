@@ -560,15 +560,19 @@ def originProblem():
     cnt = 0
     bij = []
     bv_bij = [BoolVar() for i in range(60)]
+    # bv_bij = []
+
     for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
         # for each relation
         for col_ids in rel.df:
             # one per column
+            # bij += exactly_one(rel[:, col_ids])
             b1 = to_cnf(exactly_one(rel[:, col_ids]))
             [bij.append(implies(bv_bij[cnt], clause)) for clause in b1]
             cnt += 1
         for (_,row) in rel.df.iterrows():
             # one per row
+            # bij += exactly_one(row)
             b2 = to_cnf(exactly_one(row))
             [bij.append( implies(bv_bij[cnt] , clause) ) for clause in b2]
             cnt += 1
@@ -679,14 +683,14 @@ def originProblem():
     # The centenarian who lives in Plymouth isn't a native of Alaska
     c8a = to_cnf([implies(lives_in[p, 'Plymouth'], ~native[p, 'Alaska']) for p in person])
     [clues.append(implies(bv_clues[8], clause)) for clause in c8a]
-    # clues.append([implies(lives_in[p, 'Plymouth'], ~native[p, 'Alaska']) for p in person])
-
+    # [clues.append(implies(bv_clues[8], implies(lives_in[p, 'Plymouth'], ~native[p, 'Alaska']))) for p in person]
 
     # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
     c9a = to_cnf([implies(lives_in[p, 'Tehama'],
                           (p != 'Mattie') &
                           ((native['Mattie', 'Alaska'] & native[p, 'Kansas']) |
                            (native[p, 'Alaska'] & native['Mattie', 'Kansas']))) for p in person])
+
     [clues.append(implies(bv_clues[9], clause)) for clause in c9a]
     # clues.append([implies(lives_in[p, 'Tehama'],
     #                       (p != 'Mattie') &
@@ -745,7 +749,7 @@ def explain_p5(parameters={'extension': 'greedy_no_param','output': 'log.json'},
         unknown_facts=explainable_facts
     )
 
-def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
+def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
 
@@ -761,14 +765,13 @@ def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.jso
     bij_cnf = cnf_to_pysat(to_cnf(bij))
     trans_cnf = cnf_to_pysat(to_cnf(trans))
 
-
     hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
     soft_clauses = []
     soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
     soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
     soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
 
-    # print(maxPropagate(cnf))
+    # print(maxPropagate(hard_clauses + soft_clauses))
 
     weights = [20 for clause in bv_clues] + \
               [5 for clause in bv_trans] + \
@@ -776,6 +779,7 @@ def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.jso
 
     explainable_facts = set()
     for rel in rels:
+        print(rel.df)
         for item in rel.df.values:
             explainable_facts |= set(i.name+1 for i in item)
 
@@ -831,7 +835,7 @@ if __name__ == "__main__":
     # print("-------------------")
     # print("Explaining FRIETKOT")
     # print("-------------------\n")
-    explain_frietkot()
+    # explain_frietkot()
     # print("\n\n-------------------")
     # print("Explaining ORIGIN")
     # print("-------------------\n")

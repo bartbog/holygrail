@@ -130,7 +130,10 @@ def optimalPropagate(cnf, I):
     # anders: stoppen, huidige intersection gebruike
     with Solver() as s:
         s.append_formula(cnf, no_return=False)
-        s.solve(assumptions=list(I))
+        if len(I) > 0:
+            s.solve(assumptions=list(I))
+        else:
+            s.solve()
         # models = []
         model = None
         for i, m in enumerate(s.enum_models()):
@@ -164,7 +167,7 @@ def naiveOptimalPropagate(cnf, I):
     return lits
 
 
-def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, weights=None, bv=None, parameters=None, incremental=False, reuse_mss=False, I0=None):
+def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, weights=None, bv=None, parameters=None, incremental=False, reuse_mss=False, I0=None, unknown_facts=None):
     # initial interpretation
     if hard_clauses is not None and soft_clauses is not None:
         cnf = hard_clauses+soft_clauses
@@ -173,9 +176,14 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
         I0 = set()
     I = I0
     I_cnf = [frozenset({lit}) for lit in I0]
+    
     # TODO: should become optimalpropagate!!!
-    #I_end_all = optimalPropagate(cnf, I0)
-    I_end_all = maxPropagate(cnf, list(I0))
+    I_end_all = optimalPropagate(cnf, I0)
+    
+    [print(id, ":", clause) for id, clause in enumerate(cnf)]
+    print("Hard:", hard_clauses)
+    print("soft:", soft_clauses)
+    # I_end_all = maxPropagate(cnf, list(I0))
     print(I_end_all)
 
     # if rels != None:
@@ -208,9 +216,11 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
     # @TIAS:  OMUS model with all clauses
     # o = OMUS(from_clauses=cnf, I=I_end_all, bv=bv, parameters=parameters, weights=weights, logging=True, reuse_mss=reuse_mss)
     o = OMUS(hard_clauses=hard_clauses, soft_clauses=soft_clauses, I=I_end_all, bv=bv, soft_weights=weights, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=reuse_mss)
+    explainable_facts = set(lit for lit in optimalPropagate(cnf, I0) if abs(lit) in unknown_facts)
 
     cnt = 0
-    while len(I_end - I) > 0:
+
+    while len(explainable_facts - I) > 0:
         assert len(I) == len(I_cnf)
         cost_best = None
         E_best, S_best, N_best = None, None, None
@@ -218,7 +228,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
 
-        for i in I_end - I:
+        for i in explainable_facts - I:
             # Match MSS
             if incremental:
                 hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
@@ -248,7 +258,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
 
             # new fact
             N_i = {i}
-            print(f"Candidate explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
+            # print(f"Candidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i}\n")
 
             if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
@@ -267,7 +277,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
         expl_seq.append((E_best, S_best, N_best))
 
         # @TIAS: printing explanations
-        print(f"Optimal explanation \t\t {E_best} /\\ {S_best} => {N_best}\n")
+        print(f"Optimal explanation \t\t {E_best} /\\ {S_best} => {N_best.intersection(explainable_facts)}\n")
         # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
         cnt += 1

@@ -537,7 +537,7 @@ def frietKotProblem():
 
     # model = Model(allwishes)
     # print(model)
-    return constraints, bv
+    return constraints, bv, [mayo, ketchup, curry, andalouse, samurai]
 
 
 def originProblem():
@@ -724,7 +724,7 @@ def explain_frietkot(parameters={'extension': 'greedy_sat','output': 'log.json'}
     now = datetime.now().strftime("%H_%M_%S")
 
     # explain
-    constraints, bv_constraints = frietKotProblem()
+    constraints, bv_constraints, unknown_facts = frietKotProblem()
     cnf = cnf_to_pysat(to_cnf(constraints)) 
     bv = set(bv.name+1 for bv in bv_constraints)
 
@@ -733,6 +733,7 @@ def explain_frietkot(parameters={'extension': 'greedy_sat','output': 'log.json'}
     # cnf = cnf_to_pysat(cppy_model.constraints)
     hard_clauses = [frozenset(c) for c in cnf]
     soft_clauses=[frozenset({bv.name + 1}) for bv in bv_constraints]
+    explainable_facts = set(bv.name + 1 for bv in unknown_facts)
     
     o, expl_seq = omusExplain(
         hard_clauses=hard_clauses,
@@ -742,7 +743,8 @@ def explain_frietkot(parameters={'extension': 'greedy_sat','output': 'log.json'}
         rels=None,
         parameters=parameters,
         incremental=True,
-        reuse_mss=True
+        reuse_mss=True,
+        unknown_facts=explainable_facts
     )
 
     o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")

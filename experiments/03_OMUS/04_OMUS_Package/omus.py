@@ -1232,7 +1232,7 @@ class OMUS(object):
                     self.greedy_steps.append(self.steps.greedy - n_greedy)
                     self.incremental_steps.append(self.steps.incremental - n_incremental)
                 print("\n")
-                return hs, [set(self.clauses[idx]) for idx in hs]
+                return hs, [self.clauses[idx] for idx in hs]
 
             # ------ Grow
             # grow model over hard clauses first, must be satisfied

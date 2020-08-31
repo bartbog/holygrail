@@ -176,10 +176,10 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
         I0 = set()
     I = I0
     I_cnf = [frozenset({lit}) for lit in I0]
-    
+
     # TODO: should become optimalpropagate!!!
     I_end_all = optimalPropagate(cnf, I0)
-    
+
     [print(id, ":", clause) for id, clause in enumerate(cnf)]
     print("Hard:", hard_clauses)
     print("soft:", soft_clauses)
@@ -268,16 +268,17 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
                 # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
         # propagate as much info as possible
-        N_best = optimalPropagate(hard_clauses + E_best + S_best, I)
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
+        N_best = New_info.intersection(explainable_facts)
 
         # add new info
-        I = I | N_best
-        I_cnf += [frozenset({lit}) for lit in N_best]
+        I = I | New_info
+        I_cnf += [frozenset({lit}) for lit in New_info]
 
         expl_seq.append((E_best, S_best, N_best))
 
         # @TIAS: printing explanations
-        print(f"Optimal explanation \t\t {E_best} /\\ {S_best} => {N_best.intersection(explainable_facts)}\n")
+        print(f"Optimal explanation \t\t {E_best} /\\ {S_best} => {N_best}\n")
         # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
         cnt += 1

@@ -169,7 +169,7 @@ def naiveOptimalPropagate(cnf, I):
     return lits
 
 
-def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=None, bv=None, parameters=None, incremental=False, reuse_mss=False, I0=None, unknown_facts=None):
+def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=None, bv=None, parameters=None, incremental=False, reuse_mss=False, I0=None, unknown_facts=None, limit=1, limit_step=1):
     # initial interpretation
     if hard_clauses is not None and soft_clauses is not None:
         cnf = hard_clauses+soft_clauses
@@ -220,7 +220,11 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             print("Explaining ", i)
             if incremental:
                 hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
-                                             add_weights=w_I)
+                                             add_weights=w_I, limit=limit)
+                if explanation is None:
+                    # early stopping
+                    print(f"Skipping {i} for now: limit {limit} reached")
+                    continue
             else:
                 hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
                                          add_weights=w_I)
@@ -255,6 +259,11 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             # @TIAS: printing explanations as they get better
             print(f"\tFacts: {E_i} Clause: {S_i} => {N_i} (",cost((E_i, S_i, N_i)),")")
 
+        if cost_best is None:
+            # all were early stopped by limit
+            limit = limit + limit_step
+            continue
+
         # propagate as much info as possible
         # print(explanation)
         New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
@@ -275,6 +284,9 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
 
     # o.export_results('results/')
+
+    print("Explanation sequence:")
+    print("\n".join(map(str,expl_seq)))
 
     return o, expl_seq
 

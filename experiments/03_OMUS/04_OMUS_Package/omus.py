@@ -289,6 +289,8 @@ class OMUS(object):
         # trivial case: empty
         # print(H)
         if len(H) == 0:
+            if self.logging:
+                self.steps.greedy += 1
             return set()
 
         # the hitting set
@@ -991,7 +993,7 @@ class OMUS(object):
 
         return t_F_prime, lit_true
 
-    def maxsat_fprime(self, F_prime, model, grow_clauses):
+    def maxsat_fprime(self, F_prime, model):
         t_F_prime = set(F_prime)
 
         wcnf = WCNF()
@@ -1062,7 +1064,7 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, add_clauses, add_weights=None):
+    def omusIncr(self, add_clauses, add_weights=None, limit=None):
         # Benchmark info
         t_start = time.time()
         n_msses = len(self.MSSes)
@@ -1087,6 +1089,7 @@ class OMUS(object):
         F = frozenset(range(self.nSoftClauses))
         mapped_model, solved =  self.checkSatNoSolver()
         assert solved == False, f"CNF is satisfiable check sat no solver"
+        #print("\tcnf is sat", time.time()-t_start)
 
         H, C = [], []
         h_counter = Counter()
@@ -1098,6 +1101,7 @@ class OMUS(object):
         satsolver, sat, hs = None, None, None
 
 
+        # XXX THIS PART IS A BOTTLENECK: slow for some reason... perhaps first 4 lines the list comprehension
         if self.reuse_mss:
             F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
             for mss_idxs, MSS_model in set(self.MSSes):
@@ -1122,13 +1126,17 @@ class OMUS(object):
                     self.addSetGurobiModel(gurobi_model, C)
                     mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
                     self.MSSes.add((mssIdxs, frozenset(model)))
+        #print("\treuse added", time.time()-t_start)
 
         mode = MODE_GREEDY
         #print("\n")
         while(True):
-            # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
+            #print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True):
-                # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
+                #print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
+                if limit is not None and \
+                   self.steps.greedy - n_greedy + self.steps.optimal - n_optimal + self.steps.incremental - n_incremental >= limit:
+                    return None, None
                 if mode == MODE_INCR:
                     # print("Incremental")
                     if self.logging:
@@ -1150,12 +1158,14 @@ class OMUS(object):
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
                     hs = self.greedyHittingSet(H)
+                #print("\tgreedy or incr computed", time.time()-t_start)
 
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
                     (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c_best)
                 elif mode == MODE_GREEDY:
                     (model, sat, satsolver) = self.checkSat(hs)
+                #print("\ths sat checked", time.time()-t_start)
 
                 if not sat:
                     # incremental hs is unsat, switch to optimal method
@@ -1184,6 +1194,7 @@ class OMUS(object):
                 C = F - MSS
                 #print("C",C)
                 assert len(C) > 0, f"Greedy: hs={hs}, model={model}"
+                #print("hs grown", time.time()-t_start)
 
                 # Store the MSSes
                 if self.reuse_mss:
@@ -1197,11 +1208,14 @@ class OMUS(object):
                 # Sat => Back to incremental mode 
                 mode = MODE_INCR
 
+            #print("before optimal", time.time()-t_start)
             # ----- Compute Optimal Hitting Set
             hs = self.gurobiOptimalHittingSet(gurobi_model)
+            #print("after optimal", time.time()-t_start)
 
             # ------ Sat check
             (model, sat, satsolver) = self.checkSat(hs)
+            #print("optimal, sat?", time.time()-t_start)
 
             if not sat:
                 #

@@ -227,7 +227,6 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
             # t_end_omus = time.time()
             assert len(hs) > 0, "OMUS shoudl be non empty"
-            print(explanation)
             # print(f"\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
             # print("\t\t\t - #Steps OptHS\t\t\t", o.optimal_steps[-1])
             # print("\t\t\t - #Steps Greedy HS\t\t", o.greedy_steps[-1])
@@ -253,8 +252,8 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost((E_i, S_i, N_i))
 
-                # @TIAS: printing explanations as they get better
-                print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
+            # @TIAS: printing explanations as they get better
+            print(f"\tFacts: {E_i} Clause: {S_i} => {N_i} (",cost((E_i, S_i, N_i)),")")
 
         # propagate as much info as possible
         # print(explanation)

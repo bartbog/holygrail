@@ -482,7 +482,7 @@ class OMUS(object):
             'greedy_no_param': self.greedy_no_param,
             'greedy_sat': self.greedy_sat,
             'maxsat': self.maxsat_fprime,
-            # 'greedy_vertical': self.greedy_vertical,
+            'greedy_vertical': self.greedy_vertical,
             # 'satlike': SATLike
         }
         # print("clauses=", clauses)
@@ -490,7 +490,7 @@ class OMUS(object):
         # print("F_prime=", F_prime)
         # print("model=", model)
         # print("parameters=", parameters)
-        new_F_prime, new_model = extensions[extension](F_prime, model, clauses)
+        new_F_prime, new_model = extensions[extension](F_prime, model)
 
         if self.logging:
             tend = time.time()
@@ -502,7 +502,7 @@ class OMUS(object):
     def defaultExtension(self, F_prime, model, clauses):
         return F_prime
 
-    def greedy_no_param(self,  F_prime, model, grow_clauses):
+    def greedy_no_param(self,  F_prime, model):
         # XXX Tias thinks it has to be over all clause (filter back alter)
         # XXX Tias: SHIT! 'grow' assumes all clauses are soft...
         # XXX so it returns a solution with a violated hard constraint
@@ -510,9 +510,7 @@ class OMUS(object):
         # how to overcome? 
         # -> we should first grow the hard clauses (or call a SAT solver to be sure)
         # -> only then 'grow' the soft clauses as we do!
-        if grow_clauses is None:
-            print("Warning, GROW should get explicit hard/soft clauses...")
-            grow_clauses = self.clauses + self.hard_clauses
+        grow_clauses = self.clauses + self.hard_clauses
         cl_true = set(F_prime)
         cl_unk = set( range(len(grow_clauses)) ) - cl_true
 
@@ -799,16 +797,20 @@ class OMUS(object):
                     new_model = s.get_model()
         return new_F_prime, new_model
 
-    def greedy_vertical(self,  F_prime, model):
+    def greedy_vertical(self, F_prime, model):
+        # soft and hard, only soft indexes really matter but all need
+        # to be unit-propagated
+        grow_clauses = self.clauses + self.hard_clauses
+
         ts = time.time()
         cl_true = set(F_prime)
-        cl_unk = set( range(self.nSoftClauses) ) - cl_true
+        cl_unk = set( range(len(grow_clauses)) ) - cl_true
         #print("cl_:", time.time()-ts, len(cl_unk))
         #print("cl t",cl_true)
 
         lit_true = set(model)
         lit_false = set(-l for l in model)
-        lit_unk = set(frozenset.union(*self.clauses)) - lit_true - lit_false
+        lit_unk = set(frozenset.union(*grow_clauses)) - lit_true - lit_false
         #print("lit_:", time.time()-ts, len(lit_unk))
         #print("lt t",lit_true)
 
@@ -816,14 +818,14 @@ class OMUS(object):
         # build vertical sets
         new_true = set()
         V = dict((e,set()) for e in lit_unk)  # for each unknown literal
-        for i in cl_unk:
+        for i in sorted(cl_unk, reverse=True): # reverse: hard ones first
             # special case: already true
-            if len(self.clauses[i].intersection(lit_true)) > 0:
+            if len(grow_clauses[i].intersection(lit_true)) > 0:
                 cl_true.add(i)
                 continue
 
             # special case: unit literal unknown
-            unks = self.clauses[i].intersection(lit_unk)
+            unks = grow_clauses[i].intersection(lit_unk)
             if len(unks) == 1:
                 # unit
                 lit = next(iter(unks))
@@ -876,9 +878,9 @@ class OMUS(object):
             new_true = set()
             #print(V, lit_true, lit_unk)
 
-            for cl in cl_newfalse - cl_newtrue:
+            for cl in sorted(cl_newfalse - cl_newtrue, reverse=True):
                 # check for unit, add to new_true
-                unks = self.clauses[cl].intersection(lit_unk)
+                unks = grow_clauses[cl].intersection(lit_unk)
                 if len(unks) == 1:
                     # unit
                     lit = next(iter(unks))
@@ -1105,8 +1107,8 @@ class OMUS(object):
                     continue
 
                 # grow model over hard clauses first, must be satisfied
-                if self.extension == 'maxsat':
-                    MSS, model = self.grow(mss, MSS_model, self.hard_clauses)
+                if True or self.extension == 'maxsat':
+                    MSS, model = self.grow(mss, MSS_model)
                 else:
                     MSS, model = self.grow(mss, MSS_model, self.hard_clauses)
                     # grow model over as many as possible soft clauses next 
@@ -1118,11 +1120,11 @@ class OMUS(object):
                     H.append(C)
                     added_MSSes.append(MSS)
                     self.addSetGurobiModel(gurobi_model, C)
-                    mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
+                    mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
                     self.MSSes.add((mssIdxs, frozenset(model)))
 
         mode = MODE_GREEDY
-        print("\n")
+        #print("\n")
         while(True):
             # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True):
@@ -1168,9 +1170,9 @@ class OMUS(object):
                     # break # skip grow
 
                 # ------ Grow
-                if self.extension == 'maxsat':
+                if True or self.extension == 'maxsat':
                     # grow model over hard clauses first, must be satisfied
-                    MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
+                    MSS, MSS_model = self.grow(hs, model)
                 else:
                     # grow model over hard clauses first, must be satisfied
                     MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
@@ -1185,7 +1187,7 @@ class OMUS(object):
 
                 # Store the MSSes
                 if self.reuse_mss:
-                    mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
+                    mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
                     self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
                 h_counter.update(list(C))
@@ -1213,7 +1215,7 @@ class OMUS(object):
                     self.optimal_steps.append(self.steps.optimal - n_optimal)
                     self.greedy_steps.append(self.steps.greedy - n_greedy)
                     self.incremental_steps.append(self.steps.incremental - n_incremental)
-                print("\n")
+                #print("\n")
                 return hs, [self.clauses[idx] for idx in hs]
 
             # ------ Grow
@@ -1236,7 +1238,7 @@ class OMUS(object):
             mode = MODE_INCR
 
             if self.reuse_mss:
-                mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
+                mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
                 self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
     def omus(self, add_clauses, add_weights=None):

@@ -745,7 +745,7 @@ def explain_p5(parameters={'extension': 'greedy_no_param','output': 'log.json'},
         unknown_facts=explainable_facts
     )
 
-def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
+def explain_origin(parameters={'extension': 'greedy_vertical','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
 
@@ -793,7 +793,7 @@ def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.jso
     o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
     del o
 
-def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
+def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
     from datetime import date, datetime
@@ -828,13 +828,13 @@ def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.j
     del o
 
 if __name__ == "__main__":
-    # print("-------------------")
-    # print("Explaining FRIETKOT")
-    # print("-------------------\n")
+    print("-------------------")
+    print("Explaining FRIETKOT")
+    print("-------------------\n")
     explain_frietkot()
-    # print("\n\n-------------------")
-    # print("Explaining ORIGIN")
-    # print("-------------------\n")
+    print("\n\n-------------------")
+    print("Explaining ORIGIN")
+    print("-------------------\n")
     explain_origin()
     # explain_p5()
 

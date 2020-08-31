@@ -204,6 +204,9 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
     print(explainable_facts)
     cnt = 0
 
+    best_costs = dict({i: None for i in explainable_facts - I})
+
+
     while len(explainable_facts - I) > 0:
         # print(I, I_cnf)
         assert len(I) == len(I_cnf)
@@ -219,10 +222,19 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             # Match MSS
             # print("Explaining ", i)
             t_start_omus = time.time()
+            if best_costs[i] is not None:
+                if cost_best is None:
+                    print("Does this ever happen ???")
+                    best_cost_i = best_costs[i]
+                else:
+                    best_cost_i = min(cost_best, best_costs[i])
+            else:
+                best_cost_i = cost_best
+
             if incremental:
                 hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
                                              add_weights=w_I,
-                                             best_cost=cost_best)
+                                             best_cost=best_cost_i)
             else:
                 hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
                                          add_weights=w_I)
@@ -256,14 +268,20 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
             # new fact
             N_i = {i}
+
+            cost_explanation = cost((E_i, S_i, N_i))
+
+            if best_costs[i] is None or best_costs[i] > cost_explanation:
+                best_costs[i] = cost_explanation
+
             # print(f"Candidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i}\n")
             # print(explanation)
-            if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
+            if cost_best is None or cost_explanation < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
-                cost_best = cost((E_i, S_i, N_i))
+                cost_best = cost_explanation
 
             # @TIAS: printing explanations as they get better
-            print(f"\tFacts: {E_i} Clause: {S_i} => {N_i} (",cost((E_i, S_i, N_i)),")")
+            # print(f"\tFacts: {E_i} Clause: {S_i} => {N_i} (", cost_explanation, ")")
 
         # propagate as much info as possible
         # print(explanation)

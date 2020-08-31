@@ -212,8 +212,8 @@ class OMUS(object):
         if self.logging:
             tstart = time.time()
         
-        if f_prime is not None and len(f_prime) == 0:
-            return [], True
+        #if f_prime is not None and len(f_prime) == 0:
+        #    return [], True
 
         if f_prime is None:
             validated_clauses = self.clauses + self.hard_clauses
@@ -242,8 +242,8 @@ class OMUS(object):
 
         satsolver = Solver()
 
-        if len(f_prime) == 0:
-            return [], True, satsolver
+        #if len(f_prime) == 0:
+        #    return [], True, satsolver
 
         validated_clauses = [self.clauses[i] for i in f_prime] + self.hard_clauses
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
@@ -1130,9 +1130,9 @@ class OMUS(object):
                     continue
 
                 # grow model over hard clauses first, must be satisfied
-                MSS, MSS_model = self.grow(mss, model, self.hard_clauses)
+                MSS, model = self.grow(mss, MSS_model, self.hard_clauses)
                 # grow model over as many as possible soft clauses next 
-                MSS, MSS_model = self.grow(mss, MSS_model, self.clauses)
+                MSS, model = self.grow(mss, model, self.clauses)
                 C = F - MSS
 
                 if C not in H:

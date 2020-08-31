@@ -173,6 +173,8 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
         I0 = set()
     I = I0
     I_cnf = [frozenset({lit}) for lit in I0]
+    # TODO: should become optimalpropagate!!!
+    #I_end_all = optimalPropagate(cnf, I0)
     I_end_all = maxPropagate(cnf, list(I0))
     print(I_end_all)
 
@@ -224,7 +226,6 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
             else:
                 hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
                                          add_weights=w_I)
-            print("hs",hs,"expl",explanation)
 
             # t_end_omus = time.time()
 
@@ -243,9 +244,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, rels=None, wei
             E_i = [ci for ci in explanation if ci in I_cnf]
 
             # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            print("cnf",cnf)
             S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
-            print("S_i",S_i)
 
             # new fact
             N_i = {i}

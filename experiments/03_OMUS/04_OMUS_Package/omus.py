@@ -1192,13 +1192,13 @@ class OMUS(object):
                 # ------ Grow
                 # grow model over hard clauses first, must be satisfied
                 MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
-                print("hard grow:",len(MSS),model,"->",MSS_model)
+                #print("hard grow:",len(MSS),model,"->",MSS_model)
                 # grow model over as many as possible soft clauses next 
                 MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
-                print("soft grow:",MSS,MSS_model)
-                print("MSS",MSS)
+                #print("soft grow:",MSS,MSS_model)
+                #print("MSS",MSS)
                 C = F - MSS
-                print("C",C)
+                #print("C",C)
                 assert len(C) > 0, f"Greedy: hs={hs}, model={model}"
 
                 # Store the MSSes

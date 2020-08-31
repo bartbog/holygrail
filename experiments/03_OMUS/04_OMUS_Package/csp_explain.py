@@ -272,8 +272,8 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         N_best = New_info.intersection(explainable_facts) - I
 
         # add new info
-        I = I | New_info
-        I_cnf += [frozenset({lit}) for lit in New_info if frozenset({lit}) not in I_cnf]
+        I = I | N_best
+        I_cnf += [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
 
         expl_seq.append((E_best, S_best, N_best))
 

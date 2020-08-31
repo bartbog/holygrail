@@ -217,13 +217,13 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         for i in explainable_facts - I:
             # if i == 30:
             # Match MSS
-            print("Explaining ", i)
+            #print("Explaining ", i)
             if incremental:
                 hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
                                              add_weights=w_I, limit=limit)
                 if explanation is None:
                     # early stopping
-                    print(f"Skipping {i} for now: limit {limit} reached")
+                    #print(f"Skipping {i} for now: limit {limit} reached")
                     continue
             else:
                 hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],

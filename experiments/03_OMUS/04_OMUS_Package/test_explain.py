@@ -6,7 +6,7 @@ import pandas as pd
 
 # csp explanations
 
-from csp_explain import omusExplain
+from csp_explain import omusExplain, maxPropagate, optimalPropagate
 
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 sys.path.append('/home/emilio/Documents/cppy_src/')
@@ -398,7 +398,9 @@ def p5():
             cnt+=1
         for (_,row) in rel.df.iterrows():
             # one per row
+            # z = [clause for clause in exactly_one(row)]
             bij += [implies(bv_bij[cnt], clause) for clause in exactly_one(row)]
+            # bij += [implies(bv_bij[cnt], z)]
             cnt+=1
 
     # Transitivity
@@ -450,18 +452,7 @@ def p5():
 
     # Clues
     clues = []
-    # clues_text = [
-    #     "Mattie is 113 years old", 
-    #     "The person who lives in Tehama is a native of either Kansas or Oregon",
-    #     "The Washington native is 1 year older than Ernesto",
-    #     "Roxanne is 2 years younger than the Kansas native",
-    #     "The person who lives in Zearing isn't a native of Alaska",
-    #     "The person who is 111 years old doesn't live in Plymouth",
-    #     "The Oregon native is either Zachary or the person who lives in Tehama",
-    #     "The person who lives in Shaver Lake is 1 year younger than Roxanne",
-    #     "The centenarian who lives in Plymouth isn't a native of Alaska",
-    #     "Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas"
-    # ]
+
     bv_clues = [BoolVar() for i in range(n_clues)]
 
     # Mattie is 113 years old
@@ -506,11 +497,11 @@ def p5():
                             (native[p,'Alaska'] & native['Mattie','Kansas'])))) for p in person] )
 
     # bv for tracking clues during explanation generation
-    bij_bv = [implies(bv, bi) for bv, bi  in zip(bv_bij, bij)]
+    # bij_bv = [implies(bv, bi) for bv, bi  in zip(bv_bij, bij)]
 
     # model = Model(clues + bij_bv + trans)
     # return (bv_trans, bv_bij, bv_clues), (trans, bij_bv, clues), clues_text
-    return relations, (clues, trans, bij_bv), (bv_clues, bv_trans, bv_bij)
+    return (clues, trans, bij), (bv_clues, bv_trans, bv_bij), relations
 
 
 def frietKotProblem():
@@ -566,79 +557,145 @@ def originProblem():
     city_birth = Relation(city, birthplace)
 
     # Bijectivity
+    cnt = 0
     bij = []
+    bv_bij = [BoolVar() for i in range(60)]
     for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
         # for each relation
         for col_ids in rel.df:
             # one per column
-            bij += exactly_one(rel[:, col_ids])
+            b1 = to_cnf(exactly_one(rel[:, col_ids]))
+            [bij.append(implies(bv_bij[cnt], clause)) for clause in b1]
+            cnt += 1
         for (_,row) in rel.df.iterrows():
             # one per row
-            bij += exactly_one(row)
+            b2 = to_cnf(exactly_one(row))
+            [bij.append( implies(bv_bij[cnt] , clause) ) for clause in b2]
+            cnt += 1
 
     # Transitivity
     trans = []
-    for p in person:
-        for c in city:
-            trans.append([implies(is_old[p, a] & age_city[a, c],
-                                  lives_in[p, c]) for a in age])
-        for b in birthplace:
-            trans.append([implies(is_old[p, a] & age_birth[a, b],
-                                  native[p, b]) for a in age])
-            trans.append([implies(lives_in[p, c] & city_birth[c, b],
-                                  native[p, b]) for c in city])
-    for a in age:
-        for b in birthplace:
-            trans.append([implies(age_city[a, c] & city_birth[c, b],
-                                  age_birth[a, b]) for c in city])
+    bv_trans =  [BoolVar() for i in range(12)]
+    for x in person:
+        for z in birthplace:
+            for y in age:
+                # ! x y z:  from(x, z) & is_linked_with_1(y, z) => is_old(x, y).
+                t0 = to_cnf(implies( native[x, z] & age_birth[y, z], is_old[x, y]))
+                [trans.append(implies(bv_trans[0], clause)) for clause in t0]
 
-    # Clues
+                 # ! x y z:  ~from(x, z) & is_linked_with_1(y, z) => ~is_old[x, y].
+                t1 = to_cnf(implies( ~native[x, z] & age_birth[y, z], ~is_old[x, y]))
+                [trans.append(implies(bv_trans[1], clause)) for clause in t1]
+
+                 # ! x y z:  from(x, z) & ~is_linked_with_1(y, z) => ~is_old[x, y].
+                t2 = to_cnf(implies( native[x, z] & ~age_birth[y, z], ~is_old[x, y]))
+                [trans.append(implies(bv_trans[2], clause)) for clause in t2]
+
+    for x in person :
+        for y in age :
+            for z in city :
+
+                # ! x y z:  lives_in(x, z) & is_linked_with_2(y, z) => is_old[x, y].
+                t3 = to_cnf(implies( lives_in[x, z] & age_city[y, z], is_old[x, y]))
+                [trans.append(implies(bv_trans[3], clause)) for clause in t3]
+
+                # ! x y z:  ~lives_in(x, z) & is_linked_with_2(y, z) => ~is_old(x, y).
+                t4 = to_cnf(implies( ~lives_in[x, z] & age_city[y, z], ~is_old[x, y]))
+                [trans.append(implies(bv_trans[4], clause)) for clause in t4]
+
+                # ! x y z:  lives_in(x, z) & ~is_linked_with_2(y, z) => ~is_old(x, y).
+                t5 = to_cnf(implies( lives_in[x, z] & ~age_city[y, z], ~is_old[x, y]))
+                [trans.append(implies(bv_trans[5], clause)) for clause in t5]
+
+    for x in person :
+        for y in birthplace :
+            for z in city :
+                #  ! x y z:  lives_in(x, z) & is_linked_with_3(y, z) => from(x, y).
+                t6 =to_cnf(implies( lives_in[x, z] & city_birth[z, y] , native[x, y] ))
+                [trans.append(implies(bv_trans[6], clause)) for clause in t6]
+
+                # ! x y z:  ~lives_in(x, z) & is_linked_with_3(y, z) => ~from(x, y).
+                t7 = to_cnf(implies( ~lives_in[x, z] & city_birth[z, y] , ~native[x, y]))
+                [trans.append(implies(bv_trans[7], clause)) for clause in t7]
+
+                # ! x y z:  lives_in(x, z) & ~is_linked_with_3(y, z) => ~from(x, y).
+                t8 = to_cnf(implies( lives_in[x, z] & ~city_birth[z, y] , ~native[x, y] ))
+                [trans.append(implies(bv_trans[8], clause)) for clause in t8]
+
+    for x in age :
+        for y in birthplace:
+            for z in city :
+                #  ! x y z:  is_linked_with_2(x, z) & is_linked_with_3(y, z) => is_linked_with_1(x, y).
+                t9 = to_cnf(implies( age_city[x, z] & city_birth[z, y], age_birth[x, y]))
+                [trans.append(implies(bv_trans[9], clause)) for clause in t9]
+
+                # ! x y z:  ~is_linked_with_2(x, z) & is_linked_with_3(y, z) => ~is_linked_with_1(x, y).
+                t10 = to_cnf(implies( ~age_city[x, z] & city_birth[z, y], ~age_birth[x, y]))
+                [trans.append(implies(bv_trans[10], clause)) for clause in t10]
+
+                # ! x y z:  is_linked_with_2(x, z) & ~is_linked_with_3(y, z) => ~is_linked_with_1(x, y).
+                t11 = to_cnf(implies( age_city[x, z] & ~city_birth[z, y], ~age_birth[x, y]))
+                [trans.append(implies(bv_trans[11], clause)) for clause in t11]
+
+    # bv1 = BoolVar()
     clues = []
-    # Mattie is 113 years old
-    clues.append(is_old['Mattie', '113'])
+    bv_clues = [BoolVar() for i in range(10)]
+    # clue1 = to_cnf(is_old['Mattie', '113'])
+    # clues.append(is_old['Mattie', '113'])
+    clues.append(implies(bv_clues[0], is_old['Mattie', '113']))
 
     # The person who lives in Tehama is a native of either Kansas or Oregon
-    clues.append([implies(lives_in[p, 'Tehama'],
-                          native[p, 'Kansas'] | native[p, 'Oregon']) for p in person])
+    c1a = to_cnf([implies(lives_in[p, 'Tehama'], native[p, 'Kansas'] | native[p, 'Oregon']) for p in person])
+    [clues.append(implies(bv_clues[1], clause)) for clause in c1a]
 
     # The Washington native is 1 year older than Ernesto
-    clues.append([implies(age_birth[a, 'Washington'],
-                          is_old['Ernesto', str(int(a)-1)]) for a in age])
+    c2a = to_cnf([implies(age_birth[a, 'Washington'], is_old['Ernesto', str(int(a)-1)]) for a in age])
+    [clues.append(implies(bv_clues[2], clause)) for clause in c2a]
+    # clues.append([implies(age_birth[a, 'Washington'], is_old['Ernesto', str(int(a)-1)]) for a in age])
 
     # Roxanne is 2 years younger than the Kansas native
-    clues.append([implies(is_old['Roxanne', a],
-                          age_birth[str(int(a)+2), 'Kansas']) for a in age])
+    c3a = to_cnf([implies(is_old['Roxanne', a], age_birth[str(int(a)+2), 'Kansas']) for a in age])
+    [clues.append(implies(bv_clues[3], clause)) for clause in c3a]
 
     # The person who lives in Zearing isn't a native of Alaska
-    clues.append([implies(lives_in[p, 'Zearing'],
-                          ~native[p, 'Alaska']) for p in person])
+    c4a = to_cnf([implies(lives_in[p, 'Zearing'], ~native[p, 'Alaska']) for p in person])
+    [clues.append(implies(bv_clues[4], clause)) for clause in c4a]
 
     # The person who is 111 years old doesn't live in Plymouth
-    clues.append([implies(is_old[p, '111'],
-                          ~lives_in[p, 'Plymouth']) for p in person])
+    c5a = to_cnf([implies(is_old[p, '111'], ~lives_in[p, 'Plymouth']) for p in person])
+    [clues.append(implies(bv_clues[5], clause)) for clause in c5a]
+    # clues.append([implies(is_old[p, '111'], ~lives_in[p, 'Plymouth']) for p in person])
 
     # The Oregon native is either Zachary or the person who lives in Tehama
-    clues.append([implies(native[p, 'Oregon'],
-                          (p == 'Zachary') | lives_in[p, 'Tehama']) for p in person])
+    c6a = to_cnf([implies(native[p, 'Oregon'], (p == 'Zachary') | lives_in[p, 'Tehama']) for p in person])
+    [clues.append(implies(bv_clues[6], clause)) for clause in c6a]
+    # clues.append([implies(native[p, 'Oregon'], (p == 'Zachary') | lives_in[p, 'Tehama']) for p in person])
 
     # The person who lives in Shaver Lake is 1 year younger than Roxanne
-    clues.append([implies(age_city[a, 'Shaver Lake'],
-                          is_old['Roxanne', str(int(a)+1)]) for a in age])
+    # clues.append([implies(age_city[a, 'Shaver Lake'], is_old['Roxanne', str(int(a)+1)]) for a in age])
+    c7a = to_cnf([implies(age_city[a, 'Shaver Lake'], is_old['Roxanne', str(int(a)+1)]) for a in age])
+    [clues.append(implies(bv_clues[7], clause)) for clause in c7a]
 
     # The centenarian who lives in Plymouth isn't a native of Alaska
-    clues.append([implies(lives_in[p, 'Plymouth'],
-                          ~native[p, 'Alaska']) for p in person])
+    c8a = to_cnf([implies(lives_in[p, 'Plymouth'], ~native[p, 'Alaska']) for p in person])
+    [clues.append(implies(bv_clues[8], clause)) for clause in c8a]
+    # clues.append([implies(lives_in[p, 'Plymouth'], ~native[p, 'Alaska']) for p in person])
+
 
     # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
-    clues.append([implies(lives_in[p, 'Tehama'],
+    c9a = to_cnf([implies(lives_in[p, 'Tehama'],
                           (p != 'Mattie') &
                           ((native['Mattie', 'Alaska'] & native[p, 'Kansas']) |
                            (native[p, 'Alaska'] & native['Mattie', 'Kansas']))) for p in person])
+    [clues.append(implies(bv_clues[9], clause)) for clause in c9a]
+    # clues.append([implies(lives_in[p, 'Tehama'],
+    #                       (p != 'Mattie') &
+    #                       ((native['Mattie', 'Alaska'] & native[p, 'Kansas']) |
+    #                        (native[p, 'Alaska'] & native['Mattie', 'Kansas']))) for p in person])
 
-    # model = Model(bij + trans + clues)
-    # model = Model(bij + trans + clues)
+
     rels=[is_old, lives_in, native, age_city, age_birth, city_birth]
-    return bij, trans, clues, rels
+    return (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels
 
 def test_MSSes():
     cppy_model = frietKotProblem()
@@ -649,7 +706,7 @@ def test_MSSes():
 def explain_p5(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
-    relations, (clues, trans, bij), (bv_clues, bv_trans, bv_bij)  = p5()
+    (clues, trans, bij), (bv_clues, bv_trans, bv_bij), relations  = p5()
 
     # CNF building
     cnf_clues = [frozenset(clause) for clause in cnf_to_pysat(to_cnf(clues))]
@@ -658,7 +715,7 @@ def explain_p5(parameters={'extension': 'greedy_no_param','output': 'log.json'},
     cnf_bv = [frozenset({bv.name+1}) for bv in bv_clues+ bv_bij+ bv_trans]
 
     # HARD constraints with "infinite" weights
-    weights_cnf = [1000 for i in range(len(cnf_clues) + len(cnf_bij) + len(cnf_trans))]
+    # weights_cnf = [1000 for i in range(len(cnf_clues) + len(cnf_bij) + len(cnf_trans))]
 
     # SOFT constraints with heavy weights for clues and small weights for trans/bij
     weights_bij_bv = [5 for _ in bv_bij]
@@ -666,19 +723,26 @@ def explain_p5(parameters={'extension': 'greedy_no_param','output': 'log.json'},
     weights_clues_bv = [20 for _ in bv_clues]
 
     # FINAL CNF
-    cnf = cnf_clues + cnf_bij + cnf_trans
-    weights = weights_cnf + weights_clues_bv + weights_bij_bv + weights_trans_bv
+    cnf = cnf_clues + cnf_bij + cnf_trans + cnf_bv
+    weights = weights_clues_bv + weights_bij_bv + weights_trans_bv
     bv = set(bv.name+1 for bv in bv_clues+ bv_bij+ bv_trans)
+
+    explainable_facts = set()
+
+    for rel in relations:
+        print("\n", rel.df, "\n")
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
 
     o, exp_seq = omusExplain(
         hard_clauses=cnf_clues + cnf_bij + cnf_trans, 
         soft_clauses=cnf_bv,
-        weights=weights,
+        soft_weights=weights,
         bv=bv,
-        rels=relations,
         parameters=parameters,
         incremental=True,
-        reuse_mss=True
+        reuse_mss=True,
+        unknown_facts=explainable_facts
     )
 
 def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
@@ -691,31 +755,45 @@ def explain_origin(parameters={'extension': 'greedy_no_param','output': 'log.jso
     now = datetime.now().strftime("%H_%M_%S")
 
     # model constraints
-    bij, trans, clues, rels = originProblem()
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
     clues_cnf = cnf_to_pysat(to_cnf(clues))
     bij_cnf = cnf_to_pysat(to_cnf(bij))
     trans_cnf = cnf_to_pysat(to_cnf(trans))
 
-    cnf = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
-    weights = [len(clause) for clause in clues_cnf] + \
-              [len(clause) for clause in trans_cnf] + \
-              [len(clause) for clause in bij_cnf]
 
-    print("About to call")
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+
+    # print(maxPropagate(cnf))
+
+    weights = [20 for clause in bv_clues] + \
+              [5 for clause in bv_trans] + \
+              [5 for clause in bv_bij]
+
+    explainable_facts = set()
+    for rel in rels:
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
     o, expl_seq = omusExplain(
-        cnf=cnf,
-        weights=weights,
-        bv=bv,
-        rels=None,
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        soft_weights=weights,
         parameters=parameters,
         incremental=True,
-        reuse_mss=True
+        bv= set(bv.name+1 for bv in bv_clues + bv_trans + bv_bij),
+        reuse_mss=True,
+        unknown_facts=explainable_facts
     )
 
     o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
     del o
 
-def explain_frietkot(parameters={'extension': 'greedy_sat','output': 'log.json'}, 
+def explain_frietkot(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
     from datetime import date, datetime
@@ -738,9 +816,8 @@ def explain_frietkot(parameters={'extension': 'greedy_sat','output': 'log.json'}
     o, expl_seq = omusExplain(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
-        weights=weights,
-        bv=bv,
-        rels=None,
+        soft_weights=weights,
+        # bv=bv,
         parameters=parameters,
         incremental=True,
         reuse_mss=True,
@@ -754,10 +831,10 @@ if __name__ == "__main__":
     # print("-------------------")
     # print("Explaining FRIETKOT")
     # print("-------------------\n")
-    explain_frietkot()
+    # explain_frietkot()
     # print("\n\n-------------------")
     # print("Explaining ORIGIN")
     # print("-------------------\n")
-    # explain_origin()
+    explain_origin()
     # explain_p5()
 

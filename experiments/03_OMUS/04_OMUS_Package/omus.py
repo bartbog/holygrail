@@ -153,15 +153,17 @@ class Timings(object):
 class OMUS(object):
     def __init__(self, hard_clauses=None, soft_clauses=None, I=None, bv=None, soft_weights=None, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=True):
         # checking input
-        assert (f is not None) or (weights is not None), "No mapping function or weights supplied."
+        assert (f is not None) or (soft_weights is not None), "No mapping function or weights supplied."
         assert (hard_clauses is not None), "No clauses or CNF supplied."
         assert I is not None, "No interpretation provided"
         assert bv is not None, "Please add indication variables"
 
         # parameters of the solver
-        self.extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
+        self.extension = parameters['extension'] if 'extension' in parameters else 'maxsat'
+        # self.extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
         self.output = parameters['output'] if 'output' in parameters else 'log.json'
         self.parameters = parameters
+        # print("Extension")
 
         # Logging / benchmark info
         self.logging = logging
@@ -211,14 +213,12 @@ class OMUS(object):
     def checkSatNoSolver(self, f_prime=None):
         if self.logging:
             tstart = time.time()
-        
-        #if f_prime is not None and len(f_prime) == 0:
-        #    return [], True
 
         if f_prime is None:
             validated_clauses = self.clauses + self.hard_clauses
         else:
             validated_clauses = [self.clauses[i] for i in f_prime]
+
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
 
         with Solver() as s:
@@ -230,6 +230,7 @@ class OMUS(object):
         if self.logging:
             tend = time.time()
             self.timing.sat.append(tend - tstart)
+
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
             return mapped_model, solved
@@ -241,9 +242,6 @@ class OMUS(object):
             tstart = time.time()
 
         satsolver = Solver()
-
-        #if len(f_prime) == 0:
-        #    return [], True, satsolver
 
         validated_clauses = [self.clauses[i] for i in f_prime] + self.hard_clauses
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
@@ -409,33 +407,6 @@ class OMUS(object):
 
         return hs
 
-    # def gurobiOptimalHittingSetAll(self, gurobi_model, C):
-        if self.logging:
-            tstart = time.time()
-
-        # trivial case
-        if len(C) == 0:
-            return []
-
-        # print(C)
-        for ci in C:
-            # print(ci)
-            # add new constraint sum x[j] * hij >= 1
-            self.addSetGurobiModel(self.clauses, gurobi_model, ci)
-
-        # solve optimization problem
-        gurobi_model.optimize()
-
-        # output hitting set
-        x = gurobi_model.getVars()
-        hs = set(i for i in range(self.nSoftClauses) if x[i].x == 1)
-
-        if self.logging:
-            tend = time.time()
-            self.timing.greedy.append(tend - tstart)
-
-        return hs
-
     def gurobiOptimalHittingSetCold(self, H):
         if self.logging:
             tstart = time.time()
@@ -511,6 +482,7 @@ class OMUS(object):
             'greedy_no_param': self.greedy_no_param,
             'greedy_sat': self.greedy_sat,
             'maxsat': self.maxsat_fprime,
+            # 'greedy_vertical': self.greedy_vertical,
             # 'satlike': SATLike
         }
         # print("clauses=", clauses)
@@ -523,6 +495,7 @@ class OMUS(object):
         if self.logging:
             tend = time.time()
             self.timing.growMss.append(tend - tstart)
+            # print("Grow:", round(tend-tstart))
 
         return new_F_prime, new_model
 
@@ -1016,18 +989,20 @@ class OMUS(object):
 
         return t_F_prime, lit_true
 
-    def maxsat_fprime(self, F_prime, model):
+    def maxsat_fprime(self, F_prime, model, grow_clauses):
         t_F_prime = set(F_prime)
 
         wcnf = WCNF()
+        wcnf.extend(self.hard_clauses)
         for i, clause in enumerate(self.clauses):
             if i in F_prime:
                 wcnf.append(list(clause))
             else:
-                wcnf.append(list(clause), weight=weights[i])
+                wcnf.append(list(clause), weight=self.weights[i])
 
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()
+            # print("Cost:", rc2.cost)
 
         for i, clause in enumerate(self.clauses):
             if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
@@ -1109,7 +1084,7 @@ class OMUS(object):
 
         F = frozenset(range(self.nSoftClauses))
         mapped_model, solved =  self.checkSatNoSolver()
-        assert solved == False, "CNF is satisfiable"
+        assert solved == False, f"CNF is satisfiable check sat no solver"
 
         H, C = [], []
         h_counter = Counter()
@@ -1130,9 +1105,12 @@ class OMUS(object):
                     continue
 
                 # grow model over hard clauses first, must be satisfied
-                MSS, model = self.grow(mss, MSS_model, self.hard_clauses)
-                # grow model over as many as possible soft clauses next 
-                MSS, model = self.grow(mss, model, self.clauses)
+                if self.extension == 'maxsat':
+                    MSS, model = self.grow(mss, MSS_model, self.hard_clauses)
+                else:
+                    MSS, model = self.grow(mss, MSS_model, self.hard_clauses)
+                    # grow model over as many as possible soft clauses next 
+                    MSS, model = self.grow(mss, model, self.clauses)
                 C = F - MSS
 
                 if C not in H:
@@ -1140,17 +1118,17 @@ class OMUS(object):
                     H.append(C)
                     added_MSSes.append(MSS)
                     self.addSetGurobiModel(gurobi_model, C)
-                    #TODO: Check wether this is a good idea or not !
                     mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
                     self.MSSes.add((mssIdxs, frozenset(model)))
 
         mode = MODE_GREEDY
         print("\n")
         while(True):
-            print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}", end='\r')
+            # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True):
-                print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}", end='\r')
+                # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
                 if mode == MODE_INCR:
+                    # print("Incremental")
                     if self.logging:
                         tstart = time.time()
                     # add sets-to-hit incrementally until unsat then continue with optimal method
@@ -1190,12 +1168,16 @@ class OMUS(object):
                     # break # skip grow
 
                 # ------ Grow
-                # grow model over hard clauses first, must be satisfied
-                MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
-                #print("hard grow:",len(MSS),model,"->",MSS_model)
-                # grow model over as many as possible soft clauses next 
-                MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
-                #print("soft grow:",MSS,MSS_model)
+                if self.extension == 'maxsat':
+                    # grow model over hard clauses first, must be satisfied
+                    MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
+                else:
+                    # grow model over hard clauses first, must be satisfied
+                    MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
+                    # print("hard grow:",len(MSS),model,"->",MSS_model)
+                    # grow model over as many as possible soft clauses next 
+                    MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
+                # print("soft grow:",MSS,MSS_model)
                 #print("MSS",MSS)
                 C = F - MSS
                 #print("C",C)
@@ -1235,10 +1217,16 @@ class OMUS(object):
                 return hs, [self.clauses[idx] for idx in hs]
 
             # ------ Grow
-            # grow model over hard clauses first, must be satisfied
-            MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
-            # grow model over as many as possible soft clauses next 
-            MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
+            if self.extension == 'maxsat':
+                # grow model over hard clauses first, must be satisfied
+                MSS, MSS_model = self.grow(hs, model, self.hard_clauses)                    
+            else:
+                # grow model over hard clauses first, must be satisfied
+                MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
+                # print("hard grow:",len(MSS),model,"->",MSS_model)
+                # grow model over as many as possible soft clauses next 
+                MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
+
             C = F - MSS
             self.addSetGurobiModel(gurobi_model, C)
             assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"

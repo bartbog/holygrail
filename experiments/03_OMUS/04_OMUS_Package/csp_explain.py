@@ -207,7 +207,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
     while len(explainable_facts - I) > 0:
         # print(I, I_cnf)
         assert len(I) == len(I_cnf)
-
+        print("Remaining facts:", len(explainable_facts-I))
         cost_best = None
         E_best, S_best, N_best = None, None, None
 
@@ -217,19 +217,25 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         for i in explainable_facts - I:
             # if i == 30:
             # Match MSS
-            print("Explaining ", i)
+            # print("Explaining ", i)
+            t_start_omus = time.time()
             if incremental:
                 hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
-                                             add_weights=w_I)
+                                             add_weights=w_I,
+                                             best_cost=cost_best)
             else:
                 hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
                                          add_weights=w_I)
 
+            t_end_omus = time.time()
             # t_end_omus = time.time()
+            if hs is None:
+                continue
+
             assert len(hs) > 0, "OMUS shoudl be non empty"
             # print([o.clauses[i] for i in hs], explanation)
             # print([f'{o.clauses[i]}: soft\n' if o.clauses[i] in soft_clauses else f'{o.clauses[i]}: hard\n' for i in hs])
-            # print(f"\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
+            print(f"\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
             # print("\t\t\t - #Steps OptHS\t\t\t", o.optimal_steps[-1])
             # print("\t\t\t - #Steps Greedy HS\t\t", o.greedy_steps[-1])
             # print("\t\t\t - #Steps Incremental HS\t", o.incremental_steps[-1])
@@ -245,6 +251,8 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
             # constraint used ('and not ci in E_i': dont repeat unit clauses)
             S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
+            # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
+            # [print(clause) for clause in hard_clauses if len(opti.intersection(clause))> 0]
 
             # new fact
             N_i = {i}

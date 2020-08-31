@@ -7,6 +7,8 @@ import random
 # Gurobi utilities
 import gurobipy as gp
 from gurobipy import GRB
+
+
 # Pysat Utilities
 from pysat.examples.rc2 import RC2
 from pysat.formula import CNF, WCNF
@@ -991,7 +993,7 @@ class OMUS(object):
 
         return t_F_prime, lit_true
 
-    def maxsat_fprime(self, F_prime, model, grow_clauses):
+    def maxsat_fprime(self, F_prime, model):
         t_F_prime = set(F_prime)
 
         wcnf = WCNF()
@@ -1062,7 +1064,7 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, add_clauses, add_weights=None):
+    def omusIncr(self, add_clauses, add_weights=None, best_cost=None):
         # Benchmark info
         t_start = time.time()
         n_msses = len(self.MSSes)
@@ -1123,11 +1125,12 @@ class OMUS(object):
                     mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
                     self.MSSes.add((mssIdxs, frozenset(model)))
 
-        mode = MODE_GREEDY
+        mode = MODE_OPT
         #print("\n")
         while(True):
             # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True):
+                # print("Starting with optimal!")
                 # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
                 if mode == MODE_INCR:
                     # print("Incremental")
@@ -1150,14 +1153,25 @@ class OMUS(object):
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
                     hs = self.greedyHittingSet(H)
-
+                elif mode == MODE_OPT:
+                    break
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
                     (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c_best)
                 elif mode == MODE_GREEDY:
                     (model, sat, satsolver) = self.checkSat(hs)
 
-                if not sat:
+                E_i = [ci for ci in hs if self.clauses[ci] in add_clauses]
+
+                # constraint used ('and not ci in E_i': dont repeat unit clauses)
+                S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses and self.clauses[ci] not in add_clauses]
+                # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
+                my_cost = cost((E_i, S_i, set()))
+                # print(my_cost, "vs ", best_cost)
+
+                # if best_cost is not None and best_cost < my_cost:
+                #     return  None, None
+                if not sat or (best_cost is not None and best_cost <= my_cost):
                     # incremental hs is unsat, switch to optimal method
                     hs = None
                     if mode == MODE_INCR:
@@ -1168,7 +1182,7 @@ class OMUS(object):
                         mode = MODE_OPT
                         break
                     # break # skip grow
-
+                # if (best_cost is not None and best_cost <= my_cost):
                 # ------ Grow
                 if True or self.extension == 'maxsat':
                     # grow model over hard clauses first, must be satisfied
@@ -1196,10 +1210,10 @@ class OMUS(object):
 
                 # Sat => Back to incremental mode 
                 mode = MODE_INCR
-
             # ----- Compute Optimal Hitting Set
             hs = self.gurobiOptimalHittingSet(gurobi_model)
 
+            # print(my_cost, "vs ", best_cost)
             # ------ Sat check
             (model, sat, satsolver) = self.checkSat(hs)
 
@@ -1229,6 +1243,20 @@ class OMUS(object):
                 # grow model over as many as possible soft clauses next 
                 MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
 
+            if self.reuse_mss:
+                mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
+                self.MSSes.add((mssIdxs, frozenset(MSS_model)))
+
+            E_i = [ci for ci in hs if self.clauses[ci] in add_clauses]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses and self.clauses[ci] not in add_clauses]
+            # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
+            my_cost = cost((E_i, S_i, set()))
+            # print(my_cost, "vs", best_cost)
+            if best_cost is not None and best_cost <= my_cost:
+                return None, None
+
             C = F - MSS
             self.addSetGurobiModel(gurobi_model, C)
             assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"
@@ -1237,9 +1265,8 @@ class OMUS(object):
             H.append(C)
             mode = MODE_INCR
 
-            if self.reuse_mss:
-                mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
-                self.MSSes.add((mssIdxs, frozenset(MSS_model)))
+            
+
 
     def omus(self, add_clauses, add_weights=None):
         # ---------- build clauses and additional weights
@@ -1311,6 +1338,24 @@ class OMUS(object):
 
         with open(outputDir + outputFile, 'w') as file:
             file.write(json.dumps(results)) # use `json.loads` to do the reverse
+
+
+def basecost(constraints, clues):
+    # nClues = len(constraints.intersection(clues))
+    nClues = 0
+    nOthers = len(constraints) - nClues
+    # print("constraints = ", constraints)
+    if nClues == 0 and nOthers == 1:
+        return 0
+    elif nClues == 0 and nOthers > 1:
+        return 20
+    else:
+        return nClues * 20
+
+
+def cost(explanation):
+    facts, constraints, new = explanation
+    return basecost(constraints, set()) + len(facts) + len(constraints)
 
 if __name__ == "__main__":
     cnf = CNF()

@@ -749,11 +749,7 @@ def explain_p5(parameters={'extension': 'greedy_no_param','output': 'log.json'},
         unknown_facts=explainable_facts
     )
 
-# <<<<<<< HEAD
-# def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'}, 
-# =======
-def explain_origin(parameters={'extension': 'greedy_vertical','output': 'log.json'}, 
-# >>>>>>> 928bf724b72e6569e8ee964fbbb0b374029856d4
+def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
 
@@ -839,7 +835,7 @@ if __name__ == "__main__":
     print("-------------------")
     print("Explaining FRIETKOT")
     print("-------------------\n")
-    explain_frietkot()
+    # explain_frietkot()
     print("\n\n-------------------")
     print("Explaining ORIGIN")
     print("-------------------\n")

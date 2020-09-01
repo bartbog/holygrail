@@ -207,6 +207,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
     best_costs = dict({i: 9999999 for i in explainable_facts - I})
 
     while len(explainable_facts - I) > 0:
+        t_iter = time.time()
         # print(I, I_cnf)
         assert len(I) == len(I_cnf)
         print("Remaining facts:", len(explainable_facts-I))
@@ -238,6 +239,11 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
                 hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
                                          add_weights=w_I)
 
+            if hs is None:
+                continue
+
+            assert len(hs) > 0, "OMUS shoudl be non empty"
+
             t_end_omus = time.time()
             # print([o.clauses[i] for i in hs], explanation)
             # print([f'{o.clauses[i]}: soft\n' if o.clauses[i] in soft_clauses else f'{o.clauses[i]}: hard\n' for i in hs])
@@ -266,11 +272,6 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
                 print("\t\t\t - AVG/step GROW\t\t", round(sum(o.timing.growMss[-1:-(1+o.grow_steps[-1]):-1])/o.grow_steps[-1],3), "\t[s/step]")
             # # print(f"\t OMUS: {round(t_end_omus - t_start_omus, 2)}")
             # print(f"\t\t MSS size={o.MSS_sizes[-1]}\n")
-
-            if hs is None:
-                continue
-
-            assert len(hs) > 0, "OMUS shoudl be non empty"
 
             # explaining facts
             E_i = [ci for ci in explanation if ci in I_cnf]
@@ -310,7 +311,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         expl_seq.append((E_best, S_best, N_best))
 
         # @TIAS: printing explanations
-        print(f"Optimal explanation \t\t {E_best} /\\ {S_best} => {N_best}\n")
+        print(f"Optimal explanation \t\t {E_best} /\\ {S_best} => {N_best}", time.time()-t_iter,"\n")
         # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
         cnt += 1

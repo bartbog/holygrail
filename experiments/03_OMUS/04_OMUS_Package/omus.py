@@ -1231,7 +1231,7 @@ class OMUS(object):
             my_cost = cost((E_i, S_i, set()))
             # print(my_cost, "vs", best_cost)
             if best_cost is not None and my_cost >= best_cost:
-                return None, None
+                return None, my_cost
 
             # ------ Sat check
             (model, sat, satsolver) = self.checkSat(hs)

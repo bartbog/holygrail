@@ -220,16 +220,8 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         for i in sorted(explainable_facts - I, key=lambda i: best_costs[i]):
             # if i == 30:
             # Match MSS
-            print("Explaining ", i)
+            print("Explaining ", i, best_costs[i])
             t_start_omus = time.time()
-            if best_costs[i] is not None:
-                if cost_best is None:
-                    print("Does this ever happen ???")
-                    best_cost_i = best_costs[i]
-                else:
-                    best_cost_i = min([cost_best, best_costs[i]])
-            else:
-                best_cost_i = cost_best
 
             if incremental:
                 hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
@@ -240,6 +232,8 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
                                          add_weights=w_I)
 
             if hs is None:
+                # HACK: store my_cost of this guy, for sorting next iter
+                best_costs[i] = 1000+explanation
                 continue
 
             assert len(hs) > 0, "OMUS shoudl be non empty"
@@ -285,9 +279,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             N_i = {i}
 
             cost_explanation = cost((E_i, S_i, N_i))
-
-            if best_costs[i] is None or best_costs[i] > cost_explanation:
-                best_costs[i] = cost_explanation
+            best_costs[i] = cost_explanation
 
             print(f"Candidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i} ({cost_explanation})\n")
             # print(explanation)

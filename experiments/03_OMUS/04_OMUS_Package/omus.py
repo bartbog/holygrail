@@ -1108,40 +1108,33 @@ class OMUS(object):
         H, C = [], []
         h_counter = Counter()
 
-        if self.reuse_mss:
-            added_MSSes = []
-
         gurobi_model = self.gurobiModel()
         satsolver, sat, hs = None, None, None
 
-
-        t_reuse = time.time()
-        print("pre reuse:",t_reuse-t_start)
+        # WARNING: self.MSSes is a tuple (mss, model)
+        # XXX: the models are HUGE! can save memory if only on grid vars?
         if self.reuse_mss:
+            added_MSSes = []
+            # map global 'softClauseIdx' to local 'pos'
             F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
-            for mss_idxs, MSS_model in set(self.MSSes):
-                mss = set(F_idxs[mss_idx] for mss_idx in mss_idxs if mss_idx in F_idxs)
+            for mss_idxs, MSS_model in self.MSSes:
+                # get local pos from global idx
+                mss = set(F_idxs[mss_idx] for mss_idx in mss_idxs&F_idxs.keys())
                 # print(mss, )
-                if any(True if mss.issubset(MSS) else False for MSS in added_MSSes):
+
+                if any(mss.issubset(MSS) for MSS in added_MSSes):
                     continue
 
                 # grow model over hard clauses first, must be satisfied
-                if True or self.extension == 'maxsat':
-                    MSS, model = self.grow(mss, MSS_model)
-                else:
-                    MSS, model = self.grow(mss, MSS_model, self.hard_clauses)
-                    # grow model over as many as possible soft clauses next 
-                    MSS, model = self.grow(mss, model, self.clauses)
+                # Timing: grow is rather slow
+                MSS, model = self.grow(mss, MSS_model)
                 C = F - MSS
 
                 if C not in H:
                     h_counter.update(list(C))
                     H.append(C)
-                    added_MSSes.append(MSS)
+                    added_MSSes.append(MSS&F)
                     self.addSetGurobiModel(gurobi_model, C)
-                    # mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
-                    # self.MSSes.add((mssIdxs, frozenset(model)))
-        print("post reuse:",time.time() - t_reuse)
 
         mode = MODE_OPT
         #print("\n")

@@ -206,7 +206,6 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
     best_costs = dict({i: None for i in explainable_facts - I})
 
-
     while len(explainable_facts - I) > 0:
         # print(I, I_cnf)
         assert len(I) == len(I_cnf)
@@ -248,13 +247,28 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             # print([o.clauses[i] for i in hs], explanation)
             # print([f'{o.clauses[i]}: soft\n' if o.clauses[i] in soft_clauses else f'{o.clauses[i]}: hard\n' for i in hs])
             print(f"\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
-            # print("\t\t\t - #Steps OptHS\t\t\t", o.optimal_steps[-1])
-            # print("\t\t\t - #Steps Greedy HS\t\t", o.greedy_steps[-1])
-            # print("\t\t\t - #Steps Incremental HS\t", o.incremental_steps[-1])
+            print("\t\t\t - #Steps OptHS\t\t\t", o.optimal_steps[-1])
+            print("\t\t\t - #Steps Greedy HS\t\t", o.greedy_steps[-1])
+            print("\t\t\t - #Steps Incremental HS\t", o.incremental_steps[-1])
+            print("\t\t\t - #Steps SAT HS\t\t", o.sat_steps[-1])
+            print("\t\t\t - #Steps GROW HS\t\t", o.grow_steps[-1])
 
-            # print("\t\t\t - Time OptHS\t\t\t", round(sum(o.timing.optimal[-1:-(1+o.optimal_steps[-1]):-1]),3), "s")
-            # print("\t\t\t - Time Greedy HS\t\t", round(sum(o.timing.greedy[-1:-(1+o.greedy_steps[-1]):-1]),3), "s")
-            # print("\t\t\t - Time Incremental HS\t\t", round(sum(o.timing.incremental[-1:-(1+o.incremental_steps[-1]):-1]),3), "s")
+            print("\t\t\t - Time OptHS\t\t\t", round(sum(o.timing.optimal[-1:-(1+o.optimal_steps[-1]):-1]),3), "\t[s]")
+            print("\t\t\t - Time Greedy HS\t\t", round(sum(o.timing.greedy[-1:-(1+o.greedy_steps[-1]):-1]),3), "\t[s]")
+            print("\t\t\t - Time Incremental HS\t\t", round(sum(o.timing.incremental[-1:-(1+o.incremental_steps[-1]):-1]),3), "\t[s]")
+            print("\t\t\t - Time SAT\t\t\t", round(sum(o.timing.sat[-1:-(1+o.sat_steps[-1]):-1]),3), "\t[s]")
+            print("\t\t\t - Time GROW\t\t\t", round(sum(o.timing.growMss[-1:-(1+o.grow_steps[-1]):-1]),3), "\t[s]")
+            
+            if o.optimal_steps[-1] > 0:
+                print("\t\t\t - AVG/step OPT\t\t\t", round(sum(o.timing.optimal[-1:-(1+o.optimal_steps[-1]):-1])/o.optimal_steps[-1],3), "\t[s/step]")
+            if o.greedy_steps[-1] > 0:
+                print("\t\t\t - AVG/step Greedy \t\t", round(sum(o.timing.greedy[-1:-(1+o.greedy_steps[-1]):-1])/o.greedy_steps[-1],3), "\t[s/step]")
+            if o.incremental_steps[-1] > 0:
+                print("\t\t\t - AVG/step Incremental \t", round(sum(o.timing.incremental[-1:-(1+o.incremental_steps[-1]):-1])/o.incremental_steps[-1],3), "\t[s/step]")
+            if o.sat_steps[-1] > 0:
+                print("\t\t\t - AVG/step SAT\t\t\t", round(sum(o.timing.sat[-1:-(1+o.sat_steps[-1]):-1])/o.sat_steps[-1],3), "\t[s/step]")
+            if o.grow_steps[-1] > 0:
+                print("\t\t\t - AVG/step GROW\t\t", round(sum(o.timing.growMss[-1:-(1+o.grow_steps[-1]):-1])/o.grow_steps[-1],3), "\t[s/step]")
             # # print(f"\t OMUS: {round(t_end_omus - t_start_omus, 2)}")
             # print(f"\t\t MSS size={o.MSS_sizes[-1]}\n")
 

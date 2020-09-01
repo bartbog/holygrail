@@ -120,16 +120,20 @@ class BenchmarkInfo(object):
 
 
 class Steps(object):
-    def __init__(self, incremental=0, greedy=0, optimal=0):
+    def __init__(self, incremental=0, greedy=0, optimal=0, sat=0, grow=0):
         self.incremental = incremental
         self.greedy = greedy
         self.optimal = optimal
+        self.sat = sat
+        self.grow = grow
 
     def __sub__(self, other):
         s = Steps()
         s.incremental = self.incremental - other.incremental
         s.greedy = self.greedy - other.greedy
         s.optimal = self.optimal - other.optimal
+        s.sat = self.sat - other.sat
+        s.grow = self.grow - other.grow
         return s
 
     def __add__(self, other):
@@ -137,6 +141,8 @@ class Steps(object):
         s.incremental = self.incremental + other.incremental
         s.greedy = self.greedy + other.greedy
         s.optimal = self.optimal + other.optimal
+        s.sat = self.sat + other.sat
+        s.grow = self.grow + other.grow
         return s
 
     def __repr__(self):
@@ -176,6 +182,8 @@ class OMUS(object):
             self.optimal_steps = []
             self.greedy_steps = []
             self.incremental_steps = []
+            self.sat_steps = []
+            self.grow_steps = []
 
         # clauses
         self.hard_clauses = [frozenset(clause) for clause in hard_clauses]
@@ -241,6 +249,7 @@ class OMUS(object):
 
     def checkSat(self, f_prime):
         if self.logging:
+            self.steps.sat += 1
             tstart = time.time()
 
         satsolver = Solver()
@@ -264,6 +273,7 @@ class OMUS(object):
 
     def checkSatIncr(self, satsolver, hs, c):
         if self.logging:
+            self.steps.sat += 1
             tstart = time.time()
 
         validated_clauses = [self.clauses[i] for i in hs] + self.hard_clauses
@@ -497,6 +507,7 @@ class OMUS(object):
         if self.logging:
             tend = time.time()
             self.timing.growMss.append(tend - tstart)
+            self.steps.grow += 1
             # print("Grow:", round(tend-tstart))
 
         return new_F_prime, new_model
@@ -1069,6 +1080,8 @@ class OMUS(object):
         t_start = time.time()
         n_msses = len(self.MSSes)
         n_greedy = self.steps.greedy
+        n_sat = self.steps.sat
+        n_grow = self.steps.grow
         n_optimal = self.steps.optimal
         n_incremental = self.steps.incremental
 
@@ -1104,7 +1117,7 @@ class OMUS(object):
             F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
             for mss_idxs, MSS_model in set(self.MSSes):
                 mss = set(F_idxs[mss_idx] for mss_idx in mss_idxs if mss_idx in F_idxs)
-
+                # print(mss, )
                 if any(True if mss.issubset(MSS) else False for MSS in added_MSSes):
                     continue
 
@@ -1122,8 +1135,8 @@ class OMUS(object):
                     H.append(C)
                     added_MSSes.append(MSS)
                     self.addSetGurobiModel(gurobi_model, C)
-                    mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
-                    self.MSSes.add((mssIdxs, frozenset(model)))
+                    # mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
+                    # self.MSSes.add((mssIdxs, frozenset(model)))
 
         mode = MODE_OPT
         #print("\n")
@@ -1193,10 +1206,9 @@ class OMUS(object):
                     # print("hard grow:",len(MSS),model,"->",MSS_model)
                     # grow model over as many as possible soft clauses next 
                     MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
-                # print("soft grow:",MSS,MSS_model)
-                #print("MSS",MSS)
+                    # print("soft grow:",MSS,MSS_model)
+
                 C = F - MSS
-                #print("C",C)
                 assert len(C) > 0, f"Greedy: hs={hs}, model={model}"
 
                 # Store the MSSes
@@ -1213,7 +1225,6 @@ class OMUS(object):
             # ----- Compute Optimal Hitting Set
             hs = self.gurobiOptimalHittingSet(gurobi_model)
 
-            # print(my_cost, "vs ", best_cost)
             # ------ Sat check
             (model, sat, satsolver) = self.checkSat(hs)
 
@@ -1229,6 +1240,8 @@ class OMUS(object):
                     self.optimal_steps.append(self.steps.optimal - n_optimal)
                     self.greedy_steps.append(self.steps.greedy - n_greedy)
                     self.incremental_steps.append(self.steps.incremental - n_incremental)
+                    self.sat_steps.append(self.steps.sat - n_sat)
+                    self.grow_steps.append(self.steps.grow - n_grow)
                 #print("\n")
                 return hs, [self.clauses[idx] for idx in hs]
 
@@ -1264,9 +1277,6 @@ class OMUS(object):
             h_counter.update(list(C))
             H.append(C)
             mode = MODE_INCR
-
-            
-
 
     def omus(self, add_clauses, add_weights=None):
         # ---------- build clauses and additional weights

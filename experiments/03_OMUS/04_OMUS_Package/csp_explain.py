@@ -93,9 +93,9 @@ def maxPropagate(cnf, I=list()):
             raise "Problem"
 
 
-def basecost(constraints, clues):
+def basecost(constraints, clues, soft_weights):
     # nClues = len(constraints.intersection(clues))
-    nClues = 0
+    nClues = sum([1 if soft_weights[i] == 20 else 0 for i in constraints])
     nOthers = len(constraints) - nClues
     # print("constraints = ", constraints)
     if nClues == 0 and nOthers == 1:
@@ -106,9 +106,9 @@ def basecost(constraints, clues):
         return nClues * 20
 
 
-def cost(explanation):
-    facts, constraints, new = explanation
-    return basecost(constraints, set()) + len(facts) + len(constraints)
+def cost(explanation, soft_weights):
+    facts, constraints = explanation
+    return basecost(constraints, set(), soft_weights) + len(facts) + len(constraints)
 
 
 def propagate(cnf, I=list()):
@@ -203,6 +203,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
     print(explainable_facts)
     cnt = 0
+    best_costs = dict({i: None for i in explainable_facts - I})
 
     while len(explainable_facts - I) > 0:
         # print(I, I_cnf)
@@ -213,14 +214,32 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
-
+        # if len(o.MSSes) >0:
+        #     print("MSS:")
+        #     mss_inter = next(iter(o.MSSes))[0]
+        #     for MSS, model in o.MSSes:
+        #         mss_inter = mss_inter.intersection(MSS)
+        #     print(mss_inter)
+        # [print("\t", MSS) for MSS, model in o.MSSes]
+        # print("Model:")
+        # [print("\t", model) for MSS, model in o.MSSes]
         for i in explainable_facts - I:
             # if i == 30:
             # Match MSS
-            #print("Explaining ", i)
+            print("Explaining ", i)
+            if best_costs[i] is not None:
+                if cost_best is None:
+                    best_cost_i = best_costs[i]
+                else:
+                    best_cost_i = min([cost_best, best_costs[i]])
+            else:
+                best_cost_i = cost_best
+
             if incremental:
                 hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
-                                             add_weights=w_I, limit=limit)
+                                             add_weights=w_I, 
+                                             limit=limit,
+                                             best_cost=best_cost_i)
                 if explanation is None:
                     # early stopping
                     #print(f"Skipping {i} for now: limit {limit} reached")
@@ -250,16 +269,24 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             # constraint used ('and not ci in E_i': dont repeat unit clauses)
             S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
 
+            S_hs = [soft_clauses.index(si) for si in S_i]
+
             # new fact
             N_i = {i}
+
+            cost_explanation = cost((E_i, S_hs), soft_weights)
+
+            if best_costs[i] is None or best_costs[i] > cost_explanation:
+                best_costs[i] = cost_explanation
+
             # print(f"Candidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i}\n")
             # print(explanation)
-            if cost_best is None or cost((E_i, S_i, N_i)) < cost_best:
+            if cost_best is None or cost_explanation < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
-                cost_best = cost((E_i, S_i, N_i))
+                cost_best = cost_explanation
 
             # @TIAS: printing explanations as they get better
-            print(f"\tFacts: {E_i} Clause: {S_i} => {N_i} (",cost((E_i, S_i, N_i)),")")
+            print(f"\tFacts: {E_i} Clause: {S_i} => {N_i} (",cost((E_i, S_hs), soft_weights),")")
 
         if cost_best is None:
             # all were early stopped by limit

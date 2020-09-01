@@ -1064,13 +1064,14 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, add_clauses, add_weights=None, limit=None):
+    def omusIncr(self, add_clauses, add_weights=None, limit=None, best_cost=None):
         # Benchmark info
         t_start = time.time()
-        n_msses = len(self.MSSes)
-        n_greedy = self.steps.greedy
-        n_optimal = self.steps.optimal
-        n_incremental = self.steps.incremental
+        if self.logging:
+            n_msses = len(self.MSSes)
+            n_greedy = self.steps.greedy
+            n_optimal = self.steps.optimal
+            n_incremental = self.steps.incremental
 
         # Build clauses and additional weights
         self.clauses = self.soft_clauses + add_clauses
@@ -1128,7 +1129,7 @@ class OMUS(object):
                     self.MSSes.add((mssIdxs, frozenset(model)))
         #print("\treuse added", time.time()-t_start)
 
-        mode = MODE_GREEDY
+        mode = MODE_OPT
         #print("\n")
         while(True):
             #print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
@@ -1159,7 +1160,8 @@ class OMUS(object):
                     # ----- Greedy compute hitting set
                     hs = self.greedyHittingSet(H)
                 #print("\tgreedy or incr computed", time.time()-t_start)
-
+                elif mode == MODE_OPT:
+                    break
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
                     (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c_best)
@@ -1167,8 +1169,18 @@ class OMUS(object):
                     (model, sat, satsolver) = self.checkSat(hs)
                 #print("\ths sat checked", time.time()-t_start)
 
-                if not sat:
-                    # incremental hs is unsat, switch to optimal method
+
+                E_i = [ci for ci in hs if self.clauses[ci] in add_clauses]
+
+                # constraint used ('and not ci in E_i': dont repeat unit clauses)
+                S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses and self.clauses[ci] not in add_clauses]
+                # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
+                my_cost = self.cost((E_i, S_i))
+                # print(my_cost, "vs ", best_cost)
+
+                # if best_cost is not None and best_cost < my_cost:
+                #     return  None, None
+                if not sat or (best_cost is not None and best_cost <= my_cost):                    # incremental hs is unsat, switch to optimal method
                     hs = None
                     if mode == MODE_INCR:
                         mode = MODE_GREEDY
@@ -1199,6 +1211,7 @@ class OMUS(object):
                 # Store the MSSes
                 if self.reuse_mss:
                     mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
+                    # print(mssIdxs)
                     self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
                 h_counter.update(list(C))
@@ -1235,13 +1248,28 @@ class OMUS(object):
             # ------ Grow
             if self.extension == 'maxsat':
                 # grow model over hard clauses first, must be satisfied
-                MSS, MSS_model = self.grow(hs, model, self.hard_clauses)                    
+                MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
             else:
                 # grow model over hard clauses first, must be satisfied
                 MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
                 # print("hard grow:",len(MSS),model,"->",MSS_model)
-                # grow model over as many as possible soft clauses next 
+                # grow model over as many as possible soft clauses next
                 MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
+
+            if self.reuse_mss:
+                mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
+                # print(mssIdxs)
+                self.MSSes.add((mssIdxs, frozenset(MSS_model)))
+
+            E_i = [ci for ci in hs if self.clauses[ci] in add_clauses]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses and self.clauses[ci] not in add_clauses]
+            # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
+            my_cost = self.cost((E_i, S_i))
+
+            if best_cost is not None and best_cost <= my_cost:
+                return None, None
 
             C = F - MSS
             self.addSetGurobiModel(gurobi_model, C)
@@ -1250,10 +1278,6 @@ class OMUS(object):
             h_counter.update(list(C))
             H.append(C)
             mode = MODE_INCR
-
-            if self.reuse_mss:
-                mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
-                self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
     def omus(self, add_clauses, add_weights=None):
         # ---------- build clauses and additional weights
@@ -1325,6 +1349,34 @@ class OMUS(object):
 
         with open(outputDir + outputFile, 'w') as file:
             file.write(json.dumps(results)) # use `json.loads` to do the reverse
+
+    def basecost(self, constraints, clues):
+        # nClues = len(constraints.intersection(clues))
+        nClues = sum([1 if self.soft_weights[i] == 20 else 0 for i in constraints])
+        nOthers = len(constraints) - nClues
+        # print("constraints = ", constraints)
+        if nClues == 0 and nOthers == 1:
+            return 0
+        elif nClues == 0 and nOthers > 1:
+            return 20
+        else:
+            return nClues * 20
+
+
+    def cost(self, explanation):
+        # TODO match puzzle bvs
+        facts, constraints = explanation
+        # return self.basecost(constraints, set()) + len(facts) + len(constraints)
+        return self.basecost(constraints, set()) + len(facts) + len(constraints)
+
+
+# SOURCE: https://stackoverflow.com/questions/2361945/detecting-consecutive-integers-in-a-list
+def ranges(nums):
+    nums = sorted(set(nums))
+    gaps = [[s, e] for s, e in zip(nums, nums[1:]) if s+1 < e]
+    edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
+    return [(s, e+1) for s, e in zip(edges, edges)]
+
 
 if __name__ == "__main__":
     cnf = CNF()

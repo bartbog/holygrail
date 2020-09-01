@@ -234,7 +234,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             if incremental:
                 hs, explanation = o.omusIncr(add_clauses=I_cnf + [frozenset({-i})],
                                              add_weights=w_I,
-                                             best_cost=best_cost_i)
+                                             best_cost=cost_best)
             else:
                 hs, explanation = o.omus(add_clauses=I_cnf + [frozenset({-i})],
                                          add_weights=w_I)

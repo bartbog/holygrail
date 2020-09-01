@@ -1223,6 +1223,16 @@ class OMUS(object):
             # ----- Compute Optimal Hitting Set
             hs = self.gurobiOptimalHittingSet(gurobi_model)
 
+            # check cost, return premptively if worse than best
+            E_i = [ci for ci in hs if self.clauses[ci] in add_clauses]
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses and self.clauses[ci] not in add_clauses]
+            # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
+            my_cost = cost((E_i, S_i, set()))
+            # print(my_cost, "vs", best_cost)
+            if best_cost is not None and my_cost >= best_cost:
+                return None, None
+
             # ------ Sat check
             (model, sat, satsolver) = self.checkSat(hs)
 
@@ -1257,16 +1267,6 @@ class OMUS(object):
             if self.reuse_mss:
                 mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
                 self.MSSes.add((mssIdxs, frozenset(MSS_model)))
-
-            E_i = [ci for ci in hs if self.clauses[ci] in add_clauses]
-
-            # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses and self.clauses[ci] not in add_clauses]
-            # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
-            my_cost = cost((E_i, S_i, set()))
-            # print(my_cost, "vs", best_cost)
-            if best_cost is not None and best_cost <= my_cost:
-                return None, None
 
             C = F - MSS
             self.addSetGurobiModel(gurobi_model, C)

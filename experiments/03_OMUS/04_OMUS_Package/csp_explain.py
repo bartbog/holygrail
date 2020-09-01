@@ -204,7 +204,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
     print(explainable_facts)
     cnt = 0
 
-    best_costs = dict({i: None for i in explainable_facts - I})
+    best_costs = dict({i: 9999999 for i in explainable_facts - I})
 
     while len(explainable_facts - I) > 0:
         # print(I, I_cnf)
@@ -216,7 +216,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
 
-        for i in explainable_facts - I:
+        for i in sorted(explainable_facts - I, key=lambda i: best_costs[i]):
             # if i == 30:
             # Match MSS
             print("Explaining ", i)

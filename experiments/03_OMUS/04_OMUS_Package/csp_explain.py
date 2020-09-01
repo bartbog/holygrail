@@ -219,7 +219,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         for i in explainable_facts - I:
             # if i == 30:
             # Match MSS
-            # print("Explaining ", i)
+            print("Explaining ", i)
             t_start_omus = time.time()
             if best_costs[i] is not None:
                 if cost_best is None:
@@ -239,11 +239,6 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
                                          add_weights=w_I)
 
             t_end_omus = time.time()
-            # t_end_omus = time.time()
-            if hs is None:
-                continue
-
-            assert len(hs) > 0, "OMUS shoudl be non empty"
             # print([o.clauses[i] for i in hs], explanation)
             # print([f'{o.clauses[i]}: soft\n' if o.clauses[i] in soft_clauses else f'{o.clauses[i]}: hard\n' for i in hs])
             print(f"\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
@@ -272,6 +267,11 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             # # print(f"\t OMUS: {round(t_end_omus - t_start_omus, 2)}")
             # print(f"\t\t MSS size={o.MSS_sizes[-1]}\n")
 
+            if hs is None:
+                continue
+
+            assert len(hs) > 0, "OMUS shoudl be non empty"
+
             # explaining facts
             E_i = [ci for ci in explanation if ci in I_cnf]
 
@@ -288,7 +288,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             if best_costs[i] is None or best_costs[i] > cost_explanation:
                 best_costs[i] = cost_explanation
 
-            # print(f"Candidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i}\n")
+            print(f"Candidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i} ({cost_explanation})\n")
             # print(explanation)
             if cost_best is None or cost_explanation < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i

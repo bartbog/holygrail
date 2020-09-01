@@ -371,18 +371,19 @@ class OMUS(object):
         g_model.Params.LogToConsole = 0
         g_model.Params.Threads = 8
 
-        # create the variables
-        x = g_model.addMVar(shape=self.nSoftClauses, vtype=GRB.BINARY, name="x")
+        # create the variables (with weights in one go)
+        x = g_model.addMVar(shape=self.nSoftClauses, vtype=GRB.BINARY, obj=self.weights, name="x")
 
         # set objective : min sum xi*wi
-        g_model.setObjective(sum(x[i] * self.weights[i] for i in range(self.nSoftClauses)), GRB.MINIMIZE)
+        #g_model.setObjective(sum(x[i] * self.weights[i] for i in range(self.nSoftClauses)), GRB.MINIMIZE)
+        # done earlier, automatically minimisation...
 
         # update the model
         g_model.update()
 
         if self.logging:
             tend = time.time()
-            self.timing.greedy.append(tend - tstart)
+            self.timing.optimal.append(tend - tstart)
 
         return g_model
 
@@ -1100,8 +1101,9 @@ class OMUS(object):
         assert self.nSoftClauses == self.nWeights, "Weights must be the same"
 
         F = frozenset(range(self.nSoftClauses))
-        mapped_model, solved =  self.checkSatNoSolver()
-        assert solved == False, f"CNF is satisfiable check sat no solver"
+        # Overhead cus not needed?
+        #mapped_model, solved =  self.checkSatNoSolver()
+        #assert solved == False, f"CNF is satisfiable check sat no solver"
 
         H, C = [], []
         h_counter = Counter()
@@ -1113,6 +1115,8 @@ class OMUS(object):
         satsolver, sat, hs = None, None, None
 
 
+        t_reuse = time.time()
+        print("pre reuse:",t_reuse-t_start)
         if self.reuse_mss:
             F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
             for mss_idxs, MSS_model in set(self.MSSes):
@@ -1137,6 +1141,7 @@ class OMUS(object):
                     self.addSetGurobiModel(gurobi_model, C)
                     # mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
                     # self.MSSes.add((mssIdxs, frozenset(model)))
+        print("post reuse:",time.time() - t_reuse)
 
         mode = MODE_OPT
         #print("\n")

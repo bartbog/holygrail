@@ -299,8 +299,9 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
         # propagate as much info as possible
         # print(explanation)
-        New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
-        N_best = New_info.intersection(explainable_facts) - I
+        # Timing: skip for now...
+        #New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
+        #N_best = New_info.intersection(explainable_facts) - I
 
         # add new info
         I = I | N_best

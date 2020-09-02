@@ -7,10 +7,14 @@ import random
 # Gurobi utilities
 import gurobipy as gp
 from gurobipy import GRB
+
 # Pysat Utilities
 from pysat.examples.rc2 import RC2
 from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
+
+# interval computation
+import portion as P
 
 import json
 # GLOBAL VARIABELS
@@ -118,16 +122,20 @@ class BenchmarkInfo(object):
 
 
 class Steps(object):
-    def __init__(self, incremental=0, greedy=0, optimal=0):
+    def __init__(self, incremental=0, greedy=0, optimal=0, sat=0, grow=0):
         self.incremental = incremental
         self.greedy = greedy
         self.optimal = optimal
+        self.sat = sat
+        self.grow = grow
 
     def __sub__(self, other):
         s = Steps()
         s.incremental = self.incremental - other.incremental
         s.greedy = self.greedy - other.greedy
         s.optimal = self.optimal - other.optimal
+        s.sat = self.sat - other.sat
+        s.grow = self.grow - other.grow
         return s
 
     def __add__(self, other):
@@ -135,6 +143,8 @@ class Steps(object):
         s.incremental = self.incremental + other.incremental
         s.greedy = self.greedy + other.greedy
         s.optimal = self.optimal + other.optimal
+        s.sat = self.sat + other.sat
+        s.grow = self.grow + other.grow
         return s
 
     def __repr__(self):
@@ -148,7 +158,6 @@ class Timings(object):
         self.incremental = []
         self.sat = []
         self.growMss = []
-
 
 class OMUS(object):
     def __init__(self, hard_clauses=None, soft_clauses=None, I=None, bv=None, soft_weights=None, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=True):
@@ -174,6 +183,8 @@ class OMUS(object):
             self.optimal_steps = []
             self.greedy_steps = []
             self.incremental_steps = []
+            self.sat_steps = []
+            self.grow_steps = []
 
         # clauses
         self.hard_clauses = [frozenset(clause) for clause in hard_clauses]
@@ -212,6 +223,7 @@ class OMUS(object):
 
     def checkSatNoSolver(self, f_prime=None):
         if self.logging:
+            self.steps.sat += 1
             tstart = time.time()
 
         if f_prime is None:
@@ -239,6 +251,7 @@ class OMUS(object):
 
     def checkSat(self, f_prime):
         if self.logging:
+            self.steps.sat += 1
             tstart = time.time()
 
         satsolver = Solver()
@@ -262,6 +275,7 @@ class OMUS(object):
 
     def checkSatIncr(self, satsolver, hs, c):
         if self.logging:
+            self.steps.sat += 1
             tstart = time.time()
 
         validated_clauses = [self.clauses[i] for i in hs] + self.hard_clauses
@@ -497,6 +511,7 @@ class OMUS(object):
         if self.logging:
             tend = time.time()
             self.timing.growMss.append(tend - tstart)
+            self.steps.grow += 1
             # print("Grow:", round(tend-tstart))
 
         return new_F_prime, new_model
@@ -1068,11 +1083,14 @@ class OMUS(object):
         # Benchmark info
         t_start = time.time()
         if self.logging:
-            n_msses = len(self.MSSes)
+            t_start = time.time()
             n_greedy = self.steps.greedy
+            n_sat = self.steps.sat
+            n_grow = self.steps.grow
             n_optimal = self.steps.optimal
             n_incremental = self.steps.incremental
-
+        if self.reuse_mss:
+            n_msses = len(self.MSSes)
         # Build clauses and additional weights
         self.clauses = self.soft_clauses + add_clauses
         self.nSoftClauses = len(self.clauses)
@@ -1102,35 +1120,53 @@ class OMUS(object):
         satsolver, sat, hs = None, None, None
 
 
-        # XXX THIS PART IS A BOTTLENECK: slow for some reason... perhaps first 4 lines the list comprehension
-        if self.reuse_mss:
-            F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
-            for mss_idxs, MSS_model in set(self.MSSes):
-                mss = set(F_idxs[mss_idx] for mss_idx in mss_idxs if mss_idx in F_idxs)
+        # # XXX THIS PART IS A BOTTLENECK: slow for some reason... perhaps first 4 lines the list comprehension
+        # if self.reuse_mss:
 
-                if any(True if mss.issubset(MSS) else False for MSS in added_MSSes):
-                    continue
+        #     # F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
+        #     # F_ranges = set(self.softClauseIdxs[clause] for clause in self.clauses)
+        #     # soft_clauses always going to be there !
+        #     for mss_ranges, MSS_model in set(self.MSSes):
 
-                # grow model over hard clauses first, must be satisfied
-                if True or self.extension == 'maxsat':
-                    MSS, model = self.grow(mss, MSS_model)
-                else:
-                    MSS, model = self.grow(mss, MSS_model, self.hard_clauses)
-                    # grow model over as many as possible soft clauses next 
-                    MSS, model = self.grow(mss, model, self.clauses)
-                C = F - MSS
+        #         # mss = set(F_idxs[mss_idx] for mss_idx in P.iterate(mss_ranges.intersection(), step=1) if mss_idx in F_idxs)
 
-                if C not in H:
-                    h_counter.update(list(C))
-                    H.append(C)
-                    added_MSSes.append(MSS)
-                    self.addSetGurobiModel(gurobi_model, C)
-                    mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
-                    self.MSSes.add((mssIdxs, frozenset(model)))
-        #print("\treuse added", time.time()-t_start)
+        #         # if any(True if mss.issubset(MSS) else False for MSS in added_MSSes):
+        #         #     continue
+
+        #         # grow model over hard clauses first, must be satisfied
+        #         if True or self.extension == 'maxsat':
+        #             MSS, model = self.grow(mss, MSS_model)
+        #         else:
+        #             MSS, model = self.grow(mss, MSS_model, self.hard_clauses)
+        #             # grow model over as many as possible soft clauses next 
+        #             MSS, model = self.grow(mss, model, self.clauses)
+
+        #         C = F - MSS
+
+        #         if C not in H:
+        #             h_counter.update(list(C))
+        #             H.append(C)
+        #             added_MSSes.append(MSS)
+        #             self.addSetGurobiModel(gurobi_model, C)
+
+        #             # adding the MSS as intervals
+        #             mssIdxs = set(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
+
+        #             r = ranges(mssIdxs)
+        #             mss_inside = False
+        #             for m, _ in self.MSSes:
+        #                 if r in m:
+        #                     mss_inside = True
+        #                     break
+
+        #             if not mss_inside:
+        #             # for m in self.MSSes:
+        #                 self.MSSes.add((r, frozenset(model)))
+        # print("\treuse added", round(time.time()-t_start, 3), "s")
+        # print("\t#MSSes=", len(self.MSSes))
+        # mode = MODE_GREEDY
 
         mode = MODE_OPT
-        #print("\n")
         while(True):
             #print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True):
@@ -1176,11 +1212,10 @@ class OMUS(object):
                 S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses and self.clauses[ci] not in add_clauses]
                 # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
                 my_cost = self.cost((E_i, S_i))
-                # print(my_cost, "vs ", best_cost)
 
                 # if best_cost is not None and best_cost < my_cost:
                 #     return  None, None
-                if not sat or (best_cost is not None and best_cost <= my_cost):                    # incremental hs is unsat, switch to optimal method
+                if not sat or (best_cost is not None and best_cost < my_cost):                    # incremental hs is unsat, switch to optimal method
                     hs = None
                     if mode == MODE_INCR:
                         mode = MODE_GREEDY
@@ -1210,9 +1245,18 @@ class OMUS(object):
 
                 # Store the MSSes
                 if self.reuse_mss:
-                    mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
+                    mssIdxs = set(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
+                    r = ranges(mssIdxs)
+                    mss_inside = False
+                    for m, _ in self.MSSes:
+                        if r in m:
+                            mss_inside = True
+                            break
+                    if not mss_inside:
+                        self.MSSes.add((r, frozenset(MSS_model)))
                     # print(mssIdxs)
-                    self.MSSes.add((mssIdxs, frozenset(MSS_model)))
+                    # print(ranges(mssIdxs))
+                    # self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
                 h_counter.update(list(C))
                 self.addSetGurobiModel(gurobi_model, C)
@@ -1228,20 +1272,34 @@ class OMUS(object):
 
             # ------ Sat check
             (model, sat, satsolver) = self.checkSat(hs)
+
             #print("optimal, sat?", time.time()-t_start)
 
             if not sat:
                 #
                 gurobi_model.dispose()
+                # print("OMUS:")
+                if self.reuse_mss:
+                    MSS = F-hs
+                    model, solved = self.checkSatNoSolver(MSS)
+                    assert solved == True
+                    mssIdxs = set(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
+                    # print(mssIdxs)
+                    r = ranges(mssIdxs)
+
+                    self.MSSes.add((r, frozenset(MSS_model)))
 
                 # Benchmark info
                 if self.logging:
                     exec_time = time.time() - t_start
                     self.total_timings.append(exec_time)
-                    self.MSS_sizes.append(len(self.MSSes) - n_msses)
+                    if self.reuse_mss:
+                        self.MSS_sizes.append(len(self.MSSes) - n_msses)
                     self.optimal_steps.append(self.steps.optimal - n_optimal)
                     self.greedy_steps.append(self.steps.greedy - n_greedy)
                     self.incremental_steps.append(self.steps.incremental - n_incremental)
+                    self.sat_steps.append(self.steps.sat - n_sat)
+                    self.grow_steps.append(self.steps.grow - n_grow)
                 #print("\n")
                 return hs, [self.clauses[idx] for idx in hs]
 
@@ -1257,9 +1315,14 @@ class OMUS(object):
                 MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
 
             if self.reuse_mss:
-                mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
+                # mssIdxs = [self.softClauseIdxs[self.clauses[id]] for id in MSS&F]
+                # self.MSSes.add((mssIdxs, frozenset(MSS_model)))
+                mssIdxs = set(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
                 # print(mssIdxs)
-                self.MSSes.add((mssIdxs, frozenset(MSS_model)))
+                r = ranges(mssIdxs)
+
+                self.MSSes.add((r, frozenset(MSS_model)))
+                # print(ranges(mssIdxs))
 
             E_i = [ci for ci in hs if self.clauses[ci] in add_clauses]
 
@@ -1268,7 +1331,7 @@ class OMUS(object):
             # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
             my_cost = self.cost((E_i, S_i))
 
-            if best_cost is not None and best_cost <= my_cost:
+            if best_cost is not None and best_cost < my_cost:
                 return None, None
 
             C = F - MSS
@@ -1371,11 +1434,16 @@ class OMUS(object):
 
 
 # SOURCE: https://stackoverflow.com/questions/2361945/detecting-consecutive-integers-in-a-list
+
+
 def ranges(nums):
     nums = sorted(set(nums))
     gaps = [[s, e] for s, e in zip(nums, nums[1:]) if s+1 < e]
     edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
-    return [(s, e+1) for s, e in zip(edges, edges)]
+    P1 = P.empty()
+    for s, e in zip(edges, edges):
+        P1 |= P.closed(s, e)
+    return P1
 
 
 if __name__ == "__main__":

@@ -159,7 +159,7 @@ class Timings(object):
 
 
 class OMUS(object):
-    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, bv=None, soft_weights=None, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=True):
+    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, bv=None, soft_weights=None, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=True,clues=None,trans=None,bij=None):
         # checking input
         assert (f is not None) or (soft_weights is not None), "No mapping function or weights supplied."
         assert (hard_clauses is not None), "No clauses or CNF supplied."
@@ -188,8 +188,13 @@ class OMUS(object):
         # clauses
         self.hard_clauses = [frozenset(clause) for clause in hard_clauses]
         self.soft_clauses = [frozenset(clause) for clause in soft_clauses]
-        self.clauses = self.soft_clauses # soft + omus 'added' ones
+        self.clauses = self.soft_clauses  # soft + omus 'added' ones
         self.nSoftClauses = len(self.soft_clauses)
+        self.fullMss = frozenset(i for i in range(self.nSoftClauses + len(I)))
+        self.I_lits = frozenset(set(abs(lit) for lit in I) | set(-abs(lit) for lit in I))
+        self.clues=clues
+        self.trans=trans
+        self.bij=bij
 
         # indicator variables
         self.bv = bv
@@ -1005,6 +1010,33 @@ class OMUS(object):
 
         return t_F_prime, lit_true
 
+
+    def maxsat_fprime_n(self, F_prime, n):
+        t_F_prime = set(F_prime)
+
+        wcnf = WCNF()
+        wcnf.extend(self.hard_clauses)
+        for i, clause in enumerate(self.clauses):
+            if i in F_prime:
+                wcnf.append(list(clause))
+            else:
+                wcnf.append(list(clause), weight=self.weights[i])
+
+        list_msses = []
+        with RC2(wcnf) as rc2:
+            for id, t_model in enumerate(rc2.enumerate()):
+                if id == n:
+                    break
+
+                t_F_prime = set(F_prime)
+                for i, clause in enumerate(self.clauses):
+                    if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
+                        t_F_prime.add(i)
+
+                list_msses.append((frozenset(t_F_prime), t_model))
+
+        return list_msses
+
     def maxsat_fprime(self, F_prime, model):
         t_F_prime = set(F_prime)
 
@@ -1018,6 +1050,7 @@ class OMUS(object):
 
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()
+
             # print("Cost:", rc2.cost)
 
         for i, clause in enumerate(self.clauses):
@@ -1076,7 +1109,7 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, add_clauses, add_weights=None, best_cost=None):
+    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None):
         # Benchmark info
         t_start = time.time()
         n_msses = len(self.MSSes)
@@ -1087,13 +1120,13 @@ class OMUS(object):
         n_incremental = self.steps.incremental
 
         # Build clauses and additional weights
-        self.clauses = self.soft_clauses + add_clauses
+        self.clauses = self.soft_clauses + I_cnf + [frozenset({-explained_literal})]
         self.nSoftClauses = len(self.clauses)
 
         if add_weights is not None:
             self.weights = self.soft_weights + add_weights
         elif self.f is not None:
-            self.weights = self.soft_weights + [f(clause) for clause in add_clauses]
+            self.weights = self.soft_weights + [f(clause) for clause in I_cnf + [frozenset({-explained_literal})]]
 
         # ---- getting more steps when reusing the models
         self.nWeights = len(self.weights)
@@ -1118,6 +1151,16 @@ class OMUS(object):
             # map global 'softClauseIdx' to local 'pos'
             F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
             for mss_idxs, MSS_model in self.MSSes:
+
+                # part of fullMSS
+                if mss_idxs.issubset(self.fullMss):
+                    # print("MSS is subset")
+                    continue
+
+                # if literal not in the model then we can skip it
+                if explained_literal not in MSS_model and -explained_literal not in MSS_model:
+                    continue
+
                 # get local pos from global idx
                 mss = set(F_idxs[mss_idx] for mss_idx in mss_idxs&F_idxs.keys())
                 # print(mss, )
@@ -1127,14 +1170,17 @@ class OMUS(object):
 
                 # grow model over hard clauses first, must be satisfied
                 # Timing: grow is rather slow
-                MSS, model = self.grow(mss, MSS_model)
-                C = F - MSS
+                # XXX Model if literal inside then add it to the MSS and C = F-MSS
+                # XXX remove grow
+                # MSS, model = self.grow(mss, MSS_model)
+                C = F - mss
 
                 if C not in H:
                     h_counter.update(list(C))
                     H.append(C)
-                    added_MSSes.append(MSS&F)
+                    added_MSSes.append(mss&F)
                     self.addSetGurobiModel(gurobi_model, C)
+                # print(C)
 
         mode = MODE_OPT
         #print("\n")
@@ -1172,16 +1218,15 @@ class OMUS(object):
                 elif mode == MODE_GREEDY:
                     (model, sat, satsolver) = self.checkSat(hs)
 
-                E_i = [ci for ci in hs if self.clauses[ci] in add_clauses]
+                E_i = [ci for ci in hs if self.clauses[ci] in I_cnf]
 
                 # constraint used ('and not ci in E_i': dont repeat unit clauses)
-                S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses and self.clauses[ci] not in add_clauses]
-                # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
-                my_cost = cost((E_i, S_i, set()))
+                S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses]
+                # S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses and self.clauses[ci] not in I_cnf]
+
+                my_cost = self.cost((E_i, S_i))
                 # print(my_cost, "vs ", best_cost)
 
-                # if best_cost is not None and best_cost < my_cost:
-                #     return  None, None
                 if not sat or (best_cost is not None and best_cost <= my_cost):
                     # incremental hs is unsat, switch to optimal method
                     hs = None
@@ -1212,7 +1257,10 @@ class OMUS(object):
                 # Store the MSSes
                 if self.reuse_mss:
                     mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
-                    self.MSSes.add((mssIdxs, frozenset(MSS_model)))
+                    # mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
+                    if not mssIdxs.issubset(self.fullMss):
+                        # XXX look only for explainable lits ? 
+                        self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
                 h_counter.update(list(C))
                 self.addSetGurobiModel(gurobi_model, C)
@@ -1224,11 +1272,13 @@ class OMUS(object):
             hs = self.gurobiOptimalHittingSet(gurobi_model)
 
             # check cost, return premptively if worse than best
-            E_i = [ci for ci in hs if self.clauses[ci] in add_clauses]
+            E_i = [ci for ci in hs if self.clauses[ci] in I_cnf]
+
             # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses and self.clauses[ci] not in add_clauses]
+            S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses]
+
             # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
-            my_cost = cost((E_i, S_i, set()))
+            my_cost = self.cost((E_i, S_i))
             # print(my_cost, "vs", best_cost)
             if best_cost is not None and my_cost >= best_cost:
                 return None, my_cost
@@ -1256,7 +1306,8 @@ class OMUS(object):
             # ------ Grow
             if self.extension == 'maxsat':
                 # grow model over hard clauses first, must be satisfied
-                MSS, MSS_model = self.grow(hs, model, self.hard_clauses)                    
+                # MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
+                MSS, MSS_model = self.grow(hs, model)
             else:
                 # grow model over hard clauses first, must be satisfied
                 MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
@@ -1266,7 +1317,9 @@ class OMUS(object):
 
             if self.reuse_mss:
                 mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
-                self.MSSes.add((mssIdxs, frozenset(MSS_model)))
+                # mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
+                if not mssIdxs.issubset(self.fullMss):
+                    self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
             C = F - MSS
             self.addSetGurobiModel(gurobi_model, C)
@@ -1348,22 +1401,22 @@ class OMUS(object):
             file.write(json.dumps(results)) # use `json.loads` to do the reverse
 
 
-def basecost(constraints, clues):
-    # nClues = len(constraints.intersection(clues))
-    nClues = 0
-    nOthers = len(constraints) - nClues
-    # print("constraints = ", constraints)
-    if nClues == 0 and nOthers == 1:
-        return 0
-    elif nClues == 0 and nOthers > 1:
-        return 20
-    else:
-        return nClues * 20
+    def basecost(self, constraints):
+        # nClues = len(constraints.intersection(clues))
+        nClues = sum([1 if id in clues else 0 for id in constraints])
+        nOthers = len(constraints) - nClues
+        # print("constraints = ", constraints)
+        if nClues == 0 and nOthers == 1:
+            return 0
+        elif nClues == 0 and nOthers > 1:
+            return 20
+        else:
+            return nClues * 20
 
 
-def cost(explanation):
-    facts, constraints, new = explanation
-    return basecost(constraints, set()) + len(facts) + len(constraints)
+    def cost(self, explanation):
+        facts, constraints = explanation
+        return self.basecost(constraints) + len(facts) + len(constraints)
 
 if __name__ == "__main__":
     cnf = CNF()

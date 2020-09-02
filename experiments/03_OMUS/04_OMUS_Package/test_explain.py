@@ -768,8 +768,8 @@ def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'},
     hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
     soft_clauses = []
     soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
     soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
 
     # print(maxPropagate(hard_clauses + soft_clauses))
 
@@ -779,7 +779,7 @@ def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'},
 
     explainable_facts = set()
     for rel in rels:
-        print(rel.df)
+        # print(rel.df)
         for item in rel.df.values:
             explainable_facts |= set(i.name+1 for i in item)
 
@@ -791,7 +791,10 @@ def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'},
         incremental=True,
         bv= set(bv.name+1 for bv in bv_clues + bv_trans + bv_bij),
         reuse_mss=True,
-        unknown_facts=explainable_facts
+        unknown_facts=explainable_facts,
+        clues=set(i for i in range(len(clues_cnf))) | set(i for i in range(len(hard_clauses), len(hard_clauses)+len(bv_clues))),
+        bij=set(i for i in range(len(clues), len(clues) + len(bij))) | set(i for i in range(len(hard_clauses)+len(bv_clues), len(hard_clauses)+len(bv_clues)+len(bv_bij))),
+        trans=set(i for i in range(len(clues) + len(bij), len(clues) + len(bij)+len(trans))) | set(i for i in range(len(hard_clauses)+len(bv_clues)+len(bv_bij), len(hard_clauses)+len(bv_clues)+len(bv_bij)+len(trans)))
     )
 
     o.export_results('results/puzzles/origin/', today + "_" + now + ".json")

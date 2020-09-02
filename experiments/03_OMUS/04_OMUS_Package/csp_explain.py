@@ -83,16 +83,16 @@ def explanationsToJson(explanations, clue_match, literal_match, output):
         json.dump(json_expls, fp)
 
 
-def maxPropagate(cnf, I=list()):
-    with Solver() as s:
-        s.append_formula(cnf, no_return=False)
-        solved = s.solve()
-        if solved:
-            # for id, m in enumerate(s.enum_models()):
-            #     print(id)
-            return set(s.get_model())
-        else:
-            raise "Problem"
+# def maxPropagate(cnf, I=list()):
+#     with Solver() as s:
+#         s.append_formula(cnf, no_return=False)
+#         solved = s.solve()
+#         if solved:
+#             # for id, m in enumerate(s.enum_models()):
+#             #     print(id)
+#             return set(s.get_model())
+#         else:
+#             raise "Problem"
 
 
 def basecost(constraints, weights, clues, trans, bij):
@@ -113,17 +113,17 @@ def cost(explanation, weights, clues, trans, bij):
     return basecost(constraints, weights, clues, trans, bij) + len(facts) + len(constraints)
 
 
-def propagate(cnf, I=list()):
-    lits = set(lit for ci in cnf for lit in ci) | set(-lit for ci in cnf for lit in ci)
+# def propagate(cnf, I=list()):
+#     lits = set(lit for ci in cnf for lit in ci) | set(-lit for ci in cnf for lit in ci)
 
-    with Solver() as s:
-        s.append_formula(cnf, no_return=False)
-        s.solve(assumptions=I)
-        model = set(s.get_model())
+#     with Solver() as s:
+#         s.append_formula(cnf, no_return=False)
+#         s.solve(assumptions=I)
+#         model = set(s.get_model())
 
-    cnf_lits = lits.intersection(model)
+#     cnf_lits = lits.intersection(model)
 
-    return cnf_lits
+#     return cnf_lits
 
 
 def optimalPropagate(cnf, I=None):
@@ -158,17 +158,31 @@ def optimalPropagate(cnf, I=None):
                 return model - set()
 
 
-def naiveOptimalPropagate(cnf, I):
-    # The most precise and most expensive version returns the partial structure in which atoms are unknown 
-    # iff they do not have the same truth value in all models
-    # I_prop = set(I)
-    all_models = set()
-    with Solver() as s:
-        s.append_formula(cnf, no_return=False)
-        for m in s.enum_models():
-            all_models |= set(m)
-    lits = set(lit for lit in all_models if -lit not in all_models and lit not in I)
-    return lits
+def print_omus_debug(o):
+    print("\t\t\t - #Steps OptHS\t\t\t", o.optimal_steps[-1])
+    print("\t\t\t - #Steps Greedy HS\t\t", o.greedy_steps[-1])
+    print("\t\t\t - #Steps Incremental HS\t", o.incremental_steps[-1])
+    print("\t\t\t - #Steps SAT HS\t\t", o.sat_steps[-1])
+    print("\t\t\t - #Steps GROW HS\t\t", o.grow_steps[-1])
+
+    print("\t\t\t - Time OptHS\t\t\t", round(sum(o.timing.optimal[-1:-(1+o.optimal_steps[-1]):-1]),3), "\t[s]")
+    print("\t\t\t - Time Greedy HS\t\t", round(sum(o.timing.greedy[-1:-(1+o.greedy_steps[-1]):-1]),3), "\t[s]")
+    print("\t\t\t - Time Incremental HS\t\t", round(sum(o.timing.incremental[-1:-(1+o.incremental_steps[-1]):-1]),3), "\t[s]")
+    print("\t\t\t - Time SAT\t\t\t", round(sum(o.timing.sat[-1:-(1+o.sat_steps[-1]):-1]),3), "\t[s]")
+    print("\t\t\t - Time GROW\t\t\t", round(sum(o.timing.growMss[-1:-(1+o.grow_steps[-1]):-1]),3), "\t[s]")
+
+    if o.optimal_steps[-1] > 0:
+        print("\t\t\t - AVG/step OPT\t\t\t", round(sum(o.timing.optimal[-1:-(1+o.optimal_steps[-1]):-1])/o.optimal_steps[-1],3), "\t[s/step]")
+    if o.greedy_steps[-1] > 0:
+        print("\t\t\t - AVG/step Greedy \t\t", round(sum(o.timing.greedy[-1:-(1+o.greedy_steps[-1]):-1])/o.greedy_steps[-1],3), "\t[s/step]")
+    if o.incremental_steps[-1] > 0:
+        print("\t\t\t - AVG/step Incremental \t", round(sum(o.timing.incremental[-1:-(1+o.incremental_steps[-1]):-1])/o.incremental_steps[-1],3), "\t[s/step]")
+    if o.sat_steps[-1] > 0:
+        print("\t\t\t - AVG/step SAT\t\t\t", round(sum(o.timing.sat[-1:-(1+o.sat_steps[-1]):-1])/o.sat_steps[-1],3), "\t[s/step]")
+    if o.grow_steps[-1] > 0:
+        print("\t\t\t - AVG/step GROW\t\t", round(sum(o.timing.growMss[-1:-(1+o.grow_steps[-1]):-1])/o.grow_steps[-1],3), "\t[s/step]")
+    # print(f"\t OMUS: {round(t_end_omus - t_start_omus, 2)}")
+    print(f"\t\t MSS size={o.MSS_sizes[-1]}\n")
 
 
 def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=None, bv=None, parameters=None, incremental=False, reuse_mss=False, seed_mss=True, I0=None, unknown_facts=None, bij=None, trans=None, clues=None):
@@ -185,9 +199,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
     I_cnf = [frozenset({lit}) for lit in I0]
 
     I_end = optimalPropagate(cnf, I0)
-    # I_end = maxPropagate(cnf, I0)
 
-    # print(len(maxPropagate(cnf, I0)))
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
 
     # explanation sequence
@@ -209,8 +221,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
     if reuse_mss and seed_mss:
         # add full theory without negation literal
         o.MSSes.add((o.fullMss, frozenset(I_end)))
-        # print(o.MSSes)
-        # F = frozenset(range(o.nSoftClauses))
+
         for i in explainable_facts - I:
             # Only negation of literal inside
             o.clauses = o.soft_clauses + [frozenset({-i})]
@@ -226,15 +237,13 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             o.MSSes.add((mssIdxs, frozenset(MSS_Model)))
 
     cnt = 0
-    # print(o.MSSes)
 
     best_costs = dict({i: 9999999 for i in explainable_facts - I})
 
     while len(explainable_facts - I) > 0:
         t_iter = time.time()
-        # print(I, I_cnf)
         assert len(I) == len(I_cnf)
-        # print("Remaining facts:", len(explainable_facts-I))
+
         cost_best = None
         E_best, S_best, N_best = None, None, None
 
@@ -242,8 +251,6 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         w_I = [1 for _ in I] + [1]
         print("\n",{i: best_costs[i] for i in sorted(explainable_facts - I, key=lambda i: best_costs[i])}, "\n")
         for id, i in enumerate(sorted(explainable_facts - I, key=lambda i: best_costs[i])):
-            # if i == 30:
-            # Match MSS
             print(f"Expl {i:4} [{id:4}/{len(explainable_facts-I):4}] \tbest_cost_i= ", best_costs[i], "\t - \t", "cost_best=\t", cost_best, end="\r")
             t_start_omus = time.time()
 
@@ -264,33 +271,10 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             assert len(hs) > 0, "OMUS shoudl be non empty"
 
             t_end_omus = time.time()
-            # print([o.clauses[i] for i in hs], explanation)
+
             # print([f'{o.clauses[i]}: soft\n' if o.clauses[i] in soft_clauses else f'{o.clauses[i]}: hard\n' for i in hs])
             print(f"\n\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
-            # print("\t\t\t - #Steps OptHS\t\t\t", o.optimal_steps[-1])
-            # print("\t\t\t - #Steps Greedy HS\t\t", o.greedy_steps[-1])
-            # print("\t\t\t - #Steps Incremental HS\t", o.incremental_steps[-1])
-            # print("\t\t\t - #Steps SAT HS\t\t", o.sat_steps[-1])
-            # print("\t\t\t - #Steps GROW HS\t\t", o.grow_steps[-1])
-
-            # print("\t\t\t - Time OptHS\t\t\t", round(sum(o.timing.optimal[-1:-(1+o.optimal_steps[-1]):-1]),3), "\t[s]")
-            # print("\t\t\t - Time Greedy HS\t\t", round(sum(o.timing.greedy[-1:-(1+o.greedy_steps[-1]):-1]),3), "\t[s]")
-            # print("\t\t\t - Time Incremental HS\t\t", round(sum(o.timing.incremental[-1:-(1+o.incremental_steps[-1]):-1]),3), "\t[s]")
-            # print("\t\t\t - Time SAT\t\t\t", round(sum(o.timing.sat[-1:-(1+o.sat_steps[-1]):-1]),3), "\t[s]")
-            # print("\t\t\t - Time GROW\t\t\t", round(sum(o.timing.growMss[-1:-(1+o.grow_steps[-1]):-1]),3), "\t[s]")
-
-            # if o.optimal_steps[-1] > 0:
-            #     print("\t\t\t - AVG/step OPT\t\t\t", round(sum(o.timing.optimal[-1:-(1+o.optimal_steps[-1]):-1])/o.optimal_steps[-1],3), "\t[s/step]")
-            # if o.greedy_steps[-1] > 0:
-            #     print("\t\t\t - AVG/step Greedy \t\t", round(sum(o.timing.greedy[-1:-(1+o.greedy_steps[-1]):-1])/o.greedy_steps[-1],3), "\t[s/step]")
-            # if o.incremental_steps[-1] > 0:
-            #     print("\t\t\t - AVG/step Incremental \t", round(sum(o.timing.incremental[-1:-(1+o.incremental_steps[-1]):-1])/o.incremental_steps[-1],3), "\t[s/step]")
-            # if o.sat_steps[-1] > 0:
-            #     print("\t\t\t - AVG/step SAT\t\t\t", round(sum(o.timing.sat[-1:-(1+o.sat_steps[-1]):-1])/o.sat_steps[-1],3), "\t[s/step]")
-            # if o.grow_steps[-1] > 0:
-            #     print("\t\t\t - AVG/step GROW\t\t", round(sum(o.timing.growMss[-1:-(1+o.grow_steps[-1]):-1])/o.grow_steps[-1],3), "\t[s/step]")
-            # # print(f"\t OMUS: {round(t_end_omus - t_start_omus, 2)}")
-            # print(f"\t\t MSS size={o.MSS_sizes[-1]}\n")
+            print_omus_debug(o)
 
             # explaining facts
             E_i = [ci for ci in explanation if ci in I_cnf]
@@ -298,8 +282,6 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             # constraint used ('and not ci in E_i': dont repeat unit clauses)
             S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
             S_hs = [soft_clauses.index(si) for si in S_i]
-            # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
-            # [print(clause) for clause in hard_clauses if len(opti.intersection(clause))> 0]
 
             # new fact
             N_i = {i}
@@ -309,7 +291,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
             print(f"\n\t\tCandidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i} ({cost_explanation})\n")
             # print(explanation)
-            if cost_best is None or cost_explanation <= cost_best:
+            if cost_best is None or cost_explanation < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost_explanation
 
@@ -319,8 +301,11 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         # propagate as much info as possible
         # print(explanation)
         # Timing: skip for now...
-        #New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
-        #N_best = New_info.intersection(explainable_facts) - I
+        t_start= time.time()
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
+        t_end= round(time.time() - t_start, 3)
+        print("Time Optimal Propagate=\t", t_end)
+        N_best = New_info.intersection(explainable_facts) - I
 
         # add new info
         I = I | N_best
@@ -330,7 +315,6 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
         # @TIAS: printing explanations
         print(f"\nOptimal explanation \t\t {E_best} /\\ {S_best} => {N_best}", time.time()-t_iter,"\n")
-        # print(f"Facts:\n\t{E_best}  \nClause:\n\t{S_best} \n=> Derive (at cost {cost_best}) \n\t{N_best}")
 
         cnt += 1
 

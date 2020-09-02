@@ -167,11 +167,9 @@ class OMUS(object):
         assert bv is not None, "Please add indication variables"
 
         # parameters of the solver
-        # self.extension = parameters['extension'] if 'extension' in parameters else 'maxsat'
-        self.extension = parameters['extension'] if 'extension' in parameters else 'greedy_no_param'
+        self.extension = parameters['extension'] if 'extension' in parameters else 'maxsat'
         self.output = parameters['output'] if 'output' in parameters else 'log.json'
         self.parameters = parameters
-        print("Extension", self.extension)
 
         # Logging / benchmark info
         self.logging = logging
@@ -192,9 +190,9 @@ class OMUS(object):
         self.nSoftClauses = len(self.soft_clauses)
         self.fullMss = frozenset(i for i in range(self.nSoftClauses + len(I)))
         self.I_lits = frozenset(set(abs(lit) for lit in I) | set(-abs(lit) for lit in I))
-        self.clues=clues
-        self.trans=trans
-        self.bij=bij
+        self.clues = clues
+        self.trans = trans
+        self.bij = bij
 
         # indicator variables
         self.bv = bv
@@ -222,6 +220,7 @@ class OMUS(object):
         self.softClauseIdxs = dict()
         # matching table clause to fixed id
         all_soft_clauses = self.soft_clauses + [frozenset({lit}) for lit in I] + [frozenset({-lit}) for lit in I]
+
         for idx, clause in enumerate(all_soft_clauses):
             self.softClauseIdxs[clause] = idx
 
@@ -240,7 +239,6 @@ class OMUS(object):
             s.append_formula(validated_clauses, no_return=False)
             solved = s.solve()
             model = s.get_model()
-        # print(solved, model)
 
         if self.logging:
             tend = time.time()
@@ -371,7 +369,6 @@ class OMUS(object):
         g_model = gp.Model('MipOptimalHittingSet')
 
         # model parameters
-        # g_model.Params.LogFile = 'logs/'+datetime.now().strftime("%Y_%m_%d_%H_%M_%S")+'.log'
         g_model.Params.OutputFlag = 0
         g_model.Params.LogToConsole = 0
         g_model.Params.Threads = 8
@@ -503,11 +500,7 @@ class OMUS(object):
             'greedy_vertical': self.greedy_vertical,
             # 'satlike': SATLike
         }
-        # print("clauses=", clauses)
-        # print("weights=",weights)
-        # print("F_prime=", F_prime)
-        # print("model=", model)
-        # print("parameters=", parameters)
+
         new_F_prime, new_model = extensions[extension](F_prime, model)
 
         if self.logging:
@@ -1024,16 +1017,17 @@ class OMUS(object):
 
         list_msses = []
         with RC2(wcnf) as rc2:
-            for id, t_model in enumerate(rc2.enumerate()):
+            for id, model in enumerate(rc2.enumerate()):
                 if id == n:
                     break
 
                 t_F_prime = set(F_prime)
+                t_model = set(model)
                 for i, clause in enumerate(self.clauses):
                     if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
                         t_F_prime.add(i)
 
-                list_msses.append((frozenset(t_F_prime), t_model))
+                list_msses.append((frozenset(t_F_prime), frozenset(t_model)))
 
         return list_msses
 
@@ -1111,13 +1105,14 @@ class OMUS(object):
 
     def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None):
         # Benchmark info
-        t_start = time.time()
-        n_msses = len(self.MSSes)
-        n_greedy = self.steps.greedy
-        n_sat = self.steps.sat
-        n_grow = self.steps.grow
-        n_optimal = self.steps.optimal
-        n_incremental = self.steps.incremental
+        if self.logging:
+            t_start_omus = time.time()
+            n_msses = len(self.MSSes)
+            n_greedy = self.steps.greedy
+            n_sat = self.steps.sat
+            n_grow = self.steps.grow
+            n_optimal = self.steps.optimal
+            n_incremental = self.steps.incremental
 
         # Build clauses and additional weights
         self.clauses = self.soft_clauses + I_cnf + [frozenset({-explained_literal})]
@@ -1134,6 +1129,7 @@ class OMUS(object):
         assert self.nSoftClauses == self.nWeights, "Weights must be the same"
 
         F = frozenset(range(self.nSoftClauses))
+        
         # Overhead cus not needed?
         #mapped_model, solved =  self.checkSatNoSolver()
         #assert solved == False, f"CNF is satisfiable check sat no solver"
@@ -1150,6 +1146,7 @@ class OMUS(object):
             added_MSSes = []
             # map global 'softClauseIdx' to local 'pos'
             F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
+
             for mss_idxs, MSS_model in self.MSSes:
 
                 # part of fullMSS
@@ -1180,7 +1177,6 @@ class OMUS(object):
                     H.append(C)
                     added_MSSes.append(mss&F)
                     self.addSetGurobiModel(gurobi_model, C)
-                # print(C)
 
         mode = MODE_OPT
         #print("\n")
@@ -1190,7 +1186,6 @@ class OMUS(object):
                 # print("Starting with optimal!")
                 # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
                 if mode == MODE_INCR:
-                    # print("Incremental")
                     if self.logging:
                         tstart = time.time()
                     # add sets-to-hit incrementally until unsat then continue with optimal method
@@ -1292,7 +1287,7 @@ class OMUS(object):
 
                 # Benchmark info
                 if self.logging:
-                    exec_time = time.time() - t_start
+                    exec_time = time.time() - t_start_omus
                     self.total_timings.append(exec_time)
                     self.MSS_sizes.append(len(self.MSSes) - n_msses)
                     self.optimal_steps.append(self.steps.optimal - n_optimal)

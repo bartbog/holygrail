@@ -218,15 +218,18 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         trans=trans,
         bij=bij)
 
+    best_costs = dict({i: 9999999 for i in explainable_facts - I})
+
     if reuse_mss and seed_mss:
         # add full theory without negation literal
         o.MSSes.add((o.fullMss, frozenset(I_end)))
-
+        base_F = set(range(len(o.soft_clauses)))
         for i in explainable_facts - I:
+            F = base_F | set({o.softClauseIdxs[frozenset({-i})]})
+
             # Only negation of literal inside
             o.clauses = o.soft_clauses + [frozenset({-i})]
             o.weights = o.soft_weights + [1]
-
             # F_prime = last variable
             F_prime = set({len(soft_clauses)})
 
@@ -234,11 +237,15 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
             # build MSS with correct indexes
             mssIdxs = frozenset(o.softClauseIdxs[o.clauses[id]] for id in MSS)
+
+            C =  F - MSS
+            # print(C, i)
+            best_costs[i] = len(MSS) * 1000
             o.MSSes.add((mssIdxs, frozenset(MSS_Model)))
 
     cnt = 0
+    # return 
 
-    best_costs = dict({i: 9999999 for i in explainable_facts - I})
 
     while len(explainable_facts - I) > 0:
         t_iter = time.time()

@@ -1045,8 +1045,6 @@ class OMUS(object):
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()
 
-            # print("Cost:", rc2.cost)
-
         for i, clause in enumerate(self.clauses):
             if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
                 t_F_prime.add(i)

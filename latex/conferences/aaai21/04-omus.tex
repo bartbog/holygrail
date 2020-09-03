@@ -1,88 +1,139 @@
 % !TeX root = ./main.tex
 
+Before presenting an algorithm that computes optimal MUSs, we first formally define the problem we are going to solve and we present an extension of the hitting set duality of \cref{prop:duality}. 
+Throughout this section, we assume that an objective function $f: 2^\formula \to \nat$ that assigns to each subset of \formula a cost is fixed. Our goal now is not to find arbitrary MUSs, but MUSs that are optimal with respect to $f$. 
 
-\begin{itemize}
-  \item Davies'MaxSAT version ? (takes a lot of space on paper)
-  \item OMUS v1
-  \item OMUS v2
-\end{itemize}
-\emilio{
-  In this section, we first introduce the notion of OMUS and extend the smallest MUS approach \cite{ignatiev2015smallest} to compute optimal MUS with respect to an objective function. 
-}
-We further improve the efficiency of the OMUS algorithm using ideas from the improved \textsc{MaxHS} algorithm \cite{davies2013postponing}.
 
-\begin{definition}
-  A MUS of $\m{F}$ with an optimal value w.r.t an \emph{objective function $f$} is called an \textbf{Optimal Minimal Unsatisfiable Subset} (OMUS).
-\end{definition}
-
-Similar to computing the \texttt{SMUS}, the OMUS requires computing \textit{minimum} hitting sets with respect to $f$:
+% \begin{itemize}
+%   \item Davies'MaxSAT version ? (takes a lot of space on paper)
+%   \item OMUS v1
+%   \item OMUS v2
+% \end{itemize}
+% \emilio{
+%   In this section, we first introduce the notion of OMUS and extend the smallest MUS approach \cite{ignatiev2015smallest} to compute optimal MUS with respect to an objective function. 
+% }
+% We further improve the efficiency of the OMUS algorithm using ideas from the improved \textsc{MaxHS} algorithm \cite{davies2013postponing}.
 
 \begin{definition}
-  Let $\m{K}$ be a collection of sets, $HS(\m{K})$ the set of all hitting sets on $\m{K}$ and let $f$ be an monotonic objective function.
-  A hitting set $ h \in HS(\m{K})$ is said to be an \textbf{optimal} hitting set if $\forall$ $h' \in HS(\m{K})$ we have that $f(h) \leq f(h')$ with respect to f. %\cite{davies2011solving}.
+  A MUS $M$ of \formula such that no MUS $M'$ exists with $f(M')<f(M)$  is called an \emph{$f$-Optimal Minimal Unsatisfiable Subset} (OMUS) of \formula.
 \end{definition}
-
-While any objective function is applicable for OMUSes, the set of possible objective functions is constrained to \emph{monotonic} functions to guarantee that the algorithm \ref{alg:omus} presented below finds the OMUS.
 
 \begin{definition}
-  Given a CNF Formula $\m{F}$, let $f : 2^{\m{F}} \rightarrow \mathbb{R}$ be a mapping of a sets of clauses to real numbers. f is said to be a \emph{monotonic} objective function if for any subsets $\m{A}$, $\m{B}$ of $\m{F}$ if $\m{A} \subseteq \m{B}$ then $f(\m{A}) \leq f(\m{B})$.
+  Let $\m{H}$ be a collection of subsets of a set $S$ and $c$ a function $2^S\to\nat$. 
+  A hitting set of $\m{H}$ is called \emph{$c$-optimal} if there are no hitting sets $h'$ of $\m{H}$ with $c(h')<c(h)$. 
 \end{definition}
+In case our collection of sets $\m{H}$ happen to be subsets of \formula, we can use the function $f$ to measure the costs. 
+% 
+% While any objective function is applicable for OMUSes, the set of possible objective functions is constrained to \emph{monotonic} functions to guarantee that the algorithm \ref{alg:omus} presented below finds the OMUS.
 
-The OMUS is then computed using the following observation:
+% \begin{definition}
+%   Given a CNF Formula \formula, let $f : 2^{\formula} \rightarrow \mathbb{R}$ be a mapping of a sets of clauses to real numbers. f is said to be a \emph{monotonic} objective function if for any subsets $\m{A}$, $\m{B}$ of \formula if $\m{A} \subseteq \m{B}$ then $f(\m{A}) \leq f(\m{B})$.
+% \end{definition}
+
+The hitting set duality now straightforwardly generalizes as follows. 
 
 \begin{proposition}\label{prop:optimal-hitting-set}
-  A set $\m{U} \subseteq \m{F}$ is an OMUS of $\m{F}$ iff $\m{U}$ is an optimal hitting set of MCSes($\m{F}$).
+  A set $\m{U} \subseteq \formula$ is an $f$-OMUS of \formula iff $\m{U}$ is an $f$-optimal hitting set of \mcses{\formula}.
+\end{proposition}
+ 
+In order to find an OMUS, there is no need to explicitly enumerate all MCSes of \formula. In practice it suffices to compute sufficiently many of them. 
+% and the correction subsets considered need not neccesarily be maximal. 
+The following proposition formalizes this. 
+% 
+% Lemma \ref{lemma:K} specifies that, in practice, it is not required to enumerate all MCSes of \formula.
+% The algorithm only requires finding an optimal hitting set on \mcses{\formula} tat is unsatisfiable.
+
+\begin{proposition}\label{prop:K}
+  Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 
+  If $\m{U}$ is an $f$-optimal hitting set of \m{H} and $\m{U}$ is unsatisfiable, then $\m{U}$ is an $f$-OMUS of \formula. 
 \end{proposition}
 
-Lemma \ref{lemma:K} specifies that, in practice, it is not required to enumerate all MCSes of $\m{F}$.
-The algorithm only requires finding an optimal hitting set on MCSes($\m{F}$) tat is unsatisfiable.
-
-\begin{lemma}\label{lemma:K}
-  Let $\m{K} \subseteq$ MCSes($\m{F}$). Then a subset $\m{U}$ of $\m{F}$ is an OMUS if $\m{U}$ is a \textbf{optimal} hitting set on $\m{K}$ and $\m{U}$ is \textbf{unsatisfiable}.
-\end{lemma}
+% \begin{proposition}
+%   If $\m{U}$ is an $f$-OMUS of \formula and $\m{C}$ a correction subset of \formula, then 
+% \end{proposition}
 
 
+We are now ready to present our basic OMUS algorithm in \cref{alg:omus}. 
+The algorithm keeps track of a set $\m{H}$ of (minimal) correction subsets of $\formula$. 
+It makes use of a procedure \ohs that computes an optimal (with respect to $f$) hitting set $\formula'$  of a given set of subsets of \formula. In practice, this type of call is often implement using a MIP solver \cite{davies2011solving}. 
+Whenever such a hitting set is found, a \sat-call checks whether the result is satisfiable. If it is, \cref{prop:K} guarantees that the result is an OMUS. 
+If it is not, a procedure \grow is used to extend it to a set $\formula''$ with $\formula'\subseteq \formula''$ such that $\formula''$ is still satisfiable.
+The implementation of \grow can be achieved in different ways.
+In fact, we could call a weighted partial \textsc{MaxSAT} solver to find the maximal satisfiable subset of clauses grown from the hitting set.
+In practice, we use a greedy approximative method to find a sastisfying assignment favoring literals that will satisfy the most clauses of highest weights.
+More precisely, we rank the clauses based on the ratio of weight to the number of literals not yet assigned in the clause.
+\todo{beter uitleggen. Nog niet zo duidelijk. Ook niet zeker of dit op deze moment echt van belang is.}
+\bart{OOK: hoe gebruiken we de maxsat solver, zoeken we een MSS met een zo HOOG mogelijke kost? Is dat ``optimaal'' in zekere zin? Ik weet het eigenlijk niet... Een MSS met hoge kost, betekent dat de MCS een lage kost heeft. Maar een MCS met een hoge kost is eigenlijk informatiever, neen? Dat geeft een strengere constraint op onze hitting sets? 
+Wel... We willen zo weinig mogelijk constraints in de MCS (om een sterke cosntratint op de hitting set te krijgen), maar we hebben voor die zaken wel liefst GROTE gewichten in de MCS. 
+Dus... eerlijk... ik weet niet zo goed of we gewichten hier wel in rekening moeten brengen... En tenzij we het zelf volledig snappen zou ik het niet in de paper schrijven :-)}
+
+
+% 
+% This can be implemented in various ways, e.g., using a MAXsat call can guarantee that $\formula''$ is an MSS of \formula. Another possibility is  -- given a model $I$ of $\formula''$ -- to take $\formula''$ to be $\{c\in\formula \mid I\models c\}$.
+
+% \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
 \begin{algorithm}[ht]
   \DontPrintSemicolon
-  $\m{K} \gets \emptyset$  \label{omus-line1} \;
+  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   \While{true}{
-    $hs \gets$ \texttt{FindMinCostHittingSet}($\m{K}, f$) \label{omus-hs} \;%\tcp*{\small Find \textbf{optimal} solution}
+    $\F' \gets \ohs(\setstohit,f) $ \label{smus-hs} \;%\tcp*{\small Find \textbf{optimal} solution}
     % \tcp{\small set with all unique clauses from hitting set}
-    (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
     % \tcp{IF UNSAT, $hs$ is the OMUS }
-    \If{ not sat?}{
-      \Return{$(hs,  \m{K})$} \;
+    \If{ $\lnot \sat(\F')$}{
+      \Return{$\F'$} \;
     }
-    $MSS \gets  \texttt{Grow}($hs$) $\;
-    $\m{K} \gets \m{K} \cup \{  \m{F}$ $\setminus MSS\}$ \;
+    $\F'' \gets  \grow(\F') $\;
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
   }
-  \caption{\textsc{OMUS($\m{F}, \ f$)}}
+  \caption{$\omus(\formula,f)$ }
   \label{alg:omus}
 \end{algorithm}
 
 
-% The \texttt{OMUS} algorithm repeatedly computes the optimal hitting set $hs$ (line \ref{omus-hs}) on the already found $\m{K}$, the MCSes of $\m{F}$. If the $hs$ is satisfiable, $hs$ is grown grown to 
+% 
+% \begin{algorithm}[ht]
+%   \DontPrintSemicolon
+%   $\m{K} \gets \emptyset$  \label{omus-line1} \;
+%   \While{true}{
+%     $hs \gets$ \texttt{FindMinCostHittingSet}($\m{K}, f$) \label{omus-hs} \;%\tcp*{\small Find \textbf{optimal} solution}
+%     % \tcp{\small set with all unique clauses from hitting set}
+%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+%     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+%     % \tcp{IF UNSAT, $hs$ is the OMUS }
+%     \If{ not sat?}{
+%       \Return{$(hs,  \m{K})$} \;
+%     }
+%     $MSS \gets  \texttt{Grow}($hs$) $\;
+%     $\m{K} \gets \m{K} \cup \{  \formula$ $\setminus MSS\}$ \;
+%   }
+%   \caption{\textsc{OMUS($\formula, \ f$)}}
+%   \label{alg:omus}
+% \end{algorithm}
+
+
+% The \texttt{OMUS} algorithm repeatedly computes the optimal hitting set $hs$ (line \ref{omus-hs}) on the already found $\m{K}$, the MCSes of \formula. If the $hs$ is satisfiable, $hs$ is grown grown to 
 % The algorithm terminates and $hs$ is guaranteed to be the OMUS based on lemma \ref{lemma:K}. 
 
-From proposition \ref{prop:MCS-MUS-hittingset}, if $hs$ is unsatisfiable, that means it hits all MCSes($\m{F}$). 
-Furthermore, $hs$ is also a cost optimal hitting set on $\m{K}$. It means that if we add any MCS to $\m{K}$, the cost of other hitting sets will either increase in cost or remain the same.
+% From proposition \ref{prop:MCS-MUS-hittingset}, if $hs$ is unsatisfiable, that means it hits all \mcses{\formula}. 
+% Furthermore, $hs$ is also a cost optimal hitting set on $\m{K}$. It means that if we add any MCS to $\m{K}$, the cost of other hitting sets will either increase in cost or remain the same.
 
 % Lemma \ref{lemma:K} also 
 
-Note if we assign a weight to all clauses equal to the number of literals it contains, then we reduce the problem of finding an optimal hitting set back to finding the minimum hitting set.
-% The algorithm then computes the smallest MUS instead of the OMUS \cite{ignatiev2015smallest}.
+% Note if we assign a weight to all clauses equal to the number of literals it contains, then we reduce the problem of finding an optimal hitting set back to finding the minimum hitting set.
+% % The algorithm then computes the smallest MUS instead of the OMUS \cite{ignatiev2015smallest}.
+% 
+% % \subsection*{Implementation}
+% 
+% Inspired by the approach of Davies and Bacchus \cite{davies2011solving}, the optimal hitting set problem is formulated as a Linear integer Program and encoded into the MIP solver. 
+% Contrary to the \texttt{SMUS} algorithm, which uses the \textsc{SAT} solver to compute minimum hitting sets. 
 
-% \subsection*{Implementation}
-
-Inspired by the approach of Davies and Bacchus \cite{davies2011solving}, the optimal hitting set problem is formulated as a Linear integer Program and encoded into the MIP solver. 
-Contrary to the \texttt{SMUS} algorithm, which uses the \textsc{SAT} solver to compute minimum hitting sets. 
-
-The implementation of the grow procedure can be achieved in different ways.
-In fact, we could call a weighted partial \textsc{MaxSAT} solver to find the maximal satisfiable subset of clauses grown from the hitting set.
-In practice, we use a greedy approximation strategy to find a sastisfying assignment favoring literals that will satisfy the most clauses of highest weights.
-More precisely, we rank the clauses based on the ratio of weight to the number of literals not yet assigned in the clause.
-
+% The implementation of the grow procedure can be achieved in different ways.
+% In fact, we could call a weighted partial \textsc{MaxSAT} solver to find the maximal satisfiable subset of clauses grown from the hitting set.
+% In practice, we use a greedy approximation strategy to find a sastisfying assignment favoring literals that will satisfy the most clauses of highest weights.
+% More precisely, we rank the clauses based on the ratio of weight to the number of literals not yet assigned in the clause.
+% 
 
 
 
@@ -95,9 +146,9 @@ More precisely, we rank the clauses based on the ratio of weight to the number o
 %     $\m{K} \gets $ $\emptyset$ \;
 %     \tcp{grow mss from input mss}
 %     \ForEach(){$\m{MSS} \in \m{M}$}{
-%       $\m{MSS}' \gets$ {Grow($\m{F} \cap \m{MSS}$)} \;
+%       $\m{MSS}' \gets$ {Grow($\formula \cap \m{MSS}$)} \;
 %       % $\m{MSS} \gets $  \;
-%       $\m{K} \gets \m{K} \cup \{  \m{F} \setminus \m{MSS}'\}$ \;
+%       $\m{K} \gets \m{K} \cup \{  \formula \setminus \m{MSS}'\}$ \;
 %     }
 
 %     % $\m{M} \gets \emptyset$ \;
@@ -131,7 +182,7 @@ More precisely, we rank the clauses based on the ratio of weight to the number o
 %           % \todo{is this really correct to add it to MSS ? }\;
 %           $MSS \gets $ {Grow}($hs$) \;
 %           $\m{M} \gets \m{M} \cup \{  MSS \}$ \;
-%           $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+%           $\m{K} \gets \m{K} \cup \{  \formula \setminus MSS\}$ \;
 %           mode $\gets$  mode\_incr \;
 %         }
 %       }
@@ -144,12 +195,12 @@ More precisely, we rank the clauses based on the ratio of weight to the number o
 %       }
 %       $MSS \gets $ {Grow}($hs$) \;
 %       $\m{M} \gets \m{M} \cup \{  MSS \} $\;
-%       $\m{K} \gets \m{K} \cup \{  \m{F} \setminus MSS\}$ \;
+%       $\m{K} \gets \m{K} \cup \{  \formula \setminus MSS\}$ \;
 %       mode $\gets$ mode\_incr \;
 %       \label{alg:omus-nonOPT-nested-end}
 %     }
 %   }
-%   \caption{OMUS-Delayed($\m{F}, \m{M}, f_{cost}$)}
+%   \caption{OMUS-Delayed($\formula, \m{M}, f_{cost}$)}
 %   \label{alg:omus-nonOPT}
 % \end{algorithm*}
 

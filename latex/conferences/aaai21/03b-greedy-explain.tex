@@ -1,5 +1,10 @@
 % !TeX root = ./main.tex
 
+We now rephrase, and simplify the explanation algorithm of \citet{ecai/BogaertsGCG20} in terms of OMUS calls. The use of OMUS, rather than a plain MUS call simplifies the algorithm and removes the need for ... EPLAIN
+
+BLA BLA 
+
+
 \begin{enumerate}
     \item OMUS oracle
     \item Greedy sequence
@@ -7,6 +12,7 @@
 
 \begin{algorithm}
     \DontPrintSemicolon
+    \todo{CLEANUP: is it S or T?}
     $\m{I}_{end} \gets$ \textsc{propagate($\m{I}_0$, $\m{T}$)} \;
     $\m{I} \gets \m{I}_0$  \;
     $Seq \gets \emptyset$  \;
@@ -22,5 +28,20 @@
         $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
     }
   \caption{CSP-Explain($\m{T} ,\ f \ [,  \ \m{I}_0 ]$)}
+  \todo{present as simple as possible}
   \label{alg:cspExplain}
 \end{algorithm}
+
+\todo{explain what the goal is, and what is going on here.}
+
+\bart{I would take the focus away from ``CSP''. This paperi s about SAT-like problems}
+
+
+When investigating \cref{alg:cspExplain}, we see ample room for improvement. 
+First of all, in order to compute an entire explanation sequence, \label{alg:cspExplain} will make use of very many \omus calls that share a large part of the theory. 
+This suggests the possibility of developing \emph{incremental} OMUS algorithms that reuse results from previous calls. 
+Secondly, the inner loop in \cref{alg:cspExplain} loops over all possibly derivable  literals, searches for each of them an OMUS and subsequently, the best of those is taken. 
+In an ideal situation, this could be done in a single call to a solver that exploits all possible information at once. 
+In its most general form, this idea can be phrased as the search for a MUS of a given theory that is subject to certain constraints. 
+In Section \ref{sec:constrainedOMUS}, we explore this idea in the generic setting and develop an algorithm that searches for an OMUS satisfying a given set of meta-level constraints. 
+In \cref{sec:incrementalExp}, we combine these two ideas to develop a simpler, and more efficient explanation-generation algorithm. 

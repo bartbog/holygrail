@@ -37,8 +37,10 @@ $\formula$ is said to be \emph{unsatisfiable} if it has no models.
 \end{definition}
 
 \begin{definition}
-    A subset $\m{C} \subseteq \formula$ is a \emph{Minimal Correction Subset} (MCS) if $\formula\setminus\m{C}$ is satisfiable, while for all 
-    $ \m{C}' \subsetneq C$,  $\formula \setminus \m{C}'$ is unsatisfiable.
+    A subset $\m{C} \subseteq \formula$ is a \emph{correction subset} of \formula if $\formula\setminus\m{C}$ is satisfiable. 
+    A correction subset \m{C} is a \emph{minimal correction subset} (MCS)  of \formula if no strict subset of \m{C} is also a correction subset. 
+%     if $\formula\setminus\m{C}$ is satisfiable, while for all 
+%     $ \m{C}' \subsetneq C$,  $\formula \setminus \m{C}'$ is unsatisfiable.
     We write \mcses{\F} for the set of MCSs of \F. 
 \end{definition}
 
@@ -67,40 +69,41 @@ The following proposition is the well-known hitting set duality  between MCSs an
  
 The duality of \cref{prop:MCS-MUS-hittingset} lies at the basis of various algorithms to compute MUSs \cite{} or MSSs \cite{,}. 
 It was also used in an algorithm to find \emph{cardinality-minimal MUSs} (also called \emph{smallest MUS} or SMUS) by \citet{ignatiev2015smallest}, which our algorithm is based on. 
+In the next section, we discuss our basic OMUS algorithm. 
+The algorithm of \citet{} can be obtained from \cref{alg:omus} by using cardinality as a cost function, hence we do not give it explicitly here. 
 
 
-. The core of their SMUS algorithm is as follows:
-
-% \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
-\begin{algorithm}[ht]
-  \DontPrintSemicolon
-  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
-  \While{true}{
-    $\F' \gets$ FindCardMinHittingSet($\setstohit $) \label{smus-hs} \;%\tcp*{\small Find \textbf{optimal} solution}
-    % \tcp{\small set with all unique clauses from hitting set}
-%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
-    % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-    % \tcp{IF UNSAT, $hs$ is the OMUS }
-    \If{ not sat($\F'$)}{
-      \Return{$\F'$} \;
-    }
-    $\F'' \gets  \texttt{Grow}($\F'$) $\;
-    $\setstohit  \gets \setstohit  \cup \{  \formula$ $\setminus \F''\}$ \;
-  }
-  \caption{\textsc{SMUS($\formula$)}}
-  \label{alg:omus}
-\end{algorithm}
-\todo{notatie van algorithm calls uniform maken. textsc? texttt? plain text? Pick one. }
-
-Maybe we should not even give it here... 
-
-
-% Moreover, it is easy to see that the duality still holds when a cost-function is added. 
-% \begin{proposition}
-%   Let $\cost 
-% \end{proposition}
-
-% Let \cost 
-Moreover, it is easy to see that to explaining how we can compute the SMUS in section \ref{sec:smus}. 
-% TODO: add something here ?
-In section \ref{sec:omus}, we further exploit this proposition for computing the OMUS for a given unsatisfiable CNF formula $\formula$.
+% 
+% % \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+% \begin{algorithm}[ht]
+%   \DontPrintSemicolon
+%   $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+%   \While{true}{
+%     $\F' \gets$ FindCardMinHittingSet($\setstohit $) \label{smus-hs} \;%\tcp*{\small Find \textbf{optimal} solution}
+%     % \tcp{\small set with all unique clauses from hitting set}
+% %     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+%     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+%     % \tcp{IF UNSAT, $hs$ is the OMUS }
+%     \If{ not sat($\F'$)}{
+%       \Return{$\F'$} \;
+%     }
+%     $\F'' \gets  \texttt{Grow}($\F'$) $\;
+%     $\setstohit  \gets \setstohit  \cup \{  \formula$ $\setminus \F''\}$ \;
+%   }
+%   \caption{\textsc{SMUS($\formula$)}}
+%   \label{alg:omus}
+% \end{algorithm}
+% \todo{notatie van algorithm calls uniform maken. textsc? texttt? plain text? Pick one. }
+% 
+% Maybe we should not even give it here... 
+% 
+% 
+% % Moreover, it is easy to see that the duality still holds when a cost-function is added. 
+% % \begin{proposition}
+% %   Let $\cost 
+% % \end{proposition}
+% 
+% % Let \cost 
+% Moreover, it is easy to see that to explaining how we can compute the SMUS in section \ref{sec:smus}. 
+% % TODO: add something here ?
+% In section \ref{sec:omus}, we further exploit this proposition for computing the OMUS for a given unsatisfiable CNF formula $\formula$.

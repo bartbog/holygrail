@@ -226,6 +226,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         base_F = set(range(len(o.soft_clauses)))
 
         for i in explainable_facts - I:
+
             F = base_F | set({o.softClauseIdxs[frozenset({-i})]})
 
             # Only negation of literal inside

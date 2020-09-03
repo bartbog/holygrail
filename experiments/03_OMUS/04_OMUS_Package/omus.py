@@ -175,7 +175,7 @@ class OMUS(object):
         self.logging = logging
         if logging:
             self.steps = Steps()
-            self.timing = Timings()
+            # self.timing = Timings()
             self.total_timings = []
             self.optimal_steps = []
             self.greedy_steps = []
@@ -193,6 +193,7 @@ class OMUS(object):
         self.clues = clues
         self.trans = trans
         self.bij = bij
+        self.hs_sizes = []
 
         # indicator variables
         self.bv = bv
@@ -225,8 +226,8 @@ class OMUS(object):
             self.softClauseIdxs[clause] = idx
 
     def checkSatNoSolver(self, f_prime=None):
-        if self.logging:
-            tstart = time.time()
+        # if self.logging:
+        #     tstart = time.time()
 
         if f_prime is None:
             validated_clauses = self.clauses + self.hard_clauses
@@ -240,9 +241,9 @@ class OMUS(object):
             solved = s.solve()
             model = s.get_model()
 
-        if self.logging:
-            tend = time.time()
-            self.timing.sat.append(tend - tstart)
+        # if self.logging:
+        #     tend = time.time()
+        #     self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -253,7 +254,7 @@ class OMUS(object):
     def checkSat(self, f_prime):
         if self.logging:
             self.steps.sat += 1
-            tstart = time.time()
+            # tstart = time.time()
 
         satsolver = Solver()
 
@@ -264,9 +265,9 @@ class OMUS(object):
         solved = satsolver.solve()
         model = satsolver.get_model()
 
-        if self.logging:
-            tend = time.time()
-            self.timing.sat.append(tend - tstart)
+        # if self.logging:
+            # tend = time.time()
+            # self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -277,7 +278,7 @@ class OMUS(object):
     def checkSatIncr(self, satsolver, hs, c):
         if self.logging:
             self.steps.sat += 1
-            tstart = time.time()
+            # tstart = time.time()
 
         validated_clauses = [self.clauses[i] for i in hs] + self.hard_clauses
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
@@ -287,9 +288,9 @@ class OMUS(object):
         solved = satsolver.solve()
         model = satsolver.get_model()
 
-        if self.logging:
-            tend = time.time()
-            self.timing.sat.append(tend - tstart)
+        # if self.logging:
+        #     tend = time.time()
+        #     self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -299,8 +300,8 @@ class OMUS(object):
             return None, solved, satsolver
 
     def greedyHittingSet(self, H):
-        if self.logging:
-            tstart = time.time()
+        # if self.logging:
+        #     tstart = time.time()
         # trivial case: empty
         # print(H)
         if len(H) == 0:
@@ -356,15 +357,15 @@ class OMUS(object):
                     del V[e]
 
         if self.logging:
-            tend = time.time()
-            self.timing.greedy.append(tend-tstart)
+            # tend = time.time()
+            # self.timing.greedy.append(tend-tstart)
             self.steps.greedy += 1
 
         return C
 
     def gurobiModel(self):
-        if self.logging:
-            tstart = time.time()
+        # if self.logging:
+        #     tstart = time.time()
         # create gurobi model
         g_model = gp.Model('MipOptimalHittingSet')
 
@@ -383,9 +384,9 @@ class OMUS(object):
         # update the model
         g_model.update()
 
-        if self.logging:
-            tend = time.time()
-            self.timing.optimal.append(tend - tstart)
+        # if self.logging:
+        #     tend = time.time()
+        #     self.timing.optimal.append(tend - tstart)
 
         return g_model
 
@@ -398,8 +399,8 @@ class OMUS(object):
         gurobi_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
 
     def gurobiOptimalHittingSet(self, gurobi_model):
-        if self.logging:
-            tstart = time.time()
+        # if self.logging:
+        #     tstart = time.time()
 
         # trivial case
         # if len(C) == 0:
@@ -416,15 +417,15 @@ class OMUS(object):
         hs = set(i for i in range(self.nSoftClauses) if x[i].x == 1)
 
         if self.logging:
-            tend = time.time()
-            self.timing.optimal.append(tend - tstart)
+            # tend = time.time()
+            # self.timing.optimal.append(tend - tstart)
             self.steps.optimal += 1
 
         return hs
 
     def gurobiOptimalHittingSetCold(self, H):
-        if self.logging:
-            tstart = time.time()
+        # if self.logging:
+        #     tstart = time.time()
 
         gurobi_model = self.gurobiModel()
         # trivial case
@@ -443,9 +444,9 @@ class OMUS(object):
         hs = set(i for i in range(self.nSoftClauses) if x[i].x == 1)
         gurobi_model.dispose()
 
-        if self.logging:
-            tend = time.time()
-            self.timing.greedy.append(tend - tstart)
+        # if self.logging:
+        #     tend = time.time()
+        #     self.timing.greedy.append(tend - tstart)
 
         return hs
 
@@ -485,8 +486,8 @@ class OMUS(object):
 
                 Maxsat
         """
-        if self.logging:
-            tstart = time.time()
+        # if self.logging:
+        #     tstart = time.time()
         extension = self.extension
 
         extensions = {
@@ -504,8 +505,8 @@ class OMUS(object):
         new_F_prime, new_model = extensions[extension](F_prime, model)
 
         if self.logging:
-            tend = time.time()
-            self.timing.growMss.append(tend - tstart)
+            # tend = time.time()
+            # self.timing.growMss.append(tend - tstart)
             self.steps.grow += 1
             # print("Grow:", round(tend-tstart))
 
@@ -1101,7 +1102,7 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None):
+    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=True):
         # Benchmark info
         if self.logging:
             t_start_omus = time.time()
@@ -1128,6 +1129,7 @@ class OMUS(object):
 
         F = frozenset(range(self.nSoftClauses))
 
+        self.hs_sizes = []
         H, C = [], []
         h_counter = Counter()
 
@@ -1176,12 +1178,11 @@ class OMUS(object):
         #print("\n")
         while(True):
             # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
-            while(True):
+            while(True and postponed_omus):
                 # print("Starting with optimal!")
                 # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
                 if mode == MODE_INCR:
-                    if self.logging:
-                        tstart = time.time()
+
                     # add sets-to-hit incrementally until unsat then continue with optimal method
                     # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
                     # then hs + any element of 'C' is a valid hitting set of CC + C
@@ -1192,13 +1193,15 @@ class OMUS(object):
                     # choose clause with smallest weight appearing most in H
                     c_best = max(m, key=lambda ci: h_counter[ci])
                     hs.add(c_best)
+                    # self.hs_sizes.append(len(hs))
                     if self.logging:
-                        tend = time.time()
-                        self.timing.incremental.append(tend - tstart)
+                        # tend = time.time()
+                        # self.timing.incremental.append(tend - tstart)
                         self.steps.incremental += 1
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
                     hs = self.greedyHittingSet(H)
+                    # self.hs_sizes.append(len(hs))
                 elif mode == MODE_OPT:
                     break
                 # ----- check satisfiability of hitting set
@@ -1265,6 +1268,7 @@ class OMUS(object):
                 mode = MODE_INCR
             # ----- Compute Optimal Hitting Set
             hs = self.gurobiOptimalHittingSet(gurobi_model)
+            # self.hs_sizes.append(len(hs))
 
             # check cost, return premptively if worse than best
             E_i = [ci for ci in hs if self.clauses[ci] in I_cnf]

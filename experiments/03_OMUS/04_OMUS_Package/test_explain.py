@@ -782,7 +782,10 @@ def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'},
         # print(rel.df)
         for item in rel.df.values:
             explainable_facts |= set(i.name+1 for i in item)
-
+    # print(soft_clauses)
+    print([frozenset({bv1.name + 1}) for bv1 in bv_clues])
+    print([frozenset({bv1.name + 1}) for bv1 in bv_bij])
+    print([frozenset({bv1.name + 1}) for bv1 in bv_trans])
     o, expl_seq = omusExplain(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
@@ -792,9 +795,9 @@ def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'},
         bv= set(bv.name+1 for bv in bv_clues + bv_trans + bv_bij),
         reuse_mss=True,
         unknown_facts=explainable_facts,
-        clues=set(i for i in range(len(clues_cnf))) | set(i for i in range(len(hard_clauses), len(hard_clauses)+len(bv_clues))),
-        bij=set(i for i in range(len(clues), len(clues) + len(bij))) | set(i for i in range(len(hard_clauses)+len(bv_clues), len(hard_clauses)+len(bv_clues)+len(bv_bij))),
-        trans=set(i for i in range(len(clues) + len(bij), len(clues) + len(bij)+len(trans))) | set(i for i in range(len(hard_clauses)+len(bv_clues)+len(bv_bij), len(hard_clauses)+len(bv_clues)+len(bv_bij)+len(trans)))
+        clues=set(i for i in range(len(bv_clues))),
+        bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+        trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
     )
 
     o.export_results('results/puzzles/origin/', today + "_" + now + ".json")

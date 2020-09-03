@@ -1129,10 +1129,6 @@ class OMUS(object):
         assert self.nSoftClauses == self.nWeights, "Weights must be the same"
 
         F = frozenset(range(self.nSoftClauses))
-        
-        # Overhead cus not needed?
-        #mapped_model, solved =  self.checkSatNoSolver()
-        #assert solved == False, f"CNF is satisfiable check sat no solver"
 
         H, C = [], []
         h_counter = Counter()
@@ -1253,8 +1249,10 @@ class OMUS(object):
                 if self.reuse_mss:
                     mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
                     # mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
-                    if not mssIdxs.issubset(self.fullMss):
-                        # XXX look only for explainable lits ? 
+                    # self.MSSes = self.MSSes.filter()
+                    storeMss= not mssIdxs.issubset(self.fullMss) and \
+                              not any(True if mssIdxs.issubset(m[0]) else False for m in self.MSSes)
+                    if(storeMss):
                         self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
                 h_counter.update(list(C))
@@ -1313,7 +1311,9 @@ class OMUS(object):
             if self.reuse_mss:
                 mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
                 # mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
-                if not mssIdxs.issubset(self.fullMss):
+                storeMss= not mssIdxs.issubset(self.fullMss) and \
+                            not any(True if mssIdxs < m[0] else False for m in self.MSSes)
+                if(storeMss):
                     self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
             C = F - MSS
@@ -1398,7 +1398,7 @@ class OMUS(object):
 
     def basecost(self, constraints):
         # nClues = len(constraints.intersection(clues))
-        nClues = sum([1 if id in clues else 0 for id in constraints])
+        nClues = sum([1 if id in self.clues else 0 for id in constraints])
         nOthers = len(constraints) - nClues
         # print("constraints = ", constraints)
         if nClues == 0 and nOthers == 1:

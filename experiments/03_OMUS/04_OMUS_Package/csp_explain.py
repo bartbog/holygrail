@@ -83,16 +83,16 @@ def explanationsToJson(explanations, clue_match, literal_match, output):
         json.dump(json_expls, fp)
 
 
-# def maxPropagate(cnf, I=list()):
-#     with Solver() as s:
-#         s.append_formula(cnf, no_return=False)
-#         solved = s.solve()
-#         if solved:
-#             # for id, m in enumerate(s.enum_models()):
-#             #     print(id)
-#             return set(s.get_model())
-#         else:
-#             raise "Problem"
+def maxPropagate(cnf, I=list()):
+    with Solver() as s:
+        s.append_formula(cnf, no_return=False)
+        solved = s.solve()
+        if solved:
+            # for id, m in enumerate(s.enum_models()):
+            #     print(id)
+            return set(s.get_model())
+        else:
+            raise "Problem"
 
 
 def basecost(constraints, weights, clues, trans, bij):
@@ -249,9 +249,12 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
+
         print("\n",{i: best_costs[i] for i in sorted(explainable_facts - I, key=lambda i: best_costs[i])}, "\n")
+
         for id, i in enumerate(sorted(explainable_facts - I, key=lambda i: best_costs[i])):
-            print(f"Expl {i:4} [{id:4}/{len(explainable_facts-I):4}] \tbest_cost_i= ", best_costs[i], "\t - \t", "cost_best=\t", cost_best, end="\r")
+ 
+            print(f"Expl {i:4} [{id+1:4}/{len(explainable_facts-I):4}] \tbest_cost_i= ", best_costs[i], "\t - \t", "cost_best=\t", cost_best, end="\r")
             t_start_omus = time.time()
 
             if incremental:
@@ -294,6 +297,19 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             if cost_best is None or cost_explanation < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost_explanation
+
+        # post-processing the MSSes
+        print("Size MSSes BEFORE:", len(o.MSSes))
+        keep = set()
+        for (m1, m1_model) in o.MSSes:
+            keep_m1 = True
+            for (m2, _) in o.MSSes:
+                if m1 != m2 and m1 < m2:
+                    keep_m1 = False
+            if keep_m1:
+                keep.add((m1, m1_model))
+        o.MSSes = keep
+        print("Size MSSes AFFTER:", len(o.MSSes))
 
             # @TIAS: printing explanations as they get better
             # print(f"\tFacts: {E_i} Clause: {S_i} => {N_i} (", cost_explanation, ")")

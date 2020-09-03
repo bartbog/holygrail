@@ -164,7 +164,6 @@ class OMUS(object):
         assert (f is not None) or (soft_weights is not None), "No mapping function or weights supplied."
         assert (hard_clauses is not None), "No clauses or CNF supplied."
         assert I is not None, "No interpretation provided"
-        assert bv is not None, "Please add indication variables"
 
         # parameters of the solver
         self.extension = parameters['extension'] if 'extension' in parameters else 'maxsat'
@@ -196,8 +195,6 @@ class OMUS(object):
         self.hs_sizes = []
 
         # indicator variables
-        self.bv = bv
-        self.nBv = len(bv)
 
         # weights
         self.f = f
@@ -256,9 +253,15 @@ class OMUS(object):
             self.steps.sat += 1
             # tstart = time.time()
 
+
+
         satsolver = Solver()
 
+        if len(f_prime) == 0:
+            return set(), True, satsolver
+        # print(self.clauses, self.hard_clauses)
         validated_clauses = [self.clauses[i] for i in f_prime] + self.hard_clauses
+        # print(f_prime, validated_clauses)
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
 
         satsolver.append_formula(validated_clauses, no_return=False)
@@ -281,6 +284,7 @@ class OMUS(object):
             # tstart = time.time()
 
         validated_clauses = [self.clauses[i] for i in hs] + self.hard_clauses
+        # print(validated_clauses, self.clauses, self.hard_clauses)
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
         clause = self.clauses[c]
 
@@ -1102,10 +1106,10 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=True):
+    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=True, timeout=1000):
         # Benchmark info
+        t_start_omus = time.time()
         if self.logging:
-            t_start_omus = time.time()
             n_msses = len(self.MSSes)
             n_greedy = self.steps.greedy
             n_sat = self.steps.sat
@@ -1128,6 +1132,7 @@ class OMUS(object):
         assert self.nSoftClauses == self.nWeights, "Weights must be the same"
 
         F = frozenset(range(self.nSoftClauses))
+        # print(F)
 
         self.hs_sizes = []
         H, C = [], []
@@ -1135,6 +1140,7 @@ class OMUS(object):
 
         gurobi_model = self.gurobiModel()
         satsolver, sat, hs = None, None, None
+        my_cost = None
 
         # WARNING: self.MSSes is a tuple (mss, model)
         # XXX: the models are HUGE! can save memory if only on grid vars?
@@ -1177,8 +1183,12 @@ class OMUS(object):
         mode = MODE_OPT
         #print("\n")
         while(True):
+            if (time.time() -t_start_omus) > timeout:
+                return None, my_cost
             # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True and postponed_omus):
+                if (time.time() -t_start_omus) > timeout:
+                    return None, my_cost
                 # print("Starting with optimal!")
                 # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
                 if mode == MODE_INCR:
@@ -1266,6 +1276,7 @@ class OMUS(object):
 
                 # Sat => Back to incremental mode 
                 mode = MODE_INCR
+
             # ----- Compute Optimal Hitting Set
             hs = self.gurobiOptimalHittingSet(gurobi_model)
             # self.hs_sizes.append(len(hs))
@@ -1357,7 +1368,7 @@ class OMUS(object):
         while(True):
 
             hs = self.gurobiOptimalHittingSet(gurobi_model, C)
-            print(hs)
+            # print(hs)
             model, sat = self.checkSatNoSolver(hs)
 
             # if not sat or steps > max_steps_main:
@@ -1407,7 +1418,10 @@ class OMUS(object):
 
     def basecost(self, constraints):
         # nClues = len(constraints.intersection(clues))
-        nClues = sum([1 if id in self.clues else 0 for id in constraints])
+        if self.clues is not None:
+            nClues = sum([1 if id in self.clues else 0 for id in constraints])
+        else:
+            nClues = 0
         nOthers = len(constraints) - nClues
         # print("constraints = ", constraints)
         if nClues == 0 and nOthers == 1:

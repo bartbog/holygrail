@@ -1101,7 +1101,7 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None):
+    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None):
         # Benchmark info
         if self.logging:
             t_start_omus = time.time()
@@ -1215,6 +1215,7 @@ class OMUS(object):
 
                 my_cost = self.cost((E_i, S_i))
                 # print(my_cost, "vs ", best_cost)
+                # if(len())
 
                 if not sat or (best_cost is not None and best_cost <= my_cost):
                     # incremental hs is unsat, switch to optimal method
@@ -1256,6 +1257,9 @@ class OMUS(object):
                 h_counter.update(list(C))
                 self.addSetGurobiModel(gurobi_model, C)
                 H.append(C)
+
+                if hs_limit is not None and len(H) > hs_limit:
+                    return C, my_cost
 
                 # Sat => Back to incremental mode 
                 mode = MODE_INCR
@@ -1321,6 +1325,9 @@ class OMUS(object):
             h_counter.update(list(C))
             H.append(C)
             mode = MODE_INCR
+
+            if hs_limit is not None and len(H) > hs_limit:
+                return C, my_cost
 
     def omus(self, add_clauses, add_weights=None):
         # ---------- build clauses and additional weights

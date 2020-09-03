@@ -224,6 +224,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         # add full theory without negation literal
         o.MSSes.add((o.fullMss, frozenset(I_end)))
         base_F = set(range(len(o.soft_clauses)))
+
         for i in explainable_facts - I:
             F = base_F | set({o.softClauseIdxs[frozenset({-i})]})
 
@@ -238,14 +239,40 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             # build MSS with correct indexes
             mssIdxs = frozenset(o.softClauseIdxs[o.clauses[id]] for id in MSS)
 
-            C =  F - MSS
-            # print(C, i)
-            best_costs[i] = len(MSS) * 1000
+            # C =  F - MSS
+            # best_costs[i] = len(MSS) * 1000
             o.MSSes.add((mssIdxs, frozenset(MSS_Model)))
 
-    cnt = 0
-    # return 
+    # -- precompute some hitting sets for a rough idea on the costs
+    w_I = [1 for _ in I] + [1]
 
+    t_start_seed = time.time()
+    for i in explainable_facts - I:
+        hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                    explained_literal=i,
+                                    add_weights=w_I,
+                                    best_cost=best_costs[i],
+                                    hs_limit=len(explainable_facts - I) + 10
+                                    )
+        if type(explanation) != list:
+            best_costs[i] = explanation + 1000
+        else:
+            E_i = [ci for ci in explanation if ci in I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
+            S_hs = [soft_clauses.index(si) for si in S_i]
+
+            # new fact
+            N_i = {i}
+
+            cost_explanation = cost((E_i, S_hs), soft_weights, clues, trans, bij)
+            best_costs[i] = min([cost_explanation, best_costs[i]])
+    
+    t_end_seed = time.time()
+    print("Time_seed = ", t_end_seed - t_start_seed)
+
+    cnt = 0
 
     while len(explainable_facts - I) > 0:
         t_iter = time.time()
@@ -257,11 +284,12 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
 
-        print("\n",{i: best_costs[i] for i in sorted(explainable_facts - I, key=lambda i: best_costs[i])}, "\n")
+        # print("\n", {i: best_costs[i] for i in sorted(explainable_facts - I, key=lambda i: best_costs[i])}, "\n")
 
         for id, i in enumerate(sorted(explainable_facts - I, key=lambda i: best_costs[i])):
- 
+
             print(f"Expl {i:4} [{id+1:4}/{len(explainable_facts-I):4}] \tbest_cost_i= ", best_costs[i], "\t - \t", "cost_best=\t", cost_best, end="\r")
+
             t_start_omus = time.time()
 
             if incremental:
@@ -282,7 +310,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
             t_end_omus = time.time()
 
-            # print([f'{o.clauses[i]}: soft\n' if o.clauses[i] in soft_clauses else f'{o.clauses[i]}: hard\n' for i in hs])
+            # DEBUG INFO
             print(f"\n\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
             print_omus_debug(o)
 
@@ -300,13 +328,12 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             best_costs[i] = min([cost_explanation, best_costs[i]])
 
             print(f"\n\t\tCandidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i} ({cost_explanation})\n")
-            # print(explanation)
+
             if cost_best is None or cost_explanation < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost_explanation
 
         # post-processing the MSSes
-        print("Size MSSes BEFORE:", len(o.MSSes))
         keep = set()
         for (m1, m1_model) in o.MSSes:
             keep_m1 = True
@@ -316,7 +343,6 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
             if keep_m1:
                 keep.add((m1, m1_model))
         o.MSSes = keep
-        print("Size MSSes AFFTER:", len(o.MSSes))
 
             # @TIAS: printing explanations as they get better
             # print(f"\tFacts: {E_i} Clause: {S_i} => {N_i} (", cost_explanation, ")")

@@ -783,9 +783,7 @@ def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'},
         for item in rel.df.values:
             explainable_facts |= set(i.name+1 for i in item)
     # print(soft_clauses)
-    print([frozenset({bv1.name + 1}) for bv1 in bv_clues])
-    print([frozenset({bv1.name + 1}) for bv1 in bv_bij])
-    print([frozenset({bv1.name + 1}) for bv1 in bv_trans])
+
     o, expl_seq = omusExplain(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,

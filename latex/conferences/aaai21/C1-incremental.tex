@@ -1,0 +1,40 @@
+An attempt at describing the generic, incremental, setting.
+
+ 
+
+We have a theory (a set of constraints) T plus a weight functionn assigning weights to elements of it (or some more complex way to compute costs of subsets of T) 
+
+ 
+
+
+There will be a lot of OMUS calls, but not for OMUSs of T, but for OMUSs of subsets of T
+
+ 
+
+I.e.,  
+OMUS(T') with $T'\subseteq T.$
+
+ 
+
+During such a call, a lot of 
+ (maximal) satisfiable subsets 
+ of T' will be computed.  (together with the corresponding model)
+ (*) Satisfiable subsets of T' can easily be extended to (not-neccesarily-maximal) satisfiable subsets of T (just check which of Ts constraints are satisfied in the accompanying model) 
+ 
+THESE are the ones to be stored. 
+  OPTIIMIZATION 1: do not store all of them, only the subset-maximal one. If S1 and S2 are satisfiable subsets of T and $S1 \subseteq S2$, do not store S1. 
+
+ 
+
+
+Given a new OMUS call OMUS(T") with $T"\subseteq T$
+Take all SS of T.
+For each of them: take intersection with T". 
+    OPTIMIZATION 2: only keep the subset-maximal of those 
+    (this is an independent optimization from the previous one. It can be that after taking intersection, one of them is no longer subset-maximal!) 
+Use the SS as the start for the current call. During the current call more (M)SS will be generated. Always extend them to SS of T (see higher) and store (taking OPTIMIZATION 1 into account)     
+
+ 
+
+
+THat's it. 

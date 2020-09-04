@@ -44,9 +44,15 @@ Another difference is that after computing a satisfiable subset $\formula''$ of 
 
 
 \paragraph{Application to Explanations}
-To apply this idea to the context of explanation generation. 
+To apply this idea to the context of explanation generation, we notice that the entire explanation generation loop starts with a certain interpretation $I_0$, and gradually derives more and more consequences.
+At each point, the set of literals that can be used for explanations are the consequences derived this far. On top of that, the \omus call will always contain a single negation of a consequence literal (the literal to be explained). 
+Thus, if 
+\[I_{\mathit{end}} = \{ l\mid \formulag \land I_0 \models l\},\]
+then we can take 
+\[\fall = \formulag \cup I_{\mathit{end}} \cup \lnot I_{\mathit{end}}.\]
+Which is clearly unsatisfiable (containing various literals and their negation). However, the \omus calls will always be on a subset of \fall that contains no such obvious consequences. 
 
-TODO: explain \fall in terms of \formulag.
+Using \omusinc instead of \omus in \cref{alg:singleStepExplain}  then results in an incremental explanation algorithm. Also note that the incrementality is not just obtained in a single step but over the different explanation steps. 
 % 
 % assu
 % 

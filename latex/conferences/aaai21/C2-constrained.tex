@@ -1,32 +1,72 @@
-Our goal is now
-GIVEN:
+The next question we tackle is, given \fall from the previous section, would it be possible to replace the entire for-loop in \cref{alg:explainSingleStep} by a single \omus call.
+It would be tempting to attempt this by a single call to 
+\[\omus(\formulag\cup I\cup\{\lnot l\mid \formulag \land I\models l\land l\not\in I)\]
+however this would not result in explanations in the sense of \citet{ecai/BogaertsGCG20}, as the following example illustrates. 
+% To see this consider the following example: 
+\begin{example}
+Assume \begin{align*}
+         \formulag &= \{p\lor q, \lnot p \lor r, \lnot p \lor \lnot r, \lnot q\lor r, \lnot p \lor q \}\text{ and }\\
+         I &= \emptyset
+       \end{align*}
+       and thus
+$         I_{\mathit{end}} = \{ \lnot p, q, r\}.
+$. 
+In that case, 
+\[\formulag\cup \lnot I_{\mathit{end}} = \{p\lor q, \lnot p \lor r, \lnot p \lor \lnot r, \lnot q\lor r, \lnot p \lor q , p,\lnot q,\lnot r \}\]
+has several cardinality-minimal OMUSs, for instance 
+\begin{align*}
+X_1 &=    \{\lnot p \lor r, \lnot p \lor \lnot r, p\}\text{ and}\\
+X_2 &= \{\lnot p \lor q ,  p, \lnot q\}.
+\end{align*}
+However, in the context of explanations, out of these two only $X_1$ would be considered to induce a good explanation: it represents the fact that the two constraints $\lnot p \lor r$ and $ \lnot p \lor \lnot r$ together entail $\lnot p$ (which can easily be seen by applying the resolution rule). However, $X_2$ does not have such an interpretation: it merely shows that he constraint $\lnot p \lor q$ entails that either $p$ should be false or $q$ should be true, which is quite uninformative. 
+\end{example}
+
+The previous example shows that a naive \omus call with a large enough theory, would not yield valuable explanations.
+Instead, we would be interested in searching MUSs that are \emph{optimal} among those MUSs satisfying a certain property (in our case this property is ``containing exactly one negation of a consequence literal''). 
+Phrasing this in a generic setting results in the following definition.
+
+\begin{definition}
+    If $\fall$ is a formula, $f:2^{\fall} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\fall}\to \{\ltrue,\lfalse\}$, then we call a set $U\subseteq \fall$ a \emph{$p$-constrained $f$-OMUS} ($(p,f)$-OMUS) if \begin{itemize}                                                                                                                                                                                                                         
+    \item $U$ is unsatisfiable,
+    \item $p(U)$ is true
+    \item for all other $U'\subseteq \fall$ with $p(U')=\ltrue$, it holds that $f(U')\geq f(U)$.                                                                                                                                                                                                                         \end{itemize}
+\end{definition}
+
+The problem at hand is thus to compute a $(p,f)$-OMUS of a given formula. 
+To tackle this challenge, we propose a modification of \cref{alg:omus}, as described in \cref{alg:comus}. 
+As can be seen, the condition $p$ is simply passed to the procedure \cohs, which, in contrast to \ohs generates a hitting set that is optimal \emph{among the hitting sets satisfying $p$}. Correctness of the algorithm now follows from the fact that -- as before -- all sets added to \setstohit are correction subsets (and that every MUS must thus hit all sets in \setstohit) and \cref{prop:K2}, which guarantees that when the algorithm returns $\F'$, a good solution is indeed found.  
+
+\begin{algorithm}[ht]
+  \DontPrintSemicolon
+  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+  \While{true}{
+    $\F' \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+% f{optimal} solution}
+    % \tcp{\small set with all unique clauses from hitting set}
+%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+    % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+    % \tcp{IF UNSAT, $hs$ is the OMUS }
+    \If{ $\lnot \sat(\F')$}{
+      \Return{$\F'$} \;
+    }
+    $\F'' \gets  \grow(\F',\F) $\;
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+  }
+  \caption{$\comus(\formula,f,p)$ }
+  \label{alg:comus}
+\end{algorithm}
 
 
-	
-An unsatisfiable theory T
+\begin{proposition}\label{prop:K}
+  Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 
+  If $\m{U}$ is a hitting set of \m{H} that is $f$-optimal among the hitting sets of \m{H} satisfying a predicate $p$, and  $\m{U}$ is unsatisfiable, then $\m{U}$ is a $(p,f)$-OMUS of \formula. 
+\end{proposition}
 
-FIND:
+Now, since the search for optimal hitting sets is --- in implicit hitting set algorithms --- usually done with a MIP solver, in practice only predicates $p$ that can easily be encoded in MIP are useful. In such cases, we can directly use the MIP solver to implement \cohs as well. 
 
+\paragraph{Application to Explanations}
+\todo{EXACTLY ONE is easy to encode in MIP}
 
-	
-A subset T' of T
+\todo{Our single-step explanation now becomes very simple (single omus call)} 
 
-SUCH THAT:
-
-
-	
-A certain set of constraints on T' holds  (e.g., at most one of... ) 
-	T' is optimal with respect to some criterion (can also be seen as "a certain set of constraints"
-	T' is still unsatisfiable 
-	
-	
-	SOLUTION:
-I suppose that the constraints and optimality can be phrased in MIP. 
-	
-	In that case: 
-Every model of a subset of T yields a SS of T. 
-We know that every solution to our problem will hit its complement for sure.  
-So "optimal hitting sets of complements of such sets that satisfy the MIP constraints" are certainly an upper bound on the "good" solutions. 
-
-Now... if we have such an optimal hitting set that satisfies the MIP constraints... 
-And the SAT call yields UNSAT, then it is still a solution! 
+\todo{ Observation taht we can also use $p$ to encode prior knowledge about the structure of OMUSs, possibly redundant (eg: that certain constraints are ``hard''} 

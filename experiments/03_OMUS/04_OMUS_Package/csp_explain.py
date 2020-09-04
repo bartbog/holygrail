@@ -423,7 +423,7 @@ def omusExplain2(
     o = OMUS(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
-        I=I_end,
+        I=explainable_facts,
         soft_weights=soft_weights,
         parameters=parameters,  # default parameters
         logging=True,

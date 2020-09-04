@@ -842,7 +842,7 @@ def explain_frietkot(parameters={'extension': 'maxsat','output': 'log.json'},
     cnf = cnf_to_pysat(to_cnf(constraints)) 
     bv = set(bv.name+1 for bv in bv_constraints)
 
-    weights = [2, 2, 3, 3, 3, 3,1, 3, 4, 2]
+    weights = [2, 2, 3, 3, 3, 3, 1, 3, 4, 2]
 
     # cnf = cnf_to_pysat(cppy_model.constraints)
     hard_clauses = [frozenset(c) for c in cnf]
@@ -861,7 +861,7 @@ def explain_frietkot(parameters={'extension': 'maxsat','output': 'log.json'},
         constrained=True
     )
 
-    o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
+    #o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
     del o
 
 if __name__ == "__main__":

@@ -1193,7 +1193,6 @@ class OMUS(object):
 
             h_counter.update(list(C))
             H.append(C)
-            mode = MODE_INCR
 
     def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=True, timeout=1000):
         # Benchmark info

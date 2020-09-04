@@ -6,7 +6,7 @@ import pandas as pd
 
 # csp explanations
 
-from csp_explain import omusExplain, maxPropagate, optimalPropagate
+from csp_explain import omusExplain, omusExplain2, maxPropagate, optimalPropagate
 
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 sys.path.append('/home/emilio/Documents/cppy_src/')
@@ -818,12 +818,11 @@ def explain_constrained_omus():
     hard_clauses=list()
     soft_clauses=[frozenset(clause) for clause in cnf]
     
-    o, expl_seq = omusExplain(
+    o, expl_seq = omusExplain2(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
         soft_weights=weights,
         parameters=parameters,
-        incremental=False, 
         reuse_mss=False,
         unknown_facts=explainable_facts,
         seed_mss=True,

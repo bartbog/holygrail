@@ -237,19 +237,6 @@ def omusExplain(
 
     best_costs = dict({i: 9999999 for i in explainable_facts - I})
 
-    matching = {
-        0:'c1',
-        1:'c2',
-        2:'c3',
-        3:'c4',
-        4:'c11',
-        5:'c12',
-        6:'c13',
-        7:'c21',
-        8:'c22',
-        9:'c23',
-    }
-
     if seed_mss:
         # add full theory without negation literal
         # o.MSSes.add((o.fullMss, frozenset(I_end)))
@@ -262,7 +249,7 @@ def omusExplain(
 
             # Only negation of literal inside
             # o.clauses = o.soft_clauses + [frozenset({-i})]
-            o.weights = o.soft_weights + [1] * len(o.I_lits)
+            # o.weights = o.soft_weights + [1] * len(o.I_lits)
             # F_prime = last variable
             F_prime = set({o.softClauseIdxs[frozenset({-i})]})
 
@@ -270,6 +257,7 @@ def omusExplain(
 
             o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
 
+    print(o.MSSes)
     # -- precompute some hitting sets for a rough idea on the costs
     w_I = [1 for _ in I] + [1]
 

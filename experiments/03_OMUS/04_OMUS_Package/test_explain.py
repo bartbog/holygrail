@@ -826,7 +826,8 @@ def explain_constrained_omus():
         incremental=False, 
         reuse_mss=False,
         unknown_facts=explainable_facts,
-        seed_mss=True
+        seed_mss=True,
+        constrained=True
     )
 
 def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.json'}, 

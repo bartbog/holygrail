@@ -137,7 +137,7 @@ class Steps(object):
         return s
 
     def __add__(self, other):
-        s = Steps()
+        s = Steps() 
         s.incremental = self.incremental + other.incremental
         s.greedy = self.greedy + other.greedy
         s.optimal = self.optimal + other.optimal
@@ -169,6 +169,7 @@ class OMUS(object):
         self.extension = parameters['extension'] if 'extension' in parameters else 'maxsat'
         self.output = parameters['output'] if 'output' in parameters else 'log.json'
         self.parameters = parameters
+        self.reuse_mss = reuse_mss
 
         # Logging / benchmark info
         self.logging = logging
@@ -185,51 +186,36 @@ class OMUS(object):
         # clauses
         self.hard_clauses = [frozenset(clause) for clause in hard_clauses]
         self.soft_clauses = [frozenset(clause) for clause in soft_clauses]
-        self.clauses = self.soft_clauses  # soft + omus 'added' ones
-        self.nSoftClauses = len(self.soft_clauses)
-        self.nClauses = len(self.soft_clauses)
-        self.nLiterals = len(I)
-        self.fullMss = frozenset(i for i in range())
-        self.I_lits = frozenset(set(abs(lit) for lit in I) | set(-abs(lit) for lit in I))
+        self.all_soft_clauses = self.soft_clauses + [frozenset({lit}) for lit in I] + [frozenset({-lit}) for lit in I]
         self.I = I
+        # self.I_lits = frozenset(set(abs(lit) for lit in I) | set(-abs(lit) for lit in I))
+        self.soft_weights = soft_weights
 
+        self.nSoftClauses = len(self.soft_clauses)
+        self.nClauses = len(self.all_soft_clauses)
+        self.nLiterals = len(I)
         # indicator variables
 
-        # weights
-        self.f = f
-        if f is not None:
-            self.soft_weights = [f(clause) for clause in soft_clauses]
-        else:
-            self.soft_weights = soft_weights
+        self.weights = soft_weights + [1] * 2 * self.nLiterals
 
-        self.weights = soft_weights + [1] * len(self.I_lits)
-        self.nWeights = len(self.soft_weights)
+        # self.nWeights = len(self.soft_weights)
+        self.obj_weights = soft_weights
+        self.obj_weights += [GRB.INFINITY] * (self.nLiterals)
+        self.obj_weights += [0] * (self.nLiterals)
 
-        assert self.nSoftClauses == self.nWeights, f"# clauses ({self.nSoftClauses}) != #weights ({self.nSoftClauses})"
-
-        # MSS
-        self.reuse_mss = reuse_mss
-        self.MSSes = set()
-        if reuse_mss:
-            self.MSS_sizes = []
-
-        # Keep track of soft clauses troughout the different omus/omusIncr calls
         self.softClauseIdxs = dict()
         # matching table clause to fixed id
-        self.all_soft_clauses = self.soft_clauses + [frozenset({lit}) for lit in I] + [frozenset({-lit}) for lit in I]
-
         for idx, clause in enumerate(self.all_soft_clauses):
             self.softClauseIdxs[clause] = idx
 
+        # MSS
+
+        self.MSSes = set()
+
     def checkSatNoSolver(self, f_prime=None):
-        # if self.logging:
-        #     tstart = time.time()
 
         validated_clauses = [self.all_soft_clauses[i] for i in f_prime]
-        # if f_prime is None:
-        #     validated_clauses = self.clauses + self.hard_clauses
-        # else:
-        #     validated_clauses = [self.clauses[i] for i in f_prime]
+        validated_clauses += self.hard_clauses
 
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
 
@@ -237,10 +223,6 @@ class OMUS(object):
             s.append_formula(validated_clauses, no_return=False)
             solved = s.solve()
             model = s.get_model()
-
-        # if self.logging:
-        #     tend = time.time()
-        #     self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -252,8 +234,6 @@ class OMUS(object):
         if self.logging:
             self.steps.sat += 1
             # tstart = time.time()
-
-
 
         satsolver = Solver()
 
@@ -1008,7 +988,6 @@ class OMUS(object):
 
         return t_F_prime, lit_true
 
-
     def maxsat_fprime_n(self, F_prime, n):
         t_F_prime = set(F_prime)
 
@@ -1036,7 +1015,7 @@ class OMUS(object):
 
         return list_msses
 
-    def maxsat_fprime(self, F_prime, model, ignored=[]):
+    def maxsat_fprime(self, F_prime, model):
         t_F_prime = set(F_prime)
 
         wcnf = WCNF()
@@ -1116,13 +1095,11 @@ class OMUS(object):
         self.g_model.Params.LogToConsole = 0
         self.g_model.Params.Threads = 8
 
-        nvars = len(self.soft_clauses) + len(self.I_lits)
         # create the variables (with weights in one go)
-        self.obj_weights = self.soft_weights + [GRB.INFINITY for _ in range(len(self.I))] + [0 for _ in range(len(self.I))]
-        x = self.g_model.addMVar(shape=nvars, vtype=GRB.BINARY, obj=self.obj_weights, name="x")
+        x = self.g_model.addMVar(shape=self.nClauses, vtype=GRB.BINARY, obj=self.obj_weights, name="x")
 
         # exactly one of the -literals
-        vals = range(len(self.soft_clauses) + len(self.I), nvars)
+        vals = range(self.nSoftClauses + self.nLiterals, self.nClauses)
 
         self.g_model.addConstr(x[vals].sum() == 1)
 
@@ -1133,7 +1110,7 @@ class OMUS(object):
         # change the model weights
         # if c is in the hitting set constraints + it's a literal from the final interpretation => weight =1
         # if c is NOT in the hitting set constraints => weight = INFINTIY (should not be hit)
-        for c in range(len(self.soft_clauses) , len(self.soft_clauses) + len(self.I)):
+        for c in range(self.nSoftClauses , self.nSoftClauses + self.nLiterals):
             if c in C:
                 self.obj_weights[c] = 1
             else:
@@ -1141,16 +1118,15 @@ class OMUS(object):
 
         # if c is in the hitting set constraints => weight =0
         # if c is NOT in the hitting set constraints => weight = INFINTIY (should not be hit)
-        for c in range(len(self.soft_clauses) + len(self.I), len(self.soft_clauses) + len(self.I_lits)):
+        for c in range(self.nClauses - self.nLiterals, self.nClauses):
             if c in C:
                 self.obj_weights[c] = 0
             else:
                 self.obj_weights[c] = GRB.INFINITY
+
         x = self.g_model.getVars()
-        # print(x, len(x), range(len(self.obj_weights)))
-        # self.g_model.setObjective(sum(x[i] * self.obj_weights[i] for i in range(len(self.obj_weights))), GRB.MINIMIZE)
-        self.g_model.setObjective(sum(x[i] * self.obj_weights[i] for i in range(len(self.obj_weights))), GRB.MINIMIZE)
-        # self.g_model.setObjective(gp.quicksum(x[i] * self.obj_weights[i] for i in range(len(self.obj_weights))), GRB.MINIMIZE)
+
+        self.g_model.setObjective(sum(x[i] * self.obj_weights[i] for i in range(self.nClauses)), GRB.MINIMIZE)
 
     def addSetGurobiOmusConstr(self, C):
         # variables
@@ -1161,14 +1137,12 @@ class OMUS(object):
 
     def gurobiOmusConstrHS(self):
         # solve optimization problem
-        self.g_model.update()
         self.g_model.optimize()
 
         # output hitting set
         x = self.g_model.getVars()
-        # print(x)
-        print(self.obj_weights)
-        hs = set(i for i in range(len(self.soft_clauses) + len(self.I_lits)) if x[i].x == 1)
+
+        hs = set(i for i in range(self.nClauses) if x[i].x == 1)
 
         return hs
 
@@ -1178,7 +1152,7 @@ class OMUS(object):
         satsolver, sat = None, None
         hs = None
 
-        F = frozenset(range(len(self.all_soft_clauses)))
+        F = frozenset(range(self.nClauses))
 
         H, C = [], []
         h_counter = Counter()
@@ -1197,7 +1171,9 @@ class OMUS(object):
             if self.extension == 'maxsat':
                 # grow model over hard clauses first, must be satisfied
                 # MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
-                MSS, MSS_model = self.grow(hs, model)
+                # MSS, MSS_model = self.grow(hs, model)
+                # TODO: change back to grow if working
+                MSS, MSS_model = self.maxsat_fprime(hs, model)
             else:
                 # grow model over hard clauses first, must be satisfied
                 MSS, MSS_model = self.grow(hs, model, self.hard_clauses)

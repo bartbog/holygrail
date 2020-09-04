@@ -187,13 +187,11 @@ class OMUS(object):
         self.soft_clauses = [frozenset(clause) for clause in soft_clauses]
         self.clauses = self.soft_clauses  # soft + omus 'added' ones
         self.nSoftClauses = len(self.soft_clauses)
-        self.fullMss = frozenset(i for i in range(self.nSoftClauses + len(I)))
+        self.nClauses = len(self.soft_clauses)
+        self.nLiterals = len(I)
+        self.fullMss = frozenset(i for i in range())
         self.I_lits = frozenset(set(abs(lit) for lit in I) | set(-abs(lit) for lit in I))
         self.I = I
-        self.clues = clues
-        self.trans = trans
-        self.bij = bij
-        self.hs_sizes = []
 
         # indicator variables
 
@@ -204,17 +202,15 @@ class OMUS(object):
         else:
             self.soft_weights = soft_weights
 
-        self.weights = soft_weights
+        self.weights = soft_weights + [1] * len(self.I_lits)
         self.nWeights = len(self.soft_weights)
-
-
 
         assert self.nSoftClauses == self.nWeights, f"# clauses ({self.nSoftClauses}) != #weights ({self.nSoftClauses})"
 
         # MSS
         self.reuse_mss = reuse_mss
+        self.MSSes = set()
         if reuse_mss:
-            self.MSSes = set()
             self.MSS_sizes = []
 
         # Keep track of soft clauses troughout the different omus/omusIncr calls
@@ -229,10 +225,11 @@ class OMUS(object):
         # if self.logging:
         #     tstart = time.time()
 
-        if f_prime is None:
-            validated_clauses = self.clauses + self.hard_clauses
-        else:
-            validated_clauses = [self.clauses[i] for i in f_prime]
+        validated_clauses = [self.all_soft_clauses[i] for i in f_prime]
+        # if f_prime is None:
+        #     validated_clauses = self.clauses + self.hard_clauses
+        # else:
+        #     validated_clauses = [self.clauses[i] for i in f_prime]
 
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
 
@@ -1039,12 +1036,12 @@ class OMUS(object):
 
         return list_msses
 
-    def maxsat_fprime(self, F_prime, model):
+    def maxsat_fprime(self, F_prime, model, ignored=[]):
         t_F_prime = set(F_prime)
 
         wcnf = WCNF()
         wcnf.extend(self.hard_clauses)
-        for i, clause in enumerate(self.clauses):
+        for i, clause in enumerate(self.all_soft_clauses):
             if i in F_prime:
                 wcnf.append(list(clause))
             else:
@@ -1053,7 +1050,7 @@ class OMUS(object):
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()
 
-        for i, clause in enumerate(self.clauses):
+        for i, clause in enumerate(self.all_soft_clauses):
             if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
                 t_F_prime.add(i)
 
@@ -1150,7 +1147,11 @@ class OMUS(object):
                 self.obj_weights[c] = 0
             else:
                 self.obj_weights[c] = GRB.INFINITY
-        self.g_model.setObjective(weights, GRB.MINIMIZE)
+        x = self.g_model.getVars()
+        # print(x, len(x), range(len(self.obj_weights)))
+        # self.g_model.setObjective(sum(x[i] * self.obj_weights[i] for i in range(len(self.obj_weights))), GRB.MINIMIZE)
+        self.g_model.setObjective(sum(x[i] * self.obj_weights[i] for i in range(len(self.obj_weights))), GRB.MINIMIZE)
+        # self.g_model.setObjective(gp.quicksum(x[i] * self.obj_weights[i] for i in range(len(self.obj_weights))), GRB.MINIMIZE)
 
     def addSetGurobiOmusConstr(self, C):
         # variables
@@ -1161,39 +1162,37 @@ class OMUS(object):
 
     def gurobiOmusConstrHS(self):
         # solve optimization problem
+        self.g_model.update()
         self.g_model.optimize()
 
         # output hitting set
         x = self.g_model.getVars()
+        # print(x)
+        print(self.obj_weights)
         hs = set(i for i in range(len(self.soft_clauses) + len(self.I_lits)) if x[i].x == 1)
 
         return hs
 
     def omusConstr(self, I_cnf, explained_literal):
-        self.clauses = self.soft_clauses + I_cnf + [frozenset({-explained_literal})]
-        self.nSoftClauses = len(self.clauses)
         self.gp_model = self.gurobiOmusConstrModel()
 
         satsolver, sat = None, None
         hs = None
 
-        F = frozenset(range(self.nSoftClauses))
+        F = frozenset(range(len(self.all_soft_clauses)))
 
         H, C = [], []
         h_counter = Counter()
 
         while(True):
             hs = self.gurobiOmusConstrHS()
-            print(hs)
-            print([self.all_soft_clauses[i] for i in hs])
-            print(self.obj_weights)
 
             # ------ Sat check
             (model, sat) = self.checkSatNoSolver(hs)
 
-            print(model, sat, hs)
             if not sat:
-                return hs, [self.clauses[idx] for idx in hs]
+                print("OMUS=", [self.all_soft_clauses[idx] for idx in hs])
+                return hs, [self.all_soft_clauses[idx] for idx in hs]
 
             # ------ Grow
             if self.extension == 'maxsat':
@@ -1207,19 +1206,14 @@ class OMUS(object):
                 # grow model over as many as possible soft clauses next 
                 MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
 
-            if self.reuse_mss:
-                mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
-                # mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
-                storeMss= not mssIdxs.issubset(self.fullMss) and \
-                            not any(True if mssIdxs < m[0] else False for m in self.MSSes)
-                if(storeMss):
-                    self.MSSes.add((mssIdxs, frozenset(MSS_model)))
-
             C = F - MSS
-            C_idx = frozenset(self.softClauseIdxs[self.clauses[id]] for id in C)
+            print("hs=",hs)
+            print("MSS=", MSS)
+            print("F=", F)
+            print("C=", C)
 
             self.addSetGurobiOmusConstr(C)
-            self.changeWeightsGurobiOmusConstr(C_idx)
+            self.changeWeightsGurobiOmusConstr(C)
             assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"
 
             h_counter.update(list(C))

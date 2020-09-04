@@ -803,7 +803,7 @@ def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'},
 
 
 def explain_constrained_omus():
-    parameters={'extension': 'greedy_no_param','output': 'log.json'}
+    parameters={'extension': 'maxsat','output': 'log.json'}
     (mayo, ketchup, andalouse) = BoolVar(3)
 
     c1 = mayo
@@ -826,7 +826,7 @@ def explain_constrained_omus():
         incremental=False, 
         reuse_mss=False,
         unknown_facts=explainable_facts,
-        seed_mss=False
+        seed_mss=True
     )
 
 def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.json'}, 

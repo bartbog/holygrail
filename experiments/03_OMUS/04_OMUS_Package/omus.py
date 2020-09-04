@@ -200,8 +200,9 @@ class OMUS(object):
 
         # self.nWeights = len(self.soft_weights)
         self.obj_weights = soft_weights
-        self.obj_weights += [GRB.INFINITY] * (self.nLiterals)
-        self.obj_weights += [0] * (self.nLiterals)
+        self.obj_weights += [GRB.INFINITY for _ in range(self.nLiterals)]
+        self.obj_weights += [0 for _ in range(self.nLiterals)]
+        # self.obj_weights += [0] * (self.nLiterals)
 
         self.softClauseIdxs = dict()
         # matching table clause to fixed id
@@ -209,6 +210,7 @@ class OMUS(object):
             self.softClauseIdxs[clause] = idx
 
         # MSS
+        self.gp_model = self.gurobiOmusConstrModel()
 
         self.MSSes = set()
 
@@ -1101,32 +1103,11 @@ class OMUS(object):
         # exactly one of the -literals
         vals = range(self.nSoftClauses + self.nLiterals, self.nClauses)
 
+        # exactly one of the -literals...
         self.g_model.addConstr(x[vals].sum() == 1)
 
         # update the model
         self.g_model.update()
-
-    def changeWeightsGurobiOmusConstr(self, C):
-        # change the model weights
-        # if c is in the hitting set constraints + it's a literal from the final interpretation => weight =1
-        # if c is NOT in the hitting set constraints => weight = INFINTIY (should not be hit)
-        for c in range(self.nSoftClauses , self.nSoftClauses + self.nLiterals):
-            if c in C:
-                self.obj_weights[c] = 1
-            else:
-                self.obj_weights[c] = GRB.INFINITY
-
-        # if c is in the hitting set constraints => weight =0
-        # if c is NOT in the hitting set constraints => weight = INFINTIY (should not be hit)
-        for c in range(self.nClauses - self.nLiterals, self.nClauses):
-            if c in C:
-                self.obj_weights[c] = 0
-            else:
-                self.obj_weights[c] = GRB.INFINITY
-
-        x = self.g_model.getVars()
-
-        self.g_model.setObjective(sum(x[i] * self.obj_weights[i] for i in range(self.nClauses)), GRB.MINIMIZE)
 
     def addSetGurobiOmusConstr(self, C):
         # variables
@@ -1147,30 +1128,48 @@ class OMUS(object):
         return hs
 
     def updateObjWeightsInterpret(self, I):
-        for i in range(self.nSoftClauses, self.nSoftClauses + self.nLiterals):
-            self.obj_weights[i] = GRB.INFINITY
+        # for i in range(self.nSoftClauses, self.nSoftClauses + self.nLiterals):
+        #     self.obj_weights[i] = GRB.INFINITY
 
-        for i in range(self.nSoftClauses + self.nLiterals, self.nClauses):
-            self.obj_weights[i] = 0
+        # for i in range(self.nSoftClauses + self.nLiterals, self.nClauses):
+        #     self.obj_weights[i] = 0
 
         for i in I:
             i_idx = self.softClauseIdxs[frozenset({i})]
             self.obj_weights[i_idx] = 1
 
-
             not_i_idx = self.softClauseIdxs[frozenset({-i})]
-            self.obj_weights[i_idx] = GRB.INFINITY
+            self.obj_weights[not_i_idx] = GRB.INFINITY
 
-    def omusConstr(self, I_cnf, explained_literal):
-        self.gp_model = self.gurobiOmusConstrModel()
+        x = self.g_model.getVars()
+        self.g_model.setObjective(gp.quicksum(x[i] * self.obj_weights[i] for i in range(self.nClauses)), GRB.MINIMIZE)
+        # self.g_model.update()
 
-        satsolver, sat = None, None
+    def omusConstr(self):
+        matching = {
+            0:'c1',
+            1:'c2',
+            2:'c3',
+            3:'c4',
+            4:'c11',
+            5:'c12',
+            6:'c13',
+            7:'c21',
+            8:'c22',
+            9:'c23'
+        }
         hs = None
 
         F = frozenset(range(self.nClauses))
 
         H, C = [], []
         h_counter = Counter()
+        # for constr in self.g_model.getConstrs():
+        #     print(constr)
+        #     print([l for l in constr.coeff])
+        # print(self.g_model.update())
+        self.g_model.write("model.lp")
+        print(self.obj_weights)
 
         while(True):
             hs = self.gurobiOmusConstrHS()
@@ -1179,6 +1178,7 @@ class OMUS(object):
             (model, sat) = self.checkSatNoSolver(hs)
 
             if not sat:
+                # print("hs-omus=", hs)
                 print("OMUS=", [self.all_soft_clauses[idx] for idx in hs])
                 return hs, [self.all_soft_clauses[idx] for idx in hs]
 
@@ -1197,14 +1197,20 @@ class OMUS(object):
                 MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
 
             C = F - MSS
-            print("hs=",hs)
-            print("MSS=", MSS)
-            print("F=", F)
-            print("C=", C)
 
             self.addSetGurobiOmusConstr(C)
-            self.changeWeightsGurobiOmusConstr(C)
+            # self.changeWeightsGurobiOmusConstr(C)
             assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"
+            # print("\n")
+            # print("hs=", hs)
+            # print("MSS=", MSS)
+            # print("F=", F)
+            # print("C=", C,"\n")
+            # print("hs=", [matching[i] for i in hs])
+            # print("MSS=", [matching[i] for i in MSS])
+            # print("F=", [matching[i] for i in F])
+            # print("C=", [matching[i] for i in C],"\n")
+            # print(weights)
 
             h_counter.update(list(C))
             H.append(C)

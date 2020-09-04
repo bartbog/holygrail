@@ -808,7 +808,7 @@ def explain_constrained_omus():
 
     c1 = mayo
     c2 = ~mayo | ~andalouse | ketchup
-    c3 = ~mayo | andalouse | ketchup
+    c3 = ~mayo | andalouse | ~ketchup
     c4 = ~ketchup | ~andalouse
     constraints = [c1, c2, c3, c4]
     cnf = cnf_to_pysat(constraints)
@@ -829,7 +829,7 @@ def explain_constrained_omus():
         constrained=True
     )
 
-def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.json'}, 
+def explain_frietkot(parameters={'extension': 'maxsat','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
     from datetime import date, datetime
@@ -849,15 +849,16 @@ def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.j
     soft_clauses=[frozenset({bv.name + 1}) for bv in bv_constraints]
     explainable_facts = set(bv.name + 1 for bv in unknown_facts)
 
-    o, expl_seq = omusExplain(
+    o, expl_seq = omusExplain2(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
         soft_weights=weights,
-        bv=bv,
+        # bv=bv,
         parameters=parameters,
-        incremental=True,
+        # incremental=True,
         reuse_mss=False,
-        unknown_facts=explainable_facts
+        unknown_facts=explainable_facts,
+        constrained=True
     )
 
     o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
@@ -865,10 +866,13 @@ def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.j
 
 if __name__ == "__main__":
     print("-------------------")
+    print("Explaining constrained OMUS")
+    print("-------------------\n")
+    explain_constrained_omus()
+    print("-------------------")
     print("Explaining FRIETKOT")
     print("-------------------\n")
-    # explain_frietkot()
-    explain_constrained_omus()
+    explain_frietkot()
     print("\n\n-------------------")
     print("Explaining ORIGIN")
     print("-------------------\n")

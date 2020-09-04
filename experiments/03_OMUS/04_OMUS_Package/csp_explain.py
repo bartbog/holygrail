@@ -419,6 +419,7 @@ def omusExplain2(
     I_cnf = [frozenset({lit}) for lit in I0]
 
     I_end = optimalPropagate(cnf, I0)
+    print(I_end)
 
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
     print("End interpretation=", I_end)
@@ -438,10 +439,11 @@ def omusExplain2(
 
     if seed_mss:
         # add full theory without negation literal
-        # o.MSSes.add((o.fullMss, frozenset(I_end)))
-        base_F = set(range(len(o.soft_clauses)))
-
-        F = base_F | set({o.softClauseIdxs[frozenset({-i})] for i in explainable_facts - I})
+        softies = frozenset(range(o.nSoftClauses))
+        F = frozenset(range(o.nClauses))
+        # C = F - softies
+        # already added ç!
+        o.addSetGurobiOmusConstr(softies)
 
         for i in explainable_facts - I:
 
@@ -449,34 +451,38 @@ def omusExplain2(
 
             MSS, MSS_Model = o.maxsat_fprime(F_prime, set())
 
-            o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
+            C = F - MSS
 
-    print(o.MSSes)
+            o.addSetGurobiOmusConstr(C)
 
     # -- precompute some hitting sets for a rough idea on the costs
+    cnt= 0
+    for c in o.hard_clauses + o.all_soft_clauses:
+        print(c)
 
     while len(explainable_facts - I) > 0:
+        if cnt > 6:
+            return
+
         E_best, S_best, N_best = None, None, None
 
         print("Remaining explanations=", explainable_facts - I)
 
         if constrained:
-            hs, explanation = o.omusConstr(I_cnf=I_cnf,
-                                           explained_literal=i)
-        print("Hs=\t", hs)
-        print("explanation=\t", explanation)
+            hs, explanation = o.omusConstr()
+        # print("Hs=\t", hs)
+        # print("explanation=\t", explanation)
+
         # explaining facts
         E_best = [ci for ci in explanation if ci in I_cnf]
 
         # constraint used ('and not ci in E_i': dont repeat unit clauses)
         S_best = [ci for ci in explanation if ci in soft_clauses and ci not in E_best]
+
         S_hs = [soft_clauses.index(si) for si in S_best]
 
-
-        # propagate as much info as possible
-        # print(explanation)
-        # Timing: skip for now...
         New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
+
         N_best = New_info.intersection(explainable_facts) - I
 
         # add new info
@@ -489,8 +495,19 @@ def omusExplain2(
 
         expl_seq.append((E_best, S_best, N_best))
 
+        print("I=",I)
+        print("I_cnf=",I_cnf)
+        print("E_best=",E_best)
+        print("S_best=",S_best)
+        print("N_best=",N_best)
+        print("New_info=",New_info)
+        print(E_best, S_best, N_best, New_info)
+        # print(o.obj_weights)
+
+
         # @TIAS: printing explanations
         print(f"\nOptimal explanation \t\t {E_best} /\\ {S_best} => {N_best}","\n")
+        cnt += 1
 
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
 

@@ -784,22 +784,20 @@ def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'},
             explainable_facts |= set(i.name+1 for i in item)
     # print(soft_clauses)
 
-    o, expl_seq = omusExplain(
+    o, expl_seq = omusExplain2(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
         soft_weights=weights,
+        # bv=bv,
         parameters=parameters,
-        incremental=True,
-        bv= set(bv.name+1 for bv in bv_clues + bv_trans + bv_bij),
-        reuse_mss=True,
+        # incremental=True,
+        reuse_mss=False,
         unknown_facts=explainable_facts,
-        clues=set(i for i in range(len(bv_clues))),
-        bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
-        trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
+        constrained=True
     )
 
-    o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
-    del o
+    #o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
+    #del o
 
 
 def explain_constrained_omus():
@@ -876,6 +874,6 @@ if __name__ == "__main__":
     print("\n\n-------------------")
     print("Explaining ORIGIN")
     print("-------------------\n")
-    # explain_origin()
+    explain_origin()
     # explain_p5()
 

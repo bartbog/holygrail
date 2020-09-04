@@ -185,7 +185,24 @@ def print_omus_debug(o):
     # print(f"\t\t MSS size={o.MSS_sizes[-1]}\n")
 
 
-def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=None, bv=None, parameters=None, incremental=False, reuse_mss=False, seed_mss=True, I0=None, unknown_facts=None, bij=None, trans=None, clues=None):
+def omusExplain(
+        parameters=None,
+        incremental=False,
+        reuse_mss=False,
+        seed_mss=False,
+        timeout=None,
+        cnf=None, 
+        bv=None,
+        hard_clauses=None,
+        soft_clauses=None,
+        soft_weights=None,
+        I0=None,
+        unknown_facts=None,
+        bij=None,
+        trans=None,
+        clues=None,
+        constrained=True
+    ):
     # initial interpretation
     if hard_clauses is not None and soft_clauses is not None:
         cnf = hard_clauses+soft_clauses
@@ -209,7 +226,6 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
         I=I_end,
-        bv=bv,
         soft_weights=soft_weights,
         parameters=parameters,  # default parameters
         logging=True,
@@ -227,7 +243,7 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
         for i in explainable_facts - I:
 
-            F = base_F | set({o.softClauseIdxs[frozenset({-i})]})
+            # F = base_F | set({o.softClauseIdxs[frozenset({-i})]})
 
             # Only negation of literal inside
             o.clauses = o.soft_clauses + [frozenset({-i})]
@@ -248,27 +264,28 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
     w_I = [1 for _ in I] + [1]
 
     t_start_seed = time.time()
-    for i in explainable_facts - I:
-        hs, explanation = o.omusIncr(I_cnf=I_cnf,
-                                    explained_literal=i,
-                                    add_weights=w_I,
-                                    best_cost=best_costs[i],
-                                    hs_limit=len(explainable_facts - I) + 10
-                                    )
-        if type(explanation) != list:
-            best_costs[i] = explanation + 1000
-        else:
-            E_i = [ci for ci in explanation if ci in I_cnf]
+    if seed_mss:
+        for i in explainable_facts - I:
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        best_cost=best_costs[i],
+                                        hs_limit=len(explainable_facts - I) + 10
+                                        )
+            if type(explanation) != list:
+                best_costs[i] = explanation + 1000
+            else:
+                E_i = [ci for ci in explanation if ci in I_cnf]
 
-            # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
-            S_hs = [soft_clauses.index(si) for si in S_i]
+                # constraint used ('and not ci in E_i': dont repeat unit clauses)
+                S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
+                S_hs = [soft_clauses.index(si) for si in S_i]
 
-            # new fact
-            N_i = {i}
+                # new fact
+                N_i = {i}
 
-            cost_explanation = cost((E_i, S_hs), soft_weights, clues, trans, bij)
-            best_costs[i] = min([cost_explanation, best_costs[i]])
+                cost_explanation = cost((E_i, S_hs), soft_weights, clues, trans, bij)
+                best_costs[i] = min([cost_explanation, best_costs[i]])
     
     t_end_seed = time.time()
     print("Time_seed = ", t_end_seed - t_start_seed)
@@ -293,7 +310,10 @@ def omusExplain(cnf = None, hard_clauses=None, soft_clauses=None, soft_weights=N
 
             t_start_omus = time.time()
 
-            if incremental:
+            if constrained:
+                hs, explanation = o.omusConstr(I_cnf=I_cnf, 
+                                               explained_literal=i)
+            elif incremental:
                 hs, explanation = o.omusIncr(I_cnf=I_cnf,
                                              explained_literal=i,
                                              add_weights=w_I,

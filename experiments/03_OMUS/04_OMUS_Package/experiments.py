@@ -11,6 +11,17 @@ from pysat.solvers import Solver
 # omus imports
 from omus import OMUS
 
+from test_explain import originProblem
+
+from csp_explain import omusExplain, maxPropagate, optimalPropagate
+
+sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
+sys.path.append('/home/emilio/Documents/cppy_src/')
+from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
+# from cppy.solver_interfaces.pysat_tools import 
+from cppy.model_tools.to_cnf import *
+
+
 random.seed(datetime.now())
 
 SECONDS = 1
@@ -175,38 +186,127 @@ def experiment1(sd):
 
     with open(outputDir + outputFile, 'w') as file:
         file.write(json.dumps(results))
-    # return o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
+
 # start 15:12
 def main():
     sd = datetime.now()
     random.seed(sd)
     experiment1(sd)
-    # experiment2()
+    experiment2()
     # experiment3()
 
 if __name__ == "__main__":
     main()
 
-# def experiment2():
-#     timeout = 5 * HOURS
+def experiment3():
+    parameters = {'extension': 'maxsat','output': 'log.json'}
 
-#     # setup origin puzzle
-#     origin_puzzle = ....
+    # model constraints
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
 
-#     # OMUS no improvements
-#     csp
+    # transforming the clues to constraints
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
 
-#     # OMUS postponing optimization
-#     csp-explain ....
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
 
-#     # OMUS incremental 
-#     csp-explain ...
+    # print(maxPropagate(hard_clauses + soft_clauses))
 
-#     # OMUS incremental + postponing optimization
-#     csp-explain ...
+    weights = [20 for clause in bv_clues] + \
+              [5 for clause in bv_trans] + \
+              [5 for clause in bv_bij]
 
-#     # OMUS incremental + postponing optimization + warm start
-#     csp-explain ...
+    explainable_facts = set()
+
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
+    o, expl_seq = omusExplain(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        soft_weights=weights,
+        parameters=parameters,
+        incremental=True,
+        reuse_mss=True,
+        unknown_facts=explainable_facts,
+        clues=set(i for i in range(len(bv_clues))),
+        bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+        trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
+    )
+
+
+def experiment2():
+
+    parameters = {'extension': 'maxsat','output': 'log.json'}
+    # incremental = True
+    # reuse_mss = True
+
+    # model constraints
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    # transforming the clues to constraints
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+
+    weights = [20 for clause in bv_clues] + \
+              [5 for clause in bv_trans] + \
+              [5 for clause in bv_bij]
+
+    explainable_facts = set()
+
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
+    o, expl_seq = omusExplain(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        soft_weights=weights,
+        parameters=parameters,
+        incremental=True,
+        reuse_mss=True,
+        unknown_facts=explainable_facts,
+        clues=set(i for i in range(len(bv_clues))),
+        bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+        trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
+    )
+
+    timeout = 5 * HOURS
+
+    # setup origin puzzle
+    origin_puzzle = ....
+
+    # OMUS no improvements
+    csp
+
+    # OMUS postponing optimization
+    csp-explain ....
+
+    # OMUS incremental 
+    csp-explain ...
+
+    # OMUS incremental + postponing optimization
+    csp-explain ...
+
+    # OMUS incremental + postponing optimization + warm start
+    csp-explain ...
 
 # def experiment3():
 #     # running a whole explanation sequence!

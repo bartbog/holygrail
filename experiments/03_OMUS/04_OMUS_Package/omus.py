@@ -159,7 +159,7 @@ class Timings(object):
 
 
 class OMUS(object):
-    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, bv=None, soft_weights=None, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=True,clues=None,trans=None,bij=None):
+    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, soft_weights=None, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=True,clues=None,trans=None,bij=None):
         # checking input
         assert (f is not None) or (soft_weights is not None), "No mapping function or weights supplied."
         assert (hard_clauses is not None), "No clauses or CNF supplied."
@@ -189,6 +189,7 @@ class OMUS(object):
         self.nSoftClauses = len(self.soft_clauses)
         self.fullMss = frozenset(i for i in range(self.nSoftClauses + len(I)))
         self.I_lits = frozenset(set(abs(lit) for lit in I) | set(-abs(lit) for lit in I))
+        self.I = I
         self.clues = clues
         self.trans = trans
         self.bij = bij
@@ -205,6 +206,8 @@ class OMUS(object):
 
         self.weights = None
         self.nWeights = len(self.soft_weights)
+
+
 
         assert self.nSoftClauses == self.nWeights, f"# clauses ({self.nSoftClauses}) != #weights ({self.nSoftClauses})"
 
@@ -1106,6 +1109,174 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
+    def gurobiOmusConstrModel(self):
+
+        # create gurobi model
+        self.g_model = gp.Model('MIPOptConstrHS')
+
+        # model parameters
+        self.g_model.Params.OutputFlag = 0
+        self.g_model.Params.LogToConsole = 0
+        self.g_model.Params.Threads = 8
+
+        # create the variables (with weights in one go)
+        nvars = self.nSoftClauses + len(self.I_lits)
+        self.obj_weights = self.soft_weights + [GRB.INFINITY for _ in range(len(self.I))] + [0 for _ in range(len(self.I))]
+
+        print(nvars, "=", self.nSoftClauses, "+" ,len(self.I_lits))
+
+        x = self.g_model.addMVar(shape=nvars, vtype=GRB.BINARY, obj=self.weights, name="x")
+
+        # exactly one of the -literals
+        vals = list(range(self.nSoftClauses + len(self.I), nvars))
+
+        print(vals)
+
+        self.g_model.addConstr(gp.quicksum(x[i] for i in vals) >= 1)
+        self.g_model.addConstr(gp.quicksum(x[i] for i in vals) <= 1)
+
+        # update the model
+        self.g_model.update()
+
+    def changeWeightsGurobiOmusConstr(self, C):
+        # change the model weights
+        # if c is in the hitting set constraints + it's a literal from the final interpretation => weight =1
+        # if c is NOT in the hitting set constraints => weight = INFINTIY (should not be hit)
+        for c in range(len(self.soft_clauses) , len(self.soft_clauses) + len(self.I)):
+            if c in C:
+                self.obj_weights[c] = 1
+            else:
+                self.obj_weights[c] = GRB.INFINITY
+
+        # if c is in the hitting set constraints => weight =0
+        # if c is NOT in the hitting set constraints => weight = INFINTIY (should not be hit)
+        for c in range(len(self.soft_clauses) + len(self.I), len(self.soft_clauses) + len(self.I_lits)):
+            if c in C:
+                self.obj_weights[c] = 0
+            else:
+                self.obj_weights[c] = GRB.INFINITY
+        self.g_model.setObjective(weights, GRB.MINIMIZE)
+
+    def addSetGurobiOmusConstr(self, C):
+        # variables
+        x = self.g_model.getVars()
+
+        # add new constraint sum x[j] * hij >= 1
+        self.g_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
+
+    def gurobiOmusConstrHS(self):
+        # solve optimization problem
+        self.g_model.optimize()
+
+        # output hitting set
+        x = self.g_model.getVars()
+        hs = set(i for i in range(self.nSoftClauses) if x[i].x == 1)
+
+        return hs
+
+    def omusConstr(self, I_cnf, explained_literal):
+        self.clauses = self.soft_clauses + I_cnf + [frozenset({-explained_literal})]
+        self.nSoftClauses = len(self.clauses)
+        self.gp_model = self.gurobiOmusConstrModel()
+
+        satsolver, sat = None, None
+        hs = None
+
+        F = frozenset(range(self.nSoftClauses))
+
+        H, C = [], []
+        h_counter = Counter()
+
+        if self.reuse_mss:
+            added_MSSes = []
+            # map global 'softClauseIdx' to local 'pos'
+            F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
+
+            for mss_idxs, MSS_model in self.MSSes:
+
+                # part of fullMSS
+                if mss_idxs.issubset(self.fullMss):
+                    # print("MSS is subset")
+                    continue
+
+                # if literal not in the model then we can skip it
+                if explained_literal not in MSS_model and -explained_literal not in MSS_model:
+                    continue
+
+                # get local pos from global idx
+                mss = set(F_idxs[mss_idx] for mss_idx in mss_idxs&F_idxs.keys())
+                # print(mss, )
+
+                if any(mss.issubset(MSS) for MSS in added_MSSes):
+                    continue
+
+                # grow model over hard clauses first, must be satisfied
+                # Timing: grow is rather slow
+                # XXX Model if literal inside then add it to the MSS and C = F-MSS
+                # XXX remove grow
+                # MSS, model = self.grow(mss, MSS_model)
+                C = F - mss
+                C_idx = frozenset(self.softClauseIdxs[self.clauses[id]] for id in C)
+
+                if C not in H:
+                    h_counter.update(list(C))
+                    H.append(C)
+                    added_MSSes.append(mss&F)
+                    self.addSetGurobiOmusConstr(C)
+                    self.changeWeightsGurobiOmusConstr(C_idx)
+
+        while(True):
+            while(True):
+                pass
+            hs = self.gurobiOmusConstrHS()
+
+            # check cost, return premptively if worse than best
+            E_i = [ci for ci in hs if self.clauses[ci] in I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses]
+
+            # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
+            my_cost = self.cost((E_i, S_i))
+
+            # ------ Sat check
+            (model, sat, satsolver) = self.checkSat(hs)
+
+            if not sat:
+                satsolver.delete()
+                return hs, [self.clauses[idx] for idx in hs]
+
+            # ------ Grow
+            if self.extension == 'maxsat':
+                # grow model over hard clauses first, must be satisfied
+                # MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
+                MSS, MSS_model = self.grow(hs, model)
+            else:
+                # grow model over hard clauses first, must be satisfied
+                MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
+                # print("hard grow:",len(MSS),model,"->",MSS_model)
+                # grow model over as many as possible soft clauses next 
+                MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
+
+            if self.reuse_mss:
+                mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS&F)
+                # mssIdxs = frozenset(self.softClauseIdxs[self.clauses[id]] for id in MSS)
+                storeMss= not mssIdxs.issubset(self.fullMss) and \
+                            not any(True if mssIdxs < m[0] else False for m in self.MSSes)
+                if(storeMss):
+                    self.MSSes.add((mssIdxs, frozenset(MSS_model)))
+
+            C = F - MSS
+            C_idx = frozenset(self.softClauseIdxs[self.clauses[id]] for id in C)
+
+            self.addSetGurobiOmusConstr(C)
+            self.changeWeightsGurobiOmusConstr(C_idx)
+            assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"
+
+            h_counter.update(list(C))
+            H.append(C)
+            mode = MODE_INCR
+
     def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=True, timeout=1000):
         # Benchmark info
         t_start_omus = time.time()
@@ -1184,10 +1355,14 @@ class OMUS(object):
         #print("\n")
         while(True):
             if (time.time() -t_start_omus) > timeout:
+                gurobi_model.dispose()
+                satsolver.delete()
                 return None, my_cost
             # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True and postponed_omus):
                 if (time.time() -t_start_omus) > timeout:
+                    gurobi_model.dispose()
+                    satsolver.delete()
                     return None, my_cost
                 # print("Starting with optimal!")
                 # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
@@ -1272,6 +1447,8 @@ class OMUS(object):
                 H.append(C)
 
                 if hs_limit is not None and len(H) > hs_limit:
+                    gurobi_model.dispose()
+                    satsolver.delete()
                     return C, my_cost
 
                 # Sat => Back to incremental mode 
@@ -1291,6 +1468,8 @@ class OMUS(object):
             my_cost = self.cost((E_i, S_i))
             # print(my_cost, "vs", best_cost)
             if best_cost is not None and my_cost >= best_cost:
+                gurobi_model.dispose()
+                satsolver.delete()
                 return None, my_cost
 
             # ------ Sat check
@@ -1299,6 +1478,7 @@ class OMUS(object):
             if not sat:
                 #
                 gurobi_model.dispose()
+                satsolver.delete()
 
                 # Benchmark info
                 if self.logging:
@@ -1342,6 +1522,8 @@ class OMUS(object):
             mode = MODE_INCR
 
             if hs_limit is not None and len(H) > hs_limit:
+                gurobi_model.dispose()
+                satsolver.delete()
                 return C, my_cost
 
     def omus(self, add_clauses, add_weights=None):
@@ -1374,6 +1556,7 @@ class OMUS(object):
             # if not sat or steps > max_steps_main:
             if not sat:
                 gurobi_model.dispose()
+                satsolver.delete()
                 # return hs
                 return hs, [set(self.clauses[idx]) for idx in hs]
 
@@ -1404,13 +1587,15 @@ class OMUS(object):
         results['optimal_steps'] = self.optimal_steps
         results['greedy_steps'] = self.greedy_steps
         results['incremental_steps'] = self.incremental_steps
+        results['sat_steps'] = self.sat_steps
+        results['grow_steps'] = self.grow_steps
 
         # Individual timings of the calls
-        results['timing.optimal'] = self.timing.optimal
-        results['timing.greedy'] = self.timing.greedy
-        results['timing.sat'] = self.timing.sat
-        results['timing.incremental'] = self.timing.incremental
-        results['timing.growMss'] = self.timing.growMss
+        # results['timing.optimal'] = self.timing.optimal
+        # results['timing.greedy'] = self.timing.greedy
+        # results['timing.sat'] = self.timing.sat
+        # results['timing.incremental'] = self.timing.incremental
+        # results['timing.growMss'] = self.timing.growMss
 
         with open(outputDir + outputFile, 'w') as file:
             file.write(json.dumps(results)) # use `json.loads` to do the reverse

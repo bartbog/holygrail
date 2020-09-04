@@ -820,7 +820,7 @@ def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.j
     hard_clauses = [frozenset(c) for c in cnf]
     soft_clauses=[frozenset({bv.name + 1}) for bv in bv_constraints]
     explainable_facts = set(bv.name + 1 for bv in unknown_facts)
-    
+
     o, expl_seq = omusExplain(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
@@ -828,7 +828,7 @@ def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.j
         bv=bv,
         parameters=parameters,
         incremental=True,
-        reuse_mss=True,
+        reuse_mss=False,
         unknown_facts=explainable_facts
     )
 
@@ -839,10 +839,10 @@ if __name__ == "__main__":
     print("-------------------")
     print("Explaining FRIETKOT")
     print("-------------------\n")
-    # explain_frietkot()
+    explain_frietkot()
     print("\n\n-------------------")
     print("Explaining ORIGIN")
     print("-------------------\n")
-    explain_origin()
+    # explain_origin()
     # explain_p5()
 

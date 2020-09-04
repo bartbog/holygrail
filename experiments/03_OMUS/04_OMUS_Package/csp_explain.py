@@ -84,6 +84,7 @@ def explanationsToJson(explanations, clue_match, literal_match, output):
 
 
 def maxPropagate(cnf, I=list()):
+    # print(cnf)
     with Solver() as s:
         s.append_formula(cnf, no_return=False)
         solved = s.solve()
@@ -97,7 +98,7 @@ def maxPropagate(cnf, I=list()):
 
 def basecost(constraints, weights, clues, trans, bij):
     # nClues = len(constraints.intersection(clues))
-    nClues = sum([1 if id in clues else 0 for id in constraints])
+    nClues = 0 #sum([1 if id in clues else 0 for id in constraints])
     nOthers = len(constraints) - nClues
     # print("constraints = ", constraints)
     if nClues == 0 and nOthers == 1:
@@ -216,6 +217,7 @@ def omusExplain(
     I_cnf = [frozenset({lit}) for lit in I0]
 
     I_end = optimalPropagate(cnf, I0)
+    # I_end = maxPropagate(cnf, I0)
 
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
 
@@ -233,6 +235,7 @@ def omusExplain(
         clues=clues,
         trans=trans,
         bij=bij)
+    print(soft_weights)
 
     best_costs = dict({i: 9999999 for i in explainable_facts - I})
 
@@ -306,7 +309,8 @@ def omusExplain(
 
         for id, i in enumerate(sorted(explainable_facts - I, key=lambda i: best_costs[i])):
 
-            print(f"Expl {i:4} [{id+1:4}/{len(explainable_facts-I):4}] \tbest_cost_i= ", best_costs[i], "\t - \t", "cost_best=\t", cost_best, end="\r")
+            print("Explaining=", i)
+            # print(f"Expl {i:4} [{id+1:4}/{len(explainable_facts-I):4}] \tbest_cost_i= ", best_costs[i], "\t - \t", "cost_best=\t", cost_best, end="\r")
 
             t_start_omus = time.time()
 
@@ -333,7 +337,7 @@ def omusExplain(
 
             # DEBUG INFO
             print(f"\n\t\t OMUS total exec time: {round(t_end_omus - t_start_omus, 2)}")
-            print_omus_debug(o)
+            # print_omus_debug(o)
 
             # explaining facts
             E_i = [ci for ci in explanation if ci in I_cnf]
@@ -348,22 +352,22 @@ def omusExplain(
             cost_explanation = cost((E_i, S_hs), soft_weights, clues, trans, bij)
             best_costs[i] = min([cost_explanation, best_costs[i]])
 
-            print(f"\n\t\tCandidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i} ({cost_explanation})\n")
+            # print(f"\n\t\tCandidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i} ({cost_explanation})\n")
 
             if cost_best is None or cost_explanation < cost_best:
                 E_best, S_best, N_best = E_i, S_i, N_i
                 cost_best = cost_explanation
 
         # post-processing the MSSes
-        keep = set()
-        for (m1, m1_model) in o.MSSes:
-            keep_m1 = True
-            for (m2, _) in o.MSSes:
-                if m1 != m2 and m1 < m2:
-                    keep_m1 = False
-            if keep_m1:
-                keep.add((m1, m1_model))
-        o.MSSes = keep
+        # keep = set()
+        # for (m1, m1_model) in o.MSSes:
+        #     keep_m1 = True
+        #     for (m2, _) in o.MSSes:
+        #         if m1 != m2 and m1 < m2:
+        #             keep_m1 = False
+        #     if keep_m1:
+        #         keep.add((m1, m1_model))
+        # o.MSSes = keep
 
             # @TIAS: printing explanations as they get better
             # print(f"\tFacts: {E_i} Clause: {S_i} => {N_i} (", cost_explanation, ")")

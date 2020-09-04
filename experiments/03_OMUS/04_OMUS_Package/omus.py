@@ -159,7 +159,7 @@ class Timings(object):
 
 
 class OMUS(object):
-    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, soft_weights=None, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=True,clues=None,trans=None,bij=None):
+    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, soft_weights=None, parameters={}, f=None, logging=True, reuse_mss=True,clues=None,trans=None,bij=None):
         # checking input
         assert (f is not None) or (soft_weights is not None), "No mapping function or weights supplied."
         assert (hard_clauses is not None), "No clauses or CNF supplied."
@@ -204,7 +204,7 @@ class OMUS(object):
         else:
             self.soft_weights = soft_weights
 
-        self.weights = None
+        self.weights = soft_weights
         self.nWeights = len(self.soft_weights)
 
 
@@ -220,9 +220,9 @@ class OMUS(object):
         # Keep track of soft clauses troughout the different omus/omusIncr calls
         self.softClauseIdxs = dict()
         # matching table clause to fixed id
-        all_soft_clauses = self.soft_clauses + [frozenset({lit}) for lit in I] + [frozenset({-lit}) for lit in I]
+        self.all_soft_clauses = self.soft_clauses + [frozenset({lit}) for lit in I] + [frozenset({-lit}) for lit in I]
 
-        for idx, clause in enumerate(all_soft_clauses):
+        for idx, clause in enumerate(self.all_soft_clauses):
             self.softClauseIdxs[clause] = idx
 
     def checkSatNoSolver(self, f_prime=None):
@@ -1120,20 +1120,15 @@ class OMUS(object):
         self.g_model.Params.Threads = 8
 
         # create the variables (with weights in one go)
-        nvars = self.nSoftClauses + len(self.I_lits)
+        nvars = len(self.soft_clauses) + len(self.I_lits)
         self.obj_weights = self.soft_weights + [GRB.INFINITY for _ in range(len(self.I))] + [0 for _ in range(len(self.I))]
 
-        print(nvars, "=", self.nSoftClauses, "+" ,len(self.I_lits))
-
-        x = self.g_model.addMVar(shape=nvars, vtype=GRB.BINARY, obj=self.weights, name="x")
-
         # exactly one of the -literals
-        vals = list(range(self.nSoftClauses + len(self.I), nvars))
+        vals = range(len(self.soft_clauses) + len(self.I), nvars)
 
-        print(vals)
+        x = self.g_model.addMVar(shape=nvars, vtype=GRB.BINARY, obj=self.obj_weights, name="x")
 
-        self.g_model.addConstr(gp.quicksum(x[i] for i in vals) >= 1)
-        self.g_model.addConstr(gp.quicksum(x[i] for i in vals) <= 1)
+        self.g_model.addConstr(x[vals].sum() == 1)
 
         # update the model
         self.g_model.update()
@@ -1170,7 +1165,7 @@ class OMUS(object):
 
         # output hitting set
         x = self.g_model.getVars()
-        hs = set(i for i in range(self.nSoftClauses) if x[i].x == 1)
+        hs = set(i for i in range(len(self.soft_clauses) + len(self.I_lits)) if x[i].x == 1)
 
         return hs
 
@@ -1187,63 +1182,17 @@ class OMUS(object):
         H, C = [], []
         h_counter = Counter()
 
-        if self.reuse_mss:
-            added_MSSes = []
-            # map global 'softClauseIdx' to local 'pos'
-            F_idxs = {self.softClauseIdxs[clause]: pos for pos, clause in enumerate(self.clauses)}
-
-            for mss_idxs, MSS_model in self.MSSes:
-
-                # part of fullMSS
-                if mss_idxs.issubset(self.fullMss):
-                    # print("MSS is subset")
-                    continue
-
-                # if literal not in the model then we can skip it
-                if explained_literal not in MSS_model and -explained_literal not in MSS_model:
-                    continue
-
-                # get local pos from global idx
-                mss = set(F_idxs[mss_idx] for mss_idx in mss_idxs&F_idxs.keys())
-                # print(mss, )
-
-                if any(mss.issubset(MSS) for MSS in added_MSSes):
-                    continue
-
-                # grow model over hard clauses first, must be satisfied
-                # Timing: grow is rather slow
-                # XXX Model if literal inside then add it to the MSS and C = F-MSS
-                # XXX remove grow
-                # MSS, model = self.grow(mss, MSS_model)
-                C = F - mss
-                C_idx = frozenset(self.softClauseIdxs[self.clauses[id]] for id in C)
-
-                if C not in H:
-                    h_counter.update(list(C))
-                    H.append(C)
-                    added_MSSes.append(mss&F)
-                    self.addSetGurobiOmusConstr(C)
-                    self.changeWeightsGurobiOmusConstr(C_idx)
-
         while(True):
-            while(True):
-                pass
             hs = self.gurobiOmusConstrHS()
-
-            # check cost, return premptively if worse than best
-            E_i = [ci for ci in hs if self.clauses[ci] in I_cnf]
-
-            # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            S_i = [ci for ci in hs if self.clauses[ci] in self.soft_clauses]
-
-            # opti = optimalPropagate(hard_clauses + E_i + S_i, I)
-            my_cost = self.cost((E_i, S_i))
+            print(hs)
+            print([self.all_soft_clauses[i] for i in hs])
+            print(self.obj_weights)
 
             # ------ Sat check
-            (model, sat, satsolver) = self.checkSat(hs)
+            (model, sat) = self.checkSatNoSolver(hs)
 
+            print(model, sat, hs)
             if not sat:
-                satsolver.delete()
                 return hs, [self.clauses[idx] for idx in hs]
 
             # ------ Grow

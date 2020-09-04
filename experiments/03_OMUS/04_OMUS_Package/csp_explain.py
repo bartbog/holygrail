@@ -207,11 +207,11 @@ def omusExplain(
     # initial interpretation
     if hard_clauses is not None and soft_clauses is not None:
         cnf = hard_clauses+soft_clauses
+    else:
+        raise Exception("omusExplain: hard and soft clauses can not be None")
 
-    # # TODO: match fact with table element from rels
     if I0 is None:
         I0 = set()
-
     I = I0
 
     I_cnf = [frozenset({lit}) for lit in I0]
@@ -220,6 +220,7 @@ def omusExplain(
     # I_end = maxPropagate(cnf, I0)
 
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+    print("explain:",explainable_facts)
 
     # explanation sequence
     expl_seq = []
@@ -242,32 +243,40 @@ def omusExplain(
     if reuse_mss and seed_mss:
         # add full theory without negation literal
         o.MSSes.add((o.fullMss, frozenset(I_end)))
+        print("full mss:",o.MSSes)
         base_F = set(range(len(o.soft_clauses)))
 
         for i in explainable_facts - I:
-
-            # F = base_F | set({o.softClauseIdxs[frozenset({-i})]})
+            # if -i in any of the previous mss_models, no need to mss again
+            # can be implemented more efficiently by storing those already covered outside the loop, but OK...
+            if any(-i in mss_model for (mss,mss_model) in o.MSSes):
+                print(-i,"already in an mss")
+                continue
 
             # Only negation of literal inside
             o.clauses = o.soft_clauses + [frozenset({-i})]
-            o.weights = o.soft_weights + [1]
+            o.weights = o.soft_weights + [0]
             # F_prime = last variable
-            F_prime = set({len(soft_clauses)})
+            #F_prime = set({len(soft_clauses)})
+            F_prime = set({len(o.clauses)-1})
 
-            MSS, MSS_Model = o.grow(F_prime, set())
+            MSS, MSS_Model = o.grow(F_prime, I0)
 
             # build MSS with correct indexes
             mssIdxs = frozenset(o.softClauseIdxs[o.clauses[id]] for id in MSS)
+            print("mss",-i,":",mssIdxs, MSS_Model)
 
             # C =  F - MSS
             # best_costs[i] = len(MSS) * 1000
             o.MSSes.add((mssIdxs, frozenset(MSS_Model)))
 
     # -- precompute some hitting sets for a rough idea on the costs
+    # XXX what does this do?
     w_I = [1 for _ in I] + [1]
 
     t_start_seed = time.time()
-    if seed_mss:
+    # old? its call omusIncr...
+    if False or seed_mss:
         for i in explainable_facts - I:
             hs, explanation = o.omusIncr(I_cnf=I_cnf,
                                         explained_literal=i,
@@ -303,20 +312,23 @@ def omusExplain(
         E_best, S_best, N_best = None, None, None
 
         # existing facts + unit weight for negated literal
+        # XXX old?
         w_I = [1 for _ in I] + [1]
 
         # print("\n", {i: best_costs[i] for i in sorted(explainable_facts - I, key=lambda i: best_costs[i])}, "\n")
+        # XXX... no? we no longer need to iterate per I, just one big one...
 
-        for id, i in enumerate(sorted(explainable_facts - I, key=lambda i: best_costs[i])):
+        #for id, i in enumerate(sorted(explainable_facts - I, key=lambda i: best_costs[i])):
+        if True:
 
-            print("Explaining=", i)
+            print("Left to explain:", len(explainable_facts - I))
             # print(f"Expl {i:4} [{id+1:4}/{len(explainable_facts-I):4}] \tbest_cost_i= ", best_costs[i], "\t - \t", "cost_best=\t", cost_best, end="\r")
 
             t_start_omus = time.time()
 
-            if constrained:
-                hs, explanation = o.omusConstr(I_cnf=I_cnf, 
-                                               explained_literal=i)
+            if True and constrained:
+                hs, explanation = o.omusConstr(I_cnf=I_cnf)
+                print("got hs:",hs,explanation)
             elif incremental:
                 hs, explanation = o.omusIncr(I_cnf=I_cnf,
                                              explained_literal=i,

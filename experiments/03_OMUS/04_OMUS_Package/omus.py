@@ -3,6 +3,7 @@ from collections import Counter
 from enum import Enum, IntEnum
 import time
 import random
+import sys
 
 # Gurobi utilities
 import gurobipy as gp
@@ -1168,10 +1169,19 @@ class OMUS(object):
 
         return hs
 
-    def omusConstr(self, I_cnf, explained_literal):
-        self.clauses = self.soft_clauses + I_cnf + [frozenset({-explained_literal})]
-        self.nSoftClauses = len(self.clauses)
+    def omusConstr(self, I_cnf):
+        #self.clauses = self.soft_clauses + I_cnf + [frozenset({-explained_literal})]
+        #self.nSoftClauses = len(self.clauses)
+        # XXX: no... it is shared among all omusConstr calls! so in constructor
         self.gp_model = self.gurobiOmusConstrModel()
+        # TODO: update obj weights so that 'I_cnf' literals are set to '1' and -I_cnf literals set to +inf
+
+        # TODO, add the MSSes...
+        nvars = len(self.soft_clauses) + len(self.I_lits)
+        F = set(range(nvars))
+        for (mss,mss_model) in self.MSSes:
+            C = F - mss
+            self.addSetGurobiOmusConstr(C)
 
         satsolver, sat = None, None
         hs = None
@@ -1183,9 +1193,11 @@ class OMUS(object):
 
         while(True):
             hs = self.gurobiOmusConstrHS()
-            print(hs)
-            print([self.all_soft_clauses[i] for i in hs])
-            print(self.obj_weights)
+            print("hs:",hs)
+            print("soft clauses:",[self.all_soft_clauses[i] for i in hs])
+            print("obj:",self.obj_weights)
+            print("Tias says: up to here it is correct but read the comments because I hacked some parts to make it work upto here! Can be simpler")
+            sys.exit(1)
 
             # ------ Sat check
             (model, sat) = self.checkSatNoSolver(hs)

@@ -448,7 +448,7 @@ def omusExplain2(
 
             F_prime = set([o.softClauseIdxs[frozenset({-i})]])
 
-            MSS, MSS_Model = o.grow(F_prime, I0) #maxsat_fprime()
+            MSS, MSS_Model = o.grow(F_prime, I0|{-i}) #maxsat_fprime()
 
             C = F - MSS
             o.addSetGurobiOmusConstr(C)

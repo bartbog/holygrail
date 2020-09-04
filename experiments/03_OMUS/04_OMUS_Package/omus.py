@@ -797,9 +797,12 @@ class OMUS(object):
         return new_F_prime, new_model
 
     def greedy_vertical(self, F_prime, model):
+        print("greedy_vert",F_prime,model)
+        print(self.soft_clauses)
         # soft and hard, only soft indexes really matter but all need
         # to be unit-propagated
-        grow_clauses = self.clauses + self.hard_clauses
+        grow_clauses = self.soft_clauses # not the literals in (all_soft_cl) which are unit!
+        all_clauses = grow_clauses + self.hard_clauses
 
         ts = time.time()
         cl_true = set(F_prime)
@@ -809,18 +812,43 @@ class OMUS(object):
 
         lit_true = set(model)
         lit_false = set(-l for l in model)
-        lit_unk = set(frozenset.union(*grow_clauses)) - lit_true - lit_false
+        lit_unk = set(frozenset.union(*all_clauses)) - lit_true - lit_false
         #print("lit_:", time.time()-ts, len(lit_unk))
         #print("lt t",lit_true)
 
+        new_true = set()
+        hard_unk = set( range(len(self.hard_clauses)) ) # hard clauses that are true
+        def unitprop_hard():
+            # TODO: add an index
+            changed = True
+            while changed:
+                changed = False
+                for cl in list(hard_unk):
+                    # true?
+                    if len(self.hard_clauses[cl].intersection(lit_true)) > 0:
+                        hard_unk.remove(cl)
+                        continue
+
+                    # unit?
+                    unks = self.hard_clauses[cl].intersection(lit_unk)
+                    if len(unks) == 1:
+                        # unit
+                        lit = next(iter(unks))
+                        print("hard unit:",lit,cl,self.hard_clauses[cl])
+                        assert (not -lit in new_true) and (not -lit in lit_true)
+                        new_true.add(lit)
+                        hard_unk.remove(cl)
+                        changed = True
+        unitprop_hard()
+
         ts2 = time.time()
         # build vertical sets
-        new_true = set()
         V = dict((e,set()) for e in lit_unk)  # for each unknown literal
-        for i in sorted(cl_unk, reverse=True): # reverse: hard ones first
+        for i in list(cl_unk):
             # special case: already true
             if len(grow_clauses[i].intersection(lit_true)) > 0:
                 cl_true.add(i)
+                cl_unk.remove(i)
                 continue
 
             # special case: unit literal unknown
@@ -830,21 +858,23 @@ class OMUS(object):
                 lit = next(iter(unks))
                 #print("pre: unit",i, unks)
                 if not -lit in new_true:
+                    print("unit",i,lit)
                     new_true.add(lit)
                     cl_true.add(i)
+                    cl_unk.remove(i)
             else:
                 for lit in unks:
                     V[lit].add(i)
-        #print("unk",lit_unk)
-        #print(V)
+        print("unk",lit_unk)
+        print(V)
         # check for single polarity, add to new_true
         singpolar = [-k for (k,v) in V.items() if len(v) == 0]
-        #print("singpolar", singpolar)
+        print("singpolar", singpolar)
         for k in singpolar:
             if not -k in new_true:
                 new_true.add(k)
-        #print("new_true", new_true)
-        #print("Built vertical:", time.time()-ts2)
+        print("new_true", new_true)
+        print("Built vertical:", time.time()-ts2)
 
         while(len(V) > 0):
             # if new_true is empty, add best one
@@ -852,17 +882,17 @@ class OMUS(object):
                 # get most frequent literal
                 (lit, cover) = max(V.items(), key=lambda tpl: len(tpl[1]))
                 new_true.add(lit)
-                #print("best new_true", new_true, len(cover))
+                print("best new_true", new_true, len(cover))
 
             # prep
             # cl_newtrue = take union of new_true's in V (remove from V)
             cl_newtrue = frozenset(e for k in new_true for e in V[k])
-            #print("cl_newtrue", cl_newtrue)
+            print("cl_newtrue", cl_newtrue)
             cl_true |= cl_newtrue
-            #print("cl_true", cl_true)
+            print("cl_true", cl_true)
             # cl_newfalse = take union of -new_true's in V (remove from V)
             cl_newfalse = frozenset(e for k in new_true for e in V[-k])
-            #print("cl_newfalse", cl_newfalse)
+            print("cl_newfalse", cl_newfalse)
             for k in new_true:
                 del V[k]
                 if -k in V:
@@ -876,6 +906,7 @@ class OMUS(object):
             lit_unk -= new_false
             new_true = set()
             #print(V, lit_true, lit_unk)
+            unitprop_hard()
 
             for cl in sorted(cl_newfalse - cl_newtrue, reverse=True):
                 # check for unit, add to new_true
@@ -883,7 +914,7 @@ class OMUS(object):
                 if len(unks) == 1:
                     # unit
                     lit = next(iter(unks))
-                    #print("unit:",lit)
+                    print("unit:",lit)
                     if not -lit in new_true:
                         new_true.add(lit)
             # update vertical views (remove true clauses)
@@ -891,11 +922,17 @@ class OMUS(object):
                 V[e] -= cl_newtrue
                 if len(V[e]) == 0 and not e in new_true:
                     # single polarity
-                    #print("single polar:",-e)
+                    print("single polar:",-e)
                     new_true.add(-e)
+            unitprop_hard()
             #print(V, lit_true, lit_unk)
         #print("greedy_tias, t: ", time.time() - ts)
         #print("remaining unks:", cl_unk)
+        for i in range(len(self.soft_clauses),len(self.all_soft_clauses)):
+            # the literal clauses
+            #print("in?",self.all_soft_clauses[i], lit_true)
+            if len(self.all_soft_clauses[i] & lit_true) > 0:
+                cl_true.add(i)
         return cl_true, lit_true
 
     def maxprop(self, F_prime, model):
@@ -1168,7 +1205,7 @@ class OMUS(object):
         #     print(constr)
         #     print([l for l in constr.coeff])
         # print(self.g_model.update())
-        self.g_model.write("model.lp")
+        #self.g_model.write("model.lp")
         print(self.obj_weights)
 
         while(True):
@@ -1183,19 +1220,7 @@ class OMUS(object):
                 return hs, [self.all_soft_clauses[idx] for idx in hs]
 
             # ------ Grow
-            if self.extension == 'maxsat':
-                # grow model over hard clauses first, must be satisfied
-                # MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
-                # MSS, MSS_model = self.grow(hs, model)
-                # TODO: change back to grow if working
-                MSS, MSS_model = self.maxsat_fprime(hs, model)
-            else:
-                # grow model over hard clauses first, must be satisfied
-                MSS, MSS_model = self.grow(hs, model, self.hard_clauses)
-                # print("hard grow:",len(MSS),model,"->",MSS_model)
-                # grow model over as many as possible soft clauses next 
-                MSS, MSS_model = self.grow(hs, MSS_model, self.clauses)
-
+            MSS, MSS_model = self.grow(hs, model)
             C = F - MSS
 
             self.addSetGurobiOmusConstr(C)

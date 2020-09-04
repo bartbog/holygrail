@@ -1146,6 +1146,21 @@ class OMUS(object):
 
         return hs
 
+    def updateObjWeightsInterpret(self, I):
+        for i in range(self.nSoftClauses, self.nSoftClauses + self.nLiterals):
+            self.obj_weights[i] = GRB.INFINITY
+
+        for i in range(self.nSoftClauses + self.nLiterals, self.nClauses):
+            self.obj_weights[i] = 0
+
+        for i in I:
+            i_idx = self.softClauseIdxs[frozenset({i})]
+            self.obj_weights[i_idx] = 1
+
+
+            not_i_idx = self.softClauseIdxs[frozenset({-i})]
+            self.obj_weights[i_idx] = GRB.INFINITY
+
     def omusConstr(self, I_cnf, explained_literal):
         self.gp_model = self.gurobiOmusConstrModel()
 

@@ -394,7 +394,6 @@ def omusExplain(
 
     return o, expl_seq
 
-
 def omusExplain2(
         parameters=None,
         reuse_mss=False,
@@ -484,7 +483,9 @@ def omusExplain2(
         I = I | N_best
         new_cnf = [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
         I_cnf += new_cnf
-        
+
+        # C1..4 = 20, C11=1, C12..13 = inf, C21=inf, C22..23 = 0
+        o.updateObjWeightsInterpret(I)
 
         expl_seq.append((E_best, S_best, N_best))
 

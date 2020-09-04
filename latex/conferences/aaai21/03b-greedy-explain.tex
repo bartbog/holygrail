@@ -1,12 +1,55 @@
 % !TeX root = ./main.tex
 
-\begin{enumerate}
-    \item OMUS oracle
-    \item Greedy sequence
-\end{enumerate}
+We now recall the explanation algorithm of \citet{ecai/BogaertsGCG20}. 
+In that work, the goal was to --- starting from a constraint satisfaction problem and a partial interpretation $I$ --- explain the cautious consequence in simple steps. 
+In our formulation (following \citet{ecai/BogaertsGCG20}), we assume that the formulation is done in propositional logic, but the ideas carry on to richer representation formalisms as well. We will use \formulag to denote this formula, to avoid confusion with the formula \formula used in \omus calls.
 
+To this end, a greedy algorithm was developed that starts from the initial interpretation and each time searches the literal for which the simplest explanation exists, where an explanation consists of a set of already derived literals and a set of constraints from the input formula. 
+Simplicity is weighed by some cost function $f$. 
+The algorithm used to compute the next simple explanation is given in \cref{alg:singleStepExplain}. 
+The version we present here is already a simplified one that uses a single OMUS call to find a ``good'' explanation instead of multiple MUS calls to approximate the optimal MUS. 
+
+
+% 
+% in terms of OMUS calls. The use of OMUS, rather than a plain MUS call simplifies the algorithm and removes the need for ... EPLAIN
+% 
+% BLA BLA 
+
+
+% \begin{enumerate}
+%     \item OMUS oracle
+%     \item Greedy sequence
+% \end{enumerate}
+ 
+
+\begin{algorithm}[ht]
+$    \mathit{BestVal}\gets\infty$\;
+   \For{$l \text{ such that } \formulag\land I\models l\text{ and }l\not\in I$}{
+        $X \gets \omus{(\formulag \land I \land \neg l, f)}$\;
+        \If{$f(X)<\mathit{BestVal}$}{
+            $\mathit{BestVal}\gets f(X)$\;
+            $\formulag_{\mathit{best}}\gets\formulag\cap X$\;
+            $I_{\mathit{best}} \gets I\cap X$\;
+            $l_{\mathit{best}} \gets l$\;
+        }
+        }
+        \Return{$(\formulag_{\mathit{best}},I_{\mathit{best}},l_{\mathit{best}})$}
+    
+    \caption{$\call{SingleStepExplain}(\formulag,f,I)$)}
+  \label{alg:singleStepExplain}
+  \label{alg:explainSingleStep}
+\end{algorithm}
+
+In this algorithm, an (O)MUS call is used to compute an explanation for each consequence $l$ of the combination of $\formulag$ and the assignment so far. 
+It was shown that MUSs of $\formulag\land I\land\lnot l$ correspond to non-redundant explanations of $l$ in terms of $\formulag$ and $I$ and hence an OMUS is a ``best'' explanation of $l$. 
+The loop in \cref{alg:singleStepExplain} serves to guarantee that at each point, the literal with the best explanation is selected. 
+
+
+
+\ignore{
 \begin{algorithm}
     \DontPrintSemicolon
+    \todo{CLEANUP: is it S or T?}
     $\m{I}_{end} \gets$ \textsc{propagate($\m{I}_0$, $\m{T}$)} \;
     $\m{I} \gets \m{I}_0$  \;
     $Seq \gets \emptyset$  \;
@@ -22,5 +65,21 @@
         $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
     }
   \caption{CSP-Explain($\m{T} ,\ f \ [,  \ \m{I}_0 ]$)}
+  \todo{present as simple as possible}
   \label{alg:cspExplain}
 \end{algorithm}
+
+\todo{explain what the goal is, and what is going on here.}
+
+\bart{I would take the focus away from ``CSP''. This paperi s about SAT-like problems}
+}
+
+
+When investigating \cref{alg:cspExplain}, we see ample room for improvement. 
+First of all, in order to compute an entire explanation sequence, \label{alg:cspExplain} will make use of very many \omus calls that share a large part of the theory. 
+This suggests the possibility of developing \emph{incremental} OMUS algorithms that reuse results from previous calls. 
+Secondly, the inner loop in \cref{alg:cspExplain} loops over all possibly derivable  literals, searches for each of them an OMUS and subsequently, the best of those is taken. 
+In an ideal situation, this could be done in a single call to a solver that exploits all possible information at once. 
+In its most general form, this idea can be phrased as the search for a MUS of a given theory that is subject to certain constraints. 
+In Section \ref{sec:constrained}, we explore this idea in the generic setting and develop an algorithm that searches for an OMUS satisfying a given set of meta-level constraints. 
+In \cref{sec:incrementalExp}, we combine these two ideas to develop a simpler, and more efficient explanation-generation algorithm. 

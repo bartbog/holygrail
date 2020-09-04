@@ -1,0 +1,109 @@
+In this section, we are concerned with a setting in which we know that many related (but not identical) OMUS calls will occur. The goal is to extend the basic OMUS algorithm to exploit this knowledge as much as possible, preferrably without too much overhead for the individual calls. 
+
+\newcommand\fall{\mm{\formula_{\mathit{all}}}}
+To formalize this, we assume the existence of some unsatisfiable formula $\fall$ and that several calls to compute an OMUS of a \emph{subset} of \fall will happen. 
+To take this into account in our OMUS algorithm, we first note that satisfiable subsets of $\formula\subseteq \fall$ are also satsifiable subsets of \fall, and hence their complement (in \fall) are correction sets.
+Now, since the core OMUS algorithm is to store correction sets, we propose that these be stored over multiple calls, resulting in the following algorithm, which we assume has access to a shared data structure containing \fall and a set \setstohitall of correction subsets of \fall. 
+\newcommand\Fall\fall
+\newcommand\Hall\setstohitall
+
+
+% \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\begin{algorithm}[ht]
+  \DontPrintSemicolon
+  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+  \For{$h\in\setstohitall$}{
+  $\store(h\cap \formula,\setstohit)$\;
+  }
+  
+  \While{true}{
+    $\F' \gets \ohs(\setstohit,f) $ \label{smus-hs} \;%\tcp*{\small Find \textbf{optimal} solution}
+    % \tcp{\small set with all unique clauses from hitting set}
+%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+    % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+    % \tcp{IF UNSAT, $hs$ is the OMUS }
+    \If{ $\lnot \sat(\F')$}{
+      \Return{$\F'$} \;
+    }
+    $\F'' \gets  \grow(\F',\F) $\;
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$\;
+    $\store(\Fall\setminus\grow(\F'',\Fall),\Hall)$\label{lin:storegrow}
+    \;
+  }  \caption{$\omusinc(\formula,f)$ }
+  \label{alg:omus-inc}
+\end{algorithm}
+
+The differences with \cref{alg:omus} can be explained as follows.
+First of all, instead of initializing \setstohit as the empty set, we store all intersections of sets in \setstohitall with the current formula in it. 
+While this could simply be done using 
+\[\setstohit \gets \{h\cap \fall\mid h\in \Hall\},\]
+we instead make use of a procedure \store, whose function is to remove possible duplicates and possible non-subset-minimal correction sets. 
+Indeed, it might be the case that for $h_1,h_2\in\setstohitall$, $h_1\cap\formula \subsetneq h_2\cap\formula$. 
+While it would not influence correctness of the algorithm, keeping both would influence space and time consumption.
+Another difference is that after computing a satisfiable subset $\formula''$ of \formula, in \cref{lin:storegrow} we grow it once more to obtain a (possibly larger) satisfiable subset of \fall, which is then subsequently stored in \Hall. Again, the possibility extends that this is non subset-minimal and the \store procedure takes care of that.
+
+
+\paragraph{Application to Explanations}
+To apply this idea to the context of explanation generation, we notice that the entire explanation generation loop starts with a certain interpretation $I_0$, and gradually derives more and more consequences.
+At each point, the set of literals that can be used for explanations are the consequences derived this far. On top of that, the \omus call will always contain a single negation of a consequence literal (the literal to be explained). 
+Thus, if 
+\[I_{\mathit{end}} = \{ l\mid \formulag \land I_0 \models l\},\]
+then we can take 
+\[\fall = \formulag \cup I_{\mathit{end}} \cup \lnot I_{\mathit{end}}.\]
+Which is clearly unsatisfiable (containing various literals and their negation). However, the \omus calls will always be on a subset of \fall that contains no such obvious consequences. 
+
+Using \omusinc instead of \omus in \cref{alg:singleStepExplain}  then results in an incremental explanation algorithm. Also note that the incrementality is not just obtained in a single step but over the different explanation steps. 
+% 
+% assu
+% 
+% 
+% 
+% We are now ready to present our basic OMUS algorithm in \cref{alg:omus}. 
+% The algorithm keeps track of a set $\m{H}$ of (minimal) correction subsets of $\formula$. 
+% It makes use of a procedure \ohs that computes an optimal (with respect to $f$) hitting set $\formula'$  of a given set of subsets of \formula. In practice, this type of call is often implement using a MIP solver \cite{davies2011solving}. 
+% Whenever such a hitting set is found, a \sat-call checks whether the result is satisfiable. If it is, \cref{prop:K} guarantees that the result is an OMUS. 
+% If it is not, a procedure \grow is used to extend it to a set $\formula''$ with $\formula'\subseteq \formula''$ such that $\formula''$ is still satisfiable.
+% The implementation of \grow can be achieved in different ways.
+% In fact, we could call a weighted partial \textsc{MaxSAT} solver to find the maximal satisfiable subset of clauses grown from the hitting set.
+% In practice, we use a greedy approximative method to find a sastisfying assignment favoring literals that will satisfy the most clauses of highest weights.
+
+% An attempt at describing the generic, incremental, setting.
+% 
+%  
+% 
+% We have a theory (a set of constraints) T plus a weight functionn assigning weights to elements of it (or some more complex way to compute costs of subsets of T) 
+% 
+%  
+% 
+% 
+% There will be a lot of OMUS calls, but not for OMUSs of T, but for OMUSs of subsets of T
+% 
+%  
+% 
+% I.e.,  
+% OMUS(T') with $T'\subseteq T.$
+% 
+%  
+% 
+% During such a call, a lot of 
+%  (maximal) satisfiable subsets 
+%  of T' will be computed.  (together with the corresponding model)
+%  (*) Satisfiable subsets of T' can easily be extended to (not-neccesarily-maximal) satisfiable subsets of T (just check which of Ts constraints are satisfied in the accompanying model) 
+%  
+% THESE are the ones to be stored. 
+%   OPTIIMIZATION 1: do not store all of them, only the subset-maximal one. If S1 and S2 are satisfiable subsets of T and $S1 \subseteq S2$, do not store S1. 
+% 
+%  
+% 
+% 
+% Given a new OMUS call OMUS(T") with $T"\subseteq T$
+% Take all SS of T.
+% For each of them: take intersection with T". 
+%     OPTIMIZATION 2: only keep the subset-maximal of those 
+%     (this is an independent optimization from the previous one. It can be that after taking intersection, one of them is no longer subset-maximal!) 
+% Use the SS as the start for the current call. During the current call more (M)SS will be generated. Always extend them to SS of T (see higher) and store (taking OPTIMIZATION 1 into account)     
+% 
+%  
+% 
+% 
+% THat's it. 

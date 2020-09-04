@@ -19,24 +19,48 @@
 \usepackage{amsmath,amssymb}
 \usepackage[ruled,linesnumbered]{algorithm2e}
 % \usepackage{color (if used in text)
-
+\usepackage{xspace}
  \pdfinfo{
 /Title (Efficient, Incremental OMUS Generation For Explaining CSPs)
 /Author (Anyonymous)
 % /TemplateVersion (2021.1)
 } 
-\newcommand\m[1]{\mathcal{#1}}
-
+\newcommand\m[1]{\ensuremath{\mathcal{#1}}}
+\newcommand\ignore[1]{}
+\usepackage[capitalise]{cleveref}
 \newcommand\comment[1]{\marginpar{\tiny #1}}
 \renewcommand\comment[1]{#1}
 \newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
 \newcommand{\emilio}[1]{{\comment{\color{orange}\textsc{EG:}#1}}}
 \newcommand{\bart}[1]{{bart:\comment{\color{green}\textsc{BB:}#1}}}
 \newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1} }}
-
+\newcommand\voc{\ensuremath{\Sigma}\xspace}
 \newtheorem{definition}{Definition}
 \newtheorem{proposition}{Proposition}
 \newtheorem{lemma}{Lemma}
+\newtheorem{example}{Example}
+\newcommand\muses[1]{\ensuremath{\mathit{MUSs}(#1)}\xspace}
+\newcommand\mcses[1]{\ensuremath{\mathit{MCSs}(#1)}\xspace}
+\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulag{\ensuremath{\m{G} }\xspace}
+\newcommand\mm[1]{\ensuremath{#1}\xspace}
+\newcommand\nat{\mm{\mathbb{N}}}
+\newcommand\ltrue{\mm{\textbf{t}}}
+\newcommand\lfalse{\mm{\textbf{f}}}
+
+\newcommand\call[1]{\mm{\textsc{#1}}}
+\newcommand\ohs{\mm{\call{OptHittingSet}}}
+\newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+\newcommand\sat{\mm{\call{SAT}}}
+\newcommand\grow{\mm{\call{Grow}}}
+\newcommand\omus{\mm{\call{OMUS}}}
+\newcommand\comus{\mm{\call{constr-OMUS}}}
+\newcommand\omusinc{\mm{\call{OMUS-Inc}}}
+\newcommand\store{\mm{\call{Store}}}
+% \call{}
+
 \include{common-citations}
 
 % DISALLOWED PACKAGES
@@ -82,7 +106,7 @@
 % \vspace{- -- No negative value may be used in proximity of a caption, figure, table, section, subsection, subsubsection, or reference
 % \vskip{- -- No negative value may be used to alter spacing above or below a caption, figure, table, section, subsection, subsubsection, or reference
 
-\setcounter{secnumdepth}{0} %May be changed to 1 or 2 if section numbers are desired.
+\setcounter{secnumdepth}{1} %May be changed to 1 or 2 if section numbers are desired.
 
 % Title
 
@@ -193,21 +217,31 @@ We evaluate the properties of our algorithms in the explanation-generation conte
 \section{Introduction}
 \todo{1 - 1 1/2 column}
 \input{01-intro.tex}
-\section{Related Work}
+\section{Related Work}\label{sec:related}
 \todo{1 column}
 \input{02-related-work.tex}
-\section{Background}
+\section{Background}\label{sec:backgr}
 \todo{1 1/2 -2 columns}
 \input{03-background.tex}
-\section{Greedy Explain with OMUS}
-\todo{2 column}
-\input{03b-greedy-explain.tex}
-\section{Optimal Minimal Unsatisfiable Subset}
+
+\section{Optimal Minimal Unsatisfiable Subset}\label{sec:incremetnal}
 \todo{2 column}
 \input{04-omus.tex}
-\section{Efficient, Incremental Explanations}
-\todo{1 column}
-\input{05-opt-explain.tex}
+
+\section{Greedy Explain with OMUS}\label{sec:Greedy}
+\todo{2 column}
+\input{03b-greedy-explain.tex}
+
+
+\section{Incremental OMUS computation} \label{sec:incremental}
+\input{C1-incremental.tex}
+
+\section{Constrained OMUS computation} \label{sec:constrained}
+\input{C2-constrained.tex}
+
+% \section{Efficient, Incremental Explanations}\label{sec:explanations}\label{sec:incrementalExp}
+% \todo{1 column}
+% \input{05-opt-explain.tex}
 \section{Experiments}
 \todo{2 column}
 \input{06-experiments.tex}

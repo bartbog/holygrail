@@ -1,53 +1,112 @@
 % !TeX root = ./main.tex
-The overarching goal of this paper is to generate a sequence of small reasoning steps, each with an interpretable explanation, and for that we introduce the necessary background.
-\begin{itemize}
-    \item Explanation sequence : CSP journal paper ?
-    \item concept of OMUS
-    % \item Logic grid puzzles (depends on experiments)
-    % \item Nested explanation still applicable?
-\end{itemize}
 
+In this section, we discuss background on the hitting set duality, which constitutes the core of our algorithm. 
+We present all result using propositional logic  as a representation language, as is common in hitting set--based approaches, but the algorithm works equally well for other languages with a model semantics. 
+ 
+%  
+% 
+% 
+% The overarching goal of this paper is to generate a sequence of small reasoning steps, each with an interpretable explanation, and for that we introduce the necessary background.
+% \begin{itemize}
+%     \item Explanation sequence : CSP journal paper ?
+%     \item concept of OMUS
+%     % \item Logic grid puzzles (depends on experiments)
+%     % \item Nested explanation still applicable?
+% \end{itemize}
 
-Let $\m{F}$ be a boolean propositional formula in Conjunctive Normal Form (CNF). A CNF formula $\m{F}$ is a  conjuction of clauses  (ex: $\m{F} = \{ c_1 \wedge c_2  \wedge c_3 \} $) each having a positive integer or infinite weight $w_i$ $\forall i \in \{1.. |C| \}$ with $|C|$ the number of clauses in $\m{F}$.
-Each clause is defined as a disjunction of literals (ex: $C_1 = \{ l_1 \vee l_2 \vee \lnot l_3 \}$).
-A literal is defined as an atom or its negation (true or false).
-A model is a truth assignment to the variables of $\m{F}$ that satisfies $\m{F}$.
-$\m{F}$ is said to be unsatisfiable if there does not exist model of $\m{F}$, i.e. a satisfying truth assignment to the variables of $\m{F}$.
-
-Formally, we define a \textit{Minimum Unsatisfiable Subset} (MUS), as a set of clauses that taken together are unsatisfiable, but if any of the clauses are removed then the reduced formula becomes satisfiable.
+\newcommand\F{\formula}
+Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. A clause is a disjunction of literals. A formula $\formula$ is a conjunction of clauses. 
+Slightly abusing notation, a clause is sometimes used as a set of literals and a formula as a set of clauses.
+% \todo{weight function comes later}
+A \emph{weight function} $w$ on $\formula$ assigns to each clause in $\formula$ either a positive integer, or a $\infty$. 
+A (partial) interpretation is a consistent (not containing both $p$ and $\lnot p$) set of literals. An interpretation is \emph{complete} if it contains either $p$ or $\lnot p$ for all symbols $p\in \voc$. 
+Satisfaction of a formula \formula by an interpretation is defined as usual. 
+A \emph{model} of \formula is an interpretation that satisfies \formula. 
+%  to the atoms that satisfies $\formula$.
+$\formula$ is said to be \emph{unsatisfiable} if it has no models.
+A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models; we denote this $\formula\models l$. 
 
 \begin{definition}
-    A subset $\m{S} \subseteq \m{F}$ is a \textbf{Maximal Satisfiable Subset} (MSS) iff $ \m{S}$ is satisfiable and $\forall \ \m{S}  \subset  \m{S}' $, $\m{S}'$ is unsatisfiable.
+  A \emph{Minimal Unsatisfiable Subset} (MUS) of \F is a set $\m{S} \subseteq \F$  that is unsatisfiable but such that every strict subset of $\m{S} $ is satisfiable. 
+%   
+  We write \muses{\F} for the set of MUSs of \F. 
+\end{definition}
+
+
+% Formally, we define a \textit{Minimum Unsatisfiable Subset} (MUS), as a set of clauses that taken together are unsatisfiable, but if any of the clauses are removed then the reduced formula becomes satisfiable.
+
+\begin{definition}
+    A set $\m{S} \subseteq \formula$ is a \emph{Maximal Satisfiable Subset} (MSS) of $ \formula$ if $\m{S}$ is satisfiable and for all $\m{S}'$ with $\m{S}  \subsetneq  \m{S}'\subseteq\formula $, $\m{S}'$ is unsatisfiable.
 \end{definition}
 
 \begin{definition}
-    % A correction subset of $\m{F}$ is a subset of $\m{F}$ whose complement is satisfiable.
-    A subset $\m{C} \subseteq \m{F}$ is a \textbf{Minimal Correction Subset} (MCS) iff $ \forall \ \m{C}' \subset C$ to $\m{F} \setminus \m{C}'$ is unsatisfiable.
+    A subset $\m{C} \subseteq \formula$ is a \emph{correction subset} of \formula if $\formula\setminus\m{C}$ is satisfiable. 
+    A correction subset \m{C} is a \emph{minimal correction subset} (MCS)  of \formula if no strict subset of \m{C} is also a correction subset. 
+%     if $\formula\setminus\m{C}$ is satisfiable, while for all 
+%     $ \m{C}' \subsetneq C$,  $\formula \setminus \m{C}'$ is unsatisfiable.
+    We write \mcses{\F} for the set of MCSs of \F. 
 \end{definition}
 
-\noindent It is well-known that an MCS $\m{C}$ is the complement of an MSS $\m{S} = \m{F} \setminus \m{C}$ (and vice versa).
+It is well-known that if $\formula$ is unsatisfiable, each  MCS is the complement of an MSS and vice versa. 
 
 \begin{definition}\label{def:minimal-hs}
-    Given a collection of sets $\m{K}$, a minimal hitting set h is defined as a cardinality-minimal set such that $\forall \ C \in \m{K}$, $h \cap C \neq \emptyset$.
+    Given a collection of sets $\m{K}$, a hitting set $h$ is a set such that $\forall \ C \in \m{K}$, $h \cap C \neq \emptyset$. A hitting set is \emph{minimal} if no strict subset of it is also a hitting set. 
 \end{definition}
 
-\noindent In fact, for a collection of sets $\m{K}$ there exist multiple possible minimal hitting sets on $\m{K}$. Consequently, we define the \textbf{minimum} hitting set as:
+% \noindent In fact, for a collection of sets $\m{K}$ there exist multiple possible minimal hitting sets on $\m{K}$. Consequently, we define the \textbf{minimum} hitting set as:
 
-\begin{definition}\label{def:minimum-hs}
-    Let $\m{K}$ be a collection of sets and $HS(\m{K})$ be the collection of all minimal hitting sets on $\m{K}$.
-    A hitting set $hs$ is a \textbf{minimum} hitting set if $\forall \ h' \in HS(\m{K}): |hs| \leq |h'|$.
-  \end{definition}
+% \begin{definition}\label{def:minimum-hs}
+% %     Let $\m{K}$ be a collection of sets and $HS(\m{K})$ be the collection of all minimal hitting sets on $\m{K}$.
+% %     A hitting set $hs$ is a \textbf{minimum} hitting set if $\forall \ h' \in HS(\m{K}): |hs| \leq |h'|$.
+%   \end{definition}
 
-  \noindent We also know from \cite{liffiton2008algorithms,reiter1987theory} that MCSes and MUSes are linked through minimal hitting sets:
+The following proposition is the well-known hitting set duality  between MCSs and MUSs that forms the basis of our algorithms \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}.
 
 \begin{proposition}\label{prop:MCS-MUS-hittingset}
-    Given an $ \m{F}$, let MUSes($\m{F}$), be the Minimal Unsatisfiable Subsets of F and MCSes($\m{F}$), be the Minimal Correction Subsets of F:
-    
-    A subset  $\m{C} \subset \m{F}$ is an MCS of $ \m{F}$ iff  $\m{C}$ is a \emph{minimal hitting set} of MUSes($ \m{F}$);
+%     Given an $ \formula$, let MUSes($\formula$), be the Minimal Unsatisfiable Subsets of F and MCSes($\formula$), be the Minimal Correction Subsets of F:
+%     
+    A set  $\m{C} \subseteq \formula$ is an MCS of $ \formula$ iff  $\m{C}$ is a \emph{minimal hitting set} of \muses{F}.
 
-    A subset  $\m{U} \subset \m{F}$ is a MUS of $ \m{F}$ iff  $\m{U}$ is a \emph{minimal hitting set} of MCSes($ \m{F}$);
+    A set  $\m{U} \subseteq \formula$ is a MUS of $ \formula$ iff  $\m{U}$ is a \emph{minimal hitting set} of \mcses{F}.
 \end{proposition}
+ 
+The duality of \cref{prop:MCS-MUS-hittingset} lies at the basis of various algorithms to compute MUSs \cite{} or MSSs \cite{,}. 
+It was also used in an algorithm to find \emph{cardinality-minimal MUSs} (also called \emph{smallest MUS} or SMUS) by \citet{ignatiev2015smallest}, which our algorithm is based on. 
+In the next section, we discuss our basic OMUS algorithm. 
+The algorithm of \citet{} can be obtained from \cref{alg:omus} by using cardinality as a cost function, hence we do not give it explicitly here. 
 
-The duality of proposition \ref{prop:MCS-MUS-hittingset} is fundamental to explaining how we can compute the SMUS in section \ref{sec:smus}. 
-% TODO: add something here ?
-In section \ref{sec:omus}, we further exploit this proposition for computing the OMUS for a given unsatisfiable CNF formula $\m{F}$.
+
+% 
+% % \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+% \begin{algorithm}[ht]
+%   \DontPrintSemicolon
+%   $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+%   \While{true}{
+%     $\F' \gets$ FindCardMinHittingSet($\setstohit $) \label{smus-hs} \;%\tcp*{\small Find \textbf{optimal} solution}
+%     % \tcp{\small set with all unique clauses from hitting set}
+% %     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+%     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+%     % \tcp{IF UNSAT, $hs$ is the OMUS }
+%     \If{ not sat($\F'$)}{
+%       \Return{$\F'$} \;
+%     }
+%     $\F'' \gets  \texttt{Grow}($\F'$) $\;
+%     $\setstohit  \gets \setstohit  \cup \{  \formula$ $\setminus \F''\}$ \;
+%   }
+%   \caption{\textsc{SMUS($\formula$)}}
+%   \label{alg:omus}
+% \end{algorithm}
+% \todo{notatie van algorithm calls uniform maken. textsc? texttt? plain text? Pick one. }
+% 
+% Maybe we should not even give it here... 
+% 
+% 
+% % Moreover, it is easy to see that the duality still holds when a cost-function is added. 
+% % \begin{proposition}
+% %   Let $\cost 
+% % \end{proposition}
+% 
+% % Let \cost 
+% Moreover, it is easy to see that to explaining how we can compute the SMUS in section \ref{sec:smus}. 
+% % TODO: add something here ?
+% In section \ref{sec:omus}, we further exploit this proposition for computing the OMUS for a given unsatisfiable CNF formula $\formula$.

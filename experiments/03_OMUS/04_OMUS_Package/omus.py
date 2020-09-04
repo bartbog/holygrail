@@ -1116,14 +1116,13 @@ class OMUS(object):
         self.g_model.Params.LogToConsole = 0
         self.g_model.Params.Threads = 8
 
-        # create the variables (with weights in one go)
         nvars = len(self.soft_clauses) + len(self.I_lits)
+        # create the variables (with weights in one go)
         self.obj_weights = self.soft_weights + [GRB.INFINITY for _ in range(len(self.I))] + [0 for _ in range(len(self.I))]
+        x = self.g_model.addMVar(shape=nvars, vtype=GRB.BINARY, obj=self.obj_weights, name="x")
 
         # exactly one of the -literals
         vals = range(len(self.soft_clauses) + len(self.I), nvars)
-
-        x = self.g_model.addMVar(shape=nvars, vtype=GRB.BINARY, obj=self.obj_weights, name="x")
 
         self.g_model.addConstr(x[vals].sum() == 1)
 

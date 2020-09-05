@@ -801,7 +801,7 @@ def explain_origin(parameters={'extension': 'greedy_vertical','output': 'log.jso
 
 
 def explain_constrained_omus():
-    parameters={'extension': 'greedy_vertical','output': 'log.json'}
+    parameters={'extension': 'maxsat','output': 'log.json'}
     (mayo, ketchup, andalouse) = BoolVar(3)
 
     c1 = mayo

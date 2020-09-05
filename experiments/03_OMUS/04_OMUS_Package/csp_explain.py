@@ -452,14 +452,14 @@ def omusExplain2(
 
             C = F - MSS
             o.addSetGurobiOmusConstr(C)
-            print("mss",-i,":",MSS, MSS_Model,"C",C)
+            # print("mss",-i,":",MSS, MSS_Model,"C",C)
 
     while len(explainable_facts - I) > 0:
-        print("Left to explain:", len(explainable_facts - I))
-        print("Remaining explanations=", explainable_facts - I)
+        # print("Left to explain:", len(explainable_facts - I))
+        # print("Remaining explanations=", explainable_facts - I)
 
         hs, explanation = o.omusConstr()
-        print("got hs:",hs,explanation)
+        # print("got hs:",hs,explanation)
         # print("Hs=\t", hs)
         # print("explanation=\t", explanation)
 
@@ -481,14 +481,14 @@ def omusExplain2(
         expl_seq.append((E_best, S_best, N_best))
 
 
-        print("I=",I)
-        print("I_cnf=",I_cnf)
-        print("E_best=",E_best)
-        print("S_best=",S_best)
-        print("N_best=",N_best)
-        print("New_info=",New_info)
-        print("cost=",len(E_best)+20*len(S_best))
-        print(E_best, S_best, N_best, New_info)
+        # print("I=",I)
+        # print("I_cnf=",I_cnf)
+        # print("E_best=",E_best)
+        # print("S_best=",S_best)
+        # print("N_best=",N_best)
+        # print("New_info=",New_info)
+        # print("cost=",len(E_best)+20*len(S_best))
+        # print(E_best, S_best, N_best, New_info)
         # print(o.obj_weights)
 
         # @TIAS: printing explanations
@@ -496,9 +496,9 @@ def omusExplain2(
 
 
         # C1..4 = 20, C11=1, C12..13 = inf, C21=inf, C22..23 = 0
-        print(o.obj_weights)
+        # print(o.obj_weights)
         o.updateObjWeightsInterpret(I)
-        print(o.obj_weights)
+        # print(o.obj_weights)
 
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
 

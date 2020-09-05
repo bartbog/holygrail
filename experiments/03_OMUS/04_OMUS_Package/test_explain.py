@@ -806,7 +806,7 @@ def explain_constrained_omus():
 
     c1 = mayo
     c2 = ~mayo | ~andalouse | ketchup
-    c3 = ~mayo | andalouse | ~ketchup
+    c3 = ~mayo | andalouse | ketchup
     c4 = ~ketchup | ~andalouse
     constraints = [c1, c2, c3, c4]
     cnf = cnf_to_pysat(constraints)

@@ -204,6 +204,8 @@ class OMUS(object):
         self.obj_weights += [0 for _ in range(self.nLiterals)]
         # self.obj_weights += [0] * (self.nLiterals)
 
+        self.soft_idx = frozenset(range(self.nSoftClauses))
+        self.all_soft_idx = frozenset(range(self.nClauses))
         self.softClauseIdxs = dict()
         # matching table clause to fixed id
         for idx, clause in enumerate(self.all_soft_clauses):
@@ -233,26 +235,19 @@ class OMUS(object):
             return None, solved
 
     def checkSat(self, f_prime):
-        if self.logging:
-            self.steps.sat += 1
-            # tstart = time.time()
 
         satsolver = Solver()
 
         if len(f_prime) == 0:
             return set(), True, satsolver
         # print(self.clauses, self.hard_clauses)
-        validated_clauses = [self.clauses[i] for i in f_prime] + self.hard_clauses
+        validated_clauses = [self.all_soft_clauses[i] for i in f_prime] + self.hard_clauses
         # print(f_prime, validated_clauses)
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
 
         satsolver.append_formula(validated_clauses, no_return=False)
         solved = satsolver.solve()
         model = satsolver.get_model()
-
-        # if self.logging:
-            # tend = time.time()
-            # self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -261,22 +256,15 @@ class OMUS(object):
             return None, solved, satsolver
 
     def checkSatIncr(self, satsolver, hs, c):
-        if self.logging:
-            self.steps.sat += 1
-            # tstart = time.time()
 
-        validated_clauses = [self.clauses[i] for i in hs] + self.hard_clauses
+        validated_clauses = [self.all_soft_clauses[i] for i in hs] + self.hard_clauses
         # print(validated_clauses, self.clauses, self.hard_clauses)
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
-        clause = self.clauses[c]
+        clause = self.all_soft_clauses[c]
 
         satsolver.add_clause(clause, no_return=False)
         solved = satsolver.solve()
         model = satsolver.get_model()
-
-        # if self.logging:
-        #     tend = time.time()
-        #     self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -286,8 +274,6 @@ class OMUS(object):
             return None, solved, satsolver
 
     def greedyHittingSet(self, H):
-        # if self.logging:
-        #     tstart = time.time()
         # trivial case: empty
         # print(H)
         if len(H) == 0:
@@ -299,7 +285,9 @@ class OMUS(object):
         # build vertical sets
         V = dict()  # for each element in H: which sets it is in
 
-        for i, h in enumerate(H):
+        for i, hi in enumerate(H):
+            # TIAS: only take soft clauses
+            h = hi.intersection(self.soft_idx)
             # special case: only one element in the set, must be in hitting set
             if len(h) == 1:
                 C.add(next(iter(h)))
@@ -483,7 +471,8 @@ class OMUS(object):
             'greedy_param': self.greedy_param,
             'greedy_no_param': self.greedy_no_param,
             'greedy_sat': self.greedy_sat,
-            'maxsat': self.maxsat_fprime,
+            # 'maxsat': self.maxsat_fprime,
+            'maxsat': self.maxsat_test,
             'greedy_vertical': self.greedy_vertical,
             'greedy_hardsoft': self.greedy_hardsoft,
             # 'satlike': SATLike
@@ -1152,6 +1141,7 @@ class OMUS(object):
         return list_msses
 
     def maxsat_fprime(self, F_prime, model):
+        # print()
         t_F_prime = set(F_prime)
 
         wcnf = WCNF()
@@ -1279,6 +1269,35 @@ class OMUS(object):
         self.g_model.setObjective(gp.quicksum(x[i] * self.obj_weights[i] for i in range(self.nClauses)), GRB.MINIMIZE)
         # self.g_model.update()
 
+    # def greedy_t(self, hs, model):
+
+
+    def maxsat_test(self, hs, model):
+        mss_model = set(model)
+
+        wcnf = WCNF()
+        wcnf.extend(self.hard_clauses)
+
+        for i in hs:
+            clause = self.all_soft_clauses[i]
+            wcnf.append(list(clause))
+
+        for i , clause in enumerate(self.soft_clauses):
+            if i not in hs:
+                # wcnf.append(list(clause))
+                wcnf.append(list(clause), weight=self.weights[i])
+
+        with RC2(wcnf) as rc2:
+            t_model = rc2.compute()
+            if t_model is None:
+                return hs, model
+
+            for i, clause in enumerate(self.soft_clauses):
+                if i not in hs and len(clause.intersection(t_model)) > 0:
+                    hs.add(i)
+
+            return hs, t_model
+
     def omusConstr(self):
         matching = {
             0:'c1',
@@ -1297,19 +1316,76 @@ class OMUS(object):
         F = frozenset(range(self.nClauses))
 
         H, C = [], []
+        hs = None
         h_counter = Counter()
-        # for constr in self.g_model.getConstrs():
-        #     print(constr)
-        #     print([l for l in constr.coeff])
-        # print(self.g_model.update())
-        #self.g_model.write("model.lp")
         print(self.obj_weights)
+        satsolver = None
+        mode = MODE_OPT
 
         while(True):
+            while(True):
+                if mode == MODE_INCR:
+                    # add sets-to-hit incrementally until unsat then continue with optimal method
+                    # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
+                    # then hs + any element of 'C' is a valid hitting set of CC + C
+                    # choose element from C with smallest weight
+                    if len(C.intersection(self.soft_idx)) == 0:
+                        # mode = MODE_GREEDY
+                        # satsolver.delete()
+                        break
+                    c = min(C.intersection(self.soft_idx), key=lambda i: self.weights[i])
+                    # find all elements with smallest weight
+                    m = [ci for ci in C.intersection(self.soft_idx) if self.weights[ci] == self.weights[c]]
+                    # choose clause with smallest weight appearing most in H
+                    c_best = max(m, key=lambda ci: h_counter[ci])
+                    hs.add(c)
+                elif mode == MODE_GREEDY:
+                    # ----- Greedy compute hitting set
+                    hs = self.greedyHittingSet(H)
+                elif mode == MODE_OPT:
+                    break
+
+            #         # ----- check satisfiability of hitting set
+                if mode == MODE_INCR:
+                    (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c)
+                elif mode == MODE_GREEDY:
+                    (model, sat, satsolver) = self.checkSat(hs)
+
+                print(hs, model, sat)
+                if not sat:
+                    # incremental hs is unsat, switch to optimal method
+                    hs = None
+                    if mode == MODE_INCR:
+                        mode = MODE_GREEDY
+                        satsolver.delete()
+                        continue
+                    elif mode == MODE_GREEDY:
+                        mode = MODE_OPT
+                        break
+                    # break # skip grow
+                # if (best_cost is not None and best_cost <= my_cost):
+                # ------ Grow
+                MSS, MSS_model = self.grow(hs, model)
+
+                C = F - MSS
+                # C_soft = [ci for ci in C if ci in range(self.nSoftClauses)]
+                h_counter.update(list(C))
+                self.addSetGurobiOmusConstr(C)
+                H.append(C)
+                # print("Incremental:", C)
+
+                mode = MODE_INCR
+            print("opt start")
+            t_grow = time.time()
             hs = self.gurobiOmusConstrHS()
+            print("Time opt=:", time.time() - t_grow)
+            print("opt start")
+            # print(hs)
 
             # ------ Sat check
-            (model, sat) = self.checkSatNoSolver(hs)
+            t_grow = time.time()
+            (model, sat, satsolver) = self.checkSat(hs)
+            print("Time sat=:", time.time() - t_grow)
 
             if not sat:
                 # print("hs-omus=", hs)
@@ -1317,25 +1393,19 @@ class OMUS(object):
                 return hs, [self.all_soft_clauses[idx] for idx in hs]
 
             # ------ Grow
+            # print()
+            t_grow = time.time()
             MSS, MSS_model = self.grow(hs, model)
+            print("Time grow=:", time.time() - t_grow)
             C = F - MSS
 
             self.addSetGurobiOmusConstr(C)
             # self.changeWeightsGurobiOmusConstr(C)
             assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"
-            # print("\n")
-            # print("hs=", hs)
-            # print("MSS=", MSS)
-            # print("F=", F)
-            # print("C=", C,"\n")
-            # print("hs=", [matching[i] for i in hs])
-            # print("MSS=", [matching[i] for i in MSS])
-            # print("F=", [matching[i] for i in F])
-            # print("C=", [matching[i] for i in C],"\n")
-            # print(weights)
 
             h_counter.update(list(C))
             H.append(C)
+            mode = MODE_INCR
 
     def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=True, timeout=1000):
         # Benchmark info
@@ -1439,10 +1509,6 @@ class OMUS(object):
                     c_best = max(m, key=lambda ci: h_counter[ci])
                     hs.add(c_best)
                     # self.hs_sizes.append(len(hs))
-                    if self.logging:
-                        # tend = time.time()
-                        # self.timing.incremental.append(tend - tstart)
-                        self.steps.incremental += 1
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
                     hs = self.greedyHittingSet(H)

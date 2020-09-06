@@ -457,8 +457,10 @@ def omusExplain2(
     while len(explainable_facts - I) > 0:
         # print("Left to explain:", len(explainable_facts - I))
         # print("Remaining explanations=", explainable_facts - I)
-
+        t_start = time.time()
         hs, explanation = o.omusConstr()
+        t_end = time.time()
+        print("OMUS=", round(t_end-t_start ,3))
         # print("got hs:",hs,explanation)
         # print("Hs=\t", hs)
         # print("explanation=\t", explanation)
@@ -470,8 +472,11 @@ def omusExplain2(
         S_best = [ci for ci in explanation if ci in soft_clauses and ci not in E_best]
 
         #print("optimal:", hard_clauses, E_best, S_best, I)
+        t_start = time.time()
         New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
         N_best = New_info.intersection(explainable_facts) - I
+        t_end = time.time()
+        print("Optimal Propagate=", round(t_end-t_start, 3))
 
         # add new info
         I = I | N_best

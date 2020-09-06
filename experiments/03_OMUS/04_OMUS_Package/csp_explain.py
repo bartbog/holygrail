@@ -455,6 +455,7 @@ def omusExplain2(
             # print("mss",-i,":",MSS, MSS_Model,"C",C)
 
     while len(explainable_facts - I) > 0:
+        ts = time.time()
         # print("Left to explain:", len(explainable_facts - I))
         # print("Remaining explanations=", explainable_facts - I)
 
@@ -492,7 +493,7 @@ def omusExplain2(
         # print(o.obj_weights)
 
         # @TIAS: printing explanations
-        print(f"\nOptimal explanation \t\t {E_best} /\\ {S_best} => {N_best}","\n")
+        print(f"\nOptimal explanation \t\t {E_best} /\\ {S_best} => {N_best} (",time.time()-ts,")\n")
 
 
         # C1..4 = 20, C11=1, C12..13 = inf, C21=inf, C22..23 = 0

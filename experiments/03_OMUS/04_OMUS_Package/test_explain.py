@@ -749,7 +749,7 @@ def explain_p5(parameters={'extension': 'greedy_hardsoft','output': 'log.json'},
         unknown_facts=explainable_facts
     )
 
-def explain_origin(parameters={'extension': 'greedy_hardsoft','output': 'log.json'}, 
+def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
 
@@ -791,6 +791,7 @@ def explain_origin(parameters={'extension': 'greedy_hardsoft','output': 'log.jso
         # bv=bv,
         parameters=parameters,
         # incremental=True,
+        seed_mss=False,
         reuse_mss=False,
         unknown_facts=explainable_facts,
         constrained=True
@@ -801,7 +802,7 @@ def explain_origin(parameters={'extension': 'greedy_hardsoft','output': 'log.jso
 
 
 def explain_constrained_omus():
-    parameters={'extension': 'greedy_hardsoft','output': 'log.json'}
+    parameters={'extension': 'maxsat','output': 'log.json'}
     (mayo, ketchup, andalouse) = BoolVar(3)
 
     c1 = mayo
@@ -823,11 +824,11 @@ def explain_constrained_omus():
         parameters=parameters,
         reuse_mss=False,
         unknown_facts=explainable_facts,
-        seed_mss=True,
+        seed_mss=False,
         constrained=True
     )
 
-def explain_frietkot(parameters={'extension': 'greedy_hardsoft','output': 'log.json'}, 
+def explain_frietkot(parameters={'extension': 'maxsat','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
     from datetime import date, datetime
@@ -855,6 +856,7 @@ def explain_frietkot(parameters={'extension': 'greedy_hardsoft','output': 'log.j
         parameters=parameters,
         # incremental=True,
         reuse_mss=False,
+        seed_mss=False,
         unknown_facts=explainable_facts,
         constrained=True
     )

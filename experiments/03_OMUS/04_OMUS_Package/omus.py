@@ -1307,18 +1307,57 @@ class OMUS(object):
 
         while(True):
             hs = self.gurobiOmusConstrHS()
+            print("got hs",hs)
 
             # ------ Sat check
             (model, sat) = self.checkSatNoSolver(hs)
+            #print("sat?",sat,model)
 
             if not sat:
                 # print("hs-omus=", hs)
                 print("OMUS=", [self.all_soft_clauses[idx] for idx in hs])
                 return hs, [self.all_soft_clauses[idx] for idx in hs]
 
+            # filter out -I's that are in model
+            I_unassgn = set(-lit for lit in self.I)
+            I_unassgn -= model
+            # flip remaining and filter out I's that are in model
+            I_unassgn = set(-lit for lit in I_unassgn)
+            I_unassgn -= model
+            #print("I_unassgn",I_unassgn)
+            # add to the model, then check which softs are satisfied
+            model |= I_unassgn
+
+            cl_true = hs
+            cl_false = set() # this will be the F-C, the 'set-to-hit'!
+            cl_unk = set()
+            for (i,clause) in enumerate(self.all_soft_clauses):
+                if i in cl_true:
+                    continue #skip
+                #print(clause, model)
+                if len(clause & model) > 0:
+                    # true
+                    #print("true")
+                    cl_true.add(i)
+                    continue
+                negclause = set(-l for l in clause)
+                if len(negclause - model) == 0:
+                    #print("false")
+                    # false
+                    cl_false.add(i)
+                    continue
+                #print("unk")
+                cl_unk.add(i)
+            #print("T",cl_true)
+            #print("F",cl_false)
+            #C = cl_false
+            #print("U",cl_unk)
+
             # ------ Grow
             MSS, MSS_model = self.grow(hs, model)
             C = F - MSS
+            #print("MSS",MSS)
+            print("C",C)
 
             self.addSetGurobiOmusConstr(C)
             # self.changeWeightsGurobiOmusConstr(C)

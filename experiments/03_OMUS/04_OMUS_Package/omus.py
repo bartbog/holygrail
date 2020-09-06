@@ -485,6 +485,7 @@ class OMUS(object):
             'greedy_sat': self.greedy_sat,
             'maxsat': self.maxsat_fprime,
             'greedy_vertical': self.greedy_vertical,
+            'greedy_hardsoft': self.greedy_hardsoft,
             # 'satlike': SATLike
         }
 
@@ -795,6 +796,102 @@ class OMUS(object):
                     new_F_prime.add(c)
                     new_model = s.get_model()
         return new_F_prime, new_model
+
+    def greedy_hardsoft(self, F_prime, model):
+        # keep it simple:
+        # repeat:
+        # prop hard constraints
+        # choose highest cost all_soft_clauses and set arbitrary literal to true
+        print("greedy_hardsoft",F_prime,model)
+        ts = time.time()
+
+        print(self.all_soft_clauses)
+        #print(self.hard_clauses)
+
+        soft_true = set(F_prime)
+        soft_unk = set( range(len(self.all_soft_clauses)) ) - soft_true
+        hard_unk = set( range(len(self.hard_clauses)) )
+
+        lit_true = set(model)
+        lit_known = lit_true | set(-l for l in lit_true)
+        #lit_unk = set(frozenset.union(*all_clauses)) - lit_true - lit_false
+
+        while True:
+            print(" h/s: new loop",lit_true,time.time()-ts)
+
+            # propagate hard units
+            changed = True
+            while changed:
+                changed = False
+                for cl in list(hard_unk):
+                    # true?
+                    if len(self.hard_clauses[cl].intersection(lit_true)) > 0:
+                        hard_unk.remove(cl)
+                        continue
+
+                    # unit?
+                    unks = self.hard_clauses[cl] - lit_known
+                    if len(unks) == 1:
+                        # unit
+                        lit = next(iter(unks))
+                        print(" h/s: hard unit,",lit,self.hard_clauses[cl])
+                        assert (not -lit in lit_true)
+                        lit_true.add(lit)
+                        lit_known.add(lit)
+                        lit_known.add(-lit)
+                        hard_unk.remove(cl)
+                        changed = True
+                    assert len(unks) > 0, "Err in greedy_hardsoft, clause false:"+str(self.hard_clauses[cl])+str(lit_true)
+            print(" h/s: done hard",lit_true,time.time()-ts)
+
+            # check if done...
+            if len(soft_unk) == 0:
+                print(" h/s: no softs left",lit_true,time.time()-ts)
+                break
+
+            # assign a literal in highest weight soft clause
+            for cl in sorted(soft_unk, key=lambda i: self.weights[i], reverse=True):
+                print(" h/s: soft",cl,self.weights[cl],lit_true,self.all_soft_clauses[cl],time.time()-ts)
+
+                # true?
+                if len(self.all_soft_clauses[cl].intersection(lit_true)) > 0:
+                    print(" h/s: soft",cl,"already true")
+                    soft_unk.remove(cl)
+                    soft_true.add(cl)
+                    continue
+
+                # choose a literal
+                unks = self.all_soft_clauses[cl] - lit_known
+                if len(unks) == 0:
+                    # false
+                    soft_unk.remove(cl)
+                else:
+                    lit = next(iter(unks)) # the 'first' in the unordered set
+                    print(" h/s: soft choice:",lit,cl,self.all_soft_clauses[cl])
+                    assert (not -lit in lit_true)
+                    lit_true.add(lit)
+                    lit_known.add(lit)
+                    lit_known.add(-lit)
+                    soft_unk.remove(cl)
+                    soft_true.add(cl)
+                    break # back to hard
+                    # FUCK! it could be that setting this soft is NOT
+                    # possible with the current assignment...
+                    # so in fact, we should check wether 'hard' is possible
+                    # when setting the soft to true, and if not, to remove
+                    # it again...
+
+            # skips last hard_clause check
+            #if len(soft_unk) == 0:
+            #    print(" h/s: no softs left",lit_true,time.time()-ts)
+            #    break
+
+        print("OK, done",soft_true,lit_true,time.time()-ts)
+        (model, sat) = self.checkSatNoSolver(soft_true)
+        #assert sat, "greedy_hardsoft found non-sat soft_true"+str(soft_true)
+        if not sat:
+            print("Errr... non-sat!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        return soft_true, lit_true
 
     def greedy_vertical(self, F_prime, model):
         print("greedy_vert",F_prime,model)

@@ -287,7 +287,7 @@ class OMUS(object):
 
         for i, hi in enumerate(H):
             # TIAS: only take soft clauses
-            h = hi.intersection(self.soft_idx)
+            h = [e for e in hi.intersection(self.soft_idx)]
             # special case: only one element in the set, must be in hitting set
             if len(h) == 1:
                 C.add(next(iter(h)))
@@ -1318,60 +1318,61 @@ class OMUS(object):
         H, C = [], []
         hs = None
         h_counter = Counter()
-        print(self.obj_weights)
+        # print(self.obj_weights)
         satsolver = None
         mode = MODE_OPT
 
         while(True):
-            while(True):
-                if mode == MODE_INCR:
-                    # add sets-to-hit incrementally until unsat then continue with optimal method
-                    # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
-                    # then hs + any element of 'C' is a valid hitting set of CC + C
-                    # choose element from C with smallest weight
-                    if len(C.intersection(self.soft_idx)) == 0:
-                        # mode = MODE_GREEDY
-                        # satsolver.delete()
-                        break
-                    c = min(C.intersection(self.soft_idx), key=lambda i: self.weights[i])
-                    # find all elements with smallest weight
-                    m = [ci for ci in C.intersection(self.soft_idx) if self.weights[ci] == self.weights[c]]
-                    # choose clause with smallest weight appearing most in H
-                    c_best = max(m, key=lambda ci: h_counter[ci])
-                    hs.add(c)
-                elif mode == MODE_GREEDY:
-                    # ----- Greedy compute hitting set
-                    hs = self.greedyHittingSet(H)
-                elif mode == MODE_OPT:
-                    break
+            # while(True):
+            #     if mode == MODE_INCR:
+            #         # add sets-to-hit incrementally until unsat then continue with optimal method
+            #         # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
+            #         # then hs + any element of 'C' is a valid hitting set of CC + C
+            #         # choose element from C with smallest weight
+            #         # TIAS
+            #         C_softie = [e for e in C if self.obj_weights[e] < 1e50]
+            #         if len(C_softie) == 0:
+            #             mode = MODE_GREEDY
+            #             satsolver.delete()
+            #             continue
+            #         c = min(C_softie, key=lambda i: self.weights[i])
+            #         # find all elements with smallest weight
+            #         m = [ci for ci in C_softie if self.weights[ci] == self.weights[c]]
+            #         # choose clause with smallest weight appearing most in H
+            #         c_best = max(m, key=lambda ci: h_counter[ci])
+            #         hs.add(c)
+            #     elif mode == MODE_GREEDY:
+            #         # ----- Greedy compute hitting set
+            #         hs = self.greedyHittingSet(H)
+            #     elif mode == MODE_OPT:
+            #         break
+            # #         # ----- check satisfiability of hitting set
+            #     if mode == MODE_INCR:
+            #         (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c)
+            #     elif mode == MODE_GREEDY:
+            #         (model, sat, satsolver) = self.checkSat(hs)
 
-            #         # ----- check satisfiability of hitting set
-                if mode == MODE_INCR:
-                    (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c)
-                elif mode == MODE_GREEDY:
-                    (model, sat, satsolver) = self.checkSat(hs)
+            #     print(hs, model, sat)
+            #     if not sat:
+            #         # incremental hs is unsat, switch to optimal method
+            #         hs = None
+            #         if mode == MODE_INCR:
+            #             mode = MODE_GREEDY
+            #             satsolver.delete()
+            #             continue
+            #         elif mode == MODE_GREEDY:
+            #             mode = MODE_OPT
+            #             break
+            #         # break # skip grow
+            #     # if (best_cost is not None and best_cost <= my_cost):
+            #     # ------ Grow
+            #     MSS, MSS_model = self.grow(hs, model)
 
-                # print(hs, model, sat)
-                if not sat:
-                    # incremental hs is unsat, switch to optimal method
-                    hs = None
-                    if mode == MODE_INCR:
-                        mode = MODE_GREEDY
-                        satsolver.delete()
-                        continue
-                    elif mode == MODE_GREEDY:
-                        mode = MODE_OPT
-                        break
-                    # break # skip grow
-                # if (best_cost is not None and best_cost <= my_cost):
-                # ------ Grow
-                MSS, MSS_model = self.grow(hs, model)
-
-                C = F - MSS
-                h_counter.update(list(C))
-                self.addSetGurobiOmusConstr(C)
-                H.append(C)
-                mode = MODE_INCR
+            #     C = F - MSS
+            #     h_counter.update(list(C))
+            #     self.addSetGurobiOmusConstr(C)
+            #     H.append(C)
+            #     mode = MODE_INCR
 
             #     mode = MODE_INCR
             t_grow = time.time()

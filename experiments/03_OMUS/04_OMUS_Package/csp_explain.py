@@ -279,7 +279,7 @@ def omusExplain(
                 best_costs[i] = min([cost_explanation, best_costs[i]])
     
     t_end_seed = time.time()
-    # print("Time_seed = ", t_end_seed - t_start_seed)
+    print("Time_seed = ", t_end_seed - t_start_seed)
 
     cnt = 0
 
@@ -433,6 +433,7 @@ def omusExplain2(
     best_costs = dict({i: 9999999 for i in explainable_facts - I})
 
     if seed_mss:
+        print("Seeding...")
         # add full theory without negation literal
         softies = frozenset(range(o.nSoftClauses))
         F = frozenset(range(o.nClauses))
@@ -460,8 +461,7 @@ def omusExplain2(
         # print("Remaining explanations=", explainable_facts - I)
         t_start = time.time()
         hs, explanation = o.omusConstr()
-        t_end = time.time()
-        print("OMUS=", round(t_end-t_start ,3))
+        print("OMUS=", round(time.time()-t_start ,3))
         # print("got hs:",hs,explanation)
         # print("Hs=\t", hs)
         # print("explanation=\t", explanation)
@@ -473,11 +473,10 @@ def omusExplain2(
         S_best = [ci for ci in explanation if ci in soft_clauses and ci not in E_best]
 
         #print("optimal:", hard_clauses, E_best, S_best, I)
-        t_start = time.time()
+        t_prop = time.time()
         New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
         N_best = New_info.intersection(explainable_facts) - I
-        t_end = time.time()
-        print("Optimal Propagate=", round(t_end-t_start, 3))
+        print("Optimal Propagate=", round(time.time()-t_prop, 3))
 
         # add new info
         I = I | N_best
@@ -498,7 +497,7 @@ def omusExplain2(
         # print(o.obj_weights)
 
         # @TIAS: printing explanations
-        print(f"\nOptimal explanation \t\t {E_best} /\\ {S_best} => {N_best}","\n")
+        print(f"\nOptimal explanation \t\t {E_best} /\\ {S_best} => {N_best}",round(time.time()-t_start, 3))
 
 
         # C1..4 = 20, C11=1, C12..13 = inf, C21=inf, C22..23 = 0

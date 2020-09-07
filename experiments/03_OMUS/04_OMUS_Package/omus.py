@@ -264,9 +264,9 @@ class OMUS(object):
 
     def checkSatIncr(self, satsolver, hs, c):
 
-        validated_clauses = [self.all_soft_clauses[i] for i in hs] + self.hard_clauses
+        #validated_clauses = [self.all_soft_clauses[i] for i in hs] + self.hard_clauses
         # print(validated_clauses, self.clauses, self.hard_clauses)
-        lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
+        #lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
         clause = self.all_soft_clauses[c]
 
         satsolver.add_clause(clause, no_return=False)
@@ -274,8 +274,7 @@ class OMUS(object):
         model = satsolver.get_model()
 
         if solved:
-            mapped_model = set(lit for lit in model if abs(lit) in lits)
-            return mapped_model, solved, satsolver
+            return model, solved, satsolver
         else:
             satsolver.delete()
             return None, solved, satsolver
@@ -1399,8 +1398,8 @@ class OMUS(object):
 
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
-                    #(model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c)
-                    (model, sat, satsolver) = self.checkSat(hs)
+                    (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c)
+                    #(model, sat, satsolver) = self.checkSat(hs)
                 #elif mode == MODE_GREEDY:
                 #   (model, sat, satsolver) = self.checkSat(hs)
 

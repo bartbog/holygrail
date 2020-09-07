@@ -236,22 +236,29 @@ class OMUS(object):
 
     def checkSat(self, f_prime):
 
-        satsolver = Solver()
+        satsolver = Solver(bootstrap_with=self.hard_clauses)
 
         if len(f_prime) == 0:
             return set(), True, satsolver
         # print(self.clauses, self.hard_clauses)
-        validated_clauses = [self.all_soft_clauses[i] for i in f_prime] + self.hard_clauses
+        validated_clauses = [self.all_soft_clauses[i] for i in f_prime]
         # print(f_prime, validated_clauses)
-        lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
-
         satsolver.append_formula(validated_clauses, no_return=False)
+
+        # set polarities
+        # semi-hack for indicators:
+        #  all 'softs' that are unit, add as polarity
+        polarities = []
+        for cl in self.soft_clauses:
+            if len(cl) == 1:
+                polarities.append( next(iter(cl)) )
+        satsolver.set_phases(literals=polarities)
+
         solved = satsolver.solve()
         model = satsolver.get_model()
 
         if solved:
-            mapped_model = set(lit for lit in model if abs(lit) in lits)
-            return mapped_model, solved, satsolver
+            return model, solved, satsolver
         else:
             return None, solved, satsolver
 
@@ -1023,6 +1030,7 @@ class OMUS(object):
         return cl_true, lit_true
 
     def grow_singlepass(self, F_prime, model):
+        model = frozenset(model)
         # filter out -I's that are in model
         I_unassgn = set(-lit for lit in self.I)
         I_unassgn -= model

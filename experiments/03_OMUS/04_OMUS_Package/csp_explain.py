@@ -435,26 +435,27 @@ def omusExplain2(
     if seed_mss:
         print("Seeding...")
         # add full theory without negation literal
-        softies = frozenset(range(o.nSoftClauses))
+        #softies = frozenset(range(o.nSoftClauses))
+        #o.addSetGurobiOmusConstr(softies)
+        t_seed = time.time()
+
         F = frozenset(range(o.nClauses))
-        # C = F - softies
-        # already added ç!
-        o.addSetGurobiOmusConstr(softies)
+        # each -i
+        seedable = set(-i for i in explainable_facts-I0)
+        while len(seedable) > 0:
+            i = next(iter(seedable))
 
-        for i in explainable_facts - I:
-            # if -i in any of the previous mss_models, no need to mss again
-            # can be implemented more efficiently by storing those already covered outside the loop, but OK...
-            if any(-i in mss_model for (mss,mss_model) in o.MSSes):
-                print(-i,"already in an mss")
-                continue
-
-            F_prime = set([o.softClauseIdxs[frozenset({-i})]])
-
-            MSS, MSS_Model = o.grow(F_prime, I0|{-i}) #maxsat_fprime()
+            F_prime = set([o.softClauseIdxs[frozenset({i})]])
+            MSS, MSS_Model = o.grow(F_prime, I0|{i})
 
             C = F - MSS
             o.addSetGurobiOmusConstr(C)
-            # print("mss",-i,":",MSS, MSS_Model,"C",C)
+
+            other_seeds = seedable&frozenset(MSS_Model)
+            #print("mss",i,":",MSS, other_seeds,"C",C)
+            # no need to 'grow' a literal that already has an MSS
+            seedable -= other_seeds
+        print("done seeding in",round(time.time()-t_seed,3))
 
     # total_exec_start = time.time()
     while len(explainable_facts - I) > 0:

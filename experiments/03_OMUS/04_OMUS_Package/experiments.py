@@ -3,6 +3,7 @@ import random
 import time
 from datetime import date, datetime
 from pathlib import Path
+import sys
 
 #pysat imports
 from pysat.formula import CNF, WCNF
@@ -61,7 +62,7 @@ def get_instances(n=10):
     # print(p.exists())
     # for child in p.iterdir():
     #     print(child)
-    instances = random.sample([x for x in p.iterdir()], n)
+    instances = random.sample([x for x in p.iterdir()], 1)
     filenames = [instance.name for instance in instances]
     return instances, filenames
 
@@ -88,7 +89,7 @@ def experiment1(sd):
         print(instance, filename)
         # Check satisfiability of the instance
         sat, model = checksatCNF(instance)
-        assert sat == True
+        assert sat is True
 
         # select 5 literals to explain
         instance_literals[filename] = get_literals(model, n_literals)
@@ -123,14 +124,54 @@ def experiment1(sd):
 
         cnf = CNF(from_file=instance)
 
-        o = OMUS(
-            hard_clauses=list(),
-            soft_clauses=[frozenset(clause) for clause in cnf.clauses],
-            I=model,
-            soft_weights=weights[instance],
-            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},  # default parameters
+        # o1 = OMUS(
+        #     modelname='gp1',
+        #     hard_clauses=list(),
+        #     soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+        #     I=model,
+        #     soft_weights=weights[filename],
+        #     parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},  # default parameters
+        #     )
+
+        o2 = OMUS(
+                modelname='gp2',
+                hard_clauses=list(),
+                soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+                I=model,
+                soft_weights=weights[filename],
+                parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},  # default parameters
             )
 
+            # if seed_mss:
+        print("Seeding...")
+        # add full theory without negation literal
+        softies = frozenset(range(o2.nSoftClauses))
+        F = frozenset(range(o2.nClauses))
+        # C = F - softies
+        # already added ç!
+        o2.addSetGurobiOmusConstr(softies)
+
+        for i in model:
+            # if -i in any of the previous mss_models, no need to mss again
+            # can be implemented more efficiently by storing those already covered outside the loop, but OK...
+            if any(-i in mss_model for (mss,mss_model) in o2.MSSes):
+                print(-i,"already in an mss")
+                continue
+
+            F_prime = set([o2.softClauseIdxs[frozenset({-i})]])
+
+            MSS, MSS_Model = o2.grow(F_prime, {-i}) #maxsat_fprime()
+
+            C = F - MSS
+            o2.addSetGurobiOmusConstr(C)
+            print("mss",-i,":",MSS, MSS_Model,"C",C)
+        # o3 = OMUS(
+        #         hard_clauses=list(),
+        #         soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+        #         I=model,
+        #         soft_weights=weights[filename],
+        #         parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},  # default parameters
+        #     )
 
         # o = OMUS(
         #     hard_clauses=list(),
@@ -140,47 +181,84 @@ def experiment1(sd):
         #     soft_weights=weights[instance],
         #     parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
         # )
-
+        I_cnf = [frozenset({lit}) for lit in list()]
+        I = set()
         for i in range(10):
             # OMUS no improvements
-            o.reuse_mss = False
-            t_start = time.time()
-            hs, explanation = o.omusConstr()
-            t_end = time.time()
-            literal = [clause for clause in explanation if len(clause) == 1 and clause in [frozenset({-lit}) for lit in model]]
-            print(literal)
+            # o.reuse_mss = False
+            # t_start = time.time()
+            # hs, explanation = o1.omusConstr()
+            # t_end = time.time()
+            # literal = [clause for clause in explanation if len(clause) == 1 and clause in [frozenset({-lit}) for lit in model]]
 
-            results[filename]['omus']['exec_times'].append(t_end - t_start)
-            results[filename]['omus']['H_sizes'].append(len(o.hs_sizes))
+            # results[filename]['omus_constr']['exec_times'].append(t_end - t_start)
+            # results[filename]['omus_constr']['H_sizes'].append(o.hs_sizes[-1])
 
             # OMUS postponing optimization
             t_start = time.time()
-            hs, explanation = o.omusConstr()
+            hs, explanation = o2.omusConstr(do_incremental=True, greedy=True)
             t_end = time.time()
 
-            results[filename]['omus_postponed']['exec_times'].append(t_end - t_start)
-            results[filename]['omus_postponed']['H_sizes'].append(len(o.hs_sizes))
+            # explaining facts
+            E_best = [ci for ci in explanation if ci in I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_best = [ci for ci in explanation if ci in o2.soft_clauses and ci not in E_best]
+
+            t_prop = time.time()
+            New_info = optimalPropagate([] + E_best + S_best, I)
+            N_best = New_info.intersection(model) - I
+            print("Optimal Propagate=", round(time.time()-t_prop, 3))
+
+            # add new info
+            I = I | N_best
+            new_cnf = [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+            I_cnf += new_cnf
+
+
+            # print("I=",I)
+            # print("I_cnf=",I_cnf)
+            # print("E_best=",E_best)
+            # print("S_best=",S_best)
+            # print("N_best=",N_best)
+            # print("New_info=",New_info)
+            # print("cost=",len(E_best)+20*len(S_best))
+            # print(E_best, S_best, N_best, New_info)
+            # print(o.obj_weights)
+
+            # @TIAS: printing explanations
+            print(f"\nOptimal explanation \t\t {E_best} /\\ {S_best} => {N_best}",round(time.time()-t_start, 3))
+
+
+            # C1..4 = 20, C11=1, C12..13 = inf, C21=inf, C22..23 = 0
+            # print(o.obj_weights)
+            o2.updateObjWeightsInterpret(I)
+
+            # results[filename]['omus_constr-incremental']['exec_times'].append(t_end - t_start)
+            # results[filename]['omus_constr-incremental']['H_sizes'].append(o.hs_sizes[-1])
 
             # OMUS incremental 
-            o.reuse_mss = True
-            t_start = time.time()
-            hs, explanation = o.omusConstr()
-            t_end = time.time()
-            results[filename]['omus_incremental']['exec_times'].append(t_end - t_start)
-            results[filename]['omus_incremental']['H_sizes'].append(len(o.hs_sizes))
+            # t_start = time.time()
+            # hs, explanation = o3.omusConstr(do_incremental=True, greedy=True)
+            # t_end = time.time()
 
-            # OMUS incremental + postponing optimization
-            o.reuse_mss = True
-            t_start = time.time()
-            hs, explanation = o.omusIncr(I_cnf=list(),
-                                        explained_literal=lit,
-                                        add_weights=[1],
-                                        timeout=timeout,
-                                        postponed_omus=True,
-                                        )
-            t_end = time.time()
-            results[filename]['omus_incremental_postponed']['exec_times'].append(t_end - t_start)
-            results[filename]['omus_incremental_postponed']['H_sizes'].append(len(o.hs_sizes))
+            # results[filename]['omus_constr-greedy']['exec_times'].append(t_end - t_start)
+            # results[filename]['omus_constr-greedy']['H_sizes'].append(o3.hs_sizes[-1])
+
+
+
+            # # OMUS incremental + postponing optimization
+            # o.reuse_mss = True
+            # t_start = time.time()
+            # hs, explanation = o.omusIncr(I_cnf=list(),
+            #                             explained_literal=lit,
+            #                             add_weights=[1],
+            #                             timeout=timeout,
+            #                             postponed_omus=True,
+            #                             )
+            # t_end = time.time()
+            # results[filename]['omus_incremental_postponed']['exec_times'].append(t_end - t_start)
+            # results[filename]['omus_incremental_postponed']['H_sizes'].append(len(o.hs_sizes))
 
     with open(outputDir + outputFile, 'w') as file:
         file.write(json.dumps(results))
@@ -190,7 +268,7 @@ def main():
     sd = datetime.now()
     random.seed(sd)
     experiment1(sd)
-    experiment2()
+    # experiment2()
     # experiment3()
 
 if __name__ == "__main__":
@@ -286,25 +364,25 @@ def experiment2():
         trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
     )
 
-    timeout = 5 * HOURS
+#     timeout = 5 * HOURS
 
-    # setup origin puzzle
-    origin_puzzle = ....
+#     # setup origin puzzle
+#     origin_puzzle = ....
 
-    # OMUS no improvements
-    csp
+#     # OMUS no improvements
+#     csp
 
-    # OMUS postponing optimization
-    csp-explain ....
+#     # OMUS postponing optimization
+#     csp-explain ....
 
-    # OMUS incremental 
-    csp-explain ...
+#     # OMUS incremental 
+#     csp-explain ...
 
-    # OMUS incremental + postponing optimization
-    csp-explain ...
+#     # OMUS incremental + postponing optimization
+#     csp-explain ...
 
-    # OMUS incremental + postponing optimization + warm start
-    csp-explain ...
+#     # OMUS incremental + postponing optimization + warm start
+#     csp-explain ...
 
-# def experiment3():
-#     # running a whole explanation sequence!
+# # def experiment3():
+# #     # running a whole explanation sequence!

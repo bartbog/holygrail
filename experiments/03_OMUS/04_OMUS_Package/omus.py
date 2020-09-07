@@ -159,7 +159,7 @@ class Timings(object):
 
 
 class OMUS(object):
-    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, soft_weights=None, parameters={}, f=None, logging=True, reuse_mss=True,clues=None,trans=None,bij=None):
+    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, soft_weights=None, parameters={}, f=None, logging=True, reuse_mss=True,clues=None,trans=None,bij=None, modelname='MIPOptHS'):
         # checking input
         assert (f is not None) or (soft_weights is not None), "No mapping function or weights supplied."
         assert (hard_clauses is not None), "No clauses or CNF supplied."
@@ -211,8 +211,9 @@ class OMUS(object):
         for idx, clause in enumerate(self.all_soft_clauses):
             self.softClauseIdxs[clause] = idx
 
+        self.hs_sizes = []
         # MSS
-        self.gp_model = self.gurobiOmusConstrModel()
+        self.gp_model = self.gurobiOmusConstrModel(modelname)
 
         self.MSSes = set()
 
@@ -1256,10 +1257,10 @@ class OMUS(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def gurobiOmusConstrModel(self):
+    def gurobiOmusConstrModel(self, modelname):
 
         # create gurobi model
-        self.g_model = gp.Model('MIPOptConstrHS')
+        self.g_model = gp.Model(modelname)
 
         # model parameters
         self.g_model.Params.OutputFlag = 0
@@ -1267,6 +1268,8 @@ class OMUS(object):
         self.g_model.Params.Threads = 8
 
         # create the variables (with weights in one go)
+        print(self.nClauses)
+        print(len(self.obj_weights))
         x = self.g_model.addMVar(shape=self.nClauses, vtype=GRB.BINARY, obj=self.obj_weights, name="x")
 
         # exactly one of the -literals
@@ -1284,6 +1287,8 @@ class OMUS(object):
 
         # add new constraint sum x[j] * hij >= 1
         self.g_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
+
+
 
     def gurobiOmusConstrHS(self):
         # solve optimization problem
@@ -1344,7 +1349,11 @@ class OMUS(object):
 
             return hs, t_model
 
-    def omusConstr(self):
+    def deleteModel(self):
+        self.g_model.delete()
+
+
+    def omusConstr(self, do_incremental=True, greedy=True):
         matching = {
             0:'c1',
             1:'c2',
@@ -1368,8 +1377,8 @@ class OMUS(object):
         satsolver = None
         mode = MODE_OPT
 
-        do_incremental = True
-        do_greedy = do_incremental and True
+        # do_incremental = incremental
+        do_greedy = do_incremental and greedy
 
         while(True):
             while(do_incremental):
@@ -1428,7 +1437,7 @@ class OMUS(object):
 
                 t_grow = time.time()
                 MSS, MSS_model = self.grow(hs, model)
-                print("Time grow=:", round(time.time() - t_grow, 3))
+                # print("Time grow=:", round(time.time() - t_grow, 3))
 
                 C = F - MSS
                 h_counter.update(list(C))
@@ -1450,6 +1459,7 @@ class OMUS(object):
                 satsolver.delete()
                 # print("hs-omus=", hs)
                 # print("hs-omus",hs)
+                self.hs_sizes.append(len(H))
                 print("OMUS=", [self.all_soft_clauses[idx] for idx in hs])
                 return hs, [self.all_soft_clauses[idx] for idx in hs]
 
@@ -1463,8 +1473,6 @@ class OMUS(object):
             self.addSetGurobiOmusConstr(C)
             assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"
 
-            #h_counter.update(list(C))
-            #H.append(C)
             if do_incremental: 
                 mode = MODE_INCR
             else:

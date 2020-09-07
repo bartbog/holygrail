@@ -1435,12 +1435,12 @@ class OMUS(object):
             #     mode = MODE_INCR
             t_grow = time.time()
             hs = self.gurobiOmusConstrHS()
-            # print("got hs",hs)
+            print("got hs",hs)
 
             # ------ Sat check
             t_grow = time.time()
             (model, sat, satsolver) = self.checkSat(hs)
-            # print("Time sat=:", time.time() - t_grow)
+            print("Time sat=:", time.time() - t_grow)
 
             if not sat:
                 satsolver.delete()
@@ -1453,7 +1453,7 @@ class OMUS(object):
             # print()
             t_grow = time.time()
             MSS, MSS_model = self.grow(hs, model)
-            # print("Time grow=:", time.time() - t_grow)
+            print("Time grow=:", time.time() - t_grow)
             C = F - MSS
 
             self.addSetGurobiOmusConstr(C)

@@ -416,7 +416,7 @@ def omusExplain2(
     # I_end = maxPropagate(cnf, I0)
 
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
-    print("explain:",explainable_facts)
+    print("explain:", explainable_facts)
 
     # explanation sequence
     expl_seq = []

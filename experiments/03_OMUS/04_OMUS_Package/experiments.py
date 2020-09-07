@@ -141,11 +141,12 @@ def experiment1(sd):
         #     parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
         # )
 
-        for lit in instance_literals[instance]:
+        for i in range(10):
             # OMUS no improvements
             o.reuse_mss = False
             t_start = time.time()
             hs, explanation = o.omusConstr()
+
             t_end = time.time()
 
             results[filename]['omus']['exec_times'].append(t_end - t_start)

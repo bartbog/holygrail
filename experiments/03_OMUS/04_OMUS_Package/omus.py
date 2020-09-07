@@ -475,6 +475,7 @@ class OMUS(object):
             'maxsat': self.maxsat_test,
             'greedy_vertical': self.greedy_vertical,
             'greedy_hardsoft': self.greedy_hardsoft,
+            'grow_singlepass': self.grow_singlepass,
             # 'satlike': SATLike
         }
 
@@ -1021,6 +1022,43 @@ class OMUS(object):
                 cl_true.add(i)
         return cl_true, lit_true
 
+    def grow_singlepass(self, F_prime, model):
+        # filter out -I's that are in model
+        I_unassgn = set(-lit for lit in self.I)
+        I_unassgn -= model
+        # flip remaining and filter out I's that are in model
+        I_unassgn = set(-lit for lit in I_unassgn)
+        I_unassgn -= model
+        #print("I_unassgn",I_unassgn)
+        # add to the model, then check which softs are satisfied
+        model |= I_unassgn
+
+        cl_true = F_prime
+        cl_false = set() # this will be the F-C, the 'set-to-hit'!
+        cl_unk = set()
+        for (i,clause) in enumerate(self.all_soft_clauses):
+            if i in cl_true:
+                continue #skip
+            #print(clause, model)
+            if len(clause & model) > 0:
+                # true
+                #print("true")
+                cl_true.add(i)
+                continue
+            negclause = set(-l for l in clause)
+            if len(negclause - model) == 0:
+                #print("false",clause,model)
+                # false
+                cl_false.add(i)
+                continue
+            #print("unk")
+            cl_unk.add(i)
+        #print("T",cl_true)
+        #print("F",cl_false)
+        #C = cl_false
+        #print("U",cl_unk)
+        return (cl_true, model)
+
     def maxprop(self, F_prime, model):
         # parameters
         # best_unit_literal = self.parameters['best_unit_literal']
@@ -1377,6 +1415,7 @@ class OMUS(object):
             #     mode = MODE_INCR
             t_grow = time.time()
             hs = self.gurobiOmusConstrHS()
+            print("got hs",hs)
 
             # ------ Sat check
             t_grow = time.time()

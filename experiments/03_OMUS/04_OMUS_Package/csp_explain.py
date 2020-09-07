@@ -398,6 +398,7 @@ def omusExplain2(
         unknown_facts=None,
         constrained=True
     ):
+    t_begin = time.time()
 
     # initial interpretation
     if hard_clauses is not None and soft_clauses is not None:
@@ -506,6 +507,8 @@ def omusExplain2(
         # print(o.obj_weights)
 
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
+
+    print("Found",len(expl_seq),"steps in time: ",time.time()-t_begin)
 
     # o.export_results('results/')
 

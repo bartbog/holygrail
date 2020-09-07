@@ -293,7 +293,7 @@ class OMUS(object):
 
         for i, hi in enumerate(H):
             # TIAS: only take soft clauses
-            h = [e for e in hi.intersection(self.soft_idx)]
+            h = [e for e in hi if self.obj_weights[e] < 1e50 and self.obj_weights[e] > 0]
             # special case: only one element in the set, must be in hitting set
             if len(h) == 1:
                 C.add(next(iter(h)))
@@ -1368,7 +1368,8 @@ class OMUS(object):
         satsolver = None
         mode = MODE_OPT
 
-        do_incremental = False 
+        do_incremental = False
+        do_greedy = do_incremental and False
 
         while(True):
             while(do_incremental):
@@ -1383,37 +1384,42 @@ class OMUS(object):
                         mode = MODE_OPT
                         satsolver.delete()
                         break
-                    c = min(C_softie, key=lambda i: self.obj_weights[i])
-                    print("incr choose",c,self.obj_weights[c])
                     ## find all elements with smallest weight
-                    #m = [ci for ci in C_softie if self.weights[ci] == self.weights[c]]
+                    c = min(C_softie, key=lambda i: self.obj_weights[i])
+                    # m = [ci for ci in C_softie if self.obj_weights[ci] == self.obj_weights[c]]
                     ## choose clause with smallest weight appearing most in H
-                    #c_best = max(m, key=lambda ci: h_counter[ci])
+                    # c_best = max(m, key=lambda ci: h_counter[ci])
                     hs.add(c)
+                    # print("incr choose",c,self.obj_weights[c])
+                elif mode == MODE_GREEDY and do_greedy:
+                   # ----- Greedy compute hitting set
+                   hs = self.greedyHittingSet(H)
                 elif mode == MODE_OPT:
                     break
-                #elif mode == MODE_GREEDY:
-                #    # ----- Greedy compute hitting set
-                #    hs = self.greedyHittingSet(H)
 
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
                     (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c)
                     #(model, sat, satsolver) = self.checkSat(hs)
-                #elif mode == MODE_GREEDY:
-                #   (model, sat, satsolver) = self.checkSat(hs)
+                elif mode == MODE_GREEDY  and do_greedy:
+                  (model, sat, satsolver) = self.checkSat(hs)
 
-                print(hs, sat)
+                # print(hs, sat)
                 if not sat:
                     # incremental hs is unsat, switch to optimal method
                     hs = None
                     if mode == MODE_INCR:
-                        #    mode = MODE_GREEDY
-                        #    satsolver.delete()
-                        #    continue
-                        #elif mode == MODE_GREEDY:
                         satsolver.delete()
+                        if do_greedy:
+                            mode = MODE_GREEDY
+                        #    satsolver.delete()
+                            continue
+                        else:
+                            mode = MODE_OPT
+                            break
+                    elif mode == MODE_GREEDY:
                         mode = MODE_OPT
+                        satsolver.delete()
                         break
                     # break # skip grow
                 # if (best_cost is not None and best_cost <= my_cost):
@@ -1437,7 +1443,9 @@ class OMUS(object):
             # print("Time sat=:", time.time() - t_grow)
 
             if not sat:
+                satsolver.delete()
                 # print("hs-omus=", hs)
+                print("hs-omus",hs)
                 print("OMUS=", [self.all_soft_clauses[idx] for idx in hs])
                 return hs, [self.all_soft_clauses[idx] for idx in hs]
 

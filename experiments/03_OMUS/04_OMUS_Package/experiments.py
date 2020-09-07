@@ -127,46 +127,42 @@ def experiment1(sd):
             hard_clauses=list(),
             soft_clauses=[frozenset(clause) for clause in cnf.clauses],
             I=model,
-            bv=None,
             soft_weights=weights[instance],
-            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
-        )
+            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},  # default parameters
+            )
+
+
+        # o = OMUS(
+        #     hard_clauses=list(),
+        #     soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+        #     I=model,
+        #     bv=None,
+        #     soft_weights=weights[instance],
+        #     parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+        # )
 
         for lit in instance_literals[instance]:
             # OMUS no improvements
             o.reuse_mss = False
             t_start = time.time()
-            hs, explanation = o.omusIncr(I_cnf=list(),
-                                        explained_literal=lit,
-                                        add_weights=[1],
-                                        timeout=timeout,
-                                        postponed_omus=False,
-                                        )
+            hs, explanation = o.omusConstr()
             t_end = time.time()
+
             results[filename]['omus']['exec_times'].append(t_end - t_start)
             results[filename]['omus']['H_sizes'].append(len(o.hs_sizes))
 
             # OMUS postponing optimization
             t_start = time.time()
-            hs, explanation = o.omusIncr(I_cnf=list(),
-                                        explained_literal=lit,
-                                        add_weights=[1],
-                                        timeout=timeout,
-                                        postponed_omus=True,
-                                        )
+            hs, explanation = o.omusConstr()
             t_end = time.time()
+
             results[filename]['omus_postponed']['exec_times'].append(t_end - t_start)
             results[filename]['omus_postponed']['H_sizes'].append(len(o.hs_sizes))
 
             # OMUS incremental 
             o.reuse_mss = True
-            t_start = time.time()
-            hs, explanation = o.omusIncr(I_cnf=list(),
-                                        explained_literal=lit,
-                                        add_weights=[1],
-                                        timeout=timeout,
-                                        postponed_omus=False,
-                                        )
+                t_start = time.time()
+            hs, explanation = o.omusConstr()
             t_end = time.time()
             results[filename]['omus_incremental']['exec_times'].append(t_end - t_start)
             results[filename]['omus_incremental']['H_sizes'].append(len(o.hs_sizes))

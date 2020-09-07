@@ -509,16 +509,16 @@ def frietKotProblem():
     (mayo, ketchup, curry, andalouse, samurai) = BoolVar(5)
 
 
-    Nora = mayo | ketchup
-    Leander = ~samurai | mayo
-    Benjamin = ~andalouse | ~curry | ~samurai
-    Behrouz = ketchup | curry | andalouse
-    Guy = ~ketchup | curry | andalouse
-    Daan = ~ketchup | ~curry | andalouse
-    Celine = ~samurai
-    Anton = mayo | ~curry | ~andalouse
-    Danny = ~mayo | ketchup | andalouse | samurai
-    Luc = ~mayo | samurai
+    Nora = mayo | ketchup # 0
+    Leander = ~samurai | mayo # 1
+    Benjamin = ~andalouse | ~curry | ~samurai # 2
+    Behrouz = ketchup | curry | andalouse # 3
+    Guy = ~ketchup | curry | andalouse # 4
+    Daan = ~ketchup | ~curry | andalouse # 5
+    Celine = ~samurai # 6
+    Anton = mayo | ~curry | ~andalouse # 7
+    Danny = ~mayo | ketchup | andalouse | samurai # 8
+    Luc = ~mayo | samurai # 9
 
     allwishes = [Nora, Leander, Benjamin, Behrouz, Guy, Daan, Celine, Anton, Danny, Luc]
 
@@ -804,11 +804,18 @@ def explain_constrained_omus():
     parameters={'extension': 'maxsat','output': 'log.json'}
     (mayo, ketchup, andalouse) = BoolVar(3)
 
-    c1 = mayo
-    c2 = ~mayo | ~andalouse | ketchup
-    c3 = ~mayo | andalouse | ketchup
-    c4 = ~ketchup | ~andalouse
-    constraints = [c1, c2, c3, c4]
+    c0 = mayo
+    c1 = ~mayo | ~andalouse | ketchup
+    c2 = ~mayo | andalouse | ketchup
+    c3 = ~ketchup | ~andalouse
+    #c4 = mayo
+    #c5 = ketchup
+    #c6 = -andalouse
+    #c7 = -mayo
+    #c8 = -ketchup
+    #c9 = andalouse
+    
+    constraints = [c0, c1, c2, c3]
     cnf = cnf_to_pysat(constraints)
     # print(cnf)
     explainable_facts = set({mayo.name+1, ketchup.name+1, andalouse.name+1})

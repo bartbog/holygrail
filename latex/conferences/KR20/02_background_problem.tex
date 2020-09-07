@@ -13,6 +13,7 @@ It is called a \emph{full} interpretation if it either contains $P(\ddd)$ or $\l
 In the context of first-order logic, the task of finite-domain constraint solving is better known as \emph{model expansion} \cite{MitchellTHM06}: given a logical theory $T$ (corresponding to the constraint specification) and a partial interpretation $I$ with a finite domain (corresponding to the initial domain of the variables), find a model $M$ more precise than $I$ (a partial solution that satisfies $T$).
 
 We define the \textbf{maximal consequence} of a theory $\allconstraints$ and partial interpretation $I$ (denoted $max(I,T)$) as the precision-maximal partial interpretation $I_n$ such that  $I \wedge \allconstraints \entails I_n$.
+More precisely, $I_n$ corresponds to the intersection of all CSP solutions.
 
 \subsection{Simple Explanation}
 
@@ -26,16 +27,30 @@ We say that $(E_i,S_i,N_i)$ \emph{explains} the derivation of $I_{i}$ from $I_{i
 \end{itemize}
 
 Part of our goal of finding easy to interpret explanations is to avoid redundancy.
-That is, we want a non-redundant explanation $(E_i,S_i,N_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed while still explaining the derivation of $I_i$ from $I_{i-1}$; in other word: the explanation must be \textit{subset-minimal}.
+That is, we want a non-redundant explanation $(E_i,S_i,N_i)$ where none of the facts in $E_i$ or constraints in $S_i$ can be removed while still explaining the derivation of $I_i$ from $I_{i-1}$; in other words: the explanation must be \textit{subset-minimal}.
 While subset-minimality ensures that an explanation is non-redundant, it does not quantify how \textit{interpretable} a explanation is.
 For this, we will assume the existence of a cost function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation.
 
-Formally, for a given theory $\allconstraints$, a cost function $f$ and initial partial interpretation $I_0$, the \textbf{explanation-production problem} consists of finding a non-redundant explanation sequence
+Formally, for a given theory $\allconstraints$, a cost function $f$ and initial partial interpretation $I_0$, the \textbf{explanation-production problem} consists of finding a non-redundant explanation sequence for (I, T)
 \[\langle(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_1)), \dots ,(I_n,(E_n,S_n,N_n))\rangle\]
-such that a predefined aggregate\footnote{an aggregate like $max()$ will moderate the most difficult step, while $average()$ enforces an overall simpler explanation sequence} over the sequence $\left(f(E_i,S_i,N_i)\right)_{i\leq n}$ is minimised.
+such that a predefined aggregate\footnote{An aggregate like $max()$ will moderate the most difficult step, while $average()$ enforces an overall simpler explanation sequence.} over the sequence $\left(f(E_i,S_i,N_i)\right)_{i\leq n}$ is minimised.
 
-Consider the following problem of 3 persons going to a restaurant ordering food and drinks, but we do not know the orders: ``(1) Sam decides to eat pizza. (2) The one who ate rice drank Tea. (3) Pasta does not go well with Juice. (4) John orders water, and Luke always drinks Tea.'' We extend the problem statement with the following relations $\{ eat(T_{person},\ T_{food}), drink(T_{person},\  T_{drinks}),$ $match(T_{food},\ T_{drinks})\}$ linked with types: $T_{food}= \{Pizza,  Rice,  Pasta\}$;\\ $T_{person}= \{ Sam, Luke,John\}$; $T_{drinks}= \{ Tea,  Juice,  Water\}$.
-Furthermore, we use a cost function f which \textit{favours the use of simple constraints} (ex: interpretation of a clue, simple inference techniques such as bijectivity\footnote{Each entity of one type is linked to exactly one entity of each other type} or transitivity\footnote{The entities are logically linked}) and \textit{penalizes the use of combination of constraints} (combining a clue with an inference mechanism). 
+Consider the following problem of 3 persons going to a restaurant ordering food and drinks, but we do not know the orders:
+\begin{enumerate}
+   \item ``Sam decides to eat pizza.''
+   \item ``The one who ate rice drank Tea.''
+   \item ``Pasta does not go well with Juice.''
+   \item ``John orders water, and Luke always drinks Tea.''
+\end{enumerate}  
+
+\noindent We extend the problem statement with the following relations: $$\{ eat(T_{person},\ T_{food}), \ drink(T_{person},\  T_{drinks}),\  match(T_{food},\ T_{drinks})\}$$ 
+\newpage \noindent Every type has its corresponding entities: 
+\begin{itemize}
+   \item $T_{food}= \{Pizza,  Rice,  Pasta\}$;
+   \item $T_{person}= \{ Sam, Luke,John\}$
+   \item $T_{drinks}= \{ Tea,  Juice,  Water\}$
+\end{itemize}
+Furthermore, we use a cost function f which \textit{favours the use of simple constraints} (ex: interpretation of a clue, simple inference techniques such as bijectivity\footnote{Each entity of one type is linked to exactly one entity of each other type.} or transitivity\footnote{The entities are logically linked, for example: If $eat(Sam,\ Pizza)$ and $match(Pizza,\ Juice)$, then consistently Sam should be consistently linked with Juice $drink(Sam,\ Juice)$}) and \textit{penalizes the use of combination of constraints} (combining a clue with an inference mechanism). 
 
 In the beginning, the partial interpretation $I_0$ is empty. From the clue (1), we can derive a new fact relating Sam and pizza $I_1 = \{eat(Sam, Pizza)\}$. In fact, we can also derive that Sam did not eat $Pasta$ and $Rice$.
 Formally, the tuple $(E_1, S_1, N_1)$ explains the inference step $I_1$ to $I_2$, where
@@ -53,7 +68,7 @@ Formally, the tuple $(E_1, S_1, N_1)$ explains the inference step $I_1$ to $I_2$
 \subsection{Nested Explanation}
 Each explanation in the sequence will be non-redundant and hence as small as possible. 
 Yet, in our earlier work some explanations were still quite hard to understand, mainly since multiple constraints had to be combined with a number of previously derived facts. 
-We propose the use of simple \textit{nested} explanations using reasoning by contraction, hence reusing the techniques from previous section. 
+We propose the use of simple \textit{nested} explanations using reasoning by contradiction, hence reusing the techniques from previous section. 
 
 Given a non-trivial explanation $(E,S,N)$, a nested explanation starts from the explaining facts $E$, and the counterfactual assumption of the negation of a newly derived fact. 
 At each step, it only uses clues from $S$ and each step is easier to understand (has a strictly lower cost) than the parent explanation which has cost $f(E,S,N)$. 

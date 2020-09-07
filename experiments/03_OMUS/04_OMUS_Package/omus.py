@@ -1343,7 +1343,7 @@ class OMUS(object):
             if t_model is None:
                 return hs, model
 
-            for i, clause in enumerate(self.soft_clauses):
+            for i, clause in enumerate(self.all_soft_clauses):
                 if i not in hs and len(clause.intersection(t_model)) > 0:
                     hs.add(i)
 

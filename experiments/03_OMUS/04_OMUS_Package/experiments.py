@@ -146,8 +146,9 @@ def experiment1(sd):
             o.reuse_mss = False
             t_start = time.time()
             hs, explanation = o.omusConstr()
-
             t_end = time.time()
+            literal = [clause for clause in explanation if len(clause) == 1 and clause in [frozenset({-lit}) for lit in model]]
+            print(literal)
 
             results[filename]['omus']['exec_times'].append(t_end - t_start)
             results[filename]['omus']['H_sizes'].append(len(o.hs_sizes))

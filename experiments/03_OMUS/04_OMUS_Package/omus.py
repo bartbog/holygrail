@@ -323,7 +323,7 @@ class OMUS(object):
                 # OMUS : find set of unsatisfiable clauses in hitting set with least total cost
                 # => get the clause with the most coverage but with the least total weight
                 # print(c_covers, weights)
-                (c, cover) = min(c_covers, key=lambda tpl: self.weights[tpl[0]])
+                (c, cover) = min(c_covers, key=lambda tpl: self.obj_weights[tpl[0]])
 
             del V[c]
             C.add(c)
@@ -1368,8 +1368,8 @@ class OMUS(object):
         satsolver = None
         mode = MODE_OPT
 
-        do_incremental = False
-        do_greedy = do_incremental and False
+        do_incremental = True
+        do_greedy = do_incremental and True
 
         while(True):
             while(do_incremental):
@@ -1387,9 +1387,10 @@ class OMUS(object):
                     ## find all elements with smallest weight
                     c = min(C_softie, key=lambda i: self.obj_weights[i])
                     # m = [ci for ci in C_softie if self.obj_weights[ci] == self.obj_weights[c]]
-                    ## choose clause with smallest weight appearing most in H
+                    # ## choose clause with smallest weight appearing most in H
                     # c_best = max(m, key=lambda ci: h_counter[ci])
                     hs.add(c)
+                    # hs.add(c_best)
                     # print("incr choose",c,self.obj_weights[c])
                 elif mode == MODE_GREEDY and do_greedy:
                    # ----- Greedy compute hitting set
@@ -1424,7 +1425,10 @@ class OMUS(object):
                     # break # skip grow
                 # if (best_cost is not None and best_cost <= my_cost):
                 # ------ Grow
+
+                t_grow = time.time()
                 MSS, MSS_model = self.grow(hs, model)
+                print("Time grow=:", round(time.time() - t_grow, 3))
 
                 C = F - MSS
                 h_counter.update(list(C))
@@ -1435,12 +1439,12 @@ class OMUS(object):
             #     mode = MODE_INCR
             t_grow = time.time()
             hs = self.gurobiOmusConstrHS()
-            print("got hs",hs)
+            print("got hs\t\t\t\t",hs,round(time.time() - t_grow, 3))
 
             # ------ Sat check
             t_grow = time.time()
             (model, sat, satsolver) = self.checkSat(hs)
-            print("Time sat=:", time.time() - t_grow)
+            print("Time sat=:", round(time.time() - t_grow, 3))
 
             if not sat:
                 satsolver.delete()
@@ -1453,7 +1457,7 @@ class OMUS(object):
             # print()
             t_grow = time.time()
             MSS, MSS_model = self.grow(hs, model)
-            print("Time grow=:", time.time() - t_grow)
+            print("Time grow=:", round(time.time() - t_grow, 3))
             C = F - MSS
 
             self.addSetGurobiOmusConstr(C)

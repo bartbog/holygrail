@@ -455,13 +455,14 @@ def omusExplain2(
             C = F - MSS
             o.addSetGurobiOmusConstr(C)
             # print("mss",-i,":",MSS, MSS_Model,"C",C)
+
     # total_exec_start = time.time()
     while len(explainable_facts - I) > 0:
         # print("Left to explain:", len(explainable_facts - I))
         # print("Remaining explanations=", explainable_facts - I)
         t_start = time.time()
         hs, explanation = o.omusConstr()
-        print("OMUS=", round(time.time()-t_start ,3))
+        print("OMUS=", round(time.time()-t_start , 3))
         # print("got hs:",hs,explanation)
         # print("Hs=\t", hs)
         # print("explanation=\t", explanation)

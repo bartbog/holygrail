@@ -870,14 +870,14 @@ def explain_frietkot(parameters={'extension': 'maxsat','output': 'log.json'},
     del o
 
 if __name__ == "__main__":
-    print("-------------------")
-    print("Explaining constrained OMUS")
-    print("-------------------\n")
-    explain_constrained_omus()
-    print("-------------------")
-    print("Explaining FRIETKOT")
-    print("-------------------\n")
-    explain_frietkot()
+    # print("-------------------")
+    # print("Explaining constrained OMUS")
+    # print("-------------------\n")
+    # explain_constrained_omus()
+    # print("-------------------")
+    # print("Explaining FRIETKOT")
+    # print("-------------------\n")
+    # explain_frietkot()
     print("\n\n-------------------")
     print("Explaining ORIGIN")
     print("-------------------\n")

@@ -1435,7 +1435,7 @@ class OMUS(object):
             #     mode = MODE_INCR
             t_grow = time.time()
             hs = self.gurobiOmusConstrHS()
-            print("got hs",hs)
+            # print("got hs",hs)
 
             # ------ Sat check
             t_grow = time.time()
@@ -1445,7 +1445,7 @@ class OMUS(object):
             if not sat:
                 satsolver.delete()
                 # print("hs-omus=", hs)
-                print("hs-omus",hs)
+                # print("hs-omus",hs)
                 print("OMUS=", [self.all_soft_clauses[idx] for idx in hs])
                 return hs, [self.all_soft_clauses[idx] for idx in hs]
 

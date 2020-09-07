@@ -161,7 +161,7 @@ def experiment1(sd):
 
             # OMUS incremental 
             o.reuse_mss = True
-                t_start = time.time()
+            t_start = time.time()
             hs, explanation = o.omusConstr()
             t_end = time.time()
             results[filename]['omus_incremental']['exec_times'].append(t_end - t_start)

@@ -455,7 +455,7 @@ def omusExplain2(
             C = F - MSS
             o.addSetGurobiOmusConstr(C)
             # print("mss",-i,":",MSS, MSS_Model,"C",C)
-
+    # total_exec_start = time.time()
     while len(explainable_facts - I) > 0:
         # print("Left to explain:", len(explainable_facts - I))
         # print("Remaining explanations=", explainable_facts - I)
@@ -507,6 +507,7 @@ def omusExplain2(
 
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
 
+    # total_exec_start = time.time()
     print("Found",len(expl_seq),"steps in time: ",time.time()-t_begin)
 
     # o.export_results('results/')

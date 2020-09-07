@@ -1413,6 +1413,7 @@ class OMUS(object):
                         #    satsolver.delete()
                         #    continue
                         #elif mode == MODE_GREEDY:
+                        satsolver.delete()
                         mode = MODE_OPT
                         break
                     # break # skip grow
@@ -1451,10 +1452,12 @@ class OMUS(object):
             self.addSetGurobiOmusConstr(C)
             assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"
 
-            h_counter.update(list(C))
-            H.append(C)
+            #h_counter.update(list(C))
+            #H.append(C)
             if do_incremental: 
                 mode = MODE_INCR
+            else:
+                satsolver.delete()
 
     def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=True, timeout=1000):
         # Benchmark info

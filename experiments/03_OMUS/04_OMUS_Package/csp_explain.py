@@ -127,27 +127,36 @@ def cost(explanation, weights, clues, trans, bij):
 #     return cnf_lits
 
 
-def optimalPropagate(cnf, I=None):
+def optimalPropagate(cnf, I=None, focus=None):
+    # focus: a set of literals to filter, only keep those of the model
+    # SET A FOCUS if many auxiliaries...
+
     # m1 = [1, 2, 3, ....]
     # m2 = [ -1, 2, 3, ....] => [2, 3]
     # m3 = cnf + [-2, -3] => nieuw model [ .., ....]
     # if sat: nieuw intersection => model zoeken
     # anders: stoppen, huidige intersection gebruike
-    with Solver() as s:
-        s.append_formula(cnf, no_return=False)
+    with Solver(bootstrap_with=cnf) as s:
         if I is None or len(I) == 0:
             s.solve()
         elif len(I) > 0:
             s.solve(assumptions=list(I))
 
+        #print("oP","I",I)
         model = set(s.get_model())
+        if focus:
+            model &= focus
+        #print("oP",0,model,time.time()-ts)
 
         while(True):
             s.add_clause(list(-lit for lit in model))
             solved = s.solve()
             if solved:
                 new_model = set(s.get_model())
+                if focus:
+                    new_model &= focus
                 model = model.intersection(new_model)
+                #print("oP",c,model,time.time()-ts,new_model)
             else:
                 return model
 
@@ -412,7 +421,8 @@ def omusExplain2(
 
     I_cnf = [frozenset({lit}) for lit in I0]
 
-    I_end = optimalPropagate(cnf, I0)
+    all_unk = unknown_facts | set(-l for l in unknown_facts)
+    I_end = optimalPropagate(cnf, I0, focus=all_unk)
     # I_end = maxPropagate(cnf, I0)
 
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
@@ -476,7 +486,7 @@ def omusExplain2(
 
         #print("optimal:", hard_clauses, E_best, S_best, I)
         t_prop = time.time()
-        New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I, focus=all_unk)
         N_best = New_info.intersection(explainable_facts) - I
         print("Optimal Propagate=", round(time.time()-t_prop, 3))
 

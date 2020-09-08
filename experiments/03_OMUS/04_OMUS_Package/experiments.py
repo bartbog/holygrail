@@ -84,7 +84,7 @@ def experiment1(sd):
     outputFile = ".json"
 
     # parameters
-    timeout = 1 * MINUTES
+    timeout = 15 * MINUTES
     n_literals = 50
     n_instances = 10
 
@@ -298,7 +298,7 @@ def experiment1(sd):
             # OMUS no improvements
             remaining_time = timeout - (time.time() - tstart_o3)
             t_start = time.time()
-            hs, explanation = o3.omusConstr(do_incremental=True, greedy=True)
+            hs, explanation = o3.omusConstr(do_incremental=True, greedy=True, timeout=remaining_time)
             t_end = time.time()
             if hs is None:
                 results[filename]['OmusConstrIncrWarm']['exec_times'].append('timeout')
@@ -801,8 +801,8 @@ def experiment2_OmusConstrIncr(sd, timeout):
 def experiment2_OmusConstrIncrWarm(sd, timeout):
     pass
 
-# def experiment3(sd, timeout):
-    
+def experiment3(sd, timeout):
+    pass
 
 
 

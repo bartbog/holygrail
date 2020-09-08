@@ -2718,20 +2718,16 @@ class OMUSBase(object):
             if i in F_prime:
                 wcnf.append(list(clause))
             else:
-                print(clause, self.weights[i])
                 wcnf.append(list(clause), weight=self.weights[i])
 
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()
-            t_model = set(t_model)
-            # print(t_model)
 
-            for i, clause in enumerate(self.clauses):
-                if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
-                    t_F_prime.add(i)
+        for i, clause in enumerate(self.clauses):
+            if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
+                t_F_prime.add(i)
 
-            print(t_F_prime, t_model)
-            return t_F_prime, t_model
+        return t_F_prime, t_model
 
     def unitprop(self, F_prime, model):
         """`Extension1' unit propagate the model to find all clauses hit by the current
@@ -2783,7 +2779,7 @@ class OMUSBase(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=True, timeout=None):
+    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=False, timeout=None):
         # Benchmark info
         t_start_omus = time.time()
         if self.logging:
@@ -2799,7 +2795,7 @@ class OMUSBase(object):
         self.clauses = self.soft_clauses + I_cnf + [frozenset({-explained_literal})]
         self.nSoftClauses = len(self.clauses)
 
-        print(explained_literal)
+        # print(explained_literal)
 
         if add_weights is not None:
             self.weights = self.soft_weights + add_weights
@@ -2854,8 +2850,8 @@ class OMUSBase(object):
                 # MSS, model = self.grow(mss, MSS_model)
                 C = F - mss
 
-                if len(C)==0:
-                    continue
+                # if len(C)==0:
+                #     continue
 
                 if C not in H:
                     h_counter.update(list(C))
@@ -2866,7 +2862,7 @@ class OMUSBase(object):
         mode = MODE_OPT
         # print("OPT")
         while(True):
-            print(timeout - (time.time() -t_start_omus))
+            # print(timeout - (time.time() -t_start_omus))
             if (time.time() -t_start_omus) > timeout:
                 if satsolver is not None:
                     satsolver.delete()
@@ -2880,8 +2876,7 @@ class OMUSBase(object):
                 return None, my_cost
             # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True and postponed_omus):
-                # print(hs)
-                print(timeout - (time.time() -t_start_omus))
+                # print(timeout - (time.time() -t_start_omus))
                 if (time.time() -t_start_omus) > timeout:
                     if satsolver is not None:
                         satsolver.delete()
@@ -2896,7 +2891,6 @@ class OMUSBase(object):
                 # print("Starting with optimal!")
                 # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
                 if mode == MODE_INCR:
-
                     # add sets-to-hit incrementally until unsat then continue with optimal method
                     # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
                     # then hs + any element of 'C' is a valid hitting set of CC + C
@@ -2918,10 +2912,11 @@ class OMUSBase(object):
                     # self.hs_sizes.append(len(hs))
                 elif mode == MODE_OPT:
                     break
-                print(hs)
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
-                    (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c_best)
+                    if satsolver is not None:
+                        satsolver.delete()
+                    (model, sat, satsolver) = self.checkSat(hs)
                 elif mode == MODE_GREEDY:
                     if satsolver is not None:
                         satsolver.delete()
@@ -2952,7 +2947,7 @@ class OMUSBase(object):
                     # break # skip grow
                 # if (best_cost is not None and best_cost <= my_cost):
                 # ------ Grow
-                print(hs)
+                # print(hs)
                 if True or self.extension == 'maxsat':
                     # grow model over hard clauses first, must be satisfied
                     MSS, MSS_model = self.grow(hs, model)
@@ -2997,7 +2992,7 @@ class OMUSBase(object):
                 # Sat => Back to incremental mode 
                 mode = MODE_INCR
             # ----- Compute Optimal Hitting Set
-            print(H)
+            # print(H)
             hs = self.gurobiOptimalHittingSet(gurobi_model)
             # print(hs)
             # self.hs_sizes.append(len(hs))

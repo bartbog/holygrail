@@ -819,8 +819,8 @@ def experiment2_omus(sd, timeout):
             unknown_facts |= set(i.name+1 for i in item)
     # print(soft_clauses)
 
-    clues=set(i for i in range(len(bv_clues))),
-    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+    clues=set(i for i in range(len(bv_clues)))
+    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij)))
     trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
 
     I0 = set()
@@ -832,7 +832,7 @@ def experiment2_omus(sd, timeout):
 
     I_cnf = [frozenset({lit}) for lit in I0]
 
-    I_end = optimalPropagate(cnf, I0)
+    I_end = maxPropagate(cnf, I0)
 
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
     # print(len(explainable_facts))
@@ -856,7 +856,7 @@ def experiment2_omus(sd, timeout):
     timedout = False
 
     while len(explainable_facts - I) > 0:
-
+        print("Remaining facts:", len(explainable_facts - I))
         cost_best = None
         E_best, S_best, N_best = None, None, None
 
@@ -919,7 +919,7 @@ def experiment2_omus(sd, timeout):
 
     with open(outputDir +'Omus' + outputFile , 'w') as fp:
         json.dump(results, fp)
-
+    del o
 
 def experiment2_omusIncr(sd, timeout):
     
@@ -945,9 +945,9 @@ def experiment2_omusIncr(sd, timeout):
 
     # print(maxPropagate(hard_clauses + soft_clauses))
 
-    soft_weights = [100 for clause in bv_clues] + \
-              [60 for clause in bv_trans] + \
-              [60 for clause in bv_bij]
+    soft_weights = [20 for clause in bv_clues] + \
+              [5 for clause in bv_trans] + \
+              [5 for clause in bv_bij]
 
     unknown_facts = set()
     for rel in rels:
@@ -956,8 +956,8 @@ def experiment2_omusIncr(sd, timeout):
             unknown_facts |= set(i.name+1 for i in item)
     # print(soft_clauses)
 
-    clues=set(i for i in range(len(bv_clues))),
-    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+    clues=set(i for i in range(len(bv_clues)))
+    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij)))
     trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
 
     I0 = set()
@@ -969,7 +969,7 @@ def experiment2_omusIncr(sd, timeout):
 
     I_cnf = [frozenset({lit}) for lit in I0]
 
-    I_end = optimalPropagate(cnf, I0)
+    I_end = maxPropagate(cnf, I0)
 
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
 
@@ -992,7 +992,7 @@ def experiment2_omusIncr(sd, timeout):
     timedout = False
 
     while len(explainable_facts - I) > 0:
-
+        print("Remaining facts:", len(explainable_facts - I))
         cost_best = None
         E_best, S_best, N_best = None, None, None
 
@@ -1052,6 +1052,7 @@ def experiment2_omusIncr(sd, timeout):
     with open(outputDir +'OmusIncr' + outputFile , 'w') as fp:
         json.dump(results, fp)
 
+    del o
 def experiment2_omusPost(sd, timeout):
 
     results = {
@@ -1076,19 +1077,18 @@ def experiment2_omusPost(sd, timeout):
 
     # print(maxPropagate(hard_clauses + soft_clauses))
 
-    soft_weights = [100 for clause in bv_clues] + \
-              [60 for clause in bv_trans] + \
-              [60 for clause in bv_bij]
+    soft_weights = [20 for clause in bv_clues] + \
+              [5 for clause in bv_trans] + \
+              [5 for clause in bv_bij]
 
     unknown_facts = set()
     for rel in rels:
-        # print(rel.df)
         for item in rel.df.values:
             unknown_facts |= set(i.name+1 for i in item)
     # print(soft_clauses)
 
-    clues=set(i for i in range(len(bv_clues))),
-    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+    clues=set(i for i in range(len(bv_clues)))
+    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij)))
     trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
 
     I0 = set()
@@ -1100,7 +1100,7 @@ def experiment2_omusPost(sd, timeout):
 
     I_cnf = [frozenset({lit}) for lit in I0]
 
-    I_end = optimalPropagate(cnf, I0)
+    I_end = maxPropagate(cnf, I0)
 
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
 
@@ -1110,20 +1110,17 @@ def experiment2_omusPost(sd, timeout):
     o = OMUSBase(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
-        I=I_end,
-        soft_weights=soft_weights,
+        I=explainable_facts,
+        soft_weights=[w for w in soft_weights],
         parameters=parameters,  # default parameters
         logging=True,
-        reuse_mss=False,
-        clues=clues,
-        trans=trans,
-        bij=bij)
+        reuse_mss=False)
 
     tstart_o1 = time.time()
     timedout = False
 
     while len(explainable_facts - I) > 0:
-
+        print("Remaining facts:", len(explainable_facts - I))
         cost_best = None
         E_best, S_best, N_best = None, None, None
 
@@ -1131,6 +1128,7 @@ def experiment2_omusPost(sd, timeout):
         w_I = [1 for _ in I] + [1]
         t_start_lit = time.time()
         for i in explainable_facts - I:
+            print(i)
             remaining_time = timeout - (time.time() - tstart_o1)
             hs, explanation = o.omusIncr(I_cnf=I_cnf,
                                         explained_literal=i,
@@ -1139,6 +1137,7 @@ def experiment2_omusPost(sd, timeout):
                                         timeout=remaining_time)
 
             # DEBUG INFO
+            print(hs, explanation)
             if hs is None and time.time() - tstart_o1 > timeout:
                 timedout = True
                 break
@@ -1184,6 +1183,8 @@ def experiment2_omusPost(sd, timeout):
     with open(outputDir +'OmusPost' + outputFile , 'w') as fp:
         json.dump(results, fp)
 
+    del o
+
 def experiment2_omusIncrPost(sd, timeout):
  
     results = {
@@ -1219,8 +1220,8 @@ def experiment2_omusIncrPost(sd, timeout):
             unknown_facts |= set(i.name+1 for i in item)
     # print(soft_clauses)
 
-    clues=set(i for i in range(len(bv_clues))),
-    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+    clues=set(i for i in range(len(bv_clues)))
+    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij)))
     trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
 
     I0 = set()
@@ -1232,7 +1233,20 @@ def experiment2_omusIncrPost(sd, timeout):
 
     I_cnf = [frozenset({lit}) for lit in I0]
 
-    I_end = optimalPropagate(cnf, I0)
+    print("\n")
+    print("\n")
+    print("\n")
+    print("\n")
+    print("Starting propagate")
+    t1 = time.time()
+    I_end = maxPropagate(cnf, I0)
+    t2 = time.time()
+    print("Ending propagate", round(t2-t1))
+    print("\n")
+    print("\n")
+    print("\n")
+    print("\n")
+    # I_end = optimalPropagate(cnf, I0)
 
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
 
@@ -1255,6 +1269,7 @@ def experiment2_omusIncrPost(sd, timeout):
     timedout = False
 
     while len(explainable_facts - I) > 0:
+        print("Remaining facts:", len(explainable_facts - I))
 
         cost_best = None
         E_best, S_best, N_best = None, None, None
@@ -1329,6 +1344,8 @@ def experiment2_omusIncrPost(sd, timeout):
     with open(outputDir +'OmusIncrPost' + outputFile , 'w') as fp:
         json.dump(results, fp)
 
+    del o
+
 def experiment2_omusIncrPostWarm(sd, timeout):
 
     results = {
@@ -1364,8 +1381,8 @@ def experiment2_omusIncrPostWarm(sd, timeout):
             unknown_facts |= set(i.name+1 for i in item)
     # print(soft_clauses)
 
-    clues=set(i for i in range(len(bv_clues))),
-    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+    clues=set(i for i in range(len(bv_clues)))
+    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij)))
     trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
 
     I0 = set()
@@ -1377,7 +1394,7 @@ def experiment2_omusIncrPostWarm(sd, timeout):
 
     I_cnf = [frozenset({lit}) for lit in I0]
 
-    I_end = optimalPropagate(cnf, I0)
+    I_end = maxPropagate(cnf, I0)
 
     explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
 
@@ -1395,6 +1412,7 @@ def experiment2_omusIncrPostWarm(sd, timeout):
         clues=clues,
         trans=trans,
         bij=bij)
+
     best_costs = dict({i: 9999999 for i in explainable_facts - I})
     # add full theory without negation literal
     o.MSSes.add((o.fullMss, frozenset(I_end)))
@@ -1420,6 +1438,7 @@ def experiment2_omusIncrPostWarm(sd, timeout):
     tstart_o1 = time.time()
     timedout = False
     while len(explainable_facts - I) > 0:
+        print("Remaining facts:", len(explainable_facts - I))
         assert len(I) == len(I_cnf)
 
         cost_best = None
@@ -1435,7 +1454,7 @@ def experiment2_omusIncrPostWarm(sd, timeout):
                                             add_weights=w_I,
                                             best_cost=cost_best,
                                             timeout=remaining_time)
-
+            print(hs, explanation)
             if hs is None and time.time() - tstart_o1 > timeout:
                 timedout = True
                 break
@@ -1499,6 +1518,7 @@ def experiment2_omusIncrPostWarm(sd, timeout):
 
     with open(outputDir +'omusIncrPostWarm' + outputFile , 'w') as fp:
         json.dump(results, fp)
+    del o
 
 def experiment2_omusConstr(sd, timeout):
 
@@ -1570,6 +1590,7 @@ def experiment2_omusConstr(sd, timeout):
 
     total_exec_start = time.time()
     while len(explainable_facts - I) > 0:
+        print("Remaining facts:", len(explainable_facts - I))
         t_start_lit = time.time()
         remaining_time = timeout - (time.time() - total_exec_start)
         hs, explanation = o.omusConstr(do_incremental=False, greedy=False, timeout=remaining_time)
@@ -1700,6 +1721,7 @@ def experiment2_omusConstrWarm(sd, timeout):
 
     total_exec_start = time.time()
     while len(explainable_facts - I) > 0:
+        print("Remaining facts:", len(explainable_facts - I))
         t_start_lit = time.time()
         remaining_time = timeout - (time.time() - total_exec_start)
         hs, explanation = o.omusConstr(do_incremental=False, greedy=False, timeout=remaining_time)
@@ -1813,6 +1835,7 @@ def experiment2_OmusConstrIncr(sd, timeout):
 
     total_exec_start = time.time()
     while len(explainable_facts - I) > 0:
+        print("Remaining facts:", len(explainable_facts - I))
         t_start_lit = time.time()
         remaining_time = timeout - (time.time() - total_exec_start)
         hs, explanation = o.omusConstr(do_incremental=True, greedy=True, timeout=remaining_time)
@@ -1943,6 +1966,7 @@ def experiment2_OmusConstrIncrWarm(sd, timeout):
 
     total_exec_start = time.time()
     while len(explainable_facts - I) > 0:
+        print("Remaining facts:", len(explainable_facts - I))
         t_start_lit = time.time()
         remaining_time = timeout - (time.time() - total_exec_start)
         hs, explanation = o.omusConstr(do_incremental=True, greedy=True, timeout=remaining_time)
@@ -2063,6 +2087,7 @@ def experiment3(sd, timeout):
 
     t_start_problem = time.time()
     while len(explainable_facts - I) > 0:
+        print("Remaining facts:", len(explainable_facts - I))
         hs, explanation = o.omusConstr(do_incremental=False, greedy=False)
 
         # explaining facts
@@ -2157,29 +2182,29 @@ def experiment3(sd, timeout):
 
 def experiment2(sd, timeout):
 
-    print("Starting experiment2_omusConstrWarm")
-    experiment2_omusConstrWarm(sd, timeout=timeout)
-    print("Ending experiment2_omusConstrWarm")
+    # print("Starting experiment2_omusConstrWarm")
+    # experiment2_omusConstrWarm(sd, timeout=timeout)
+    # print("Ending experiment2_omusConstrWarm")
 
-    print("Starting omusConstr")
-    experiment2_omusConstr(sd, timeout=timeout)
-    print("Ending omusConstr")
+    # print("Starting omusConstr")
+    # experiment2_omusConstr(sd, timeout=timeout)
+    # print("Ending omusConstr")
 
-    print("Starting experiment2_OmusConstrIncr")
-    experiment2_OmusConstrIncr(sd, timeout=timeout)
-    print("Ending experiment2_OmusConstrIncr")
+    # print("Starting experiment2_OmusConstrIncr")
+    # experiment2_OmusConstrIncr(sd, timeout=timeout)
+    # print("Ending experiment2_OmusConstrIncr")
 
-    print("Starting experiment2_OmusConstrIncrWarm")
-    experiment2_OmusConstrIncrWarm(sd, timeout=timeout)
-    print("Ending experiment2_OmusConstrIncrWarm")
+    # print("Starting experiment2_OmusConstrIncrWarm")
+    # experiment2_OmusConstrIncrWarm(sd, timeout=timeout)
+    # print("Ending experiment2_OmusConstrIncrWarm")
+    print("Starting OMUSIncrPost")
+    experiment2_omusIncrPost(sd, timeout=timeout)
+    print("Ending OMUSIncrPost")
 
     print("Starting OMUSIncrPostWarm")
     experiment2_omusIncrPostWarm(sd, timeout=timeout)
     print("Ending OMUSIncrPostWarm")
 
-    print("Starting OMUSIncrPost")
-    experiment2_omusIncrPost(sd, timeout=timeout)
-    print("Ending OMUSIncrPost")
     print("Starting OMUSIncr")
     experiment2_omusIncr(sd, timeout=timeout)
     print("Ending OMUSIncr")
@@ -2196,8 +2221,9 @@ def main():
     sd = datetime.now()
     random.seed(sd)
     # experiment1(sd)
-    experiment2(sd, timeout=1*MINUTES)
-    # experiment3(sd, timeout=3*MINUTES)
+    # experiment2(sd, timeout=2*HOURS)
+    experiment2(sd, timeout=1*HOURS)
+    experiment3(sd, timeout=None)
 
 
 if __name__ == "__main__":

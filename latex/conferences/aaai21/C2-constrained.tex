@@ -13,7 +13,7 @@ $         I_{\mathit{end}} = \{ \lnot p, q, r\}.
 $. 
 In that case, 
 \[\formulag\cup \lnot I_{\mathit{end}} = \{p\lor q, \lnot p \lor r, \lnot p \lor \lnot r, \lnot q\lor r, \lnot p \lor q , p,\lnot q,\lnot r \}\]
-has several cardinality-minimal OMUSs, for instance 
+has several cardinality-minimal OUSs, for instance 
 \begin{align*}
 X_1 &=    \{\lnot p \lor r, \lnot p \lor \lnot r, p\}\text{ and}\\
 X_2 &= \{\lnot p \lor q ,  p, \lnot q\}.
@@ -26,13 +26,13 @@ Instead, we would be interested in searching MUSs that are \emph{optimal} among 
 Phrasing this in a generic setting results in the following definition.
 
 \begin{definition}
-    If $\fall$ is a formula, $f:2^{\fall} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\fall}\to \{\ltrue,\lfalse\}$, then we call a set $U\subseteq \fall$ a \emph{$p$-constrained $f$-OMUS} ($(p,f)$-OMUS) if \begin{itemize}                                                                                                                                                                                                                         
+    If $\fall$ is a formula, $f:2^{\fall} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\fall}\to \{\ltrue,\lfalse\}$, then we call a set $U\subseteq \fall$ a \emph{$p$-constrained $f$-OUS} ($(p,f)$-OUS) if \begin{itemize}                                                                                                                                                                                                                         
     \item $U$ is unsatisfiable,
     \item $p(U)$ is true
     \item for all other $U'\subseteq \fall$ with $p(U')=\ltrue$, it holds that $f(U')\geq f(U)$.                                                                                                                                                                                                                         \end{itemize}
 \end{definition}
 
-The problem at hand is thus to compute a $(p,f)$-OMUS of a given formula. 
+The problem at hand is thus to compute a $(p,f)$-OUS of a given formula. 
 To tackle this challenge, we propose a modification of \cref{alg:omus}, as described in \cref{alg:comus}. 
 As can be seen, the condition $p$ is simply passed to the procedure \cohs, which, in contrast to \ohs generates a hitting set that is optimal \emph{among the hitting sets satisfying $p$}. Correctness of the algorithm now follows from the fact that -- as before -- all sets added to \setstohit are correction subsets (and that every MUS must thus hit all sets in \setstohit) and \cref{prop:K2}, which guarantees that when the algorithm returns $\F'$, a good solution is indeed found.  
 
@@ -45,7 +45,7 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
     % \tcp{\small set with all unique clauses from hitting set}
 %     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-    % \tcp{IF UNSAT, $hs$ is the OMUS }
+    % \tcp{IF UNSAT, $hs$ is the OUS }
     \If{ $\lnot \sat(\F')$}{
       \Return{$\F'$} \;
     }
@@ -59,33 +59,33 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
 
 \begin{proposition}\label{prop:K2}
   Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 
-  If $\m{U}$ is a hitting set of \m{H} that is $f$-optimal among the hitting sets of \m{H} satisfying a predicate $p$, and  $\m{U}$ is unsatisfiable, then $\m{U}$ is a $(p,f)$-OMUS of \formula. 
+  If $\m{U}$ is a hitting set of \m{H} that is $f$-optimal among the hitting sets of \m{H} satisfying a predicate $p$, and  $\m{U}$ is unsatisfiable, then $\m{U}$ is a $(p,f)$-OUS of \formula. 
 \end{proposition}
 
 Now, since the search for optimal hitting sets is --- in implicit hitting set algorithms --- usually done with a MIP solver, in practice only predicates $p$ that can easily be encoded in MIP are useful. In such cases, we can directly use the MIP solver to implement \cohs as well. 
 
 \paragraph{Application to Explanations}
 To apply this idea to the context of explanations, we note that at each step, the current interpretation, will be fixed. 
-At each step, we are looking for an OMUS that contains \emph{exactly one} negation of a derivable literal. 
+At each step, we are looking for an OUS that contains \emph{exactly one} negation of a derivable literal. 
 Such an exactly-one constraint is easily expressible in MIP.
-Furthermore, also the ``subtheory constraint'', as introduced for incremental MUS solving can be expressed in MIP. Namely, in \cref{sec:incremental}, we assumed that each OMUS call would be done given a subtheory of the original theory. However, constraints of the form ``the OMUS should be a subset of the given set \formula'' are easily expressible in MIP as well. 
-As such, the idea of constrained OMUS computation is actually more general than the formalization of incremental OMUS. 
+Furthermore, also the ``subtheory constraint'', as introduced for incremental MUS solving can be expressed in MIP. Namely, in \cref{sec:incremental}, we assumed that each OUS call would be done given a subtheory of the original theory. However, constraints of the form ``the OUS should be a subset of the given set \formula'' are easily expressible in MIP as well. 
+As such, the idea of constrained OUS computation is actually more general than the formalization of incremental OUS. 
 
 
 \paragraph{Using Constraints to Encode Domain Knowledge}
-These constraints on OMUSs can not only be used to restrict the set of solutions we are interested in, but also to improve the solver performance by encoding domain knowledge.
-Indeed, if we know that all ``good'' OMUSs will satisfy certain constraints, or if we know that it suffices to search for OMUSs satisfying certain constraints (because each OMUS can easily be extended to one such OMUS),  we can also encode that knowledge in $p$, thereby restricting the possible options of the hitting set solver, aiming to improve overall performance of the algorithm. 
+These constraints on OUSs can not only be used to restrict the set of solutions we are interested in, but also to improve the solver performance by encoding domain knowledge.
+Indeed, if we know that all ``good'' OUSs will satisfy certain constraints, or if we know that it suffices to search for OUSs satisfying certain constraints (because each OUS can easily be extended to one such OUS),  we can also encode that knowledge in $p$, thereby restricting the possible options of the hitting set solver, aiming to improve overall performance of the algorithm. 
 
 In the explanation application, we encountered this phenomenon as follows. 
 The clues to be used in explanations were high-level (first-order) constraints. They were translated into clauses, using among other, a Tseitin transformation.
 Hence, in the end the transformation of a single high-level clue consists of several clauses, of which some are definitions of newly introduced variables. 
-Now, the associated cost function was only concerned with the issue ``\emph{was a certain clue used or not?}'', which translates at the lower level to ``\emph{does the OMUS contain a clause from the translation of the clue?}''.
-Using such a cost function means that the compute the cost of an OMUS, it does not matter if a single, or all all clauses corresponding to a given clue are used. As such, we might as well include all of them. This knowledge can easily be encoded in $p$ as well. 
+Now, the associated cost function was only concerned with the issue ``\emph{was a certain clue used or not?}'', which translates at the lower level to ``\emph{does the OUS contain a clause from the translation of the clue?}''.
+Using such a cost function means that the compute the cost of an OUS, it does not matter if a single, or all all clauses corresponding to a given clue are used. As such, we might as well include all of them. This knowledge can easily be encoded in $p$ as well. 
 
 An alternative view on the same property is that we can \emph{reify} the high level constraint by considering a Tseitin variable defining satisfaction of the entire constraint. 
-We can then to $p$ add the property that all Tseitin definitions are \emph{hard constraints}, in the sense that they always have to be included in any OMUS (and thus hitting set), while only the truth/falsity of the single Tseitin variable is considered to be a clause that can be enabled/disabled by the hitting set algorithm. 
+We can then to $p$ add the property that all Tseitin definitions are \emph{hard constraints}, in the sense that they always have to be included in any OUS (and thus hitting set), while only the truth/falsity of the single Tseitin variable is considered to be a clause that can be enabled/disabled by the hitting set algorithm. 
 This variable then represent whether or not the high level constraint is active.
-It is easy to see that there is a one to one correspondence between the OMUSs produced by the two approaches. In our implementation, we opted for the latter because of its simplicity. 
+It is easy to see that there is a one to one correspondence between the OUSs produced by the two approaches. In our implementation, we opted for the latter because of its simplicity. 
 
 
  

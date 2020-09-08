@@ -2,35 +2,47 @@
 
 % Research
 
-\todo{The intro should be updated to reflect our new contributions: incremental and constrained OMUS}
+% \todo{The intro should be updated to reflect our new contributions: incremental and constrained OMUS}
 
-In recent research, a novel method for explaining the inferences made by constraint satisfaction solver was developed \cite{ecai/BogaertsGCG20}. 
+In recent research, a novel method for explaining the inferences made by constraint satisfaction solvers was developed \cite{ecai/BogaertsGCG20}. 
 While the techniques were developed for explaining satisfiable constraint satisfaction problems, the developed algorithms relied heavily on calls for so-called \emph{Minimal Unsatisfiable Subsets} (MUS), exploiting a one-to-one correspondence between so-called non-redundant explanations and MUSs. 
-The algorithm developed by \citet{ecai/BogaertsGCG20} has two weaknesses: first of all, it provides no guarantees about the quality of the produced explanations due to internally computing $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the quality of an explanations step. Secondly, it suffers from performance problems: the lack of optimality is partly overcome by replacing a potential single call for a cost-optimal MUS by multiple calls, but this very high number of MUS calls causes that even for simple puzzles for which the unique solution can be found in a fraction of a second, the explanation generation process takes several hours. 
+The algorithm developed by \citet{ecai/BogaertsGCG20} has two weaknesses: first of all, it provides no guarantees about the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the quality of an explanations step (as defined in that work). 
+Secondly, it suffers from performance problems: the lack of optimality is partly overcome by replacing a potential single call for a cost-optimal unsatisfiable subset by multiple calls, but this very high number of MUS calls causes that even for simple puzzles for which the unique solution can be found in a fraction of a second, the explanation generation process takes several hours. 
 
 
-Motivated by these observations, we develop algorithms for MUS optimization (i.e., for computing cost-optimal MUSs) given some cost function. The algorithm we develop take inspiration from 
-hitting set--based %The en-dash is on purpose! 
-algorithms to compute cardinality-minimal MUSs \cite{ignatiev2015smallest} and for MAXSAT solving \cite{davies}. 
+Motivated by these observations, we develop algorithms for unsatisfiable subset optimization (i.e., for computing cost-optimal unsatisfiable subsets, from now on called OUSs). The algorithms we develop take inspiration from 
+\hitsetbased algorithms to compute cardinality-minimal MUSs \cite{ignatiev2015smallest} and for MAXSAT solving \cite{davies}. 
 
-Furthermore, given the fact that a single call for generation of an explanation sequence internally employs several calls OMUS calls for each explanation step, whit all OMUS calls starting from approximately the same theory, we develop \emph{incremental} algorithms that allow reusing as many results as possible from earlier calls, so as to improve the overall runtime. 
+Furthermore, given the fact that a single call for generation of an explanation sequence internally employs several calls OUS calls for each explanation step, with all OUS calls using approximately the same theory, we develop \emph{incremental} algorithms that allow reusing as many results as possible from earlier calls, so as to improve the overall runtime. 
 
-We implemented these ideas in the cppy framework \cite{cppy}  and experimentally validate them on the puzzles of \citet{ecai/BogaertsGCG20} as well as on ... 
-\todo{To be filled in later}
-Our experimental results indicate that
+Next, we take this idea even further: we show that many OUS calls can be combined into a single call that searches for an \emph{optimal unsatisfiable subset under constraints}, where the constraints are meta-level constraints that specify which types of subsets are deemed acceptable. 
+We show that minimal modifications to the the original algorithm indeed yield a solution to find such \emph{constrained optimal unsatisfiable subsets}. 
+% Next, we develop, called \emph{unsatis
+
+\todo{Also say this?}
+Finally, we investigate how the ideas of \citet{davies} that were originally developed for \hitsetbased algorithms for solving MAX-SAT can be generalized to the case of constrained OUS generation. 
+
+We implemented these ideas in the \call{cppy} framework \cite{cppy}  and experimentally validate them on some puzzles of \citet{ecai/BogaertsGCG20} as well as on CNF problems from SOMEWHERE.
+Our experimental results confirm that 
 \begin{itemize}
-  \item confirm Davies's observations 
-  \item show that incrementality is of crucial importance for the explanation generation task
-  \item ... 
+  \item The quality of the explanation sequence improves compared to the algorithm of \citet{ecai/BogaertsGCG20}. 
+  \item Furthermore, significant speed-ups in run-time are obtained for the explanation-producing loop. 
+  \item Both of our extensions (incremental, and constraint OUS generation) are instrumental in achieving this speed-up. 
+  \item \todo{ confirm Davies's observations ???}
 \end{itemize}
-... \todo{To be filled in later} 
+% the validity of incremental, as well as constrained generation of optimal 
+
+
+
+
 
 Summarized, the main contributions of our paper are:
 \begin{itemize}
-  \item We generalize the algorithm of \citet{} to allow for arbitrary \emph{monotonic} (with respect to set inclusion) optimization functions
-  \item We extend by translating techniques developed for maxsat \cite{davies} and exploiting them for MUS search
-  \item We develop techniques for reusing parts of the computations of an OMUS call in future OMUS calls, thereby essentially developing the first incremental OMUS solver. 
-  \item We experimentally validate our algorithms in the explanation generation context of \citet{}
+  \item We generalize the algorithm of \citet{ignatiev2015smallest} to allow for arbitrary  optimization functions, resulting in the first algorithm for OUS generation.
+  \item We develop an \emph{incremental} version of our OUS algorithm. 
+  \item We extend the OUS problem by allowing meta-level constraints on the unsatisfiable subsets and show how our algorithm generalizes to take those constraints into account. 
+  \item We translate MAX-SAT solving techniques to the constrained OUS setting.
+  \item We experimentally validate our algorithms in the explanation generation context of \citet{ecai/BogaertsGCG20}, thereby showing improvements both in terms of the quality of the developed explanation and in the time required to find explanation sequences.
 \end{itemize}
 
 
@@ -86,5 +98,9 @@ Contributions :
 }
 
 
-The rest of this paper is structured as follows. We first discuss related work in \cref{sec:related} and background on the hitting set duality in \cref{sec:background}. Afterwards, we discuss our extensions
+The rest of this paper is structured as follows. We first discuss related work in \cref{sec:related} and background on the hitting set duality in \cref{sec:background}. \cref{sec:omus} contains our algorithm for OUS generation and \cref{sec:explain} shows how this can be used in a simplification of the explanation algorithm of \citet{ecai/BogaertsGCG20}. 
+Sections \ref{sec:incremental} and \ref{sec:constrained} contain our two conceptual extensions to the OUS problem and algorithm, namely incrementality and constrainedness respectively. 
+\todo{do we?} In \cref{sec:davies}, we discuss how the ideas of \citet{davies} can be transferred to the constrained OUS setting. 
+All our conceptual and algorithmic extensions are experimentally validated in \cref{sec:experiments} and we conclude in \cref{sec:conclusion}.
+
 

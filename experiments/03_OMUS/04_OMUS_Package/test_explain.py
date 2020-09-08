@@ -772,7 +772,6 @@ def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'},
     soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
 
     # print(maxPropagate(hard_clauses + soft_clauses))
-
     weights = [20 for clause in bv_clues] + \
               [5 for clause in bv_trans] + \
               [5 for clause in bv_bij]

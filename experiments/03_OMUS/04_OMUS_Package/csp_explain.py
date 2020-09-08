@@ -114,19 +114,6 @@ def cost(explanation, weights, clues, trans, bij):
     return basecost(constraints, weights, clues, trans, bij) + len(facts) + len(constraints)
 
 
-# def propagate(cnf, I=list()):
-#     lits = set(lit for ci in cnf for lit in ci) | set(-lit for ci in cnf for lit in ci)
-
-#     with Solver() as s:
-#         s.append_formula(cnf, no_return=False)
-#         s.solve(assumptions=I)
-#         model = set(s.get_model())
-
-#     cnf_lits = lits.intersection(model)
-
-#     return cnf_lits
-
-
 def optimalPropagate(cnf, I=None):
     # m1 = [1, 2, 3, ....]
     # m2 = [ -1, 2, 3, ....] => [2, 3]
@@ -348,15 +335,15 @@ def omusExplain(
                 cost_best = cost_explanation
 
         # post-processing the MSSes
-        # keep = set()
-        # for (m1, m1_model) in o.MSSes:
-        #     keep_m1 = True
-        #     for (m2, _) in o.MSSes:
-        #         if m1 != m2 and m1 < m2:
-        #             keep_m1 = False
-        #     if keep_m1:
-        #         keep.add((m1, m1_model))
-        # o.MSSes = keep
+        keep = set()
+        for (m1, m1_model) in o.MSSes:
+            keep_m1 = True
+            for (m2, _) in o.MSSes:
+                if m1 != m2 and m1 < m2:
+                    keep_m1 = False
+            if keep_m1:
+                keep.add((m1, m1_model))
+        o.MSSes = keep
 
             # @TIAS: printing explanations as they get better
             # print(f"\tFacts: {E_i} Clause: {S_i} => {N_i} (", cost_explanation, ")")
@@ -459,14 +446,9 @@ def omusExplain2(
 
     # total_exec_start = time.time()
     while len(explainable_facts - I) > 0:
-        # print("Left to explain:", len(explainable_facts - I))
-        # print("Remaining explanations=", explainable_facts - I)
         t_start = time.time()
         hs, explanation = o.omusConstr()
         print("OMUS=", round(time.time()-t_start , 3))
-        # print("got hs:",hs,explanation)
-        # print("Hs=\t", hs)
-        # print("explanation=\t", explanation)
 
         # explaining facts
         E_best = [ci for ci in explanation if ci in I_cnf]
@@ -487,32 +469,16 @@ def omusExplain2(
 
         expl_seq.append((E_best, S_best, N_best))
 
-
-        # print("I=",I)
-        # print("I_cnf=",I_cnf)
-        # print("E_best=",E_best)
-        # print("S_best=",S_best)
-        # print("N_best=",N_best)
-        # print("New_info=",New_info)
-        # print("cost=",len(E_best)+20*len(S_best))
-        # print(E_best, S_best, N_best, New_info)
-        # print(o.obj_weights)
-
         # @TIAS: printing explanations
         print(f"\nOptimal explanation \t\t {E_best} /\\ {S_best} => {N_best}",round(time.time()-t_start, 3))
 
 
         # C1..4 = 20, C11=1, C12..13 = inf, C21=inf, C22..23 = 0
-        # print(o.obj_weights)
         o.updateObjWeightsInterpret(I)
-        # print(o.obj_weights)
 
     assert all(False if -lit in I or lit not in I_end else True for lit in I)
 
-    # total_exec_start = time.time()
     print("Found",len(expl_seq),"steps in time: ",time.time()-t_begin)
-
-    # o.export_results('results/')
 
     return o, expl_seq
 

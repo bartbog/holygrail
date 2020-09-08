@@ -84,7 +84,7 @@ def experiment1(sd):
     outputFile = ".json"
 
     # parameters
-    timeout = 15 * MINUTES
+    timeout = 10 * MINUTES
     n_literals = 50
     n_instances = 10
 
@@ -2182,21 +2182,21 @@ def experiment3(sd, timeout):
 
 def experiment2(sd, timeout):
 
-    # print("Starting experiment2_omusConstrWarm")
-    # experiment2_omusConstrWarm(sd, timeout=timeout)
-    # print("Ending experiment2_omusConstrWarm")
+    print("Starting experiment2_omusConstrWarm")
+    experiment2_omusConstrWarm(sd, timeout=timeout)
+    print("Ending experiment2_omusConstrWarm")
 
-    # print("Starting omusConstr")
-    # experiment2_omusConstr(sd, timeout=timeout)
-    # print("Ending omusConstr")
+    print("Starting omusConstr")
+    experiment2_omusConstr(sd, timeout=timeout)
+    print("Ending omusConstr")
 
-    # print("Starting experiment2_OmusConstrIncr")
-    # experiment2_OmusConstrIncr(sd, timeout=timeout)
-    # print("Ending experiment2_OmusConstrIncr")
+    print("Starting experiment2_OmusConstrIncr")
+    experiment2_OmusConstrIncr(sd, timeout=timeout)
+    print("Ending experiment2_OmusConstrIncr")
 
-    # print("Starting experiment2_OmusConstrIncrWarm")
-    # experiment2_OmusConstrIncrWarm(sd, timeout=timeout)
-    # print("Ending experiment2_OmusConstrIncrWarm")
+    print("Starting experiment2_OmusConstrIncrWarm")
+    experiment2_OmusConstrIncrWarm(sd, timeout=timeout)
+    print("Ending experiment2_OmusConstrIncrWarm")
     print("Starting OMUSIncrPost")
     experiment2_omusIncrPost(sd, timeout=timeout)
     print("Ending OMUSIncrPost")
@@ -2221,9 +2221,8 @@ def main():
     sd = datetime.now()
     random.seed(sd)
     # experiment1(sd)
-    # experiment2(sd, timeout=2*HOURS)
     experiment2(sd, timeout=1*HOURS)
-    experiment3(sd, timeout=None)
+    # experiment3(sd, timeout=None)
 
 
 if __name__ == "__main__":

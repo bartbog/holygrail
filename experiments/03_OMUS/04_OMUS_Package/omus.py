@@ -2861,23 +2861,29 @@ class OMUSBase(object):
         # print("OPT")
         while(True):
             if (time.time() -t_start_omus) > timeout:
+                if satsolver is not None:
+                    satsolver.delete()
                 self.hs_sizes.append(len(H))
                 self.optimal_steps.append(self.steps.optimal - n_optimal)
                 self.greedy_steps.append(self.steps.greedy - n_greedy)
                 self.incremental_steps.append(self.steps.incremental - n_incremental)
                 self.sat_steps.append(self.steps.sat - n_sat)
                 self.grow_steps.append(self.steps.grow - n_grow)
+                gurobi_model.dispose()
                 return None, my_cost
             # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True and postponed_omus):
                 # print(hs)
                 if (time.time() -t_start_omus) > timeout:
+                    if satsolver is not None:
+                        satsolver.delete()
                     self.hs_sizes.append(len(H))
                     self.optimal_steps.append(self.steps.optimal - n_optimal)
                     self.greedy_steps.append(self.steps.greedy - n_greedy)
                     self.incremental_steps.append(self.steps.incremental - n_incremental)
                     self.sat_steps.append(self.steps.sat - n_sat)
                     self.grow_steps.append(self.steps.grow - n_grow)
+                    gurobi_model.dispose()
                     return None, my_cost
                 # print("Starting with optimal!")
                 # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
@@ -2928,6 +2934,8 @@ class OMUSBase(object):
                         satsolver.delete()
                         continue
                     elif mode == MODE_GREEDY:
+                        if satsolver is not None:
+                            satsolver.delete()
                         mode = MODE_OPT
                         break
                     # break # skip grow
@@ -2963,6 +2971,7 @@ class OMUSBase(object):
                 H.append(C)
 
                 if hs_limit is not None and len(H) > hs_limit:
+                    gurobi_model.dispose()
                     self.hs_sizes.append(len(H))
                     self.optimal_steps.append(self.steps.optimal - n_optimal)
                     self.greedy_steps.append(self.steps.greedy - n_greedy)
@@ -2989,12 +2998,15 @@ class OMUSBase(object):
             my_cost = self.cost((E_i, S_i))
             # print(my_cost, "vs", best_cost)
             if best_cost is not None and my_cost >= best_cost:
+                if satsolver is not None:
+                    satsolver.delete()
                 self.hs_sizes.append(len(H))
                 self.optimal_steps.append(self.steps.optimal - n_optimal)
                 self.greedy_steps.append(self.steps.greedy - n_greedy)
                 self.incremental_steps.append(self.steps.incremental - n_incremental)
                 self.sat_steps.append(self.steps.sat - n_sat)
                 self.grow_steps.append(self.steps.grow - n_grow)
+                gurobi_model.dispose()
                 return None, my_cost
 
             # ------ Sat check
@@ -3003,7 +3015,8 @@ class OMUSBase(object):
             if not sat:
                 #
                 gurobi_model.dispose()
-
+                if satsolver is not None:
+                    satsolver.delete()
                 # Benchmark info
                 if self.reuse_mss:
                     self.MSS_sizes.append(len(self.MSSes) - n_msses)
@@ -3016,6 +3029,7 @@ class OMUSBase(object):
                 self.sat_steps.append(self.steps.sat - n_sat)
                 self.grow_steps.append(self.steps.grow - n_grow)
                 self.hs_sizes.append(len(H))
+                gurobi_model.dispose()
                 #print("\n")
                 return hs, [self.clauses[idx] for idx in hs]
 
@@ -3047,8 +3061,13 @@ class OMUSBase(object):
             H.append(C)
             if postponed_omus:
                 mode = MODE_INCR
+            if satsolver is not None:
+                satsolver.delete()
 
             if hs_limit is not None and len(H) > hs_limit:
+                gurobi_model.dispose()
+                if satsolver is not None:
+                    satsolver.delete()
                 self.hs_sizes.append(len(H))
                 self.optimal_steps.append(self.steps.optimal - n_optimal)
                 self.greedy_steps.append(self.steps.greedy - n_greedy)

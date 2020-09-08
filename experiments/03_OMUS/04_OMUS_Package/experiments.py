@@ -784,7 +784,25 @@ def experiment1(sd):
             json.dump(results[filename]['OmusIncrPostWarm'], fp)
 
 
-def experiment2(sd):
+def experiment2_omus(sd, timeout):
+    pass
+def experiment2_omusIncr(sd, timeout):
+    pass
+def experiment2_omusPost(sd, timeout):
+    pass
+def experiment2_omusIncrPost(sd, timeout):
+    pass
+def experiment2_omusIncrPostWarm(sd, timeout):
+    pass
+def experiment2_omusConstr(sd, timeout):
+    pass
+def experiment2_OmusConstrIncr(sd, timeout):
+    pass
+def experiment2_OmusConstrIncrWarm(sd, timeout):
+    pass
+
+# def experiment3(sd, timeout):
+    
 
 
 
@@ -800,117 +818,3 @@ if __name__ == "__main__":
     main()
 
 
-def experiment3():
-    parameters = {'extension': 'maxsat', 'output': 'log.json'}
-
-    # model constraints
-    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
-
-    # transforming the clues to constraints
-    clues_cnf = cnf_to_pysat(to_cnf(clues))
-    bij_cnf = cnf_to_pysat(to_cnf(bij))
-    trans_cnf = cnf_to_pysat(to_cnf(trans))
-
-    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
-    soft_clauses = []
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
-
-    # print(maxPropagate(hard_clauses + soft_clauses))
-
-    weights = [20 for clause in bv_clues] + \
-              [5 for clause in bv_trans] + \
-              [5 for clause in bv_bij]
-
-    explainable_facts = set()
-
-    for rel in rels:
-        # print(rel.df)
-        for item in rel.df.values:
-            explainable_facts |= set(i.name+1 for i in item)
-
-    o, expl_seq = omusExplain(
-        hard_clauses=hard_clauses,
-        soft_clauses=soft_clauses,
-        soft_weights=weights,
-        parameters=parameters,
-        incremental=True,
-        reuse_mss=True,
-        unknown_facts=explainable_facts,
-        clues=set(i for i in range(len(bv_clues))),
-        bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
-        trans=set(i for i in range(len(bv_bij), len(
-            bv_clues)+len(bv_bij)+len(trans)))
-    )
-
-
-def experiment2():
-
-    parameters = {'extension': 'maxsat', 'output': 'log.json'}
-    # incremental = True
-    # reuse_mss = True
-
-    # model constraints
-    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
-
-    # transforming the clues to constraints
-    clues_cnf = cnf_to_pysat(to_cnf(clues))
-    bij_cnf = cnf_to_pysat(to_cnf(bij))
-    trans_cnf = cnf_to_pysat(to_cnf(trans))
-
-    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
-    soft_clauses = []
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
-
-    # print(maxPropagate(hard_clauses + soft_clauses))
-
-    weights = [20 for clause in bv_clues] + \
-              [5 for clause in bv_trans] + \
-              [5 for clause in bv_bij]
-
-    explainable_facts = set()
-
-    for rel in rels:
-        # print(rel.df)
-        for item in rel.df.values:
-            explainable_facts |= set(i.name+1 for i in item)
-
-    o, expl_seq = omusExplain(
-        hard_clauses=hard_clauses,
-        soft_clauses=soft_clauses,
-        soft_weights=weights,
-        parameters=parameters,
-        incremental=True,
-        reuse_mss=True,
-        unknown_facts=explainable_facts,
-        clues=set(i for i in range(len(bv_clues))),
-        bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
-        trans=set(i for i in range(len(bv_bij), len(
-            bv_clues)+len(bv_bij)+len(trans)))
-    )
-
-#     timeout = 5 * HOURS
-
-#     # setup origin puzzle
-#     origin_puzzle = ....
-
-#     # OMUS no improvements
-#     csp
-
-#     # OMUS postponing optimization
-#     csp-explain ....
-
-#     # OMUS incremental
-#     csp-explain ...
-
-#     # OMUS incremental + postponing optimization
-#     csp-explain ...
-
-#     # OMUS incremental + postponing optimization + warm start
-#     csp-explain ...
-
-# # def experiment3():
-# #     # running a whole explanation sequence!

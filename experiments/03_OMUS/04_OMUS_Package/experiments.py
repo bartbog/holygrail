@@ -785,33 +785,1419 @@ def experiment1(sd):
 
 
 def experiment2_omus(sd, timeout):
-    pass
+
+    results = {
+        'filename': 'origin',
+        'extension':'maxsat',
+        'exec_times':[],
+        'setup':'omus'
+    }
+
+    parameters={'extension': 'maxsat','output': 'log.json'}
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+
+    soft_weights = [100 for clause in bv_clues] + \
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
+
+    unknown_facts = set()
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            unknown_facts |= set(i.name+1 for i in item)
+    # print(soft_clauses)
+
+    clues=set(i for i in range(len(bv_clues))),
+    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+    trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
+
+    I0 = set()
+    I = set()
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
+
+    # # TODO: match fact with table element from rels
+
+    I_cnf = [frozenset({lit}) for lit in I0]
+
+    I_end = optimalPropagate(cnf, I0)
+
+    explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+    # print(len(explainable_facts))
+
+    # explanation sequence
+    expl_seq = []
+
+    o = OMUSBase(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        I=I_end,
+        soft_weights=soft_weights,
+        parameters=parameters,  # default parameters
+        logging=True,
+        reuse_mss=False,
+        clues=clues,
+        trans=trans,
+        bij=bij)
+
+    tstart_o1 = time.time()
+    timedout = False
+
+    while len(explainable_facts - I) > 0:
+
+        cost_best = None
+        E_best, S_best, N_best = None, None, None
+
+        # existing facts + unit weight for negated literal
+        w_I = [1 for _ in I] + [1]
+        t_start_lit = time.time()
+        for i in explainable_facts - I:
+            remaining_time = timeout - (time.time() - tstart_o1)
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        postponed_omus=False,
+                                        timeout=remaining_time)
+            # DEBUG INFO
+            if hs is None and time.time() - tstart_o1 > timeout:
+                timedout = True
+                break
+            # explaining facts
+            E_i = [ci for ci in explanation if ci in I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
+            S_hs = [soft_clauses.index(si) for si in S_i]
+
+            # new fact
+            N_i = {i}
+
+            cost_explanation = cost((E_i, S_hs), soft_weights, clues, trans, bij)
+
+            # print(f"\n\t\tCandidate explanation for {i} \t\t {E_i} /\\ {S_i} => {N_i} ({cost_explanation})\n")
+
+            if cost_best is None or cost_explanation < cost_best:
+                E_best, S_best, N_best = E_i, S_i, N_i
+                cost_best = cost_explanation
+
+        if timedout:
+            results['exec_times'].append('timeout')
+            break
+        else:
+            t_end_lit = time.time()
+            results['exec_times'].append(round(t_end_lit-t_start_lit, 3))
+
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
+        N_best = New_info.intersection(explainable_facts) - I
+
+        # add new info
+        I = I | N_best
+        I_cnf += [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+
+
+
+    today = date.today().strftime("%Y_%m_%d")
+
+    outputDir = 'data/experiment2/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    with open(outputDir +'Omus' + outputFile , 'w') as fp:
+        json.dump(results, fp)
+
+
 def experiment2_omusIncr(sd, timeout):
-    pass
+    
+    results = {
+        'filename': 'origin',
+        'extension':'maxsat',
+        'exec_times':[],
+        'setup':'omusIncr'
+    }
+
+    parameters={'extension': 'maxsat','output': 'log.json'}
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+
+    soft_weights = [100 for clause in bv_clues] + \
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
+
+    unknown_facts = set()
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            unknown_facts |= set(i.name+1 for i in item)
+    # print(soft_clauses)
+
+    clues=set(i for i in range(len(bv_clues))),
+    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+    trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
+
+    I0 = set()
+    I = set()
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
+
+    # # TODO: match fact with table element from rels
+
+    I_cnf = [frozenset({lit}) for lit in I0]
+
+    I_end = optimalPropagate(cnf, I0)
+
+    explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+
+    # explanation sequence
+    expl_seq = []
+
+    o = OMUSBase(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        I=I_end,
+        soft_weights=soft_weights,
+        parameters=parameters,  # default parameters
+        logging=True,
+        reuse_mss=True,
+        clues=clues,
+        trans=trans,
+        bij=bij)
+
+    tstart_o1 = time.time()
+    timedout = False
+
+    while len(explainable_facts - I) > 0:
+
+        cost_best = None
+        E_best, S_best, N_best = None, None, None
+
+        # existing facts + unit weight for negated literal
+        w_I = [1 for _ in I] + [1]
+        t_start_lit = time.time()
+        for i in explainable_facts - I:
+            remaining_time = timeout - (time.time() - tstart_o1)
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        postponed_omus=False,
+                                        timeout=remaining_time)
+            # DEBUG INFO
+            if hs is None and time.time() - tstart_o1 > timeout:
+                timedout = True
+                break
+            # explaining facts
+            E_i = [ci for ci in explanation if ci in I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
+            S_hs = [soft_clauses.index(si) for si in S_i]
+
+            # new fact
+            N_i = {i}
+
+            cost_explanation = cost((E_i, S_hs), soft_weights, clues, trans, bij)
+
+            if cost_best is None or cost_explanation < cost_best:
+                E_best, S_best, N_best = E_i, S_i, N_i
+                cost_best = cost_explanation
+        if timedout:
+            results['exec_times'].append('timeout')
+            break
+        else:
+            t_end_lit = time.time()
+            results['exec_times'].append(round(t_end_lit-t_start_lit, 3))
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
+        N_best = New_info.intersection(explainable_facts) - I
+
+        # add new info
+        I = I | N_best
+        I_cnf += [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+
+
+
+    today = date.today().strftime("%Y_%m_%d")
+
+    outputDir = 'data/experiment2/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    with open(outputDir +'OmusIncr' + outputFile , 'w') as fp:
+        json.dump(results, fp)
+
 def experiment2_omusPost(sd, timeout):
-    pass
+
+    results = {
+        'filename': 'origin',
+        'extension':'maxsat',
+        'exec_times':[],
+        'setup':'omusPost'
+    }
+
+    parameters={'extension': 'maxsat','output': 'log.json'}
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+
+    soft_weights = [100 for clause in bv_clues] + \
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
+
+    unknown_facts = set()
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            unknown_facts |= set(i.name+1 for i in item)
+    # print(soft_clauses)
+
+    clues=set(i for i in range(len(bv_clues))),
+    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+    trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
+
+    I0 = set()
+    I = set()
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
+
+    # # TODO: match fact with table element from rels
+
+    I_cnf = [frozenset({lit}) for lit in I0]
+
+    I_end = optimalPropagate(cnf, I0)
+
+    explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+
+    # explanation sequence
+    expl_seq = []
+
+    o = OMUSBase(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        I=I_end,
+        soft_weights=soft_weights,
+        parameters=parameters,  # default parameters
+        logging=True,
+        reuse_mss=False,
+        clues=clues,
+        trans=trans,
+        bij=bij)
+
+    tstart_o1 = time.time()
+    timedout = False
+
+    while len(explainable_facts - I) > 0:
+
+        cost_best = None
+        E_best, S_best, N_best = None, None, None
+
+        # existing facts + unit weight for negated literal
+        w_I = [1 for _ in I] + [1]
+        t_start_lit = time.time()
+        for i in explainable_facts - I:
+            remaining_time = timeout - (time.time() - tstart_o1)
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        postponed_omus=True,
+                                        timeout=remaining_time)
+
+            # DEBUG INFO
+            if hs is None and time.time() - tstart_o1 > timeout:
+                timedout = True
+                break
+            # explaining facts
+            E_i = [ci for ci in explanation if ci in I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
+            S_hs = [soft_clauses.index(si) for si in S_i]
+
+            # new fact
+            N_i = {i}
+
+            cost_explanation = cost((E_i, S_hs), soft_weights, clues, trans, bij)
+
+            if cost_best is None or cost_explanation < cost_best:
+                E_best, S_best, N_best = E_i, S_i, N_i
+                cost_best = cost_explanation
+        if timedout:
+            results['exec_times'].append('timeout')
+            break
+        else:
+            t_end_lit = time.time()
+            results['exec_times'].append(round(t_end_lit-t_start_lit, 3))
+
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
+        N_best = New_info.intersection(explainable_facts) - I
+
+        # add new info
+        I = I | N_best
+        I_cnf += [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+
+
+    today = date.today().strftime("%Y_%m_%d")
+
+    outputDir = 'data/experiment2/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    with open(outputDir +'OmusPost' + outputFile , 'w') as fp:
+        json.dump(results, fp)
+
 def experiment2_omusIncrPost(sd, timeout):
-    pass
+ 
+    results = {
+        'filename': 'origin',
+        'extension':'maxsat',
+        'exec_times':[],
+        'setup':'omusIncrPost'
+    }
+
+    parameters={'extension': 'maxsat','output': 'log.json'}
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+
+    soft_weights = [100 for clause in bv_clues] + \
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
+
+    unknown_facts = set()
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            unknown_facts |= set(i.name+1 for i in item)
+    # print(soft_clauses)
+
+    clues=set(i for i in range(len(bv_clues))),
+    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+    trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
+
+    I0 = set()
+    I = set()
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
+
+    # # TODO: match fact with table element from rels
+
+    I_cnf = [frozenset({lit}) for lit in I0]
+
+    I_end = optimalPropagate(cnf, I0)
+
+    explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+
+    # explanation sequence
+    expl_seq = []
+
+    o = OMUSBase(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        I=I_end,
+        soft_weights=soft_weights,
+        parameters=parameters,  # default parameters
+        logging=True,
+        reuse_mss=True,
+        clues=clues,
+        trans=trans,
+        bij=bij)
+
+    tstart_o1 = time.time()
+    timedout = False
+
+    while len(explainable_facts - I) > 0:
+
+        cost_best = None
+        E_best, S_best, N_best = None, None, None
+
+        # existing facts + unit weight for negated literal
+        w_I = [1 for _ in I] + [1]
+        t_start_lit = time.time()
+        for i in explainable_facts - I:
+            remaining_time = timeout - (time.time() - tstart_o1)
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        postponed_omus=True,
+                                        timeout=remaining_time)
+
+            # DEBUG INFO
+            if hs is None and time.time() - tstart_o1 > timeout:
+                timedout = True
+                break
+            # explaining facts
+            E_i = [ci for ci in explanation if ci in I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
+            S_hs = [soft_clauses.index(si) for si in S_i]
+
+            # new fact
+            N_i = {i}
+
+            cost_explanation = cost((E_i, S_hs), soft_weights, clues, trans, bij)
+
+            if cost_best is None or cost_explanation < cost_best:
+                E_best, S_best, N_best = E_i, S_i, N_i
+                cost_best = cost_explanation
+
+        if timedout:
+            results['exec_times'].append('timeout')
+            break
+        else:
+            t_end_lit = time.time()
+            results['exec_times'].append(round(t_end_lit-t_start_lit, 3))
+
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
+        N_best = New_info.intersection(explainable_facts) - I
+
+        # add new info
+        I = I | N_best
+        I_cnf += [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+
+
+
+        # post-processing the MSSes
+        keep = set()
+        for (m1, m1_model) in o.MSSes:
+            keep_m1 = True
+            for (m2, _) in o.MSSes:
+                if m1 != m2 and m1 < m2:
+                    keep_m1 = False
+            if keep_m1:
+                keep.add((m1, m1_model))
+        o.MSSes = keep
+
+    today = date.today().strftime("%Y_%m_%d")
+
+    outputDir = 'data/experiment2/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    with open(outputDir +'OmusIncrPost' + outputFile , 'w') as fp:
+        json.dump(results, fp)
+
 def experiment2_omusIncrPostWarm(sd, timeout):
-    pass
+
+    results = {
+        'filename': 'origin',
+        'extension':'maxsat',
+        'exec_times':[],
+        'setup':'omusIncrPostWarm'
+    }
+
+    parameters={'extension': 'maxsat','output': 'log.json'}
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+
+    soft_weights = [100 for clause in bv_clues] + \
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
+
+    unknown_facts = set()
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            unknown_facts |= set(i.name+1 for i in item)
+    # print(soft_clauses)
+
+    clues=set(i for i in range(len(bv_clues))),
+    bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij))),
+    trans=set(i for i in range(len(bv_bij), len(bv_clues)+len(bv_bij)+len(trans)))
+
+    I0 = set()
+    I = set()
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
+
+    # # TODO: match fact with table element from rels
+
+    I_cnf = [frozenset({lit}) for lit in I0]
+
+    I_end = optimalPropagate(cnf, I0)
+
+    explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+
+    # explanation sequence
+    expl_seq = []
+
+    o = OMUSBase(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        I=I_end,
+        soft_weights=soft_weights,
+        parameters=parameters,  # default parameters
+        logging=True,
+        reuse_mss=True,
+        clues=clues,
+        trans=trans,
+        bij=bij)
+    best_costs = dict({i: 9999999 for i in explainable_facts - I})
+    # add full theory without negation literal
+    o.MSSes.add((o.fullMss, frozenset(I_end)))
+    base_F = set(range(len(o.soft_clauses)))
+
+    for i in explainable_facts - I:
+
+        F = base_F | set({o.softClauseIdxs[frozenset({-i})]})
+
+        # Only negation of literal inside
+        o.clauses = o.soft_clauses + [frozenset({-i})]
+        o.weights = o.soft_weights + [1]
+        # F_prime = last variable
+        F_prime = set({len(soft_clauses)})
+
+        MSS, MSS_Model = o.grow(F_prime, {-i})
+
+        # build MSS with correct indexes
+        mssIdxs = frozenset(o.softClauseIdxs[o.clauses[id]] for id in MSS)
+
+        o.MSSes.add((mssIdxs, frozenset(MSS_Model)))
+    
+    tstart_o1 = time.time()
+    timedout = False
+    while len(explainable_facts - I) > 0:
+        assert len(I) == len(I_cnf)
+
+        cost_best = None
+        E_best, S_best, N_best = None, None, None
+
+        # existing facts + unit weight for negated literal
+        w_I = [1 for _ in I] + [1]
+        t_start_lit = time.time()
+        for id, i in enumerate(sorted(explainable_facts - I, key=lambda i: best_costs[i])):
+            remaining_time = timeout - (time.time() - tstart_o1)
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                            explained_literal=i,
+                                            add_weights=w_I,
+                                            best_cost=cost_best,
+                                            timeout=remaining_time)
+
+            if hs is None and time.time() - tstart_o1 > timeout:
+                timedout = True
+                break
+            elif hs is None:
+                # HACK: store my_cost of this guy, for sorting next iter
+                best_costs[i] = 1000+explanation
+                continue
+
+            assert len(hs) > 0, "OMUS shoudl be non empty"
+
+            # explaining facts
+            E_i = [ci for ci in explanation if ci in I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            S_i = [ci for ci in explanation if ci in soft_clauses and ci not in E_i]
+            S_hs = [soft_clauses.index(si) for si in S_i]
+
+            # new fact
+            N_i = {i}
+
+            cost_explanation = cost((E_i, S_hs), soft_weights, clues, trans, bij)
+            best_costs[i] = min([cost_explanation, best_costs[i]])
+
+            if cost_best is None or cost_explanation < cost_best:
+                E_best, S_best, N_best = E_i, S_i, N_i
+                cost_best = cost_explanation
+
+        if timedout:
+            results['exec_times'].append('timeout')
+            break
+        else:
+            t_end_lit = time.time()
+            results['exec_times'].append(round(t_end_lit-t_start_lit, 3))
+
+        # post-processing the MSSes
+        keep = set()
+        for (m1, m1_model) in o.MSSes:
+            keep_m1 = True
+            for (m2, _) in o.MSSes:
+                if m1 != m2 and m1 < m2:
+                    keep_m1 = False
+            if keep_m1:
+                keep.add((m1, m1_model))
+        o.MSSes = keep
+
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I)
+        N_best = New_info.intersection(explainable_facts) - I
+
+        # add new info
+        I = I | N_best
+        I_cnf += [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+
+    today = date.today().strftime("%Y_%m_%d")
+
+    outputDir = 'data/experiment2/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    with open(outputDir +'omusIncrPostWarm' + outputFile , 'w') as fp:
+        json.dump(results, fp)
+
 def experiment2_omusConstr(sd, timeout):
-    pass
+
+    results = {
+        'filename': 'origin',
+        'extension':'maxsat',
+        'exec_times':[],
+        'setup':'omusConstr'
+    }
+
+    parameters={'extension': 'maxsat','output': 'log.json'} 
+
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
+    # model constraints
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+    soft_weights = [100 for clause in bv_clues] + \
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
+
+    unknown_facts = set()
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            unknown_facts |= set(i.name+1 for i in item)
+    # print(soft_clauses)
+
+    # initial interpretation
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
+    else:
+        raise Exception("omusExplain2: hard and soft clauses can not be None")
+
+    I0 = set()
+    I = I0
+
+    I_cnf = [frozenset({lit}) for lit in I0]
+
+    all_unk = unknown_facts | set(-l for l in unknown_facts)
+    I_end = optimalPropagate(cnf, I0, focus=all_unk)
+    # I_end = maxPropagate(cnf, I0)
+
+    explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+
+    # explanation sequence
+    expl_seq = []
+
+    o = OMUS(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        I=explainable_facts,
+        soft_weights=soft_weights,
+        parameters=parameters,  # default parameters
+        logging=True,
+        reuse_mss=False)
+
+    total_exec_start = time.time()
+    while len(explainable_facts - I) > 0:
+        t_start_lit = time.time()
+        remaining_time = timeout - (time.time() - total_exec_start)
+        hs, explanation = o.omusConstr(do_incremental=False, greedy=False, timeout=remaining_time)
+
+        if hs is None:
+            results['exec_times'].append('timeout')
+            break
+
+        # explaining facts
+        E_best = [ci for ci in explanation if ci in I_cnf]
+
+        # constraint used ('and not ci in E_i': dont repeat unit clauses)
+        S_best = [ci for ci in explanation if ci in soft_clauses and ci not in E_best]
+
+        #print("optimal:", hard_clauses, E_best, S_best, I)
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I, focus=all_unk)
+        N_best = New_info.intersection(explainable_facts) - I
+
+        # add new info
+        I = I | N_best
+        new_cnf = [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+        I_cnf += new_cnf
+
+        expl_seq.append((E_best, S_best, N_best))
+
+        o.updateObjWeightsInterpret(I)
+
+        t_end_lit = time.time()
+        results['exec_times'].append(round(t_end_lit-t_start_lit, 3))
+
+    today = date.today().strftime("%Y_%m_%d")
+
+    outputDir = 'data/experiment2/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    with open(outputDir +'omusConstr' + outputFile , 'w') as fp:
+        json.dump(results, fp)
+
+def experiment2_omusConstrWarm(sd, timeout):
+
+    results = {
+        'filename': 'origin',
+        'extension':'maxsat',
+        'exec_times':[],
+        'setup':'omusConstrWarm'
+    }
+
+    parameters={'extension': 'maxsat','output': 'log.json'} 
+
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
+    # model constraints
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+    soft_weights = [100 for clause in bv_clues] + \
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
+
+    unknown_facts = set()
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            unknown_facts |= set(i.name+1 for i in item)
+    # print(soft_clauses)
+
+    # initial interpretation
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
+    else:
+        raise Exception("omusExplain2: hard and soft clauses can not be None")
+
+    I0 = set()
+    I = I0
+
+    I_cnf = [frozenset({lit}) for lit in I0]
+
+    all_unk = unknown_facts | set(-l for l in unknown_facts)
+    I_end = optimalPropagate(cnf, I0, focus=all_unk)
+    # I_end = maxPropagate(cnf, I0)
+
+    explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+
+    # explanation sequence
+    expl_seq = []
+
+    o = OMUS(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        I=explainable_facts,
+        soft_weights=soft_weights,
+        parameters=parameters,  # default parameters
+        logging=True,
+        reuse_mss=False)
+
+    F = frozenset(range(o.nClauses))
+    # each -i
+    seedable = set(-i for i in explainable_facts-I0)
+
+    while len(seedable) > 0:
+        i = next(iter(seedable))
+
+        F_prime = set([o.softClauseIdxs[frozenset({i})]])
+        MSS, MSS_Model = o.grow(F_prime, I0|{i})
+
+        C = F - MSS
+        o.addSetGurobiOmusConstr(C)
+
+        other_seeds = seedable&frozenset(MSS_Model)
+        #print("mss",i,":",MSS, other_seeds,"C",C)
+        # no need to 'grow' a literal that already has an MSS
+        seedable -= other_seeds
+
+    total_exec_start = time.time()
+    while len(explainable_facts - I) > 0:
+        t_start_lit = time.time()
+        remaining_time = timeout - (time.time() - total_exec_start)
+        hs, explanation = o.omusConstr(do_incremental=False, greedy=False, timeout=remaining_time)
+
+        if hs is None:
+            results['exec_times'].append('timeout')
+            break
+
+        # explaining facts
+        E_best = [ci for ci in explanation if ci in I_cnf]
+
+        # constraint used ('and not ci in E_i': dont repeat unit clauses)
+        S_best = [ci for ci in explanation if ci in soft_clauses and ci not in E_best]
+
+        #print("optimal:", hard_clauses, E_best, S_best, I)
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I, focus=all_unk)
+        N_best = New_info.intersection(explainable_facts) - I
+
+        # add new info
+        I = I | N_best
+        new_cnf = [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+        I_cnf += new_cnf
+
+        expl_seq.append((E_best, S_best, N_best))
+
+        o.updateObjWeightsInterpret(I)
+
+        t_end_lit = time.time()
+        results['exec_times'].append(round(t_end_lit-t_start_lit, 3))
+
+    today = date.today().strftime("%Y_%m_%d")
+
+    outputDir = 'data/experiment2/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    with open(outputDir +'omusConstrWarm' + outputFile , 'w') as fp:
+        json.dump(results, fp)
+
+
 def experiment2_OmusConstrIncr(sd, timeout):
-    pass
+
+    results = {
+        'filename': 'origin',
+        'extension':'maxsat',
+        'exec_times':[],
+        'setup':'OmusConstrIncr'
+    }
+
+    parameters={'extension': 'maxsat','output': 'log.json'} 
+
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
+    # model constraints
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+    soft_weights = [100 for clause in bv_clues] + \
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
+
+    unknown_facts = set()
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            unknown_facts |= set(i.name+1 for i in item)
+    # print(soft_clauses)
+
+    # initial interpretation
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
+    else:
+        raise Exception("omusExplain2: hard and soft clauses can not be None")
+
+    I0 = set()
+    I = I0
+
+    I_cnf = [frozenset({lit}) for lit in I0]
+
+    all_unk = unknown_facts | set(-l for l in unknown_facts)
+    I_end = optimalPropagate(cnf, I0, focus=all_unk)
+    # I_end = maxPropagate(cnf, I0)
+
+    explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+
+    # explanation sequence
+    expl_seq = []
+
+    o = OMUS(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        I=explainable_facts,
+        soft_weights=soft_weights,
+        parameters=parameters,  # default parameters
+        logging=True,
+        reuse_mss=True)
+
+    total_exec_start = time.time()
+    while len(explainable_facts - I) > 0:
+        t_start_lit = time.time()
+        remaining_time = timeout - (time.time() - total_exec_start)
+        hs, explanation = o.omusConstr(do_incremental=True, greedy=True, timeout=remaining_time)
+
+        if hs is None:
+            results['exec_times'].append('timeout')
+            break
+
+        # explaining facts
+        E_best = [ci for ci in explanation if ci in I_cnf]
+
+        # constraint used ('and not ci in E_i': dont repeat unit clauses)
+        S_best = [ci for ci in explanation if ci in soft_clauses and ci not in E_best]
+
+        #print("optimal:", hard_clauses, E_best, S_best, I)
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I, focus=all_unk)
+        N_best = New_info.intersection(explainable_facts) - I
+
+        # add new info
+        I = I | N_best
+        new_cnf = [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+        I_cnf += new_cnf
+
+        expl_seq.append((E_best, S_best, N_best))
+
+        o.updateObjWeightsInterpret(I)
+
+        t_end_lit = time.time()
+        results['exec_times'].append(round(t_end_lit-t_start_lit, 3))
+
+    today = date.today().strftime("%Y_%m_%d")
+
+    outputDir = 'data/experiment2/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    with open(outputDir +'omusConstrIncr' + outputFile , 'w') as fp:
+        json.dump(results, fp)
+
 def experiment2_OmusConstrIncrWarm(sd, timeout):
-    pass
+
+    results = {
+        'filename': 'origin',
+        'extension':'maxsat',
+        'exec_times':[],
+        'setup':'OmusConstrIncrWarm'
+    }
+
+    parameters={'extension': 'maxsat','output': 'log.json'} 
+
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
+    # model constraints
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+    soft_weights = [100 for clause in bv_clues] + \
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
+
+    unknown_facts = set()
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            unknown_facts |= set(i.name+1 for i in item)
+    # print(soft_clauses)
+
+    # initial interpretation
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
+    else:
+        raise Exception("omusExplain2: hard and soft clauses can not be None")
+
+    I0 = set()
+    I = I0
+
+    I_cnf = [frozenset({lit}) for lit in I0]
+
+    all_unk = unknown_facts | set(-l for l in unknown_facts)
+    I_end = optimalPropagate(cnf, I0, focus=all_unk)
+    # I_end = maxPropagate(cnf, I0)
+
+    explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+
+    # explanation sequence
+    expl_seq = []
+
+    o = OMUS(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        I=explainable_facts,
+        soft_weights=soft_weights,
+        parameters=parameters,  # default parameters
+        logging=True,
+        reuse_mss=True)
+
+    F = frozenset(range(o.nClauses))
+    # each -i
+    seedable = set(-i for i in explainable_facts-I0)
+
+    while len(seedable) > 0:
+        i = next(iter(seedable))
+
+        F_prime = set([o.softClauseIdxs[frozenset({i})]])
+        MSS, MSS_Model = o.grow(F_prime, I0|{i})
+
+        C = F - MSS
+        o.addSetGurobiOmusConstr(C)
+
+        other_seeds = seedable&frozenset(MSS_Model)
+        #print("mss",i,":",MSS, other_seeds,"C",C)
+        # no need to 'grow' a literal that already has an MSS
+        seedable -= other_seeds
+
+    total_exec_start = time.time()
+    while len(explainable_facts - I) > 0:
+        t_start_lit = time.time()
+        remaining_time = timeout - (time.time() - total_exec_start)
+        hs, explanation = o.omusConstr(do_incremental=True, greedy=True, timeout=remaining_time)
+
+        if hs is None:
+            results['exec_times'].append('timeout')
+            break
+
+        # explaining facts
+        E_best = [ci for ci in explanation if ci in I_cnf]
+
+        # constraint used ('and not ci in E_i': dont repeat unit clauses)
+        S_best = [ci for ci in explanation if ci in soft_clauses and ci not in E_best]
+
+        #print("optimal:", hard_clauses, E_best, S_best, I)
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I, focus=all_unk)
+        N_best = New_info.intersection(explainable_facts) - I
+
+        # add new info
+        I = I | N_best
+        new_cnf = [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+        I_cnf += new_cnf
+
+        expl_seq.append((E_best, S_best, N_best))
+
+        o.updateObjWeightsInterpret(I)
+
+        t_end_lit = time.time()
+        results['exec_times'].append(round(t_end_lit-t_start_lit, 3))
+
+    today = date.today().strftime("%Y_%m_%d")
+
+    outputDir = 'data/experiment2/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    with open(outputDir +'OmusConstrIncrWarm' + outputFile , 'w') as fp:
+        json.dump(results, fp)
 
 def experiment3(sd, timeout):
-    pass
+    parameters={'extension': 'maxsat','output': 'log.json'} 
+
+    # model constraints
+    (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    bv_clues_soft_clauses = [frozenset({bv1.name + 1}) for bv1 in bv_clues]
+    bv_bij_soft_clauses = [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    bv_trans_soft_clauses = [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+
+    # print(maxPropagate(hard_clauses + soft_clauses))
+    soft_weights = [100 for clause in bv_clues] + \
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
+
+    unknown_facts = set()
+    for rel in rels:
+        # print(rel.df)
+        for item in rel.df.values:
+            unknown_facts |= set(i.name+1 for i in item)
+
+    # initial interpretation
+    if hard_clauses is not None and soft_clauses is not None:
+        cnf = hard_clauses+soft_clauses
+    else:
+        raise Exception("omusExplain2: hard and soft clauses can not be None")
+
+    I0 = set()
+    I = I0
+
+    I_cnf = [frozenset({lit}) for lit in I0]
+
+    all_unk = unknown_facts | set(-l for l in unknown_facts)
+    I_end = optimalPropagate(cnf, I0, focus=all_unk)
+    # I_end = maxPropagate(cnf, I0)
+
+    explainable_facts = set(lit for lit in I_end if abs(lit) in unknown_facts)
+
+    # explanation sequence
+    expl_seq = []
+
+    o = OMUS(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        I=explainable_facts,
+        soft_weights=soft_weights,
+        parameters=parameters,  # default parameters
+        logging=True,
+        reuse_mss=False)
+
+    F = frozenset(range(o.nClauses))
+    # each -i
+    seedable = set(-i for i in explainable_facts-I0)
+
+    while len(seedable) > 0:
+        i = next(iter(seedable))
+
+        F_prime = set([o.softClauseIdxs[frozenset({i})]])
+        MSS, MSS_Model = o.grow(F_prime, I0|{i})
+
+        C = F - MSS
+        o.addSetGurobiOmusConstr(C)
+
+        other_seeds = seedable&frozenset(MSS_Model)
+        seedable -= other_seeds
+
+    t_start_problem = time.time()
+    while len(explainable_facts - I) > 0:
+        hs, explanation = o.omusConstr(do_incremental=False, greedy=False)
+
+        # explaining facts
+        E_best = [ci for ci in explanation if ci in I_cnf]
+
+        # constraint used ('and not ci in E_i': dont repeat unit clauses)
+        S_best = [ci for ci in explanation if ci in soft_clauses and ci not in E_best]
+
+        #print("optimal:", hard_clauses, E_best, S_best, I)
+        New_info = optimalPropagate(hard_clauses + E_best + S_best, I, focus=all_unk)
+        N_best = New_info.intersection(explainable_facts) - I
+
+        # add new info
+        I = I | N_best
+        new_cnf = [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+        I_cnf += new_cnf
+
+        expl_seq.append((E_best, S_best, N_best))
+
+        constraint_type = None
+        if len(S_best) == 1:
+            if S_best[0] in bv_bij_soft_clauses:
+                constraint_type = 'bijectivity'
+            elif S_best[0] in bv_trans_soft_clauses:
+                constraint_type = 'transitivity'
+            elif S_best[0] in bv_clues_soft_clauses:
+                constraint_type = 'clue'
+            else:
+                constraint_type= 'unknown'
+        else:
+            nClues = sum([1 if c in bv_clues_soft_clauses else 0 for c in S_best])
+            nBij = sum([1 if c in bv_bij_soft_clauses else 0 for c in S_best])
+            nTrans = sum([1 if c in bv_trans_soft_clauses else 0 for c in S_best])
+            if nClues > 1 and (nBij+nTrans) == 0:
+                constraint_type = 'multiple-clues'
+            elif nBij+nTrans > 1 and (nClues == 0):
+                constraint_type = 'multiple-constraints'
+            else:
+                constraint_type = 'clue+constraints'
+        print(constraint_type, S_best)
+
+        o.updateObjWeightsInterpret(I)
+
+    t_end_problem = time.time()
+    results = {
+        'tot_exec_time' : round(t_end_problem - t_start_problem, 3),
+        'explanations': []
+    }
+
+    for (E_best, S_best, N_best) in expl_seq:
+
+        constraint_type = None
+        if len(S_best) == 1:
+            if S_best[0] in bv_bij_soft_clauses:
+                constraint_type = 'bijectivity'
+            elif S_best[0] in bv_trans_soft_clauses:
+                constraint_type = 'transitivity'
+            elif S_best[0] in bv_clues_soft_clauses:
+                constraint_type = 'clue'
+            else:
+                constraint_type= 'unknown'
+        else:
+            nClues = sum([1 if c in bv_clues_soft_clauses else 0 for c in S_best])
+            nBij = sum([1 if c in bv_bij_soft_clauses else 0 for c in S_best])
+            nTrans = sum([1 if c in bv_trans_soft_clauses else 0 for c in S_best])
+            if nClues > 1 and (nBij+nTrans) == 0:
+                constraint_type = 'multiple-clues'
+            elif nBij+nTrans > 1 and (nClues == 0):
+                constraint_type = 'multiple-constraints'
+            else:
+                constraint_type = 'clue+constraints'
+
+        results['explanations'].append({
+            'clue': constraint_type,
+            'facts': len(E_best),
+            'derivations':len(N_best),
+            'constraints': [list(c) for c in S_best]
+        })
 
 
+    today = date.today().strftime("%Y_%m_%d")
+
+    outputDir = 'data/experiment3/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    with open(outputDir +'explanations' + outputFile , 'w') as fp:
+        json.dump(results, fp)
+
+def experiment2(sd, timeout):
+
+    print("Starting experiment2_omusConstrWarm")
+    experiment2_omusConstrWarm(sd, timeout=timeout)
+    print("Ending experiment2_omusConstrWarm")
+
+    print("Starting omusConstr")
+    experiment2_omusConstr(sd, timeout=timeout)
+    print("Ending omusConstr")
+
+    print("Starting experiment2_OmusConstrIncr")
+    experiment2_OmusConstrIncr(sd, timeout=timeout)
+    print("Ending experiment2_OmusConstrIncr")
+
+    print("Starting experiment2_OmusConstrIncrWarm")
+    experiment2_OmusConstrIncrWarm(sd, timeout=timeout)
+    print("Ending experiment2_OmusConstrIncrWarm")
+
+    print("Starting OMUSIncrPostWarm")
+    experiment2_omusIncrPostWarm(sd, timeout=timeout)
+    print("Ending OMUSIncrPostWarm")
+
+    print("Starting OMUSIncrPost")
+    experiment2_omusIncrPost(sd, timeout=timeout)
+    print("Ending OMUSIncrPost")
+    print("Starting OMUSIncr")
+    experiment2_omusIncr(sd, timeout=timeout)
+    print("Ending OMUSIncr")
+
+    print("Starting OMUSPost")
+    experiment2_omusPost(sd, timeout=timeout)
+    print("Ending OMUSPost")
+
+    print("Starting OMUS")
+    experiment2_omus(sd, timeout=timeout)
+    print("Ending OMUS")
 
 def main():
     sd = datetime.now()
     random.seed(sd)
-    experiment1(sd)
-    # experiment2()
-    # experiment3()
+    # experiment1(sd)
+    experiment2(sd, timeout=1*MINUTES)
+    # experiment3(sd, timeout=3*MINUTES)
 
 
 if __name__ == "__main__":

@@ -828,7 +828,7 @@ def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.j
         unknown_facts=explainable_facts
     )
 
-    o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
+    # o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
     del o
 
 if __name__ == "__main__":

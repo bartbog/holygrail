@@ -57,7 +57,7 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
 \end{algorithm}
 
 
-\begin{proposition}\label{prop:K}
+\begin{proposition}\label{prop:K2}
   Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 
   If $\m{U}$ is a hitting set of \m{H} that is $f$-optimal among the hitting sets of \m{H} satisfying a predicate $p$, and  $\m{U}$ is unsatisfiable, then $\m{U}$ is a $(p,f)$-OMUS of \formula. 
 \end{proposition}
@@ -65,8 +65,27 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
 Now, since the search for optimal hitting sets is --- in implicit hitting set algorithms --- usually done with a MIP solver, in practice only predicates $p$ that can easily be encoded in MIP are useful. In such cases, we can directly use the MIP solver to implement \cohs as well. 
 
 \paragraph{Application to Explanations}
-\todo{EXACTLY ONE is easy to encode in MIP}
+To apply this idea to the context of explanations, we note that at each step, the current interpretation, will be fixed. 
+At each step, we are looking for an OMUS that contains \emph{exactly one} negation of a derivable literal. 
+Such an exactly-one constraint is easily expressible in MIP.
+Furthermore, also the ``subtheory constraint'', as introduced for incremental MUS solving can be expressed in MIP. Namely, in \cref{sec:incremental}, we assumed that each OMUS call would be done given a subtheory of the original theory. However, constraints of the form ``the OMUS should be a subset of the given set \formula'' are easily expressible in MIP as well. 
+As such, the idea of constrained OMUS computation is actually more general than the formalization of incremental OMUS. 
 
-\todo{Our single-step explanation now becomes very simple (single omus call)} 
 
-\todo{ Observation taht we can also use $p$ to encode prior knowledge about the structure of OMUSs, possibly redundant (eg: that certain constraints are ``hard''} 
+\paragraph{Using Constraints to Encode Domain Knowledge}
+These constraints on OMUSs can not only be used to restrict the set of solutions we are interested in, but also to improve the solver performance by encoding domain knowledge.
+Indeed, if we know that all ``good'' OMUSs will satisfy certain constraints, or if we know that it suffices to search for OMUSs satisfying certain constraints (because each OMUS can easily be extended to one such OMUS),  we can also encode that knowledge in $p$, thereby restricting the possible options of the hitting set solver, aiming to improve overall performance of the algorithm. 
+
+In the explanation application, we encountered this phenomenon as follows. 
+The clues to be used in explanations were high-level (first-order) constraints. They were translated into clauses, using among other, a Tseitin transformation.
+Hence, in the end the transformation of a single high-level clue consists of several clauses, of which some are definitions of newly introduced variables. 
+Now, the associated cost function was only concerned with the issue ``\emph{was a certain clue used or not?}'', which translates at the lower level to ``\emph{does the OMUS contain a clause from the translation of the clue?}''.
+Using such a cost function means that the compute the cost of an OMUS, it does not matter if a single, or all all clauses corresponding to a given clue are used. As such, we might as well include all of them. This knowledge can easily be encoded in $p$ as well. 
+
+An alternative view on the same property is that we can \emph{reify} the high level constraint by considering a Tseitin variable defining satisfaction of the entire constraint. 
+We can then to $p$ add the property that all Tseitin definitions are \emph{hard constraints}, in the sense that they always have to be included in any OMUS (and thus hitting set), while only the truth/falsity of the single Tseitin variable is considered to be a clause that can be enabled/disabled by the hitting set algorithm. 
+This variable then represent whether or not the high level constraint is active.
+It is easy to see that there is a one to one correspondence between the OMUSs produced by the two approaches. In our implementation, we opted for the latter because of its simplicity. 
+
+
+ 

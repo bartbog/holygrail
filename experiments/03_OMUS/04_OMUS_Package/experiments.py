@@ -127,6 +127,7 @@ def experiment1(sd):
             filepath.mkdir(parents=True, exist_ok=True)
 
             results[filename][c] = {
+                'filename':filename.replace('.cnf', ''),
                 'exec_times': [],
                 'H_sizes': [],
                 'greedy':[],
@@ -781,6 +782,10 @@ def experiment1(sd):
         print(f'{filename}: Writing _OmusIncrPostWarm_... to \n\t\t', outputDir + filename.replace('.cnf', '') + '_OmusIncrPostWarm_' + outputFile, '\n')
         with open(outputDir +'OmusIncrPostWarm/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
             json.dump(results[filename]['OmusIncrPostWarm'], fp)
+
+
+def experiment2(sd):
+
 
 
 def main():

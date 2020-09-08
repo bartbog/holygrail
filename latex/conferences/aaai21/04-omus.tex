@@ -1,7 +1,7 @@
 % !TeX root = ./main.tex
 
-Before presenting an algorithm that computes optimal MUSs, we first formally define the problem we are going to solve and we present an extension of the hitting set duality of \cref{prop:duality}. 
-Throughout this section, we assume that an objective function $f: 2^\formula \to \nat$ that assigns to each subset of \formula a cost is fixed. Our goal now is not to find arbitrary MUSs, but MUSs that are optimal with respect to $f$. 
+Before presenting an algorithm that computes optimal MUSs, we first formally define the problem we are going to solve and we present an extension of the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
+Throughout this section, we assume that an objective function $f: 2^\formula \to \nat$ that assigns to each subset of \formula a cost that is fixed. Our goal now is not to find arbitrary MUSs, but MUSs\tias{MUS or US? the duality is also for MUS but you wanted to call it OUS?} that are optimal with respect to $f$. 
 
 
 % \begin{itemize}
@@ -15,7 +15,7 @@ Throughout this section, we assume that an objective function $f: 2^\formula \to
 % We further improve the efficiency of the OUS algorithm using ideas from the improved \textsc{MaxHS} algorithm \cite{davies2013postponing}.
 
 \begin{definition}
-  A MUS $M$ of \formula such that no MUS $M'$ exists with $f(M')<f(M)$  is called an \emph{$f$-Optimal Unsatisfiable Subset} (OUS) of \formula.
+  A MUS $M$ of \formula, such that no MUS $M'$ exists with $f(M')<f(M)$, is called an \emph{$f$-Optimal Unsatisfiable Subset} (f-OUS) of \formula.
 \end{definition}
 
 \begin{definition}
@@ -35,8 +35,9 @@ The hitting set duality now straightforwardly generalizes as follows.
 \begin{proposition}\label{prop:optimal-hitting-set}
   A set $\m{U} \subseteq \formula$ is an $f$-OUS of \formula iff $\m{U}$ is an $f$-optimal hitting set of \mcses{\formula}.
 \end{proposition}
- 
-In order to find an OUS, there is no need to explicitly enumerate all MCSes of \formula. In practice it suffices to compute sufficiently many of them. 
+\tias{and inversely? now it is not a duality... perhaps 'the duality allows us to derive the following:'}
+
+In order to find an OUS, there is no need to explicitly enumerate all MCSes of \formula. In practice it suffices to compute sufficiently many of them. \tias{missing argument of why being optimal and unsat is sufficient to be the f-ous... because the hs is also a (superset) of a smaller H, an OUS always has to be unsatisfiable, and so any HS of H subset MCS is either SAT or the OUS?}
 % and the correction subsets considered need not neccesarily be maximal. 
 The following proposition formalizes this. 
 % 
@@ -44,7 +45,7 @@ The following proposition formalizes this.
 % The algorithm only requires finding an optimal hitting set on \mcses{\formula} tat is unsatisfiable.
 
 \begin{proposition}\label{prop:K}
-  Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 
+  Let $\m{H}=\mcses{\formula}$ be a set of correction subsets of \formula \tias{should be subset of correction subsets $H \subseteq mcss$?}. 
   If $\m{U}$ is an $f$-optimal hitting set of \m{H} and $\m{U}$ is unsatisfiable, then $\m{U}$ is an $f$-OUS of \formula. 
 \end{proposition}
 
@@ -55,13 +56,19 @@ The following proposition formalizes this.
 
 We are now ready to present our basic OUS algorithm in \cref{alg:omus}. 
 The algorithm keeps track of a set $\m{H}$ of (minimal) correction subsets of $\formula$. 
-It makes use of a procedure \ohs that computes an optimal (with respect to $f$) hitting set $\formula'$  of a given set of subsets of \formula. In practice, this type of call is often implement using a MIP solver \cite{davies2011solving}. 
+It makes use of a procedure \ohs that computes an optimal (with respect to $f$) hitting set $\formula'$  of a given set of subsets of \formula.
+We take inspiration for the hitting set approach to solving partial weighted MaxSAT~\cite{davies2011solving} and will use a MIP solver to compute the optimal hitting set.
 Whenever such a hitting set is found, a \sat-call checks whether the result is satisfiable. If it is, \cref{prop:K} guarantees that the result is an OUS. 
-If it is not, a procedure \grow is used to extend it to a set $\formula''$ with $\formula'\subseteq \formula''\subseteq\formula$ such that $\formula''$ is still satisfiable.
+If it is not, we know that the hitting set is a satisfiable subset. We now need to compute and add an MCS which is not hit by the found hitting set.
+As is common, we first use a procedure \grow to extend the hitting set to a set $\formula''$ with $\formula'\subseteq \formula''\subseteq\formula$ such that $\formula''$ is still satisfiable. By definition \tias{??} taking the complement of this satisfiable subset to obtain a correction subset to add to $\m{H}$. \tias{smth about MSS/MCS, although the way we explain it it needs not be 'maximal', should we also be explicit about that? I don't like the current version.}
+
 The implementation of \grow can be achieved in different ways.
 In fact, we could call a weighted partial \textsc{MaxSAT} solver to find the maximal satisfiable subset of clauses grown from the hitting set.
 In practice, we use a greedy approximative method to find a sastisfying assignment favoring literals that will satisfy the most clauses of highest weights.
 More precisely, we rank the clauses based on the ratio of weight to the number of literals not yet assigned in the clause.
+\tias{we doen weighted partial maxsat, waarbij we de satisfying solution van de SAT call gebruiken. Details hiervan leiden af van de paper imho, en we hebben geen tijd om te experimenteren wat best is. Mss gewoon:}
+... In practice, we use the model found by the SAT call on line 4 and let a maxsat solver extend it to maximally cover $\formula$. We note that typically most literals are part of the found model of $\formula'$ and so this maxsat problem is considerably smaller than $\formula$.
+
 \todo{beter uitleggen. Nog niet zo duidelijk. Ook niet zeker of dit op deze moment echt van belang is.}
 \bart{OOK: hoe gebruiken we de maxsat solver, zoeken we een MSS met een zo HOOG mogelijke kost? Is dat ``optimaal'' in zekere zin? Ik weet het eigenlijk niet... Een MSS met hoge kost, betekent dat de MCS een lage kost heeft. Maar een MCS met een hoge kost is eigenlijk informatiever, neen? Dat geeft een strengere constraint op onze hitting sets? 
 Wel... We willen zo weinig mogelijk constraints in de MCS (om een sterke cosntratint op de hitting set te krijgen), maar we hebben voor die zaken wel liefst GROTE gewichten in de MCS. 
@@ -91,7 +98,7 @@ Dus... eerlijk... ik weet niet zo goed of we gewichten hier wel in rekening moet
   \caption{$\omus(\formula,f)$ }
   \label{alg:omus}
 \end{algorithm}
-
+\tias{I would add the 'delayed' extension here...}
 
 % 
 % \begin{algorithm}[ht]

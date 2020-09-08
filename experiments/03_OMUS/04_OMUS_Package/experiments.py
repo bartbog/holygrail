@@ -84,7 +84,7 @@ def experiment1(sd):
     outputFile = ".json"
 
     # parameters
-    timeout = 1 * MINUTES
+    timeout = 15 * MINUTES
     n_literals = 50
     n_instances = 10
 

@@ -22,6 +22,14 @@ X_2 &= \{\lnot p \lor q ,  p, \lnot q\}.
 However, in the context of explanations, out of these two only $X_1$ would be considered to induce a good explanation: it represents the fact that the two constraints $\lnot p \lor r$ and $ \lnot p \lor \lnot r$ together entail $\lnot p$ (which can easily be seen by applying the resolution rule). However, $X_2$ does not have such an interpretation: it merely shows that he constraint $\lnot p \lor q$ entails that either $p$ should be false or $q$ should be true, which is quite uninformative. 
 \end{example}
 \tias{This surprisingly informal. our implications need to use elements of $I$ and elements of $\bar{I}$, however calling OUS on G and I and barI leads to trivial l negl. So to get our desired implications, we need two constraints: 1) can only have one element of barI, 2) can only use elements of $I$ that are already explained. Both restrict the syntax of the OUS, but they do not affect satisfiability and hence nor that a satisfiable subset can be grown and then turned into an mcs. So, we only need to modify the hitting set computation part. We do this by 1) adding a constraint to the MIP, 2) updating the weights of the objective function such that no unexplained I can be found. smth like this?}
+\bart{There are two points here:
+\begin{itemize}
+  \item Adding complete I and barI yields a trivial MUS is one point.
+  \item However, in a singlestepexplain, the simplest way to go would be to add I-sofar and barI-tobederived. There, teh trivial inconsistency does not show up
+  What I tried to illustrate in the example is that *that* also doesnt work. THat getting *exactly one* literal from barI-tobederived is really crucial. Should be made more clear. 
+\end{itemize}
+}
+
 
 The previous example shows that a naive \omus call with a large enough theory, would not yield valuable explanations.
 Instead, we would be interested in searching MUSs that are \emph{optimal} among those MUSs satisfying a certain property (in our case this property is ``containing exactly one negation of a consequence literal''). 
@@ -58,6 +66,8 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
   \label{alg:comus}
 \end{algorithm}
 \tias{I would not show the above one as it is rather vague, but immediately rewrite it as Alg2 the singleStepExplain:}
+\bart{I would avoid that :-) That way we mix up ``how to compute constrained OUSs?'' with ``how to compute explanations using constrained OUSs?''. These are two different concerns. We should show that we also tackle the first .  That way, our new ``singlestepexplain2'' will also look a lot simpler than singleStepExplain1 (if we use one oracle call to cOUS}
+
 \begin{algorithm}[ht]
 $\setstohit  \gets \emptyset$ \;
 preseeding:\\

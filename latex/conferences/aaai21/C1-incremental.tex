@@ -7,7 +7,16 @@ Now, since the core OUS algorithm is to store correction sets, we propose that t
 \newcommand\Fall\fall
 \newcommand\Hall\setstohitall
 \tias{hmm hmm... I was not thinking of doing THIS already here...
-I think we should merely explain that if we store the satisfiable subses S used to generate the sets-to-hit (F-S), and we need to do a related OMUS, we can 'seed' the sets-to-hit by doing F-grow(S intersection F); because S intersection F will still be a satisfiable subset of F, and hence we can grow it to F, and hence we can take the complement to get an MCS, and hence that can already be put in H instead of restarting from scratch each time... I guess that is the first half of the algo and what you explain. Note that we must store the MSS'es, not the MCSs $h$ as you currently do in the algo} \tias{That is also what we implement and what we experimentally compare to the other methods...}
+I think we should merely explain that if we store the satisfiable subses S used to generate the sets-to-hit (F-S), and we need to do a related OMUS, we can 'seed' the sets-to-hit by doing F-grow(S intersection F); because S intersection F will still be a satisfiable subset of F, and hence we can grow it to F, and hence we can take the complement to get an MCS, and hence that can already be put in H instead of restarting from scratch each time... I guess that is the first half of the algo and what you explain. Note that we must store the MSS'es, not the MCSs $h$ as you currently do in the algo}
+\bart{
+\begin{itemize}
+    \item My way of phrasing the algorithm does not do a grow during the seeding. Instead, it does an extra grow on line 12. Growing to a subset of Fall instead of F. This means you only have to do this grow once, instead of with every subsequent call. 
+    \item The current presentation followed from discussion we had earlier. THere, we noticed that if you store the MSS of F, not Fall, and then take intersection with another F', there is a big chance that the intersection just falls in the ``trivially satisfiable part'' (the puzzle) and thus that the growing yields something suboptimal. (the same over and over again). The current presentation avoids this. To see if it is close enough to the actual implementation :-) 
+  \item Storing MSS vs MCS should not matter. We know Fall anyway so we can easily go back and forth. I opted here for storing the MCSs for consistency of presentation (that is also what standard OMUS stores) 
+  \item As for presentation, 
+\end{itemize}
+
+}\tias{That is also what we implement and what we experimentally compare to the other methods...}
 
 
 
@@ -36,7 +45,7 @@ I think we should merely explain that if we store the satisfiable subses S used 
   \label{alg:omus-inc}
 \end{algorithm}
 
-\tias{Also, then I would add pre-seeding: as we know our OMUSs will be variants of I and G with an l; we can grow(l) for each l, which will be a satisfiable subset and hence can be used to seed the different incremental OMUS calls. Also experimentally this is what is being compared in the mix}
+\tias{Also, then I would add pre-seeding: as we know our OMUSs will be variants of I and G with an l; we can grow(l) for each l, which will be a satisfiable subset and hence can be used to seed the different incremental OMUS calls. Also experimentally this is what is being compared in the mix}\bart{OK, but add it here? This is *another* way of adding domain knowledge, right? We know from teh structure of the problem that certain sets will be satisfiable. We can use it to inform our algorithM. Very similar to the domain knowledge added in the next section.}
 
 The differences with \cref{alg:omus} can be explained as follows.
 First of all, instead of initializing \setstohit as the empty set, we store all intersections of sets in \setstohitall with the current formula in it. 

@@ -182,6 +182,11 @@ class OMUS(object):
             self.incremental_steps = []
             self.sat_steps = []
             self.grow_steps = []
+            self.optimal_timing = []
+            self.greedy_timing = []
+            self.incremental_timing = []
+            self.sat_timing = []
+            self.grow_timing = []
 
         # clauses
         self.hard_clauses = [frozenset(clause) for clause in hard_clauses]
@@ -360,7 +365,7 @@ class OMUS(object):
         # model parameters
         g_model.Params.OutputFlag = 0
         g_model.Params.LogToConsole = 0
-        g_model.Params.Threads = 1
+        g_model.Params.Threads = 4
 
         # create the variables (with weights in one go)
         x = g_model.addMVar(shape=self.nSoftClauses, vtype=GRB.BINARY, obj=self.weights, name="x")
@@ -1272,7 +1277,7 @@ class OMUS(object):
         # model parameters
         self.g_model.Params.OutputFlag = 0
         self.g_model.Params.LogToConsole = 0
-        self.g_model.Params.Threads = 1
+        self.g_model.Params.Threads = 4
 
         # create the variables (with weights in one go)
         x = self.g_model.addMVar(shape=self.nClauses, vtype=GRB.BINARY, obj=self.obj_weights, name="x")
@@ -1364,6 +1369,7 @@ class OMUS(object):
         # nClues = len(self.clues)
         # implicit_constraints = self.bij | self.trans
         # n_all_constr = len(self.bij) + len(self.trans) + len(self.clues)
+        x = self.g_model.getVars()
 
         for i in I:
             i_idx = self.softClauseIdxs[frozenset({i})]
@@ -1919,6 +1925,11 @@ class OMUSBase(object):
             self.incremental_steps = []
             self.sat_steps = []
             self.grow_steps = []
+            self.optimal_timing = []
+            self.greedy_timing = []
+            self.incremental_timing = []
+            self.sat_timing = []
+            self.grow_timing = []
 
         # clauses
         self.hard_clauses = [frozenset(clause) for clause in hard_clauses]
@@ -2854,6 +2865,7 @@ class OMUSBase(object):
 
         F = frozenset(range(self.nSoftClauses))
         # print(F)
+        
 
         self.hs_sizes = []
         H, C = [], []
@@ -2900,7 +2912,11 @@ class OMUSBase(object):
                     H.append(C)
                     added_MSSes.append(mss&F)
                     self.addSetGurobiModel(gurobi_model, C)
-
+        t_growing = 0
+        t_incremental = 0
+        t_greedy = 0
+        t_sat=0
+        t_opt=0
         mode = MODE_OPT
         #print("\n")
         while(True):
@@ -2919,6 +2935,11 @@ class OMUSBase(object):
                     self.incremental_steps.append(self.steps.incremental - n_incremental)
                     self.sat_steps.append(self.steps.sat - n_sat)
                     self.grow_steps.append(self.steps.grow - n_grow)
+                    self.optimal_timing.append(t_opt)
+                    self.greedy_timing.append(t_greedy)
+                    self.incremental_timing.append(t_incremental)
+                    self.sat_timing.append(t_sat)
+                    self.grow_timing.append(t_growing)
                 return None, my_cost
             # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True and postponed_omus):
@@ -2936,11 +2957,16 @@ class OMUSBase(object):
                         self.incremental_steps.append(self.steps.incremental - n_incremental)
                         self.sat_steps.append(self.steps.sat - n_sat)
                         self.grow_steps.append(self.steps.grow - n_grow)
+                        self.optimal_timing.append(t_opt)
+                        self.greedy_timing.append(t_greedy)
+                        self.incremental_timing.append(t_incremental)
+                        self.sat_timing.append(t_sat)
+                        self.grow_timing.append(t_growing)
                     return None, my_cost
                 # print("Starting with optimal!")
                 # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
                 if mode == MODE_INCR:
-
+                    t_start_incr = time.time()
                     # add sets-to-hit incrementally until unsat then continue with optimal method
                     # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
                     # then hs + any element of 'C' is a valid hitting set of CC + C
@@ -2956,17 +2982,28 @@ class OMUSBase(object):
                         # tend = time.time()
                         # self.timing.incremental.append(tend - tstart)
                         self.steps.incremental += 1
+                    t_end_incr = time.time()-t_start_incr
+                    t_incremental += t_end_incr
                 elif mode == MODE_GREEDY:
                     # ----- Greedy compute hitting set
+                    t_startgreedy = time.time()
                     hs = self.greedyHittingSet(H)
+                    t_satend = time.time() - t_startgreedy
+                    t_greedy += t_satend
                     # self.hs_sizes.append(len(hs))
                 elif mode == MODE_OPT:
                     break
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
+                    t_satstart = time.time()
                     (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c_best)
+                    t_satend = time.time() - t_satstart
+                    t_sat += t_satend
                 elif mode == MODE_GREEDY:
+                    t_satstart = time.time()
                     (model, sat, satsolver) = self.checkSat(hs)
+                    t_satend = time.time() - t_satstart
+                    t_sat += t_satend
 
                 E_i = [ci for ci in hs if self.clauses[ci] in I_cnf]
 
@@ -2989,6 +3026,7 @@ class OMUSBase(object):
                         mode = MODE_OPT
                         break
                     # break # skip grow
+                t_growstart = time.time()
                 # if (best_cost is not None and best_cost <= my_cost):
                 # ------ Grow
                 if True or self.extension == 'maxsat':
@@ -3014,7 +3052,8 @@ class OMUSBase(object):
                               not any(True if mssIdxs.issubset(m[0]) else False for m in self.MSSes)
                     if(storeMss):
                         self.MSSes.add((mssIdxs, frozenset(MSS_model)))
-
+                t_growend = time.time() - t_growstart
+                t_growing += t_growend
                 h_counter.update(list(C))
                 self.addSetGurobiModel(gurobi_model, C)
                 H.append(C)
@@ -3023,7 +3062,10 @@ class OMUSBase(object):
                 mode = MODE_INCR
 
             # ----- Compute Optimal Hitting Set
+            t_optstart = time.time()
             hs = self.gurobiOptimalHittingSet(gurobi_model)
+            t_optend = time.time() - t_optstart
+            t_opt += t_optend
             # self.hs_sizes.append(len(hs))
 
             # check cost, return premptively if worse than best
@@ -3050,10 +3092,18 @@ class OMUSBase(object):
                     self.incremental_steps.append(self.steps.incremental - n_incremental)
                     self.sat_steps.append(self.steps.sat - n_sat)
                     self.grow_steps.append(self.steps.grow - n_grow)
+                    self.optimal_timing.append(t_opt)
+                    self.greedy_timing.append(t_greedy)
+                    self.incremental_timing.append(t_incremental)
+                    self.sat_timing.append(t_sat)
+                    self.grow_timing.append(t_growing)
                 return None, my_cost
 
             # ------ Sat check
+            t_satstart = time.time()
             (model, sat, satsolver) = self.checkSat(hs)
+            t_satend = time.time() - t_satstart
+            t_sat += t_satend
 
             if not sat:
                 #
@@ -3072,9 +3122,14 @@ class OMUSBase(object):
                     self.incremental_steps.append(self.steps.incremental - n_incremental)
                     self.sat_steps.append(self.steps.sat - n_sat)
                     self.grow_steps.append(self.steps.grow - n_grow)
+                    self.optimal_timing.append(t_opt)
+                    self.greedy_timing.append(t_greedy)
+                    self.incremental_timing.append(t_incremental)
+                    self.sat_timing.append(t_sat)
+                    self.grow_timing.append(t_growing)
                 #print("\n")
                 return hs, [self.clauses[idx] for idx in hs]
-
+            t_growstart = time.time()
             # ------ Grow
             if self.extension == 'maxsat':
                 # grow model over hard clauses first, must be satisfied
@@ -3094,7 +3149,8 @@ class OMUSBase(object):
                             not any(True if mssIdxs < m[0] else False for m in self.MSSes)
                 if(storeMss):
                     self.MSSes.add((mssIdxs, frozenset(MSS_model)))
-
+            t_growend = time.time() - t_growstart
+            t_growing += t_growend
             C = F - MSS
             self.addSetGurobiModel(gurobi_model, C)
             assert len(C) > 0, f"Opt: C empty\nhs={hs}\nmodel={model}"

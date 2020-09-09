@@ -32,7 +32,7 @@ from multiprocessing import Process
 SECONDS = 1
 MINUTES = 60 * SECONDS
 HOURS = 60 * MINUTES
-TIMEOUT_EXP1 = 10 * MINUTES
+TIMEOUT_EXP1 = 1 * MINUTES
 
 def checksatCNF(instance):
     cnf = CNF(from_file=instance)
@@ -126,6 +126,11 @@ def experiment1_OMUS(sd=20200918):
                 'greedy':[],
                 'incr':[],
                 'opt':[],
+                't_opt':[],
+                't_incr':[],
+                't_greedy':[],
+                't_sat':[],
+                't_grow':[]
             }
 
         # Check satisfiability of the instance
@@ -161,7 +166,9 @@ def experiment1_OMUS(sd=20200918):
 
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
-        for i in sorted(list(model - I)):
+        for id, i in enumerate(sorted(list(model - I))):
+            if id > 9:
+                break
             tstart_lit = time.time()
             remaining_time = timeout - (time.time() - tstart_exp1)
 
@@ -178,6 +185,11 @@ def experiment1_OMUS(sd=20200918):
                 results[filename]['Omus']['greedy'].append(o.greedy_steps[-1])
                 results[filename]['Omus']['incr'].append(o.incremental_steps[-1])
                 results[filename]['Omus']['opt'].append(o.optimal_steps[-1])
+                results[filename]['Omus']['t_opt'].append(o.optimal_timing[-1])
+                results[filename]['Omus']['t_incr'].append(o.incremental_timing[-1])
+                results[filename]['Omus']['t_greedy'].append(o.greedy_timing[-1])
+                results[filename]['Omus']['t_sat'].append(o.sat_timing[-1])
+                results[filename]['Omus']['t_grow'].append(o.grow_timing[-1])
                 break
             tend_lit = time.time()
             results[filename]['Omus']['exec_times'].append(round(tend_lit-tstart_lit, 3))
@@ -185,6 +197,11 @@ def experiment1_OMUS(sd=20200918):
             results[filename]['Omus']['greedy'].append(o.greedy_steps[-1])
             results[filename]['Omus']['incr'].append(o.incremental_steps[-1])
             results[filename]['Omus']['opt'].append(o.optimal_steps[-1])
+            results[filename]['Omus']['t_opt'].append(o.optimal_timing[-1])
+            results[filename]['Omus']['t_incr'].append(o.incremental_timing[-1])
+            results[filename]['Omus']['t_greedy'].append(o.greedy_timing[-1])
+            results[filename]['Omus']['t_sat'].append(o.sat_timing[-1])
+            results[filename]['Omus']['t_grow'].append(o.grow_timing[-1])
 
             assert len(hs) > 0, "OMUS shoudl be non empty"
 
@@ -255,6 +272,11 @@ def experiment1_OMUSIncr(sd=20200918):
                 'greedy':[],
                 'incr':[],
                 'opt':[],
+                't_opt':[],
+                't_incr':[],
+                't_greedy':[],
+                't_sat':[],
+                't_grow':[]
             }
 
         print(instance, filename)
@@ -298,7 +320,9 @@ def experiment1_OMUSIncr(sd=20200918):
 
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
-        for i in sorted(list(model - I)):
+        for id, i in enumerate(sorted(list(model - I))):
+            if id > 9:
+                break
             tstart_lit = time.time()
             remaining_time = timeout - (time.time() - tstart_exp1)
 
@@ -315,6 +339,11 @@ def experiment1_OMUSIncr(sd=20200918):
                 results[filename]['OmusIncr']['greedy'].append(o.greedy_steps[-1])
                 results[filename]['OmusIncr']['incr'].append(o.incremental_steps[-1])
                 results[filename]['OmusIncr']['opt'].append(o.optimal_steps[-1])
+                results[filename]['OmusIncr']['t_opt'].append(o.optimal_timing[-1])
+                results[filename]['OmusIncr']['t_incr'].append(o.incremental_timing[-1])
+                results[filename]['OmusIncr']['t_greedy'].append(o.greedy_timing[-1])
+                results[filename]['OmusIncr']['t_sat'].append(o.sat_timing[-1])
+                results[filename]['OmusIncr']['t_grow'].append(o.grow_timing[-1])
                 break
 
             # post-processing the MSSes
@@ -334,6 +363,11 @@ def experiment1_OMUSIncr(sd=20200918):
             results[filename]['OmusIncr']['greedy'].append(o.greedy_steps[-1])
             results[filename]['OmusIncr']['incr'].append(o.incremental_steps[-1])
             results[filename]['OmusIncr']['opt'].append(o.optimal_steps[-1])
+            results[filename]['OmusIncr']['t_opt'].append(o.optimal_timing[-1])
+            results[filename]['OmusIncr']['t_incr'].append(o.incremental_timing[-1])
+            results[filename]['OmusIncr']['t_greedy'].append(o.greedy_timing[-1])
+            results[filename]['OmusIncr']['t_sat'].append(o.sat_timing[-1])
+            results[filename]['OmusIncr']['t_grow'].append(o.grow_timing[-1])
       
 
         print(f'{filename}: Writing OmusIncr... to \n\t\t', outputDir + filename.replace('.cnf', '') + '_OmusIncr_' + outputFile, '\n')
@@ -402,6 +436,11 @@ def experiment1_OMUSPost(sd=20200918):
                 'greedy':[],
                 'incr':[],
                 'opt':[],
+                't_opt':[],
+                't_incr':[],
+                't_greedy':[],
+                't_sat':[],
+                't_grow':[]
             }
 
         print(instance, filename)
@@ -439,7 +478,9 @@ def experiment1_OMUSPost(sd=20200918):
         tstart_exp1 = time.time()
 
         w_I = [1 for _ in I] + [1]
-        for i in sorted(list(model - I)):
+        for id, i in enumerate(sorted(list(model - I))):
+            if id > 9:
+                break
             tstart_lit = time.time()
             remaining_time = timeout - (time.time() - tstart_exp1)
 
@@ -456,6 +497,11 @@ def experiment1_OMUSPost(sd=20200918):
                 results[filename]['OmusPost']['greedy'].append(o.greedy_steps[-1])
                 results[filename]['OmusPost']['incr'].append(o.incremental_steps[-1])
                 results[filename]['OmusPost']['opt'].append(o.optimal_steps[-1])
+                results[filename]['OmusPost']['t_opt'].append(o.optimal_timing[-1])
+                results[filename]['OmusPost']['t_incr'].append(o.incremental_timing[-1])
+                results[filename]['OmusPost']['t_greedy'].append(o.greedy_timing[-1])
+                results[filename]['OmusPost']['t_sat'].append(o.sat_timing[-1])
+                results[filename]['OmusPost']['t_grow'].append(o.grow_timing[-1])
                 break
 
             tend_lit = time.time()
@@ -464,6 +510,11 @@ def experiment1_OMUSPost(sd=20200918):
             results[filename]['OmusPost']['greedy'].append(o.greedy_steps[-1])
             results[filename]['OmusPost']['incr'].append(o.incremental_steps[-1])
             results[filename]['OmusPost']['opt'].append(o.optimal_steps[-1])
+            results[filename]['OmusPost']['t_opt'].append(o.optimal_timing[-1])
+            results[filename]['OmusPost']['t_incr'].append(o.incremental_timing[-1])
+            results[filename]['OmusPost']['t_greedy'].append(o.greedy_timing[-1])
+            results[filename]['OmusPost']['t_sat'].append(o.sat_timing[-1])
+            results[filename]['OmusPost']['t_grow'].append(o.grow_timing[-1])
 
         print(f'{filename}: Writing _OmusPost_... to \n\t\t', outputDir + filename.replace('.cnf', '') + '_OmusPost_' + outputFile, '\n')
         with open(outputDir +  'OmusPost/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
@@ -531,6 +582,11 @@ def experiment1_OMUSIncrPost(sd=20200918):
                 'greedy':[],
                 'incr':[],
                 'opt':[],
+                't_opt':[],
+                't_incr':[],
+                't_greedy':[],
+                't_sat':[],
+                't_grow':[]
             }
         # Check satisfiability of the instance
         sat, model = checksatCNF(instance)
@@ -567,7 +623,9 @@ def experiment1_OMUSIncrPost(sd=20200918):
 
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
-        for i in sorted(list(model - I)):
+        for id, i in enumerate(sorted(list(model - I))):
+            if id > 9:
+                break
             tstart_lit = time.time()
             remaining_time = timeout - (time.time() - tstart_exp1)
 
@@ -584,6 +642,11 @@ def experiment1_OMUSIncrPost(sd=20200918):
                 results[filename]['OmusIncrPost']['greedy'].append(o.greedy_steps[-1])
                 results[filename]['OmusIncrPost']['incr'].append(o.incremental_steps[-1])
                 results[filename]['OmusIncrPost']['opt'].append(o.optimal_steps[-1])
+                results[filename]['OmusIncrPost']['t_opt'].append(o.optimal_timing[-1])
+                results[filename]['OmusIncrPost']['t_incr'].append(o.incremental_timing[-1])
+                results[filename]['OmusIncrPost']['t_greedy'].append(o.greedy_timing[-1])
+                results[filename]['OmusIncrPost']['t_sat'].append(o.sat_timing[-1])
+                results[filename]['OmusIncrPost']['t_grow'].append(o.grow_timing[-1])
                 break
 
             # post-processing the MSSes
@@ -603,6 +666,11 @@ def experiment1_OMUSIncrPost(sd=20200918):
             results[filename]['OmusIncrPost']['greedy'].append(o.greedy_steps[-1])
             results[filename]['OmusIncrPost']['incr'].append(o.incremental_steps[-1])
             results[filename]['OmusIncrPost']['opt'].append(o.optimal_steps[-1])
+            results[filename]['OmusIncrPost']['t_opt'].append(o.optimal_timing[-1])
+            results[filename]['OmusIncrPost']['t_incr'].append(o.incremental_timing[-1])
+            results[filename]['OmusIncrPost']['t_greedy'].append(o.greedy_timing[-1])
+            results[filename]['OmusIncrPost']['t_sat'].append(o.sat_timing[-1])
+            results[filename]['OmusIncrPost']['t_grow'].append(o.grow_timing[-1])
         # post-processing the MSSes
 
         print(f'{filename}: Writing _OmusIncrPost_... to \n\t\t', outputDir + filename.replace('.cnf', '') + '_OmusIncrPost_' + outputFile, '\n')
@@ -671,6 +739,11 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
                 'greedy':[],
                 'incr':[],
                 'opt':[],
+                't_opt':[],
+                't_incr':[],
+                't_greedy':[],
+                't_sat':[],
+                't_grow':[]
             }
 
         # Check satisfiability of the instance
@@ -679,6 +752,7 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
         cnf = CNF(from_file=instance)
         # pprint.pprint(results, width=1)
         model = set(model)
+        print(optimalPropagate(cnf.clauses) - model)
         I = set()
 
         I_cnf = [frozenset({lit}) for lit in set()]
@@ -705,16 +779,16 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
 
         base_F = set(range(len(o.soft_clauses)))
         # F = base_F | set({o.softClauseIdxs[frozenset({-i})] for i in model - I})
-        # o.MSSes.add((o.fullMss, frozenset(model)))
-        print("Seeding")
-        for i in model - I:
-            o.clauses = o.soft_clauses + [frozenset({-i})]
-            o.weights = o.soft_weights + [1]
-            F_prime = set({o.softClauseIdxs[frozenset({-i})]})
+        o.MSSes.add((o.fullMss, frozenset(model)))
+        # print("Seeding")
+        # for i in model - I:
+        #     o.clauses = o.soft_clauses + [frozenset({-i})]
+        #     o.weights = o.soft_weights + [1]
+        #     F_prime = set({o.softClauseIdxs[frozenset({-i})]})
 
-            MSS, MSS_Model = o.grow(F_prime, set())
+        #     MSS, MSS_Model = o.grow(F_prime, set())
 
-            o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
+        #     o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
 
 
         I = set()
@@ -722,7 +796,9 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
 
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
-        for i in sorted(list(model - I)):
+        for id, i in enumerate(sorted(list(model - I))):
+            if id > 9:
+                break
             tstart_lit = time.time()
             remaining_time = timeout - (time.time() - tstart_exp1)
 
@@ -739,6 +815,11 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
                 results[filename]['OmusIncrPostWarm']['greedy'].append(o.greedy_steps[-1])
                 results[filename]['OmusIncrPostWarm']['incr'].append(o.incremental_steps[-1])
                 results[filename]['OmusIncrPostWarm']['opt'].append(o.optimal_steps[-1])
+                results[filename]['OmusIncrPostWarm']['t_opt'].append(o.optimal_timing[-1])
+                results[filename]['OmusIncrPostWarm']['t_incr'].append(o.incremental_timing[-1])
+                results[filename]['OmusIncrPostWarm']['t_greedy'].append(o.greedy_timing[-1])
+                results[filename]['OmusIncrPostWarm']['t_sat'].append(o.sat_timing[-1])
+                results[filename]['OmusIncrPostWarm']['t_grow'].append(o.grow_timing[-1])
                 break
 
             # post-processing the MSSes
@@ -759,6 +840,11 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
             results[filename]['OmusIncrPostWarm']['greedy'].append(o.greedy_steps[-1])
             results[filename]['OmusIncrPostWarm']['incr'].append(o.incremental_steps[-1])
             results[filename]['OmusIncrPostWarm']['opt'].append(o.optimal_steps[-1])
+            results[filename]['OmusIncrPostWarm']['t_opt'].append(o.optimal_timing[-1])
+            results[filename]['OmusIncrPostWarm']['t_incr'].append(o.incremental_timing[-1])
+            results[filename]['OmusIncrPostWarm']['t_greedy'].append(o.greedy_timing[-1])
+            results[filename]['OmusIncrPostWarm']['t_sat'].append(o.sat_timing[-1])
+            results[filename]['OmusIncrPostWarm']['t_grow'].append(o.grow_timing[-1])
 
 
         print(f'{filename}: Writing _OmusIncrPostWarm_... to \n\t\t', outputDir + filename.replace('.cnf', '') + '_OmusIncrPostWarm_' + outputFile, '\n')
@@ -829,6 +915,11 @@ def experiment1_OMUSIncrWarm(sd=20200918):
                 'greedy':[],
                 'incr':[],
                 'opt':[],
+                't_opt':[],
+                't_incr':[],
+                't_greedy':[],
+                't_sat':[],
+                't_grow':[]
             }
 
         # Check satisfiability of the instance
@@ -882,7 +973,9 @@ def experiment1_OMUSIncrWarm(sd=20200918):
 
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
-        for i in sorted(list(model - I)):
+        for id, i in enumerate(sorted(list(model - I))):
+            if id > 9:
+                break
             tstart_lit = time.time()
             remaining_time = timeout - (time.time() - tstart_exp1)
 
@@ -900,6 +993,11 @@ def experiment1_OMUSIncrWarm(sd=20200918):
                 results[filename]['OmusIncrWarm']['greedy'].append(o.greedy_steps[-1])
                 results[filename]['OmusIncrWarm']['incr'].append(o.incremental_steps[-1])
                 results[filename]['OmusIncrWarm']['opt'].append(o.optimal_steps[-1])
+                results[filename]['OmusIncrWarm']['t_opt'].append(o.optimal_timing[-1])
+                results[filename]['OmusIncrWarm']['t_incr'].append(o.incremental_timing[-1])
+                results[filename]['OmusIncrWarm']['t_greedy'].append(o.greedy_timing[-1])
+                results[filename]['OmusIncrWarm']['t_sat'].append(o.sat_timing[-1])
+                results[filename]['OmusIncrWarm']['t_grow'].append(o.grow_timing[-1])
                 break
 
             # post-processing the MSSes
@@ -920,6 +1018,11 @@ def experiment1_OMUSIncrWarm(sd=20200918):
             results[filename]['OmusIncrWarm']['greedy'].append(o.greedy_steps[-1])
             results[filename]['OmusIncrWarm']['incr'].append(o.incremental_steps[-1])
             results[filename]['OmusIncrWarm']['opt'].append(o.optimal_steps[-1])
+            results[filename]['OmusIncrWarm']['t_opt'].append(o.optimal_timing[-1])
+            results[filename]['OmusIncrWarm']['t_incr'].append(o.incremental_timing[-1])
+            results[filename]['OmusIncrWarm']['t_greedy'].append(o.greedy_timing[-1])
+            results[filename]['OmusIncrWarm']['t_sat'].append(o.sat_timing[-1])
+            results[filename]['OmusIncrWarm']['t_grow'].append(o.grow_timing[-1])
             # post-processing the MSSes
 
         print(f'{filename}: Writing _OmusIncrWarm_... to \n\t\t', outputDir + filename.replace('.cnf', '') + 'OmusIncrWarm' + outputFile, '\n')
@@ -2291,7 +2394,7 @@ def experiment2_omusIncrPostWarm(sd, timeout):
 
     best_costs = dict({i: 9999999 for i in explainable_facts - I})
     # add full theory without negation literal
-    o.MSSes.add((o.fullMss, frozenset(I_end)))
+    # o.MSSes.add((o.fullMss, frozenset(I_end)))
     base_F = set(range(len(o.soft_clauses)))
 
     for i in explainable_facts - I:
@@ -2307,7 +2410,7 @@ def experiment2_omusIncrPostWarm(sd, timeout):
         MSS, MSS_Model = o.grow(F_prime, {-i})
 
         # build MSS with correct indexes
-        mssIdxs = frozenset(o.softClauseIdxs[o.clauses[id]] for id in MSS)
+        mssIdxs = frozenset(o.softClauseIdxs[o.clauses[id]] for id in MSS&F)
 
         o.MSSes.add((mssIdxs, frozenset(MSS_Model)))
     
@@ -2907,8 +3010,8 @@ def experiment3(sd, timeout):
 
     # print(maxPropagate(hard_clauses + soft_clauses))
     soft_weights = [100 for clause in bv_clues] + \
-              [60 for clause in bv_trans] + \
-              [40 for clause in bv_bij]
+              [100 for clause in bv_trans] + \
+              [20 for clause in bv_bij]
 
     unknown_facts = set()
     for rel in rels:
@@ -3099,8 +3202,8 @@ def experiment2(sd, timeout):
     # print("Ending OMUS")
 
 def parallelExperiment1():
-    # fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
-    fns = [ experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
+    fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
+    # fns = [experiment1_OMUSPost, experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
     proc = []
     for fn in fns:
         p = Process(target=fn)
@@ -3112,7 +3215,8 @@ def parallelExperiment1():
 
 def main():
     sd = datetime.now()
-    parallelExperiment1()
+    # parallelExperiment1()
+    # experiment1_OMUSIncrPostWarm()
     # experiment1(sd)
     # experiment2(sd, timeout=1*HOURS)
     # experiment3(sd, timeout=None)

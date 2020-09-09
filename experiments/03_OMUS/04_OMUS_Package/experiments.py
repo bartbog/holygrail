@@ -135,6 +135,11 @@ def experiment1(sd):
                 'opt':[],
             }
 
+    for instance, filename in zip(instances, filenames):
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+
         cnf = CNF(from_file=instance)
 
         print(f'{filename}: Starting OMUSConstr...\n')
@@ -331,7 +336,7 @@ def experiment1(sd):
             results[filename]['OmusConstrIncrWarm']['incr'].append(o3.incremental_steps[-1])
             results[filename]['OmusConstrIncrWarm']['opt'].append(o3.optimal_steps[-1])
 
-
+    
         o3.deleteModel()
         del o3
         print(f'{filename}: Writing OMUSConstr... to \n\t\t', outputDir + filename.replace('.cnf', '') + 'OmusConstrIncrWarm_' + outputFile, '\n')
@@ -339,6 +344,12 @@ def experiment1(sd):
         with open(outputDir+ 'OmusConstrIncrWarm/' + filename.replace('.cnf', '')  + outputFile , 'w') as fp:
             json.dump(results[filename]['OmusConstrIncrWarm'], fp)
 
+    for instance, filename in zip(instances, filenames):
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+
+        cnf = CNF(from_file=instance)
         # pprint.pprint(results, width=1)
         model = set(model)
         I = set()
@@ -682,6 +693,7 @@ def experiment1(sd):
         o.MSS_sizes = []
 
         best_costs = dict({i: 9999999 for i in model - I})
+
         print(o.weights)
         base_F = set(range(len(o.soft_clauses)))
         F = base_F | set({o.softClauseIdxs[frozenset({-i})] for i in model - I})
@@ -2220,9 +2232,9 @@ def experiment2(sd, timeout):
 def main():
     sd = datetime.now()
     random.seed(sd)
-    # experiment1(sd)
+    experiment1(sd)
     # experiment2(sd, timeout=1*HOURS)
-    experiment3(sd, timeout=None)
+    # experiment3(sd, timeout=None)
 
 
 if __name__ == "__main__":

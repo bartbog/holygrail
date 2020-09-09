@@ -3215,7 +3215,7 @@ def parallelExperiment1():
 
 def main():
     sd = datetime.now()
-    # parallelExperiment1()
+    parallelExperiment1()
     # experiment1_OMUSIncrPostWarm()
     # experiment1(sd)
     # experiment2(sd, timeout=1*HOURS)

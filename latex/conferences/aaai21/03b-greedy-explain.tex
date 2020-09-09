@@ -1,51 +1,52 @@
 % !TeX root = ./main.tex
 
-We now recall the explanation algorithm of \citet{ecai/BogaertsGCG20}. 
+We now recall the general explanation setting of \citet{ecai/BogaertsGCG20}. 
 In that work, the goal was to --- starting from a constraint satisfaction problem and a partial interpretation $I$ --- explain the cautious consequence through a sequence of simple steps. 
 %In our formulation (following \citet{ecai/BogaertsGCG20}), we assume that the formulation is done in propositional logic, but the ideas carry on to richer representation formalisms as well. 
-We will use \formulag to denote the constraint satisfaction problem (formula in this case), to avoid confusion with the formula \formula used in \omus calls.
+We will use \formulac to denote the constraint satisfaction problem (formula in this case), to avoid confusion with the formula \formula used in \omus calls.
 
 The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by a cost function $f$. 
-An explanation step is an implication $I' \wedge \formulag' \implies l$ where $I'$ is a set of already derived literals, $\formulag'$ is a subset of constraints of the input formulate $\formulag$ and $l$ is a literal from the cautious consequence which is not yet explained.
-To obtain a sequence of such steps, we iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$.
-
-\cref{alg:singleStepExplain} depicts an OUS-based algorithm to find the next simplest explanation step in the sequence. 
-Compared to the method proposed in \cite{ecai/BogaertsGCG20}, this is already a simplified one that uses a single OUS call to find a ``good'' explanation instead of multiple MUS calls to approximate the optimal OUSs. 
-
-
-% 
-% in terms of OMUS calls. The use of OMUS, rather than a plain MUS call simplifies the algorithm and removes the need for ... EPLAIN
-% 
-% BLA BLA 
-
-
-% \begin{enumerate}
-%     \item OMUS oracle
-%     \item Greedy sequence
-% \end{enumerate}
-%  \renewcommand\formulag{\mm{T}}
+An explanation step is an implication $I' \wedge \formulac' \implies l$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formulate $\formulac$ and $l$ is a set of literals from the cautious consequence which is not yet explained.
+To obtain a sequence of such steps, we iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$. A high-level algorithm is shown in Algorithm~\ref{alg:explainCSP}; details of optimalPropagate() can be found in~\cite{ecai/BogaertsGCG20}.
 
 \begin{algorithm}[ht]
-$    \mathit{BestVal}\gets\infty$\;
-   \For{$l \text{ such that } \formulag\land I\implies l\text{ and }l\not\in I$}{
-        $X \gets \omus{(\formulag \land I \land \neg l, f)}$\;
-        \If{$f(X)<\mathit{BestVal}$}{
-            $\mathit{BestVal}\gets f(X)$\;
-            $\formulag_{\mathit{best}}\gets\formulag\cap X$\;
-            $I_{\mathit{best}} \gets I\cap X$\;
-            $l_{\mathit{best}} \gets l$\;
-        }
-        }
-        \Return{$(\formulag_{\mathit{best}},I_{\mathit{best}},l_{\mathit{best}})$}
-    
-    \caption{$\call{SingleStepExplain}(\formulag,f,I)$}
-  \label{alg:singleStepExplain}
-  \label{alg:explainSingleStep}
+  \caption{$\call{ExplainCSP}(\formulac,f)$}
+  \label{alg:explainCSP}
+$E \gets \langle \rangle$\;
+$I_{end} \gets optimalPropagate(\formulac)$\;
+$I \gets \emptyset$\;
+\While{$I \neq I_{end}$}{
+    $X \gets \call{bestStep}({\cal C},f,I,I_{end})$\;
+	$I_{\mathit{best}} \gets I\cap X$\;
+    $\formulag_{\mathit{best}}\gets\formulag\cap X$\;
+	$N_{\mathit{best}} \gets \{I_{end} \setminus I\} \cap optimalPropagate(X) $\;
+	add $\{I_{\mathit{best}} \wedge \formulag_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+	$I \gets I \cup N_{\mathit{best}}$\;
+  }
+\Return{E}\;
 \end{algorithm}
 
-In this algorithm, an (O)MUS call is used to compute an explanation for each consequence $l$ of the combination of $\formulag$ and the assignment so far. 
-It was shown that MUSs of $\formulag\land I\land\lnot l$ correspond to non-redundant explanations of $l$ in terms of $\formulag$ and $I$ and hence an OUS is a ``best'' explanation of $l$. 
-The loop in \cref{alg:singleStepExplain} serves to guarantee that at each point, the literal with the best explanation is selected. 
+Earlier work could not take advantage of an Optimal Unsatisfiable Subset algorithm, and hence implemented $\call{bestStep}$ by a heuristic method that called a Minimal Unsatisfiable Subset algorithm on increasingly larger subsets of $\formulac \wedge -l$ for all $l \in \{I_{end} \setminus I\}$~\cite{ecai/BogaertsGCG20}.
+
+
+\begin{algorithm}[ht]
+  \caption{$\call{bestStep--OUS}({\cal C},f,I,I_{end})$}
+  \label{alg:bestStepOUS}
+$X_{best} \gets \{{\cal C} \land I \land \bar{I}_{end}\}$\;
+\For{$l \in \{I_{end} \setminus I\}$}{
+    $X \gets \omus{({\cal C} \land I \land \neg l, f)}$\;
+    \If{$f(X)<f(X_{best})$}{
+        $X_{best} \gets X$\;
+    }
+}
+\Return{$X_{best}$} 
+\end{algorithm}
+
+\cref{alg:bestStepOUS} depicts an OUS-based algorithm to find the next simplest explanation step in the sequence. 
+%Compared to the method proposed in \cite{ecai/BogaertsGCG20}, this is already a simplified one that uses a single OUS call to find a ``good'' explanation instead of multiple MUS calls to approximate the optimal OUSs. 
+In this algorithm, an OUS call is used to compute an explanation for each consequence $l$ of the combination of $\formulac$ and the assignment so far. 
+It was shown that MUSs of $\formulac\land I\land\lnot l$ correspond to non-redundant explanations of $l$ in terms of $\formulac$ and $I$ and hence an OUS is a ``best'' explanation of $l$. 
+The loop in \cref{alg:bestStepOUS} serves to guarantee that at each point, the literal with the best explanation is selected. 
 
 
 
@@ -78,10 +79,10 @@ The loop in \cref{alg:singleStepExplain} serves to guarantee that at each point,
 }
 
 
-When investigating \cref{alg:singleStepExplain}, we see ample room for improvement. 
-First of all, we call the OUS algorithm many times, and each time sharing a large part of the formula in comparison to the previous call, namely $\formulag \land I$.
+When investigating \cref{alg:bestStepOUS}, we see ample room for improvement. 
+First of all, we call the OUS algorithm many times, and each time sharing a large part of the formula in comparison to the previous call, namely $\formulac \land I$.
 This suggests the opportunity of developing \emph{incremental} OUS algorithms that reuse results from previous calls. 
-More generally, the loop in \cref{alg:singleStepExplain} loops over all possibly derivable  literals $l$, searches for each of them an OUS and subsequently, the best of those is taken. 
+More generally, the loop in \cref{alg:bestStepOUS} loops over all possibly derivable  literals $l$, searches for each of them an OUS and subsequently, the best of those is taken. 
 In an ideal situation, this could be done in a single call to a solver that exploits all possible information at once. 
 These two ideas are explored in the next two sections.
 %In its most general form, this idea can be phrased as the search for a MUS of a given theory that is subject to certain constraints. 

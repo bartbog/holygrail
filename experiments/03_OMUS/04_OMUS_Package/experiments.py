@@ -111,7 +111,7 @@ def experiment1_OMUS(sd=20200918):
         filepath = Path(outputDir)
         filepath.mkdir(parents=True, exist_ok=True)
 
-        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost', 'OmusIncrWarm',
                    'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
 
         for c in configs:
@@ -240,7 +240,7 @@ def experiment1_OMUSIncr(sd=20200918):
         filepath = Path(outputDir)
         filepath.mkdir(parents=True, exist_ok=True)
 
-        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost', 'OmusIncrWarm',
                    'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
 
         for c in configs:
@@ -387,7 +387,7 @@ def experiment1_OMUSPost(sd=20200918):
         filepath = Path(outputDir)
         filepath.mkdir(parents=True, exist_ok=True)
 
-        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost', 'OmusIncrWarm',
                    'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
 
         for c in configs:
@@ -516,7 +516,7 @@ def experiment1_OMUSIncrPost(sd=20200918):
         filepath = Path(outputDir)
         filepath.mkdir(parents=True, exist_ok=True)
 
-        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost', 'OmusIncrWarm',
                    'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
 
         for c in configs:
@@ -656,7 +656,7 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
         filepath = Path(outputDir)
         filepath.mkdir(parents=True, exist_ok=True)
 
-        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost', 'OmusIncrWarm',
                    'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
 
         for c in configs:
@@ -813,7 +813,7 @@ def experiment1_OMUSIncrWarm(sd=20200918):
         filepath.mkdir(parents=True, exist_ok=True)
 
 
-        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost', 'OmusIncrWarm',
                    'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
 
 
@@ -2641,7 +2641,6 @@ def experiment2_omusConstrWarm(sd, timeout):
     with open(outputDir +'omusConstrWarm' + outputFile , 'w') as fp:
         json.dump(results, fp)
 
-
 def experiment2_OmusConstrIncr(sd, timeout):
 
     results = {
@@ -3100,7 +3099,8 @@ def experiment2(sd, timeout):
     # print("Ending OMUS")
 
 def parallelExperiment1():
-    fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
+    # fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
+    fns = [ experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
     proc = []
     for fn in fns:
         p = Process(target=fn)

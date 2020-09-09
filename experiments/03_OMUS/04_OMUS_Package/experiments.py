@@ -32,7 +32,7 @@ from multiprocessing import Process
 SECONDS = 1
 MINUTES = 60 * SECONDS
 HOURS = 60 * MINUTES
-TIMEOUT_EXP1 = 1 * MINUTES
+TIMEOUT_EXP1 = 10 * MINUTES
 
 def checksatCNF(instance):
     cnf = CNF(from_file=instance)

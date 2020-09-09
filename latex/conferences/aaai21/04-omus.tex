@@ -45,7 +45,7 @@ The following proposition formalizes this.
 % The algorithm only requires finding an optimal hitting set on \mcses{\formula} tat is unsatisfiable.
 
 \begin{proposition}\label{prop:K}
-  Let $\m{H}=\mcses{\formula}$ be a set of correction subsets of \formula \tias{should be subset of correction subsets $H \subseteq mcss$?} \bart{the way it is phrased now also allows for non-minimal correction sets. Which is needed if grow is nonoptimal}. 
+  Let $\m{H}$ be a set of correction subsets of \formula \tias{should be subset of correction subsets $H \subseteq mcss$?} \bart{the way it is phrased now also allows for non-minimal correction sets. Which is needed if grow is nonoptimal}. 
   If $\m{U}$ is an $f$-optimal hitting set of \m{H} and $\m{U}$ is unsatisfiable, then $\m{U}$ is an $f$-OUS of \formula. 
 \end{proposition}
 \begin{proof}
@@ -68,7 +68,7 @@ It makes use of a procedure \ohs that computes an optimal (with respect to $f$) 
 We take inspiration for the hitting set approach to solving partial weighted MaxSAT~\cite{davies2011solving} and will use a MIP solver to compute the optimal hitting set.
 Whenever such a hitting set is found, a \sat-call checks whether the result is satisfiable. If it is, \cref{prop:K} guarantees that the result is an OUS. 
 If it is not, we know that the hitting set is a satisfiable subset. We now need to compute and add an MCS which is not hit by the found hitting set.
-As is common, we first use a procedure \grow to extend the hitting set to a set $\formula''$ with $\formula'\subseteq \formula''\subseteq\formula$ such that $\formula''$ is still satisfiable. By definition \tias{??} \bart{a correction set is defined as the complement of a satisfiable subset} taking the complement of this satisfiable subset to obtain a correction subset to add to $\m{H}$. \tias{smth about MSS/MCS, although the way we explain it it needs not be 'maximal', should we also be explicit about that? I don't like the current version.} \bart{For our algorithms, it is crucial that they don't have to be maximal. Otherwise all approximations such as greedy grows would be incorrect}
+As is common, we first use a procedure \grow to extend the hitting set to a set $\formula''$ with $\formula'\subseteq \formula''\subseteq\formula$ such that $\formula''$ is still satisfiable. By definition $\formula \setminus \formula''$ is a correction subset; we add this complement to $\m{H}$ \bart{better sentence}. \tias{smth about MSS/MCS, although the way we explain it it needs not be 'maximal', should we also be explicit about that? I don't like the current version.} \bart{For our algorithms, it is crucial that they don't have to be maximal. Otherwise all approximations such as greedy grows would be incorrect}
 
 The implementation of \grow can be achieved in different ways.
 In fact, we could call a weighted partial \textsc{MaxSAT} solver to find the maximal satisfiable subset of clauses grown from the hitting set.

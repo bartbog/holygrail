@@ -72,8 +72,6 @@ Whenever such a hitting set is found, a \sat-call checks whether the result is s
 If it is, we know that the hitting set is a satisfiable subset. We now compute a correction set that is not hit by the found hitting set.
 As is common, we first use a procedure \grow to extend the hitting set to a set $\formula''$ with $\formula'\subseteq \formula''\subseteq\formula$ such that $\formula''$ is still satisfiable. Since the complement of a satisfiable subset is a correction set, $\formula \setminus \formula''$ is added to the $\m{H}$ of correction sets of \formula. 
 
-The implementation of \grow can be achieved in different ways.
-In practice, we use the model found by the SAT call on line 4 and let a MAX-SAT solver complete it to a full assignment of the variables of \formula to satisfy as many extra clauses as possible.  We note that typically many literals are part of the found model of $\formula'$ and hence this MAX-SAT problem is considerably smaller than $\formula$.
 % 
 % \todo{beter uitleggen. Nog niet zo duidelijk. Ook niet zeker of dit op deze moment echt van belang is.}
 % \bart{OOK: hoe gebruiken we de maxsat solver, zoeken we een MSS met een zo HOOG mogelijke kost? Is dat ``optimaal'' in zekere zin? Ik weet het eigenlijk niet... Een MSS met hoge kost, betekent dat de MCS een lage kost heeft. Maar een MCS met een hoge kost is eigenlijk informatiever, neen? Dat geeft een strengere constraint op onze hitting sets? 
@@ -87,7 +85,7 @@ In practice, we use the model found by the SAT call on line 4 and let a MAX-SAT 
 % \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
 \begin{algorithm}[ht]
   \DontPrintSemicolon
-  %$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   \While{true}{
     $\F' \gets \ohs(\setstohit,f) $ \label{smus-hs} \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
 % f{optimal} solution}
@@ -102,7 +100,7 @@ In practice, we use the model found by the SAT call on line 4 and let a MAX-SAT 
     $\F'' \gets  \grow(\F',\F,M) $\;
     $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
   }
-  \caption{$\omus(\formula,f,\setstohit=\emptyset)$ }
+  \caption{$\omus(\formula,f)$ }
   \label{alg:omus}
 \end{algorithm}
 \tias{I would add the 'delayed' extension here...}

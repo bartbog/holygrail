@@ -405,7 +405,10 @@ def omusExplain2(
         soft_weights=None,
         I0=None,
         unknown_facts=None,
-        constrained=True
+        constrained=True, 
+        clues=None,
+        trans=None,
+        bij=None
     ):
     t_begin = time.time()
 
@@ -438,7 +441,10 @@ def omusExplain2(
         soft_weights=soft_weights,
         parameters=parameters,  # default parameters
         logging=True,
-        reuse_mss=reuse_mss)
+        reuse_mss=reuse_mss,
+        clues=clues,
+        trans=trans,
+        bij=bij)
 
     best_costs = dict({i: 9999999 for i in explainable_facts - I})
 

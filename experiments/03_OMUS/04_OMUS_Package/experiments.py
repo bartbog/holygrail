@@ -1468,13 +1468,14 @@ def experiment2_omusIncrPostWarm(sd, timeout):
         w_I = [1 for _ in I] + [1]
         t_start_lit = time.time()
         for id, i in enumerate(sorted(explainable_facts - I, key=lambda i: best_costs[i])):
+            print('Trying to explain ', i )
             remaining_time = timeout - (time.time() - tstart_o1)
             hs, explanation = o.omusIncr(I_cnf=I_cnf,
                                             explained_literal=i,
                                             add_weights=w_I,
                                             best_cost=cost_best,
                                             timeout=remaining_time)
-            print(hs, explanation)
+            # print(hs, explanation)
             if hs is None and time.time() - tstart_o1 > timeout:
                 timedout = True
                 break
@@ -2087,7 +2088,10 @@ def experiment3(sd, timeout):
         soft_weights=soft_weights,
         parameters=parameters,  # default parameters
         logging=True,
-        reuse_mss=False)
+        reuse_mss=False,
+        clues=set(i for i in range(len(bv_clues))),
+        bij=set(i for i in range(len(bv_clues), len(bv_clues) + len(bv_bij))),
+        trans=set(i for i in range(len(bv_clues) + len(bv_bij), len(bv_clues) + len(bv_bij) + len(bv_trans))))
 
     F = frozenset(range(o.nClauses))
     # each -i
@@ -2204,46 +2208,46 @@ def experiment3(sd, timeout):
 
 def experiment2(sd, timeout):
 
-    print("Starting experiment2_omusConstrWarm")
-    experiment2_omusConstrWarm(sd, timeout=timeout)
-    print("Ending experiment2_omusConstrWarm")
+    # print("Starting experiment2_omusConstrWarm")
+    # experiment2_omusConstrWarm(sd, timeout=timeout)
+    # print("Ending experiment2_omusConstrWarm")
 
-    print("Starting omusConstr")
-    experiment2_omusConstr(sd, timeout=timeout)
-    print("Ending omusConstr")
+    # print("Starting omusConstr")
+    # experiment2_omusConstr(sd, timeout=timeout)
+    # print("Ending omusConstr")
 
-    print("Starting experiment2_OmusConstrIncr")
-    experiment2_OmusConstrIncr(sd, timeout=timeout)
-    print("Ending experiment2_OmusConstrIncr")
+    # print("Starting experiment2_OmusConstrIncr")
+    # experiment2_OmusConstrIncr(sd, timeout=timeout)
+    # print("Ending experiment2_OmusConstrIncr")
 
-    print("Starting experiment2_OmusConstrIncrWarm")
-    experiment2_OmusConstrIncrWarm(sd, timeout=timeout)
-    print("Ending experiment2_OmusConstrIncrWarm")
-    print("Starting OMUSIncrPost")
-    experiment2_omusIncrPost(sd, timeout=timeout)
-    print("Ending OMUSIncrPost")
+    # print("Starting experiment2_OmusConstrIncrWarm")
+    # experiment2_OmusConstrIncrWarm(sd, timeout=timeout)
+    # print("Ending experiment2_OmusConstrIncrWarm")
+    # print("Starting OMUSIncrPost")
+    # experiment2_omusIncrPost(sd, timeout=timeout)
+    # print("Ending OMUSIncrPost")
 
     print("Starting OMUSIncrPostWarm")
     experiment2_omusIncrPostWarm(sd, timeout=timeout)
     print("Ending OMUSIncrPostWarm")
 
-    print("Starting OMUSIncr")
-    experiment2_omusIncr(sd, timeout=timeout)
-    print("Ending OMUSIncr")
+    # print("Starting OMUSIncr")
+    # experiment2_omusIncr(sd, timeout=timeout)
+    # print("Ending OMUSIncr")
 
-    print("Starting OMUSPost")
-    experiment2_omusPost(sd, timeout=timeout)
-    print("Ending OMUSPost")
+    # print("Starting OMUSPost")
+    # experiment2_omusPost(sd, timeout=timeout)
+    # print("Ending OMUSPost")
 
-    print("Starting OMUS")
-    experiment2_omus(sd, timeout=timeout)
-    print("Ending OMUS")
+    # print("Starting OMUS")
+    # experiment2_omus(sd, timeout=timeout)
+    # print("Ending OMUS")
 
 def main():
     sd = datetime.now()
     random.seed(sd)
-    experiment1(sd)
-    # experiment2(sd, timeout=1*HOURS)
+    # experiment1(sd)
+    experiment2(sd, timeout=1*HOURS)
     # experiment3(sd, timeout=None)
 
 

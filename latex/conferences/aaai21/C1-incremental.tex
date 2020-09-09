@@ -1,7 +1,15 @@
-In this section, we are concerned with a setting in which we know that many related (but not identical) OUS calls will occur. The goal is to extend the basic OUS algorithm to exploit this knowledge as much as possible, preferrably without too much overhead for the individual calls. 
+In this section, we are concerned with a setting in which we know that many related (but not identical) OUS calls will occur. The goal is to extend the basic OUS algorithm to exploit this knowledge as much as possible, preferably without too much overhead for the individual calls. 
 
 \newcommand\fall{\mm{\formula_{\mathit{all}}}}
-To formalize this, we assume the existence of some unsatisfiable formula $\fall$ and that several calls to compute an OUS of a \emph{subset} of \fall will happen. 
+To formalize this, we assume that several \omus calls will happen with different formulas $\formula_1,\dots,\formula_n$ with non-empty intersection. In fact, the algorithm we present will always work for completely unrelated formulas (with empty intersection) but will in this case not yield any benefit over the plain \omus algorithm of \cref{sec:omus}. 
+
+The most important data the plain \omus algorithm keeps track of is a set of correction subsets of \formula, which are complements of satisfiable subsets of \formula.
+These correction subsets themselves are not necessarily correction subsets of other related formulas, but the opposite, the satisfiable subsets, they do transfer between formulas. Formally, if $\m{S} \subseteq \formula_1$ is an MSS of $\formula_1$, then $\m{S}\cap \formula_2$ is a satisfiable subsets of $\formula_2$ and can be grown into a maximal such satisfiable subset, e.g., using the existing \grow procedure. 
+To this end, we will assume that our algorithm 
+
+
+
+the existence of some unsatisfiable formula $\fall$ and that several calls to compute an OUS of a \emph{subset} of \fall will happen. 
 To take this into account in our OUS algorithm, we first note that satisfiable subsets of $\formula\subseteq \fall$ are also satsifiable subsets of \fall, and hence their complement (in \fall) are correction sets.
 Now, since the core OUS algorithm is to store correction sets, we propose that these be stored over multiple calls, resulting in the following algorithm, which we assume has access to a shared data structure containing \fall and a set \setstohitall of correction subsets of \fall. 
 \newcommand\Fall\fall

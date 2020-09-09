@@ -2052,7 +2052,7 @@ def experiment3(sd, timeout):
     # print(maxPropagate(hard_clauses + soft_clauses))
     soft_weights = [100 for clause in bv_clues] + \
               [60 for clause in bv_trans] + \
-              [60 for clause in bv_bij]
+              [40 for clause in bv_bij]
 
     unknown_facts = set()
     for rel in rels:
@@ -2158,7 +2158,9 @@ def experiment3(sd, timeout):
     }
 
     for (E_best, S_best, N_best) in expl_seq:
-
+        nClues = sum([1 if c in bv_clues_soft_clauses else 0 for c in S_best])
+        nBij = sum([1 if c in bv_bij_soft_clauses else 0 for c in S_best])
+        nTrans = sum([1 if c in bv_trans_soft_clauses else 0 for c in S_best])
         constraint_type = None
         if len(S_best) == 1:
             if S_best[0] in bv_bij_soft_clauses:
@@ -2170,9 +2172,6 @@ def experiment3(sd, timeout):
             else:
                 constraint_type= 'unknown'
         else:
-            nClues = sum([1 if c in bv_clues_soft_clauses else 0 for c in S_best])
-            nBij = sum([1 if c in bv_bij_soft_clauses else 0 for c in S_best])
-            nTrans = sum([1 if c in bv_trans_soft_clauses else 0 for c in S_best])
             if nClues > 1 and (nBij+nTrans) == 0:
                 constraint_type = 'multiple-clues'
             elif nBij+nTrans > 1 and (nClues == 0):
@@ -2184,7 +2183,10 @@ def experiment3(sd, timeout):
             'clue': constraint_type,
             'facts': len(E_best),
             'derivations':len(N_best),
-            'constraints': [list(c) for c in S_best]
+            'constraints': [list(c) for c in S_best],
+            'nClues':nClues,
+            'nBij':nBij,
+            'nTrans':nTrans
         })
 
 

@@ -48,7 +48,7 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
 
 \begin{algorithm}[ht]
   \DontPrintSemicolon
-  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+%  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   \While{true}{
     $\F' \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
 % f{optimal} solution}
@@ -62,7 +62,7 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
     $\F'' \gets  \grow(\F',\F) $\;
     $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
   }
-  \caption{$\comus(\formula,f,p)$ }
+  \caption{$\comus(\formula,f,p,\setstohit=\emptyset)$ }
   \label{alg:comus}
 \end{algorithm}
 \tias{I would not show the above one as it is rather vague \bart{I would disagree with the vagueness. It makes abstraction of several things (what is $p$? what is $f$? How is Grow and CondOptHS implemented? But in my opinion that is good, since it shows close relation to the basic OUS algo as well as illustrating what is really going on and modularity.}, but immediately rewrite it as Alg2 the singleStepExplain:}
@@ -84,7 +84,7 @@ $p \gets \{$exactly one of $\bar{I}_{end}$ in the hitting set$\}$\; %, none of $
 
 \While{$I \neq I_{end}$}{
 	update $p$ such that none of $\{I_{end} \setminus I\}$ and none of $\bar{I}$ can be in the hitting set\;
-    $X \gets \comus(\formulag,f,p)$\;
+    $X \gets \comus(\formulag,f,p,\setstohit)$\;
 	$I_{\mathit{best}} \gets I\cap X$\;
     ${\cal C}_{\mathit{best}}\gets{\cal C}\cap X$\;
 	$N_{\mathit{best}} \gets \{I_{end} \setminus I\} \cap optimalPropagate(X) $\;

@@ -190,14 +190,14 @@ class OMUS(object):
         self.I = set(I)
         # self.I_lits = frozenset(set(abs(lit) for lit in I) | set(-abs(lit) for lit in I))
         self.soft_weights = [w for w in soft_weights]
-
+        
         self.nSoftClauses = len(self.soft_clauses)
         self.nClauses = len(self.all_soft_clauses)
         self.nLiterals = len(I)
         # indicator variables
-        self.clues = [c for c in clues] if clues is not None else set()
-        self.bij = [b for b in bij] if bij is not None else set()
-        self.trans = [t for t in trans] if clues is not None else set()
+        self.clues = set(c for c in clues) if clues is not None else set()
+        self.bij = set(b for b in bij) if bij is not None else set()
+        self.trans = set(t for t in trans) if trans is not None else set()
 
         self.weights = [w for w in soft_weights] + [1] * 2 * self.nLiterals
 
@@ -217,6 +217,8 @@ class OMUS(object):
         self.hs_sizes = []
         # MSS
         # if joint:
+        # decision variable for gurobi model
+        self.x = None
         self.gp_model = self.gurobiOmusConstrModel(modelname)
 
         self.MSSes = set()
@@ -1274,7 +1276,52 @@ class OMUS(object):
 
         # create the variables (with weights in one go)
         x = self.g_model.addMVar(shape=self.nClauses, vtype=GRB.BINARY, obj=self.obj_weights, name="x")
+        # self.x = self.g_model.addMVar(shape=self.nClauses, vtype=GRB.BINARY, name="x")
 
+        # # |B| = # bijectivity + #transitivity constraints
+        # # W = {0, 1} if |S| > 1 then 1 else 0
+        # # Y = {0, 1} if nClues = 0 then 1 else 0
+        # # THeta = W * Y:
+        # #       if nclues = 0 and nConstraints > 1: Y =1 and W = 1 => 1
+        # #       rest 0
+        # W = self.g_model.addMVar(shape=1, vtype=GRB.BINARY, name="W")
+        # Y = self.g_model.addMVar(shape=1, vtype=GRB.BINARY, name="Y")
+        # THETA = self.g_model.addMVar(shape=1, vtype=GRB.BINARY, name="THETA")
+
+        # # 
+        # self.g_model.addConstr(THETA <= W)
+        # self.g_model.addConstr(THETA <= Y)
+        # self.g_model.addConstr(THETA >= W + Y - 1)
+
+        # B = len(self.bij | self.trans)
+        # nClues = len(self.clues)
+        # implicit_constraints = self.bij | self.trans
+        # n_all_constr = len(self.bij) + len(self.trans) + len(self.clues)
+        # print(n_all_constr)
+        # print(nClues)
+        # print(len(self.bij))
+        # print(len(self.trans))
+
+        # # obj_w = [0 for i in range(0, n_all_constr)] + [self.obj_weights[i] for i in range(n_all_constr, self.nClauses)]
+        # # obj_expr = gp.LinExpr()
+        # # obj_expr.addTerms(obj_w, x )
+        # # obj_expr.addTerms(sum(x[i] for i in self.clues) * 100)
+        # # obj_expr.addTerms(100, THETA)
+        # obj_expr = 100 * THETA + self.x[list(self.clues)].sum() * 100
+        # for i in range(n_all_constr, self.nClauses):
+        #     obj_expr += self.x[i] * self.obj_weights[i]
+        # # obj_expr = x[range(n_all_constr, self.nClauses)].sum() * [self.obj_weights[i] for i in range(n_all_constr, self.nClauses)]
+        # self.g_model.setObjective(obj_expr, GRB.MINIMIZE)
+        # # print(implicit_constraints)
+        # print(self.nClauses)
+
+        # self.g_model.addConstr(self.x[list(implicit_constraints)].sum() - 1 >= W * B)
+        # self.g_model.addConstr(self.x[list(self.clues)].sum()  <= nClues * (1 - Y))
+        # # self.g_model.addConstr(gp.quicksum(x[i] for i in implicit_constraints) - 1 >= W * B)
+        # # self.g_model.addConstr(gp.quicksum(x[i] for i in self.clues) <= nClues * (1 - Y))
+        # # self.g_model.setObjective(
+        # #     100 * THETA + gp.quicksum(x[i]*self.obj_weights[i] for i in range(n_all_constr, self.nClauses))
+        # #     , GRB.MINIMIZE)
         # exactly one of the -literals
         vals = range(self.nSoftClauses + self.nLiterals, self.nClauses)
 
@@ -1286,12 +1333,13 @@ class OMUS(object):
 
     def addSetGurobiOmusConstr(self, C):
         # variables
+        # x = self.g_model.getVarByName("x")
+        # print(self.g_model.getVars())
+        # print(x)
         x = self.g_model.getVars()
-
         # add new constraint sum x[j] * hij >= 1
         self.g_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
-
-
+        # self.g_model.addConstr(self.x[list(C)].sum()  >= 1)
 
     def gurobiOmusConstrHS(self):
         # solve optimization problem
@@ -1299,6 +1347,7 @@ class OMUS(object):
 
         # output hitting set
         x = self.g_model.getVars()
+        # x = self.g_model.getVarByName("x")
 
         hs = set(i for i in range(self.nClauses) if x[i].x == 1)
 
@@ -1311,6 +1360,11 @@ class OMUS(object):
         # for i in range(self.nSoftClauses + self.nLiterals, self.nClauses):
         #     self.obj_weights[i] = 0
 
+        # B = len(self.bij | self.trans)
+        # nClues = len(self.clues)
+        # implicit_constraints = self.bij | self.trans
+        # n_all_constr = len(self.bij) + len(self.trans) + len(self.clues)
+
         for i in I:
             i_idx = self.softClauseIdxs[frozenset({i})]
             self.obj_weights[i_idx] = 1
@@ -1318,9 +1372,20 @@ class OMUS(object):
             not_i_idx = self.softClauseIdxs[frozenset({-i})]
             self.obj_weights[not_i_idx] = GRB.INFINITY
 
-        x = self.g_model.getVars()
+        # x = self.g_model.getVarByName("x")
+        # W = self.g_model.getVarByName("W")
+        # Y = self.g_model.getVarByName("Y")
+        # THETA = self.g_model.getVarByName("THETA")
+
         self.g_model.setObjective(gp.quicksum(x[i] * self.obj_weights[i] for i in range(self.nClauses)), GRB.MINIMIZE)
         # self.g_model.update()
+        # obj_expr = gp.LinExpr(gp.quicksum(x[i] for i in self.clues) * 100)
+        # obj_expr.addTerms(100, THETA)
+        # obj_w = [0 for i in range(0, n_all_constr)] + [self.obj_weights[i] for i in range(n_all_constr, self.nClauses)]
+        # obj_expr.addTerms(obj_w, x )
+        # # obj_expr = 100 * THETA + gp.quicksum(x[i] for i in self.clues) * 100 + gp.quicksum(x[i]*self.obj_weights[i] for i in range(n_all_constr, self.nClauses))
+        # self.g_model.setObjective(obj_expr, GRB.MINIMIZE)
+
 
     def maxsat_test(self, hs_in, model):
         hs = set(hs_in) # take copy!!

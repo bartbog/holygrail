@@ -6,6 +6,9 @@ To take this into account in our OUS algorithm, we first note that satisfiable s
 Now, since the core OUS algorithm is to store correction sets, we propose that these be stored over multiple calls, resulting in the following algorithm, which we assume has access to a shared data structure containing \fall and a set \setstohitall of correction subsets of \fall. 
 \newcommand\Fall\fall
 \newcommand\Hall\setstohitall
+\tias{hmm hmm... I was not thinking of doing THIS already here...
+I think we should merely explain that if we store the satisfiable subses S used to generate the sets-to-hit (F-S), and we need to do a related OMUS, we can 'seed' the sets-to-hit by doing F-grow(S intersection F); because S intersection F will still be a satisfiable subset of F, and hence we can grow it to F, and hence we can take the complement to get an MCS, and hence that can already be put in H instead of restarting from scratch each time... I guess that is the first half of the algo and what you explain. Note that we must store the MSS'es, not the MCSs $h$ as you currently do in the algo} \tias{That is also what we implement and what we experimentally compare to the other methods...}
+
 
 
 % \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
@@ -32,6 +35,8 @@ Now, since the core OUS algorithm is to store correction sets, we propose that t
   }  \caption{$\omusinc(\formula,f)$ }
   \label{alg:omus-inc}
 \end{algorithm}
+
+\tias{Also, then I would add pre-seeding: as we know our OMUSs will be variants of I and G with an l; we can grow(l) for each l, which will be a satisfiable subset and hence can be used to seed the different incremental OMUS calls. Also experimentally this is what is being compared in the mix}
 
 The differences with \cref{alg:omus} can be explained as follows.
 First of all, instead of initializing \setstohit as the empty set, we store all intersections of sets in \setstohitall with the current formula in it. 

@@ -956,17 +956,18 @@ def experiment1_OMUSIncrWarm(sd=20200918):
 
         tstart_exp1 = time.time()
         print("Seeding")
-        for i in model - I:
-            o.clauses = o.soft_clauses + [frozenset({-i})]
-            o.weights = o.soft_weights + [1]
-            F_prime = set({o.softClauseIdxs[frozenset({-i})]})
+        o.MSSes.add((o.fullMss, frozenset(model)))
+        # for i in model - I:
+        #     o.clauses = o.soft_clauses + [frozenset({-i})]
+        #     o.weights = o.soft_weights + [1]
+        #     F_prime = set({o.softClauseIdxs[frozenset({-i})]})
 
-            MSS, MSS_Model = o.grow(F_prime, set())
+        #     MSS, MSS_Model = o.grow(F_prime, set())
 
-            o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
+        #     o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
 
-            # -- precompute some hitting sets for a rough idea on the costs
-            w_I = [1 for _ in I] + [1]
+        #     # -- precompute some hitting sets for a rough idea on the costs
+        #     w_I = [1 for _ in I] + [1]
 
         I = set()
         I_cnf = [frozenset({lit}) for lit in I]

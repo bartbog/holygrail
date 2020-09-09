@@ -1,30 +1,33 @@
 In this section, we are concerned with a setting in which we know that many related (but not identical) OUS calls will occur. The goal is to extend the basic OUS algorithm to exploit this knowledge as much as possible, preferably without too much overhead for the individual calls. 
 
+\newcommand\satsets{\mm{\mathbf{SSs}}}
 \newcommand\fall{\mm{\formula_{\mathit{all}}}}
 To formalize this, we assume that several \omus calls will happen with different formulas $\formula_1,\dots,\formula_n$ with non-empty intersection. In fact, the algorithm we present will always work for completely unrelated formulas (with empty intersection) but will in this case not yield any benefit over the plain \omus algorithm of \cref{sec:omus}. 
 
 The most important data the plain \omus algorithm keeps track of is a set of correction subsets of \formula, which are complements of satisfiable subsets of \formula.
 These correction subsets themselves are not necessarily correction subsets of other related formulas, but the opposite, the satisfiable subsets, they do transfer between formulas. Formally, if $\m{S} \subseteq \formula_1$ is an MSS of $\formula_1$, then $\m{S}\cap \formula_2$ is a satisfiable subsets of $\formula_2$ and can be grown into a maximal such satisfiable subset, e.g., using the existing \grow procedure. 
-To this end, we will assume that our algorithm 
+To this end, we will assume that our algorithm has access to a set $\satsets$ in which we store satisfiable sets and their corresponding models. The \omus algorithm from \cref{sec:omus} is then initialized with the corresponding correction subsets. 
+In  \cref{alg:omus-inc}, this is done in the for-loop starting at \cref{line:for-inc-seed}. The if-test in that loop is an optimization that does not affect correctness but does ensure that we will not compute the same satisfiable subset over and over again, to avoid spurious calls to \grow. 
+Otherwise, the algorithm behaves identically to \cref{alg:omus}, except that whenever a satisfiable subset is found, it is stored (\cref{line:store}). 
+ 
 
 
-
-the existence of some unsatisfiable formula $\fall$ and that several calls to compute an OUS of a \emph{subset} of \fall will happen. 
-To take this into account in our OUS algorithm, we first note that satisfiable subsets of $\formula\subseteq \fall$ are also satsifiable subsets of \fall, and hence their complement (in \fall) are correction sets.
-Now, since the core OUS algorithm is to store correction sets, we propose that these be stored over multiple calls, resulting in the following algorithm, which we assume has access to a shared data structure containing \fall and a set \setstohitall of correction subsets of \fall. 
-\newcommand\Fall\fall
-\newcommand\Hall\setstohitall
-\tias{hmm hmm... I was not thinking of doing THIS already here...
-I think we should merely explain that if we store the satisfiable subses S used to generate the sets-to-hit (F-S), and we need to do a related OMUS, we can 'seed' the sets-to-hit by doing F-grow(S intersection F); because S intersection F will still be a satisfiable subset of F, and hence we can grow it to F, and hence we can take the complement to get an MCS, and hence that can already be put in H instead of restarting from scratch each time... I guess that is the first half of the algo and what you explain. Note that we must store the MSS'es, not the MCSs $h$ as you currently do in the algo}
-\bart{
-\begin{itemize}
-    \item My way of phrasing the algorithm does not do a grow during the seeding. Instead, it does an extra grow on line 12. Growing to a subset of Fall instead of F. This means you only have to do this grow once, instead of with every subsequent call. 
-    \item The current presentation followed from discussion we had earlier. THere, we noticed that if you store the MSS of F, not Fall, and then take intersection with another F', there is a big chance that the intersection just falls in the ``trivially satisfiable part'' (the puzzle) and thus that the growing yields something suboptimal. (the same over and over again). The current presentation avoids this. To see if it is close enough to the actual implementation :-) 
-  \item Storing MSS vs MCS should not matter. We know Fall anyway so we can easily go back and forth. I opted here for storing the MCSs for consistency of presentation (that is also what standard OMUS stores) 
-  \item As for presentation, 
-\end{itemize}
-
-}\tias{That is also what we implement and what we experimentally compare to the other methods...}
+% the existence of some unsatisfiable formula $\fall$ and that several calls to compute an OUS of a \emph{subset} of \fall will happen. 
+% To take this into account in our OUS algorithm, we first note that satisfiable subsets of $\formula\subseteq \fall$ are also satsifiable subsets of \fall, and hence their complement (in \fall) are correction sets.
+% Now, since the core OUS algorithm is to store correction sets, we propose that these be stored over multiple calls, resulting in the following algorithm, which we assume has access to a shared data structure containing \fall and a set \setstohitall of correction subsets of \fall. 
+% \newcommand\Fall\fall
+% \newcommand\Hall\setstohitall
+% \tias{hmm hmm... I was not thinking of doing THIS already here...
+% I think we should merely explain that if we store the satisfiable subses S used to generate the sets-to-hit (F-S), and we need to do a related OMUS, we can 'seed' the sets-to-hit by doing F-grow(S intersection F); because S intersection F will still be a satisfiable subset of F, and hence we can grow it to F, and hence we can take the complement to get an MCS, and hence that can already be put in H instead of restarting from scratch each time... I guess that is the first half of the algo and what you explain. Note that we must store the MSS'es, not the MCSs $h$ as you currently do in the algo}
+% \bart{
+% \begin{itemize}
+%     \item My way of phrasing the algorithm does not do a grow during the seeding. Instead, it does an extra grow on line 12. Growing to a subset of Fall instead of F. This means you only have to do this grow once, instead of with every subsequent call. 
+%     \item The current presentation followed from discussion we had earlier. THere, we noticed that if you store the MSS of F, not Fall, and then take intersection with another F', there is a big chance that the intersection just falls in the ``trivially satisfiable part'' (the puzzle) and thus that the growing yields something suboptimal. (the same over and over again). The current presentation avoids this. To see if it is close enough to the actual implementation :-) 
+%   \item Storing MSS vs MCS should not matter. We know Fall anyway so we can easily go back and forth. I opted here for storing the MCSs for consistency of presentation (that is also what standard OMUS stores) 
+%   \item As for presentation, 
+% \end{itemize}
+% 
+% }\tias{That is also what we implement and what we experimentally compare to the other methods...}
 
 
 
@@ -32,47 +35,59 @@ I think we should merely explain that if we store the satisfiable subses S used 
 \begin{algorithm}[ht]
   \DontPrintSemicolon
   $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
-  \For{$h\in\setstohitall$}{
-  $\store(h\cap \formula,\setstohit)$\;
-  }
-  
+  $\satsets_\formula\gets\emptyset$\;
+  \For{$(\m{S},M)\in\satsets$ \label{line:for-inc-seed}}{
+    $\m{S}_\formula \gets \m{S}\cap \formula$\;
+    \If{$\lnot \exists \m{S}'\in\satsets_\formula: \m{S}_\formula \subseteq\m{S}'$}{
+        $\satsets_\formula\gets\satsets_\formula\cup\{\m{S}_\formula\}$\;
+        $\setstohit \gets \setstohit\cup \{\formula \setminus \grow( \m{S}_\formula, \formula,M)\}$
+        }
+        }
   \While{true}{
     $\F' \gets \ohs(\setstohit,f) $ \label{smus-hs} \;%\tcp*{\small Find \textbf{optimal} solution}
     % \tcp{\small set with all unique clauses from hitting set}
 %     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
     % \tcp{IF UNSAT, $hs$ is the OMUS }
-    \If{ $\lnot \sat(\F')$}{
+    $(sat, M)\gets \sat(\F')$\;
+    \If{ $sat = \mathit{false}$}{
       \Return{$\F'$} \;
     }
-    $\F'' \gets  \grow(\F',\F) $\;
+    $\F'' \gets  \grow(\F',\F,M) $\;
     $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$\;
-    $\store(\Fall\setminus\grow(\F'',\Fall),\Hall)$\label{lin:storegrow}
+    $\satsets\gets \satsets\cup \{(\F'',M)\}$ \label{line:store}
     \;
   }  \caption{$\omusinc(\formula,f)$ }
   \label{alg:omus-inc}
 \end{algorithm}
+% 
+% \tias{Also, then I would add pre-seeding: as we know our OMUSs will be variants of I and G with an l; we can grow(l) for each l, which will be a satisfiable subset and hence can be used to seed the different incremental OMUS calls. Also experimentally this is what is being compared in the mix}\bart{OK, but add it here? This is *another* way of adding domain knowledge, right? We know from teh structure of the problem that certain sets will be satisfiable. We can use it to inform our algorithM. Very similar to the domain knowledge added in the next section.}
+% 
+% The differences with \cref{alg:omus} can be explained as follows.
+% First of all, instead of initializing \setstohit as the empty set, we store all intersections of sets in \setstohitall with the current formula in it. 
+% While this could simply be done using 
+% % \[\setstohit \gets \{h\cap \fall\mid h\in \Hall\},\]
+% we instead make use of a procedure \store, whose function is to remove possible duplicates and possible non-subset-minimal correction sets. 
+% Indeed, it might be the case that for $h_1,h_2\in TODO$ %\setstohitall$,
+% $h_1\cap\formula \subsetneq h_2\cap\formula$. 
+% While it would not influence correctness of the algorithm, keeping both would influence space and time consumption.
+% Another difference is that after computing a satisfiable subset $\formula''$ of \formula, in \cref{lin:storegrow} we grow it once more to obtain a (possibly larger) satisfiable subset of FALLTODO, which is then subsequently stored in HALLTODO. Again, the possibility extends that this is non subset-minimal and the \store procedure takes care of that.
 
-\tias{Also, then I would add pre-seeding: as we know our OMUSs will be variants of I and G with an l; we can grow(l) for each l, which will be a satisfiable subset and hence can be used to seed the different incremental OMUS calls. Also experimentally this is what is being compared in the mix}\bart{OK, but add it here? This is *another* way of adding domain knowledge, right? We know from teh structure of the problem that certain sets will be satisfiable. We can use it to inform our algorithM. Very similar to the domain knowledge added in the next section.}
-
-The differences with \cref{alg:omus} can be explained as follows.
-First of all, instead of initializing \setstohit as the empty set, we store all intersections of sets in \setstohitall with the current formula in it. 
-While this could simply be done using 
-\[\setstohit \gets \{h\cap \fall\mid h\in \Hall\},\]
-we instead make use of a procedure \store, whose function is to remove possible duplicates and possible non-subset-minimal correction sets. 
-Indeed, it might be the case that for $h_1,h_2\in\setstohitall$, $h_1\cap\formula \subsetneq h_2\cap\formula$. 
-While it would not influence correctness of the algorithm, keeping both would influence space and time consumption.
-Another difference is that after computing a satisfiable subset $\formula''$ of \formula, in \cref{lin:storegrow} we grow it once more to obtain a (possibly larger) satisfiable subset of \fall, which is then subsequently stored in \Hall. Again, the possibility extends that this is non subset-minimal and the \store procedure takes care of that.
-
+\paragraph{Using Initialization to Add Domain Knowledge}
+Before the first call to \omusinc, the set \satsets of satisfiable subsets will be empty. 
+However, in case we have structural domain knowledge about the formulas, this can be exploited to pre-populate this set inteligently. 
+For instance, in the explanatory setting, we know that $\formulag$ is satisfiable, and is a satisfiable subset of \emph{all} \omusinc calls to follow. 
+By initializing $\satsets$ as $\{(\formulag,I_{\mathit{end}})\}$, with $I_\mathit{end}$ the final interpretation in the explanation sequence, we avoid the algorithm having to rediscover this satisfiable subset itself, and hence can potentially result in serious performance gains. This is experimentally validated in \cref{sec:experiments}.
 
 \paragraph{Application to Explanations}
-To apply this idea to the context of explanation generation, we notice that the entire explanation generation loop starts with a certain interpretation $I_0$, and gradually derives more and more consequences.
-At each point, the set of literals that can be used for explanations are the consequences derived this far. On top of that, the \omus call will always contain a single negation of a consequence literal (the literal to be explained). 
-Thus, if 
-\[I_{\mathit{end}} = \{ l\mid \formulag \land I_0 \models l\},\]
-then we can take 
-\[\fall = \formulag \cup I_{\mathit{end}} \cup \lnot I_{\mathit{end}}.\]
-Which is clearly unsatisfiable (containing various literals and their negation). However, the \omus calls will always be on a subset of \fall that contains no such obvious consequences. 
+% \todo{TO BE REWRITTEN}
+% To apply this idea to the context of explanation generation, we notice that the entire explanation generation loop starts with a certain interpretation $I_0$, and gradually derives more and more consequences.
+% At each point, the set of literals that can be used for explanations are the consequences derived this far. On top of that, the \omus call will always contain a single negation of a consequence literal (the literal to be explained). 
+% Thus, if 
+% \[I_{\mathit{end}} = \{ l\mid \formulag \land I_0 \models l\},\]
+% then we can take 
+% \[\fall = \formulag \cup I_{\mathit{end}} \cup \lnot I_{\mathit{end}}.\]
+% Which is clearly unsatisfiable (containing various literals and their negation). However, the \omus calls will always be on a subset of \fall that contains no such obvious consequences. 
 
 Using \omusinc instead of \omus in \cref{alg:singleStepExplain}  then results in an incremental explanation algorithm. Also note that the incrementality is not just obtained in a single step but over the different explanation steps. 
 % 

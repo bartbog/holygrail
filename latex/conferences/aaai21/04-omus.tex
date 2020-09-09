@@ -93,18 +93,42 @@ As is common, we first use a procedure \grow to extend the hitting set to a set 
 %     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
     % \tcp{IF UNSAT, $hs$ is the OUS }
-    $(sat, M)\gets \sat(\F')$\;
-    \If{ $sat = \mathit{false}$}{
+    %$(sat, M)\gets \sat(\F')$\;
+    %\If{ $sat = \mathit{false}$}{
+    \If{ $\lnot \sat(\F')$}{
       \Return{$\F'$} \;
     }
-    $\F'' \gets  \grow(\F',\F,M) $\;
+    $\F'' \gets  \grow(\F',\F) $\;
     $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
   }
   \caption{$\omus(\formula,f)$ }
   \label{alg:omus}
 \end{algorithm}
-\tias{I would add the 'delayed' extension here...}
-\bart{Go ahead! I believe you had a clean way of doing this...}
+
+\paragraph{Postponing optimization to speed up OUS solving}
+\citet{davies} demonstrated that in the case of hitting-set based MaxSAT solving, much time was spent computing the optimal hitting set. They proposed to post-pone calling the optimal hitting set solver, and instead first use a greedy hitting set method and then try to incrementally grow the hitting set by adding the smallest element according to $f$ of the newest added MCS, until the hitting sets found by those are SAT (in our case, UNSAT). Only then call the optimal hitting set method.
+
+We can similarly speed up our OUS computation. This amounts to adding the following code a the start of the \textbf{while} loop, just before line $3$:
+\begin{algorithm}[ht]
+\While{true}{
+	$\F' \gets \ghs(\setstohit,f) $\;
+    \If{ $\lnot \sat(\F')$}{
+      \textbf{break}
+    }
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
+    \While{true}{
+    	%$\F' \gets \ihs(\setstohit,f) $\;
+    	$\F' \gets \F' + min_f$ element of last MCS in $\setstohit$\;
+        \If{ $\lnot \sat(\F')$}{
+          \textbf{break}
+        }
+        $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
+    }
+}
+\end{algorithm}
+
+%\tias{I would add the 'delayed' extension here...}
+%\bart{Go ahead! I believe you had a clean way of doing this...}
 
 % 
 % \begin{algorithm}[ht]

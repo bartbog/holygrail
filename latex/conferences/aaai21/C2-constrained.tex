@@ -69,26 +69,29 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
 \bart{I would avoid that :-) That way we mix up ``how to compute constrained OUSs?'' with ``how to compute explanations using constrained OUSs?''. These are two different concerns. We should show that we also tackle the first .  That way, our new ``singlestepexplain2'' will also look a lot simpler than singleStepExplain1 (if we use one oracle call to cOUS}
 
 \begin{algorithm}[ht]
-$\setstohit  \gets \emptyset$ \;
-preseeding:\\
+  \caption{$\call{ExplainCSPcOUS}({\cal C},f)$}
+  \label{alg:explainCSPcOUS}
+$E \gets \langle \rangle$\;
+$I_{end} \gets optimalPropagate({\cal C})$\;
+$\formulag \gets {\cal C} \cup I_{end} \cup \bar{I}_{end}$\;
+$\setstohit \gets \{\formulag \setminus \{{\cal C} \cup I_{end}\}\}$\;
+// preseeding\\
 \For{$l \in I_{end}:$}{
-  $\setstohit \gets \setstohit \cup \grow(-l,\F) $\;
+  $\setstohit \gets \setstohit \cup \{\formulag \setminus \grow(-l,\formulag)\} $\;
 }
-the constrained OUS loop:
-  \While{true}{
-    some appropriate modifications to $f$ in terms of infinity values... \\
-    p = $\sum \bar{I} == 1$ or however this can be more nicely written \\
-    $\F' \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb   
+$I \gets \emptyset$\;
+$p \gets \{$exactly one of $\bar{I}_{end}$ in the hitting set$\}$\; %, none of $I_{end}$ can be in the hitting set$\}$\;
 
-    \If{ $\lnot \sat(\F')$}{
-      \Return{$\F'$} \;
-    }
-    $\F'' \gets  \grow(\F',\F) $\;
-    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+\While{$I \neq I_{end}$}{
+	update $p$ such that none of $\{I_{end} \setminus I\}$ and none of $\bar{I}$ can be in the hitting set\;
+    $X \gets \comus(\formulag,f,p)$\;
+	$I_{\mathit{best}} \gets I\cap X$\;
+    ${\cal C}_{\mathit{best}}\gets{\cal C}\cap X$\;
+	$N_{\mathit{best}} \gets \{I_{end} \setminus I\} \cap optimalPropagate(X) $\;
+	add $\{I_{\mathit{best}} \wedge {\cal C}_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+	$I \gets I \cup N_{\mathit{best}}$\;
   }
-    \caption{$\call{SingleStepExplain2}(\formulag,f,I)$}
-  \label{alg:singleStepExplain2}
-  \label{alg:explainSingleStep2}
+\Return{E}\;
 \end{algorithm}
 
 

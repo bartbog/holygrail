@@ -18,9 +18,9 @@ $I \gets \emptyset$\;
 \While{$I \neq I_{end}$}{
     $X \gets \call{bestStep}({\cal C},f,I,I_{end})$\;
 	$I_{\mathit{best}} \gets I\cap X$\;
-    $\formulag_{\mathit{best}}\gets\formulag\cap X$\;
+    $\formulac_{\mathit{best}}\gets\formulac\cap X$\;
 	$N_{\mathit{best}} \gets \{I_{end} \setminus I\} \cap optimalPropagate(X) $\;
-	add $\{I_{\mathit{best}} \wedge \formulag_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+	add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
 	$I \gets I \cup N_{\mathit{best}}$\;
   }
 \Return{E}\;
@@ -44,6 +44,7 @@ $X_{best} \gets \{{\cal C} \land I \land \bar{I}_{end}\}$\;
 
 \cref{alg:bestStepOUS} depicts an OUS-based algorithm to find the next simplest explanation step in the sequence. 
 %Compared to the method proposed in \cite{ecai/BogaertsGCG20}, this is already a simplified one that uses a single OUS call to find a ``good'' explanation instead of multiple MUS calls to approximate the optimal OUSs. 
+Note that we write $\bar{I}_{end} = \{-l | l \in I_{end}\}$.
 In this algorithm, an OUS call is used to compute an explanation for each consequence $l$ of the combination of $\formulac$ and the assignment so far. 
 It was shown that MUSs of $\formulac\land I\land\lnot l$ correspond to non-redundant explanations of $l$ in terms of $\formulac$ and $I$ and hence an OUS is a ``best'' explanation of $l$. 
 The loop in \cref{alg:bestStepOUS} serves to guarantee that at each point, the literal with the best explanation is selected. 
@@ -59,7 +60,7 @@ The loop in \cref{alg:bestStepOUS} serves to guarantee that at each point, the l
     $Seq \gets \emptyset$  \;
     \While{  $\m{I} \neq \m{I}_{end}$ }{
       \For{$i \in \m{I}_{end} \setminus \m{I}$}{
-        $X_i \gets$ \textsc{OMUS($\{\neg i\} \wedge \m{I} \wedge \m{S}$)} \;
+        $X_i \gets$ \textsc{OMUS($\{\neg i\} \wedge \m{I} \wedge \m{S}$)}\label{alg:best:ous} \;
         $E_i \gets$ $\m{I} \cap X_i$  \;
         $S_i \gets$ $\m{T} \cap X_i$  \;
         $\m{N}_i \gets$ \textsc{propagate($E_i \wedge \m{S}_i$)} \;

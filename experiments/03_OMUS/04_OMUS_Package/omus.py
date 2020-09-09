@@ -1911,10 +1911,6 @@ class OMUSBase(object):
             solved = s.solve()
             model = s.get_model()
 
-        # if self.logging:
-        #     tend = time.time()
-        #     self.timing.sat.append(tend - tstart)
-
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
             return mapped_model, solved
@@ -1926,24 +1922,17 @@ class OMUSBase(object):
             self.steps.sat += 1
             # tstart = time.time()
 
-
-
         satsolver = Solver()
 
         if len(f_prime) == 0:
             return set(), True, satsolver
-        # print(self.clauses, self.hard_clauses)
+
         validated_clauses = [self.clauses[i] for i in f_prime] + self.hard_clauses
-        # print(f_prime, validated_clauses)
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
 
         satsolver.append_formula(validated_clauses, no_return=False)
         solved = satsolver.solve()
         model = satsolver.get_model()
-
-        # if self.logging:
-            # tend = time.time()
-            # self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -1954,20 +1943,14 @@ class OMUSBase(object):
     def checkSatIncr(self, satsolver, hs, c):
         if self.logging:
             self.steps.sat += 1
-            # tstart = time.time()
 
         validated_clauses = [self.clauses[i] for i in hs] + self.hard_clauses
-        # print(validated_clauses, self.clauses, self.hard_clauses)
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
         clause = self.clauses[c]
 
         satsolver.add_clause(clause, no_return=False)
         solved = satsolver.solve()
         model = satsolver.get_model()
-
-        # if self.logging:
-        #     tend = time.time()
-        #     self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -2857,6 +2840,7 @@ class OMUSBase(object):
         #print("\n")
         while(True):
             if (time.time() -t_start_omus) > timeout:
+                gurobi_model.dispose()
                 self.hs_sizes.append(len(H))
                 if self.reuse_mss:
                     self.MSS_sizes.append(len(self.MSSes) - n_msses)
@@ -2874,13 +2858,13 @@ class OMUSBase(object):
             # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
             while(True and postponed_omus):
                 if (time.time() -t_start_omus) > timeout:
+                    gurobi_model.dispose()
                     self.hs_sizes.append(len(H))
                     if self.reuse_mss:
                         self.MSS_sizes.append(len(self.MSSes) - n_msses)
                     # Benchmark info
                     if self.logging:
                         exec_time = time.time() - t_start_omus
-
                         self.total_timings.append(exec_time)
                         self.optimal_steps.append(self.steps.optimal - n_optimal)
                         self.greedy_steps.append(self.steps.greedy - n_greedy)
@@ -2987,6 +2971,8 @@ class OMUSBase(object):
             my_cost = self.cost((E_i, S_i))
             # print(my_cost, "vs", best_cost)
             if best_cost is not None and my_cost >= best_cost:
+                gurobi_model.dispose()
+                self.hs_sizes.append(len(H))
                 if self.reuse_mss:
                     self.MSS_sizes.append(len(self.MSSes) - n_msses)
                 # Benchmark info

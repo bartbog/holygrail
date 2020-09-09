@@ -365,7 +365,7 @@ class OMUS(object):
         # model parameters
         g_model.Params.OutputFlag = 0
         g_model.Params.LogToConsole = 0
-        g_model.Params.Threads = 4
+        g_model.Params.Threads = 1
 
         # create the variables (with weights in one go)
         x = g_model.addMVar(shape=self.nSoftClauses, vtype=GRB.BINARY, obj=self.weights, name="x")
@@ -1277,7 +1277,7 @@ class OMUS(object):
         # model parameters
         self.g_model.Params.OutputFlag = 0
         self.g_model.Params.LogToConsole = 0
-        self.g_model.Params.Threads = 4
+        self.g_model.Params.Threads = 1
 
         # create the variables (with weights in one go)
         x = self.g_model.addMVar(shape=self.nClauses, vtype=GRB.BINARY, obj=self.obj_weights, name="x")

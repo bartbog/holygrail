@@ -21,6 +21,7 @@ from csp_explain import omusExplain, maxPropagate, optimalPropagate, cost
 
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 sys.path.append('/home/emilio/Documents/cppy_src/')
+sys.path.append('/home/emilio/documents/cppy_mysrc/')
 # from cppy.solver_interfaces.pysat_tools import
 from cppy.model_tools.to_cnf import *
 from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat

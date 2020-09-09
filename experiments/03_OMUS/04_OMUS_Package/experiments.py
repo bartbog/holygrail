@@ -25,22 +25,13 @@ sys.path.append('/home/emilio/Documents/cppy_src/')
 from cppy.model_tools.to_cnf import *
 from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
 
-random.seed(datetime.now())
+from multiprocessing import Process
+
 
 SECONDS = 1
 MINUTES = 60 * SECONDS
 HOURS = 60 * MINUTES
-
-
-def maxPropagate(cnf, I=list()):
-    with Solver() as s:
-        s.append_formula(cnf, no_return=False)
-        solved = s.solve()
-        if solved:
-            return set(s.get_model())
-        else:
-            raise "Problem"
-
+TIMEOUT_EXP1 = 10 * MINUTES
 
 def checksatCNF(instance):
     cnf = CNF(from_file=instance)
@@ -61,6 +52,10 @@ def generate_weights(instance):
     return weights
 
 
+def read_json(filepath):
+    with open(filepath, "r") as read_file:
+        return json.load(read_file)['weights']
+
 def get_instances(n=10):
     p = Path('data/experiment1/SW100-8-0/')
     # print(p.exists())
@@ -70,9 +65,869 @@ def get_instances(n=10):
     filenames = [instance.name for instance in instances]
     return instances, filenames
 
+def experiment1_OMUS(sd=20200918):
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
+    outputDir = 'data/experiment1/results/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    # parameters
+    timeout = TIMEOUT_EXP1
+    n_literals = 10
+    n_instances = 10
+
+    results = {}
+    instances, filenames = get_instances(n_instances)
+    weights = {}
+    instance_literals = {}
+
+    for instance, filename in zip(instances, filenames):
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+        assert sat is True
+
+        # select 5 literals to explain
+        instance_literals[filename] = get_literals(model, n_literals)
+
+        # generate some weights for each
+        weights[filename] = read_json('data/experiment1/SW100-8-0_weights/' + instance.stem + ".json")
+
+        # results dict
+        results[filename] = {
+            'parameters': {
+                'seed': sd,
+                'weights': weights[filename],
+                'literals': instance_literals[filename]
+            }
+        }
+
+        filepath = Path(outputDir)
+        filepath.mkdir(parents=True, exist_ok=True)
+
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+                   'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
+
+        for c in configs:
+
+            filepath = Path(outputDir + c + '/')
+            filepath.mkdir(parents=True, exist_ok=True)
+
+            results[filename][c] = {
+                'filename': filename.replace('.cnf', ''),
+                'exec_times': [],
+                'H_sizes': [],
+                'greedy':[],
+                'incr':[],
+                'opt':[],
+            }
+
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+
+        cnf = CNF(from_file=instance)
+        # pprint.pprint(results, width=1)
+        model = set(model)
+        I = set()
+
+        I_cnf = [frozenset({lit}) for lit in set()]
+
+        o = OMUSBase(
+            hard_clauses=list(),
+            soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+            I=model,
+            bv=None,
+            soft_weights=weights[filename],
+            reuse_mss=False,
+            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            logging=True
+        )
+
+        # 'Omus'
+        tstart_exp1 = time.time()
+
+        I = set()
+        I_cnf = [frozenset({lit}) for lit in I]
+
+        w_I = [1 for _ in I] + [1]
+
+        print(f'{filename}: Starting OMUS...\n')
+
+        # existing facts + unit weight for negated literal
+        w_I = [1 for _ in I] + [1]
+        for i in sorted(list(model - I)):
+            tstart_lit = time.time()
+            remaining_time = timeout - (time.time() - tstart_exp1)
+
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        timeout=remaining_time,
+                                        postponed_omus=False
+                                        )
+
+            if hs is None:
+                results[filename]['Omus']['exec_times'].append('timeout')
+                results[filename]['Omus']['H_sizes'].append(o.hs_sizes[-1])
+                results[filename]['Omus']['greedy'].append(o.greedy_steps[-1])
+                results[filename]['Omus']['incr'].append(o.incremental_steps[-1])
+                results[filename]['Omus']['opt'].append(o.optimal_steps[-1])
+                break
+            tend_lit = time.time()
+            results[filename]['Omus']['exec_times'].append(round(tend_lit-tstart_lit, 3))
+            results[filename]['Omus']['H_sizes'].append(o.hs_sizes[-1])
+            results[filename]['Omus']['greedy'].append(o.greedy_steps[-1])
+            results[filename]['Omus']['incr'].append(o.incremental_steps[-1])
+            results[filename]['Omus']['opt'].append(o.optimal_steps[-1])
+
+            assert len(hs) > 0, "OMUS shoudl be non empty"
 
 
-def experiment1(sd):
+        print(f'{filename}: Writing Omus... to \n\t\t', outputDir + filename.replace('.cnf', '') + '_Omus_' + outputFile, '\n')
+        with open(outputDir +'Omus/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
+            json.dump(results[filename]['Omus'], fp)
+
+        del o
+
+def experiment1_OMUSIncr(sd=20200918):
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
+    outputDir = 'data/experiment1/results/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    # parameters
+    timeout = TIMEOUT_EXP1
+    n_literals = 10
+    n_instances = 10
+
+    results = {}
+    instances, filenames = get_instances(n_instances)
+    weights = {}
+    instance_literals = {}
+
+    for instance, filename in zip(instances, filenames):
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+        assert sat is True
+
+        # select 5 literals to explain
+        instance_literals[filename] = get_literals(model, n_literals)
+
+        # generate some weights for each
+        weights[filename] = read_json('data/experiment1/SW100-8-0_weights/' + instance.stem + ".json")
+
+        # results dict
+        results[filename] = {
+            'parameters': {
+                'seed': sd,
+                'weights': weights[filename],
+                'literals': instance_literals[filename]
+            }
+        }
+
+        filepath = Path(outputDir)
+        filepath.mkdir(parents=True, exist_ok=True)
+
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+                   'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
+
+        for c in configs:
+
+            filepath = Path(outputDir + c + '/')
+            filepath.mkdir(parents=True, exist_ok=True)
+
+            results[filename][c] = {
+                'filename': filename.replace('.cnf', ''),
+                'exec_times': [],
+                'H_sizes': [],
+                'greedy':[],
+                'incr':[],
+                'opt':[],
+            }
+
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+
+        cnf = CNF(from_file=instance)
+        # pprint.pprint(results, width=1)
+        model = set(model)
+        I = set()
+
+        I_cnf = [frozenset({lit}) for lit in set()]
+
+        o = OMUSBase(
+            hard_clauses=list(),
+            soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+            I=model,
+            bv=None,
+            soft_weights=weights[filename],
+            reuse_mss=False,
+            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            logging=True
+        )
+
+        # 'OmusIncr'
+        o.reuse_mss = True
+        timedout = False
+        o.MSSes= set()
+        o.MSS_sizes = []
+
+        print(f'{filename}: Starting OmusIncr...\n')
+        I = set()
+        I_cnf = [frozenset({lit}) for lit in I]
+        w_I = [1 for _ in I] + [1]
+
+        o.reuse_mss = True
+        o.MSSes= set()
+        o.MSS_sizes = []
+        timedout = False
+        tstart_exp1 = time.time()
+
+        # existing facts + unit weight for negated literal
+        w_I = [1 for _ in I] + [1]
+        for i in sorted(list(model - I)):
+            tstart_lit = time.time()
+            remaining_time = timeout - (time.time() - tstart_exp1)
+
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        timeout=remaining_time,
+                                        postponed_omus=False
+                                        )
+
+            if hs is None:
+                results[filename]['OmusIncr']['exec_times'].append('timeout')
+                results[filename]['OmusIncr']['H_sizes'].append(o.hs_sizes[-1])
+                results[filename]['OmusIncr']['greedy'].append(o.greedy_steps[-1])
+                results[filename]['OmusIncr']['incr'].append(o.incremental_steps[-1])
+                results[filename]['OmusIncr']['opt'].append(o.optimal_steps[-1])
+                break
+
+            # post-processing the MSSes
+            keep = set()
+            for (m1, m1_model) in o.MSSes:
+                keep_m1 = True
+                for (m2, _) in o.MSSes:
+                    if m1 != m2 and m1 < m2:
+                        keep_m1 = False
+                if keep_m1:
+                    keep.add((m1, m1_model))
+            o.MSSes = keep
+      
+            tend_lit = time.time()
+            results[filename]['OmusIncr']['exec_times'].append(round(tend_lit-tstart_lit, 3))
+            results[filename]['OmusIncr']['H_sizes'].append(o.hs_sizes[-1])
+            results[filename]['OmusIncr']['greedy'].append(o.greedy_steps[-1])
+            results[filename]['OmusIncr']['incr'].append(o.incremental_steps[-1])
+            results[filename]['OmusIncr']['opt'].append(o.optimal_steps[-1])
+      
+
+        print(f'{filename}: Writing OmusIncr... to \n\t\t', outputDir + filename.replace('.cnf', '') + '_OmusIncr_' + outputFile, '\n')
+        with open(outputDir + 'OmusIncr/' + filename.replace('.cnf', '')  + outputFile , 'w') as fp:
+            json.dump(results[filename]['OmusIncr'], fp)
+
+        del o
+
+def experiment1_OMUSPost(sd=20200918):
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
+    outputDir = 'data/experiment1/results/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    # parameters
+    timeout = TIMEOUT_EXP1
+    n_literals = 10
+    n_instances = 10
+
+    results = {}
+    instances, filenames = get_instances(n_instances)
+    weights = {}
+    instance_literals = {}
+
+    for instance, filename in zip(instances, filenames):
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+        assert sat is True
+
+        # select 5 literals to explain
+        instance_literals[filename] = get_literals(model, n_literals)
+
+        # generate some weights for each
+        weights[filename] = read_json('data/experiment1/SW100-8-0_weights/' + instance.stem + ".json")
+
+        # results dict
+        results[filename] = {
+            'parameters': {
+                'seed': sd,
+                'weights': weights[filename],
+                'literals': instance_literals[filename]
+            }
+        }
+
+        filepath = Path(outputDir)
+        filepath.mkdir(parents=True, exist_ok=True)
+
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+                   'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
+
+        for c in configs:
+
+            filepath = Path(outputDir + c + '/')
+            filepath.mkdir(parents=True, exist_ok=True)
+
+            results[filename][c] = {
+                'filename': filename.replace('.cnf', ''),
+                'exec_times': [],
+                'H_sizes': [],
+                'greedy':[],
+                'incr':[],
+                'opt':[],
+            }
+
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+
+        cnf = CNF(from_file=instance)
+        # pprint.pprint(results, width=1)
+        model = set(model)
+        I = set()
+
+        I_cnf = [frozenset({lit}) for lit in set()]
+
+        o = OMUSBase(
+            hard_clauses=list(),
+            soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+            I=model,
+            bv=None,
+            soft_weights=weights[filename],
+            reuse_mss=False,
+            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            logging=True
+        )
+
+        # 'OmusPost'
+        I = set()
+        I_cnf = [frozenset({lit}) for lit in I]
+        print(f'{filename}: Starting OmusPost...\n')
+        o.reuse_mss = False
+        timedout = False
+        o.MSSes= set()
+        o.MSS_sizes = []
+        w_I = [1 for _ in I] + [1]
+
+        tstart_exp1 = time.time()
+
+        w_I = [1 for _ in I] + [1]
+        for i in sorted(list(model - I)):
+            tstart_lit = time.time()
+            remaining_time = timeout - (time.time() - tstart_exp1)
+
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        timeout=remaining_time,
+                                        postponed_omus=True
+                                        )
+
+            if hs is None:
+                results[filename]['OmusPost']['exec_times'].append('timeout')
+                results[filename]['OmusPost']['H_sizes'].append(o.hs_sizes[-1])
+                results[filename]['OmusPost']['greedy'].append(o.greedy_steps[-1])
+                results[filename]['OmusPost']['incr'].append(o.incremental_steps[-1])
+                results[filename]['OmusPost']['opt'].append(o.optimal_steps[-1])
+                break
+
+            tend_lit = time.time()
+            results[filename]['OmusPost']['exec_times'].append(round(tend_lit-tstart_lit, 3))
+            results[filename]['OmusPost']['H_sizes'].append(o.hs_sizes[-1])
+            results[filename]['OmusPost']['greedy'].append(o.greedy_steps[-1])
+            results[filename]['OmusPost']['incr'].append(o.incremental_steps[-1])
+            results[filename]['OmusPost']['opt'].append(o.optimal_steps[-1])
+
+        print(f'{filename}: Writing _OmusPost_... to \n\t\t', outputDir + filename.replace('.cnf', '') + '_OmusPost_' + outputFile, '\n')
+        with open(outputDir +  'OmusPost/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
+            json.dump(results[filename]['OmusPost'], fp)
+
+        del o
+
+def experiment1_OMUSIncrPost(sd=20200918):
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
+    outputDir = 'data/experiment1/results/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    # parameters
+    timeout = TIMEOUT_EXP1
+    n_literals = 10
+    n_instances = 10
+
+    results = {}
+    instances, filenames = get_instances(n_instances)
+    weights = {}
+    instance_literals = {}
+
+    for instance, filename in zip(instances, filenames):
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+        assert sat is True
+
+        # select 5 literals to explain
+        instance_literals[filename] = get_literals(model, n_literals)
+
+        # generate some weights for each
+        weights[filename] = read_json('data/experiment1/SW100-8-0_weights/' + instance.stem + ".json")
+
+        # results dict
+        results[filename] = {
+            'parameters': {
+                'seed': sd,
+                'weights': weights[filename],
+                'literals': instance_literals[filename]
+            }
+        }
+
+        filepath = Path(outputDir)
+        filepath.mkdir(parents=True, exist_ok=True)
+
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+                   'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
+
+        for c in configs:
+
+            filepath = Path(outputDir + c + '/')
+            filepath.mkdir(parents=True, exist_ok=True)
+
+            results[filename][c] = {
+                'filename': filename.replace('.cnf', ''),
+                'exec_times': [],
+                'H_sizes': [],
+                'greedy':[],
+                'incr':[],
+                'opt':[],
+            }
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+
+        cnf = CNF(from_file=instance)
+        # pprint.pprint(results, width=1)
+        model = set(model)
+        I = set()
+
+        I_cnf = [frozenset({lit}) for lit in set()]
+
+        o = OMUSBase(
+            hard_clauses=list(),
+            soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+            I=model,
+            bv=None,
+            soft_weights=weights[filename],
+            reuse_mss=False,
+            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            logging=True
+        )
+
+        # 'OmusIncrPost'
+
+        print(f'{filename}: Starting OmusIncrPost...\n')
+        I = set()
+        I_cnf = [frozenset({lit}) for lit in I]
+
+        o.reuse_mss = True
+        o.MSSes= set()
+        o.MSS_sizes = []
+
+        tstart_exp1 = time.time()
+
+        # existing facts + unit weight for negated literal
+        w_I = [1 for _ in I] + [1]
+        for i in sorted(list(model - I)):
+            tstart_lit = time.time()
+            remaining_time = timeout - (time.time() - tstart_exp1)
+
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        timeout=remaining_time,
+                                        postponed_omus=True
+                                        )
+
+            if hs is None:
+                results[filename]['OmusIncrPost']['exec_times'].append('timeout')
+                results[filename]['OmusIncrPost']['H_sizes'].append(o.hs_sizes[-1])
+                results[filename]['OmusIncrPost']['greedy'].append(o.greedy_steps[-1])
+                results[filename]['OmusIncrPost']['incr'].append(o.incremental_steps[-1])
+                results[filename]['OmusIncrPost']['opt'].append(o.optimal_steps[-1])
+                break
+
+            # post-processing the MSSes
+            keep = set()
+            for (m1, m1_model) in o.MSSes:
+                keep_m1 = True
+                for (m2, _) in o.MSSes:
+                    if m1 != m2 and m1 < m2:
+                        keep_m1 = False
+                if keep_m1:
+                    keep.add((m1, m1_model))
+            o.MSSes = keep
+
+            tend_lit = time.time()
+            results[filename]['OmusIncrPost']['exec_times'].append(round(tend_lit-tstart_lit, 3))
+            results[filename]['OmusIncrPost']['H_sizes'].append(o.hs_sizes[-1])
+            results[filename]['OmusIncrPost']['greedy'].append(o.greedy_steps[-1])
+            results[filename]['OmusIncrPost']['incr'].append(o.incremental_steps[-1])
+            results[filename]['OmusIncrPost']['opt'].append(o.optimal_steps[-1])
+        # post-processing the MSSes
+
+        print(f'{filename}: Writing _OmusIncrPost_... to \n\t\t', outputDir + filename.replace('.cnf', '') + '_OmusIncrPost_' + outputFile, '\n')
+        with open(outputDir + 'OmusIncrPost/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
+            json.dump(results[filename]['OmusIncrPost'], fp)
+
+        del o
+
+def experiment1_OMUSIncrPostWarm(sd=20200918):
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
+    outputDir = 'data/experiment1/results/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    # parameters
+    timeout = TIMEOUT_EXP1
+    n_literals = 10
+    n_instances = 10
+
+    results = {}
+    instances, filenames = get_instances(n_instances)
+    weights = {}
+    instance_literals = {}
+
+    for instance, filename in zip(instances, filenames):
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+        assert sat is True
+
+        # select 5 literals to explain
+        instance_literals[filename] = get_literals(model, n_literals)
+
+        # generate some weights for each
+        weights[filename] = read_json('data/experiment1/SW100-8-0_weights/' + instance.stem + ".json")
+
+        # results dict
+        results[filename] = {
+            'parameters': {
+                'seed': sd,
+                'weights': weights[filename],
+                'literals': instance_literals[filename]
+            }
+        }
+
+        filepath = Path(outputDir)
+        filepath.mkdir(parents=True, exist_ok=True)
+
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+                   'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
+
+        for c in configs:
+
+            filepath = Path(outputDir + c + '/')
+            filepath.mkdir(parents=True, exist_ok=True)
+
+            results[filename][c] = {
+                'filename': filename.replace('.cnf', ''),
+                'exec_times': [],
+                'H_sizes': [],
+                'greedy':[],
+                'incr':[],
+                'opt':[],
+            }
+
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+
+        cnf = CNF(from_file=instance)
+        # pprint.pprint(results, width=1)
+        model = set(model)
+        I = set()
+
+        I_cnf = [frozenset({lit}) for lit in set()]
+
+        o = OMUSBase(
+            hard_clauses=list(),
+            soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+            I=model,
+            bv=None,
+            soft_weights=weights[filename],
+            reuse_mss=False,
+            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            logging=True
+        )
+
+        # 'OmusIncrPost warm start'
+        print(f'{filename}: Starting OmusIncrPost warm start...\n')
+        o.reuse_mss = True
+        timedout = False
+        o.MSSes= set()
+        o.MSS_sizes = []
+
+        tstart_exp1 = time.time()
+
+        base_F = set(range(len(o.soft_clauses)))
+        # F = base_F | set({o.softClauseIdxs[frozenset({-i})] for i in model - I})
+        # o.MSSes.add((o.fullMss, frozenset(model)))
+        print("Seeding")
+        for i in model - I:
+            o.clauses = o.soft_clauses + [frozenset({-i})]
+            o.weights = o.soft_weights + [1]
+            F_prime = set({o.softClauseIdxs[frozenset({-i})]})
+
+            MSS, MSS_Model = o.grow(F_prime, set())
+
+            o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
+
+
+        I = set()
+        I_cnf = [frozenset({lit}) for lit in I]
+
+        # existing facts + unit weight for negated literal
+        w_I = [1 for _ in I] + [1]
+        for i in sorted(list(model - I)):
+            tstart_lit = time.time()
+            remaining_time = timeout - (time.time() - tstart_exp1)
+
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        timeout=remaining_time,
+                                        postponed_omus=True,
+                                        )
+
+            if hs is None:
+                results[filename]['OmusIncrPostWarm']['exec_times'].append('timeout')
+                results[filename]['OmusIncrPostWarm']['H_sizes'].append(o.hs_sizes[-1])
+                results[filename]['OmusIncrPostWarm']['greedy'].append(o.greedy_steps[-1])
+                results[filename]['OmusIncrPostWarm']['incr'].append(o.incremental_steps[-1])
+                results[filename]['OmusIncrPostWarm']['opt'].append(o.optimal_steps[-1])
+                break
+
+            # post-processing the MSSes
+            keep = set()
+            for (m1, m1_model) in o.MSSes:
+                keep_m1 = True
+                for (m2, _) in o.MSSes:
+                    if m1 != m2 and m1 < m2:
+                        keep_m1 = False
+                if keep_m1:
+                    keep.add((m1, m1_model))
+            o.MSSes = keep
+
+            tend_lit = time.time()
+
+            results[filename]['OmusIncrPostWarm']['exec_times'].append(round(tend_lit-tstart_lit, 3))
+            results[filename]['OmusIncrPostWarm']['H_sizes'].append(o.hs_sizes[-1])
+            results[filename]['OmusIncrPostWarm']['greedy'].append(o.greedy_steps[-1])
+            results[filename]['OmusIncrPostWarm']['incr'].append(o.incremental_steps[-1])
+            results[filename]['OmusIncrPostWarm']['opt'].append(o.optimal_steps[-1])
+
+
+        print(f'{filename}: Writing _OmusIncrPostWarm_... to \n\t\t', outputDir + filename.replace('.cnf', '') + '_OmusIncrPostWarm_' + outputFile, '\n')
+        with open(outputDir +'OmusIncrPostWarm/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
+            json.dump(results[filename]['OmusIncrPostWarm'], fp)
+
+        del o
+
+def experiment1_OMUSIncrWarm(sd=20200918):
+    today = date.today().strftime("%Y_%m_%d")
+    now = datetime.now().strftime("%H_%M_%S")
+
+    outputDir = 'data/experiment1/results/'+today + '/'
+
+    filepath = Path(outputDir)
+    filepath.mkdir(parents=True, exist_ok=True)
+
+    outputFile = ".json"
+
+    # parameters
+    timeout = TIMEOUT_EXP1
+    n_literals = 10
+    n_instances = 10
+
+    results = {}
+    instances, filenames = get_instances(n_instances)
+    weights = {}
+    instance_literals = {}
+
+    for instance, filename in zip(instances, filenames):
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+        assert sat is True
+
+        # select 5 literals to explain
+        instance_literals[filename] = get_literals(model, n_literals)
+
+        # generate some weights for each
+        weights[filename] = read_json('data/experiment1/SW100-8-0_weights/' + instance.stem + ".json")
+
+        # results dict
+        results[filename] = {
+            'parameters': {
+                'seed': sd,
+                'weights': weights[filename],
+                'literals': instance_literals[filename]
+            }
+        }
+
+        filepath = Path(outputDir)
+        filepath.mkdir(parents=True, exist_ok=True)
+
+
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
+                   'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
+
+
+        for c in configs:
+
+            filepath = Path(outputDir + c + '/')
+            filepath.mkdir(parents=True, exist_ok=True)
+
+            results[filename][c] = {
+                'filename': filename.replace('.cnf', ''),
+                'exec_times': [],
+                'H_sizes': [],
+                'greedy':[],
+                'incr':[],
+                'opt':[],
+            }
+
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+
+        cnf = CNF(from_file=instance)
+        # pprint.pprint(results, width=1)
+        model = set(model)
+        I = set()
+
+        I_cnf = [frozenset({lit}) for lit in set()]
+
+        o = OMUSBase(
+            hard_clauses=list(),
+            soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+            I=model,
+            bv=None,
+            soft_weights=weights[filename],
+            reuse_mss=False,
+            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            logging=True
+        )
+
+        # 'OmusIncrPost warm start'
+        print(f'{filename}: Starting OmusIncr warm start...\n')
+        o.reuse_mss = True
+        timedout = False
+        o.MSSes= set()
+        o.MSS_sizes = []
+
+        best_costs = dict({i: 9999999 for i in model - I})
+
+        base_F = set(range(len(o.soft_clauses)))
+
+        tstart_exp1 = time.time()
+        print("Seeding")
+        for i in model - I:
+            o.clauses = o.soft_clauses + [frozenset({-i})]
+            o.weights = o.soft_weights + [1]
+            F_prime = set({o.softClauseIdxs[frozenset({-i})]})
+
+            MSS, MSS_Model = o.grow(F_prime, set())
+
+            o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
+
+            # -- precompute some hitting sets for a rough idea on the costs
+            w_I = [1 for _ in I] + [1]
+
+        I = set()
+        I_cnf = [frozenset({lit}) for lit in I]
+
+        # existing facts + unit weight for negated literal
+        w_I = [1 for _ in I] + [1]
+        for i in sorted(list(model - I)):
+            tstart_lit = time.time()
+            remaining_time = timeout - (time.time() - tstart_exp1)
+
+            hs, explanation = o.omusIncr(I_cnf=I_cnf,
+                                        explained_literal=i,
+                                        add_weights=w_I,
+                                        timeout=remaining_time,
+                                        postponed_omus=False,
+                                        best_cost=None
+                                        )
+
+            if hs is None:
+                results[filename]['OmusIncrWarm']['exec_times'].append('timeout')
+                results[filename]['OmusIncrWarm']['H_sizes'].append(o.hs_sizes[-1])
+                results[filename]['OmusIncrWarm']['greedy'].append(o.greedy_steps[-1])
+                results[filename]['OmusIncrWarm']['incr'].append(o.incremental_steps[-1])
+                results[filename]['OmusIncrWarm']['opt'].append(o.optimal_steps[-1])
+                break
+
+            # post-processing the MSSes
+            keep = set()
+            for (m1, m1_model) in o.MSSes:
+                keep_m1 = True
+                for (m2, _) in o.MSSes:
+                    if m1 != m2 and m1 < m2:
+                        keep_m1 = False
+                if keep_m1:
+                    keep.add((m1, m1_model))
+            o.MSSes = keep
+
+            tend_lit = time.time()
+
+            results[filename]['OmusIncrWarm']['exec_times'].append(round(tend_lit-tstart_lit, 3))
+            results[filename]['OmusIncrWarm']['H_sizes'].append(o.hs_sizes[-1])
+            results[filename]['OmusIncrWarm']['greedy'].append(o.greedy_steps[-1])
+            results[filename]['OmusIncrWarm']['incr'].append(o.incremental_steps[-1])
+            results[filename]['OmusIncrWarm']['opt'].append(o.optimal_steps[-1])
+            # post-processing the MSSes
+
+        print(f'{filename}: Writing _OmusIncrWarm_... to \n\t\t', outputDir + filename.replace('.cnf', '') + 'OmusIncrWarm' + outputFile, '\n')
+        with open(outputDir +'OmusIncrWarm/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
+            json.dump(results[filename]['OmusIncrWarm'], fp)
+
+        del o
+
+def experiment1(sd=20200918):
     today = date.today().strftime("%Y_%m_%d")
     now = datetime.now().strftime("%H_%M_%S")
 
@@ -117,7 +972,7 @@ def experiment1(sd):
         filepath = Path(outputDir)
         filepath.mkdir(parents=True, exist_ok=True)
 
-        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost',
+        configs = ['Omus', 'OmusPost', 'OmusIncr', 'OmusIncrPost','OmusIncrWarm'
                    'OmusIncrPostWarm', 'OmusConstr', 'OmusConstrIncr', 'OmusConstrIncrWarm']
 
         for c in configs:
@@ -134,214 +989,214 @@ def experiment1(sd):
                 'opt':[],
             }
 
-    for instance, filename in zip(instances, filenames):
-        print(instance, filename)
-        # Check satisfiability of the instance
-        sat, model = checksatCNF(instance)
+    # for instance, filename in zip(instances, filenames):
+    #     print(instance, filename)
+    #     # Check satisfiability of the instance
+    #     sat, model = checksatCNF(instance)
 
-        cnf = CNF(from_file=instance)
+    #     cnf = CNF(from_file=instance)
 
-        print(f'{filename}: Starting OMUSConstr...\n')
+    #     print(f'{filename}: Starting OMUSConstr...\n')
 
-        o = OMUS(
-            modelname='gp2',
-            hard_clauses=list(),
-            soft_clauses=[frozenset(clause) for clause in cnf.clauses],
-            I=model,
-            soft_weights=weights[filename],
-            parameters={'extension': 'maxsat',
-                        'output': instance.stem + '.json'},
-        )
+    #     o = OMUS(
+    #         modelname='gp2',
+    #         hard_clauses=list(),
+    #         soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+    #         I=model,
+    #         soft_weights=weights[filename],
+    #         parameters={'extension': 'maxsat',
+    #                     'output': instance.stem + '.json'},
+    #     )
 
-        I = set()
-        I_cnf = []
-        # derived_literals = []
+    #     I = set()
+    #     I_cnf = []
+    #     # derived_literals = []
 
-        tstart_o1 = time.time()
-        for i in range(n_literals):
-            print(f'\t Explaining literal {i+1}/[{n_literals}]...\n')
-            remaining_time = timeout - (time.time() - tstart_o1)
-            print(remaining_time)
-            # OMUS no improvements
-            t_start = time.time()
-            hs, explanation = o.omusConstr(timeout=remaining_time)
-            if hs is None:
-                results[filename]['OmusConstr']['exec_times'].append('timeout')
-                results[filename]['OmusConstr']['H_sizes'].append(o.hs_sizes[-1])
-                results[filename]['OmusConstr']['greedy'].append(o.greedy_steps[-1])
-                results[filename]['OmusConstr']['incr'].append(o.incremental_steps[-1])
-                results[filename]['OmusConstr']['opt'].append(o.optimal_steps[-1])
-                # o.deleteModel()
-                break
-            t_end = time.time()
-            literal = [clause for clause in explanation if len(clause) == 1 and clause in [frozenset({-lit}) for lit in model]]
-            print(literal)
+    #     tstart_o1 = time.time()
+    #     for i in range(n_literals):
+    #         print(f'\t Explaining literal {i+1}/[{n_literals}]...\n')
+    #         remaining_time = timeout - (time.time() - tstart_o1)
+    #         print(remaining_time)
+    #         # OMUS no improvements
+    #         t_start = time.time()
+    #         hs, explanation = o.omusConstr(timeout=remaining_time)
+    #         if hs is None:
+    #             results[filename]['OmusConstr']['exec_times'].append('timeout')
+    #             results[filename]['OmusConstr']['H_sizes'].append(o.hs_sizes[-1])
+    #             results[filename]['OmusConstr']['greedy'].append(o.greedy_steps[-1])
+    #             results[filename]['OmusConstr']['incr'].append(o.incremental_steps[-1])
+    #             results[filename]['OmusConstr']['opt'].append(o.optimal_steps[-1])
+    #             # o.deleteModel()
+    #             break
+    #         t_end = time.time()
+    #         literal = [clause for clause in explanation if len(clause) == 1 and clause in [frozenset({-lit}) for lit in model]]
+    #         print(literal)
 
-            # explaining facts
-            E_best = [ci for ci in explanation if ci in I_cnf]
+    #         # explaining facts
+    #         E_best = [ci for ci in explanation if ci in I_cnf]
 
-            # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            S_best = [ci for ci in explanation if ci in o.soft_clauses and ci not in E_best]
+    #         # constraint used ('and not ci in E_i': dont repeat unit clauses)
+    #         S_best = [ci for ci in explanation if ci in o.soft_clauses and ci not in E_best]
 
-            New_info = optimalPropagate([] + E_best + S_best, I)
-            N_best = New_info.intersection(model) - I
+    #         New_info = optimalPropagate([] + E_best + S_best, I)
+    #         N_best = New_info.intersection(model) - I
 
-            # add new info
-            I = I | N_best
-            new_cnf = [frozenset({lit})
-                       for lit in N_best if frozenset({lit}) not in I_cnf]
-            I_cnf += new_cnf
+    #         # add new info
+    #         I = I | N_best
+    #         new_cnf = [frozenset({lit})
+    #                    for lit in N_best if frozenset({lit}) not in I_cnf]
+    #         I_cnf += new_cnf
 
-            o.updateObjWeightsInterpret(I)
+    #         o.updateObjWeightsInterpret(I)
 
-            results[filename]['OmusConstr']['exec_times'].append(round(t_end-t_start, 3))
-            results[filename]['OmusConstr']['H_sizes'].append(o.hs_sizes[-1])
-            results[filename]['OmusConstr']['greedy'].append(o.greedy_steps[-1])
-            results[filename]['OmusConstr']['incr'].append(o.incremental_steps[-1])
-            results[filename]['OmusConstr']['opt'].append(o.optimal_steps[-1])
+    #         results[filename]['OmusConstr']['exec_times'].append(round(t_end-t_start, 3))
+    #         results[filename]['OmusConstr']['H_sizes'].append(o.hs_sizes[-1])
+    #         results[filename]['OmusConstr']['greedy'].append(o.greedy_steps[-1])
+    #         results[filename]['OmusConstr']['incr'].append(o.incremental_steps[-1])
+    #         results[filename]['OmusConstr']['opt'].append(o.optimal_steps[-1])
 
-        o.deleteModel()
-        del o
-        print(f'{filename}: Writing OMUSConstr... to \n\t\t',  outputDir + filename.replace('.cnf', '') + 'OmusConstr_' + outputFile,  '\n')
+    #     o.deleteModel()
+    #     del o
+    #     print(f'{filename}: Writing OMUSConstr... to \n\t\t',  outputDir + filename.replace('.cnf', '') + 'OmusConstr_' + outputFile,  '\n')
 
-        with open(outputDir + 'OmusConstr/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
-            json.dump(results[filename]['OmusConstr'], fp)
+    #     with open(outputDir + 'OmusConstr/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
+    #         json.dump(results[filename]['OmusConstr'], fp)
 
-        print(f'{filename}: Starting OmusConstrIncr...\n')
-        o2 = OMUS(
-            modelname='gp1',
-            hard_clauses=list(),
-            soft_clauses=[frozenset(clause) for clause in cnf.clauses],
-            I=model,
-            soft_weights=weights[filename],
-            parameters={'extension': 'maxsat',
-                        'output': instance.stem + '.json'},
-        )
+    #     print(f'{filename}: Starting OmusConstrIncr...\n')
+    #     o2 = OMUS(
+    #         modelname='gp1',
+    #         hard_clauses=list(),
+    #         soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+    #         I=model,
+    #         soft_weights=weights[filename],
+    #         parameters={'extension': 'maxsat',
+    #                     'output': instance.stem + '.json'},
+    #     )
 
-        I = set()
-        I_cnf = []
-        tstart_o2 = time.time()
-        for i in range(n_literals):
-            print(f'\t Explaining literal {i+1}/[{n_literals}]...\n')
-            remaining_time = timeout - (time.time() - tstart_o2)
-            # OMUS no improvements
-            t_start = time.time()
-            hs, explanation = o2.omusConstr(do_incremental=True, greedy=True, timeout=remaining_time)
-            if hs is None:
-                results[filename]['OmusConstrIncr']['exec_times'].append('timeout')
-                results[filename]['OmusConstrIncr']['H_sizes'].append(o2.hs_sizes[-1])
-                results[filename]['OmusConstrIncr']['greedy'].append(o2.greedy_steps[-1])
-                results[filename]['OmusConstrIncr']['incr'].append(o2.incremental_steps[-1])
-                results[filename]['OmusConstrIncr']['opt'].append(o2.optimal_steps[-1])
-                # o.deleteModel()
-                break
-            t_end = time.time()
+    #     I = set()
+    #     I_cnf = []
+    #     tstart_o2 = time.time()
+    #     for i in range(n_literals):
+    #         print(f'\t Explaining literal {i+1}/[{n_literals}]...\n')
+    #         remaining_time = timeout - (time.time() - tstart_o2)
+    #         # OMUS no improvements
+    #         t_start = time.time()
+    #         hs, explanation = o2.omusConstr(do_incremental=True, greedy=True, timeout=remaining_time)
+    #         if hs is None:
+    #             results[filename]['OmusConstrIncr']['exec_times'].append('timeout')
+    #             results[filename]['OmusConstrIncr']['H_sizes'].append(o2.hs_sizes[-1])
+    #             results[filename]['OmusConstrIncr']['greedy'].append(o2.greedy_steps[-1])
+    #             results[filename]['OmusConstrIncr']['incr'].append(o2.incremental_steps[-1])
+    #             results[filename]['OmusConstrIncr']['opt'].append(o2.optimal_steps[-1])
+    #             # o.deleteModel()
+    #             break
+    #         t_end = time.time()
 
-            # explaining facts
-            E_best = [ci for ci in explanation if ci in I_cnf]
+    #         # explaining facts
+    #         E_best = [ci for ci in explanation if ci in I_cnf]
 
-            # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            S_best = [ci for ci in explanation if ci in o2.soft_clauses and ci not in E_best]
+    #         # constraint used ('and not ci in E_i': dont repeat unit clauses)
+    #         S_best = [ci for ci in explanation if ci in o2.soft_clauses and ci not in E_best]
 
-            New_info = optimalPropagate([] + E_best + S_best, I)
-            N_best = New_info.intersection(model) - I
+    #         New_info = optimalPropagate([] + E_best + S_best, I)
+    #         N_best = New_info.intersection(model) - I
 
-            # add new info
-            I = I | N_best
-            new_cnf = [frozenset({lit})
-                    for lit in N_best if frozenset({lit}) not in I_cnf]
-            I_cnf += new_cnf
+    #         # add new info
+    #         I = I | N_best
+    #         new_cnf = [frozenset({lit})
+    #                 for lit in N_best if frozenset({lit}) not in I_cnf]
+    #         I_cnf += new_cnf
 
-            o2.updateObjWeightsInterpret(I)
+    #         o2.updateObjWeightsInterpret(I)
 
-            results[filename]['OmusConstrIncr']['exec_times'].append(round(t_end-t_start, 3))
-            results[filename]['OmusConstrIncr']['H_sizes'].append(o2.hs_sizes[-1])
-            results[filename]['OmusConstrIncr']['greedy'].append(o2.greedy_steps[-1])
-            results[filename]['OmusConstrIncr']['incr'].append(o2.incremental_steps[-1])
-            results[filename]['OmusConstrIncr']['opt'].append(o2.optimal_steps[-1])
+    #         results[filename]['OmusConstrIncr']['exec_times'].append(round(t_end-t_start, 3))
+    #         results[filename]['OmusConstrIncr']['H_sizes'].append(o2.hs_sizes[-1])
+    #         results[filename]['OmusConstrIncr']['greedy'].append(o2.greedy_steps[-1])
+    #         results[filename]['OmusConstrIncr']['incr'].append(o2.incremental_steps[-1])
+    #         results[filename]['OmusConstrIncr']['opt'].append(o2.optimal_steps[-1])
 
-        o2.deleteModel()
-        del o2
+    #     o2.deleteModel()
+    #     del o2
 
-        print(f'{filename}: Writing OMUSConstr... to \n\t\t',  outputDir + filename.replace('.cnf', '') + 'OmusConstrIncr_' + outputFile, '\n')
+    #     print(f'{filename}: Writing OMUSConstr... to \n\t\t',  outputDir + filename.replace('.cnf', '') + 'OmusConstrIncr_' + outputFile, '\n')
 
-        with open(outputDir + 'OmusConstrIncr/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
-            json.dump(results[filename]['OmusConstrIncr'], fp)
+    #     with open(outputDir + 'OmusConstrIncr/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
+    #         json.dump(results[filename]['OmusConstrIncr'], fp)
 
-        print(f'{filename}: Starting OmusConstrIncr...\n')
-        o3 = OMUS(
-            modelname='gp3',
-            hard_clauses=list(),
-            soft_clauses=[frozenset(clause) for clause in cnf.clauses],
-            I=model,
-            soft_weights=weights[filename],
-            parameters={'extension': 'maxsat',
-                        'output': instance.stem + '.json'},
-        )
-        print(f'\t Seeding....\n')
+    #     print(f'{filename}: Starting OmusConstrIncr...\n')
+    #     o3 = OMUS(
+    #         modelname='gp3',
+    #         hard_clauses=list(),
+    #         soft_clauses=[frozenset(clause) for clause in cnf.clauses],
+    #         I=model,
+    #         soft_weights=weights[filename],
+    #         parameters={'extension': 'maxsat',
+    #                     'output': instance.stem + '.json'},
+    #     )
+    #     print(f'\t Seeding....\n')
 
-        tstart_o3 = time.time()
-        F = frozenset(range(o3.nClauses))
-        seedable = set(-i for i in model)
-        while len(seedable) > 0:
-            i = next(iter(seedable))
+    #     tstart_o3 = time.time()
+    #     F = frozenset(range(o3.nClauses))
+    #     seedable = set(-i for i in model)
+    #     while len(seedable) > 0:
+    #         i = next(iter(seedable))
 
-            F_prime = set([o3.softClauseIdxs[frozenset({i})]])
-            MSS, MSS_Model = o3.grow(F_prime, set()|{i})
+    #         F_prime = set([o3.softClauseIdxs[frozenset({i})]])
+    #         MSS, MSS_Model = o3.grow(F_prime, set()|{i})
 
-            C = F - MSS
-            o3.addSetGurobiOmusConstr(C)
+    #         C = F - MSS
+    #         o3.addSetGurobiOmusConstr(C)
 
-            other_seeds = seedable&frozenset(MSS_Model)
-            seedable -= other_seeds
+    #         other_seeds = seedable&frozenset(MSS_Model)
+    #         seedable -= other_seeds
 
-        I = set()
-        I_cnf = []
-        for i in range(n_literals):
-            print(f'\t Explaining literal {i+1}/[{n_literals}]...\n')
-            # OMUS no improvements
-            remaining_time = timeout - (time.time() - tstart_o3)
-            t_start = time.time()
-            hs, explanation = o3.omusConstr(do_incremental=True, greedy=True, timeout=remaining_time)
-            t_end = time.time()
-            if hs is None:
-                results[filename]['OmusConstrIncrWarm']['exec_times'].append('timeout')
-                results[filename]['OmusConstrIncrWarm']['H_sizes'].append(o3.hs_sizes[-1])
-                results[filename]['OmusConstrIncrWarm']['greedy'].append(o3.greedy_steps[-1])
-                results[filename]['OmusConstrIncrWarm']['incr'].append(o3.incremental_steps[-1])
-                results[filename]['OmusConstrIncrWarm']['opt'].append(o3.optimal_steps[-1])
-                # o.deleteModel()
-                break
+    #     I = set()
+    #     I_cnf = []
+    #     for i in range(n_literals):
+    #         print(f'\t Explaining literal {i+1}/[{n_literals}]...\n')
+    #         # OMUS no improvements
+    #         remaining_time = timeout - (time.time() - tstart_o3)
+    #         t_start = time.time()
+    #         hs, explanation = o3.omusConstr(do_incremental=True, greedy=True, timeout=remaining_time)
+    #         t_end = time.time()
+    #         if hs is None:
+    #             results[filename]['OmusConstrIncrWarm']['exec_times'].append('timeout')
+    #             results[filename]['OmusConstrIncrWarm']['H_sizes'].append(o3.hs_sizes[-1])
+    #             results[filename]['OmusConstrIncrWarm']['greedy'].append(o3.greedy_steps[-1])
+    #             results[filename]['OmusConstrIncrWarm']['incr'].append(o3.incremental_steps[-1])
+    #             results[filename]['OmusConstrIncrWarm']['opt'].append(o3.optimal_steps[-1])
+    #             # o.deleteModel()
+    #             break
 
-            # explaining facts
-            E_best = [ci for ci in explanation if ci in I_cnf]
+    #         # explaining facts
+    #         E_best = [ci for ci in explanation if ci in I_cnf]
 
-            # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            S_best = [ci for ci in explanation if ci in o3.soft_clauses and ci not in E_best]
+    #         # constraint used ('and not ci in E_i': dont repeat unit clauses)
+    #         S_best = [ci for ci in explanation if ci in o3.soft_clauses and ci not in E_best]
 
-            New_info = optimalPropagate([] + E_best + S_best, I)
-            N_best = New_info.intersection(model) - I
+    #         New_info = optimalPropagate([] + E_best + S_best, I)
+    #         N_best = New_info.intersection(model) - I
 
-            # add new info
-            I = I | N_best
-            new_cnf = [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
-            I_cnf += new_cnf
+    #         # add new info
+    #         I = I | N_best
+    #         new_cnf = [frozenset({lit}) for lit in N_best if frozenset({lit}) not in I_cnf]
+    #         I_cnf += new_cnf
 
-            o3.updateObjWeightsInterpret(I)
+    #         o3.updateObjWeightsInterpret(I)
 
-            results[filename]['OmusConstrIncrWarm']['exec_times'].append(round(t_end-t_start, 3))
-            results[filename]['OmusConstrIncrWarm']['H_sizes'].append(o3.hs_sizes[-1])
-            results[filename]['OmusConstrIncrWarm']['greedy'].append(o3.greedy_steps[-1])
-            results[filename]['OmusConstrIncrWarm']['incr'].append(o3.incremental_steps[-1])
-            results[filename]['OmusConstrIncrWarm']['opt'].append(o3.optimal_steps[-1])
+    #         results[filename]['OmusConstrIncrWarm']['exec_times'].append(round(t_end-t_start, 3))
+    #         results[filename]['OmusConstrIncrWarm']['H_sizes'].append(o3.hs_sizes[-1])
+    #         results[filename]['OmusConstrIncrWarm']['greedy'].append(o3.greedy_steps[-1])
+    #         results[filename]['OmusConstrIncrWarm']['incr'].append(o3.incremental_steps[-1])
+    #         results[filename]['OmusConstrIncrWarm']['opt'].append(o3.optimal_steps[-1])
 
     
-        o3.deleteModel()
-        del o3
-        print(f'{filename}: Writing OMUSConstr... to \n\t\t', outputDir + filename.replace('.cnf', '') + 'OmusConstrIncrWarm_' + outputFile, '\n')
+    #     o3.deleteModel()
+    #     del o3
+    #     print(f'{filename}: Writing OMUSConstr... to \n\t\t', outputDir + filename.replace('.cnf', '') + 'OmusConstrIncrWarm_' + outputFile, '\n')
 
-        with open(outputDir+ 'OmusConstrIncrWarm/' + filename.replace('.cnf', '')  + outputFile , 'w') as fp:
-            json.dump(results[filename]['OmusConstrIncrWarm'], fp)
+    #     with open(outputDir+ 'OmusConstrIncrWarm/' + filename.replace('.cnf', '')  + outputFile , 'w') as fp:
+    #         json.dump(results[filename]['OmusConstrIncrWarm'], fp)
 
     for instance, filename in zip(instances, filenames):
         print(instance, filename)
@@ -2243,11 +3098,22 @@ def experiment2(sd, timeout):
     # experiment2_omus(sd, timeout=timeout)
     # print("Ending OMUS")
 
+def parallelExperiment1():
+    fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
+    proc = []
+    for fn in fns:
+        p = Process(target=fn)
+        p.start()
+        proc.append(p)
+    for p in proc:
+        p.join()
+
+
 def main():
     sd = datetime.now()
-    random.seed(sd)
+    parallelExperiment1()
     # experiment1(sd)
-    experiment2(sd, timeout=1*HOURS)
+    # experiment2(sd, timeout=1*HOURS)
     # experiment3(sd, timeout=None)
 
 

@@ -3203,8 +3203,8 @@ def experiment2(sd, timeout):
     # print("Ending OMUS")
 
 def parallelExperiment1():
-    fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
-    # fns = [experiment1_OMUSPost, experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
+    #fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
+    fns = [experiment1_OMUSIncr, experiment1_OMUSIncrPostWarm]
     proc = []
     for fn in fns:
         p = Process(target=fn)

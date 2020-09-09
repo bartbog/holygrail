@@ -85,10 +85,9 @@ def experiment1(sd):
 
     # parameters
     timeout = 10 * MINUTES
-    n_literals = 50
+    n_literals = 10
     n_instances = 10
 
-    #
     results = {}
     instances, filenames = get_instances(n_instances)
     weights = {}
@@ -127,13 +126,18 @@ def experiment1(sd):
             filepath.mkdir(parents=True, exist_ok=True)
 
             results[filename][c] = {
-                'filename':filename.replace('.cnf', ''),
+                'filename': filename.replace('.cnf', ''),
                 'exec_times': [],
                 'H_sizes': [],
                 'greedy':[],
                 'incr':[],
                 'opt':[],
             }
+
+    for instance, filename in zip(instances, filenames):
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
 
         cnf = CNF(from_file=instance)
 
@@ -331,7 +335,7 @@ def experiment1(sd):
             results[filename]['OmusConstrIncrWarm']['incr'].append(o3.incremental_steps[-1])
             results[filename]['OmusConstrIncrWarm']['opt'].append(o3.optimal_steps[-1])
 
-
+    
         o3.deleteModel()
         del o3
         print(f'{filename}: Writing OMUSConstr... to \n\t\t', outputDir + filename.replace('.cnf', '') + 'OmusConstrIncrWarm_' + outputFile, '\n')
@@ -339,6 +343,12 @@ def experiment1(sd):
         with open(outputDir+ 'OmusConstrIncrWarm/' + filename.replace('.cnf', '')  + outputFile , 'w') as fp:
             json.dump(results[filename]['OmusConstrIncrWarm'], fp)
 
+    for instance, filename in zip(instances, filenames):
+        print(instance, filename)
+        # Check satisfiability of the instance
+        sat, model = checksatCNF(instance)
+
+        cnf = CNF(from_file=instance)
         # pprint.pprint(results, width=1)
         model = set(model)
         I = set()
@@ -353,6 +363,7 @@ def experiment1(sd):
             soft_weights=weights[filename],
             reuse_mss=False,
             parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            logging=True
         )
 
         # 'Omus'
@@ -404,7 +415,9 @@ def experiment1(sd):
                 if cost_best is None or cost_explanation < cost_best:
                     E_best, S_best, N_best = E_i, S_i, N_i
                     cost_best = cost_explanation
-
+            if timedout:
+                results[filename]['Omus']['exec_times'].append('timeout')
+                break
             tend_lit = time.time()
             results[filename]['Omus']['exec_times'].append(round(tend_lit-tstart_lit, 3))
             results[filename]['Omus']['H_sizes'].append(o.hs_sizes[-1])
@@ -412,9 +425,7 @@ def experiment1(sd):
             results[filename]['Omus']['incr'].append(o.incremental_steps[-1])
             results[filename]['Omus']['opt'].append(o.optimal_steps[-1])
 
-            if timedout:
-                results[filename]['Omus']['exec_times'].append('timeout')
-                break
+
             # post-processing the MSSes
 
             New_info = optimalPropagate(o.hard_clauses + E_best + S_best, I)
@@ -429,11 +440,13 @@ def experiment1(sd):
             json.dump(results[filename]['Omus'], fp)
 
         # 'OmusPost'
-
         I = set()
         I_cnf = [frozenset({lit}) for lit in I]
         print(f'{filename}: Starting OmusPost...\n')
-
+        o.reuse_mss = False
+        timedout = False
+        o.MSSes= set()
+        o.MSS_sizes = []
         w_I = [1 for _ in I] + [1]
 
         timedout = False
@@ -502,6 +515,11 @@ def experiment1(sd):
 
 
         # 'OmusIncr'
+        o.reuse_mss = True
+        timedout = False
+        o.MSSes= set()
+        o.MSS_sizes = []
+
         print(f'{filename}: Starting OmusIncr...\n')
         I = set()
         I_cnf = [frozenset({lit}) for lit in I]
@@ -586,17 +604,19 @@ def experiment1(sd):
         with open(outputDir + 'OmusIncr/' + filename.replace('.cnf', '')  + outputFile , 'w') as fp:
             json.dump(results[filename]['OmusIncr'], fp)
 
-        # 'OmusIncrPost'
+        'OmusIncrPost'
+
         print(f'{filename}: Starting OmusIncrPost...\n')
         I = set()
         I_cnf = [frozenset({lit}) for lit in I]
-        w_I = [1 for _ in I] + [1]
 
-        o.MSSes= set()
-        o.MSS_sizes = []
+        w_I = [1 for _ in I] + [1]
 
         o.reuse_mss = True
         timedout = False
+        o.MSSes= set()
+        o.MSS_sizes = []
+
         tstart_exp1 = time.time()
         for j in range(n_literals):
 
@@ -638,6 +658,9 @@ def experiment1(sd):
                     cost_best = cost_explanation
 
 
+            if timedout:
+                results[filename]['OmusIncrPost']['exec_times'].append('timeout')
+                break
             # post-processing the MSSes
             keep = set()
             for (m1, m1_model) in o.MSSes:
@@ -648,10 +671,6 @@ def experiment1(sd):
                 if keep_m1:
                     keep.add((m1, m1_model))
             o.MSSes = keep
-
-            if timedout:
-                results[filename]['OmusIncrPost']['exec_times'].append('timeout')
-                break
 
             tend_lit = time.time()
             results[filename]['OmusIncrPost']['exec_times'].append(round(tend_lit-tstart_lit, 3))
@@ -675,30 +694,28 @@ def experiment1(sd):
 
         # 'OmusIncrPost warm start'
         print(f'{filename}: Starting OmusIncrPost warm start...\n')
-        print(model)
         o.reuse_mss = True
         timedout = False
         o.MSSes= set()
         o.MSS_sizes = []
 
         best_costs = dict({i: 9999999 for i in model - I})
-        print(o.weights)
+
         base_F = set(range(len(o.soft_clauses)))
-        F = base_F | set({o.softClauseIdxs[frozenset({-i})] for i in model - I})
-        o.MSSes.add((o.fullMss, frozenset(model)))
+        # F = base_F | set({o.softClauseIdxs[frozenset({-i})] for i in model - I})
+        # o.MSSes.add((o.fullMss, frozenset(model)))
         print("Seeding")
         for i in model - I:
             o.clauses = o.soft_clauses + [frozenset({-i})]
-            o.weights = o.soft_weights + [1] * len(o.I_lits)
+            o.weights = o.soft_weights + [1]
             F_prime = set({o.softClauseIdxs[frozenset({-i})]})
 
-            MSS, MSS_Model = o.maxsat_fprime(F_prime, set())
+            MSS, MSS_Model = o.grow(F_prime, set())
 
             o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
 
             # -- precompute some hitting sets for a rough idea on the costs
             w_I = [1 for _ in I] + [1]
-
 
         tstart_exp1 = time.time()
 
@@ -748,7 +765,9 @@ def experiment1(sd):
                     E_best, S_best, N_best = E_i, S_i, N_i
                     cost_best = cost_explanation
 
-
+            if timedout:
+                results[filename]['OmusIncrPostWarm']['exec_times'].append('timeout')
+                break
             # post-processing the MSSes
             keep = set()
             for (m1, m1_model) in o.MSSes:
@@ -760,11 +779,11 @@ def experiment1(sd):
                     keep.add((m1, m1_model))
             o.MSSes = keep
 
-            if timedout:
-                results[filename]['OmusIncrPostWarm']['exec_times'].append('timeout')
-                break
-
             tend_lit = time.time()
+            print(o.hs_sizes[-1])
+            print(o.greedy_steps[-1])
+            print(o.incremental_steps[-1])
+            print(o.optimal_steps[-1])
             results[filename]['OmusIncrPostWarm']['exec_times'].append(round(tend_lit-tstart_lit, 3))
             results[filename]['OmusIncrPostWarm']['H_sizes'].append(o.hs_sizes[-1])
             results[filename]['OmusIncrPostWarm']['greedy'].append(o.greedy_steps[-1])
@@ -783,6 +802,7 @@ def experiment1(sd):
         with open(outputDir +'OmusIncrPostWarm/' + filename.replace('.cnf', '') + outputFile , 'w') as fp:
             json.dump(results[filename]['OmusIncrPostWarm'], fp)
 
+        del o
 
 def experiment2_omus(sd, timeout):
 
@@ -2220,8 +2240,8 @@ def experiment2(sd, timeout):
 def main():
     sd = datetime.now()
     random.seed(sd)
-    # experiment1(sd)
-    experiment2(sd, timeout=1*HOURS)
+    experiment1(sd)
+    # experiment2(sd, timeout=1*HOURS)
     # experiment3(sd, timeout=None)
 
 

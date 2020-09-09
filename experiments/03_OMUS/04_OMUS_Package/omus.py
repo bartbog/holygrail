@@ -1832,7 +1832,7 @@ class OMUS(object):
 
 
 class OMUSBase(object):
-    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, bv=None, soft_weights=None, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=True,clues=set(),trans=set(),bij=set()):
+    def __init__(self, hard_clauses=None, soft_clauses=None, I=None, bv=None, soft_weights=None, parameters={}, f=lambda x: len(x), logging=True, reuse_mss=True,clues=None,trans=None,bij=None):
         # checking input
         assert (f is not None) or (soft_weights is not None), "No mapping function or weights supplied."
         assert (hard_clauses is not None), "No clauses or CNF supplied."
@@ -1858,7 +1858,7 @@ class OMUSBase(object):
         # clauses
         self.hard_clauses = [frozenset(clause) for clause in hard_clauses]
         self.soft_clauses = [frozenset(clause) for clause in soft_clauses]
-        self.clauses = [c for c in self.soft_clauses]  # soft + omus 'added' ones
+        self.clauses = self.soft_clauses  # soft + omus 'added' ones
         self.nSoftClauses = len(self.soft_clauses)
         self.fullMss = frozenset(i for i in range(self.nSoftClauses + len(I)))
         self.I_lits = frozenset(set(abs(lit) for lit in I) | set(-abs(lit) for lit in I))
@@ -1874,7 +1874,7 @@ class OMUSBase(object):
         if f is not None:
             self.soft_weights = [f(clause) for clause in soft_clauses]
         else:
-            self.soft_weights = [w for w in soft_weights]
+            self.soft_weights = soft_weights
 
         self.weights = None
         self.nWeights = len(self.soft_weights)
@@ -1883,9 +1883,9 @@ class OMUSBase(object):
 
         # MSS
         self.reuse_mss = reuse_mss
-        # if reuse_mss:
-        self.MSSes = set()
-        self.MSS_sizes = []
+        if reuse_mss:
+            self.MSSes = set()
+            self.MSS_sizes = []
 
         # Keep track of soft clauses troughout the different omus/omusIncr calls
         self.softClauseIdxs = dict()
@@ -1911,10 +1911,6 @@ class OMUSBase(object):
             solved = s.solve()
             model = s.get_model()
 
-        # if self.logging:
-        #     tend = time.time()
-        #     self.timing.sat.append(tend - tstart)
-
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
             return mapped_model, solved
@@ -1926,24 +1922,17 @@ class OMUSBase(object):
             self.steps.sat += 1
             # tstart = time.time()
 
-
-
         satsolver = Solver()
 
         if len(f_prime) == 0:
             return set(), True, satsolver
-        # print(self.clauses, self.hard_clauses)
+
         validated_clauses = [self.clauses[i] for i in f_prime] + self.hard_clauses
-        # print(f_prime, validated_clauses)
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
 
         satsolver.append_formula(validated_clauses, no_return=False)
         solved = satsolver.solve()
         model = satsolver.get_model()
-
-        # if self.logging:
-            # tend = time.time()
-            # self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -1954,20 +1943,14 @@ class OMUSBase(object):
     def checkSatIncr(self, satsolver, hs, c):
         if self.logging:
             self.steps.sat += 1
-            # tstart = time.time()
 
         validated_clauses = [self.clauses[i] for i in hs] + self.hard_clauses
-        # print(validated_clauses, self.clauses, self.hard_clauses)
         lits = set(abs(lit) for lit in frozenset.union(*validated_clauses))
         clause = self.clauses[c]
 
         satsolver.add_clause(clause, no_return=False)
         solved = satsolver.solve()
         model = satsolver.get_model()
-
-        # if self.logging:
-        #     tend = time.time()
-        #     self.timing.sat.append(tend - tstart)
 
         if solved:
             mapped_model = set(lit for lit in model if abs(lit) in lits)
@@ -2049,7 +2032,7 @@ class OMUSBase(object):
         # model parameters
         g_model.Params.OutputFlag = 0
         g_model.Params.LogToConsole = 0
-        g_model.Params.Threads = 1
+        g_model.Params.Threads = 8
 
         # create the variables (with weights in one go)
         x = g_model.addMVar(shape=self.nSoftClauses, vtype=GRB.BINARY, obj=self.weights, name="x")
@@ -2779,7 +2762,7 @@ class OMUSBase(object):
         assert all([True if -l not in lit_true else False for l in lit_true]), f"Conflicting literals {lit_true}"
         return new_F_prime, lit_true
 
-    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=False, timeout=None):
+    def omusIncr(self, I_cnf, explained_literal, add_weights=None, best_cost=None, hs_limit=None, postponed_omus=True, timeout=None):
         # Benchmark info
         t_start_omus = time.time()
         if self.logging:
@@ -2790,12 +2773,9 @@ class OMUSBase(object):
             n_incremental = self.steps.incremental
         if self.reuse_mss:
             n_msses = len(self.MSSes)
-
         # Build clauses and additional weights
         self.clauses = self.soft_clauses + I_cnf + [frozenset({-explained_literal})]
         self.nSoftClauses = len(self.clauses)
-
-        # print(explained_literal)
 
         if add_weights is not None:
             self.weights = self.soft_weights + add_weights
@@ -2850,9 +2830,6 @@ class OMUSBase(object):
                 # MSS, model = self.grow(mss, MSS_model)
                 C = F - mss
 
-                # if len(C)==0:
-                #     continue
-
                 if C not in H:
                     h_counter.update(list(C))
                     H.append(C)
@@ -2860,37 +2837,45 @@ class OMUSBase(object):
                     self.addSetGurobiModel(gurobi_model, C)
 
         mode = MODE_OPT
-        # print("OPT")
+        #print("\n")
         while(True):
-            # print(timeout - (time.time() -t_start_omus))
             if (time.time() -t_start_omus) > timeout:
-                if satsolver is not None:
-                    satsolver.delete()
-                self.hs_sizes.append(len(H))
-                self.optimal_steps.append(self.steps.optimal - n_optimal)
-                self.greedy_steps.append(self.steps.greedy - n_greedy)
-                self.incremental_steps.append(self.steps.incremental - n_incremental)
-                self.sat_steps.append(self.steps.sat - n_sat)
-                self.grow_steps.append(self.steps.grow - n_grow)
                 gurobi_model.dispose()
-                return None, my_cost
-            # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
-            while(True and postponed_omus):
-                # print(timeout - (time.time() -t_start_omus))
-                if (time.time() -t_start_omus) > timeout:
-                    if satsolver is not None:
-                        satsolver.delete()
-                    self.hs_sizes.append(len(H))
+                self.hs_sizes.append(len(H))
+                if self.reuse_mss:
+                    self.MSS_sizes.append(len(self.MSSes) - n_msses)
+                # Benchmark info
+                if self.logging:
+                    exec_time = time.time() - t_start_omus
+
+                    self.total_timings.append(exec_time)
                     self.optimal_steps.append(self.steps.optimal - n_optimal)
                     self.greedy_steps.append(self.steps.greedy - n_greedy)
                     self.incremental_steps.append(self.steps.incremental - n_incremental)
                     self.sat_steps.append(self.steps.sat - n_sat)
                     self.grow_steps.append(self.steps.grow - n_grow)
+                return None, my_cost
+            # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
+            while(True and postponed_omus):
+                if (time.time() -t_start_omus) > timeout:
                     gurobi_model.dispose()
+                    self.hs_sizes.append(len(H))
+                    if self.reuse_mss:
+                        self.MSS_sizes.append(len(self.MSSes) - n_msses)
+                    # Benchmark info
+                    if self.logging:
+                        exec_time = time.time() - t_start_omus
+                        self.total_timings.append(exec_time)
+                        self.optimal_steps.append(self.steps.optimal - n_optimal)
+                        self.greedy_steps.append(self.steps.greedy - n_greedy)
+                        self.incremental_steps.append(self.steps.incremental - n_incremental)
+                        self.sat_steps.append(self.steps.sat - n_sat)
+                        self.grow_steps.append(self.steps.grow - n_grow)
                     return None, my_cost
                 # print("Starting with optimal!")
                 # print(f"\t\topt steps = {self.steps.optimal - n_optimal}\t greedy steps = {self.steps.greedy - n_greedy}\t incremental steps = {self.steps.incremental - n_incremental}")
                 if mode == MODE_INCR:
+
                     # add sets-to-hit incrementally until unsat then continue with optimal method
                     # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
                     # then hs + any element of 'C' is a valid hitting set of CC + C
@@ -2914,12 +2899,8 @@ class OMUSBase(object):
                     break
                 # ----- check satisfiability of hitting set
                 if mode == MODE_INCR:
-                    if satsolver is not None:
-                        satsolver.delete()
-                    (model, sat, satsolver) = self.checkSat(hs)
+                    (model, sat, satsolver) = self.checkSatIncr(satsolver=satsolver, hs=hs, c=c_best)
                 elif mode == MODE_GREEDY:
-                    if satsolver is not None:
-                        satsolver.delete()
                     (model, sat, satsolver) = self.checkSat(hs)
 
                 E_i = [ci for ci in hs if self.clauses[ci] in I_cnf]
@@ -2940,14 +2921,11 @@ class OMUSBase(object):
                         satsolver.delete()
                         continue
                     elif mode == MODE_GREEDY:
-                        if satsolver is not None:
-                            satsolver.delete()
                         mode = MODE_OPT
                         break
                     # break # skip grow
                 # if (best_cost is not None and best_cost <= my_cost):
                 # ------ Grow
-                # print(hs)
                 if True or self.extension == 'maxsat':
                     # grow model over hard clauses first, must be satisfied
                     MSS, MSS_model = self.grow(hs, model)
@@ -2973,28 +2951,14 @@ class OMUSBase(object):
                         self.MSSes.add((mssIdxs, frozenset(MSS_model)))
 
                 h_counter.update(list(C))
-
                 self.addSetGurobiModel(gurobi_model, C)
                 H.append(C)
 
-                if hs_limit is not None and len(H) > hs_limit:
-                    if satsolver is not None:
-                        satsolver.delete()
-                    gurobi_model.dispose()
-                    self.hs_sizes.append(len(H))
-                    self.optimal_steps.append(self.steps.optimal - n_optimal)
-                    self.greedy_steps.append(self.steps.greedy - n_greedy)
-                    self.incremental_steps.append(self.steps.incremental - n_incremental)
-                    self.sat_steps.append(self.steps.sat - n_sat)
-                    self.grow_steps.append(self.steps.grow - n_grow)
-                    return C, my_cost
-
                 # Sat => Back to incremental mode 
                 mode = MODE_INCR
+
             # ----- Compute Optimal Hitting Set
-            # print(H)
             hs = self.gurobiOptimalHittingSet(gurobi_model)
-            # print(hs)
             # self.hs_sizes.append(len(hs))
 
             # check cost, return premptively if worse than best
@@ -3007,15 +2971,20 @@ class OMUSBase(object):
             my_cost = self.cost((E_i, S_i))
             # print(my_cost, "vs", best_cost)
             if best_cost is not None and my_cost >= best_cost:
-                if satsolver is not None:
-                    satsolver.delete()
-                self.hs_sizes.append(len(H))
-                self.optimal_steps.append(self.steps.optimal - n_optimal)
-                self.greedy_steps.append(self.steps.greedy - n_greedy)
-                self.incremental_steps.append(self.steps.incremental - n_incremental)
-                self.sat_steps.append(self.steps.sat - n_sat)
-                self.grow_steps.append(self.steps.grow - n_grow)
                 gurobi_model.dispose()
+                self.hs_sizes.append(len(H))
+                if self.reuse_mss:
+                    self.MSS_sizes.append(len(self.MSSes) - n_msses)
+                # Benchmark info
+                if self.logging:
+                    exec_time = time.time() - t_start_omus
+
+                    self.total_timings.append(exec_time)
+                    self.optimal_steps.append(self.steps.optimal - n_optimal)
+                    self.greedy_steps.append(self.steps.greedy - n_greedy)
+                    self.incremental_steps.append(self.steps.incremental - n_incremental)
+                    self.sat_steps.append(self.steps.sat - n_sat)
+                    self.grow_steps.append(self.steps.grow - n_grow)
                 return None, my_cost
 
             # ------ Sat check
@@ -3023,22 +2992,21 @@ class OMUSBase(object):
 
             if not sat:
                 #
+                self.hs_sizes.append(len(H))
+                satsolver.delete()
                 gurobi_model.dispose()
-                if satsolver is not None:
-                    satsolver.delete()
-                # Benchmark info
                 if self.reuse_mss:
                     self.MSS_sizes.append(len(self.MSSes) - n_msses)
-                # if self.logging:
-                exec_time = time.time() - t_start_omus
-                self.total_timings.append(exec_time)
-                self.optimal_steps.append(self.steps.optimal - n_optimal)
-                self.greedy_steps.append(self.steps.greedy - n_greedy)
-                self.incremental_steps.append(self.steps.incremental - n_incremental)
-                self.sat_steps.append(self.steps.sat - n_sat)
-                self.grow_steps.append(self.steps.grow - n_grow)
-                self.hs_sizes.append(len(H))
-                gurobi_model.dispose()
+                # Benchmark info
+                if self.logging:
+                    exec_time = time.time() - t_start_omus
+
+                    self.total_timings.append(exec_time)
+                    self.optimal_steps.append(self.steps.optimal - n_optimal)
+                    self.greedy_steps.append(self.steps.greedy - n_greedy)
+                    self.incremental_steps.append(self.steps.incremental - n_incremental)
+                    self.sat_steps.append(self.steps.sat - n_sat)
+                    self.grow_steps.append(self.steps.grow - n_grow)
                 #print("\n")
                 return hs, [self.clauses[idx] for idx in hs]
 
@@ -3068,20 +3036,7 @@ class OMUSBase(object):
 
             h_counter.update(list(C))
             H.append(C)
-            if postponed_omus:
-                mode = MODE_INCR
-
-            if hs_limit is not None and len(H) > hs_limit:
-                gurobi_model.dispose()
-                if satsolver is not None:
-                    satsolver.delete()
-                self.hs_sizes.append(len(H))
-                self.optimal_steps.append(self.steps.optimal - n_optimal)
-                self.greedy_steps.append(self.steps.greedy - n_greedy)
-                self.incremental_steps.append(self.steps.incremental - n_incremental)
-                self.sat_steps.append(self.steps.sat - n_sat)
-                self.grow_steps.append(self.steps.grow - n_grow)
-                return C, my_cost
+            mode = MODE_INCR
 
     def omus(self, add_clauses, add_weights=None):
         # ---------- build clauses and additional weights

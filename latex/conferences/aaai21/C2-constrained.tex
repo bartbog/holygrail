@@ -93,7 +93,38 @@ $p \gets \{$exactly one of $\bar{I}_{end}$ in the hitting set$\}$\; %, none of $
   }
 \Return{E}\;
 \end{algorithm}
-
+\tias{dit is eigenlijk het greedy algo, zou in sec 3 moeten komen... met lijn 12/13 dan door 'SingleStepExplain(C,f,I,Iend)'. Zoals algo 2; hieronder de 3 versies (sec 5,6,7):}
+\begin{algorithm}[ht]
+  \caption{$\call{bestStep1}({\cal C},f,I,I_{end},\setstohit)$}
+  \label{alg:singleStepExplain1}
+$X_{best} \gets \{{\cal C} \land I \land \bar{I}_{end}\}$\;
+\For{$l \in \{I_{end} \setminus I\}$}{
+    $X \gets \omus{({\cal C} \land I \land \neg l, f)}$\;
+    \If{$f(X)<f(X_{best})$}{
+        $X_{best} \gets X$\;
+    }
+}
+\Return{$(\formulag_{\mathit{best}},I_{\mathit{best}},l_{\mathit{best}})$} 
+\end{algorithm}
+\begin{algorithm}[ht]
+  \caption{$\call{bestStep2}({\cal C},f,I,I_{end},\setstohit)$}
+  \label{alg:singleStepExplain2}
+$X_{best} \gets \{{\cal C} \land I \land \bar{I}_{end}\}$\;
+\For{$l \in \{I_{end} \setminus I\}$}{
+    $X \gets \omusinc{({\cal C} \land I \land \neg l, f)}$\;
+    \If{$f(X)<f(X_{best})$}{
+        $X_{best} \gets X$\;
+    }
+}
+\Return{$(\formulag_{\mathit{best}},I_{\mathit{best}},l_{\mathit{best}})$} 
+\end{algorithm}
+\begin{algorithm}[ht]
+  \caption{$\call{bestStep3}({\cal C},f,I,I_{end},\setstohit)$}
+  \label{alg:singleStepExplain3}
+$\formulag \gets {\cal C} \cup I_{end} \cup \bar{I}_{end}$\;
+set $p$ such that exactly one of $\bar{I}_{end}$ in the hitting set \textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
+\Return{$\comus(\formulag,f,p,\setstohit)$}\;
+\end{algorithm}
 
 \begin{proposition}\label{prop:K2}
   Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 

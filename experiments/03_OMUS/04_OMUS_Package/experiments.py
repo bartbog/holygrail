@@ -2221,8 +2221,8 @@ def main():
     sd = datetime.now()
     random.seed(sd)
     # experiment1(sd)
-    experiment2(sd, timeout=1*HOURS)
-    # experiment3(sd, timeout=None)
+    # experiment2(sd, timeout=1*HOURS)
+    experiment3(sd, timeout=None)
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ To answer the first research question, we use 10 CNF instances from the SATLIB B
         1 & 50& 80&   0.88 s  &   0.38 s  &   0.37 s  &   0.81 s  &    0.65 s  &      \textbf{0.33} s  \\
         2 & 350 & 1157 &   122.42 s  &  94.07 s  &  96.84 s  &  120.55 s  &  126.15 s  &     \textbf{87.31} s  \\
         3 & 155& 1135&   130.38 s  &  87.97 s  &  84.75 s  &  104.7 s  &  124.48 s  &     \textbf{80.92 s}  \\
-        4 .. 10 & x $\cdot$ $10^2$ & x $\cdot$ $10^3$           &      --- &     --- &   --- &  --- &   --- &     --- \\
+        4  & 1015 & 3324&      --- &     --- &     --- &     --- &      --- &        --- \\
         % 5 & 317 & 1264           &      --- &  --- &  --- &     --- &      --- &     --- \\
         % 6 & 324 & 1292        &      --- &     --- &     --- &     --- &      --- &        --- \\
         % 7 & 334 & 1332        &      --- &     --- &     --- &     --- &      --- &        --- \\
@@ -48,26 +48,28 @@ To answer the first research question, we use 10 CNF instances from the SATLIB B
         \label{table:experiment1}
 \end{table*}
 
-\begin{table*}[t!]
-    \centering
-    \begin{tabular}{c|cccc|cccccc}
-        % \hline
-        p &  time [s] &  \#steps &   $\overline{cost}$ & max(cost) &    1 bij &  1trans &  1 clue & 1 clue+i & 1 mult-i & mult-c. \\
-        \hline
-        1 &  1287.27 &     115 &     25.87  &    25.87  &  31.83\% &  50.57\% &  1.09\% &    16.52 \% &     0\% &    0.0\% \\
-        % \hline
-        \end{tabular}
-        \caption{Puzzle Properties, execution statistics and explanation sequence composition for the origin puzzle.}
-        \label{table:experiment3}
-\end{table*}
+% \begin{table*}[t!]
+%     \centering
+%     \begin{tabular}{c|cccc|cccccc}
+%         % \hline
+%         p &  time [s] &  \#steps &   $\overline{cost}$ & max(cost) &    1 bij &  1trans &  1 clue & 1 clue+i & 1 mult-i & mult-c. \\
+%         \hline
+%         1 &  1287.27 &     115 &     25.87  &    25.87  &  31.83\% &  50.57\% &  1.09\% &    16.52 \% &     0\% &    0.0\% \\
+%         % \hline
+%         \end{tabular}
+%         \caption{Puzzle Properties, execution statistics and explanation sequence composition for the origin puzzle.}
+%         \label{table:experiment3}
+% \end{table*}
 
-
-The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance\tias{please add the names}, the number of variables and the number of clauses respectively. 
-Only for instances 1, 2 and 3, is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the required time constraint of 10 minutes.\tias{remove other ones, say that larger instances timed out in the text}
+% ------------------------------- EMILIO LOCK -----------------------------------------
+The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance name, the number of variables and the number of clauses respectively. 
+Only for instances 1 (aim-50-1\_6-yes1-4.cnf), 2 (par8-2.cnf) and 3 (zebra\_v155\_c1135.cnf), is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the required time constraint of 10 minutes.
+All variants of the \omus timed out on the larger instances 
+%\tias{remove other ones, say that larger instances timed out in the text}
 A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent growing $\m{SS}$s\tias{in general or for warmstarting? This means that my 'implementation consideration' of using a MaxSat solver is cheap is not true...}. For instances 1-3 executed without postponing optimization, 70\% of the time is spent growing, and for the remaining instances close to 100 \% of the time is spent growing.
 In particular, for executions involving postponing the calls (+P/+IP/+IPW) to the MIP solver, 90-100\% of the time is spent growing, while the remainder of the time is distributed between incremental and greedy computation of hitting sets.
 Finally, we conclude that within the short time limit provided, the best configuration for computing multiple related OUS's is \omus+IPW, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed $\m{SS}$s.
-
+% ------------------------------- EMILIO LOCK -----------------------------------------
 
 % \begin{table*}[h!]
 %     \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
@@ -114,7 +116,7 @@ Finally, we conclude that within the short time limit provided, the best configu
 
 
 \paragraph{RQ2}
-The second research question is how do the different variants perform when explaining an elaborate constraint satisfaction problem? The results for the logic grid puzzle called 'origin' is shown in Figure~\ref{fig:exp2}.
+The second research question is: how do the different variants perform when explaining an elaborate constraint satisfaction problem? The results for the logic grid puzzle called 'origin' is shown in Figure~\ref{fig:exp2}.
 
 \begin{figure}[t]
     \centering
@@ -129,11 +131,12 @@ We can see that OUS-Incremental with pre-seeding and post-poning optimisation is
 When combining constrained-OUS with either pre-seeding, post-poned optimisation or both, then our approach is able to fully explain the solution. Best results are obtained with constrained-OUS with just pre-seeding at the beginning. The post-poned optimisation in this case may spent a lot of time generating MCSs that are not or little relevant to the constrained OUSs we are seeking.
 
 \paragraph{}
-Finally, for \textbf{RQ3} we compare the sequence found by our proposed method with the sequence reported on in~\cite{ecai/BogaertsGCG20} for the origin puzzle (puzzle 1). 
-The explanation sequence for the puzzle is generated using \omus Constr with pre-seeding and according to the same cost function as Bogaerts et al.~\cite{ecai/BogaertsGCG20}. We report statistics relating to the explanation generation in table~\ref{table:experiment3}.
-Evidently, one of the most important observations is the speed-up provided by \omus Constr. 
-As a matter of fact, the sequence is generated in a bit more than 21 minutes compared to a few (2-3) hours in~\cite{ecai/BogaertsGCG20}, meaning that \omus Constr is 8-10x faster, while also finding the optimal explanations in each step.
-Table \ref{table:experiment3} also reports that the explanation sequence has become easier to understand: the average cost is slightly lower and so is $max(cost)$, the cost of the most difficult explanation in the puzzle. 
+Finally, for \textbf{RQ3} \emilio{Bart: concluding phrases on expl. generation}
+%  we compare the sequence found by our proposed method with the sequence reported on in~\cite{ecai/BogaertsGCG20} for the origin puzzle (puzzle 1). 
+% The explanation sequence for the puzzle is generated using \omus Constr with pre-seeding and according to the same cost function as Bogaerts et al.~\cite{ecai/BogaertsGCG20}. We report statistics relating to the explanation generation in table~\ref{table:experiment3}.
+% Evidently, one of the most important observations is the speed-up provided by \omus Constr. 
+% As a matter of fact, the sequence is generated in a bit more than 21 minutes compared to a few (2-3) hours in~\cite{ecai/BogaertsGCG20}, meaning that \omus Constr is 8-10x faster, while also finding the optimal explanations in each step.
+% Table \ref{table:experiment3} also reports that the explanation sequence has become easier to understand: the average cost is slightly lower and so is $max(cost)$, the cost of the most difficult explanation in the puzzle. 
 
 
 % \begin{table*}

@@ -5,17 +5,17 @@ In this section, we are concerned with a setting in which we know that many rela
 To formalize this, we assume that several \omus calls will happen with different formulas $\formula_1,\dots,\formula_n$ with a non-empty intersection. In fact, the algorithm we present will always work for completely unrelated formulas (with empty intersection) but will in this case not yield any benefit over the plain \omus algorithm of \cref{sec:omus}. 
 
 The most important data the plain \omus algorithm keeps track of is a set of correction subsets of \formula, which are complements of satisfiable subsets of \formula.
-These correction subsets themselves are not necessarily correction subsets of other related formulas, but the opposite, the satisfiable subsets, they do transfer between formulas.
+These correction subsets themselves are not necessarily correction subsets of other related formulas, but satisfiable subsets do transfer between formulas.
 
 \begin{proposition}\label{prop:ss}
-if $\m{S} \subseteq \formula_1$ is a Satisfiable Subset of $\formula_1$, then $\m{S}\cap \formula_2$ is a satisfiable subset of $\formula_2$
+if $\m{S} \subseteq \formula_1$ is a satisfiable subset of $\formula_1$, then $\m{S}\cap \formula_2$ is a satisfiable subset of $\formula_2$.\bart{Not so convincing to call this a proposition (rather than ``trivial observation''}
 \end{proposition}
-Hence, $\formula_2 \setminus \{\m{S}\cap \formula_2\}$ is a correction subset of $\formula_2$ and hence can be added to the sets-to-hit $\setstohit$. As before, we can first grow the satisfiable subset $\grow(\m{S}\cap \formula_2,\F_2)$ to obtain a larger satisfiable subset and hence a smaller MCS.
+Hence, $\formula_2 \setminus \{\m{S}\cap \formula_2\}$ is a correction subset of $\formula_2$ and can be added to the sets-to-hit $\setstohit$. As before, we can first grow the satisfiable subset $\grow(\m{S}\cap \formula_2,\F_2)$ to obtain a larger satisfiable subset and hence a smaller MCS.
 
 We use this property to create an \textit{incremental} OUS algorithm, see \cref{alg:omus-inc}. We assume that our algorithm has access to a set $\satsets$ in which we store satisfiable sets used to build $\setstohit$. The \omus algorithm is then initialized with the corresponding correction subsets. 
 In  \cref{alg:omus-inc}, this is done in the for-loop starting at \cref{line:for-inc-seed}. The if-test in that loop is an optimization that does not affect correctness but does ensure that we will not compute the same satisfiable subset over and over again, to avoid spurious calls to \grow. 
 Otherwise, the algorithm behaves identically to \cref{alg:omus}, except that whenever a satisfiable subset is found, it is stored for use in later calls to \omusinc (\cref{line:store}). 
-\tias{I find $SSs_F$ and $SS$s to be too similar and a possible cause of confusion; not sure how to rename the former... Bart?}
+\tias{I find $SSs_F$ and $SS$s to be too similar and a possible cause of confusion; not sure how to rename the former... Bart?}\bart{better?}
 
 
 % the existence of some unsatisfiable formula $\fall$ and that several calls to compute an OUS of a \emph{subset} of \fall will happen. 
@@ -37,17 +37,18 @@ Otherwise, the algorithm behaves identically to \cref{alg:omus}, except that whe
 
 
 
+\newcommand\satsetsformula{\mm{\mathbf{SSOfF}}}
 % \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
 \begin{algorithm}[ht]
   \DontPrintSemicolon
   %$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
-  $\satsets_\formula\gets\emptyset$\;
+  $\satsetsformula\gets\emptyset$\;
   \For{$S\in\satsets$ \label{line:for-inc-seed}}{
     $S_\formula \gets {S}\cap \formula$\;
-    \If{$\lnot \exists {S}'\in\satsets_\formula: {S}_\formula \subseteq{S}'$}{
+    \If{$\lnot \exists {S}'\in\satsetsformula: {S}_\formula \subseteq{S}'$}{
     	$S_\formula \gets \grow( {S}_\formula, \formula)$\;
     	        $\setstohit \gets \setstohit\cup \{\formula \setminus {S}_\formula\}$\;
-        $\satsets_\formula\gets\satsets_\formula\cup\{{S}_\formula\}$
+        $\satsetsformula\gets\satsetsformula\cup\{{S}_\formula\}$
         }
     }
   \While{true}{
@@ -78,13 +79,14 @@ Otherwise, the algorithm behaves identically to \cref{alg:omus}, except that whe
 \paragraph{Using Initialization to Add Domain Knowledge}
 Before the first call to \omusinc, the set \satsets of satisfiable subsets will be empty. 
 However, in case we have structural domain knowledge about the formulas, this can be exploited to pre-populate this set intelligently. 
-For instance, in the explanatory setting, we know that $\formulac$ is satisfiable with (partial) solution $\Iend$, and is a satisfiable subset of \emph{all} \omusinc calls to follow. 
+For instance, in the explanatory setting, we know that $\formulac$ is satisfiable with (partial) solution $\Iend$, and is a satisfiable subset for \emph{all} \omusinc calls to follow. 
 By initializing $\satsets$ as $\{\formulac \cup I_{\mathit{end}}\}$, we avoid the algorithm having to rediscover this satisfiable subset itself.
 %, and hence can potentially result in serious performance gains. This is experimentally validated in \cref{sec:experiments}.
 
-Furthermore, we know that for every $-l, l \in \Iend$ we will do an OMUS call. Hence, we can pre-compute a large satisfiable subset for every $-l$ through $\grow(-l, \formulag)$, with $\formulag = {\cal C} \cup \Iend \cup \overline{\Iend}$ the set of all clauses that will ever by considered in the OUS calls. We call this process \textit{pre-seeding} the set $\setstohit$.
+Furthermore, we know that for every literal $ l \in \Iend$ we will do an OMUS call. Hence, we can pre-compute a large satisfiable subset for every $\lnot l$ through $\grow(\lnot l, \formulag)$, with $\formulag = {\cal C} \cup \Iend \cup \overline{\Iend}$ the set of all clauses that will ever be considered in the OUS calls. We call this process \textit{pre-seeding} the set $\setstohit$.
 
-Apart from optionally pre-seeding and calling $\omusinc(\formula,f)$ instead of $\omus(\formula,f)$ on line 3 in Algorithm~\ref{alg:bestStepOUS}, there is one more property we can use: the OUS found will only be kept if $f(X)<f(X_{best})$. Instead of enforcing this post-hoc, we can push this constraint into the OUS algorithm through a simple upper-bounding constraint added to the hitting set algorithm in \omusinc. As it is obviously beneficial to find a good $X_{best}$ quickly, we can order the literals by their best value found so far and initialise these values based on the satisfiable subset found when preseeding.
+Apart from optionally pre-seeding and calling $\omusinc(\formula,f)$ instead of $\omus(\formula,f)$ on line 3 in Algorithm~\ref{alg:bestStepOUS}, there is one more property we can use: the OUS found will only be kept if $f(X)<f(X_\mathit{best})$. Instead of enforcing this post-hoc, we can push this constraint into the OUS algorithm through a simple upper-bounding constraint added to the hitting set algorithm in \omusinc. As it is obviously beneficial to find a good $X_\mathit{best}$ quickly, we can order the literals by their best value found so far and initialise these values based on the satisfiable subset found when pre-seeding.
+\bart{This ``upper-bounding constraint''. Is actually a form of ``Constrained OUS'' and hence belongs more in the next section, or maybe in implementation considerations}
 
 %\tias{seeding}
 %\begin{algorithm}[ht]

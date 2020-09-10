@@ -1,6 +1,6 @@
-Even when using an incremental OUS algorithm, we still need to compute an (upper-bounded) OUS for every literal.
+Even when using an incremental OUS algorithm, at each step we still need to call \omusinc for every literal.
 
-We now ask the question if we can do away with that, and instead use an OUS-like algorithm to directly find the best OUS across all literals in $I_{end} \setminus I$, where $I$ is the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. 
+We now aim to instead use an OUS-like algorithm to directly find the best OUS across all literals in $I_{end} \setminus I$, where $I$ is the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. 
 
 It would be tempting to attempt this by a single call to 
 \[\omus(\formulac \cup I \cup \overline{\Iend\setminus I})\]
@@ -23,18 +23,18 @@ X_2 &= \{\lnot p \lor q ,  p, \lnot q\}.
 out of these two only $X_1$ would be considered to induce a good explanation: it represents the fact that the two constraints $\lnot p \lor r$ and $ \lnot p \lor \lnot r$ together entail $\lnot p$ (which can easily be seen by applying the resolution rule). However, $X_2$ does not have such an interpretation: it merely shows that the constraint $\lnot p \lor q$ entails that either $p$ should be false or $q$ should be true, which is uninformative. 
 \end{example}
 
-We can see that in general, for an OUS of $\formulac \cup I_{end} \cup \overline{\Iend}$ to be a valid explanation, it needs to satisfy a number of constraints. %Let $I$ be the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. 
-We can identify the following constraints: 1) the OUS should explain exactly one literal $-l$ in $\overline{\Iend}$; 2) the OUS may not explain a literal that is already explained, that is, no literal in $\overline{\Iend \setminus I}$; and 3) the explanation can only use literals from the cautious consequence that are already explained, so no literals from $I_{end} \setminus I$.
+We can see that in general, for an OUS of $\formulac \cup \Iend \cup \overline{\Iend}$ to be a valid explanation, it needs to satisfy a number of constraints. %Let $I$ be the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. 
+We can identify the following constraints: 1) the OUS should explain exactly one literal, i.e., contain exactly one literal from $\overline{\Iend}$; 2) the OUS may not explain a literal that is already explained, that is, it may contain no literal in $\overline{I}$; and 3) the explanation can only use literals from the cautious consequence that are already explained, so no literals from $I_{end} \setminus I$.
 
 %The previous example shows that a naive \omus call with a large enough theory, would not yield valuable explanations.
 Hence, we are interested in searching for an OUS that is \emph{optimal} among those that satisfy these properties. 
 Phrasing this in a generic setting results in the following definition.
 
 \begin{definition}
-    If $\formulag$ is a formula, $f:2^{\formulag} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formulag}\to \{\ltrue,\lfalse\}$, then we call a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} ($(p,f)$-OUS) if \begin{itemize}                                                                                                                                                                                                                         
+    If $\formulag$ is a formula, $f:2^{\formulag} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formulag}\to \{\ltrue,\lfalse\}$, then we call a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} ($(p,f)$-OUS) if \begin{compactitem}                                                                                                                                                                                                                         
     \item $U$ is unsatisfiable,
     \item $p(U)$ is true
-    \item for all other $U'\subseteq \formulag$ with $p(U')=\ltrue$, it holds that $f(U')\geq f(U)$.                                                                                                                                                                                                                         \end{itemize}
+    \item for all other $U'\subseteq \formulag$, if $p(U')=\ltrue$ then   $f(U')\geq f(U)$.                                                                                                                                                                                                                         \end{compactitem}
 \end{definition}
 
 The problem at hand is thus to compute a $(p,f)$-OUS of a given formula. 
@@ -89,11 +89,12 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
 %\Return{E}\;
 %\end{algorithm}
 
-Correctness of the algorithm now follows from the fact that -- as before -- all sets added to \setstohit are correction subsets (and that every MUS must thus hit all sets in \setstohit) and \cref{prop:K2}, which guarantees that when the algorithm returns $\F'$, a valid solution is indeed found. \tias{'good solution'? can you reword?}
+Soundness and completeness of the algorithm now follow from the fact that -- as before -- all sets added to \setstohit are correction subsets,  every MUS must thus hit all sets in \setstohit and \cref{prop:K2}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
  
 \begin{proposition}\label{prop:K2}
   Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 
   If $\m{U}$ is a hitting set of \m{H} that is $f$-optimal among the hitting sets of \m{H} satisfying a predicate $p$, and  $\m{U}$ is unsatisfiable, then $\m{U}$ is a $(p,f)$-OUS of \formula. 
+  If  $\m{H}$ has no hitting sets satisfying $p$, then $\formula$ has no $(p,f)$-OUSs.
 \end{proposition}
 
 Now, since the search for optimal hitting sets is --- in implicit hitting set algorithms --- usually done with a MIP solver, it suffices to express the predicate $p$ as constraints on the MIP. This is trivial for constraints that restrict the \textit{syntax} of what a valid hitting set can be, including each of the 3 constraints that we need to obtain meaningful explanations. %needed to have meaningful in practice only predicates $p$ that can easily be encoded in MIP are useful. In such cases, we can directly use the MIP solver to implement \cohs as well. 

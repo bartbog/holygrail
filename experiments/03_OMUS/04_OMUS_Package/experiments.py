@@ -150,7 +150,7 @@ def experiment1_OMUS(sd=20200918):
             bv=None,
             soft_weights=weights[filename],
             reuse_mss=False,
-            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            parameters={'extension': 'greedy_vertical', 'output': instance.stem + '.json'},
             logging=True
         )
 
@@ -297,7 +297,7 @@ def experiment1_OMUSIncr(sd=20200918):
             bv=None,
             soft_weights=weights[filename],
             reuse_mss=False,
-            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            parameters={'extension': 'greedy_vertical', 'output': instance.stem + '.json'},
             logging=True
         )
 
@@ -461,7 +461,7 @@ def experiment1_OMUSPost(sd=20200918):
             bv=None,
             soft_weights=weights[filename],
             reuse_mss=False,
-            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            parameters={'extension': 'greedy_vertical', 'output': instance.stem + '.json'},
             logging=True
         )
 
@@ -605,7 +605,7 @@ def experiment1_OMUSIncrPost(sd=20200918):
             bv=None,
             soft_weights=weights[filename],
             reuse_mss=False,
-            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            parameters={'extension': 'greedy_vertical', 'output': instance.stem + '.json'},
             logging=True
         )
 
@@ -693,7 +693,7 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
     # parameters
     timeout = TIMEOUT_EXP1
     n_literals = 10
-    n_instances = 10
+    n_instances = 3
 
     results = {}
     instances, filenames = get_instances(n_instances)
@@ -764,7 +764,7 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
             bv=None,
             soft_weights=weights[filename],
             reuse_mss=False,
-            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            parameters={'extension': 'greedy_vertical', 'output': instance.stem + '.json'},
             logging=True
         )
 
@@ -797,6 +797,7 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
         for id, i in enumerate(sorted(list(model - I))):
+            print("Explaining", i)
             if id > 9:
                 break
             tstart_lit = time.time()
@@ -867,7 +868,7 @@ def experiment1_OMUSIncrWarm(sd=20200918):
     # parameters
     timeout = TIMEOUT_EXP1
     n_literals = 10
-    n_instances = 10
+    n_instances = 3
 
     results = {}
     instances, filenames = get_instances(n_instances)
@@ -939,7 +940,7 @@ def experiment1_OMUSIncrWarm(sd=20200918):
             bv=None,
             soft_weights=weights[filename],
             reuse_mss=False,
-            parameters={'extension': 'maxsat', 'output': instance.stem + '.json'},
+            parameters={'extension': 'greedy_vertical', 'output': instance.stem + '.json'},
             logging=True
         )
 
@@ -957,17 +958,17 @@ def experiment1_OMUSIncrWarm(sd=20200918):
         tstart_exp1 = time.time()
         print("Seeding")
         o.MSSes.add((o.fullMss, frozenset(model)))
-        # for i in model - I:
-        #     o.clauses = o.soft_clauses + [frozenset({-i})]
-        #     o.weights = o.soft_weights + [1]
-        #     F_prime = set({o.softClauseIdxs[frozenset({-i})]})
+        for i in model - I:
+            o.clauses = o.soft_clauses + [frozenset({-i})]
+            o.weights = o.soft_weights + [1]
+            F_prime = set({o.softClauseIdxs[frozenset({-i})]})
 
-        #     MSS, MSS_Model = o.grow(F_prime, set())
+            MSS, MSS_Model = o.grow(F_prime, {-i})
 
-        #     o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
+            o.MSSes.add((frozenset(MSS), frozenset(MSS_Model)))
 
-        #     # -- precompute some hitting sets for a rough idea on the costs
-        #     w_I = [1 for _ in I] + [1]
+            # -- precompute some hitting sets for a rough idea on the costs
+            w_I = [1 for _ in I] + [1]
 
         I = set()
         I_cnf = [frozenset({lit}) for lit in I]
@@ -975,6 +976,7 @@ def experiment1_OMUSIncrWarm(sd=20200918):
         # existing facts + unit weight for negated literal
         w_I = [1 for _ in I] + [1]
         for id, i in enumerate(sorted(list(model - I))):
+            print('Explaining', i)
             if id > 9:
                 break
             tstart_lit = time.time()
@@ -1910,7 +1912,7 @@ def experiment2_omusIncr(sd, timeout):
         'setup':'omusIncr'
     }
 
-    parameters={'extension': 'maxsat','output': 'log.json'}
+    parameters={'extension': 'greedy_vertical','output': 'log.json'}
     (bij, trans, clues), (bv_clues, bv_trans, bv_bij), rels = originProblem()
 
     clues_cnf = cnf_to_pysat(to_cnf(clues))
@@ -3203,8 +3205,8 @@ def experiment2(sd, timeout):
     # print("Ending OMUS")
 
 def parallelExperiment1():
-    #fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
-    fns = [experiment1_OMUSIncr, experiment1_OMUSIncrPostWarm]
+    fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
+    # fns = [experiment1_OMUSIncr, experiment1_OMUSIncrPostWarm]
     proc = []
     for fn in fns:
         p = Process(target=fn)
@@ -3216,11 +3218,11 @@ def parallelExperiment1():
 
 def main():
     sd = datetime.now()
-    # parallelExperiment1()
-    # experiment1_OMUSIncrPostWarm()
+    parallelExperiment1()
+    # experiment1_OMUSIncrWarm()
     # experiment1(sd)
     # experiment2(sd, timeout=1*HOURS)
-    experiment3(sd, timeout=None)
+    # experiment3(sd, timeout=None)
 
 
 if __name__ == "__main__":

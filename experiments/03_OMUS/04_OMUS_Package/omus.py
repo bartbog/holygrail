@@ -2549,7 +2549,7 @@ class OMUSBase(object):
     def greedy_vertical(self, F_prime, model):
         # soft and hard, only soft indexes really matter but all need
         # to be unit-propagated
-        grow_clauses = self.clauses + self.hard_clauses
+        grow_clauses = self.clauses #+ self.hard_clauses
 
         ts = time.time()
         cl_true = set(F_prime)
@@ -2920,6 +2920,7 @@ class OMUSBase(object):
         mode = MODE_OPT
         #print("\n")
         while(True):
+            # print(hs)
             if (time.time() -t_start_omus) > timeout:
                 gurobi_model.dispose()
                 self.hs_sizes.append(len(H))

@@ -79,10 +79,13 @@ Only for instances aim-50-1\_6-yes1-4, par8-2.cnf and zebra\_v155\_c1135.cnf, is
 For these instances, the overall winner is \emph{\omus+IPW}. 
 All variants time out on the larger instances (par8-5, par16-1, par16-2, par16-3, par16-4-c, par16-4, hanoi4) before finding the \texttt{OUS}s for all 10 decision variables. For instance par8-5, all variants are able to find 6 out of the 10 variables, but \emph{\omus+IPW} remains the fastest. Similar results are observed for the remaining instances for all variants par16-* and hanoi4 with the \omus found for only 1 variable.
 
-A further analysis of the overall execution times highlights that postponing the MIP call effectively redistributes 50\% of the load to the greedy and incremental hitting set heuristic .
+
+A further analysis of the overall execution times highlights that the grow procedure forms a bottleneck when growing using the RC2 MAxSAT. 
+However, when the same benchmark configurations are re-run using a greedy grow procedure, we notice that \omus is not even able to finish for zebra\_v155\_c1135.
+Furthermore, we see that postponing the MIP call effectively redistributes 50\% of the computational load to growing \satsets and the remaining 50 \% are evenly distributed between (i) the SAT solver, (ii) the MIP solver, and (iii) the the greedy and incremental hitting set heuristics.
 % A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent WE NEED TEXT HERE AFTER TEH RUNS ARE READY\todo{emilio}
 
-Finally, we conclude that within the short time limit provided, the best configuration for computing multiple related OUS's is \omus+IPW, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed \satsets.
+Finally, we conclude that within the short time limit provided, the best configuration for computing multiple related OUS's is \emph{\omus+IPW}, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed \satsets.
 % ------------------------------- EMILIO LOCK -----------------------------------------
 
 % \begin{table*}[h!]

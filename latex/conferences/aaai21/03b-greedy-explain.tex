@@ -13,27 +13,27 @@ To obtain a sequence of such steps, we iteratively search for the best (least co
   \caption{$\call{ExplainCSP}(\formulac,f)$}
   \label{alg:explainCSP}
 $E \gets \langle \rangle$\;
-$I_{end} \gets optimalPropagate(\formulac)$\;
+$\Iend \gets optimalPropagate(\formulac)$\;
 $I \gets \emptyset$\;
-\While{$I \neq I_{end}$}{
-    $X \gets \call{bestStep}({\cal C},f,I,I_{end})$\;
+\While{$I \neq \Iend$}{
+    $X \gets \call{bestStep}({\cal C},f,I,\Iend)$\;
 	$I_{\mathit{best}} \gets I\cap X$\;
     $\formulac_{\mathit{best}}\gets\formulac\cap X$\;
-	$N_{\mathit{best}} \gets \{I_{end} \setminus I\} \cap optimalPropagate(X) $\;
+	$N_{\mathit{best}} \gets \{\Iend \setminus I\} \cap optimalPropagate(X) $\;
 	add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
 	$I \gets I \cup N_{\mathit{best}}$\;
   }
 \Return{E}\;
 \end{algorithm}
 
-Earlier work could not take advantage of an Optimal Unsatisfiable Subset algorithm, and hence implemented $\call{bestStep}$ by a heuristic method that called a Minimal Unsatisfiable Subset algorithm on increasingly larger subsets of $\formulac \wedge -l$ for all $l \in \{I_{end} \setminus I\}$~\cite{ecai/BogaertsGCG20}.
+Earlier work could not take advantage of an Optimal Unsatisfiable Subset algorithm, and hence implemented $\call{bestStep}$ by a heuristic method that called a Minimal Unsatisfiable Subset algorithm on increasingly larger subsets of $\formulac \wedge \lnot l$ for all $l \in \{\Iend \setminus I\}$~\cite{ecai/BogaertsGCG20}.
 
 
 \begin{algorithm}[ht]
-  \caption{$\call{bestStep--OUS}({\cal C},f,I,I_{end})$}
+  \caption{$\call{bestStep--OUS}({\cal C},f,I,\Iend)$}
   \label{alg:bestStepOUS}
-$X_{best} \gets \{{\cal C} \land I \land \bar{I}_{end}\}$\;
-\For{$l \in \{I_{end} \setminus I\}$}{
+$X_{best} \gets \{{\cal C} \land I \land \overline{\Iend}\}$\;
+\For{$l \in \{\Iend \setminus I\}$}{
     $X \gets \omus{({\cal C} \land I \land \neg l,\  f)}$\;
     \If{$f(X)<f(X_{best})$}{
         $X_{best} \gets X$\;
@@ -44,7 +44,7 @@ $X_{best} \gets \{{\cal C} \land I \land \bar{I}_{end}\}$\;
 
 \cref{alg:bestStepOUS} depicts an OUS-based algorithm to find the next simplest explanation step in the sequence. 
 %Compared to the method proposed in \cite{ecai/BogaertsGCG20}, this is already a simplified one that uses a single OUS call to find a ``good'' explanation instead of multiple MUS calls to approximate the optimal OUSs. 
-Note that we write $\bar{I}_{end} = \{-l \ | \  l \in I_{end}\}$.
+% Note that we write $\overline{\Iend} = \{-l \ | \  l \in \Iend\}$.
 In this algorithm, an OUS call is used to compute an explanation for each consequence $l$ of the combination of $\formulac$ and the assignment so far. 
 It was shown that MUSs of $\formulac\land I\land\lnot l$ correspond to non-redundant explanations of $l$ in terms of $\formulac$ and $I$ and hence an OUS is a ``best'' explanation of $l$. 
 The loop in \cref{alg:bestStepOUS} serves to guarantee that at each point, the literal with the best explanation is selected. 
@@ -55,11 +55,11 @@ The loop in \cref{alg:bestStepOUS} serves to guarantee that at each point, the l
 \begin{algorithm}
     \DontPrintSemicolon
     \todo{CLEANUP: is it S or T?}
-    $\m{I}_{end} \gets$ \textsc{propagate($\m{I}_0$, $\m{T}$)} \;
+    $\m\Iend \gets$ \textsc{propagate($\m{I}_0$, $\m{T}$)} \;
     $\m{I} \gets \m{I}_0$  \;
     $Seq \gets \emptyset$  \;
-    \While{  $\m{I} \neq \m{I}_{end}$ }{
-      \For{$i \in \m{I}_{end} \setminus \m{I}$}{
+    \While{  $\m{I} \neq \m\Iend$ }{
+      \For{$i \in \m\Iend \setminus \m{I}$}{
         $X_i \gets$ \textsc{OMUS($\{\neg i\} \wedge \m{I} \wedge \m{S}$)}\label{alg:best:ous} \;
         $E_i \gets$ $\m{I} \cap X_i$  \;
         $S_i \gets$ $\m{T} \cap X_i$  \;

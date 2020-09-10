@@ -28,19 +28,35 @@ We compare the following enhancements options to the basic \omus algorithm: post
         % p    & nv& nc&           \omus &      \omus+Incr &      \omus+Post &  \omus+Incr+Warm &   \omus+Incr+Post & \omus+Incr+Post+Warm \\
         p    & nv& nc&           \omus &      \omus+I &      \omus+P &  \omus+IW &   \omus+IP & \omus+IPW \\
         \hline
-        1 & 50& 80&   0.88 s  &   0.38 s  &   0.37 s  &   0.81 s  &    0.65 s  &      \textbf{0.33} s  \\
-        2 & 350 & 1157 &   122.42 s  &  94.07 s  &  96.84 s  &  120.55 s  &  126.15 s  &     \textbf{87.31} s  \\
-        3 & 155& 1135&   130.38 s  &  87.97 s  &  84.75 s  &  104.7 s  &  124.48 s  &     \textbf{80.92 s}  \\
-        4  & 1015 & 3324&      --- &     --- &     --- &     --- &      --- &        --- \\
-        % 5 & 317 & 1264           &      --- &  --- &  --- &     --- &      --- &     --- \\
-        % 6 & 324 & 1292        &      --- &     --- &     --- &     --- &      --- &        --- \\
-        % 7 & 334 & 1332        &      --- &     --- &     --- &     --- &      --- &        --- \\
-        % 8& 349 & 1392         &      --- &     --- &     --- &     --- &      --- &        --- \\
-        % 9  & 1015 & 3324        &      --- &     --- &     --- &     --- &      --- &        --- \\
-        % 10  & 718 & 4934       &      --- &     --- &     --- &     --- &      --- &        --- \\
+        aim-50-1\_6-yes1-4 & 50& 80&   0.88 s  &   0.38 s  &   0.37 s  &   0.81 s  &    0.65 s  &      \textbf{0.33} s  \\
+        par8-2 & 350 & 1157 &   122.42 s  &  94.07 s  &  96.84 s  &  120.55 s  &  126.15 s  &     \textbf{87.31} s  \\
+        zebra\_v155\_c1135 & 155& 1135&   130.38 s  &  87.97 s  &  84.75 s  &  104.7 s  &  124.48 s  &     \textbf{80.92 s}  \\
         \hline
         \end{tabular}
-        \caption{Comparison of \omus variants evaluated on CNF instances.}
+        \caption{Execution time of the \omus variants for deriving 10 literals evaluated on CNF instances.}
+        \label{table:experiment1}
+\end{table*}
+
+\begin{table*}[t!]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+        \hline
+        % p    & nv& nc&           \omus &      \omus+Incr &      \omus+Post &  \omus+Incr+Warm &   \omus+Incr+Post & \omus+Incr+Post+Warm \\
+        p    & nv& nc&           \omus &      \omus+I &      \omus+P &  \omus+IW &   \omus+IP & \omus+IPW \\
+        \hline
+        % 1 & 50& 80&   0.88 s  &   0.38 s  &   0.37 s  &   0.81 s  &    0.65 s  &      \textbf{0.33} s  \\
+        % 2 & 350 & 1157 &   122.42 s  &  94.07 s  &  96.84 s  &  120.55 s  &  126.15 s  &     \textbf{87.31} s  \\
+        % 3 & 155& 1135&   130.38 s  &  87.97 s  &  84.75 s  &  104.7 s  &  124.48 s  &     \textbf{80.92 s}  \\
+        par8-5  & 350  & 1171&      --- &     --- &     --- &     --- &      --- &        --- \\
+        par16-1 & 317 & 1264           &      --- &  --- &  --- &     --- &      --- &     --- \\
+        par16-2& 349 & 1392         &      --- &     --- &     --- &     --- &      --- &        --- \\
+        par16-3 & 334 & 1332        &      --- &     --- &     --- &     --- &      --- &        --- \\
+        par16-4-c & 324 & 1292        &      --- &     --- &     --- &     --- &      --- &        --- \\
+        par16-4  & 1015 & 3324        &      --- &     --- &     --- &     --- &      --- &        --- \\
+        hanoi4  & 718 & 4934       &      1 &     1 &     1 &     1 &      1 &        1 \\
+        \hline
+        \end{tabular}
+        \caption{Number of decision variables explained by the variants of the \omus for timed-out CNF instances.}
         \label{table:experiment1}
 \end{table*}
 
@@ -59,10 +75,12 @@ We compare the following enhancements options to the basic \omus algorithm: post
 
 % ------------------------------- EMILIO LOCK -----------------------------------------
 The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance name, the number of variables and the number of clauses respectively. 
-Only for instances 1 (aim-50-1\_6-yes1-4.cnf), 2 (par8-2.cnf) and 3 (zebra\_v155\_c1135.cnf), is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the required time constraint of 10 minutes.
+Only for instances aim-50-1\_6-yes1-4, par8-2.cnf and zebra\_v155\_c1135.cnf, is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the required time constraint of 10 minutes.
 All variants time out on the larger instances finding the \texttt{OUS}s up to 6 out of the 10 decision variables. \bart{MEER DETAIL}
 %\tias{remove other ones, say that larger instances timed out in the text}
-A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent WE NEED TEXT HERE AFTER TEH RUNS ARE READY\todo{emilio} \satsets
+A further analysis of the overall execution times highlights that postponing the MIP call effectively redistributes the load to the greedy and incremental hitting set heuristic.
+For instances 
+A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent WE NEED TEXT HERE AFTER TEH RUNS ARE READY\todo{emilio}
 \tias{in general or for warmstarting? This means that my 'implementation consideration' of using a MaxSat solver is cheap is not true...}. For instances 1-3 executed without postponing optimization, \todo{ emilio}\% of the time is spent growing, and for the remaining instances close to \todo{ emilio} \% of the time is spent \todo{ emilio} .
 In particular, for executions involving postponing the calls (+P/+IP/+IPW) to the MIP solver, \todo{ emilio}\% of the time is spent growing, while the remainder of the time is distributed between incremental and greedy computation of hitting sets.
 Finally, we conclude that within the short time limit provided, the best configuration for computing multiple related OUS's is \omus+IPW, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed \satsets.

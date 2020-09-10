@@ -6,13 +6,13 @@ PySAT~\footnote{\url{https://pysathq.github.io}}. The MIP solver used is Gurobi 
 
 Based on the theoretical findings of the previous sections, we aim to answer the following research questions:
 \begin{itemize}
-\item RQ1: what is the effect of delaying propagation, incremental OUS solving and pre-seeding the MCSs when solving multiple variants of the same problem?
+\item RQ1: what is the effect of postponing optimal hitting set computation, of incremental OUS solving and of pre-seeding the MCSs when solving multiple variants of the same problem?
 \item RQ2: how do the different variants of \omus perform when explaining an elaborate constraint satisfaction problem?
 \item RQ3: how do the sequences found when using (constrained) \omus search compare to those found using a heurisic MUS approach?
 \end{itemize}
 
 \paragraph{RQ1}
-To answer the first research question, we select 10 CNF instances from SATLIB problems Benchmark. We randomly choose a subset of 10 decision variables and maintain a fixed ordering among them, and then compare the following enhancements to the \omus algorithm: postponing optimization (+P), reusing subsets between \omus calls (+I), and pre-seeding grown $\m{SS}$s from every negated decision variable of the instance (+W). For example \omus+IPW characterises running the \omus algorithm postponing the optimization phase, with incrementality between the succesive calls, and warm starting with satisfiable subsets of the original CNF formula.
+To answer the first research question, we use 10 CNF instances from the SATLIB Benchmark and randomly choose a subset of 10 decision variables. For each variant of the algorithm, we compute the OUS of the same 10 decision variables in the same order within a time limit of 10 minutes. We compare the following enhancements options to the basic \omus algorithm: postponing optimization (+P), reusing satisfiable subsets between \omus calls (+I), and pre-seeding $\m{SS}$s from every negated decision variable of the instance (+W). Options can be combined, for example \omus+IPW characterises running the \omus algorithm postponing the optimization phase, with incrementality between the succesive calls, and warm starting with satisfiable subsets of the original CNF formula.
 The executions are set to timeout after 10 minutes, a limit fixed based on the results of experiment 2.
 
 The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance, the number of variables and the number of clauses respectively. 

@@ -1,11 +1,11 @@
 % !TeX root = ./main.tex
 
-Before presenting an algorithm that computes optimal unsatisfiable subsets, we first formally define the problem we are going to solve and we present an extension of the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
-Throughout this section, we assume that an objective function $f: 2^\formula \to \nat$ that assigns to each subset of \formula a cost that is fixed. Our goal now is not to find arbitrary MUSs, but unsatisfiable subsets that are optimal with respect to the minimisation of $f$. 
+We first  define the problem and present an extension of the hitting set duality. 
+Throughout this section, we assume that an objective function $f: 2^\formula \to \nat$ is given, assigning each subset of \formula a fixed cost. Our goal now is to find unsatisfiable subsets that are optimal (minimal) with respect to $f$. 
 
 
 % \begin{itemize}
-%   \item Davies'MaxSAT version ? (takes a lot of space on paper)
+%   \item Davies'\maxsat version ? (takes a lot of space on paper)
 %   \item OUS v1
 %   \item OUS v2
 % \end{itemize}
@@ -39,11 +39,9 @@ The hitting set duality of \cref{prop:MCS-MUS-hittingset} now straightforwardly 
   \noindent
    A set  $\m{C} \subseteq \formula$ is an $f$-minimal correction set of $ \formula$ iff  $\m{C}$ is $f$-optimal hitting set of \muses{F}.
 \end{proposition}
-\tias{Bart, die tweede zin klopt niet, $f$-minmal? and reuse van $\formula$ symbol}\bart{$f$-minimal is minimal wrt $f$. But there was an ``of'' missing}
+% \tias{Bart, die tweede zin klopt niet, $f$-minmal? and reuse van $\formula$ symbol}\bart{$f$-minimal is minimal wrt $f$. But there was an ``of'' missing}
 
-In order to find an OUS, there is no need to explicitly enumerate all MCSes of \formula. In practice it suffices to compute sufficiently many of them. 
-% and the correction subsets considered need not neccesarily be maximal. 
-The following proposition formalizes this. 
+To find an OUS, there is no need to explicitly enumerate all MCSes of \formula. In practice it suffices to compute sufficiently many of them, as formalized next.
 % 
 % Lemma \ref{lemma:K} specifies that, in practice, it is not required to enumerate all MCSes of \formula.
 % The algorithm only requires finding an optimal hitting set on \mcses{\formula} tat is unsatisfiable.
@@ -69,10 +67,10 @@ The following proposition formalizes this.
 We are now ready to present our basic OUS algorithm in \cref{alg:omus}. 
 The algorithm keeps track of a set $\m{H}$ of (minimal) correction subsets of $\formula$. 
 It makes use of a procedure \ohs that computes an optimal (with respect to $f$) hitting set $\formula'$  of a given set of subsets of \formula. 
-We take inspiration from the \hitsetbased~solving techniques for cardinality-minimal MUSs \cite{ignatiev2015smallest}, but rather use a MIP solver to compute the optimal hitting set as done for MaxSAT solving~\cite{DBLP:conf/sat/DaviesB13}.
+We take inspiration from the \hitsetbased~solving techniques for cardinality-minimal MUSs \cite{ignatiev2015smallest}, but rather use a MIP solver to compute the optimal hitting set as done for \maxsat solving~\cite{DBLP:conf/sat/DaviesB13}.
 Whenever such a hitting set is found, a \sat-call checks whether the result is satisfiable. If it is not, \cref{prop:K} guarantees that the result is an OUS. 
-If it is, we know that the hitting set is a satisfiable subset. We now compute a correction set that is not hit by the found hitting set.
-While the complement of this set is a correction set, it is common to  first use a procedure \grow to extend the hitting set to a larger satisfiable subset, the complement of which is then added to $\m{H}$, our set of stored correction subsets of \formula.
+If the hitting set does correspond to a satisfiable subset, we know its complement is a correction set. 
+Instead of simply adding it to $\m{H}$, it is common to  first use a procedure \grow (for details on this, see \cite{ignatiev2015smallest}) to extend the hitting set to a larger satisfiable subset, the complement of which is then added to $\m{H}$, our set of stored correction subsets of \formula.
 
 % 
 % \todo{beter uitleggen. Nog niet zo duidelijk. Ook niet zeker of dit op deze moment echt van belang is.}
@@ -85,7 +83,7 @@ While the complement of this set is a correction set, it is common to  first use
 % This can be implemented in various ways, e.g., using a MAXsat call can guarantee that $\formula''$ is an MSS of \formula. Another possibility is  -- given a model $I$ of $\formula''$ -- to take $\formula''$ to be $\{c\in\formula \mid I\models c\}$.
 
 % \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
-\begin{algorithm}[ht]
+\begin{algorithm}[t]
   \DontPrintSemicolon
   $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   \While{true}{
@@ -108,11 +106,11 @@ While the complement of this set is a correction set, it is common to  first use
 \end{algorithm}
 
 \paragraph{Postponing optimization to speed up OUS solving}
-\citet{davies} demonstrated that in the case of hitting-set based MaxSAT solving, much time was spent computing the optimal hitting set. They proposed to post-pone calling the optimal hitting set solver, and instead first use a greedy hitting set method or incrementally grow the hitting set by adding the smallest element of the latest added MCS. 
-In case such a possibly non-optimal hitting set corresponds to an unsatisfiable subset, this does \ref{prop:K2} no longer guarantees that the result is indeed optimal. Only then do they call the optimal hitting set method.
-
+\citet{davies} demonstrated that in the case of \hitsetbased \maxsat solving, much time was spent computing the optimal hitting set. They proposed to postpone calling the optimal hitting set solver, and instead first use a greedy hitting set method or incrementally grow the hitting set by adding the smallest element of the newest MCS in \m{H}. 
+In case such a possibly non-optimal hitting set corresponds to an unsatisfiable subset,  \cref{prop:K2} no longer guarantees that the result is optimal. Only then do they call the optimal hitting set method.
+% 
 We can similarly speed up our OUS computation. This amounts to adding the contents of \cref{alg:postomus} at the start of the \textbf{while} loop, just before \cref{hs:omus}.
-\begin{algorithm}[ht]
+\begin{algorithm}[t]
 \While{true}{
     \While{$|\setstohit| > 0$}{
     	%$\F' \gets \ihs(\setstohit,f) $\;
@@ -172,7 +170,7 @@ We can similarly speed up our OUS computation. This amounts to adding the conten
 % Contrary to the \texttt{SMUS} algorithm, which uses the \textsc{SAT} solver to compute minimum hitting sets. 
 
 % The implementation of the grow procedure can be achieved in different ways.
-% In fact, we could call a weighted partial \textsc{MaxSAT} solver to find the maximal satisfiable subset of clauses grown from the hitting set.
+% In fact, we could call a weighted partial \textsc{\maxsat} solver to find the maximal satisfiable subset of clauses grown from the hitting set.
 % In practice, we use a greedy approximation strategy to find a sastisfying assignment favoring literals that will satisfy the most clauses of highest weights.
 % More precisely, we rank the clauses based on the ratio of weight to the number of literals not yet assigned in the clause.
 % 

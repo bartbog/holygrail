@@ -79,6 +79,13 @@
 \newcommand\maxsat{MaxSAT\xspace}
 \usepackage{paralist}
 
+\let\oldpar\paragraph
+\renewcommand\paragraph[1]{
+
+\vspace{5pt}
+
+\noindent\textbf{#1} }
+
 \include{common-citations}
 
 % DISALLOWED PACKAGES
@@ -255,14 +262,17 @@ We evaluate the properties of our algorithms in the explanation-generation conte
 \section{Constrained OUS computation} \label{sec:constrained}
 \input{C2-constrained.tex}
 
+\ignore{
 \section{Implementation considerations}\label{sec:impl}
+\todo{REMOVE}
+REMOVE
 When we check the satisfiability of a set $\F'$ we initialise the polarity of the literals to $I_{end}$. We use assumptions to keep the solver warm across different sets $\F'$.
 
 The implementation of \grow can be achieved in different ways.
 In our algorithms we use the model found by the $\sat(\F')$ call and let a MaxSAT solver complete it to a full assignment over $\F$. Our custom implementations of a greedy grow were consistently outperformed by the MaxSAT call. We believe this is because typically only a fraction of literals of $\F$ are left unassigned in the model of $\F'$ and a MaxSAT solver has highly optimized data-structures to manage $\F$.  %We note that typically many literals are part of the found model of $\formula'$ and hence this MAX-SAT problem is considerably smaller than $\formula$. 
 
 In $\comus$, we keep the MIP solver warm and reuse it across all $\comus$ calls. We only ever add constraints to the solver. To handle the changes in $p$ with respect to literals that cannot be chosen, we enforce this by temporarily setting the objective weight to $+\infty$ for literals.
-
+}
 
 % \section{Efficient, Incremental Explanations}\label{sec:explanations}\label{sec:incrementalExp}
 % \todo{1 column}

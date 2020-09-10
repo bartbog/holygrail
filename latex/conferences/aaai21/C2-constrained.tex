@@ -1,6 +1,6 @@
 Even when using an incremental OUS algorithm, we still need to compute an (upper-bounded) OUS for every literal.
 
-We now ask the question if we can do away with that, and instead use an OUS-like algorithm to directly find the best OUS across all literals in $I_{end} \setminus I$.
+We now ask the question if we can do away with that, and instead use an OUS-like algorithm to directly find the best OUS across all literals in $I_{end} \setminus I$, where $I$ is the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. 
 
 It would be tempting to attempt this by a single call to 
 \[\omus(\formulac \cup I \cup \overline{\Iend\setminus I})\]
@@ -23,7 +23,8 @@ X_2 &= \{\lnot p \lor q ,  p, \lnot q\}.
 out of these two only $X_1$ would be considered to induce a good explanation: it represents the fact that the two constraints $\lnot p \lor r$ and $ \lnot p \lor \lnot r$ together entail $\lnot p$ (which can easily be seen by applying the resolution rule). However, $X_2$ does not have such an interpretation: it merely shows that the constraint $\lnot p \lor q$ entails that either $p$ should be false or $q$ should be true, which is uninformative. 
 \end{example}
 
-We can see that for an OUS of $\formulac \cup I_{end} \cup \overline{\Iend}$ to be a valid explanation, it needs to satisfy a number of constraints. Let $I$ be the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. We can identify the following constraints: 1) the OUS should explain exactly one literal $-l$ in $\overline{\Iend}$; 2) the OUS may not explain a literal that is already explained, that is, no literal in $\overline{\Iend} \setminus \bar{I}$; and 3) the explanation can only use literals from the cautious consequence that are already explained, so no literals from $I_{end} \setminus I$.
+We can see that in general, for an OUS of $\formulac \cup I_{end} \cup \overline{\Iend}$ to be a valid explanation, it needs to satisfy a number of constraints. %Let $I$ be the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. 
+We can identify the following constraints: 1) the OUS should explain exactly one literal $-l$ in $\overline{\Iend}$; 2) the OUS may not explain a literal that is already explained, that is, no literal in $\overline{\Iend \setminus I}$; and 3) the explanation can only use literals from the cautious consequence that are already explained, so no literals from $I_{end} \setminus I$.
 
 %The previous example shows that a naive \omus call with a large enough theory, would not yield valuable explanations.
 Hence, we are interested in searching for an OUS that is \emph{optimal} among those that satisfy these properties. 

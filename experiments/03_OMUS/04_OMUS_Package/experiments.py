@@ -693,7 +693,7 @@ def experiment1_OMUSIncrPostWarm(sd=20200918):
     # parameters
     timeout = TIMEOUT_EXP1
     n_literals = 10
-    n_instances = 3
+    n_instances = 10
 
     results = {}
     instances, filenames = get_instances(n_instances)
@@ -868,7 +868,7 @@ def experiment1_OMUSIncrWarm(sd=20200918):
     # parameters
     timeout = TIMEOUT_EXP1
     n_literals = 10
-    n_instances = 3
+    n_instances = 10
 
     results = {}
     instances, filenames = get_instances(n_instances)
@@ -3205,7 +3205,8 @@ def experiment2(sd, timeout):
     # print("Ending OMUS")
 
 def parallelExperiment1():
-    fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
+    # fns = [experiment1_OMUS,experiment1_OMUSIncr, experiment1_OMUSPost,experiment1_OMUSIncrPost,experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
+    fns = [experiment1_OMUSIncrPostWarm, experiment1_OMUSIncrWarm]
     # fns = [experiment1_OMUSIncr, experiment1_OMUSIncrPostWarm]
     proc = []
     for fn in fns:

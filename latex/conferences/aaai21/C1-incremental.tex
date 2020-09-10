@@ -5,8 +5,14 @@ In this section, we are concerned with a setting in which we know that many rela
 To formalize this, we assume that several \omus calls will happen with different formulas $\formula_1,\dots,\formula_n$ with non-empty intersection. In fact, the algorithm we present will always work for completely unrelated formulas (with empty intersection) but will in this case not yield any benefit over the plain \omus algorithm of \cref{sec:omus}. 
 
 The most important data the plain \omus algorithm keeps track of is a set of correction subsets of \formula, which are complements of satisfiable subsets of \formula.
-These correction subsets themselves are not necessarily correction subsets of other related formulas, but the opposite, the satisfiable subsets, they do transfer between formulas. Formally, if $\m{S} \subseteq \formula_1$ is an MSS of $\formula_1$, then $\m{S}\cap \formula_2$ is a satisfiable subsets of $\formula_2$ and can be grown into a maximal such satisfiable subset, e.g., using the existing \grow procedure. 
-To this end, we will assume that our algorithm has access to a set $\satsets$ in which we store satisfiable sets and their corresponding models. The \omus algorithm from \cref{sec:omus} is then initialized with the corresponding correction subsets. 
+These correction subsets themselves are not necessarily correction subsets of other related formulas, but the opposite, the satisfiable subsets, they do transfer between formulas.
+
+\begin{proposition}\label{prop:ss}
+if $\m{S} \subseteq \formula_1$ is a Satisfiable Subset of $\formula_1$, then $\m{S}\cap \formula_2$ is a satisfiable subsets of $\formula_2$
+\end{proposition}
+Hence, $\formula_2 \setminus \{\m{S}\cap \formula_2\}$ is a correction subset of $\formula_2$ and hence can be added to the sets-to-hit $\setstohit$. As before, we can first grow the satisfiable subset $\grow(\m{S}\cap \formula_2,\F_2)$ to obtain a larger satisfiable subset and hence a smaller MCS.
+
+We use this property to create an \textit{incremental} OUS algorithm, see \cref{alg:omus-inc}. We assume that our algorithm has access to a set $\satsets$ in which we store satisfiable sets used to build $\setstohit$. The \omus algorithm is then initialized with the corresponding correction subsets. 
 In  \cref{alg:omus-inc}, this is done in the for-loop starting at \cref{line:for-inc-seed}. The if-test in that loop is an optimization that does not affect correctness but does ensure that we will not compute the same satisfiable subset over and over again, to avoid spurious calls to \grow. 
 Otherwise, the algorithm behaves identically to \cref{alg:omus}, except that whenever a satisfiable subset is found, it is stored (\cref{line:store}). 
  
@@ -36,28 +42,24 @@ Otherwise, the algorithm behaves identically to \cref{alg:omus}, except that whe
   \DontPrintSemicolon
   %$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   $\satsets_\formula\gets\emptyset$\;
-  \For{$(\m{S},M)\in\satsets$ \label{line:for-inc-seed}}{
-    $\m{S}_\formula \gets \m{S}\cap \formula$\;
-    \If{$\lnot \exists \m{S}'\in\satsets_\formula: \m{S}_\formula \subseteq\m{S}'$}{
-        $\satsets_\formula\gets\satsets_\formula\cup\{\m{S}_\formula\}$\;
-        $\setstohit \gets \setstohit\cup \{\formula \setminus \grow( \m{S}_\formula, \formula,M)\}$
+  \For{$S\in\satsets$ \label{line:for-inc-seed}}{
+    $S_\formula \gets {S}\cap \formula$\;
+    \If{$\lnot \exists {S}'\in\satsets_\formula: {S}_\formula \subseteq{S}'$}{
+    	$S_\formula \gets \grow( {S}_\formula, \formula)$\;
+    	        $\setstohit \gets \setstohit\cup \{\formula \setminus {S}_\formula\}$\;
+        $\satsets_\formula\gets\satsets_\formula\cup\{{S}_\formula\}$
         }
-        }
+    }
   \While{true}{
-    $\F' \gets \ohs(\setstohit,f) $ \label{smus-hs} \;%\tcp*{\small Find \textbf{optimal} solution}
-    % \tcp{\small set with all unique clauses from hitting set}
-%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
-    % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-    % \tcp{IF UNSAT, $hs$ is the OMUS }
-    $(sat, M)\gets \sat(\F')$\;
-    \If{ $sat = \mathit{false}$}{
+    $\F' \gets \ohs(\setstohit,f) $ \label{smus-hs} \;
+    \If{ $\lnot \sat(\F')$}{
       \Return{$\F'$} \;
     }
-    $\F'' \gets  \grow(\F',\F,M) $\;
+    $\F'' \gets  \grow(\F',\F) $\;
     $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$\;
     $\satsets\gets \satsets\cup \{(\F'',M)\}$ \label{line:store}
     \;
-  }  \caption{$\omusinc(\formula,f,\setstohit=\emptyset)$ }
+  }  \caption{$\omusinc(\formula,f)$ }
   \label{alg:omus-inc}
 \end{algorithm}
 % 
@@ -75,11 +77,25 @@ Otherwise, the algorithm behaves identically to \cref{alg:omus}, except that whe
 
 \paragraph{Using Initialization to Add Domain Knowledge}
 Before the first call to \omusinc, the set \satsets of satisfiable subsets will be empty. 
-However, in case we have structural domain knowledge about the formulas, this can be exploited to pre-populate this set inteligently. 
-For instance, in the explanatory setting, we know that $\formulag$ is satisfiable, and is a satisfiable subset of \emph{all} \omusinc calls to follow. 
-By initializing $\satsets$ as $\{(\formulag,I_{\mathit{end}})\}$, with $I_\mathit{end}$ the final interpretation in the explanation sequence, we avoid the algorithm having to rediscover this satisfiable subset itself, and hence can potentially result in serious performance gains. This is experimentally validated in \cref{sec:experiments}.
+However, in case we have structural domain knowledge about the formulas, this can be exploited to pre-populate this set intelligently. 
+For instance, in the explanatory setting, we know that $\formulac$ is satisfiable with (partial) solution $I_{end}$, and is a satisfiable subset of \emph{all} \omusinc calls to follow. 
+By initializing $\satsets$ as $\{\formulac \cup I_{\mathit{end}}\}$, we avoid the algorithm having to rediscover this satisfiable subset itself.
+%, and hence can potentially result in serious performance gains. This is experimentally validated in \cref{sec:experiments}.
+Furthermore, we know that for every $-l, l \in I_{end}$ we will do an OMUS call. Hence, we can pre-compute a large satisfiable subset for every $-l$ through $\grow(-l, \formulag)$, with $\formulag = {\cal C} \cup I_{end} \cup \bar{I}_{end}$ the set of all clauses that will ever by considered in the OUS calls. We call this process \textit{pre-seeding} the set $\setstohit$.
 
-\paragraph{Application to Explanations}
+Apart from optionally pre-seeding and calling $\omusinc(\formula,f)$ instead of $\omus(\formula,f)$ on line 3 in Algorithm~\ref{alg:bestStepOUS}, there is one more property we can use: the OUS found will only be kept if $f(X)<f(X_{best})$. Instead of enforcing this post-hoc, we can push this constraint into the OUS algorithm through a simple upper-bounding constraint added to the hitting set algorithm in \omusinc.
+
+%\tias{seeding}
+%\begin{algorithm}[ht]
+%$\formulag \gets \formulac \cup I_{end} \cup \bar{I}_{end}$\;
+%$\setstohit \gets \{\formulag \setminus \{\formulac \cup I_{end}\}\}$\;
+%\For{$l \in I_{end}:$}{
+%  $\setstohit \gets \setstohit \cup \{\formulag \setminus \grow(-l,\formulag)\} $\;
+%}
+%\end{algorithm}
+
+
+%\paragraph{Application to Explanations}
 % \todo{TO BE REWRITTEN}
 % To apply this idea to the context of explanation generation, we notice that the entire explanation generation loop starts with a certain interpretation $I_0$, and gradually derives more and more consequences.
 % At each point, the set of literals that can be used for explanations are the consequences derived this far. On top of that, the \omus call will always contain a single negation of a consequence literal (the literal to be explained). 
@@ -88,8 +104,8 @@ By initializing $\satsets$ as $\{(\formulag,I_{\mathit{end}})\}$, with $I_\mathi
 % then we can take 
 % \[\fall = \formulag \cup I_{\mathit{end}} \cup \lnot I_{\mathit{end}}.\]
 % Which is clearly unsatisfiable (containing various literals and their negation). However, the \omus calls will always be on a subset of \fall that contains no such obvious consequences. 
-
-Using \omusinc instead of \omus in \cref{alg:singleStepExplain}  then results in an incremental explanation algorithm. Also note that the incrementality is not just obtained in a single step but over the different explanation steps. 
+%
+%Using \omusinc instead of \omus in \cref{alg:singleStepExplain}  then results in an incremental explanation algorithm. Also note that the incrementality is not just obtained in a single step but over the different explanation steps. 
 % 
 % assu
 % 
@@ -144,3 +160,6 @@ Using \omusinc instead of \omus in \cref{alg:singleStepExplain}  then results in
 % 
 % 
 % THat's it. 
+
+
+

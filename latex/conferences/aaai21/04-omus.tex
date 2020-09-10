@@ -47,14 +47,14 @@ The following proposition formalizes this.
 % The algorithm only requires finding an optimal hitting set on \mcses{\formula} tat is unsatisfiable.
 
 \begin{proposition}\label{prop:K}
-  Let $\m{H}$ be a set of correction subsets of \formula. 
+  Let $\m{H}$ be a set of (potentially non-minimal) correction subsets of \formula. 
   If $\m{U}$ is an $f$-optimal hitting set of \m{H} and $\m{U}$ is unsatisfiable, then $\m{U}$ is an $f$-OUS of \formula. 
 \end{proposition}
 \begin{proof}
 %   We know that . 
   All we need to show is $f$-optimality of $\m{U}$.
-  If some other unsatisfiable subset $\m{U}'$ exists with $f(\m{U}')\leq f(\m{U})$, we know that $\mu{U}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction is the superset of a minimal correction set).
-  Since $\m{U}$ is an $f$-optimal hitting and $\m{U}'$ also hits $\m{H}$, it must thus be that $f(\m{U})=f(\m{U'})$. 
+  If some other unsatisfiable subset $\m{U}'$ exists with $f(\m{U}')\leq f(\m{U})$, we know that $\m{U}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction set is the superset of a minimal correction set).
+  Since $\m{U}$ is an $f$-optimal hitting set and $\m{U}'$ also hits $\m{H}$, it must thus be that $f(\m{U})=f(\m{U'})$. 
 %   
 \end{proof}
 
@@ -67,10 +67,10 @@ The following proposition formalizes this.
 We are now ready to present our basic OUS algorithm in \cref{alg:omus}. 
 The algorithm keeps track of a set $\m{H}$ of (minimal) correction subsets of $\formula$. 
 It makes use of a procedure \ohs that computes an optimal (with respect to $f$) hitting set $\formula'$  of a given set of subsets of \formula. 
-We take inspiration from the \hitsetbased solving techniques for cardinality-minimal MUSs \cite{ignatiev2015smallest} and will use a MIP solver to compute the optimal hitting set.
+We take inspiration from the \hitsetbased~solving techniques for cardinality-minimal MUSs \cite{ignatiev2015smallest}, but rather use a MIP solver to compute the optimal hitting set as done for MaxSAT solving~\cite{DBLP:conf/sat/DaviesB13}.
 Whenever such a hitting set is found, a \sat-call checks whether the result is satisfiable. If it is not, \cref{prop:K} guarantees that the result is an OUS. 
 If it is, we know that the hitting set is a satisfiable subset. We now compute a correction set that is not hit by the found hitting set.
-As is common, we first use a procedure \grow to extend the hitting set to a set $\formula''$ with $\formula'\subseteq \formula''\subseteq\formula$ such that $\formula''$ is still satisfiable. Since the complement of a satisfiable subset is a correction set, $\formula \setminus \formula''$ is added to the $\m{H}$ of correction sets of \formula. 
+As is common, we first use a procedure \grow to extend the hitting set to a set $\formula''$ with $\formula'\subseteq \formula''\subseteq\formula$ such that $\formula''$ is still satisfiable. Since the complement of a satisfiable subset is a correction set, $\formula \setminus \formula''$ is added to $\m{H}$, our set of correction subsets of \formula.
 
 % 
 % \todo{beter uitleggen. Nog niet zo duidelijk. Ook niet zeker of dit op deze moment echt van belang is.}
@@ -93,18 +93,42 @@ As is common, we first use a procedure \grow to extend the hitting set to a set 
 %     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
     % \tcp{IF UNSAT, $hs$ is the OUS }
-    $(sat, M)\gets \sat(\F')$\;
-    \If{ $sat = \mathit{false}$}{
+    %$(sat, M)\gets \sat(\F')$\;
+    %\If{ $sat = \mathit{false}$}{
+    \If{ $\lnot \sat(\F')$}{
       \Return{$\F'$} \;
     }
-    $\F'' \gets  \grow(\F',\F,M) $\;
+    $\F'' \gets  \grow(\F',\F) $\;
     $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
   }
   \caption{$\omus(\formula,f)$ }
   \label{alg:omus}
 \end{algorithm}
-\tias{I would add the 'delayed' extension here...}
-\bart{Go ahead! I believe you had a clean way of doing this...}
+
+\paragraph{Postponing optimization to speed up OUS solving}
+\citet{davies} demonstrated that in the case of hitting-set based MaxSAT solving, much time was spent computing the optimal hitting set. They proposed to post-pone calling the optimal hitting set solver, and instead first use a greedy hitting set method and then try to incrementally grow the hitting set by adding the smallest element according to $f$ of the newest added MCS, until the hitting sets found by those are SAT (in our case, UNSAT). Only then call the optimal hitting set method.
+
+We can similarly speed up our OUS computation. This amounts to adding the following code a the start of the \textbf{while} loop, just before line $3$:
+\begin{algorithm}[ht]
+\While{true}{
+	$\F' \gets \ghs(\setstohit,f) $\;
+    \If{ $\lnot \sat(\F')$}{
+      \textbf{break}
+    }
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
+    \While{true}{
+    	%$\F' \gets \ihs(\setstohit,f) $\;
+    	$\F' \gets \F' + min_f$ element of last MCS in $\setstohit$\;
+        \If{ $\lnot \sat(\F')$}{
+          \textbf{break}
+        }
+        $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
+    }
+}
+\end{algorithm}
+
+%\tias{I would add the 'delayed' extension here...}
+%\bart{Go ahead! I believe you had a clean way of doing this...}
 
 % 
 % \begin{algorithm}[ht]

@@ -16,7 +16,7 @@ Based on the theoretical findings of the previous sections, we aim to answer the
 
 \paragraph{RQ1}
 To answer the first research question, we use 10 CNF instances from the SATLIB Benchmark and randomly choose 10 literals that are entailed by the CNF. For each variant of the algorithm, we compute the OUS of the same 10 literals in the same order within a total time limit of 10 minutes. 
-We compare the following enhancements options to the basic \omus algorithm: postponing optimization (+P), incrementality by reusing satisfiable subsets between \omus calls (+I), and pre-seeding $\satsets$ as described in Section~\ref{sec:incremental} (+W). Options can be combined, for example \omus+IPW characterises running the \omus algorithm postponing the optimization phase, with incrementality between the successive calls, and warm starting (pre-seeding) with satisfiable subsets of the original CNF formula.
+We compare the following enhancements options to the basic \omus algorithm: postponing optimization (+P), incrementality by reusing satisfiable subsets between \omus calls (+I), and pre-seeding $\satsets$ as described in Section~\ref{sec:incremental} (+W). Options can be combined, for example {\omus}+IPW characterises running the \omus algorithm postponing the optimization phase, with incrementality between the successive calls, and warm starting (pre-seeding) with satisfiable subsets of the original CNF formula.
 %The executions are set to timeout after 10 minutes, a limit fixed based on the results of experiment 2.
 
 % \rule{\textwidth}{10pt}
@@ -25,8 +25,8 @@ We compare the following enhancements options to the basic \omus algorithm: post
     \centering
     \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
         \hline
-        % p    & nv& nc&           \omus &      \omus+Incr &      \omus+Post &  \omus+Incr+Warm &   \omus+Incr+Post & \omus+Incr+Post+Warm \\
-        p    & nv& nc&           \omus &      \omus+I &      \omus+P &  \omus+IW &   \omus+IP & \omus+IPW \\
+        % p    & nv& nc&           \omus &      {\omus}+Incr &      {\omus}+Post &  {\omus}+Incr+Warm &   {\omus}+Incr+Post & {\omus}+Incr+Post+Warm \\
+        p    & nv& nc&           \omus &      {\omus}+I &      {\omus}+P &  {\omus}+IW &   {\omus}+IP & {\omus}+IPW \\
         \hline
         aim-50-1\_6-yes1-4 & 50& 80&   0.88 s  &   0.38 s  &   0.37 s  &   0.81 s  &    0.65 s  &      \textbf{0.33} s  \\
         par8-2 & 350 & 1157 &   122.42 s  &  94.07 s  &  96.84 s  &  120.55 s  &  126.15 s  &     \textbf{87.31} s  \\
@@ -41,8 +41,8 @@ We compare the following enhancements options to the basic \omus algorithm: post
 %     \centering
 %     \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
 %         \hline
-%         % p    & nv& nc&           \omus &      \omus+Incr &      \omus+Post &  \omus+Incr+Warm &   \omus+Incr+Post & \omus+Incr+Post+Warm \\
-%         p    & nv& nc&           \omus &      \omus+I &      \omus+P &  \omus+IW &   \omus+IP & \omus+IPW \\
+%         % p    & nv& nc&           \omus &      {\omus}+Incr &      {\omus}+Post &  {\omus}+Incr+Warm &   {\omus}+Incr+Post & {\omus}+Incr+Post+Warm \\
+%         p    & nv& nc&           \omus &      {\omus}+I &      {\omus}+P &  {\omus}+IW &   {\omus}+IP & {\omus}+IPW \\
 %         \hline
 %         % 1 & 50& 80&   0.88 s  &   0.38 s  &   0.37 s  &   0.81 s  &    0.65 s  &      \textbf{0.33} s  \\
 %         % 2 & 350 & 1157 &   122.42 s  &  94.07 s  &  96.84 s  &  120.55 s  &  126.15 s  &     \textbf{87.31} s  \\
@@ -75,9 +75,9 @@ We compare the following enhancements options to the basic \omus algorithm: post
 
 % ------------------------------- EMILIO LOCK -----------------------------------------
 The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance name, the number of variables and the number of clauses respectively. 
-Only for instances aim-50-1\_6-yes1-4, par8-2.cnf and zebra\_v155\_c1135.cnf, is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the limited time constraint of 10 minutes.
-For these instances, the overall winner is \emph{\omus+IPW}. 
-All variants time out on the larger instances (par8-5, par16-1, par16-2, par16-3, par16-4-c, par16-4, hanoi4) before finding the \texttt{OUS}s for all 10 decision variables. For instance par8-5, all variants are able to find 6 out of the 10 variables. On all instances that timed-out, \emph{\omus+IPW} had progressed fastest. %Similar results are observed for the remaining instances for all variants par16-* and hanoi4 with the \omus found for only 1 variable.
+Only for instances aim-50-1\_6-yes1-4, par8-2.cnf and zebra\_v155\_c1135.cnf, is the algorithm able to complete the search for OUSs on the 10 decision variables within the required time constraint of 10 minutes.
+For these instances, the overall winner is \emph{{\omus}+IPW}. 
+All variants time out on the larger instances (par8-5, par16-1, par16-2, par16-3, par16-4-c, par16-4, hanoi4) before finding the OUSs for all 10 decision variables. For instance par8-5, all variants are able to find 6 out of the 10 variables, but \emph{{\omus}+IPW} remains the fastest. Similar results are observed for the remaining instances for all variants par16-* and hanoi4 with the \omus found for only 1 variable.
 
 
 A further analysis of the overall execution times highlights that much time is spent in the grow procedure, for which we start from the partial assignment found by the SAT check and use the RC2 MaxSAT solver to complete it. 
@@ -85,14 +85,14 @@ We reran the same experiments with a greedy grow algorithm instead and observed 
 Furthermore, we see that in this case postponing the MIP call effectively redistributes 50\% of the computational load to growing \satsets and the remaining 50 \% are evenly distributed between (i) the SAT solver, (ii) the MIP solver, and (iii) the the greedy and incremental hitting set heuristics. Hence, while the portion of time spent growing satisfiable subsets is reduced, much more iterations are needed to find the optimal OUSs. %runtime of grow is decreased, the number of 
 % A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent WE NEED TEXT HERE AFTER TEH RUNS ARE READY\todo{emilio}
 
-From this experiment we conclude that in the short time limit provided, the best configuration for computing multiple related OUS's is \emph{\omus+IPW}, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed \satsets.
+Finally, we conclude that within the short time limit provided, the best configuration for computing multiple related OUS's is \emph{{\omus}+IPW}, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed \satsets.
 % ------------------------------- EMILIO LOCK -----------------------------------------
 
 % \begin{table*}[h!]
 %     \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
 %         \hline
-%         % p    & nv& nc&           \omus &      \omus+Incr &      \omus+Post &  \omus+Incr+Warm &   \omus+Incr+Post & \omus+Incr+Post+Warm \\
-%         p    & nv& nc&           \omus &      \omus+I &      \omus+P &  \omus+IW &   \omus+IP & \omus+IPW \\
+%         % p    & nv& nc&           \omus &      {\omus}+Incr &      {\omus}+Post &  {\omus}+Incr+Warm &   {\omus}+Incr+Post & {\omus}+Incr+Post+Warm \\
+%         p    & nv& nc&           \omus &      {\omus}+I &      {\omus}+P &  {\omus}+IW &   {\omus}+IP & {\omus}+IPW \\
 %         \hline
 %         1 & 50& 80&   0.88 s  &   0.38 s  &   0.27 s  &   0.81 s  &    0.65 s  &      0.33 s  \\
 %         2 & 350 & 1157 &   22.42 s  &  14.07 s  &  76.84 s  &  20.55 s  &  126.15 s  &     87.31 s  \\
@@ -113,7 +113,7 @@ From this experiment we conclude that in the short time limit provided, the best
 % \begin{table*}
 %     \begin{tabular}{|c|c|c|c|c|c|c|}
 %         \hline
-%         p                  &           \omus &      \omus+Incr &      \omus+Post &  \omus+Incr+Warm &   \omus+Incr+Post & \omus+Incr+Post+Warm \\
+%         p                  &           \omus &      {\omus}+Incr &      {\omus}+Post &  {\omus}+Incr+Warm &   {\omus}+Incr+Post & {\omus}+Incr+Post+Warm \\
 %         \hline
 %         1 &    0.88 s | 10 &   0.38 s | 10 &   0.27 s | 10 &   0.81 s | 10 &    0.65 s | 10 &      0.33 s | 10 \\
 %         2            &   22.42 s | 10 &  14.07 s | 10 &  76.84 s | 10 &  20.55 s | 10 &  126.15 s | 10 &     87.31 s | 10 \\

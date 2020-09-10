@@ -259,7 +259,7 @@ When we check the satisfiability of a set $\F'$ we initialise the polarity of th
 The implementation of \grow can be achieved in different ways.
 In the OUS algorithms we use the model found by the $\sat(\F')$ call and let a MaxSAT solver complete it to a full assignment over $\F$. Our custom implementations of a greedy grow was consistently outperformed by the MaxSAT solver. We believe this is because typically only a fraction of literals of $\F$ are left unassigned in the model of $\sat(\F')$ and a MaxSAT solver has highly optimized data-structures to manage $\F$.  %We note that typically many literals are part of the found model of $\formula'$ and hence this MAX-SAT problem is considerably smaller than $\formula$. 
 
-In $\comus()$, we keep the MIP solver warm and reuse it across all $\comus$ calls. We only ever add constraints to the solver. To handle the changes in $p$ with respect to literals that cannot be chosen, we enforce this by temporarily setting the objective weight to $+\infty$ for literals that can not be chosen.
+In $\comus()$, we keep the MIP solver warm and reuse it across all $\comus$ calls. We only ever add constraints to the solver. To handle the changes in $p$ with respect to literals that cannot be chosen, we enforce this by temporarily setting the objective weight to $+\infty$ for literals that cannot be chosen.
 
 
 % \section{Efficient, Incremental Explanations}\label{sec:explanations}\label{sec:incrementalExp}

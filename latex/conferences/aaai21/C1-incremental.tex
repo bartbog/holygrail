@@ -81,6 +81,7 @@ However, in case we have structural domain knowledge about the formulas, this ca
 For instance, in the explanatory setting, we know that $\formulac$ is satisfiable with (partial) solution $\Iend$, and is a satisfiable subset of \emph{all} \omusinc calls to follow. 
 By initializing $\satsets$ as $\{\formulac \cup I_{\mathit{end}}\}$, we avoid the algorithm having to rediscover this satisfiable subset itself.
 %, and hence can potentially result in serious performance gains. This is experimentally validated in \cref{sec:experiments}.
+
 Furthermore, we know that for every $-l, l \in \Iend$ we will do an OMUS call. Hence, we can pre-compute a large satisfiable subset for every $-l$ through $\grow(-l, \formulag)$, with $\formulag = {\cal C} \cup \Iend \cup \overline{\Iend}$ the set of all clauses that will ever by considered in the OUS calls. We call this process \textit{pre-seeding} the set $\setstohit$.
 
 Apart from optionally pre-seeding and calling $\omusinc(\formula,f)$ instead of $\omus(\formula,f)$ on line 3 in Algorithm~\ref{alg:bestStepOUS}, there is one more property we can use: the OUS found will only be kept if $f(X)<f(X_{best})$. Instead of enforcing this post-hoc, we can push this constraint into the OUS algorithm through a simple upper-bounding constraint added to the hitting set algorithm in \omusinc.

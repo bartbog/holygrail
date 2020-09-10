@@ -1,7 +1,7 @@
 % !TeX root = ./main.tex
 
 In this section, we discuss the background on the hitting set duality, which constitutes the core of our algorithm. 
-We present all results using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics in terms of a satisfaction relation \emilio{missing word: is maintained ?} between expressions in the language and possible states of affairs (assignments of values to variables).
+We present all results using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics is given in terms of a satisfaction relation  between expressions in the language and possible states of affairs (assignments of values to variables).
  
 %  
 % 
@@ -15,7 +15,7 @@ We present all results using propositional logic but our results easily generali
 % \end{itemize}
 
 \newcommand\F{\formula}
-Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$.
+Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. 
 \marginpar{clause constraint}
 %\tias{Can we keep it at general 'constraint' here? the only requirement is that we can check satisfiability of a set of constraints (SAT(F')) and that we can grow the set to a larger set (Grow(F',F)), so nothing clause-specific. The literal is then an assignment or its negation...} \bart{Yes, we can! But it's always a struggle. WE need to be very precise (Ive had reviewers complain the past because of not being explicit about what a formula is or is not allowed to be etc.) Also: we use MAX-sat calls in our algorithm; some care needed there}.
 A clause is a disjunction of literals. A formula $\formula$ is a conjunction of clauses. 
@@ -27,7 +27,8 @@ Satisfaction of a formula \formula by an interpretation is defined as usual.
 A \emph{model} of \formula is an interpretation that satisfies \formula. 
 %  to the atoms that satisfies $\formula$.
 $\formula$ is said to be \emph{unsatisfiable} if it has no models.
-A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models; we denote this $\formula\models l$. 
+A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models; we denote this $\formula\models l$.
+If $I$ is a set of literals, we write \negset{I} for the set of literals $\{\lnot l\mid l\in I\}$.
 
 \begin{definition}
   A \emph{Minimal Unsatisfiable Subset} (MUS) of \F is a set $\m{S} \subseteq \F$  that is unsatisfiable such that every strict subset of $\m{S} $ is satisfiable. 

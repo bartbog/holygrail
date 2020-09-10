@@ -78,19 +78,19 @@ Otherwise, the algorithm behaves identically to \cref{alg:omus}, except that whe
 \paragraph{Using Initialization to Add Domain Knowledge}
 Before the first call to \omusinc, the set \satsets of satisfiable subsets will be empty. 
 However, in case we have structural domain knowledge about the formulas, this can be exploited to pre-populate this set intelligently. 
-For instance, in the explanatory setting, we know that $\formulac$ is satisfiable with (partial) solution $I_{end}$, and is a satisfiable subset of \emph{all} \omusinc calls to follow. 
+For instance, in the explanatory setting, we know that $\formulac$ is satisfiable with (partial) solution $\Iend$, and is a satisfiable subset of \emph{all} \omusinc calls to follow. 
 By initializing $\satsets$ as $\{\formulac \cup I_{\mathit{end}}\}$, we avoid the algorithm having to rediscover this satisfiable subset itself.
 %, and hence can potentially result in serious performance gains. This is experimentally validated in \cref{sec:experiments}.
 
-Furthermore, we know that for every $-l, l \in I_{end}$ we will do an OMUS call. Hence, we can pre-compute a large satisfiable subset for every $-l$ through $\grow(-l, \formulag)$, with $\formulag = {\cal C} \cup I_{end} \cup \bar{I}_{end}$ the set of all clauses that will ever by considered in the OUS calls. We call this process \textit{pre-seeding} the set $\setstohit$.
+Furthermore, we know that for every $-l, l \in \Iend$ we will do an OMUS call. Hence, we can pre-compute a large satisfiable subset for every $-l$ through $\grow(-l, \formulag)$, with $\formulag = {\cal C} \cup \Iend \cup \overline{\Iend}$ the set of all clauses that will ever by considered in the OUS calls. We call this process \textit{pre-seeding} the set $\setstohit$.
 
 Apart from optionally pre-seeding and calling $\omusinc(\formula,f)$ instead of $\omus(\formula,f)$ on line 3 in Algorithm~\ref{alg:bestStepOUS}, there is one more property we can use: the OUS found will only be kept if $f(X)<f(X_{best})$. Instead of enforcing this post-hoc, we can push this constraint into the OUS algorithm through a simple upper-bounding constraint added to the hitting set algorithm in \omusinc.
 
 %\tias{seeding}
 %\begin{algorithm}[ht]
-%$\formulag \gets \formulac \cup I_{end} \cup \bar{I}_{end}$\;
-%$\setstohit \gets \{\formulag \setminus \{\formulac \cup I_{end}\}\}$\;
-%\For{$l \in I_{end}:$}{
+%$\formulag \gets \formulac \cup \Iend \cup \overline{\Iend}$\;
+%$\setstohit \gets \{\formulag \setminus \{\formulac \cup \Iend\}\}$\;
+%\For{$l \in \Iend:$}{
 %  $\setstohit \gets \setstohit \cup \{\formulag \setminus \grow(-l,\formulag)\} $\;
 %}
 %\end{algorithm}

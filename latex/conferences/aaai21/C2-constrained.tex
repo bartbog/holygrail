@@ -3,7 +3,7 @@ Even when using an incremental OUS algorithm, we still need to compute an (upper
 We now ask the question if we can do away with that, and instead use an OUS-like algorithm to directly find the best OUS across all literals in $I_{end} \setminus I$.
 
 It would be tempting to attempt this by a single call to 
-\[\omus(\formulac \cup I_{end} \cup \bar{I}_{end})\]
+\[\omus(\formulac \cup I \cup \overline{\Iend\setminus I})\]
 however such an OUS would not result in an explanation of the form $I' \wedge \formulac' \implies l$ as the following example illustrates. 
 % To see this consider the following example: 
 \begin{example}
@@ -12,7 +12,7 @@ Assume \begin{align*}
          I &= \emptyset
        \end{align*}
        and thus
-$         I_{\mathit{end}} = \{ \lnot p, q, r\}.$
+$         \Iend = \{ \lnot p, q, r\}.$
 In that case, 
 \[\formulac\cup \bar{I}_{\mathit{end}} = \{p\lor q, \lnot p \lor r, \lnot p \lor \lnot r, \lnot q\lor r, \lnot p \lor q , p,\lnot q,\lnot r \}\]
 has several cardinality-minimal OUSs, for instance 
@@ -23,7 +23,7 @@ X_2 &= \{\lnot p \lor q ,  p, \lnot q\}.
 out of these two only $X_1$ would be considered to induce a good explanation: it represents the fact that the two constraints $\lnot p \lor r$ and $ \lnot p \lor \lnot r$ together entail $\lnot p$ (which can easily be seen by applying the resolution rule). However, $X_2$ does not have such an interpretation: it merely shows that the constraint $\lnot p \lor q$ entails that either $p$ should be false or $q$ should be true, which is uninformative. 
 \end{example}
 
-We can see that for an OUS of $\formulac \cup I_{end} \cup \bar{I}_{end}$ to be a valid explanation, it needs to satisfy a number of constraints. Let $I$ be the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. We can identify the following constraints: 1) the OUS should explain exactly one literal $-l$ in $\bar{I}_{end}$; 2) the OUS may not explain a literal that is already explained, that is, no literal in $\bar{I}_{end} \setminus \bar{I}$; and 3) the explanation can only use literals from the cautious consequence that are already explained, so no literals from $I_{end} \setminus I$.
+We can see that for an OUS of $\formulac \cup I_{end} \cup \overline{\Iend}$ to be a valid explanation, it needs to satisfy a number of constraints. Let $I$ be the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. We can identify the following constraints: 1) the OUS should explain exactly one literal $-l$ in $\overline{\Iend}$; 2) the OUS may not explain a literal that is already explained, that is, no literal in $\overline{\Iend} \setminus \bar{I}$; and 3) the explanation can only use literals from the cautious consequence that are already explained, so no literals from $I_{end} \setminus I$.
 
 %The previous example shows that a naive \omus call with a large enough theory, would not yield valuable explanations.
 Hence, we are interested in searching for an OUS that is \emph{optimal} among those that satisfy these properties. 
@@ -67,14 +67,14 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
 %  \label{alg:explainCSPcOUS}
 %$E \gets \langle \rangle$\;
 %$I_{end} \gets optimalPropagate({\cal C})$\;
-%$\formulag \gets {\cal C} \cup I_{end} \cup \bar{I}_{end}$\;
+%$\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
 %$\setstohit \gets \{\formulag \setminus \{{\cal C} \cup I_{end}\}\}$\;
 %// preseeding\\
 %\For{$l \in I_{end}:$}{
 %  $\setstohit \gets \setstohit \cup \{\formulag \setminus \grow(-l,\formulag)\} $\;
 %}
 %$I \gets \emptyset$\;
-%$p \gets \{$exactly one of $\bar{I}_{end}$ in the hitting set$\}$\; %, none of $I_{end}$ can be in the hitting set$\}$\;
+%$p \gets \{$exactly one of $\overline{\Iend}$ in the hitting set$\}$\; %, none of $I_{end}$ can be in the hitting set$\}$\;
 %
 %\While{$I \neq I_{end}$}{
 %	update $p$ such that none of $\{I_{end} \setminus I\}$ and none of $\bar{I}$ can be in the hitting set\;
@@ -109,8 +109,8 @@ Given such a constrained OUS algorithm, the procedure to find the single best ex
 \begin{algorithm}[ht]
   \caption{$\call{bestStep--c-OUS}({\cal C},f,I,I_{end})$}
   \label{alg:singleStepExplain3}
-$\formulag \gets {\cal C} \cup I_{end} \cup \bar{I}_{end}$\;
-set $p$ such that exactly one of $\bar{I}_{end}$ in the hitting set \textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
+$\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
+set $p$ such that exactly one of $\overline{\Iend}$ in the hitting set \textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
 \Return{$\comus(\formulag,f,p)$}\;
 \end{algorithm}
 

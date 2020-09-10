@@ -111,12 +111,7 @@ As is common, we first use a procedure \grow to extend the hitting set to a set 
 We can similarly speed up our OUS computation. This amounts to adding the following code a the start of the \textbf{while} loop, just before line $3$:
 \begin{algorithm}[ht]
 \While{true}{
-	$\F' \gets \ghs(\setstohit,f) $\;
-    \If{ $\lnot \sat(\F')$}{
-      \textbf{break}
-    }
-    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
-    \While{true}{
+    \While{$|\setstohit| > 0$}{
     	%$\F' \gets \ihs(\setstohit,f) $\;
     	$\F' \gets \F' + min_f$ element of last MCS in $\setstohit$\;
         \If{ $\lnot \sat(\F')$}{
@@ -124,6 +119,11 @@ We can similarly speed up our OUS computation. This amounts to adding the follow
         }
         $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
     }
+    	$\F' \gets \ghs(\setstohit,f) $\;
+        \If{ $\lnot \sat(\F')$}{
+          \textbf{break}
+        }
+        $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
 }
 \end{algorithm}
 

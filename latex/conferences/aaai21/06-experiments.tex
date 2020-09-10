@@ -64,10 +64,11 @@ To answer the first research question, we use 10 CNF instances from the SATLIB B
 % ------------------------------- EMILIO LOCK -----------------------------------------
 The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance name, the number of variables and the number of clauses respectively. 
 Only for instances 1 (aim-50-1\_6-yes1-4.cnf), 2 (par8-2.cnf) and 3 (zebra\_v155\_c1135.cnf), is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the required time constraint of 10 minutes.
-All variants of the \omus timed out on the larger instances 
+All variants time out on the larger instances finding the \texttt{OUS}s up to 6 out of the 10 decision variables.
 %\tias{remove other ones, say that larger instances timed out in the text}
-A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent growing $\m{SS}$s\tias{in general or for warmstarting? This means that my 'implementation consideration' of using a MaxSat solver is cheap is not true...}. For instances 1-3 executed without postponing optimization, 70\% of the time is spent growing, and for the remaining instances close to 100 \% of the time is spent growing.
-In particular, for executions involving postponing the calls (+P/+IP/+IPW) to the MIP solver, 90-100\% of the time is spent growing, while the remainder of the time is distributed between incremental and greedy computation of hitting sets.
+A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent \todo{emilio} $\m{SS}$s
+\tias{in general or for warmstarting? This means that my 'implementation consideration' of using a MaxSat solver is cheap is not true...}. For instances 1-3 executed without postponing optimization, \todo{ emilio}\% of the time is spent growing, and for the remaining instances close to \todo{ emilio} \% of the time is spent \todo{ emilio} .
+In particular, for executions involving postponing the calls (+P/+IP/+IPW) to the MIP solver, \todo{ emilio}\% of the time is spent growing, while the remainder of the time is distributed between incremental and greedy computation of hitting sets.
 Finally, we conclude that within the short time limit provided, the best configuration for computing multiple related OUS's is \omus+IPW, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed $\m{SS}$s.
 % ------------------------------- EMILIO LOCK -----------------------------------------
 

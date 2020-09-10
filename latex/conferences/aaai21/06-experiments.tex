@@ -48,12 +48,25 @@ To answer the first research question, we use 10 CNF instances from the SATLIB B
         \label{table:experiment1}
 \end{table*}
 
+\begin{table*}[t!]
+    \centering
+    \begin{tabular}{c|cccc|cccccc}
+        % \hline
+        p &  time [s] &  \#steps &   $\overline{cost}$ & max(cost) &    1 bij &  1trans &  1 clue & 1 clue+i & 1 mult-i & mult-c. \\
+        \hline
+        1 &  1287.27 &     115 &     25.87  &    25.87  &  31.83\% &  50.57\% &  1.09\% &    16.52 \% &     0\% &    0.0\% \\
+        % \hline
+        \end{tabular}
+        \caption{Puzzle Properties, execution statistics and explanation sequence composition for the origin puzzle.}
+        \label{table:experiment3}
+\end{table*}
+
 
 The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance\tias{please add the names}, the number of variables and the number of clauses respectively. 
-Only for instances 1, 2 and 3, is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the required time constraint.\tias{remove other ones, say that larger instances timed out in the text}
+Only for instances 1, 2 and 3, is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the required time constraint of 10 minutes.\tias{remove other ones, say that larger instances timed out in the text}
 A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent growing $\m{SS}$s\tias{in general or for warmstarting? This means that my 'implementation consideration' of using a MaxSat solver is cheap is not true...}. For instances 1-3 executed without postponing optimization, 70\% of the time is spent growing, and for the remaining instances close to 100 \% of the time is spent growing.
 In particular, for executions involving postponing the calls (+P/+IP/+IPW) to the MIP solver, 90-100\% of the time is spent growing, while the remainder of the time is distributed between incremental and greedy computation of hitting sets.
-Finally, we conclude that the best configuration for generating explanation sequence is \omus+IPW, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed $\m{SS}$s.
+Finally, we conclude that within the short time limit provided, the best configuration for computing multiple related OUS's is \omus+IPW, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed $\m{SS}$s.
 
 
 % \begin{table*}[h!]
@@ -111,29 +124,17 @@ The second research question is how do the different variants perform when expla
 \end{figure}
 
 The figure shows the number of literals explained on the X-axis, and the cumulative time taken on the Y-axis. 
-We can see that OUS-Incremental with pre-seeding and post-poning optimisation is not able to explain all of the literals within the timeout; especially around step 95 there is a big jump in runtime. The vanilla constrained-OUS approach is not able to finish in time either, with big jumps in time on specific (hard) clues.
+We can see that OUS-Incremental with pre-seeding and post-poning optimisation is not able to explain all of the literals within the time limit; especially around step 95 there is a big jump in runtime. The vanilla constrained-OUS approach is not able to finish in time either, with big jumps in time on specific (large and costly) explanation steps.
 
 When combining constrained-OUS with either pre-seeding, post-poned optimisation or both, then our approach is able to fully explain the solution. Best results are obtained with constrained-OUS with just pre-seeding at the beginning. The post-poned optimisation in this case may spent a lot of time generating MCSs that are not or little relevant to the constrained OUSs we are seeking.
 
+\paragraph{}
 Finally, for \textbf{RQ3} we compare the sequence found by our proposed method with the sequence reported on in~\cite{ecai/BogaertsGCG20} for the origin puzzle (puzzle 1). 
 The explanation sequence for the puzzle is generated using \omus Constr with pre-seeding and according to the same cost function as Bogaerts et al.~\cite{ecai/BogaertsGCG20}. We report statistics relating to the explanation generation in table~\ref{table:experiment3}.
 Evidently, one of the most important observations is the speed-up provided by \omus Constr. 
-As a matter of fact, the sequence is generated in a bit more than 21 minutes compared to a few (2-3) hours in~\cite{ecai/BogaertsGCG20}, meaning that \omus Constr is 8-10x faster!
-Table \ref{table:experiment3} also reports that the explanation sequence has become easier to understand: the average cost is slightly lower and as well as $max(cost)$, the cost of the most difficult explanation in the puzzle. 
-Sumarised, while \cite{ecai/BogaertsGCG20} has to explore multiple candidate explanations requiring expensive calls to MUS extractions methods, the step-wise explanations generation directly benefits from the \omus Constr approach of finding the optimal explanation candidate at any point in the sequence.
+As a matter of fact, the sequence is generated in a bit more than 21 minutes compared to a few (2-3) hours in~\cite{ecai/BogaertsGCG20}, meaning that \omus Constr is 8-10x faster, while also finding the optimal explanations in each step.
+Table \ref{table:experiment3} also reports that the explanation sequence has become easier to understand: the average cost is slightly lower and so is $max(cost)$, the cost of the most difficult explanation in the puzzle. 
 
-\begin{table*}
-    \centering
-    \begin{tabular}{c|cccc|cccccc}
-        % \hline
-        p &  time [s] &  \#steps &   $\overline{cost}$ & max(cost) &    1 bij &  1trans &  1 clue & 1 clue+i & 1 mult-i & mult-c. \\
-        \hline
-        1 &  1287.27 &     115 &     25.87  &    25.87  &  31.83\% &  50.57\% &  1.09\% &    16.52 \% &     0\% &    0.0\% \\
-        % \hline
-        \end{tabular}
-        \caption{Puzzle Properties, execution statistics and explanation sequence composition for the origin puzzle.}
-        \label{table:experiment3}
-\end{table*}
 
 % \begin{table*}
 %     \begin{tabular}{ccc|ccc|cccccc}

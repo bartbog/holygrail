@@ -3,7 +3,7 @@
 We now recall the general explanation setting of \citet{ecai/BogaertsGCG20}. 
 In that work, the goal was to --- starting from a constraint satisfaction problem and a partial interpretation $I$ --- explain the cautious consequence through a sequence of simple steps. 
 %In our formulation (following \citet{ecai/BogaertsGCG20}), we assume that the formulation is done in propositional logic, but the ideas carry on to richer representation formalisms as well. 
-We will use \formulac to denote the constraint satisfaction problem (formula in this case), to avoid confusion with the formula \formula used in \omus calls.
+We will use \formulac to denote the constraint satisfaction problem (a CNF formula in this case), to avoid confusion with the formula \formula used in \omus calls.
 
 The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by a cost function $f$. 
 An explanation step is an implication $I' \wedge \formulac' \implies l$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formulate $\formulac$ and $l$ is a set of literals from the cautious consequence which is not yet explained.
@@ -34,7 +34,7 @@ Earlier work could not take advantage of an Optimal Unsatisfiable Subset algorit
   \label{alg:bestStepOUS}
 $X_{best} \gets \{{\cal C} \land I \land \bar{I}_{end}\}$\;
 \For{$l \in \{I_{end} \setminus I\}$}{
-    $X \gets \omus{({\cal C} \land I \land \neg l, f)}$\;
+    $X \gets \omus{({\cal C} \land I \land \neg l,\  f)}$\;
     \If{$f(X)<f(X_{best})$}{
         $X_{best} \gets X$\;
     }
@@ -44,7 +44,7 @@ $X_{best} \gets \{{\cal C} \land I \land \bar{I}_{end}\}$\;
 
 \cref{alg:bestStepOUS} depicts an OUS-based algorithm to find the next simplest explanation step in the sequence. 
 %Compared to the method proposed in \cite{ecai/BogaertsGCG20}, this is already a simplified one that uses a single OUS call to find a ``good'' explanation instead of multiple MUS calls to approximate the optimal OUSs. 
-Note that we write $\bar{I}_{end} = \{-l | l \in I_{end}\}$.
+Note that we write $\bar{I}_{end} = \{-l \ | \  l \in I_{end}\}$.
 In this algorithm, an OUS call is used to compute an explanation for each consequence $l$ of the combination of $\formulac$ and the assignment so far. 
 It was shown that MUSs of $\formulac\land I\land\lnot l$ correspond to non-redundant explanations of $l$ in terms of $\formulac$ and $I$ and hence an OUS is a ``best'' explanation of $l$. 
 The loop in \cref{alg:bestStepOUS} serves to guarantee that at each point, the literal with the best explanation is selected. 

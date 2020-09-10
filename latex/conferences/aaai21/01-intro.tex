@@ -8,7 +8,8 @@ Generating minimal explanations in case of an unsatisfiable CSP is well-studied~
 The techniques developed in the latter rely heavily on calls for so-called \emph{Minimal Unsatisfiable Subsets} (MUS), exploiting a one-to-one correspondence between so-called non-redundant explanations and MUSs. 
 The algorithm developed by \citet{ecai/BogaertsGCG20} has two weaknesses: first, it provides no guarantees about the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the quality of an explanations step (as defined in that work). 
 Secondly, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate implied fact. %replacing a potential single call for a cost-optimal unsatisfiable subset by multiple calls, 
-However, the high number of MUS calls needed has as a result that even for simple problems for which the unique solution can be found in a fraction of a second, the explanation generation process takes several hours.
+However, the high number of MUS calls needed impacts even simple problems for which the unique solution can be found in a fraction of a second. 
+In fact, the explanation generation process takes several hours.
 
 
 Motivated by these observations, we develop algorithms for unsatisfiable subset optimization (i.e., for computing cost-optimal unsatisfiable subsets, from now on called OUSs). The algorithms we develop combine ideas from both 
@@ -45,7 +46,7 @@ Summarized, the main contributions of our paper are:
   %\item We translate MAX-SAT solving techniques to the constrained OUS setting.
   \item We develop an \emph{incremental} version of our OUS algorithm by exploiting properties of the hitting set dualisation;
   \item We generalize the OUS problem to a constrained OUS problem by allowing meta-level constraints on the unsatisfiable subsets; % and show how our algorithm generalizes to take those constraints into account;
-  \item We experimentally validate our algorithms in the context of generation explanations of CSPs, thereby showing improvements both in terms of the time required to find explanation sequences and the quality thereof. %of the developed explanation.
+  \item We experimentally validate our algorithms in the context of explanation generation for CSPs, thereby showing improvements both in terms of the time required to find explanation sequences and the quality thereof. %of the developed explanation.
 \end{itemize}
 
 

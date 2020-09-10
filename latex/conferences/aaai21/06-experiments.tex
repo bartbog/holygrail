@@ -1,15 +1,15 @@
 % !TeX root = ./main.tex
-We will validate the gain in efficiency and quality of using the proposed Optimal Unsatisfiable Subset detection algorithms for explaining satisfiable constraint satisfaction problems.
+In this section, we validate the gain in efficiency and quality of using the proposed Optimal Unsatisfiable Subset detection algorithms for explaining satisfiable constraint satisfaction problems.
 
 We consider the following benchmarks: CNF instances from the SATLIB problems Benchmark \cite{hoos2000satlib} and a CNF encoding of the logic grid puzzle used in~\cite{ecai/BogaertsGCG20}. All code was implemented in Python on top of %CPpy~\footnote{} and
 PySAT~\footnote{\url{https://pysathq.github.io}}. The MIP solver used is Gurobi 9.0 and when a MaxSAT solver is used it is RC2 as bundled with PySAT. Experiments were run on a Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0.
 
-We aim to answer the following research questions:
+Based on the theoretical findings of the previous sections, we aim to answer the following research questions:
 \begin{itemize}
 \item RQ1: what is the effect of delaying propagation, incremental OUS solving and pre-seeding the MCS when solving multiple variants of the same problem?
-\item RQ2: how do the different variants perform when explaining an elaborate constraint satisfaction problem?
-\item RQ3: how do the sequences found when using (constrained) OUS search compare to those found using a heurisic MUS approach?
-\end{itemize} 
+\item RQ2: how do the different variants of \omus perform when explaining an elaborate constraint satisfaction problem?
+\item RQ3: how do the sequences found when using (constrained) \omus search compare to those found using a heurisic MUS approach?
+\end{itemize}
 
 \paragraph{RQ1}
 To answer the first research question, we select 10 CNF instances from SATLIB problems Benchmark. We randomly choose a subset of 10 decision variables and maintain a fixed ordering among them, and then compare the following enhancements to the \omus algorithm: postponing optimization (+P), reusing subsets between \omus calls (+I), and pre-seeding grown $\m{SS}$s from every negated decision variable of the instance (+W). For example \omus+IPW characterises running the \omus algorithm postponing the optimization phase, with incrementality between the succesive calls, and warm starting with satisfiable subsets of the original CNF formula.
@@ -20,16 +20,19 @@ Only for instances 1, 2 and 3, is the algorithm able to complete the search for 
 A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent growing $\m{SS}$s. For instances 1-3 executed without postponing optimization, 70\% of the time is spent growing, and for the remaining instances close to 100 \% of the time is spent growing.
 In particular, for executions involving postponing the calls (+P/+IP/+IPW) to the MIP solver, 90-100\% of the time is spent growing, while the remainder of the time is distributed between incremental and greedy computation of hitting sets.
 Finally, we conclude that the best configuration for generating explanation sequence is \omus+IPW, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed $\m{SS}$s.
+
+
 \begin{table*}[h!]
+    \centering
     \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
         \hline
         % p    & nv& nc&           \omus &      \omus+Incr &      \omus+Post &  \omus+Incr+Warm &   \omus+Incr+Post & \omus+Incr+Post+Warm \\
         p    & nv& nc&           \omus &      \omus+I &      \omus+P &  \omus+IW &   \omus+IP & \omus+IPW \\
         \hline
-        1 & 50& 80&   0.88 s  &   0.38 s  &   0.27 s  &   0.81 s  &    0.65 s  &      0.33 s  \\
-        2 & 350 & 1157 &   22.42 s  &  14.07 s  &  76.84 s  &  20.55 s  &  126.15 s  &     87.31 s  \\
-        3 & 155& 1135&   130.38 s  &  87.97 s  &  64.75 s  &  104.7 s  &  124.48 s  &     80.92 s  \\
-        4..10 & x $\cdot$ $10^2$ & x $\cdot$ $10^3$           &      --- &     --- &   --- &  --- &   --- &     --- \\
+        1 & 50& 80&   0.88 s  &   0.38 s  &   0.37 s  &   0.81 s  &    0.65 s  &      \textbf{0.33} s  \\
+        2 & 350 & 1157 &   122.42 s  &  94.07 s  &  96.84 s  &  120.55 s  &  126.15 s  &     \textbf{87.31} s  \\
+        3 & 155& 1135&   130.38 s  &  87.97 s  &  84.75 s  &  104.7 s  &  124.48 s  &     \textbf{80.92 s}  \\
+        4 .. 10 & x $\cdot$ $10^2$ & x $\cdot$ $10^3$           &      --- &     --- &   --- &  --- &   --- &     --- \\
         % 5 & 317 & 1264           &      --- &  --- &  --- &     --- &      --- &     --- \\
         % 6 & 324 & 1292        &      --- &     --- &     --- &     --- &      --- &        --- \\
         % 7 & 334 & 1332        &      --- &     --- &     --- &     --- &      --- &        --- \\
@@ -104,11 +107,12 @@ When combining constrained-OUS with either pre-seeding, post-poned optimisation 
 Finally, for \textbf{RQ3} we compare the sequence found by our proposed method with the sequence reported on in~\cite{ecai/BogaertsGCG20} for the origin puzzle (puzzle 1). 
 The explanation sequence for the puzzle is generated using \omus Constr with pre-seeding and according to the same cost function as Bogaerts et al.~\cite{ecai/BogaertsGCG20}. We report statistics relating to the explanation generation in table~\ref{table:experiment3}.
 Evidently, one of the most important observations is the speed-up provided by \omus Constr. 
-As a matter of fact, the sequence is generated in a bit more than 21 minutes compared to a few (2-3) hours in~\cite{ecai/BogaertsGCG20}, which means that \omus Constr is 8-10x faster!
-The average cost is slightly lower and as well as $max(cost)$, the cost of the most difficult explanation in the puzzle. 
-
+As a matter of fact, the sequence is generated in a bit more than 21 minutes compared to a few (2-3) hours in~\cite{ecai/BogaertsGCG20}, meaning that \omus Constr is 8-10x faster!
+Table \ref{table:experiment3} also reports that the explanation sequence has become easier to understand: the average cost is slightly lower and as well as $max(cost)$, the cost of the most difficult explanation in the puzzle. 
+Sumarised, while \cite{ecai/BogaertsGCG20} has to explore multiple candidate explanations requiring expensive calls to MUS extractions methods, the step-wise explanations generation directly benefits from the \omus Constr approach of finding the optimal explanation candidate at any point in the sequence.
 
 \begin{table*}
+    \centering
     \begin{tabular}{c|cccc|cccccc}
         % \hline
         p &  time [s] &  \#steps &   $\overline{cost}$ & max(cost) &    1 bij &  1trans &  1 clue & 1 clue+i & 1 mult-i & mult-c. \\
@@ -140,10 +144,10 @@ The average cost is slightly lower and as well as $max(cost)$, the cost of the m
 %    \label{}
 %\end{figure*}
 
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/explanation_cost.png}
-    \caption{}
-    \label{}
-\end{figure}
+% \begin{figure}[ht]
+%     \centering
+%     \includegraphics[width=\columnwidth]{figures/explanation_cost.png}
+%     \caption{}
+%     \label{}
+% \end{figure}
 

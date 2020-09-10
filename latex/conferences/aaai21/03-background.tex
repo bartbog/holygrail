@@ -1,7 +1,7 @@
 % !TeX root = ./main.tex
 
 In this section, we discuss the background on the hitting set duality, which constitutes the core of our algorithm. 
-We present all result using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics in terms of a satisfaction relation between expressions in the language and possible states of affairs (assignments of values to variables).
+We present all results using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics in terms of a satisfaction relation \emilio{missing word: is maintained ?} between expressions in the language and possible states of affairs (assignments of values to variables).
  
 %  
 % 
@@ -19,7 +19,7 @@ Let \voc be a set of propositional symbols, also called \emph{atoms}; this set i
 \marginpar{clause constraint}
 %\tias{Can we keep it at general 'constraint' here? the only requirement is that we can check satisfiability of a set of constraints (SAT(F')) and that we can grow the set to a larger set (Grow(F',F)), so nothing clause-specific. The literal is then an assignment or its negation...} \bart{Yes, we can! But it's always a struggle. WE need to be very precise (Ive had reviewers complain the past because of not being explicit about what a formula is or is not allowed to be etc.) Also: we use MAX-sat calls in our algorithm; some care needed there}.
 A clause is a disjunction of literals. A formula $\formula$ is a conjunction of clauses. 
-Slightly abusing notation, a clause is sometimes used as a set of literals and a formula as a set of clauses.
+Slightly abusing notation, a clause is sometimes referred to as a set of literals and a formula as a set of clauses.
 % \todo{weight function comes later}
 A \emph{weight function} $w$ on $\formula$ assigns to each clause in $\formula$ either a positive integer, or a $\infty$. 
 A (partial) interpretation is a consistent (not containing both $p$ and $\lnot p$) set of literals. An interpretation is \emph{complete} if it contains either $p$ or $\lnot p$ for all symbols $p\in \voc$. 
@@ -30,7 +30,7 @@ $\formula$ is said to be \emph{unsatisfiable} if it has no models.
 A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models; we denote this $\formula\models l$. 
 
 \begin{definition}
-  A \emph{Minimal Unsatisfiable Subset} (MUS) of \F is a set $\m{S} \subseteq \F$  that is unsatisfiable but such that every strict subset of $\m{S} $ is satisfiable. 
+  A \emph{Minimal Unsatisfiable Subset} (MUS) of \F is a set $\m{S} \subseteq \F$  that is unsatisfiable such that every strict subset of $\m{S} $ is satisfiable. 
 %   
   We write \muses{\F} for the set of MUSs of \F. 
 \end{definition}
@@ -74,7 +74,7 @@ The following proposition is the well-known hitting set duality  between MCSs an
     A set  $\m{U} \subseteq \formula$ is a MUS of $ \formula$ iff  $\m{U}$ is a \emph{minimal hitting set} of \mcses{F}.
 \end{proposition}
  
-The duality of \cref{prop:MCS-MUS-hittingset} lies at the basis of various algorithms to compute MUSs \cite{} or MSSs \cite{,}. 
+The duality of \cref{prop:MCS-MUS-hittingset} lies at the basis of various algorithms to compute MUSs \cite{ignatiev2015smallest} or MSSs \cite{DBLP:conf/sat/DaviesB13}\emilio{check citation: was empty}. 
 It was also used in an algorithm to find \emph{cardinality-minimal MUSs} (also called \emph{smallest MUS} or SMUS) by \citet{ignatiev2015smallest}, which our algorithm is based on. 
 In the next section, we discuss our proposed OUS algorithm. 
 %The algorithm of \citet{ignatiev2015smallest} can be obtained from \cref{alg:omus} by using cardinality as a cost function, hence we do not give it explicitly here. They use a maxsat solver for the hitting sets...

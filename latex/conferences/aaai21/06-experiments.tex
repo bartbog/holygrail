@@ -1,7 +1,7 @@
 % !TeX root = ./main.tex
-In this section, we validate the gain in efficiency and quality of using the proposed Optimal Unsatisfiable Subset detection algorithms for explaining satisfiable constraint satisfaction problems.
+We now experimentally validate the the performance of the different version of our algorithms for explaining satisfiable constraint satisfaction problems.
 
-We consider the following benchmarks: CNF instances from the SATLIB problems Benchmark \cite{hoos2000satlib} and a CNF encoding of the logic grid puzzle used in~\cite{ecai/BogaertsGCG20}. All code was implemented in Python on top of %CPpy~\footnote{} and
+We consider the following benchmarks: CNF instances from the SATLIB problems Benchmark \cite{hoos2000satlib} and a CNF encoding of the logic grid puzzle ``Origin'' of \citet{ecai/BogaertsGCG20}. All code was implemented in Python on top of %CPpy~\footnote{} and
 PySAT~\footnote{\url{https://pysathq.github.io}}. The MIP solver used is Gurobi 9.0 and when a MaxSAT solver is used it is RC2 as bundled with PySAT. Experiments were run on a Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0.
 
 Based on the theoretical findings of the previous sections, we aim to answer the following questions:
@@ -24,6 +24,7 @@ No ``delaying propagation''!}
 To answer the first research question, we use 10 CNF instances from the SATLIB Benchmark and randomly choose a subset of 10 decision variables. For each variant of the algorithm, we compute the OUS of the same 10 decision variables in the same order within a time limit of 10 minutes. We compare the following enhancements options to the basic \omus algorithm: postponing optimization (+P), incrementality by reusing satisfiable subsets between \omus calls (+I), and pre-seeding $\m{SS}$s from every negated decision variable of the instance (+W). Options can be combined, for example \omus+IPW characterises running the \omus algorithm postponing the optimization phase, with incrementality between the succesive calls, and warm starting with satisfiable subsets of the original CNF formula.
 %The executions are set to timeout after 10 minutes, a limit fixed based on the results of experiment 2.
 
+% \rule{\textwidth}{10pt}
 
 \begin{table*}[t!]
     \centering

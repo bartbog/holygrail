@@ -2,8 +2,8 @@ Even when using an incremental OUS algorithm, calling \omusinc at each step for 
 For this reason, we now aim to instead use an OUS-like algorithm to directly find the best OUS across all literals in $\Iend \setminus I$, where $I$ is the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. 
 
 It would be tempting to attempt this by a single call to 
-\[\omus(\formulac \cup I \cup \overline{\Iend\setminus I})\]
-however such an OUS would not result in an explanation of the form $I' \wedge \formulac' \implies N$ as the following example illustrates. 
+\[\omus(\formulac \cup I \cup \overline{\Iend\setminus I}).\]
+However, such an OUS would not result in an explanation of the form $I' \wedge \formulac' \implies N$ as the following example illustrates. 
 % To see this consider the following example: 
 \begin{example}
 Assume $I=\emptyset$, \begin{align*}
@@ -13,7 +13,8 @@ Assume $I=\emptyset$, \begin{align*}
        and thus
 $         \Iend = \{ \lnot p, q, r\}.$
 In that case, 
-\[\formulac\cup \overline{\Iend} = \{p\lor q, \lnot p \lor r, \lnot p \lor \lnot r, \lnot q\lor r, \lnot p \lor q , p,\lnot q,\lnot r \}\]
+$\formulac\cup \overline{\Iend}$ 
+%= \{p\lor q, \lnot p \lor r, \lnot p \lor \lnot r, \lnot q\lor r, \lnot p \lor q , p,\lnot q,\lnot r \}\]
 has several cardinality-minimal OUSs, for instance 
 \begin{align*}
 X_1 &=    \{\lnot p \lor r, \lnot p \lor \lnot r, p\}\text{ and}\\
@@ -32,14 +33,14 @@ Phrasing this in a generic setting results in the following definition.
     If $\formulag$ is a formula, $f:2^{\formulag} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formulag}\to \{\ltrue,\lfalse\}$, then we call a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} ($(p,f)$-OUS) if \begin{compactitem}                                                                                                                                                                                                                         
     \item $U$ is unsatisfiable,
     \item $p(U)$ is true
-    \item for all other $U'\subseteq \formulag$, if $p(U')=\ltrue$ then   $f(U')\geq f(U)$.                                                                                                                                                                                                                         \end{compactitem}
+    \item for all other unsatisfiable $U'\subseteq \formulag$, if $p(U')=\ltrue$ then   $f(U')\geq f(U)$.                                                                                                                                                                                                                         \end{compactitem}
 \end{definition}
 
 The problem at hand is thus to compute a $(p,f)$-OUS of a given formula. 
 To tackle this challenge, we propose a modification to the OUS algorithm of \cref{alg:omus}, as depicted in \cref{alg:comus}. 
 As can be seen, the condition $p$ is simply passed to the procedure \cohs, which, in contrast to \ohs generates a hitting set that is optimal \emph{among the hitting sets satisfying $p$}.
 
-\begin{algorithm}[ht]
+\begin{algorithm}[t]
   \DontPrintSemicolon
 %  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   \While{true}{
@@ -87,7 +88,7 @@ As can be seen, the condition $p$ is simply passed to the procedure \cohs, which
 %\Return{E}\;
 %\end{algorithm}
 
-Soundness and completeness of the algorithm now follow from the fact that -- as before -- all sets added to \setstohit are correction subsets,  every MUS must thus hit all sets in \setstohit and \cref{prop:K2}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
+Soundness and completeness  follow from the fact that -- as before -- all sets added to \setstohit are correction subsets,  every unsatisfiable subset must thus hit all sets in \setstohit, and \cref{prop:K2}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
  
 \begin{proposition}\label{prop:K2}
   Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 

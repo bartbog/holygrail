@@ -77,7 +77,7 @@ We compare the following enhancements options to the basic \omus algorithm: post
 The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance name, the number of variables and the number of clauses respectively. 
 Only for instances aim-50-1\_6-yes1-4, par8-2.cnf and zebra\_v155\_c1135.cnf, is the algorithm able to complete the search for OUSs on the 10 decision variables within the required time constraint of 10 minutes.
 For these instances, the overall winner is \emph{{\omus}+IPW}. 
-All variants time out on the larger instances (par8-5, par16-1, par16-2, par16-3, par16-4-c, par16-4, hanoi4) before finding the OUSs for all 10 decision variables. For instance par8-5, all variants are able to find 6 out of the 10 variables, but \emph{{\omus}+IPW} remains the fastest. Similar results are observed for the remaining instances for all variants par16-* and hanoi4 with the \omus found for only 1 variable.
+All variants time out on the larger instances (par8-5, par16-1, par16-2, par16-3, par16-4-c, par16-4, hanoi4) before finding the OUSs for all 10 decision variables. For instance par8-5, all variants are able to find 6 out of the 10 variables. On all instances that timed-out, \emph{{\omus}+IPW} remains the fastest. Similar results are observed for the remaining instances for all variants par16-* and hanoi4 with the \omus found for only 1 variable.
 
 
 A further analysis of the overall execution times highlights that much time is spent in the grow procedure, for which we start from the partial assignment found by the SAT check and use the RC2 MaxSAT solver to complete it. 
@@ -85,7 +85,7 @@ We reran the same experiments with a greedy grow algorithm instead and observed 
 Furthermore, we see that in this case postponing the MIP call effectively redistributes 50\% of the computational load to growing \satsets and the remaining 50 \% are evenly distributed between (i) the SAT solver, (ii) the MIP solver, and (iii) the the greedy and incremental hitting set heuristics. Hence, while the portion of time spent growing satisfiable subsets is reduced, much more iterations are needed to find the optimal OUSs. %runtime of grow is decreased, the number of 
 % A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent WE NEED TEXT HERE AFTER TEH RUNS ARE READY\todo{emilio}
 
-Finally, we conclude that within the short time limit provided, the best configuration for computing multiple related OUS's is \emph{{\omus}+IPW}, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed \satsets.
+From this experiment we conclude that in the short time limit provided, the best configuration for computing multiple related OUS's is \emph{{\omus}+IPW}, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed \satsets.
 % ------------------------------- EMILIO LOCK -----------------------------------------
 
 % \begin{table*}[h!]
@@ -134,7 +134,7 @@ Finally, we conclude that within the short time limit provided, the best configu
 
 \paragraph{RQ2}
 The second research question is: how do the different variants perform when explaining an elaborate constraint satisfaction problem? For this, we tested the complete generation of an explanation sequence. 
-In this comparison, we expect that ``constrained'' versions of our algorithm perform best as they will allow performing an entire step of the explanations in a single solver call, rather than naively generating and checking. 
+In this comparison, we expect that constrained versions of our algorithm perform best as they will allow performing an entire step of the explanations in a single call.
 For this reason, we only include different variations on the constrained configuration and the single best variant of non-constrained algorithms found in the previous experiment. 
 
 \begin{figure}[t]
@@ -144,11 +144,11 @@ For this reason, we only include different variations on the constrained configu
     \label{fig:exp2}
 \end{figure}
 
-In our set-up, we generate the explanation sequence as far as possible within a time limit of one hour. 
-The results for the logic grid puzzle called ``origin'' is shown in Figure~\ref{fig:exp2}.
-The figure shows the number of literals explained on the X-axis, and the cumulative time taken on the Y-axis. 
-Only three configurations are able to find the full explanation sequence (note that there can be multiple optimal sequences with a different length, which explains the difference in length between the configurations).
-We can see that the best non-constrained implementation is unable to explain all of the literals within the time limit; especially around step 95 there is a big jump in runtime. The vanilla constrained-OUS approach is not able to finish in time either, with big jumps in time on specific (large and costly) explanation steps.
+We generate the explanation sequence as far as possible within a time limit of one hour. 
+The results for the  ``origin'' puzzle is shown in Figure~\ref{fig:exp2}.
+It shows the number of literals explained on the X-axis, and the cumulative time taken on the Y-axis. 
+Only three configurations find the full explanation sequence (note that there can be multiple optimal sequences with a different length, which explains the difference in length between the configurations).
+We  see that the best non-constrained implementation is unable to explain all of the literals within the time limit; especially around step 95 there is a big jump in runtime. The vanilla constrained-OUS approach is not able to finish in time either, with big jumps in time on specific (large and costly) explanation steps.
 
 When combining constrained-OUS with either pre-seeding, post-poned optimisation or both, then our approach is able to fully explain the solution. Best results are obtained with constrained-OUS with just pre-seeding at the beginning. The post-poned optimisation in this case may spent a lot of time generating MCSs that are not or little relevant to the constrained OUSs we are seeking. 
 
@@ -156,8 +156,8 @@ When combining constrained-OUS with either pre-seeding, post-poned optimisation 
 While a direct comparison of the runtime needed to find an explanation sequence of our tool versus the one of \citep{ecai/BogaertsGCG20} %built on the IDP system \cite{WarrenBook/DeCatBBD14} 
 would shed more light on the performance impact, we can not do a fair comparison as the solvers and hardware used are different.
 
-However, the authors reported that explaining a single puzzle easily takes one to two hours due to the many MUS calls. In contrast, Figure~\ref{fig:exp2} shows that three of our constrained-OMUS approaches are able to fully explain a puzzle one of their larger puzzles in 20 to 30 minutes.
-Furthermore, our algorithms provide a guarantee that each explanation step is \emph{optimal} with respect to $f$. As such we know that the generated sequences are at least as good for the cost function provided.
+However, the authors reported that explaining a single puzzle easily takes one to two hours due to the many MUS calls. In contrast, Figure~\ref{fig:exp2} shows that three of our constrained-OMUS approaches fully explain a puzzle one of their larger puzzles in 20 to 30 minutes.
+Furthermore, our algorithms guarantee that each explanation step is \emph{optimal} with respect to $f$. As such we know that the generated sequences are at least as good for the cost function provided.
 
 % do not include such an extensive experiment here since it would not be a fair comparison of the underlying algorithms. Indeed, different solving technology is used for finding MUSs, and satisfying assignments. 
 %We can, however, give an indication of the speed by mentioning that in some preliminary experiments (e.g., on the origin puzzle), using constrained \omus calls, we can find the entire sequence in roughly 20 minutes, whereas the IDP-based tool takes over two hours.

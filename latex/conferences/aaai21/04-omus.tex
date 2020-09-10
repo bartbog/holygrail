@@ -70,7 +70,7 @@ It makes use of a procedure \ohs that computes an optimal (with respect to $f$) 
 We take inspiration from the \hitsetbased~solving techniques for cardinality-minimal MUSs \cite{ignatiev2015smallest}, but rather use a MIP solver to compute the optimal hitting set as done for MaxSAT solving~\cite{DBLP:conf/sat/DaviesB13}.
 Whenever such a hitting set is found, a \sat-call checks whether the result is satisfiable. If it is not, \cref{prop:K} guarantees that the result is an OUS. 
 If it is, we know that the hitting set is a satisfiable subset. We now compute a correction set that is not hit by the found hitting set.
-As is common, we first use a procedure \grow to extend the hitting set to a set $\formula''$ with $\formula'\subseteq \formula''\subseteq\formula$ such that $\formula''$ is still satisfiable. Since the complement of a satisfiable subset is a correction set, $\formula \setminus \formula''$ is added to $\m{H}$, our set of correction subsets of \formula.
+While the complement of this set is a correction set, it is common to  first use a procedure \grow to extend the hitting set to a larger satisfiable subset, the complement of which is then added to $\m{H}$, our set of stored correction subsets of \formula.
 
 % 
 % \todo{beter uitleggen. Nog niet zo duidelijk. Ook niet zeker of dit op deze moment echt van belang is.}
@@ -87,7 +87,7 @@ As is common, we first use a procedure \grow to extend the hitting set to a set 
   \DontPrintSemicolon
   $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   \While{true}{
-    $\F' \gets \ohs(\setstohit,f) $ \label{smus-hs} \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    $\F' \gets \ohs(\setstohit,f) $ \label{smus-hs}\label{hs:omus} \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
 % f{optimal} solution}
     % \tcp{\small set with all unique clauses from hitting set}
 %     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
@@ -106,9 +106,10 @@ As is common, we first use a procedure \grow to extend the hitting set to a set 
 \end{algorithm}
 
 \paragraph{Postponing optimization to speed up OUS solving}
-\citet{davies} demonstrated that in the case of hitting-set based MaxSAT solving, much time was spent computing the optimal hitting set. They proposed to post-pone calling the optimal hitting set solver, and instead first use a greedy hitting set method and then try to incrementally grow the hitting set by adding the smallest element according to $f$ of the newest added MCS, until the hitting sets found by those are SAT (in our case, UNSAT). Only then call the optimal hitting set method.
+\citet{davies} demonstrated that in the case of hitting-set based MaxSAT solving, much time was spent computing the optimal hitting set. They proposed to post-pone calling the optimal hitting set solver, and instead first use a greedy hitting set method or incrementally grow the hitting set by adding the smallest element of the latest added MCS. 
+In case such a possibly non-optimal hitting set corresponds to an unsatisfiable subset, this does \ref{prop:K2} no longer guarantees that the result is indeed optimal. Only then do they call the optimal hitting set method.
 
-We can similarly speed up our OUS computation. This amounts to adding the following code a the start of the \textbf{while} loop, just before line $3$:
+We can similarly speed up our OUS computation. This amounts to adding the contents of \cref{alg:postomus} at the start of the \textbf{while} loop, just before \cref{hs:omus}.
 \begin{algorithm}[ht]
 \While{true}{
     \While{$|\setstohit| > 0$}{
@@ -125,6 +126,7 @@ We can similarly speed up our OUS computation. This amounts to adding the follow
         }
         $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
 }
+\caption{Postponing hitting set optimization for OUS (to be inserted before \cref{hs:omus} of \cref{alg:omus})}\label{alg:postomus}
 \end{algorithm}
 
 %\tias{I would add the 'delayed' extension here...}

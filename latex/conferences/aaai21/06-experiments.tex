@@ -4,14 +4,14 @@ In this section, we validate the gain in efficiency and quality of using the pro
 We consider the following benchmarks: CNF instances from the SATLIB problems Benchmark \cite{hoos2000satlib} and a CNF encoding of the logic grid puzzle used in~\cite{ecai/BogaertsGCG20}. All code was implemented in Python on top of %CPpy~\footnote{} and
 PySAT~\footnote{\url{https://pysathq.github.io}}. The MIP solver used is Gurobi 9.0 and when a MaxSAT solver is used it is RC2 as bundled with PySAT. Experiments were run on a Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0.
 
-Based on the theoretical findings of the previous sections, we aim to answer the following research questions:
+Based on the theoretical findings of the previous sections, we aim to answer the following questions:
 \begin{compactitem}
-\item RQ1: what is the effect of delaying propagation, incremental OUS solving and pre-seeding the MCSs when solving multiple variants of the same problem?
+\item RQ1: what is the effect of postponing optimal hitting set computation, of incremental OUS solving and of pre-seeding the MCSs when solving multiple variants of the same problem?
 \item RQ2: how do the different variants of \omus perform when explaining an elaborate constraint satisfaction problem?
 \item RQ3: how do the sequences found when using (constrained) \omus search compare to those found using a heurisic MUS approach?
 \end{compactitem}
 
-{\color{red}Terminology: 
+\ignore{\color{red}Terminology: 
 \begin{itemize}
   \item Postponing optimization = davies
   \item Incremental = Section 6
@@ -21,17 +21,11 @@ Based on the theoretical findings of the previous sections, we aim to answer the
 No ``delaying propagation''!}
 
 \paragraph{RQ1}
-To answer the first research question, we select 10 CNF instances from SATLIB problems Benchmark. We randomly choose a subset of 10 decision variables and maintain a fixed ordering among them, and then compare the following enhancements to the \omus algorithm: postponing optimization (+P), reusing subsets between \omus calls (+I), and pre-seeding grown $\m{SS}$s from every negated decision variable of the instance (+W). For example \omus+IPW characterises running the \omus algorithm postponing the optimization phase, with incrementality between the succesive calls, and warm starting with satisfiable subsets of the original CNF formula.
-The executions are set to timeout after 10 minutes, a limit fixed based on the results of experiment 2.
-
-The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance, the number of variables and the number of clauses respectively. 
-Only for instances 1, 2 and 3, is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the required time constraint.
-A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent growing $\m{SS}$s. For instances 1-3 executed without postponing optimization, 70\% of the time is spent growing, and for the remaining instances close to 100 \% of the time is spent growing.
-In particular, for executions involving postponing the calls (+P/+IP/+IPW) to the MIP solver, 90-100\% of the time is spent growing, while the remainder of the time is distributed between incremental and greedy computation of hitting sets.
-Finally, we conclude that the best configuration for generating explanation sequence is \omus+IPW, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed $\m{SS}$s.
+To answer the first research question, we use 10 CNF instances from the SATLIB Benchmark and randomly choose a subset of 10 decision variables. For each variant of the algorithm, we compute the OUS of the same 10 decision variables in the same order within a time limit of 10 minutes. We compare the following enhancements options to the basic \omus algorithm: postponing optimization (+P), incrementality by reusing satisfiable subsets between \omus calls (+I), and pre-seeding $\m{SS}$s from every negated decision variable of the instance (+W). Options can be combined, for example \omus+IPW characterises running the \omus algorithm postponing the optimization phase, with incrementality between the succesive calls, and warm starting with satisfiable subsets of the original CNF formula.
+%The executions are set to timeout after 10 minutes, a limit fixed based on the results of experiment 2.
 
 
-\begin{table*}[h!]
+\begin{table*}[t!]
     \centering
     \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
         \hline
@@ -53,6 +47,14 @@ Finally, we conclude that the best configuration for generating explanation sequ
         \caption{Comparison of \omus variants evaluated on CNF instances.}
         \label{table:experiment1}
 \end{table*}
+
+
+The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance\tias{please add the names}, the number of variables and the number of clauses respectively. 
+Only for instances 1, 2 and 3, is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the required time constraint.\tias{remove other ones, say that larger instances timed out in the text}
+A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent growing $\m{SS}$s\tias{in general or for warmstarting? This means that my 'implementation consideration' of using a MaxSat solver is cheap is not true...}. For instances 1-3 executed without postponing optimization, 70\% of the time is spent growing, and for the remaining instances close to 100 \% of the time is spent growing.
+In particular, for executions involving postponing the calls (+P/+IP/+IPW) to the MIP solver, 90-100\% of the time is spent growing, while the remainder of the time is distributed between incremental and greedy computation of hitting sets.
+Finally, we conclude that the best configuration for generating explanation sequence is \omus+IPW, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed $\m{SS}$s.
+
 
 % \begin{table*}[h!]
 %     \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
@@ -108,7 +110,7 @@ The second research question is how do the different variants perform when expla
     \label{fig:exp2}
 \end{figure}
 
-The figure shows the number of literals explained on the X-axis, and the cumulative time taken on the X-axis. 
+The figure shows the number of literals explained on the X-axis, and the cumulative time taken on the Y-axis. 
 We can see that OUS-Incremental with pre-seeding and post-poning optimisation is not able to explain all of the literals within the timeout; especially around step 95 there is a big jump in runtime. The vanilla constrained-OUS approach is not able to finish in time either, with big jumps in time on specific (hard) clues.
 
 When combining constrained-OUS with either pre-seeding, post-poned optimisation or both, then our approach is able to fully explain the solution. Best results are obtained with constrained-OUS with just pre-seeding at the beginning. The post-poned optimisation in this case may spent a lot of time generating MCSs that are not or little relevant to the constrained OUSs we are seeking.

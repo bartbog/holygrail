@@ -2,11 +2,11 @@
 We now experimentally validate the the performance of the different versions of our algorithms for explaining satisfiable constraint satisfaction problems.
 
 We consider the following benchmarks: CNF instances from the SATLIB problems Benchmark \cite{hoos2000satlib} and a CNF encoding of the logic grid puzzle ``Origin'' of \citet{ecai/BogaertsGCG20}. All code was implemented in Python on top of %CPpy~\footnote{} and
-PySAT~\footnote{\url{https://pysathq.github.io}}. The MIP solver used is Gurobi 9.0 and when a MaxSAT solver is used it is RC2 as bundled with PySAT. Experiments were run on a Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0.
+PySAT.\footnote{\url{https://pysathq.github.io}} The MIP solver used is Gurobi 9.0 and when a (Max)SAT solver is used it is RC2 as bundled with PySAT. Experiments were run on a Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb memory, running linux 4.15.0.
 
-Based on the theoretical findings of the previous sections, we aim to answer the following questions:
+Based on the theoretical findings of the previous sections, we aim to answer the following research questions:
 \begin{compactdesc}
-\item[RQ1] what is the effect of postponing optimal hitting set computation, of incremental OUS solving and of pre-seeding the MCSs when solving multiple variants of the same problem?
+\item[RQ1] what is the effect of postponing optimal hitting set computation, of incremental OUS solving and of pre-seeding \satsets when solving multiple variants of the same problem?
 \item[RQ2] how do the different variants of \omus perform when explaining an elaborate constraint satisfaction problem?
 \ignore{
 \item[RQ3] how do the sequences found when using (constrained) \omus search compare to those found using a heurisic MUS approach?
@@ -115,7 +115,7 @@ Finally, we conclude that within the short time limit provided, the best configu
 \paragraph{RQ2}
 The second research question is: how do the different variants perform when explaining an elaborate constraint satisfaction problem? For this, we tested the complete generation of an explanation sequence. 
 In this comparison, we expect that ``constrained'' versions of our algorithm perform best as they will allow performing an entire step of the explanations in a single solver call, rather than naively generating and checking. 
-For this reason, we here only include different variations on the constrained configuration and the single best variant of non-constrained algorithms found in the previous experiment. 
+For this reason, we only include different variations on the constrained configuration and the single best variant of non-constrained algorithms found in the previous experiment. 
 
 \begin{figure}[t]
     \centering
@@ -124,9 +124,9 @@ For this reason, we here only include different variations on the constrained co
     \label{fig:exp2}
 \end{figure}
 
-In our set-up, we generate the explanation sequence as far as possible withing a time limit of one hour. 
+In our set-up, we generate the explanation sequence as far as possible within a time limit of one hour. 
 The results for the logic grid puzzle called ``origin'' is shown in Figure~\ref{fig:exp2}.
-The figure shows the number of literals explained (hwo  on the X-axis, and the cumulative time taken on the Y-axis. 
+The figure shows the number of literals explained on the X-axis, and the cumulative time taken on the Y-axis. 
 Only three configurations are able to find the full explanation sequence (note that there can be multiple optimal sequences with a different length, which explains the difference in length between the configurations).
 We can see that OUS-Incremental with pre-seeding and post-poning optimisation is not able to explain all of the literals within the time limit; especially around step 95 there is a big jump in runtime. The vanilla constrained-OUS approach is not able to finish in time either, with big jumps in time on specific (large and costly) explanation steps.
 

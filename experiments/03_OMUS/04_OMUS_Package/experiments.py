@@ -3011,8 +3011,8 @@ def experiment3(sd, timeout):
 
     # print(maxPropagate(hard_clauses + soft_clauses))
     soft_weights = [100 for clause in bv_clues] + \
-              [50 for clause in bv_trans] + \
-              [20 for clause in bv_bij]
+              [5 for clause in bv_trans] + \
+              [5 for clause in bv_bij]
 
     unknown_facts = set()
     for rel in rels:

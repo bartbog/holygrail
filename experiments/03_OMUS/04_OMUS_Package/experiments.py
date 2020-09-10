@@ -3011,7 +3011,7 @@ def experiment3(sd, timeout):
 
     # print(maxPropagate(hard_clauses + soft_clauses))
     soft_weights = [100 for clause in bv_clues] + \
-              [100 for clause in bv_trans] + \
+              [50 for clause in bv_trans] + \
               [20 for clause in bv_bij]
 
     unknown_facts = set()
@@ -3216,11 +3216,11 @@ def parallelExperiment1():
 
 def main():
     sd = datetime.now()
-    parallelExperiment1()
+    # parallelExperiment1()
     # experiment1_OMUSIncrPostWarm()
     # experiment1(sd)
     # experiment2(sd, timeout=1*HOURS)
-    # experiment3(sd, timeout=None)
+    experiment3(sd, timeout=None)
 
 
 if __name__ == "__main__":

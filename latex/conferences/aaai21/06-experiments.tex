@@ -76,13 +76,12 @@ We compare the following enhancements options to the basic \omus algorithm: post
 % ------------------------------- EMILIO LOCK -----------------------------------------
 The results can be seen in Table \ref{table:experiment1} and can be summarized as follows: p, nv and nc represent the instance name, the number of variables and the number of clauses respectively. 
 Only for instances aim-50-1\_6-yes1-4, par8-2.cnf and zebra\_v155\_c1135.cnf, is the algorithm able to complete the search for \texttt{OUS}s on the 10 decision variables within the required time constraint of 10 minutes.
-All variants time out on the larger instances (par8-5, par16-1, par16-2, par16-3, par16-4-c, par16-4, hanoi4) finding the \texttt{OUS}s for up to 6 out of the 10 decision variables. \bart{MEER DETAIL}
-%\tias{remove other ones, say that larger instances timed out in the text}
-A further analysis of the overall execution times highlights that postponing the MIP call effectively redistributes the load to the greedy and incremental hitting set heuristic.
-For instances 
-A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent WE NEED TEXT HERE AFTER TEH RUNS ARE READY\todo{emilio}
-\tias{in general or for warmstarting? This means that my 'implementation consideration' of using a MaxSat solver is cheap is not true...}. For instances 1-3 executed without postponing optimization, \todo{ emilio}\% of the time is spent growing, and for the remaining instances close to \todo{ emilio} \% of the time is spent \todo{ emilio} .
-In particular, for executions involving postponing the calls (+P/+IP/+IPW) to the MIP solver, \todo{ emilio}\% of the time is spent growing, while the remainder of the time is distributed between incremental and greedy computation of hitting sets.
+For these instances, the overall winner is \emph{\omus+IPW}. 
+All variants time out on the larger instances (par8-5, par16-1, par16-2, par16-3, par16-4-c, par16-4, hanoi4) before finding the \texttt{OUS}s for all 10 decision variables. For instance par8-5, all variants are able to find 6 out of the 10 variables, but \emph{\omus+IPW} remains the fastest. Similar results are observed for the remaining instances for all variants par16-* and hanoi4 with the \omus found for only 1 variable.
+
+A further analysis of the overall execution times highlights that postponing the MIP call effectively redistributes 50\% of the load to the greedy and incremental hitting set heuristic .
+% A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent WE NEED TEXT HERE AFTER TEH RUNS ARE READY\todo{emilio}
+
 Finally, we conclude that within the short time limit provided, the best configuration for computing multiple related OUS's is \omus+IPW, taking advantage of the repeated calls to the OUS algorithm, thus reusing the computed \satsets.
 % ------------------------------- EMILIO LOCK -----------------------------------------
 
@@ -154,8 +153,8 @@ When combining constrained-OUS with either pre-seeding, post-poned optimisation 
 While a direct comparison of the runtime needed to find an explanation sequence of our tool versus the one of \citep{ecai/BogaertsGCG20} %built on the IDP system \cite{WarrenBook/DeCatBBD14} 
 would shed more light on the performance impact, we can not do a fair comparison as the solvers and hardware used are different.
 
-However, the authors reported that explaining a single puzzle easily takes one to two hours due to the many MUS calls. In contrast, Figure~\ref{fig:exp2} shows that three of our constrained-OMUS approaches are able to fully explain a puzzle in 20 to 30 minutes.
-Furthermore, our algorithms provide a guarantee that each explanation step is \emph{optimal} with respect to $f$, as such we know that the generated sequences are at least as good for the cost function provided.
+However, the authors reported that explaining a single puzzle easily takes one to two hours due to the many MUS calls. In contrast, Figure~\ref{fig:exp2} shows that three of our constrained-OMUS approaches are able to fully explain a puzzle one of their larger puzzles in 20 to 30 minutes.
+Furthermore, our algorithms provide a guarantee that each explanation step is \emph{optimal} with respect to $f$. As such we know that the generated sequences are at least as good for the cost function provided.
 
 % do not include such an extensive experiment here since it would not be a fair comparison of the underlying algorithms. Indeed, different solving technology is used for finding MUSs, and satisfying assignments. 
 %We can, however, give an indication of the speed by mentioning that in some preliminary experiments (e.g., on the origin puzzle), using constrained \omus calls, we can find the entire sequence in roughly 20 minutes, whereas the IDP-based tool takes over two hours.

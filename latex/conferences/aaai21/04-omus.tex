@@ -64,12 +64,12 @@ To find an OUS, there is no need to explicitly enumerate all MCSes of \formula. 
 % \end{proposition}
 
 
-We are now ready to present our basic OUS algorithm in \cref{alg:omus}. 
+We now present our basic OUS algorithm in \cref{alg:omus}. 
 The algorithm keeps track of a set $\m{H}$ of (minimal) correction subsets of $\formula$. 
-It makes use of a procedure \ohs that computes an optimal (with respect to $f$) hitting set $\formula'$  of a given set of subsets of \formula. 
+It makes use of a procedure \ohs that computes an $f$-optimal  hitting set $\formula'$  of \setstohit. 
 We take inspiration from the \hitsetbased~solving techniques for cardinality-minimal MUSs \cite{ignatiev2015smallest}, but rather use a MIP solver to compute the optimal hitting set as done for \maxsat solving~\cite{DBLP:conf/sat/DaviesB13}.
 Whenever such a hitting set is found, a \sat-call checks whether the result is satisfiable. If it is not, \cref{prop:K} guarantees that the result is an OUS. 
-If the hitting set does correspond to a satisfiable subset, we know its complement is a correction set. 
+If it is satisfiable, we know its complement is a correction set. 
 Instead of simply adding it to $\m{H}$, it is common to  first use a procedure \grow (for details on this, see \cite{ignatiev2015smallest}) to extend the hitting set to a larger satisfiable subset, the complement of which is then added to $\m{H}$, our set of stored correction subsets of \formula.
 
 % 

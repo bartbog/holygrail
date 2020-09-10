@@ -7,7 +7,7 @@ We will use \formulac to denote the constraint satisfaction problem (a CNF formu
 
 The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by a cost function $f$. 
 An explanation step is an implication $I' \wedge \formulac' \implies l$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formulate $\formulac$ and $l$ is a set of literals from the cautious consequence which is not yet explained.
-To obtain a sequence of such steps, we iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$. A high-level algorithm is shown in Algorithm~\ref{alg:explainCSP}; details of optimalPropagate() can be found in~\cite{ecai/BogaertsGCG20}.
+To obtain a sequence of such steps, we iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$. A high-level algorithm is shown in Algorithm~\ref{alg:explainCSP}; details of the optimalPropagate() routine that computes the cautious consequence can be found in~\cite{ecai/BogaertsGCG20}.
 
 \begin{algorithm}[ht]
   \caption{$\call{ExplainCSP}(\formulac,f)$}
@@ -45,7 +45,7 @@ $X_{best} \gets \{{\cal C} \land I \land \bar{I}_{end}\}$\;
 \cref{alg:bestStepOUS} depicts an OUS-based algorithm to find the next simplest explanation step in the sequence. 
 %Compared to the method proposed in \cite{ecai/BogaertsGCG20}, this is already a simplified one that uses a single OUS call to find a ``good'' explanation instead of multiple MUS calls to approximate the optimal OUSs. 
 Note that we write $\bar{I}_{end} = \{-l \ | \  l \in I_{end}\}$.
-In this algorithm, an OUS call is used to compute an explanation for each consequence $l$ of the combination of $\formulac$ and the assignment so far. 
+In this algorithm, an OUS call is used to compute an explanation for each candidate consequence $l$ using the combination of $\formulac$ and the assignment so far with $-l$. 
 It was shown that MUSs of $\formulac\land I\land\lnot l$ correspond to non-redundant explanations of $l$ in terms of $\formulac$ and $I$ and hence an OUS is a ``best'' explanation of $l$. 
 The loop in \cref{alg:bestStepOUS} serves to guarantee that at each point, the literal with the best explanation is selected. 
 

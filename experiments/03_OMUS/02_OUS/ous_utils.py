@@ -1,4 +1,10 @@
 import math
+import pprint
+from collections import Counter
+from gurobipy import GRB
+
+
+pp = pprint.PrettyPrinter(indent=4)
 
 
 class OusParams(object):
@@ -17,25 +23,48 @@ class OusParams(object):
         self.outputFile = ''
         self.timeout = None
 
+    def __repr__(self):
+        return {
+            'pre_seed': self.pre_seed,
+            'constrained': self.constrained,
+            "incremental": self.incremental,
+            'bounded': self.bounded,
+            'sort_lits': self.sort_lits,
+            'post_opt': self.post_opt,
+            'post_opt_incremental': self.post_opt_incremental,
+            'post_opt_greedy': self.post_opt_greedy,
+            'benchmark': self.benchmark,
+            'extension': self.extension,
+            'output': self.outputFile,
+            'timeout': self.timeout,
+        }
+
 
 class Clauses(object):
-    def __init__(self):
+    def __init__(self, constrainedOUS=True):
+        self.constrainedOUS = constrainedOUS
         self.__hard_clauses = []
         self.__soft_clauses = []
         self.__soft_weights = []
-        self.__all_soft_idxs = set()
-        self.nHardClauses = 0
-        self.nSoftClauses = 0
-        self.nAllClauses = 0
+        self.__all_lits = set()
+        self.__lits = set()
+        self.__Icnf = []
+        self.__notIcnf = []
+        self.derived = set()
+        self.__obj_weights = []
+        self.h_counter = Counter()
 
     def add_hardclauses(self, added_clauses):
-        self.__hard_clauses += added_clauses
-        self.nSoftClauses = len(self.__hard_clauses)
-
+        self.__hard_clauses += [frozenset(clause) for clause in added_clauses]
+        for clause in added_clauses:
+            self.__all_lits |= set(clause)
+            self.__lits |= set(abs(lit) for lit in clause)
+        
     def add_soft_clauses(self, added_clauses, added_weights=None, f=None):
-        self.__soft_clauses += added_clauses
-        self.nSoftClauses = len(self.__soft_clauses)
-        self.__all_soft_idxs
+        self.__soft_clauses += [frozenset(clause) for clause in added_clauses]
+        for clause in added_clauses:
+            self.__all_lits |= set(clause)
+            self.__lits |= set(abs(lit) for lit in clause)
 
         if added_weights is not None:
             self.__soft_weights += added_weights
@@ -44,17 +73,124 @@ class Clauses(object):
         else:
             raise "Weights/mapping f not provided"
 
-    @property
-    def all_soft_idxs(self): return self.hard_clauses + self.soft_clauses
+    def add_indicatorVars(self, weights):
+        self.h_counter = Counter()
+        indHard = []
+        indVars = set(i for i in range(self.nLits + 1, self.nLits + self.nHard + 1))
+
+        # update hard clauses with indicator variables
+        for clause, i in zip(self.__hard_clauses, indVars):
+            new_clause = set(clause) | {i}
+            indHard.append(frozenset(new_clause))
+            self.h_counter.update(list(new_clause))
+            self.h_counter.update([-i])
+
+        self.__hard_clauses = indHard
+
+        # add indicator variables to soft clauses
+        soft_inds = [frozenset({-i}) for i in indVars]
+
+        if weights is None:
+            self.add_soft_clauses(added_clauses=soft_inds, added_weights=[1 for _ in indVars])
+        else:
+            self.add_soft_clauses(added_clauses=soft_inds, added_weights=weights)
+
+        return indVars
+
+    def add_I(self, added_I):
+        for i in added_I:
+            self.__Icnf.append(frozenset({i}))
+            self.__notIcnf.append(frozenset({-i}))
+
+        if self.constrainedOUS:
+            # INFINITY because the knowledge is not derived yet
+            self.__obj_weights += [GRB.INFINITY for _ in added_I]
+            # 0 because we want to choose 1 of the neg lits for explanations
+            self.__obj_weights += [0 for _ in added_I]
 
     @property
-    def clauses(self): return self.hard_clauses + self.soft_clauses
+    def indicator_vars(self):
+        return self.__ind_vars
+
+    @property
+    def nLits(self):
+        return len(self.__lits)
+
+    @property
+    def all_lits(self):
+        """All -/+ literals appearing in the clauses."""
+        return set(self.__all_lits)
+
+    @property
+    def lits(self):
+        """All lits"""
+        return set(self.__lits)
+
+    @property
+    def nHard(self):
+        return len(self.__hard_clauses)
+
+    @property
+    def nSoft(self):
+        return len(self.__soft_clauses)
+
+    @property
+    def nDerived(self):
+        return len(self.derived)
+
+    @property
+    def nHardSoft(self):
+        return len(self.__soft_clauses) + len(self.__hard_clauses)
+
+    @property
+    def soft_clauses(self): return list(self.__soft_clauses)
+
+    @property
+    def all_soft_clauses(self):
+        return self.__soft_clauses + self.__Icnf + self.__notIcnf
+
+    @property
+    def obj_weights(self):
+        return self.__soft_weights + self.__obj_weights
+
+    @property
+    def update_obj_weights(self, addedI):
+        for i in addedI:
+            fi = frozenset({i})
+            posi = self.__Icnf.index(fi)
+            self.__obj_weights[posi] = 1
+
+            fnoti = frozenset({-i})
+            posnoti = self.__notIcnf.index(fnoti)
+            self.__obj_weights[posnoti] = GRB.INFINITY
+    
+    @property
+    def nCNFLits(self):
+        return len(self.__Icnf)
+
+    @property
+    def hard_clauses(self): return list(self.__hard_clauses)
 
     @property
     def soft_weights(self): return self.__soft_weights
 
     @property
-    def weights(self): return [math.inf for _ in self.__hard_clauses] + self.__soft_weights
+    def weights(self):
+        return [math.inf for _ in self.__hard_clauses] + self.__soft_weights
+
+    def __str__(self):
+        return f"""
+        Clauses:
+        \t  hard={self.__hard_clauses},
+        \t  soft={self.__soft_clauses},
+        \tw_soft={self.__soft_weights},
+        \t  lits={self.__lits},
+        \t  Icnf={self.__Icnf},
+        \t -Icnf={self.__notIcnf},
+        \t w_obj={self.__obj_weights}
+        \t cnter={self.h_counter}
+        \t
+        """
 
 
 class BenchmarkInfo(object):

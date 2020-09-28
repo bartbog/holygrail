@@ -3,47 +3,74 @@ from collections import Counter
 # Gurobi utilities
 import gurobipy as gp
 from gurobipy import GRB
+
 from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
+from pysat.examples.rc2 import RC2
 
 from ous_utils import BenchmarkInfo, Clauses, OusParams, Steps, Timings
 
 
 class OUS(object):
 
-    def __init__(self, logging=False, params=OusParams()):
+    def __init__(self, logging=False, params=OusParams(), clauses=Clauses(), fullI=None):
         self.params = params
         self.do_logging(logging)
-        self.__clauses = Clauses()
+        self.__clauses = clauses
         self.h_counter = Counter()
         self.SS = set()
         self.__satsolver = None
         self.grow_extension = None
-        self.f_cost = f_cost
+
+        if fullI is not None:
+            self.__clauses.add_I(fullI)
 
         if self.params.constrained:
-            self.opt_model = self.gurobi_cOUSModel()
+            self.gurobi_cOUSModel()
+
+    def __str__(self):
+        return f"""
+        params={str(self.params)},
+        clauses={str(self.__clauses)},
+        """
 
     @property
-    def clauses(self): return self.__clauses.clauses
+    def clauses(self): return self.__clauses.all_clauses
+
+    @property
+    def soft_clauses(self): return self.__clauses.soft_clauses
+
+    @property
+    def hard_clauses(self): return self.__clauses.hard_clauses
 
     @property
     def weights(self): return self.__clauses.weights
 
-    @property
-    def clauses_idxs(self): return self.__clauses.clause_idxs
-
     def add_hardClauses(self, added_clauses: list):
         self.__clauses.add_hardclauses(added_clauses)
-        if self.__satsolver is not None:
-            self.__satsolver.append_formula(added_clauses, no_return=False)
-        #TODO: add clasues to satsolver
 
     def add_softClauses(self, added_clauses: list, added_weights: list):
         self.__clauses.add_soft_clauses(added_clauses, added_weights)
-        if self.__satsolver is not None:
-            self.__satsolver.append_formula(added_clauses, no_return=False)
-        #TODO: add clasues to satsolver
+
+    def add_IndicatorVars(self, added_weights=None):
+        # if added_weights is None:
+        return self.__clauses.add_indicatorVars(added_weights)
+
+    def add_I(self, added_I):
+        self.__clauses.add_I(added_I, self.params.constrained)
+
+    def set_objective(self):
+        x = self.opt_model.getVars()
+
+        self.gurobi_cOUSModel.setObjective(gp.quicksum(x[i] * self.obj_weights[i] for i in range(self.nClauses)), GRB.MINIMIZE)
+
+    def add_derived_I(self, derived_I):
+        if self.params.constrained:
+            self.update_obj_weights(derived_I)
+            #TODO: set objective weights
+            self.set_objective()
+        else:
+            self.__clauses.add_derived_Icnf(derived_I)
 
     def do_logging(self, logging: bool = True):
         if logging:
@@ -54,6 +81,13 @@ class OUS(object):
         if use_sat:
             self.params.incremental_sat = True
             self.__satsolver = Solver()
+
+    @property
+    def nClauses(self):
+        if self.params.constrained:
+            return len(self.__clauses.all_soft_clauses)
+        else:
+            return self.__clauses.nSoft + self.__clauses.nDerived + 1
 
     def set_extension(self, ext: str = 'default'):
 
@@ -83,59 +117,52 @@ class OUS(object):
         raise "NotImplemented"
 
     def gurobi_optHS(self):
-        self.gurobi_model.optimize()
+        self.opt_model.optimize()
 
-        x = self.g_model.getVarByName("x")
+        x = self.opt_model.getVarByName("x")
         hs = set(i for i in self.clauses_idxs if x[i].x == 1)
 
         return hs
 
     def gurobi_OUSModel(self):
-        self.gurobi_model = gp.Model('MipOptimalHittingSet')
+        self.opt_model = gp.Model('OptHS')
 
         # model parameters
-        self.gurobi_model.Params.OutputFlag = 0
-        self.gurobi_model.Params.LogToConsole = 0
-        self.gurobi_model.Params.Threads = 1
+        self.opt_model.Params.OutputFlag = 0
+        self.opt_model.Params.LogToConsole = 0
+        self.opt_model.Params.Threads = 8
 
         #TODO add variables
         raise "NotImplemented"
 
     def gurobi_cOUSModel(self):
-        self.gurobi_model = gp.Model('MipOptimalHittingSet')
+        assert self.__clauses.nSoft + 2 * self.__clauses.nCNFLits == self.nClauses, "check nclauses"
+        assert len(self.__clauses.obj_weights) == self.nClauses, "#weights != #clauses"
+
+        self.opt_model = gp.Model('constrOptHS')
 
         # model parameters
-        self.gurobi_model.Params.OutputFlag = 0
-        self.gurobi_model.Params.LogToConsole = 0
-        self.gurobi_model.Params.Threads = 1
-
+        self.opt_model.Params.OutputFlag = 0
+        self.opt_model.Params.LogToConsole = 0
+        self.opt_model.Params.Threads = 8
         # update the model
-        #TODO add variables
-        # exactly one of the -literals
-        # vals = range(self.nSoftClauses + self.nLiterals, self.nClauses)
-        # self.g_model.addConstr(x[vals].sum() == 1)
-        raise "NotImplemented"
+        x = self.opt_model.addMVar(
+            shape=self.nClauses,
+            vtype=GRB.BINARY,
+            obj=self.__clauses.obj_weights,
+            name="x")
 
-        self.g_model.update()
+        # exactly one of the -literals
+        vals = range(self.__clauses.nSoft + self.__clauses.nCNFLits, self.nClauses)
+        self.opt_model.addConstr(x[vals].sum() == 1)
+
+        self.opt_model.update()
 
     def gurobi_addCorrectionSet(self, C):
-        x = self.g_model.getVarByName("x")
+        x = self.opt_model.getVarByName("x")
 
         # add new constraint sum x[j] * hij >= 1
-        self.gurobi_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
-
-    def gurobi_updObjWeights(self, I):
-        x = self.g_model.getVarByName("x")
-
-        # for i in I:
-            # i_idx = self.softClauseIdxs[frozenset({i})]
-            # self.obj_weights[i_idx] = 1
-
-            # not_i_idx = self.softClauseIdxs[frozenset({-i})]
-            # self.obj_weights[not_i_idx] = GRB.INFINITY
-
-        # self.g_model.setObjective(gp.quicksum(x[i] * self.obj_weights[i] for i in range(self.nClauses)), GRB.MINIMIZE)
-        raise "NotImplemented error"
+        self.opt_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
 
     def postpone_greedyHS(self, H):
         if len(H) == 0:
@@ -209,24 +236,32 @@ class OUS(object):
     def grow_default(self, f_prime, model):
         return f_prime, model
 
-    def grow_maxsat(self, f_prime, model):
-        raise "NotImplemented"
-        # wcnf = WCNF()
-        # wcnf.extend(self.hard_clauses)
-        # for i, clause in enumerate(self.clauses):
-        #     if i in f_prime:
-        #         wcnf.append(list(clause))
-        #     else:
-        #         wcnf.append(list(clause), weight=self.weights[i])
+    def grow_maxsat(self, hs_in, model):
         
-        # with RC2(wcnf) as rc2:
-        #     t_model = rc2.compute()
+        hs = set(hs_in) # take copy!!
+        mss_model = set(model)
 
-        # for i, clause in enumerate(self.clauses):
-        #     if i not in t_F_prime and len(clause.intersection(t_model)) > 0:
-        #         t_F_prime.add(i)
+        wcnf = WCNF()
+        wcnf.extend(self.hard_clauses)
 
-        # return t_F_prime, t_model
+        for i in hs:
+            clause = self.soft_clauses[i]
+            wcnf.append(list(clause))
+
+        for i, clause in enumerate(self.soft_clauses):
+            if i not in hs:
+                wcnf.append(list(clause), weight=self.weights[i])
+
+        with RC2(wcnf) as rc2:
+            t_model = rc2.compute()
+            if t_model is None:
+                return hs, model
+            # TODO: This might not be correct
+            for i, clause in enumerate(self.soft_clauses):
+                if i not in hs and len(clause.intersection(t_model)) > 0:
+                    hs.add(i)
+
+            return hs, t_model
 
     def OUS_grow(self, f_prime: set, model: set):
         grown_set, grown_model = self.grow_extension(f_prime, model)
@@ -281,14 +316,16 @@ class OUS(object):
 
         # record this as part of the object
         if not self.params.constrained:
-            self.gurobi_model = gurobi_OUSModel()
+            self.opt_model = self.gurobi_OUSModel()
 
         if self.params.incremental and self.params.constrained:
             SSofF = set()
             for S, model in self.SS:
                 S_F = S & F
+
                 if any(True if S_F.issubset(Sp) else False for Sp in SSofF):
                     continue
+
                 S_F, _ = self.grow(S_F, model)
                 C = F - S_F
                 H.append(C)
@@ -340,7 +377,7 @@ class OUS(object):
         if not self.params.constrained:
             self.h_counter = Counter()
             self.__satsolver.delete()
-            self.gurobi_model.dispose()
+            self.opt_model.dispose()
 
             if self.params.incremental:
                 self.cleanMSS()

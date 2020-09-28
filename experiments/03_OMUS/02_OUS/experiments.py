@@ -12,7 +12,7 @@ from pysat.solvers import Solver
 # omus imports
 from ous import OUS
 
-from ous_utils import OusParams
+from ous_utils import OusParams, Clauses
 
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 sys.path.append('/home/emilio/Documents/cppy_src/')
@@ -21,6 +21,8 @@ sys.path.append('/home/emilio/documents/cppy_mysrc/')
 # from cppy.solver_interfaces.pysat_tools import
 from cppy.model_tools import to_cnf
 from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
+
+from frietkot import frietKotProblem, simpleProblem
 
 
 from multiprocessing import Process
@@ -41,10 +43,12 @@ def runParallel(fn, args):
     for p in procs:
         p.join()
 
+
 def generate_weights(instance):
     clauses = CNF(from_file=instance).clauses
     weights = random.choices(list(range(5, 21)), k=len(clauses))
     return weights
+
 
 def checkSatFile(instance):
     cnf = CNF(from_file=instance)
@@ -63,7 +67,6 @@ def get_instances():
 
 def experiment1():
     today = date.today().strftime("%Y_%m_%d")
-    # now = datetime.now().strftime("%H_%M_%S")
     outputDir = 'data/experiment1/results/'+today + '/'
     filepath = Path(outputDir)
     filepath.mkdir(parents=True, exist_ok=True)
@@ -83,6 +86,7 @@ def experiment1():
 
     running_params = []
     for fpath, fname in sat_instances:
+        cnt = 0
         for incr in incrs:
             for constrained in constraineds:
                 for pre_seed in pre_seeds:
@@ -91,6 +95,7 @@ def experiment1():
                             for post_opt_incr in post_opt_incrs:
                                 for post_opt_greedy in post_opt_greedys:
                                     for bounded in boundeds:
+                                        outputFile = outputDir + fname.replace('.cnf','') + ".json"
                                         ousParam = OusParams()
                                         ousParam.pre_seed= pre_seed
                                         ousParam.constrained = constrained
@@ -99,17 +104,29 @@ def experiment1():
                                         ousParam.post_opt_incremental = post_opt_incr
                                         ousParam.post_opt_greedy = post_opt_greedy
                                         ousParam.bounded = bounded
-                                        running_params.append((ousParam, fpath, fname))
+                                        running_params.append((ousParam, fpath, fname, outputFile))
+                                        cnt += 1
     # print(running_params)
     runParallel(exp1_instance, running_params)
 
 
 def exp1_instance(args):
-    ousParam, fpath, fname = args
+    ousParam, fpath, fname, outputFile = args
     print("File:", fpath)
-    print("File:", fname)
+    print("File:", fname, outputFile)
 
 
+def main():
+    # experiment1()
+    cnf, facts = simpleProblem()
+    print(cnf)
+    # clauses = Clauses()
+    o = OUS()
+    o.add_hardClauses(cnf)
+    o.add_IndicatorVars()
+    print(o.hard_clauses)
+    print(o.soft_clauses)
+    # print(p)
 
-
-experiment1()
+if __name__ == "__main__":
+    main()

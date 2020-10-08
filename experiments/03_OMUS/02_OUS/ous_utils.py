@@ -3,14 +3,12 @@ import pprint
 from collections import Counter
 from gurobipy import GRB
 
-
 pp = pprint.PrettyPrinter(indent=4)
 
-
 class OusParams(object):
+
     def __init__(self):
         self.incremental = False
-        # self.incremental_sat = False
         self.pre_seed = False
         self.sort_lits = False
         self.constrained = False
@@ -19,7 +17,6 @@ class OusParams(object):
         self.post_opt_incremental = False
         self.post_opt_greedy = False
         self.benchmark = False
-        self.extension = ''
         self.outputFile = ''
         self.timeout = None
 
@@ -46,11 +43,13 @@ class Clauses(object):
         self.__hard_clauses = []
         self.__soft_clauses = []
         self.__soft_weights = []
+        self.__all_soft_clauses = []
+        self.__all_soft_idxs = set()
         self.__all_lits = set()
         self.__lits = set()
         self.__Icnf = []
         self.__notIcnf = []
-        self.derived = set()
+        self.derived_idxs = set()
         self.__obj_weights = []
         self.h_counter = Counter()
 
@@ -59,7 +58,7 @@ class Clauses(object):
         for clause in added_clauses:
             self.__all_lits |= set(clause)
             self.__lits |= set(abs(lit) for lit in clause)
-        
+
     def add_soft_clauses(self, added_clauses, added_weights=None, f=None):
         self.__soft_clauses += [frozenset(clause) for clause in added_clauses]
         for clause in added_clauses:
@@ -72,6 +71,9 @@ class Clauses(object):
             self.__soft_weights += [f(cl) for cl in added_clauses]
         else:
             raise "Weights/mapping f not provided"
+
+        self.__all_soft_clauses = self.__soft_clauses + self.__Icnf + self.__notIcnf
+        self.__all_soft_idxs = set(i for i in range(len(self.__all_soft_clauses)))
 
     def add_indicatorVars(self, weights):
         self.h_counter = Counter()
@@ -95,6 +97,9 @@ class Clauses(object):
         else:
             self.add_soft_clauses(added_clauses=soft_inds, added_weights=weights)
 
+        self.__all_soft_clauses = self.__soft_clauses + self.__Icnf + self.__notIcnf
+        self.__all_soft_idxs = set(i for i in range(len(self.__all_soft_clauses)))
+
         return indVars
 
     def add_I(self, added_I):
@@ -107,6 +112,9 @@ class Clauses(object):
             self.__obj_weights += [GRB.INFINITY for _ in added_I]
             # 0 because we want to choose 1 of the neg lits for explanations
             self.__obj_weights += [0 for _ in added_I]
+
+        self.__all_soft_clauses = self.__soft_clauses + self.__Icnf + self.__notIcnf
+        self.__all_soft_idxs = set(i for i in range(len(self.__all_soft_clauses)))
 
     @property
     def indicator_vars(self):
@@ -135,8 +143,12 @@ class Clauses(object):
         return len(self.__soft_clauses)
 
     @property
+    def nSoftI(self):
+        return len(self.__soft_weights) + len(self.__obj_weights)
+
+    @property
     def nDerived(self):
-        return len(self.derived)
+        return len(self.derived_idxs)
 
     @property
     def nHardSoft(self):
@@ -146,24 +158,57 @@ class Clauses(object):
     def soft_clauses(self): return list(self.__soft_clauses)
 
     @property
+    def derived_I_idxs(self):
+        return set(self.nSoft + i for i in range(self.derived_idxs))
+
+    @property
     def all_soft_clauses(self):
-        return self.__soft_clauses + self.__Icnf + self.__notIcnf
+        # if self.__all_soft_clauses
+        return list(self.__all_soft_clauses)
+
+    @property
+    def all_soft_weights(self):
+        return self.__soft_weights + [1 if i == 0 else i for i in self.__obj_weights]
+    
+    @property
+    def soft_idxs(self):
+        return set(i for i in range(self.nSoft))
+    
+    @property
+    def I_idxs(self):
+        return set(i for i in range(self.nSoft, self.nSoftI))
+
+    @property
+    def all_soft_clauses_idxs(self):
+        # soft + I_cnf_all + (- I_cnf_all)
+        return set(self.__all_soft_idxs)
+
+    @property
+    def soft_I_lit_clause_idxs(self):
+        # soft + I_cnf + (-lit)
+        n = self.nSoft + self.nDerived + 1
+        return set(i for i in range(n))
 
     @property
     def obj_weights(self):
         return self.__soft_weights + self.__obj_weights
 
-    @property
-    def update_obj_weights(self, addedI):
+    def add_derived_Icnf(self, addedI):
         for i in addedI:
             fi = frozenset({i})
-            posi = self.__Icnf.index(fi)
-            self.__obj_weights[posi] = 1
-
             fnoti = frozenset({-i})
+
+            posi = self.__Icnf.index(fi)
             posnoti = self.__notIcnf.index(fnoti)
-            self.__obj_weights[posnoti] = GRB.INFINITY
-    
+
+            self.derived_idxs.add(posi)
+            if self.constrainedOUS:
+                self.__obj_weights[posi] = 1
+                self.__obj_weights[len(self.__Icnf) + posnoti] = GRB.INFINITY
+
+    def lit_idx(self, lit):
+        return self.__Icnf.index(lit)
+
     @property
     def nCNFLits(self):
         return len(self.__Icnf)
@@ -181,12 +226,12 @@ class Clauses(object):
     def __str__(self):
         return f"""
         Clauses:
-        \t  hard={self.__hard_clauses},
-        \t  soft={self.__soft_clauses},
+        \t  hard={[list(cl) for cl in self.__hard_clauses]},
+        \t  soft={[list(cl) for cl in self.__soft_clauses]},
         \tw_soft={self.__soft_weights},
         \t  lits={self.__lits},
-        \t  Icnf={self.__Icnf},
-        \t -Icnf={self.__notIcnf},
+        \t  Icnf={[list(cl) for cl in self.__Icnf]},
+        \t -Icnf={[list(cl) for cl in self.__notIcnf]},
         \t w_obj={self.__obj_weights}
         \t cnter={self.h_counter}
         \t

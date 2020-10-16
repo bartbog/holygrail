@@ -209,6 +209,7 @@ class OUS(object):
         self.opt_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
 
     def postpone_greedyHS(self, H):
+        soft_weights = self.__clauses.all_soft_weights
         if len(H) == 0:
             return set()
 
@@ -219,8 +220,7 @@ class OUS(object):
         V = dict()  # for each element in H: which sets it is in
 
         for i, hi in enumerate(H):
-            # TODO: this needs to be checked!!
-            h = [e for e in hi if self.obj_weights[e] < 1e50]
+            h = [e for e in hi if soft_weights[e] < 1e50]
             # special case: only one element in the set, must be in hitting set
             if len(h) == 1:
                 C.add(next(iter(h)))
@@ -234,7 +234,7 @@ class OUS(object):
         for c in C:
             if c in V:
                 del V[c]
-        
+
         while len(V) > 0:
             # special case, one element left
             if len(V) == 1:
@@ -249,7 +249,7 @@ class OUS(object):
                 # OMUS : find set of unsatisfiable clauses in hitting set with least total cost
                 # => get the clause with the most coverage but with the least total weight
                 # print(c_covers, weights)
-                (c, cover) = min(c_covers, key=lambda tpl: self.obj_weights[tpl[0]])
+                (c, cover) = min(c_covers, key=lambda tpl: soft_weights[tpl[0]])
 
             del V[c]
             C.add(c)
@@ -301,50 +301,57 @@ class OUS(object):
         return grown_set, grown_model
 
     def postponeOpt(self, H, C, Fp):
-        F = self.clauses_idxs
+        soft_weights = self.__clauses.all_soft_weights
+        F = self.clause_idxs
         print(self.h_counter)
+
         if C is None:
             return H
 
         while(True):
-            while (H > set() and self.params.post_opt_incremental):
-                Csoft = C&(self.soft_idxs)
-                Crest = 
+            while (len(H) > 0 and self.params.post_opt_incremental):
+                Csoft = C & (self.soft_idxs)
+                Crest = C - Csoft
+
+                if len(Csoft) == 0:
+                    c = max(self.soft_idxs, key=lambda i: self.h_counter[i])
+                else:
+                    c = min(Crest, key=lambda i: soft_weights[i])
 
                 # add sets-to-hit incrementally until unsat then continue with optimal method
                 # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
                 # then hs + any element of 'C' is a valid hitting set of CC + C
                 # choose element from C with smallest weight
-                c = min(C, key=lambda i: self.weights[i])
-                # find all elements with smallest weight
-                m = [ci for ci in C if self.weights[ci] == self.weights[c]]
-                # choose clause with smallest weight appearing most in H
-                # TODO: can be problem here, because we might need to ignore some of the literals
-                c_best = max(m, key=lambda ci: self.h_counter[ci])
-                Fp.add(c_best)
+                # c = min(C, key=lambda i: self.weights[i])
+                # # find all elements with smallest weight
+                # m = [ci for ci in C if self.weights[ci] == self.weights[c]]
+                # # choose clause with smallest weight appearing most in H
+                # # TODO: can be problem here, because we might need to ignore some of the literals
+                # c_best = max(m, key=lambda ci: self.h_counter[ci])
+                Fp.add(c)
 
                 sat, model = self.checkSat(Fp)
 
                 if not sat:
                     break
-                C = F - self.grow(Fp, model)
+
+                Fpp, Fpp_model = self.grow(Fp, model)
+                C = F - Fpp
                 H.append(C)
-                self.h_counter.update(l)
-                self.gurobiAddCorrectionSet(C)
+                self.gurobi_addCorrectionSet(C)
                 self.h_counter.update(list(C))
 
             if(not self.params.post_opt_greedy):
                 break
 
-            Fp = self.GreedyHS()
+            Fp = self.postpone_greedyHS(H)
             sat, model = self.checkSat(Fp)
 
             if not sat:
                 break
 
             H.append(C)
-
-            self.gurobiAddCorrectionSet(C)
+            self.gurobi_addCorrectionSet(C)
             self.h_counter.update(list(C))
         return H
 
@@ -400,16 +407,12 @@ class OUS(object):
                 self.h_counter.update(list(C))
                 SSofF.add(S_F)
 
-        print(self.obj_weights)
         while(True):
             if best_cost is not None and best_cost < self.cost(Fp):
                 return None, None, self.cost(Fp)
 
             if self.params.post_opt:
                 H = self.postponeOpt(H, C, Fp)
-                print(self.h_counter)
-                print(C)
-                print(Fp)
 
             # compute optimal hitting set
             Fp = self.optHS()
@@ -420,7 +423,6 @@ class OUS(object):
             # OUS
             if not sat:
                 self.clean()
-                print(Fp)
                 return Fp, [self.__clauses.all_soft_clauses[idx] for idx in Fp], self.cost(Fp)
 
             # grow satisfiable set into (maximally) satisfiable subset

@@ -122,9 +122,9 @@ def test_explain():
     params.pre_seed = False
     params.sort_lits = False
     params.bounded = False
-    params.post_opt = True
-    params.post_opt_incremental = False
-    params.post_opt_greedy = False
+    params.post_opt = False
+    params.post_opt_incremental = True
+    params.post_opt_greedy = True
     params.extension = 'maxsat'
 
     cnf, facts = simpleProblem()

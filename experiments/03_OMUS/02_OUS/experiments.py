@@ -24,14 +24,12 @@ from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
 
 from frietkot import frietKotProblem, simpleProblem
 
-
 from multiprocessing import Process
 
 SECONDS = 1
 MINUTES = 60 * SECONDS
 HOURS = 60 * MINUTES
 TIMEOUT_EXP1 = 10 * MINUTES
-
 
 def runParallel(fn, args):
     procs = []

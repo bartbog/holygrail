@@ -8,7 +8,7 @@ from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
 from pysat.examples.rc2 import RC2
 
-from ous_utils import BenchmarkInfo, Clauses, OusParams, Steps, Timings
+from ous_utils import BenchmarkInfo, Clauses, OusParams, Steps, Timings, profile
 
 
 class OUS(object):
@@ -275,7 +275,7 @@ class OUS(object):
         wcnf.extend(self.hard_clauses)
         soft_clauses = self.__clauses.all_soft_clauses
         soft_weights = self.__clauses.all_soft_weights
-        
+
         for i in hs:
             clause = soft_clauses[i]
             wcnf.append(list(clause))
@@ -373,6 +373,7 @@ class OUS(object):
             model = self.__satsolver.get_model()
             return solved, model
 
+        print("creating new solver")
         with Solver() as s:
             s.append_formula(self.clauses, no_return=False)
             solved = s.solve(assumptions=assumptions)
@@ -422,7 +423,7 @@ class OUS(object):
 
             # OUS
             if not sat:
-                self.clean()
+                self.cleanOUS()
                 return Fp, [self.__clauses.all_soft_clauses[idx] for idx in Fp], self.cost(Fp)
 
             # grow satisfiable set into (maximally) satisfiable subset
@@ -451,11 +452,16 @@ class OUS(object):
                 keep.add((m1, m1_model))
         self.SS = keep
 
-    def clean(self):
-        if not self.params.constrained:
-            self.h_counter = Counter()
-            self.__satsolver.delete()
-            self.opt_model.dispose()
+    def cleanOUS(self):
+        self.h_counter = Counter()
+        # self.__satsolver.delete()
 
-            if self.params.incremental:
-                self.cleanMSS()
+        if self.params.incremental and not self.params.contrained:
+            self.cleanMSS()
+
+    def clean(self):
+        self.__satsolver.delete()
+        self.opt_model.dispose()
+
+        self.__clauses.clean()
+        del self.__clauses

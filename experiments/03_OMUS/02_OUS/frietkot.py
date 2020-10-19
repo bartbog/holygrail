@@ -165,8 +165,14 @@ def frietKotProblem():
     Luc = ~mayo | samurai
 
     allwishes = [Nora, Leander, Benjamin, Behrouz, Guy, Daan, Celine, Anton, Danny, Luc]
+    cnf = cnf_to_pysat(allwishes)
+    explainable_facts = {
+        mayo.name+1:"mayo", 
+        ketchup.name+1:"ketchup", 
+        andalouse.name+1:"andalouse", 
+        curry.name+1:"curry", 
+        samurai.name+1:"samurai"}
 
-    # model = Model(allwishes)
-    # print(model)
-    return allwishes
+
+    return cnf, explainable_facts.keys(), explainable_facts.values()
 

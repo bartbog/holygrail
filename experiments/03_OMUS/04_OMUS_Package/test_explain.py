@@ -6,10 +6,11 @@ import pandas as pd
 
 # csp explanations
 
-from csp_explain import omusExplain, maxPropagate, optimalPropagate
+from csp_explain import omusExplain, omusExplain2, maxPropagate, optimalPropagate
 
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 sys.path.append('/home/emilio/Documents/cppy_src/')
+sys.path.append('/home/emilio/documents/cppy_mysrc/')
 from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
 # from cppy.solver_interfaces.pysat_tools import 
 from cppy.model_tools.to_cnf import *
@@ -509,16 +510,16 @@ def frietKotProblem():
     (mayo, ketchup, curry, andalouse, samurai) = BoolVar(5)
 
 
-    Nora = mayo | ketchup
-    Leander = ~samurai | mayo
-    Benjamin = ~andalouse | ~curry | ~samurai
-    Behrouz = ketchup | curry | andalouse
-    Guy = ~ketchup | curry | andalouse
-    Daan = ~ketchup | ~curry | andalouse
-    Celine = ~samurai
-    Anton = mayo | ~curry | ~andalouse
-    Danny = ~mayo | ketchup | andalouse | samurai
-    Luc = ~mayo | samurai
+    Nora = mayo | ketchup # 0
+    Leander = ~samurai | mayo # 1
+    Benjamin = ~andalouse | ~curry | ~samurai # 2
+    Behrouz = ketchup | curry | andalouse # 3
+    Guy = ~ketchup | curry | andalouse # 4
+    Daan = ~ketchup | ~curry | andalouse # 5
+    Celine = ~samurai # 6
+    Anton = mayo | ~curry | ~andalouse # 7
+    Danny = ~mayo | ketchup | andalouse | samurai # 8
+    Luc = ~mayo | samurai # 9
 
     allwishes = [Nora, Leander, Benjamin, Behrouz, Guy, Daan, Celine, Anton, Danny, Luc]
 
@@ -707,7 +708,7 @@ def test_MSSes():
     frozen_cnf = [frozenset(c) for c in cnf]
     seq = omusExplain(frozen_cnf, weights=[len(c) for c in cnf], parameters=parameters, incremental=True)
 
-def explain_p5(parameters={'extension': 'greedy_no_param','output': 'log.json'}, 
+def explain_p5(parameters={'extension': 'greedy_hardsoft','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
     (clues, trans, bij), (bv_clues, bv_trans, bv_bij), relations  = p5()
@@ -768,36 +769,83 @@ def explain_origin(parameters={'extension': 'maxsat','output': 'log.json'},
     hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
     soft_clauses = []
     soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
     soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
+    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
 
     # print(maxPropagate(hard_clauses + soft_clauses))
-
     weights = [20 for clause in bv_clues] + \
               [5 for clause in bv_trans] + \
               [5 for clause in bv_bij]
 
     explainable_facts = set()
     for rel in rels:
-        print(rel.df)
+        # print(rel.df)
         for item in rel.df.values:
             explainable_facts |= set(i.name+1 for i in item)
+    # print(soft_clauses)
 
-    o, expl_seq = omusExplain(
+    idx_clues=set(i for i in range(len(bv_clues)))
+    idx_bij=set(i for i in range(len(bv_clues), len(bv_clues)+len(bv_bij)))
+    idx_trans=set(i for i in range(len(bv_clues)+len(bv_bij), len(bv_clues)+len(bv_bij)+len(bv_trans)))
+    print(len(idx_clues))
+    print(len(idx_bij))
+    print(len(idx_trans))
+
+
+    o, expl_seq = omusExplain2(
+        hard_clauses=hard_clauses,
+        soft_clauses=soft_clauses,
+        soft_weights=weights,
+        # bv=bv,
+        parameters=parameters,
+        # incremental=True,
+        reuse_mss=False,
+        unknown_facts=explainable_facts,
+        constrained=True,
+        clues=idx_clues,
+        bij=idx_bij, 
+        trans=idx_trans
+    )
+
+    #o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
+    #del o
+
+
+def explain_constrained_omus():
+    parameters={'extension': 'maxsat','output': 'log.json'}
+    (mayo, ketchup, andalouse) = BoolVar(3)
+
+    c0 = mayo
+    c1 = ~mayo | ~andalouse | ketchup
+    c2 = ~mayo | andalouse | ketchup
+    c3 = ~ketchup | ~andalouse
+    #c4 = mayo
+    #c5 = ketchup
+    #c6 = -andalouse
+    #c7 = -mayo
+    #c8 = -ketchup
+    #c9 = andalouse
+    
+    constraints = [c0, c1, c2, c3]
+    cnf = cnf_to_pysat(constraints)
+    # print(cnf)
+    explainable_facts = set({mayo.name+1, ketchup.name+1, andalouse.name+1})
+    weights = [20, 20, 20, 20]
+    hard_clauses=list()
+    soft_clauses=[frozenset(clause) for clause in cnf]
+    
+    o, expl_seq = omusExplain2(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
         soft_weights=weights,
         parameters=parameters,
-        incremental=True,
-        bv= set(bv.name+1 for bv in bv_clues + bv_trans + bv_bij),
-        reuse_mss=True,
-        unknown_facts=explainable_facts
+        reuse_mss=False,
+        unknown_facts=explainable_facts,
+        seed_mss=True,
+        constrained=True
     )
 
-    o.export_results('results/puzzles/origin/', today + "_" + now + ".json")
-    del o
-
-def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.json'}, 
+def explain_frietkot(parameters={'extension': 'maxsat','output': 'log.json'}, 
                    incremental=True, 
                    reuse_mss=True):
     from datetime import date, datetime
@@ -810,32 +858,37 @@ def explain_frietkot(parameters={'extension': 'greedy_vertical','output': 'log.j
     cnf = cnf_to_pysat(to_cnf(constraints)) 
     bv = set(bv.name+1 for bv in bv_constraints)
 
-    weights = [2, 2, 3, 3, 3, 3,1, 3, 4, 2]
+    weights = [2, 2, 3, 3, 3, 3, 1, 3, 4, 2]
 
     # cnf = cnf_to_pysat(cppy_model.constraints)
     hard_clauses = [frozenset(c) for c in cnf]
     soft_clauses=[frozenset({bv.name + 1}) for bv in bv_constraints]
     explainable_facts = set(bv.name + 1 for bv in unknown_facts)
-    
-    o, expl_seq = omusExplain(
+
+    o, expl_seq = omusExplain2(
         hard_clauses=hard_clauses,
         soft_clauses=soft_clauses,
         soft_weights=weights,
-        bv=bv,
+        # bv=bv,
         parameters=parameters,
-        incremental=True,
-        reuse_mss=True,
-        unknown_facts=explainable_facts
+        # incremental=True,
+        reuse_mss=False,
+        unknown_facts=explainable_facts,
+        constrained=True
     )
 
-    # o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
+    #o.export_results('results/puzzles/frietkot/', today + "_" + now + ".json")
     del o
 
 if __name__ == "__main__":
-    print("-------------------")
-    print("Explaining FRIETKOT")
-    print("-------------------\n")
-    explain_frietkot()
+    # print("-------------------")
+    # print("Explaining constrained OMUS")
+    # print("-------------------\n")
+    # explain_constrained_omus()
+    # print("-------------------")
+    # print("Explaining FRIETKOT")
+    # print("-------------------\n")
+    # explain_frietkot()
     print("\n\n-------------------")
     print("Explaining ORIGIN")
     print("-------------------\n")

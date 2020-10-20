@@ -79,7 +79,7 @@ class OUS(object):
         if self.params.constrained:
             return self.__clauses.I_idxs
         else:
-            return self.__clauses.der| self.__clauses.lit_idx(self.lit)
+            raise NotImplementedError()
 
     @property
     def nClauses(self):
@@ -114,8 +114,6 @@ class OUS(object):
         # print("Derived i:", derived_I)
         self.__clauses.add_derived_Icnf(derived_I)
         if self.params.constrained:
-            # self.__clauses.update_obj_weights(derived_I)
-            #TODO: set objective weights
             self.gurobi_set_objective()
 
     def gurobi_set_objective(self):
@@ -199,6 +197,10 @@ class OUS(object):
         vals = range(self.__clauses.nSoft + self.__clauses.nCNFLits, self.nClauses)
         self.opt_model.addConstr(x[vals].sum() == 1)
 
+        # at least one of the soft clauses
+        vals2 = range(self.__clauses.nSoft)
+        self.opt_model.addConstr(x[vals2].sum() >= 1)
+
         self.opt_model.update()
 
     def gurobi_addCorrectionSet(self, C):
@@ -220,7 +222,7 @@ class OUS(object):
         V = dict()  # for each element in H: which sets it is in
 
         for i, hi in enumerate(H):
-            h = [e for e in hi if soft_weights[e] < 1e50]
+            h = [e for e in hi if soft_weights[e] < GRB.INFINITY]
             # special case: only one element in the set, must be in hitting set
             if len(h) == 1:
                 C.add(next(iter(h)))
@@ -230,6 +232,7 @@ class OUS(object):
                         V[e] = set([i])
                     else:
                         V[e].add(i)
+
         # special cases, remove from V so they are not picked again
         for c in C:
             if c in V:
@@ -269,20 +272,22 @@ class OUS(object):
 
     def grow_maxsat(self, hs_in, model):
         hs = set(hs_in) # take copy!!
-        # mss_model = set(model)
 
         wcnf = WCNF()
         wcnf.extend(self.hard_clauses)
         soft_clauses = self.__clauses.all_soft_clauses
         soft_weights = self.__clauses.all_soft_weights
 
-        for i in hs:
-            clause = soft_clauses[i]
-            wcnf.append(list(clause))
+        # for i in hs:
+        #     clause = soft_clauses[i]
+        wcnf.extend([list(soft_clauses[i]) for i in hs])
+        wcnf.extend(
+            [list(clause) for i, clause in enumerate(soft_clauses) if i not in hs],
+            [soft_weights[i] for i in range(len(soft_clauses)) if i not in hs])
 
-        for i, clause in enumerate(soft_clauses):
-            if i not in hs:
-                wcnf.append(list(clause), weight=soft_weights[i])
+        # for i, clause in enumerate(soft_clauses):
+        #     if i not in hs:
+        #         wcnf.append(list(clause), weight=soft_weights[i])
 
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()
@@ -363,12 +368,12 @@ class OUS(object):
                 all_soft = self.__clauses.all_soft_clauses
                 for i in assumptions:
                     cl = all_soft[i]
-                    if len(cl) == 1:
-                        # print(next(iter(cl)))
-                        polarities.append(next(iter(cl)))
+                    # if len(cl) == 1:
+                    # print(next(iter(cl)))
+                    polarities.append(next(iter(cl)))
             else:
                 raise NotImplementedError("Checksat not constrained not implemented")
-            # self.__satsolver.set_phases(literals=polarities)
+
             solved = self.__satsolver.solve(assumptions=polarities)
             model = self.__satsolver.get_model()
             return solved, model
@@ -383,6 +388,7 @@ class OUS(object):
     def optHS(self):
         return self.gurobi_optHS()
 
+    # @profile(sort_by='cumulative', lines_to_print=None, strip_dirs=True)
     def OUS(self, best_cost=None, lit=None):
         assert self.params.constrained == self.__clauses.constrainedOUS, "Parameters must be equal."
         F = self.clause_idxs
@@ -391,23 +397,24 @@ class OUS(object):
         # record this as part of the object
         if not self.params.constrained:
             assert lit is not None, "Lit not given for OUS"
-            self.opt_model = self.gurobi_OUSModel()
+            self.gurobi_OUSModel()
             self.lit = frozenset({lit})
 
-        if self.params.incremental and not self.params.constrained:
-            SSofF = set()
-            for S, model in self.SS:
-                S_F = S & F
+            if self.params.incremental:
+                SSofF = set()
+                for S, model in self.SS:
+                    S_F = S & F
 
-                if any(True if S_F.issubset(Sp) else False for Sp in SSofF):
-                    continue
+                    if any(True if S_F.issubset(Sp) else False for Sp in SSofF):
+                        continue
 
-                S_F, _ = self.grow(S_F, model)
-                C = F - S_F
-                H.append(C)
-                self.h_counter.update(list(C))
-                SSofF.add(S_F)
-
+                    S_F, _ = self.grow(S_F, model)
+                    C = F - S_F
+                    H.append(C)
+                    self.h_counter.update(list(C))
+                    SSofF.add(S_F)
+        # print(self.checkSat([0, 232]))
+        # return
         while(True):
             if best_cost is not None and best_cost < self.cost(Fp):
                 return None, None, self.cost(Fp)
@@ -417,20 +424,19 @@ class OUS(object):
 
             # compute optimal hitting set
             Fp = self.optHS()
+            # print(Fp, ":", [set(self.__clauses.all_soft_clauses[idx]) for idx in Fp])
 
             # check satisfiability of the hitting set
             sat, model = self.checkSat(Fp)
 
             # OUS
             if not sat:
+                # print(Fp, [self.__clauses.all_soft_clauses[idx] for idx in Fp])
                 self.cleanOUS()
                 return Fp, [self.__clauses.all_soft_clauses[idx] for idx in Fp], self.cost(Fp)
 
             # grow satisfiable set into (maximally) satisfiable subset
             Fpp, Fpp_model = self.grow(Fp, model)
-
-            # print("Fpp=", Fpp, "Fpp_model=", Fpp_model)
-            # print(self.h_counter)
 
             if self.params.incremental and not self.params.constrained:
                 self.storeMSS(F, Fpp)
@@ -453,11 +459,16 @@ class OUS(object):
         self.SS = keep
 
     def cleanOUS(self):
-        self.h_counter = Counter()
+        # self.h_counter = Counter()
         # self.__satsolver.delete()
 
         if self.params.incremental and not self.params.contrained:
             self.cleanMSS()
+
+    def print_clauses(self):
+        c = self.__clauses.all_clauses
+        for cl in c:
+            print(cl)
 
     def clean(self):
         self.__satsolver.delete()

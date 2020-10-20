@@ -123,6 +123,7 @@ class Clauses(object):
             self.__lits |= set(abs(lit) for lit in clause)
 
         if added_weights is not None:
+            assert len(added_clauses) == len(added_weights), f"Weights ({len(added_weights)}) and clauses ({len(added_clauses)}) must be  of same length"
             self.__soft_weights += added_weights
         elif f is not None:
             self.__soft_weights += [f(cl) for cl in added_clauses]
@@ -173,6 +174,22 @@ class Clauses(object):
 
         self.__all_soft_clauses = self.__soft_clauses + self.__Icnf + self.__notIcnf
         self.__all_soft_idxs = set(i for i in range(len(self.__all_soft_clauses)))
+
+    def add_derived_Icnf(self, addedI):
+        for i in addedI:
+            fi = frozenset({i})
+            fnoti = frozenset({-i})
+
+            posi = self.__Icnf.index(fi)
+            posnoti = self.__notIcnf.index(fnoti)
+
+            self.derived_idxs.add(posi)
+            if self.constrainedOUS:
+                self.__obj_weights[posi] = 1
+                self.__obj_weights[len(self.__Icnf) + posnoti] = GRB.INFINITY
+
+    def lit_idx(self, lit):
+        return self.__Icnf.index(lit)
 
     @property
     def indicator_vars(self):
@@ -227,6 +244,7 @@ class Clauses(object):
     @property
     def all_soft_weights(self):
         return self.__soft_weights + [1 if i == 0 else i for i in self.__obj_weights]
+        # return self.__soft_weights + [1 for i in self.__obj_weights]
     
     @property
     def soft_idxs(self):
@@ -251,22 +269,6 @@ class Clauses(object):
     def obj_weights(self):
         return self.__soft_weights + self.__obj_weights
 
-    def add_derived_Icnf(self, addedI):
-        for i in addedI:
-            fi = frozenset({i})
-            fnoti = frozenset({-i})
-
-            posi = self.__Icnf.index(fi)
-            posnoti = self.__notIcnf.index(fnoti)
-
-            self.derived_idxs.add(posi)
-            if self.constrainedOUS:
-                self.__obj_weights[posi] = 1
-                self.__obj_weights[len(self.__Icnf) + posnoti] = GRB.INFINITY
-
-    def lit_idx(self, lit):
-        return self.__Icnf.index(lit)
-
     @property
     def nCNFLits(self):
         return len(self.__Icnf)
@@ -280,6 +282,10 @@ class Clauses(object):
     @property
     def weights(self):
         return [math.inf for _ in self.__hard_clauses] + self.__soft_weights
+
+    @property
+    def all_clauses(self): 
+        return [list(c) for c in self.__hard_clauses + self.__soft_clauses]
 
     def __str__(self):
         return f"""

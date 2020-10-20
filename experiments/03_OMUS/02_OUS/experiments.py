@@ -95,7 +95,7 @@ def experiment1():
                                     for bounded in boundeds:
                                         outputFile = outputDir + fname.replace('.cnf','') + ".json"
                                         ousParam = OusParams()
-                                        ousParam.pre_seed= pre_seed
+                                        ousParam.pre_seed = pre_seed
                                         ousParam.constrained = constrained
                                         ousParam.incremental = incr
                                         ousParam.post_opt = post_opt

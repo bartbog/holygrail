@@ -198,8 +198,8 @@ class OUS(object):
         self.opt_model.addConstr(x[vals].sum() == 1)
 
         # at least one of the soft clauses
-        vals2 = range(self.__clauses.nSoft)
-        self.opt_model.addConstr(x[vals2].sum() >= 1)
+        # vals2 = range(self.__clauses.nSoft)
+        # self.opt_model.addConstr(x[vals2].sum() >= 1)
 
         self.opt_model.update()
 

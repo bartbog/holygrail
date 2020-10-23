@@ -155,7 +155,7 @@ def explain_csp(params: OusParams, cnf: list, factsToExplain: set, weights: list
         print(f"\nOptimal explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
         # cnt += 1
         # if cnt== 4:
-        return expl_seq
+        # return expl_seq
 
     o.clean()
 

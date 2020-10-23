@@ -198,8 +198,8 @@ class OUS(object):
         self.opt_model.addConstr(x[vals].sum() == 1)
 
         # at least one of the soft clauses
-        # vals2 = range(self.__clauses.nSoft)
-        # self.opt_model.addConstr(x[vals2].sum() >= 1)
+        vals2 = range(self.__clauses.nSoft  + self.__clauses.nCNFLits)
+        self.opt_model.addConstr(x[vals2].sum() >= 1)
 
         self.opt_model.update()
 
@@ -388,7 +388,7 @@ class OUS(object):
     def optHS(self):
         return self.gurobi_optHS()
 
-    # @profile(sort_by='cumulative', lines_to_print=None, strip_dirs=True)
+    @profile(sort_by='cumulative', lines_to_print=None, strip_dirs=True)
     def OUS(self, best_cost=None, lit=None):
         assert self.params.constrained == self.__clauses.constrainedOUS, "Parameters must be equal."
         F = self.clause_idxs
@@ -415,7 +415,10 @@ class OUS(object):
                     SSofF.add(S_F)
         # print(self.checkSat([0, 232]))
         # return
+        # print(F)
+        # print(self.__clauses)
         while(True):
+            # print("\n\n")
             if best_cost is not None and best_cost < self.cost(Fp):
                 return None, None, self.cost(Fp)
 
@@ -424,10 +427,13 @@ class OUS(object):
 
             # compute optimal hitting set
             Fp = self.optHS()
-            # print(Fp, ":", [set(self.__clauses.all_soft_clauses[idx]) for idx in Fp])
+            # print("Fp=", Fp)
+            # print(Fp, ":", [list(self.__clauses.all_soft_clauses[idx]) for idx in Fp])
 
             # check satisfiability of the hitting set
             sat, model = self.checkSat(Fp)
+            # print("sat=", sat)
+            # print("model=", model)
 
             # OUS
             if not sat:
@@ -437,6 +443,8 @@ class OUS(object):
 
             # grow satisfiable set into (maximally) satisfiable subset
             Fpp, Fpp_model = self.grow(Fp, model)
+            # print("Fpp=", Fpp)
+            # print("Fpp_model=", Fpp_model)
 
             if self.params.incremental and not self.params.constrained:
                 self.storeMSS(F, Fpp)
@@ -446,6 +454,8 @@ class OUS(object):
             H.append(C)
             self.gurobi_addCorrectionSet(C)
             self.h_counter.update(list(C))
+            # print("C=", C)
+            # print("F=", F)
 
     def cleanMSS(self):
         keep = set()

@@ -292,11 +292,11 @@ class Clauses(object):
         Clauses:
         \t  hard={[list(cl) for cl in self.__hard_clauses]},
         \t  soft={[list(cl) for cl in self.__soft_clauses]},
-        \tw_soft={self.__soft_weights},
-        \t  lits={self.__lits},
         \t  Icnf={[list(cl) for cl in self.__Icnf]},
         \t -Icnf={[list(cl) for cl in self.__notIcnf]},
+        \tw_soft={self.__soft_weights},
         \t w_obj={self.__obj_weights}
+        \t  lits={self.__lits},
         \t cnter={self.h_counter}
         \t
         """

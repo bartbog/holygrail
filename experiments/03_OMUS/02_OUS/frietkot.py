@@ -66,7 +66,6 @@ def originProblem():
     cnt = 0
     bij = []
     bv_bij = [BoolVar() for i in range(60)]
-    # bv_bij = []
 
     for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
         # for each relation
@@ -147,13 +146,13 @@ def originProblem():
                 t11 = to_cnf(implies( age_city[x, z] & ~city_birth[z, y], ~age_birth[x, y]))
                 [trans.append(implies(bv_trans[11], clause)) for clause in t11]
 
-    # bv1 = BoolVar()
     clues = []
     bv_clues = [BoolVar() for i in range(10)]
     clues.append(implies(bv_clues[0], is_old['Mattie', '113']))
 
     # The person who lives in Tehama is a native of either Kansas or Oregon
     c1a = to_cnf([implies(lives_in[p, 'Tehama'], native[p, 'Kansas'] | native[p, 'Oregon']) for p in person])
+
     [clues.append(implies(bv_clues[1], clause)) for clause in c1a]
 
     # The Washington native is 1 year older than Ernesto
@@ -196,6 +195,7 @@ def originProblem():
     clues_cnf = cnf_to_pysat(to_cnf(clues))
     bij_cnf = cnf_to_pysat(to_cnf(bij))
     trans_cnf = cnf_to_pysat(to_cnf(trans))
+    print(len(clues_cnf))
 
     hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
     soft_clauses = []
@@ -204,8 +204,8 @@ def originProblem():
     soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
 
     weights = [100 for clause in bv_clues] + \
-              [50 for clause in bv_trans] + \
-              [50 for clause in bv_bij]
+              [60 for clause in bv_trans] + \
+              [60 for clause in bv_bij]
 
     explainable_facts = set()
     for rel in rels:

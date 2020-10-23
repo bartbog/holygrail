@@ -75,6 +75,9 @@ def optimalPropagate(cnf, I=None, focus=None):
         elif len(I) > 0:
             s.solve(assumptions=list(I))
 
+        # for id, _ in enumerate(s.enum_models()):
+        #     print(id)
+
         model = set(s.get_model())
         if focus:
             model &= focus
@@ -97,6 +100,7 @@ def explain_csp(params: OusParams, cnf: list, factsToExplain: set, weights: list
     I = i_0
     I_cnf = []
     expl_seq = []
+    print("Starting optimal Propagate")
 
     if is_problem:
         Iend = optimalPropagate(cnf + indicatorVars)
@@ -124,10 +128,13 @@ def explain_csp(params: OusParams, cnf: list, factsToExplain: set, weights: list
     # return None
     cnt = 0
 
+
     while(len(facts - I) > 0):
+        print("Remaining facts:", len(facts- I))
         ous_start = time.time()
         hs, explanation, _ = o.OUS()
         ous_end = time.time()
+        print("OUS time:", round(ous_end-ous_start, 3))
 
         # explaining facts
         E_i = [ci for ci in explanation if ci in I_cnf]
@@ -146,9 +153,9 @@ def explain_csp(params: OusParams, cnf: list, factsToExplain: set, weights: list
         expl_seq.append((E_i, S_i, N_i))
         # print(New_info)
         print(f"\nOptimal explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
-        cnt += 1
-        if cnt== 4:
-            return expl_seq
+        # cnt += 1
+        # if cnt== 4:
+        return expl_seq
 
     o.clean()
 
@@ -178,7 +185,6 @@ def test_explain():
     # frietkot_cnf, frietkot_facts, frietkot_names = frietKotProblem()
     # frietkot_weights = random.choices(list(range(2, 10)), k=len(frietkot_cnf))
 
-    # # print(frietkot_cnf)
     # frietkot_expl = explain_csp(params, cnf=frietkot_cnf, factsToExplain=frietkot_facts, weights=frietkot_weights)
 
     # # print(frietkot_cnf)
@@ -198,6 +204,7 @@ def test_explain():
     #     print(f"Expl:\n\tE_expl={E_expl}\n\tS_expl={S_expl}\n\tN_expl={N_expl}")
 
     # # test on puzzle problem
+    # originProblem()
     puzzle_hard, puzzle_soft, puzzle_weights, puzzle_facts = originProblem()
     puzzle_expl = explain_csp(params, cnf=puzzle_hard, factsToExplain=puzzle_facts, weights=puzzle_weights, indicatorVars=puzzle_soft, is_problem=True)
 

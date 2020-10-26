@@ -1,21 +1,22 @@
 from collections import Counter
 
-from ous_utils import BenchmarkInfo, Clauses, OusParams, Steps, Timings, profile
+from ous_utils import BenchmarkInfo, Clauses, OusParams, profileFunc
+from gurobipy import GRB
 
 
 class OUS(object):
-    def __init__(self, logging=False, optSolver=None, params=OusParams(), clauses=Clauses(), grower=None, satSolver=None):
-        self.do_logging(logging)
+    def __init__(self, optSolver=None, params=OusParams(), clauses=Clauses(), grower=None, satSolver=None):
+        # OUS active objects
         self.params = params
         self.clauses = clauses
-        self.satsolver = satSolver
+        self.satSolver = satSolver
         self.optSolver = optSolver
         self.grower = grower
 
-        if self.params.constrained:
-            self.gurobi_cOUSModel()
-
+        # OUS active variables
         self.h_counter = Counter()
+        self.SS = set()
+        self.H = []
 
     def __str__(self):
         return f"""
@@ -23,49 +24,49 @@ class OUS(object):
         clauses={str(self.clauses)},
         """
 
-    # Clause properties
-    @property
-    def clauses(self): return self.clauses.all_clauses
+    # # Clause properties
+    # @property
+    # def clauses(self): return self.clauses.all_clauses
 
-    @property
-    def soft_clauses(self): return self.clauses.soft_clauses
+    # @property
+    # def soft_clauses(self): return self.clauses.soft_clauses
 
-    @property
-    def hard_clauses(self): return self.clauses.hard_clauses
+    # @property
+    # def hard_clauses(self): return self.clauses.hard_clauses
 
-    @property
-    def weights(self): return self.clauses.weights
+    # @property
+    # def weights(self): return self.clauses.weights
 
-    @property
-    def obj_weights(self):
-        return self.clauses.obj_weights
+    # @property
+    # def obj_weights(self):
+    #     return self.clauses.obj_weights
 
-    @property
-    def soft_idxs(self):
-        return self.clauses.soft_idxs
+    # @property
+    # def soft_idxs(self):
+    #     return self.clauses.soft_idxs
 
-    @property
-    def I_idxs(self):
-        if self.params.constrained:
-            return self.clauses.I_idxs
-        else:
-            raise NotImplementedError()
+    # @property
+    # def I_idxs(self):
+    #     if self.params.constrained:
+    #         return self.clauses.I_idxs
+    #     else:
+    #         raise NotImplementedError()
 
-    @property
-    def nClauses(self):
-        if self.params.constrained:
-            return len(self.clauses.all_soft_clauses)
-        else:
-            return self.clauses.nSoft + self.clauses.nDerived + 1
+    # @property
+    # def nClauses(self):
+    #     if self.params.constrained:
+    #         return len(self.clauses.all_soft_clauses)
+    #     else:
+    #         return self.clauses.nSoft + self.clauses.nDerived + 1
 
-    @property
-    def clause_idxs(self):
-        if self.params.constrained:
-            # Clause indexes covers all soft indexes + Icnf_all + (-Icnf_all)
-            return self.clauses.all_soft_clauses_idxs
-        else:
-            # Clause indexes covers all soft indexes + Icnf_derived + (-lit)
-            return self.clauses.soft_I_lit_clause_idxs
+    # @property
+    # def clause_idxs(self):
+    #     if self.params.constrained:
+    #         # Clause indexes covers all soft indexes + Icnf_all + (-Icnf_all)
+    #         return self.clauses.all_soft_clauses_idxs
+    #     else:
+    #         # Clause indexes covers all soft indexes + Icnf_derived + (-lit)
+    #         return self.clauses.soft_I_lit_clause_idxs
 
     # def add_hardClauses(self, added_clauses: list):
     #     self.clauses.add_hardclauses(added_clauses)
@@ -89,9 +90,8 @@ class OUS(object):
     def warm_start(self):
         pass
 
-    def seed_MSS(self):
-      assert lit is not None, "Lit not given for OUS"
-
+    def seed_MSS(self, H):
+        F = self.clause_idxs
         SSofF = set()
         for S, model in self.SS:
             S_F = S & F
@@ -99,24 +99,19 @@ class OUS(object):
             if any(True if S_F.issubset(Sp) else False for Sp in SSofF):
                 continue
 
-            S_F, _ = self.grow(S_F, model)
+            S_F, _ = self.grower.grow(S_F, model)
             C = F - S_F
             H.append(C)
             self.h_counter.update(list(C))
             SSofF.add(S_F)
 
-    def do_logging(self, logging: bool = True):
-        if logging:
-            self.params.benchmark = True
-            self.benchmark_info = BenchmarkInfo()
-
     def cost(self, Fp):
         return 0
         # raise "NotImplemented"
 
-    def postpone_greedyHS(self, H):
+    def postpone_greedyHS(self):
         soft_weights = self.clauses.all_soft_weights
-        if len(H) == 0:
+        if len(self.H) == 0:
             return set()
 
         # the hitting set
@@ -125,7 +120,7 @@ class OUS(object):
         # build vertical sets
         V = dict()  # for each element in H: which sets it is in
 
-        for i, hi in enumerate(H):
+        for i, hi in enumerate(self.H):
             h = [e for e in hi if soft_weights[e] < GRB.INFINITY]
             # special case: only one element in the set, must be in hitting set
             if len(h) == 1:
@@ -171,34 +166,27 @@ class OUS(object):
 
         return C
 
-    def postponeOpt(self, H, C, Fp):
+    def postponeOpt(self, C, Fp):
         soft_weights = self.clauses.all_soft_weights
         F = self.clause_idxs
-        print(self.h_counter)
 
         if C is None:
-            return H
+            return self.H
 
         while(True):
-            while (len(H) > 0 and self.params.post_opt_incremental):
+            while (len(self.H) > 0 and self.params.post_opt_incremental):
                 Csoft = C & (self.soft_idxs)
                 Crest = C - Csoft
-
-                if len(Csoft) == 0:
-                    c = max(self.soft_idxs, key=lambda i: self.h_counter[i])
-                else:
-                    c = min(Crest, key=lambda i: soft_weights[i])
 
                 # add sets-to-hit incrementally until unsat then continue with optimal method
                 # given sets to hit 'CC', a hitting set thereof 'hs' and a new set-to-hit added 'C'
                 # then hs + any element of 'C' is a valid hitting set of CC + C
                 # choose element from C with smallest weight
-                # c = min(C, key=lambda i: self.weights[i])
-                # # find all elements with smallest weight
-                # m = [ci for ci in C if self.weights[ci] == self.weights[c]]
-                # # choose clause with smallest weight appearing most in H
-                # # TODO: can be problem here, because we might need to ignore some of the literals
-                # c_best = max(m, key=lambda ci: self.h_counter[ci])
+                if len(Csoft) == 0:
+                    c = max(self.soft_idxs, key=lambda i: self.h_counter[i])
+                else:
+                    c = min(Crest, key=lambda i: soft_weights[i])
+
                 Fp.add(c)
 
                 sat, model = self.checkSat(Fp)
@@ -208,23 +196,23 @@ class OUS(object):
 
                 Fpp, Fpp_model = self.grow(Fp, model)
                 C = F - Fpp
-                H.append(C)
+                self.H.append(C)
                 self.gurobi_addCorrectionSet(C)
                 self.h_counter.update(list(C))
 
             if(not self.params.post_opt_greedy):
                 break
 
-            Fp = self.postpone_greedyHS(H)
+            Fp = self.postpone_greedyHS()
             sat, model = self.checkSat(Fp)
 
             if not sat:
                 break
 
-            H.append(C)
+            self.H.append(C)
             self.gurobi_addCorrectionSet(C)
             self.h_counter.update(list(C))
-        return H
+        # return H
 
     def OUS(self, best_cost=None, lit=None):
         F = self.clause_idxs
@@ -271,18 +259,18 @@ class OUS(object):
             self.optSolver.addCorrectionSet(C)
             self.h_counter.update(list(C))
 
-    @profile(sort_by='cumulative', lines_to_print=20, strip_dirs=True)
+    @profileFunc(sort_by='cumulative', lines_to_print=20, strip_dirs=True)
     def cOUS(self):
         F = self.clause_idxs
-        H, C, Fp = [], None, None
+        C, Fp = None, None
 
         while(True):
 
             if self.params.post_opt:
-                H = self.postponeOpt(H, C, Fp)
+                self.postponeOpt(C, Fp)
 
             # compute optimal hitting set
-            Fp = self.optHS()
+            Fp = self.optSolver.optHS()
 
             # check satisfiability of the hitting set
             sat, model = self.satSolver.checkSat(Fp)
@@ -290,18 +278,14 @@ class OUS(object):
             # OUS
             if not sat:
                 # print(Fp, [self.clauses.all_soft_clauses[idx] for idx in Fp])
-                self.cleanOUS()
                 return Fp, [self.clauses.all_soft_clauses[idx] for idx in Fp], self.cost(Fp)
 
             # grow satisfiable set into (maximally) satisfiable subset
-            Fpp, Fpp_model = self.grow(Fp, model)
-
-            if self.params.incremental and not self.params.constrained:
-                self.storeMSS(F, Fpp)
+            Fpp, _ = self.grower.grow(Fp, model)
 
             # Add MCS to collection of MCSes
             C = F - Fpp
-            H.append(C)
+            self.H.append(C)
             self.optSolver.addCorrectionSet(C)
             self.h_counter.update(list(C))
 
@@ -316,15 +300,7 @@ class OUS(object):
                 keep.add((m1, m1_model))
         self.SS = keep
 
-    def cleanOUS(self):
-        # self.h_counter = Counter()
-        # self.satsolver.delete()
-
-        if self.params.incremental and not self.params.contrained:
-            self.cleanMSS()
-
     def print_clauses(self):
         c = self.clauses.all_clauses
         for cl in c:
             print(cl)
-

@@ -1,11 +1,8 @@
-import random
 import time
-from ous_utils import OusParams, Clauses
+from ous_utils import OusParams, Clauses, SatChecker, Grower, OptSolver
 from ous import OUS
 
 # pysat imports
-from pysat.formula import CNF
-from pysat.solvers import Solver
 from frietkot import simpleProblem, frietKotProblem, originProblem
 
 import cProfile
@@ -66,107 +63,136 @@ def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_d
     return inner
 
 
-def optimalPropagate(cnf, I=None, focus=None):
-    # focus: a set of literals to filter, only keep those of the model
-    # SET A FOCUS if many auxiliaries...
-    with Solver(bootstrap_with=cnf) as s:
-        if I is None or len(I) == 0:
-            s.solve()
-        elif len(I) > 0:
-            s.solve(assumptions=list(I))
+class ExplainCSP:
+    def __init__(self, params: OusParams, cnf: list, factsToExplain: set, weights: list, i_0: set = set(), indicatorVars: list = list()) -> None:
+        self.params = params
+        self.I = i_0
+        self.I_cnf = []
+        self.expl_seq = []
 
-        # for id, _ in enumerate(s.enum_models()):
-        #     print(id)
+        # Build clauses from CNF
+        self.clauses = Clauses(constrainedOUS=params.constrained)
+        self.clauses.add_hard(cnf)
 
-        model = set(s.get_model())
-        if focus:
-            model &= focus
+        # hand puzzle problems with indicator variables activate or de-active clues
+        # weights = cost of using a clue
+        if self.params.ispuzzle:
+            self.clauses.add_soft(added_clauses=indicatorVars, added_weights=weights)
+        else:
+            self.clauses.add_indicators(weights)
 
-        while(True):
-            s.add_clause(list(-lit for lit in model))
-            solved = s.solve()
-            if solved:
-                new_model = set(s.get_model())
-                if focus:
-                    new_model &= focus
-                model = model.intersection(new_model)
-                #print("oP",c,model,time.time()-ts,new_model)
-            else:
-                return model
+        # sat solver
+        self.satsolver = SatChecker(self.clauses)
+        self.all_unk = factsToExplain | set(-l for l in factsToExplain)
+        self.Iend = self.satsolver.optPropagate()
+
+        self.facts = set(fact if fact in self.Iend else -fact for fact in factsToExplain)
+        self.clauses.add_I(self.facts)
+
+        # opt solver
+        optSolver = OptSolver(self.clauses, params.constrained)
+
+        # grow clauses
+        grower = Grower(self.clauses, params.extension)
+
+        self.ous = OUS(params=params, clauses=self.clauses, grower=grower, optSolver=optSolver, satSolver=self.satsolver)
+
+    def explain(self, warmstart=False):
+        """
+        docstring
+        """
+        if warmstart:
+            self.ous.warmup()
+
+        while(len(self.facts - self.I) > 0):
+            ous_start = time.time()
+            hs, explanation, _ = self.ous.cOUS()
+            ous_end = time.time()
+            print("OUS time:", round(ous_end-ous_start, 3))
+
+            # TODO: explaining facts - use indices instead of the clause
+            E_i = [ci for ci in explanation if ci in self.I_cnf]
+
+            # constraint used ('and not ci in E_i': dont repeat unit clauses)
+            # TODO: constraints - use indices instead of the clause
+            S_i = [ci for ci in explanation if ci in self.clauses.soft_clauses and ci not in E_i]
+
+            # TODO: Correct NEW facts derivation
+            New_info = self.satsolver.optPropagate(E_i + S_i, I=self.I, focus=self.all_unk)
+            N_i = New_info.intersection(self.facts) - self.I
+
+            # add new info
+            self.I |= N_i
+            self.I_cnf += [frozenset({lit}) for lit in N_i if frozenset({lit}) not in self.I_cnf]
+
+            self.clauses.add_derived_Icnf(N_i)
+            self.expl_seq.append((E_i, S_i, N_i))
+            # print(New_info)
+            print(f"\nOptimal explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
+
+        return self.expl_seq
+
+    def explain_lit(self, lit):
+        pass
 
 
-@profile(sort_by='cumulative', lines_to_print=20, strip_dirs=True)
-def explain_csp(params: OusParams, cnf: list, factsToExplain: set, weights: list, i_0: set = set(), indicatorVars: list = list(), is_problem=False):
-    I = i_0
-    I_cnf = []
-    expl_seq = []
-    print("Starting optimal Propagate")
-
-    if is_problem:
-        Iend = optimalPropagate(cnf + indicatorVars)
-    else:
-        Iend = optimalPropagate(cnf)
-
-    all_unk = factsToExplain | set(-l for l in factsToExplain)
-    facts = set(fact if fact in Iend else -fact for fact in factsToExplain)
-    # print(facts)
-
-    clauses = Clauses(constrainedOUS=params.constrained)
-    clauses.add_hardclauses(cnf)
-
-    if is_problem:
-        clauses.add_soft_clauses(added_clauses=indicatorVars, added_weights=weights)
-    else:
-        clauses.add_indicatorVars(weights)
-
-    clauses.add_I(facts)
-    # print(facts)
-    print(len(indicatorVars) + len(facts))
-    o = OUS(logging=True, params=params, clauses=clauses)
-    o.reuse_satSolver()
-
-    o.warmup()
-    cnt = 0
+# @profile(sort_by='cumulative', lines_to_print=20, strip_dirs=True)
+# def explain_csp(params: OusParams, cnf: list, factsToExplain: set, weights: list, i_0: set = set(), indicatorVars: list = list()):
+#     # I = i_0
+#     # I_cnf = []
+#     # expl_seq = []
 
 
-    while(len(facts - I) > 0):
-        print("Remaining facts:", len(facts- I))
-        ous_start = time.time()
-        hs, explanation, _ = o.OUS()
-        ous_end = time.time()
-        print("OUS time:", round(ous_end-ous_start, 3))
 
-        # explaining facts
-        E_i = [ci for ci in explanation if ci in I_cnf]
+#     # all_unk = factsToExplain | set(-l for l in factsToExplain)
 
-        # constraint used ('and not ci in E_i': dont repeat unit clauses)
-        S_i = [ci for ci in explanation if ci in clauses.soft_clauses and ci not in E_i]
+#     # facts = set(fact if fact in Iend else -fact for fact in factsToExplain)
+#     # clauses.add_I(facts)
+#     # # print(facts)
+#     # print(len(indicatorVars) + len(facts))
+#     # o = OUS(logging=True, params=params, clauses=clauses)
+#     o.warmup()
 
-        New_info = optimalPropagate(clauses.hard_clauses + E_i + S_i, I, focus=all_unk)
-        N_i = New_info.intersection(facts) - I
+#     cnt = 0
 
-        # add new info
-        I |= N_i
-        I_cnf += [frozenset({lit}) for lit in N_i if frozenset({lit}) not in I_cnf]
 
-        o.add_derived_I(N_i)
-        expl_seq.append((E_i, S_i, N_i))
-        # print(New_info)
-        print(f"\nOptimal explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
-        cnt += 1
-        if cnt== 4:
-            return expl_seq
+#     while(len(facts - I) > 0):
+#         print("Remaining facts:", len(facts- I))
+#         ous_start = time.time()
+#         hs, explanation, _ = o.OUS()
+#         ous_end = time.time()
+#         print("OUS time:", round(ous_end-ous_start, 3))
 
-    o.clean()
+#         # explaining facts
+#         E_i = [ci for ci in explanation if ci in I_cnf]
 
-    return expl_seq
+#         # constraint used ('and not ci in E_i': dont repeat unit clauses)
+#         S_i = [ci for ci in explanation if ci in clauses.soft_clauses and ci not in E_i]
+
+#         New_info = optimalPropagate(clauses.hard_clauses + E_i + S_i, I, focus=all_unk)
+#         N_i = New_info.intersection(facts) - I
+
+#         # add new info
+#         I |= N_i
+#         I_cnf += [frozenset({lit}) for lit in N_i if frozenset({lit}) not in I_cnf]
+
+#         o.add_derived_I(N_i)
+#         expl_seq.append((E_i, S_i, N_i))
+#         # print(New_info)
+#         print(f"\nOptimal explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
+#         cnt += 1
+#         if cnt== 4:
+#             return expl_seq
+
+#     o.clean()
+
+#     return expl_seq
 
 
 def test_explain():
     params = OusParams()
     params.constrained = True
     params.incremental = False
-    # self.incremental_sat = False
     params.pre_seed = False
     params.sort_lits = False
     params.bounded = False

@@ -1,12 +1,13 @@
-import math
 import pprint
 from collections import Counter
-from gurobipy import GRB
 import cProfile
 import pstats
 from functools import wraps
+from datetime import datetime
 
-from pysat.formula import CNF, WCNF
+# datetime object containing current date and time
+
+from pysat.formula import WCNF
 from pysat.solvers import Solver
 from pysat.examples.rc2 import RC2
 
@@ -47,7 +48,8 @@ def profileFunc(output_file=None, sort_by='cumulative', lines_to_print=None, str
     def inner(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            _output_file = output_file or func.__name__ + '.prof'
+            now = datetime.now().strftime("%Y%m%d_%H%M%S")
+            _output_file = output_file or func.__name__ + "_" + now + '.prof'
             pr = cProfile.Profile()
             pr.enable()
             retval = func(*args, **kwargs)
@@ -142,36 +144,31 @@ class OptSolver(object):
 
 
 class Grower(object):
-    def __init__(self, clauses):
+    def __init__(self, clauses, extension='maxsat'):
         self.clauses = clauses
+        self.extension = extension
 
-    def grow_default(self, f_prime, model):
+    def default(self, f_prime, model):
         return f_prime, model
 
-    def grow_maxsat(self, hs_in, model):
-        hs = set(hs_in) # take copy!!
-
-        wcnf = WCNF()
-        wcnf.extend(self.clauses.hard_clauses)
+    def maxsat(self, hs_in, model):
+        hs = set(hs_in)  # take copy!!
         soft_clauses = self.clauses.all_soft_clauses
         soft_weights = self.clauses.all_soft_weights
 
-        # for i in hs:
-        #     clause = soft_clauses[i]
-        wcnf.extend([list(soft_clauses[i]) for i in hs])
+        wcnf = WCNF()
+        wcnf.extend(self.clauses.hard_clauses + [list(soft_clauses[i]) for i in hs])
+
         wcnf.extend(
             [list(clause) for i, clause in enumerate(soft_clauses) if i not in hs],
-            [soft_weights[i] for i in range(len(soft_clauses)) if i not in hs])
-
-        # for i, clause in enumerate(soft_clauses):
-        #     if i not in hs:
-        #         wcnf.append(list(clause), weight=soft_weights[i])
+            [soft_weights[i] for i in range(len(soft_clauses)) if i not in hs]
+        )
 
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()
             if t_model is None:
                 return hs, model
-            # TODO: This might not be correct
+
             for i, clause in enumerate(soft_clauses):
                 if i not in hs and len(clause.intersection(t_model)) > 0:
                     hs.add(i)
@@ -179,33 +176,77 @@ class Grower(object):
             return hs, t_model
 
     def grow(self, f_prime: set, model: set):
-        grown_set, grown_model = self.grow_extension(f_prime, model)
+        """
+
+            Procedure to efficiently grow the list clauses in ``F_prime``. The complement of F_prime is a correction
+            set.
+
+            :param cnf_clauses: a collection of clauses (list of literals).
+            :param F_prime: hitting set : a list of clauses.
+            :param extensions: list of extensions activated
+
+            The ``extensions`` argument is a list of extensions on the default grow procedure to optimize
+            the building of the minimum correction set.
+
+
+            :type cnf_clauses: iterable(iterable(int))
+            :type F_prime: iterable(int)
+            :type extensions: iterable(int)
+        """
+
+        extensions = {
+            'default': self.default,
+            'maxsat': self.maxsat,
+        }
+
+        grown_set, grown_model = extensions[self.extension](f_prime, model)
 
         return grown_set, grown_model
 
 
 class SatChecker(object):
-    def __init__(self, clauses):
+    def __init__(self, clauses, satsolver=None):
+        # self.constrainedOUS = constrainedOUS
         self.clauses = clauses
-        self.satsolver = Solver(bootstrap_with=self.clauses.hard_clauses)
+        if satsolver:
+            self.satsolver = satsolver
+        else:
+            self.satsolver = Solver(bootstrap_with=self.clauses.hard_clauses)
 
-    def checkSat(self, assumptions: list = []):
-        # print(assumptions)
-        if self.satsolver is not None:
-            polarities = []
-            if self.params.constrained:
-                all_soft = self.clauses.all_soft_clauses
-                for i in assumptions:
-                    cl = all_soft[i]
-                    # if len(cl) == 1:
-                    # print(next(iter(cl)))
-                    polarities.append(next(iter(cl)))
+    def checkSat(self, fprime: list = []):
+        #TODO: add polaritities
+        polarities = []
+
+        all_soft = self.clauses.all_soft_clauses
+        assumptions = [all_soft[i] for i in fprime]
+
+        solved = self.satsolver.solve(assumptions=assumptions)
+        model = self.satsolver.get_model()
+        return solved, model
+
+    def optPropagate(self, I=None, focus=None):
+        # focus: a set of literals to filter, only keep those of the model
+        # SET A FOCUS if many auxiliaries...
+        if I is None or len(I) == 0:
+            #TODO: correct indicator variables
+            self.satsolver.solve(assumptions=self.clauses.indicators)
+        elif len(I) > 0:
+            self.satsolver.solve(assumptions=list(I))
+
+        model = set(self.satsolver.get_model())
+        if focus:
+            model &= focus
+
+        while(True):
+            self.satsolver.add_clause(list(-lit for lit in model))
+            solved = self.satsolver.solve()
+            if solved:
+                new_model = set(self.satsolver.get_model())
+                if focus:
+                    new_model &= focus
+                model = model.intersection(new_model)
             else:
-                raise NotImplementedError("Checksat not constrained not implemented")
-
-            solved = self.satsolver.solve(assumptions=polarities)
-            model = self.satsolver.get_model()
-            return solved, model
+                return model
 
     def __del__(self):
         self.satsolver.delete()
@@ -223,8 +264,10 @@ class OusParams(object):
         self.post_opt_incremental = False
         self.post_opt_greedy = False
         self.benchmark = False
+        self.ispuzzle = True
         self.outputFile = ''
         self.timeout = None
+        self.extension = 'maxsat'
 
     def __repr__(self):
         return {
@@ -233,11 +276,12 @@ class OusParams(object):
             "incremental": self.incremental,
             'bounded': self.bounded,
             'sort_lits': self.sort_lits,
+            'extension': self.extension,
             'post_opt': self.post_opt,
             'post_opt_incremental': self.post_opt_incremental,
             'post_opt_greedy': self.post_opt_greedy,
             'benchmark': self.benchmark,
-            'extension': self.extension,
+            'puzzle': self.ispuzzle,
             'output': self.outputFile,
             'timeout': self.timeout,
         }
@@ -246,195 +290,161 @@ class OusParams(object):
 class Clauses(object):
     def __init__(self, constrainedOUS=True):
         self.constrainedOUS = constrainedOUS
-        self.__hard_clauses = []
-        self.__soft_clauses = []
-        self.__soft_weights = []
-        self.__all_soft_clauses = []
-        self.__all_soft_idxs = set()
-        self.__all_lits = set()
-        self.__lits = set()
-        self.__Icnf = []
-        self.__notIcnf = []
-        self.derived_idxs = set()
-        self.__obj_weights = []
-        self.h_counter = Counter()
+        # self.__hard_clauses = []
+        # self.__soft_weights = []
+        # self.__soft_clauses = []
+        self._hard = []
+        self._soft = []
+        self._soft_weights = []
 
-    def add_hardclauses(self, added_clauses):
-        self.__hard_clauses += [frozenset(clause) for clause in added_clauses]
-        for clause in added_clauses:
-            self.__all_lits |= set(clause)
-            self.__lits |= set(abs(lit) for lit in clause)
+        # self.
+        self.all_soft = []
+        self.all_soft_ids = set()
+        self.all_lits = set()
+        self.lits = set()
+        self._Icnf = []
+        self._notIcnf = []
+        self._derived = set()
+        self._obj_weights = []
+        self.lit_counter = Counter()
 
-    def add_soft_clauses(self, added_clauses, added_weights=None, f=None):
-        self.__soft_clauses += [frozenset(clause) for clause in added_clauses]
+    def add_hard(self, added_clauses):
+        self._hard += added_clauses
         for clause in added_clauses:
-            self.__all_lits |= set(clause)
-            self.__lits |= set(abs(lit) for lit in clause)
+            self.all_lits |= set(clause)
+            self.lits |= set(abs(lit) for lit in clause)
+
+    def add_soft(self, added_clauses, added_weights=None, f=None):
+        self._soft += added_clauses
+        for clause in added_clauses:
+            self.all_lits |= set(clause)
+            self.lits |= set(abs(lit) for lit in clause)
 
         if added_weights is not None:
             assert len(added_clauses) == len(added_weights), f"Weights ({len(added_weights)}) and clauses ({len(added_clauses)}) must be  of same length"
-            self.__soft_weights += added_weights
+            self._soft_weights += added_weights
         elif f is not None:
-            self.__soft_weights += [f(cl) for cl in added_clauses]
+            self._soft_weights += [f(cl) for cl in added_clauses]
         else:
             raise "Weights/mapping f not provided"
 
-        self.__all_soft_clauses = self.__soft_clauses + self.__Icnf + self.__notIcnf
-        self.__all_soft_idxs = set(i for i in range(len(self.__all_soft_clauses)))
+        self.all_soft = self._soft + self._Icnf + self._notIcnf
+        self.all_soft_ids = set(i for i in range(len(self.all_soft)))
 
-    def add_indicatorVars(self, weights):
-        self.h_counter = Counter()
+    def add_indicators(self, weights=None):
+        self.lit_counter = Counter()
         indHard = []
-        max_lit = max(self.__lits)
+        max_lit = max(self._lits)
         indVars = set(i for i in range(max_lit + 1, max_lit + self.nHard + 1))
 
         # update hard clauses with indicator variables
-        for clause, i in zip(self.__hard_clauses, indVars):
-            new_clause = set(clause) | {i}
-            indHard.append(frozenset(new_clause))
-            self.h_counter.update(list(new_clause))
-            self.h_counter.update([-i])
+        for clause, i in zip(self._hard, indVars):
+            new_clause = clause + [i]
+            indHard.append([new_clause])
+            self.lit_counter.update(new_clause)
+            self.lit_counter.update([-i])
 
-        self.__hard_clauses = indHard
+        self._hard = indHard
 
         # add indicator variables to soft clauses
-        soft_inds = [frozenset({-i}) for i in indVars]
+        soft_inds = [[-i] for i in indVars]
 
         if weights is None:
-            self.add_soft_clauses(added_clauses=soft_inds, added_weights=[1 for _ in indVars])
+            self.add_soft(added_clauses=soft_inds, added_weights=[1 for _ in indVars])
         else:
-            self.add_soft_clauses(added_clauses=soft_inds, added_weights=weights)
+            self.add_soft(added_clauses=soft_inds, added_weights=weights)
 
-        self.__all_soft_clauses = self.__soft_clauses + self.__Icnf + self.__notIcnf
-        self.__all_soft_idxs = set(i for i in range(len(self.__all_soft_clauses)))
+        self.all_soft = self._soft + self._Icnf + self._notIcnf
+        self.all_soft_ids = set(i for i in range(len(self.all_soft)))
 
-        return indVars
+        # return indVars
 
     def add_I(self, added_I):
         for i in added_I:
-            self.__Icnf.append(frozenset({i}))
-            self.__notIcnf.append(frozenset({-i}))
+            self._Icnf.append([i])
+            self._notIcnf.append([-i])
 
         if self.constrainedOUS:
             # INFINITY because the knowledge is not derived yet
-            self.__obj_weights += [GRB.INFINITY for _ in added_I]
+            self._obj_weights += [GRB.INFINITY for _ in added_I]
             # 0 because we want to choose 1 of the neg lits for explanations
-            self.__obj_weights += [0 for _ in added_I]
+            self._obj_weights += [0 for _ in added_I]
 
-        self.__all_soft_clauses = self.__soft_clauses + self.__Icnf + self.__notIcnf
-        self.__all_soft_idxs = set(i for i in range(len(self.__all_soft_clauses)))
+        self.all_soft = self._soft + self._Icnf + self._notIcnf
+        self.all_soft_ids = set(i for i in range(len(self.all_soft)))
 
     def add_derived_Icnf(self, addedI):
         for i in addedI:
-            fi = frozenset({i})
-            fnoti = frozenset({-i})
+            fi = [i]
+            fnoti = [-i]
 
-            posi = self.__Icnf.index(fi)
-            posnoti = self.__notIcnf.index(fnoti)
+            posi = self._Icnf.index(fi)
+            posnoti = self._notIcnf.index(fnoti)
 
             self.derived_idxs.add(posi)
             if self.constrainedOUS:
-                self.__obj_weights[posi] = 1
-                self.__obj_weights[len(self.__Icnf) + posnoti] = GRB.INFINITY
-
-    def lit_idx(self, lit):
-        return self.__Icnf.index(lit)
+                self._obj_weights[posi] = 1
+                self._obj_weights[len(self.__Icnf) + posnoti] = GRB.INFINITY
 
     @property
-    def indicator_vars(self):
-        return self.__ind_vars
+    def hard(self):
+        return list(self._hard)
+
+    @property
+    def soft(self): return list(self._soft)
 
     @property
     def nLits(self):
-        return len(self.__lits)
-
-    @property
-    def all_lits(self):
-        """All -/+ literals appearing in the clauses."""
-        return set(self.__all_lits)
-
-    @property
-    def lits(self):
-        """All lits"""
-        return set(self.__lits)
+        return len(self.lits)
 
     @property
     def nHard(self):
-        return len(self.__hard_clauses)
+        return len(self._hard)
 
     @property
-    def nSoft(self):
-        return len(self.__soft_clauses)
+    def nIndi(self):
+        return len(self._soft)
 
     @property
     def nSoftI(self):
-        return len(self.__soft_weights) + len(self.__obj_weights)
+        return len(self._soft) + len(self._obj_weights)
 
     @property
     def nDerived(self):
-        return len(self.derived_idxs)
+        return len(self._derived)
 
     @property
-    def nHardSoft(self):
-        return len(self.__soft_clauses) + len(self.__hard_clauses)
-
-    @property
-    def soft_clauses(self): return list(self.__soft_clauses)
-
-    @property
-    def derived_I_idxs(self):
+    def derived_idxs(self):
         return set(self.nSoft + i for i in range(self.derived_idxs))
 
     @property
-    def all_soft_clauses(self):
-        # if self.__all_soft_clauses
-        return list(self.__all_soft_clauses)
-
-    @property
     def all_soft_weights(self):
-        return self.__soft_weights + [1 if i == 0 else i for i in self.__obj_weights]
-        # return self.__soft_weights + [1 for i in self.__obj_weights]
-    
-    @property
-    def soft_idxs(self):
-        return set(i for i in range(self.nSoft))
-    
+        return self._soft_weights + [1 if i == 0 else i for i in self._obj_weights]
+
     @property
     def I_idxs(self):
-        return set(i for i in range(self.nSoft, self.nSoftI))
+        return set(i for i in range(self.nIndi, self.nIndi + self.nCNFLits))
 
     @property
-    def all_soft_clauses_idxs(self):
-        # soft + I_cnf_all + (- I_cnf_all)
-        return set(self.__all_soft_idxs)
-
-    @property
-    def soft_I_lit_clause_idxs(self):
-        # soft + I_cnf + (-lit)
-        n = self.nSoft + self.nDerived + 1
-        return set(i for i in range(n))
+    def not_I_idxs(self):
+        return set(i for i in range(self.nIndi + self.nCNFLits, self.nSoftI))
 
     @property
     def obj_weights(self):
-        return self.__soft_weights + self.__obj_weights
+        return self._soft_weights + self._obj_weights
 
     @property
     def nCNFLits(self):
-        return len(self.__Icnf)
+        return len(self._Icnf)
 
-    @property
-    def hard_clauses(self): return list(self.__hard_clauses)
-
-    @property
-    def soft_weights(self): return self.__soft_weights
 
     @property
     def weights(self):
-        return [math.inf for _ in self.__hard_clauses] + self.__soft_weights
+        return [GRB.INFINITY] * len(self._hard) + self._soft_weights
 
     @property
-    def all_clauses(self): 
-        return [list(c) for c in self.__hard_clauses + self.__soft_clauses]
+    def all_clauses(self):
+        return self._hard + self._soft
 
     def __str__(self):
         return f"""
@@ -446,7 +456,7 @@ class Clauses(object):
         \tw_soft={self.__soft_weights},
         \t w_obj={self.__obj_weights}
         \t  lits={self.__lits},
-        \t cnter={self.h_counter}
+        \t cnter={self.lit_counter}
         \t
         """
 
@@ -455,14 +465,14 @@ class Clauses(object):
         del self.__soft_clauses
         del self.__soft_weights
         del self.__all_soft_clauses
-        del self.__all_soft_idxs
+        del self.__all_soft_ids
         del self.__all_lits
         del self.__lits
         del self.__Icnf
         del self.__notIcnf
         del self.derived_idxs
         del self.__obj_weights
-        del self.h_counter
+        del self.lit_counter
 
 
 class BenchmarkInfo(object):

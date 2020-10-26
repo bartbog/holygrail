@@ -6,10 +6,18 @@ import cProfile
 import pstats
 from functools import wraps
 
+from pysat.formula import CNF, WCNF
+from pysat.solvers import Solver
+from pysat.examples.rc2 import RC2
+
+# Gurobi utilities
+import gurobipy as gp
+from gurobipy import GRB
+
 pp = pprint.PrettyPrinter(indent=4)
 
 
-def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_dirs=False):
+def profileFunc(output_file=None, sort_by='cumulative', lines_to_print=None, strip_dirs=False):
     """A time profiler decorator.
     Inspired by and modified the profile decorator of Giampaolo Rodola:
     http://code.activestate.com/recipes/577817-profile-decorator/
@@ -60,6 +68,147 @@ def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_d
         return wrapper
 
     return inner
+
+
+class OptSolver(object):
+    def __init__(self, clauses, constrained=True):
+
+        self.clauses = clauses
+        self.constrained = constrained
+
+        if constrained:
+            self.opt_model = self.cOUSModel()
+        else:
+            self.opt_model = self.OUSModel()
+
+    def cOUSModel(self):
+        assert self.clauses.nSoft + 2 * self.clauses.nCNFLits == self.nClauses, "check nclauses"
+        assert len(self.clauses.obj_weights) == self.nClauses, "#weights != #clauses"
+
+        self.opt_model = gp.Model('constrOptHS')
+
+        # model parameters
+        self.opt_model.Params.OutputFlag = 0
+        self.opt_model.Params.LogToConsole = 0
+        self.opt_model.Params.Threads = 8
+        # update the model
+        x = self.opt_model.addMVar(
+            shape=self.nClauses,
+            vtype=GRB.BINARY,
+            obj=self.clauses.obj_weights,
+            name="x")
+
+        # exactly one of the -literals
+        vals = range(self.clauses.nSoft + self.clauses.nCNFLits, self.nClauses)
+        self.opt_model.addConstr(x[vals].sum() == 1)
+
+        # at least one of the soft clauses
+        vals2 = range(self.clauses.nSoft  + self.clauses.nCNFLits)
+        self.opt_model.addConstr(x[vals2].sum() >= 1)
+
+        self.opt_model.update()
+
+    def OUSModel(self):
+        self.opt_model = gp.Model('OptHS')
+
+        # model parameters
+        self.opt_model.Params.OutputFlag = 0
+        self.opt_model.Params.LogToConsole = 0
+        self.opt_model.Params.Threads = 8
+
+        #TODO add variables
+        raise "NotImplemented"
+
+    def addCorrectionSet(self, C):
+        x = self.opt_model.getVars()
+
+        # add new constraint sum x[j] * hij >= 1
+        self.opt_model.addConstr(gp.quicksum(x[i] for i in C) >= 1)
+
+    def optHS(self):
+        self.opt_model.optimize()
+        x = self.opt_model.getVars()
+        hs = set(i for i in range(self.nClauses) if x[i].x == 1)
+
+        return hs
+
+    def set_objective(self):
+        x = self.opt_model.getVars()
+        self.opt_model.setObjective(gp.quicksum(x[i] * self.obj_weights[i] for i in self.clause_idxs), GRB.MINIMIZE)
+
+    def __del__(self):
+        self.opt_model.dispose()
+        # self.opt_model.
+
+
+class Grower(object):
+    def __init__(self, clauses):
+        self.clauses = clauses
+
+    def grow_default(self, f_prime, model):
+        return f_prime, model
+
+    def grow_maxsat(self, hs_in, model):
+        hs = set(hs_in) # take copy!!
+
+        wcnf = WCNF()
+        wcnf.extend(self.clauses.hard_clauses)
+        soft_clauses = self.clauses.all_soft_clauses
+        soft_weights = self.clauses.all_soft_weights
+
+        # for i in hs:
+        #     clause = soft_clauses[i]
+        wcnf.extend([list(soft_clauses[i]) for i in hs])
+        wcnf.extend(
+            [list(clause) for i, clause in enumerate(soft_clauses) if i not in hs],
+            [soft_weights[i] for i in range(len(soft_clauses)) if i not in hs])
+
+        # for i, clause in enumerate(soft_clauses):
+        #     if i not in hs:
+        #         wcnf.append(list(clause), weight=soft_weights[i])
+
+        with RC2(wcnf) as rc2:
+            t_model = rc2.compute()
+            if t_model is None:
+                return hs, model
+            # TODO: This might not be correct
+            for i, clause in enumerate(soft_clauses):
+                if i not in hs and len(clause.intersection(t_model)) > 0:
+                    hs.add(i)
+
+            return hs, t_model
+
+    def grow(self, f_prime: set, model: set):
+        grown_set, grown_model = self.grow_extension(f_prime, model)
+
+        return grown_set, grown_model
+
+
+class SatChecker(object):
+    def __init__(self, clauses):
+        self.clauses = clauses
+        self.satsolver = Solver(bootstrap_with=self.clauses.hard_clauses)
+
+    def checkSat(self, assumptions: list = []):
+        # print(assumptions)
+        if self.satsolver is not None:
+            polarities = []
+            if self.params.constrained:
+                all_soft = self.clauses.all_soft_clauses
+                for i in assumptions:
+                    cl = all_soft[i]
+                    # if len(cl) == 1:
+                    # print(next(iter(cl)))
+                    polarities.append(next(iter(cl)))
+            else:
+                raise NotImplementedError("Checksat not constrained not implemented")
+
+            solved = self.satsolver.solve(assumptions=polarities)
+            model = self.satsolver.get_model()
+            return solved, model
+
+    def __del__(self):
+        self.satsolver.delete()
 
 
 class OusParams(object):
@@ -301,7 +450,7 @@ class Clauses(object):
         \t
         """
 
-    def clean(self):
+    def __del__(self):
         del self.__hard_clauses
         del self.__soft_clauses
         del self.__soft_weights

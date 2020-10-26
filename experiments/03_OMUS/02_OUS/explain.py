@@ -95,7 +95,7 @@ def optimalPropagate(cnf, I=None, focus=None):
                 return model
 
 
-@profile(sort_by='cumulative', lines_to_print=None, strip_dirs=True)
+@profile(sort_by='cumulative', lines_to_print=20, strip_dirs=True)
 def explain_csp(params: OusParams, cnf: list, factsToExplain: set, weights: list, i_0: set = set(), indicatorVars: list = list(), is_problem=False):
     I = i_0
     I_cnf = []
@@ -124,8 +124,8 @@ def explain_csp(params: OusParams, cnf: list, factsToExplain: set, weights: list
     print(len(indicatorVars) + len(facts))
     o = OUS(logging=True, params=params, clauses=clauses)
     o.reuse_satSolver()
-    # o.print_clauses()
-    # return None
+
+    o.warmup()
     cnt = 0
 
 
@@ -153,9 +153,9 @@ def explain_csp(params: OusParams, cnf: list, factsToExplain: set, weights: list
         expl_seq.append((E_i, S_i, N_i))
         # print(New_info)
         print(f"\nOptimal explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
-        # cnt += 1
-        # if cnt== 4:
-        # return expl_seq
+        cnt += 1
+        if cnt== 4:
+            return expl_seq
 
     o.clean()
 

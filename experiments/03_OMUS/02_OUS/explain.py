@@ -1,6 +1,7 @@
 import time
 from ous_utils import OusParams, Clauses, SatChecker, Grower, OptSolver
 from ous import OUS
+import random
 
 # pysat imports
 from frietkot import simpleProblem, frietKotProblem, originProblem
@@ -73,28 +74,26 @@ class ExplainCSP:
         # Build clauses from CNF
         self.clauses = Clauses(constrainedOUS=params.constrained)
         self.clauses.add_hard(cnf)
-
         # hand puzzle problems with indicator variables activate or de-active clues
         # weights = cost of using a clue
         if self.params.ispuzzle:
             self.clauses.add_soft(added_clauses=indicatorVars, added_weights=weights)
         else:
             self.clauses.add_indicators(weights)
-
         # sat solver
         self.satsolver = SatChecker(self.clauses)
         self.all_unk = factsToExplain | set(-l for l in factsToExplain)
-        self.Iend = self.satsolver.optPropagate()
+        self.Iend = self.satsolver.optPropagate(explanation=self.clauses.all_soft)
 
         self.facts = set(fact if fact in self.Iend else -fact for fact in factsToExplain)
         self.clauses.add_I(self.facts)
+        self.clauses.set_lits(self.Iend)
 
         # opt solver
         optSolver = OptSolver(self.clauses, params.constrained)
 
         # grow clauses
         grower = Grower(self.clauses, params.extension)
-
         self.ous = OUS(params=params, clauses=self.clauses, grower=grower, optSolver=optSolver, satSolver=self.satsolver)
 
     def explain(self, warmstart=False):
@@ -105,27 +104,25 @@ class ExplainCSP:
             self.ous.warmup()
 
         while(len(self.facts - self.I) > 0):
-            ous_start = time.time()
             hs, explanation, _ = self.ous.cOUS()
-            ous_end = time.time()
-            print("OUS time:", round(ous_end-ous_start, 3))
 
             # TODO: explaining facts - use indices instead of the clause
             E_i = [ci for ci in explanation if ci in self.I_cnf]
 
             # constraint used ('and not ci in E_i': dont repeat unit clauses)
             # TODO: constraints - use indices instead of the clause
-            S_i = [ci for ci in explanation if ci in self.clauses.soft_clauses and ci not in E_i]
+            S_i = [ci for ci in explanation if ci in self.clauses.soft and ci not in E_i]
 
             # TODO: Correct NEW facts derivation
-            New_info = self.satsolver.optPropagate(E_i + S_i, I=self.I, focus=self.all_unk)
+            New_info = self.satsolver.optPropagate(I=self.I, focus=self.all_unk, explanation=E_i + S_i)
             N_i = New_info.intersection(self.facts) - self.I
 
             # add new info
             self.I |= N_i
-            self.I_cnf += [frozenset({lit}) for lit in N_i if frozenset({lit}) not in self.I_cnf]
+            self.I_cnf += [[lit] for lit in N_i if [lit] not in self.I_cnf]
 
             self.clauses.add_derived_Icnf(N_i)
+            self.ous.optSolver.set_objective()
             self.expl_seq.append((E_i, S_i, N_i))
             # print(New_info)
             print(f"\nOptimal explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
@@ -136,76 +133,37 @@ class ExplainCSP:
         pass
 
 
-# @profile(sort_by='cumulative', lines_to_print=20, strip_dirs=True)
-# def explain_csp(params: OusParams, cnf: list, factsToExplain: set, weights: list, i_0: set = set(), indicatorVars: list = list()):
-#     # I = i_0
-#     # I_cnf = []
-#     # expl_seq = []
-
-
-
-#     # all_unk = factsToExplain | set(-l for l in factsToExplain)
-
-#     # facts = set(fact if fact in Iend else -fact for fact in factsToExplain)
-#     # clauses.add_I(facts)
-#     # # print(facts)
-#     # print(len(indicatorVars) + len(facts))
-#     # o = OUS(logging=True, params=params, clauses=clauses)
-#     o.warmup()
-
-#     cnt = 0
-
-
-#     while(len(facts - I) > 0):
-#         print("Remaining facts:", len(facts- I))
-#         ous_start = time.time()
-#         hs, explanation, _ = o.OUS()
-#         ous_end = time.time()
-#         print("OUS time:", round(ous_end-ous_start, 3))
-
-#         # explaining facts
-#         E_i = [ci for ci in explanation if ci in I_cnf]
-
-#         # constraint used ('and not ci in E_i': dont repeat unit clauses)
-#         S_i = [ci for ci in explanation if ci in clauses.soft_clauses and ci not in E_i]
-
-#         New_info = optimalPropagate(clauses.hard_clauses + E_i + S_i, I, focus=all_unk)
-#         N_i = New_info.intersection(facts) - I
-
-#         # add new info
-#         I |= N_i
-#         I_cnf += [frozenset({lit}) for lit in N_i if frozenset({lit}) not in I_cnf]
-
-#         o.add_derived_I(N_i)
-#         expl_seq.append((E_i, S_i, N_i))
-#         # print(New_info)
-#         print(f"\nOptimal explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
-#         cnt += 1
-#         if cnt== 4:
-#             return expl_seq
-
-#     o.clean()
-
-#     return expl_seq
-
-
 def test_explain():
-    params = OusParams()
-    params.constrained = True
-    params.incremental = False
-    params.pre_seed = False
-    params.sort_lits = False
-    params.bounded = False
-    params.post_opt = False
-    params.post_opt_incremental = False
-    params.post_opt_greedy = False
-    params.extension = 'maxsat'
+    params_cnf = OusParams()
+    params_cnf.constrained = True
+    params_cnf.incremental = False
+    params_cnf.pre_seed = False
+    params_cnf.sort_lits = False
+    params_cnf.bounded = False
+    params_cnf.post_opt = False
+    params_cnf.post_opt_incremental = False
+    params_cnf.post_opt_greedy = False
+    params_cnf.extension = 'maxsat'
+    params_cnf.ispuzzle = False
+
+    params_puzzle = OusParams()
+    params_puzzle.constrained = True
+    params_puzzle.incremental = False
+    params_puzzle.pre_seed = False
+    params_puzzle.sort_lits = False
+    params_puzzle.bounded = False
+    params_puzzle.post_opt = False
+    params_puzzle.post_opt_incremental = False
+    params_puzzle.post_opt_greedy = False
+    params_puzzle.extension = 'maxsat'
+    params_puzzle.ispuzzle = True
 
     # # # test on simple case
-    # simple_cnf, simple_facts, simple_names = simpleProblem()
-    # simple_weights = random.choices(list(range(2, 10)), k=len(simple_cnf))
+    simple_cnf, simple_facts, simple_names = simpleProblem()
+    simple_weights = random.choices(list(range(2, 10)), k=len(simple_cnf))
 
-    # simple_expl = explain_csp(params, cnf=simple_cnf, factsToExplain=simple_facts, weights=simple_weights)
+    simple_csp = ExplainCSP(params=params_cnf, cnf=simple_cnf, factsToExplain=simple_facts, weights=simple_weights)
+    explanations = simple_csp.explain()
 
     # #test on more difficult case
     # frietkot_cnf, frietkot_facts, frietkot_names = frietKotProblem()
@@ -213,26 +171,14 @@ def test_explain():
 
     # frietkot_expl = explain_csp(params, cnf=frietkot_cnf, factsToExplain=frietkot_facts, weights=frietkot_weights)
 
-    # # print(frietkot_cnf)
-    # for expl in frietkot_expl:
-    #     E_i, S_i, N_i = expl
-    #     if len(E_i) > 0:
-    #         E_expl = [frietkot_names[abs(next(iter(f_lit)))] for f_lit in E_i]
-    #     else:
-    #         E_expl = []
-    #     if len(S_i) > 0:
-    #         S_expl = S_i
-    #     else:
-    #         S_expl = []
-    #     N_expl = [('-' if f_lit < 0 else '')  + frietkot_names[abs(f_lit)] for f_lit in N_i]
-
-
-    #     print(f"Expl:\n\tE_expl={E_expl}\n\tS_expl={S_expl}\n\tN_expl={N_expl}")
-
     # # test on puzzle problem
     # originProblem()
-    puzzle_hard, puzzle_soft, puzzle_weights, puzzle_facts = originProblem()
-    puzzle_expl = explain_csp(params, cnf=puzzle_hard, factsToExplain=puzzle_facts, weights=puzzle_weights, indicatorVars=puzzle_soft, is_problem=True)
+    # puzzle_hard, puzzle_soft, puzzle_weights, puzzle_facts = originProblem()
+    # origin_csp = ExplainCSP(params=params_puzzle, cnf=puzzle_hard, factsToExplain=puzzle_facts, weights=puzzle_weights, indicatorVars=puzzle_soft)
+    # origin_csp.explain()
+
+    # puzzle_expl = explain_csp(params, cnf=puzzle_hard, factsToExplain=puzzle_facts, weights=puzzle_weights, indicatorVars=puzzle_soft, is_problem=True)
+
 
 if __name__ == "__main__":
     test_explain()

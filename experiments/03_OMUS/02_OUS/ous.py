@@ -24,69 +24,6 @@ class OUS(object):
         clauses={str(self.clauses)},
         """
 
-    # # Clause properties
-    # @property
-    # def clauses(self): return self.clauses.all_clauses
-
-    # @property
-    # def soft_clauses(self): return self.clauses.soft_clauses
-
-    # @property
-    # def hard_clauses(self): return self.clauses.hard_clauses
-
-    # @property
-    # def weights(self): return self.clauses.weights
-
-    # @property
-    # def obj_weights(self):
-    #     return self.clauses.obj_weights
-
-    # @property
-    # def soft_idxs(self):
-    #     return self.clauses.soft_idxs
-
-    # @property
-    # def I_idxs(self):
-    #     if self.params.constrained:
-    #         return self.clauses.I_idxs
-    #     else:
-    #         raise NotImplementedError()
-
-    # @property
-    # def nClauses(self):
-    #     if self.params.constrained:
-    #         return len(self.clauses.all_soft_clauses)
-    #     else:
-    #         return self.clauses.nSoft + self.clauses.nDerived + 1
-
-    # @property
-    # def clause_idxs(self):
-    #     if self.params.constrained:
-    #         # Clause indexes covers all soft indexes + Icnf_all + (-Icnf_all)
-    #         return self.clauses.all_soft_clauses_idxs
-    #     else:
-    #         # Clause indexes covers all soft indexes + Icnf_derived + (-lit)
-    #         return self.clauses.soft_I_lit_clause_idxs
-
-    # def add_hardClauses(self, added_clauses: list):
-    #     self.clauses.add_hardclauses(added_clauses)
-
-    # def add_softClauses(self, added_clauses: list, added_weights: list):
-    #     self.clauses.add_soft_clauses(added_clauses, added_weights)
-
-    # def add_IndicatorVars(self, added_weights=None):
-    #     # if added_weights is None:
-    #     return self.clauses.add_indicatorVars(added_weights)
-
-    # def add_I(self, added_I):
-    #     self.clauses.add_I(added_I, self.params.constrained)
-
-    # def add_derived_I(self, derived_I):
-    #     # print("Derived i:", derived_I)
-    #     self.clauses.add_derived_Icnf(derived_I)
-    #     if self.params.constrained:
-    #         self.gurobi_set_objective()
-
     def warm_start(self):
         pass
 
@@ -233,13 +170,9 @@ class OUS(object):
 
             # compute optimal hitting set
             Fp = self.optHS()
-            # print("Fp=", Fp)
-            # print(Fp, ":", [list(self.clauses.all_soft_clauses[idx]) for idx in Fp])
 
             # check satisfiability of the hitting set
             sat, model = self.satSolver.checkSat(Fp)
-            # print("sat=", sat)
-            # print("model=", model)
 
             # OUS
             if not sat:
@@ -261,11 +194,11 @@ class OUS(object):
 
     @profileFunc(sort_by='cumulative', lines_to_print=20, strip_dirs=True)
     def cOUS(self):
-        F = self.clause_idxs
+        F = self.clauses.all_soft_ids
+        # print(F)
         C, Fp = None, None
 
         while(True):
-
             if self.params.post_opt:
                 self.postponeOpt(C, Fp)
 
@@ -278,7 +211,7 @@ class OUS(object):
             # OUS
             if not sat:
                 # print(Fp, [self.clauses.all_soft_clauses[idx] for idx in Fp])
-                return Fp, [self.clauses.all_soft_clauses[idx] for idx in Fp], self.cost(Fp)
+                return Fp, [self.clauses.all_soft[idx] for idx in Fp], self.cost(Fp)
 
             # grow satisfiable set into (maximally) satisfiable subset
             Fpp, _ = self.grower.grow(Fp, model)

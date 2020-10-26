@@ -197,11 +197,11 @@ def originProblem():
     trans_cnf = cnf_to_pysat(to_cnf(trans))
     print(len(clues_cnf))
 
-    hard_clauses = [frozenset(c) for c in clues_cnf + bij_cnf + trans_cnf]
+    hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
     soft_clauses = []
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_clues]
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_bij]
-    soft_clauses += [frozenset({bv1.name + 1}) for bv1 in bv_trans]
+    soft_clauses += [[bv1.name + 1] for bv1 in bv_clues]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_bij]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_trans]
 
     weights = [100 for clause in bv_clues] + \
               [60 for clause in bv_trans] + \
@@ -234,7 +234,7 @@ def simpleProblem():
         andalouse.name+1:"andalouse"
     }
 
-    return cnf, explainable_facts.keys(), explainable_facts.values()
+    return [list(c) for c in cnf], explainable_facts.keys(), explainable_facts.values()
 
 
 def frietKotProblem():

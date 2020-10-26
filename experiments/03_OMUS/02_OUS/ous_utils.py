@@ -49,7 +49,7 @@ def profileFunc(output_file=None, sort_by='cumulative', lines_to_print=None, str
         @wraps(func)
         def wrapper(*args, **kwargs):
             now = datetime.now().strftime("%Y%m%d_%H%M%S")
-            _output_file = output_file or func.__name__ + "_" + now + '.prof'
+            _output_file = output_file or "profiles/" + func.__name__ + "_" + now + '.prof'
             pr = cProfile.Profile()
             pr.enable()
             retval = func(*args, **kwargs)

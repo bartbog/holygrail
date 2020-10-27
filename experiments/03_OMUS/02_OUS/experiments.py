@@ -1,9 +1,9 @@
 import json
 import random
+import sys
 import time
 from datetime import date, datetime
 from pathlib import Path
-import sys
 
 # pysat imports
 from pysat.formula import CNF, WCNF
@@ -11,20 +11,18 @@ from pysat.solvers import Solver
 
 # omus imports
 from ous import OUS
-
-from ous_utils import OusParams, Clauses
+from ous_utils import Clauses, OusParams
 
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 sys.path.append('/home/emilio/Documents/cppy_src/')
 sys.path.append('/home/emilio/documents/cppy_mysrc/')
 
-# from cppy.solver_interfaces.pysat_tools import
-from cppy.model_tools import to_cnf
+from multiprocessing import Process
+
 from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
+from cppy.model_tools import to_cnf
 
 from frietkot import frietKotProblem, simpleProblem
-
-from multiprocessing import Process
 
 SECONDS = 1
 MINUTES = 60 * SECONDS

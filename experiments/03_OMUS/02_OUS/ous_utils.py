@@ -89,7 +89,8 @@ class OptSolver(object):
         # model parameters
         self.opt_model.Params.OutputFlag = 0
         self.opt_model.Params.LogToConsole = 0
-        self.opt_model.Params.Threads = 8
+        self.opt_model.Params.Threads = 1
+
         # update the model
         x = self.opt_model.addMVar(
             shape=self.clauses.nSoftI,
@@ -173,7 +174,7 @@ class Grower(object):
 
             return hs, t_model
 
-    def grow(self, f_prime: set, model: set):
+    def grow(self, f_prime: set, model=set()):
         """
 
             Procedure to efficiently grow the list clauses in ``F_prime``. The complement of F_prime is a correction
@@ -218,6 +219,7 @@ class SatChecker(object):
 
         # list with assumption literals
         assumptions = [self.clauses.all_soft_flat[i] for i in fprime]
+
         solved = self.satsolver.solve(assumptions=assumptions)
         if solved:
             model = self.satsolver.get_model()
@@ -262,8 +264,8 @@ class OusParams(object):
 
     def __init__(self):
         self.incremental = False
-        self.pre_seed = False
-        self.sort_lits = False
+        self.warm_start = True
+        # self.sort_lits = False
         self.constrained = False
         self.bounded = False
         self.post_opt = False
@@ -277,11 +279,11 @@ class OusParams(object):
 
     def __repr__(self):
         return {
-            'pre_seed': self.pre_seed,
+            'warm_start': self.warm_start,
             'constrained': self.constrained,
             "incremental": self.incremental,
             'bounded': self.bounded,
-            'sort_lits': self.sort_lits,
+            # 'sort_lits': self.sort_lits,
             'extension': self.extension,
             'post_opt': self.post_opt,
             'post_opt_incremental': self.post_opt_incremental,
@@ -400,6 +402,10 @@ class Clauses(object):
 
     def set_lits(self, Iend):
         self.model = set(Iend)
+
+    @property
+    def fact_lits(self):
+        return [cl[0] for cl in self._Icnf]
 
     @property
     def hard(self):

@@ -1,6 +1,6 @@
 import time
 from ous_utils import OusParams, Clauses, SatChecker, Grower, OptSolver
-from ous import OUS
+from ous import COUS
 import random
 
 # pysat imports
@@ -94,14 +94,14 @@ class ExplainCSP:
 
         # grow clauses
         grower = Grower(self.clauses, params.extension)
-        self.ous = OUS(params=params, clauses=self.clauses, grower=grower, optSolver=optSolver, satSolver=self.satsolver)
+        self.ous = COUS(params=params, clauses=self.clauses, grower=grower, optSolver=optSolver, satSolver=self.satsolver)
 
     def explain(self, warmstart=False):
         """
         docstring
         """
         if warmstart:
-            self.ous.warmup()
+            self.ous.warm_start()
 
         while(len(self.facts - self.I) > 0):
             hs, explanation, _ = self.ous.cOUS()
@@ -163,7 +163,7 @@ def test_explain():
     simple_weights = random.choices(list(range(2, 10)), k=len(simple_cnf))
 
     simple_csp = ExplainCSP(params=params_cnf, cnf=simple_cnf, factsToExplain=simple_facts, weights=simple_weights)
-    explanations = simple_csp.explain()
+    explanations = simple_csp.explain(warmstart=True)
 
     # #test on more difficult case
     # frietkot_cnf, frietkot_facts, frietkot_names = frietKotProblem()

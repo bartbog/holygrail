@@ -5,24 +5,35 @@ ACTIVE FOLDER = "experiments/03_OMUS/02_OUS/"
 ## 0. Setup phase [**experiments/03_OMUS/02_OUS/explain.py**  (lines: 68 -> 97)]
 
 Input:
+- :cnf CNF C over V
+- :user_vars User vocabulary V' subset V
+- :user_vars_cost Cost-to-use voor elke var in V'
+- :initial_intepretation I0 subset V' [partial interpretation]
 
 - :params = Execution parameters
 - :cnf = list of hard clauses
-- :factsToExplain = set of facts to explain
+user variables
+- <span style="color:red">:explainableVars = set of vars to explain (visible variables)</span>
 - :weights = indicator variables weights
-- :i_0 = initial interpretation (lits in factsToExplain)
+- :i_0 = initial interpretation (lits in factsToExplain) [part is assigned, but using it still has a cost]
 - :indicatorVars = list of indicator variables.
   - *constrained*: indicator variables contains the soft clauses to enable or disable clue (trans/bij/clue) clauses
   - *not-constrained*: indicator variables considered empty, and indicator variables are added to every hard clause and added as unit literal soft clauses:
     - indicator vars = [max(lits in hard) + 1, max(lits in hard) + n_hard + 1]
 
-Output:
-
+Internal state
 - clauses = Clause object to manipulate clauses
-- sat solver = initialise sat solver bootstrapped hard clauses
+- sat solver = initialise sat solver bootstrapped with **cnf** (hard clauses)
+    1. Computation end_interpretation
 - opt solver = initialisation Gurobi opt solver
 - grow extension = set extension when growing
 - (C)OUS object = central object linked to different components (sat/opt solvers+clauses+grower)
+
+
+
+<span style="color:red">
+- Disable clause
+</span>
 
 ### Execution parameters   [**experiments/03_OMUS/02_OUS/ous_utils.py**  (lines: 263 -> 293)]
 
@@ -246,6 +257,10 @@ Attribute (objective coefficients) of variables set to new objective weights
 <span style="color:red">
 
     Q: Should we keep assumptions in line 249 or not?
+
+    -  add assumptions everytime you add a clause and once the finished with the optimal propagation the clauses are validated.
+
+</span>
 
 </span>
 

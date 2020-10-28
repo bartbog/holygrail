@@ -204,13 +204,14 @@ class Grower(object):
 
 
 class SatChecker(object):
-    def __init__(self, clauses, satsolver=None):
-        # self.constrainedOUS = constrainedOUS
+    def __init__(self, clauses):
+        """
+        Args:
+            clauses (Clauses): clauses.
+            satsolver ([type], optional): [description]. Defaults to None.
+        """
         self.clauses = clauses
-        if satsolver is not None:
-            self.satsolver = satsolver
-        else:
-            self.satsolver = Solver(bootstrap_with=self.clauses.hard)
+        self.satsolver = Solver(bootstrap_with=self.clauses.hard)
 
     def checkSat(self, fprime: list = []):
         # Preferred values for the lits not in the assumption literals
@@ -221,6 +222,7 @@ class SatChecker(object):
         assumptions = [self.clauses.all_soft_flat[i] for i in fprime]
 
         solved = self.satsolver.solve(assumptions=assumptions)
+
         if solved:
             model = self.satsolver.get_model()
             return solved, model
@@ -228,11 +230,9 @@ class SatChecker(object):
             return solved, None
 
     def optPropagate(self, I=None, focus=None, explanation=[]):
-        """CANNOT reuse solver because need to add clauses to the solver
-           which impacts future calls to the sat solver during OUS solving.
-
-           focus: a set of literals to filter, only keep those of the model
-                 SET A FOCUS if many auxiliaries..."""
+        """
+            focus (set, optional): a set of literals to filter, only keep those of the model.
+            SET A FOCUS if many auxiliaries..."""
 
         with Solver(bootstrap_with=self.clauses.hard + explanation) as s:
             if I is None or len(I) == 0:
@@ -255,6 +255,32 @@ class SatChecker(object):
                     model = model.intersection(new_model)
                 else:
                     return model
+
+    def optPropagateReuse(self, interpretation=[], focus=None, explanation=[]):
+        solved = self.satsolver.solve(assumptions=explanation + interpretation)
+
+        model = set(self.satsolver.get_model())
+
+        if focus:
+            model &= focus
+
+        added_assumptions = []
+        while(solved):
+            ass = self.clauses.get_assumption_lit()
+            added_assumptions.append([ass])
+
+            clause = list(-lit for lit in model) + [ass]
+            self.satsolver.add_clause(clause)
+            solved = self.satsolver.solve()
+
+            if solved:
+                new_model = set(self.satsolver.get_model())
+                if focus:
+                    new_model &= focus
+                model = model.intersection(new_model)
+
+        self.satsolver.append_formula(added_assumptions, no_return=True)
+        return model
 
     def __del__(self):
         self.satsolver.delete()
@@ -322,18 +348,18 @@ class Clauses(object):
             self.all_lits |= set(clause)
             self.lits |= set(abs(lit) for lit in clause)
 
-    def add_soft(self, added_clauses, added_weights=None, f=None):
-        self._soft += added_clauses
+    def add_assumptions(self, assumptions, cost_assumptions=None, f=None):
+        self._soft += assumptions
 
-        for clause in added_clauses:
+        for clause in assumptions:
             self.all_lits |= set(clause)
             self.lits |= set(abs(lit) for lit in clause)
 
-        if added_weights is not None:
-            assert len(added_clauses) == len(added_weights), f"Weights ({len(added_weights)}) and clauses ({len(added_clauses)}) must be  of same length"
-            self._soft_weights += added_weights
+        if assumptions is not None:
+            assert len(assumptions) == len(cost_assumptions), f"Weights ({len(cost_assumptions)}) and clauses ({len(assumptions)}) must be  of same length"
+            self._soft_weights += cost_assumptions
         elif f is not None:
-            self._soft_weights += [f(cl) for cl in added_clauses]
+            self._soft_weights += [f(cl) for cl in assumptions]
         else:
             raise "Weights/mapping f not provided"
 
@@ -399,6 +425,11 @@ class Clauses(object):
             if self.constrainedOUS:
                 self._obj_weights[posi] = 1
                 self._obj_weights[len(self._Icnf) + posnoti] = GRB.INFINITY
+
+    def get_assumption_lit(self):
+        max_lit = max(self.lits)
+        self.lits.add(max_lit+1)
+        return max_lit+1
 
     def set_lits(self, Iend):
         self.model = set(Iend)

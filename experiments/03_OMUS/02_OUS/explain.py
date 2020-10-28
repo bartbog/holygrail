@@ -65,41 +65,66 @@ def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_d
 
 
 class ExplainCSP:
-    def __init__(self, params: OusParams, cnf: list, factsToExplain: set, weights: list, i_0: set = set(), indicatorVars: list = list()) -> None:
-        self.params = params
-        self.I = i_0
-        self.I_cnf = []
-        self.expl_seq = []
+    def __init__(self, cnf: list, user_vars: list, user_vars_cost: list, initial_interpretation: set = set()):
+        """
+        ExplainCSP constructor uses hard clauses supplied in CNF format to
+        explain user variables with associated weights users_vars_cost based
+        on the initial interpretation.
+
+        Args:
+            cnf (list): CNF C over V
+            user_vars (list, list): User vocabulary V' subset V'
+            user_vars_cost (list): Cost-to-use voor elke var in V'
+            initial_interpretation (set): partial interpretation where I0 subset V',
+
+
+        """
+
+        # internal state variables
+        self.params = OusParams()
+        self.I = initial_interpretation
+        varsToExplain, assumptions = user_vars
+        cost_varsToExplain, cost_assumptions = user_vars_cost
 
         # Build clauses from CNF
-        self.clauses = Clauses(constrainedOUS=params.constrained)
+        self.clauses = Clauses()
         self.clauses.add_hard(cnf)
+
         # hand puzzle problems with indicator variables activate or de-active clues
         # weights = cost of using a clue
-        if self.params.ispuzzle:
-            self.clauses.add_soft(added_clauses=indicatorVars, added_weights=weights)
-        else:
-            self.clauses.add_indicators(weights)
+        self.clauses.add_assumptions(assumptions=assumptions, cost_assumptions=cost_assumptions)
+
         # sat solver
         self.satsolver = SatChecker(self.clauses)
-        self.all_unk = factsToExplain | set(-l for l in factsToExplain)
+        self.all_unk = varsToExplain | set(-l for l in varsToExplain)
         self.Iend = self.satsolver.optPropagate(explanation=self.clauses.all_soft)
+        print(self.Iend)
 
-        self.facts = set(fact if fact in self.Iend else -fact for fact in factsToExplain)
+        self.facts = set(fact if fact in self.Iend else -fact for fact in varsToExplain)
         self.clauses.add_I(self.facts)
         self.clauses.set_lits(self.Iend)
 
-        # opt solver
-        optSolver = OptSolver(self.clauses, params.constrained)
-
-        # grow clauses
-        grower = Grower(self.clauses, params.extension)
-        self.ous = COUS(params=params, clauses=self.clauses, grower=grower, optSolver=optSolver, satSolver=self.satsolver)
 
     def explain(self, warmstart=False):
         """
-        docstring
+        Internal state
+        --------------
+            :params = Execution parameters
+            :COUS object = central object linked to different components (sat/opt solvers+clauses+grower):
+            - :clauses (Clauses) = Clause object to manipulate (add/remove/get inidices) clauses
+            - :sat solver = Init SAT solver bootstrapped with **cnf** (hard clauses)
+            - :opt_solver = Init optimisation solver with Given input
+            - :grower = set extension when growing
         """
+        # TODO: setup optSolver
+        # opt solver
+        # optSolver = OptSolver(self.clauses, params.constrained)
+        # grow clauses
+        grower = Grower(self.clauses, params.extension)
+
+        # 
+        self.ous = COUS(params=params, clauses=self.clauses, grower=grower, optSolver=optSolver, satSolver=self.satsolver)
+
         if warmstart:
             self.ous.warm_start()
 
@@ -133,6 +158,21 @@ class ExplainCSP:
         pass
 
 
+def add_assumptions(cnf):
+    flat = set(abs(i) for lst in cnf for i in lst)
+    max_lit = max(flat)
+
+    cnf_ass = []
+    assumptions = []
+    for id, cl in enumerate(cnf):
+        ass = max_lit + id + 1
+        cl.append(-ass)
+        assumptions.append([ass])
+        cnf_ass.append(cl)
+
+    return cnf_ass, assumptions
+
+
 def test_explain():
     params_cnf = OusParams()
     params_cnf.constrained = True
@@ -162,7 +202,7 @@ def test_explain():
     simple_cnf, simple_facts, simple_names = simpleProblem()
     simple_weights = random.choices(list(range(2, 10)), k=len(simple_cnf))
 
-    simple_csp = ExplainCSP(params=params_cnf, cnf=simple_cnf, factsToExplain=simple_facts, weights=simple_weights)
+    simple_csp = ExplainCSP(params=params_cnf, cnf=simple_cnf, user_vars=(simple_facts, )weights=simple_weights)
     explanations = simple_csp.explain(warmstart=True)
 
     # #test on more difficult case

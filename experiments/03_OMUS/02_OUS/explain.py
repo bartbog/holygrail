@@ -6,6 +6,8 @@ import random
 # pysat imports
 from frietkot import simpleProblem, frietKotProblem, originProblem
 
+from pysat.formula import WCNF
+
 import cProfile
 import pstats
 from functools import wraps
@@ -65,45 +67,35 @@ def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_d
 
 
 class ExplainCSP:
-    def __init__(self, cnf: list, user_vars: list, user_vars_cost: list, initial_interpretation: set = set()):
+    def __init__(self, wcnf: WCNF, user_vars: list, user_vars_cost: list, initial_interpretation: list = list()):
         """
         ExplainCSP constructor uses hard clauses supplied in CNF format to
         explain user variables with associated weights users_vars_cost based
         on the initial interpretation.
 
         Args:
-            cnf (list): CNF C over V
-            user_vars (list, list): User vocabulary V' subset V'
-            user_vars_cost (list): Cost-to-use voor elke var in V'
-            initial_interpretation (set): partial interpretation where I0 subset V',
-
-
+            cnf (list):
+                weighted CNF C over V:
+                - hard clauses: original cnf (hard puzzle problems with
+                  indicator variables activate or de-active clues)
+                - soft clauses:
+                    + assumptions used for explanations
+                    + weights = cost of using a clue
+            user_vars (list):
+                User vocabulary V'
+            user_vars_cost (list):
+                Cost-to-use for each var in V'
+            initial_interpretation (set):
+                initial partial interpretation where I0 subset V'
+        TODO:
+            - Add user vars cost to objective function instead of 0.
         """
 
         # internal state variables
         self.params = OusParams()
-        self.I = initial_interpretation
-        varsToExplain, assumptions = user_vars
-        cost_varsToExplain, cost_assumptions = user_vars_cost
 
         # Build clauses from CNF
-        self.clauses = Clauses()
-        self.clauses.add_hard(cnf)
-
-        # hand puzzle problems with indicator variables activate or de-active clues
-        # weights = cost of using a clue
-        self.clauses.add_assumptions(assumptions=assumptions, cost_assumptions=cost_assumptions)
-
-        # sat solver
-        self.satsolver = SatChecker(self.clauses)
-        self.all_unk = varsToExplain | set(-l for l in varsToExplain)
-        self.Iend = self.satsolver.optPropagate(explanation=self.clauses.all_soft)
-        print(self.Iend)
-
-        self.facts = set(fact if fact in self.Iend else -fact for fact in varsToExplain)
-        self.clauses.add_I(self.facts)
-        self.clauses.set_lits(self.Iend)
-
+        self.clauses = Clauses(wcnf, user_vars, user_vars_cost, initial_interpretation)
 
     def explain(self, warmstart=False):
         """
@@ -117,13 +109,7 @@ class ExplainCSP:
             - :grower = set extension when growing
         """
         # TODO: setup optSolver
-        # opt solver
-        # optSolver = OptSolver(self.clauses, params.constrained)
-        # grow clauses
-        grower = Grower(self.clauses, params.extension)
-
-        # 
-        self.ous = COUS(params=params, clauses=self.clauses, grower=grower, optSolver=optSolver, satSolver=self.satsolver)
+        self.ous = COUS(params=self.params, clauses=self.clauses)
 
         if warmstart:
             self.ous.warm_start()

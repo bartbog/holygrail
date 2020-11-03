@@ -1,17 +1,16 @@
 from collections import Counter
 
-from ous_utils import BenchmarkInfo, Clauses, OusParams, profileFunc
+from ous_utils import BenchmarkInfo, Clauses, Grower, OptSolver, OusParams, profileFunc
 from gurobipy import GRB
 
 
 class COUS(object):
-    def __init__(self, optSolver=None, params=OusParams(), clauses=Clauses(), grower=None, satSolver=None):
+    def __init__(self, params: OusParams, clauses: Clauses):
         # OUS active objects
         self.params = params
         self.clauses = clauses
-        self.satSolver = satSolver
-        self.optSolver = optSolver
-        self.grower = grower
+        self.optSolver = OptSolver(clauses)
+        self.grower = Grower(clauses, extension='maxsat')
 
         # OUS active variables
         self.h_counter = Counter()
@@ -167,7 +166,7 @@ class COUS(object):
             Fp = self.optSolver.optHS()
 
             # check satisfiability of the hitting set
-            sat, model = self.satSolver.checkSat(Fp)
+            sat, model = self.clauses.checkSat(Fp)
 
             # OUS
             if not sat:

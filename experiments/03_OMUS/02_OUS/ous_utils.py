@@ -99,10 +99,12 @@ class OptSolver(object):
             name="x")
 
         # exactly one of the -literals
+        # TODO: CHANGE THIS!
         vals = self.clauses.not_I_idxs
         self.opt_model.addConstr(x[vals].sum() == 1)
 
         # at least one of the soft clauses
+        # TODO CHANGE THIS !
         vals2 = range(self.clauses.nIndi + self.clauses.nCNFLits)
         self.opt_model.addConstr(x[vals2].sum() >= 1)
 
@@ -203,89 +205,6 @@ class Grower(object):
         return grown_set, grown_model
 
 
-class SatChecker(object):
-    def __init__(self, clauses):
-        """
-        Args:
-            clauses (Clauses): clauses.
-            satsolver ([type], optional): [description]. Defaults to None.
-        """
-        self.clauses = clauses
-        self.satsolver = Solver(bootstrap_with=self.clauses.hard)
-
-    def checkSat(self, fprime: list = []):
-        # Preferred values for the lits not in the assumption literals
-        polarities = self.clauses.model
-        self.satsolver.set_phases(literals=polarities)
-
-        # list with assumption literals
-        assumptions = [self.clauses.all_soft_flat[i] for i in fprime]
-
-        solved = self.satsolver.solve(assumptions=assumptions)
-
-        if solved:
-            model = self.satsolver.get_model()
-            return solved, model
-        else:
-            return solved, None
-
-    def optPropagate(self, I=None, focus=None, explanation=[]):
-        """
-            focus (set, optional): a set of literals to filter, only keep those of the model.
-            SET A FOCUS if many auxiliaries..."""
-
-        with Solver(bootstrap_with=self.clauses.hard + explanation) as s:
-            if I is None or len(I) == 0:
-                s.solve()
-            else:
-                s.solve(assumptions=list(I))
-
-            model = set(s.get_model())
-            if focus:
-                model &= focus
-
-            while(True):
-                s.add_clause(list(-lit for lit in model))
-                solved = s.solve()
-
-                if solved:
-                    new_model = set(s.get_model())
-                    if focus:
-                        new_model &= focus
-                    model = model.intersection(new_model)
-                else:
-                    return model
-
-    def optPropagateReuse(self, interpretation=[], focus=None, explanation=[]):
-        solved = self.satsolver.solve(assumptions=explanation + interpretation)
-
-        model = set(self.satsolver.get_model())
-
-        if focus:
-            model &= focus
-
-        added_assumptions = []
-        while(solved):
-            ass = self.clauses.get_assumption_lit()
-            added_assumptions.append([ass])
-
-            clause = list(-lit for lit in model) + [ass]
-            self.satsolver.add_clause(clause)
-            solved = self.satsolver.solve()
-
-            if solved:
-                new_model = set(self.satsolver.get_model())
-                if focus:
-                    new_model &= focus
-                model = model.intersection(new_model)
-
-        self.satsolver.append_formula(added_assumptions, no_return=True)
-        return model
-
-    def __del__(self):
-        self.satsolver.delete()
-
-
 class OusParams(object):
 
     def __init__(self):
@@ -322,79 +241,162 @@ class OusParams(object):
 
 
 class Clauses(object):
-    def __init__(self, constrainedOUS=True):
+    def __init__(self, wcnf: WCNF, user_vars: list, user_vars_cost: list, initial_interpretation: list, constrainedOUS=True):
         self.constrainedOUS = constrainedOUS
-        self._hard = []
-        self._soft = []
-        self._soft_weights = []
+        self._hard = wcnf.hard
+        self._soft = wcnf.soft
+        self._soft_wght = wcnf.wght
+        self._user_vars = user_vars
+        self._user_vars_cost = user_vars_cost
 
-        #
-        self.all_soft = []
-        self.all_soft_ids = set()
-        self.all_lits = set()
-        self.soft_flat = []
-        self.all_soft_flat = []
-        self.lits = set()
-        self.model = set()
-        self._Icnf = []
-        self._notIcnf = []
-        self._derived = set()
+        # initialize sat solver with hard clauses
+        self.satsolver = Solver(bootstrap_with=wcnf.hard)
+
+        # propagate and find end model (interpretation) from initial
+        # interpretation and clues
+        self.model = self.optProp(I=initial_interpretation, expl=wcnf.soft)
+        self.facts = set(fact if fact in self.model else -fact for fact in user_vars)
+
+        self.nc = len(wcnf.soft) + 2 * len(user_vars)
+        self.all_soft_ids = frozenset(range(self.nc))
+        self.lit_cnt = Counter(wcnf.unweighted().clauses)
+
+        # soft_wght
         self._obj_weights = []
-        self.lit_counter = Counter()
+        # self.all_soft = []
+        # self.all_lits = set()
+        # self.soft_flat = []
+        # self.all_soft_flat = []
+        # self.lits = set()
+        # self._derived = set()
 
-    def add_hard(self, added_clauses):
-        self._hard += added_clauses
-        for clause in added_clauses:
-            self.all_lits |= set(clause)
-            self.lits |= set(abs(lit) for lit in clause)
+    def checkSat(self, fprime: set = set()):
+        # Preferred values for the lits not in the assumption literals
+        polarities = self.model
+        self.satsolver.set_phases(literals=polarities)
 
-    def add_assumptions(self, assumptions, cost_assumptions=None, f=None):
-        self._soft += assumptions
+        # list with assumption literals
+        # TODO implement all_soft_flat + make faster
+        assumptions = [self.clauses.all_soft_flat[i] for i in fprime]
 
-        for clause in assumptions:
-            self.all_lits |= set(clause)
-            self.lits |= set(abs(lit) for lit in clause)
+        solved = self.satsolver.solve(assumptions=assumptions)
 
-        if assumptions is not None:
-            assert len(assumptions) == len(cost_assumptions), f"Weights ({len(cost_assumptions)}) and clauses ({len(assumptions)}) must be  of same length"
-            self._soft_weights += cost_assumptions
-        elif f is not None:
-            self._soft_weights += [f(cl) for cl in assumptions]
+        if solved:
+            model = self.satsolver.get_model()
+            return solved, model
         else:
-            raise "Weights/mapping f not provided"
+            return solved, None
 
-        self.all_soft = self._soft + self._Icnf + self._notIcnf
-        self.all_soft_ids = set(i for i in range(len(self.all_soft)))
-        self.soft_flat = [l[0] for l in self._soft]
-        self.all_soft_flat = [l[0] for l in self._soft + self._Icnf + self._notIcnf]
+    def optProp(self, I: list = None, focus=None, expl=[]):
+        """
+            focus (set, optional): a set of literals to filter, only keep
+            those of the model. SET A FOCUS if many auxiliaries...
+        """
 
-    def add_indicators(self, weights=None):
-        self.lit_counter = Counter()
-        indHard = []
-        max_lit = max(self.lits)
-        indVars = set(i for i in range(max_lit + 1, max_lit + self.nHard + 1))
+        with Solver(bootstrap_with=self.clauses.hard + expl) as s:
+            if I is None or len(I) == 0:
+                s.solve()
+            else:
+                s.solve(assumptions=I)
 
-        # update hard clauses with indicator variables
-        for clause, i in zip(self._hard, indVars):
-            new_clause = clause + [-i]
-            indHard.append(new_clause)
-            self.lit_counter.update(new_clause)
-            self.lit_counter.update([-i])
+            model = set(s.get_model())
+            if focus:
+                model &= focus
 
-        self._hard = indHard
+            while(True):
+                s.add_clause(list(-lit for lit in model))
+                solved = s.solve()
 
-        # add indicator variables to soft clauses
-        soft_inds = [[i] for i in indVars]
+                if solved:
+                    new_model = set(s.get_model())
+                    if focus:
+                        new_model &= focus
+                    model = model.intersection(new_model)
+                else:
+                    return model
 
-        if weights is None:
-            self.add_soft(added_clauses=soft_inds, added_weights=[1 for _ in indVars])
-        else:
-            self.add_soft(added_clauses=soft_inds, added_weights=weights)
+    def optPropReuse(self, interpretation=[], focus=None, expl=[]):
+        solved = self.satsolver.solve(assumptions=expl + interpretation)
 
-        self.all_soft = self._soft + self._Icnf + self._notIcnf
-        self.all_soft_ids = set(i for i in range(len(self.all_soft)))
-        self.soft_flat = [l[0] for l in self._soft]
-        self.all_soft_flat = [l[0] for l in self._soft + self._Icnf + self._notIcnf]
+        model = set(self.satsolver.get_model())
+
+        if focus:
+            model &= focus
+
+        added_assumptions = []
+        while(solved):
+            ass = self.clauses.get_assumption_lit()
+            added_assumptions.append([ass])
+
+            clause = list(-lit for lit in model) + [ass]
+            self.satsolver.add_clause(clause)
+            solved = self.satsolver.solve()
+
+            if solved:
+                new_model = set(self.satsolver.get_model())
+                if focus:
+                    new_model &= focus
+                model = model.intersection(new_model)
+
+        self.satsolver.append_formula(added_assumptions, no_return=True)
+        return model
+
+    def __del__(self):
+        self.satsolver.delete()
+
+    # def add_hard(self, added_clauses):
+    #     self._hard += added_clauses
+    #     for clause in added_clauses:
+    #         self.all_lits |= set(clause)
+    #         self.lits |= set(abs(lit) for lit in clause)
+
+    # def add_assumptions(self, assumptions, cost_assumptions=None, f=None):
+    #     self._soft += assumptions
+
+    #     for clause in assumptions:
+    #         self.all_lits |= set(clause)
+    #         self.lits |= set(abs(lit) for lit in clause)
+
+    #     if assumptions is not None:
+    #         assert len(assumptions) == len(cost_assumptions), f"Weights ({len(cost_assumptions)}) and clauses ({len(assumptions)}) must be  of same length"
+    #         self._soft_weights += cost_assumptions
+    #     elif f is not None:
+    #         self._soft_weights += [f(cl) for cl in assumptions]
+    #     else:
+    #         raise "Weights/mapping f not provided"
+
+    #     self.all_soft = self._soft + self._Icnf + self._notIcnf
+    #     self.all_soft_ids = set(i for i in range(len(self.all_soft)))
+    #     self.soft_flat = [l[0] for l in self._soft]
+    #     self.all_soft_flat = [l[0] for l in self._soft + self._Icnf + self._notIcnf]
+
+    # def add_indicators(self, weights=None):
+    #     self.lit_counter = Counter()
+    #     indHard = []
+    #     max_lit = max(self.lits)
+    #     indVars = set(i for i in range(max_lit + 1, max_lit + self.nHard + 1))
+
+    #     # update hard clauses with indicator variables
+    #     for clause, i in zip(self._hard, indVars):
+    #         new_clause = clause + [-i]
+    #         indHard.append(new_clause)
+    #         self.lit_counter.update(new_clause)
+    #         self.lit_counter.update([-i])
+
+    #     self._hard = indHard
+
+    #     # add indicator variables to soft clauses
+    #     soft_inds = [[i] for i in indVars]
+
+    #     if weights is None:
+    #         self.add_soft(added_clauses=soft_inds, added_weights=[1 for _ in indVars])
+    #     else:
+    #         self.add_soft(added_clauses=soft_inds, added_weights=weights)
+
+    #     self.all_soft = self._soft + self._Icnf + self._notIcnf
+    #     self.all_soft_ids = set(i for i in range(len(self.all_soft)))
+    #     self.soft_flat = [l[0] for l in self._soft]
+    #     self.all_soft_flat = [l[0] for l in self._soft + self._Icnf + self._notIcnf]
         # return indVars
 
     def add_I(self, added_I):
@@ -408,10 +410,10 @@ class Clauses(object):
             # 0 because we want to choose 1 of the neg lits for explanations
             self._obj_weights += [0 for _ in added_I]
 
-        self.all_soft = self._soft + self._Icnf + self._notIcnf
-        self.all_soft_ids = set(i for i in range(len(self.all_soft)))
-        self.soft_flat = [l[0] for l in self._soft]
-        self.all_soft_flat = [l[0] for l in self._soft + self._Icnf + self._notIcnf]
+        # self.all_soft = self._soft + self._Icnf + self._notIcnf
+        # self.all_soft_ids = set(i for i in range(len(self.all_soft)))
+        # self.soft_flat = [l[0] for l in self._soft]
+        # self.all_soft_flat = [l[0] for l in self._soft + self._Icnf + self._notIcnf]
 
     def add_derived_Icnf(self, addedI):
         for i in addedI:
@@ -426,13 +428,13 @@ class Clauses(object):
                 self._obj_weights[posi] = 1
                 self._obj_weights[len(self._Icnf) + posnoti] = GRB.INFINITY
 
-    def get_assumption_lit(self):
-        max_lit = max(self.lits)
-        self.lits.add(max_lit+1)
-        return max_lit+1
+    # def get_assumption_lit(self):
+    #     max_lit = max(self.lits)
+    #     self.lits.add(max_lit+1)
+    #     return max_lit+1
 
-    def set_lits(self, Iend):
-        self.model = set(Iend)
+    # def set_lits(self, Iend):
+    #     self.model = set(Iend)
 
     @property
     def fact_lits(self):

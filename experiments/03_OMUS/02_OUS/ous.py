@@ -1,11 +1,11 @@
 from collections import Counter
 
-from ous_utils import BenchmarkInfo, Clauses, Grower, OptSolver, OusParams, profileFunc
+from ous_utils import BenchmarkInfo, Grower, OptSolver, OusParams, profileFunc
 from gurobipy import GRB
 
 
 class COUS(object):
-    def __init__(self, params: OusParams, clauses: Clauses):
+    def __init__(self, params: OusParams, clauses=None):
         # OUS active objects
         self.params = params
         self.clauses = clauses

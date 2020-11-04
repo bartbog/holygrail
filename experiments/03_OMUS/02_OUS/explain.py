@@ -1,6 +1,6 @@
 import time
-from ous_utils import OusParams, Clauses, SatChecker, Grower, OptSolver
-from ous import COUS
+from ous_utils import OusParams, Grower, OptSolver
+# from ous import COUS
 import random
 
 # pysat imports
@@ -86,7 +86,12 @@ def explain(params, cnf: CNF, user_vars, user_vars_cost, initial_interpretation)
     TODO:
         - Add user vars cost to objective function instead of 0.
     """
-    vars_expl = set(user_vars) | set(-lit for lit in user_vars) - initial_interpretation
+    print(user_vars)
+    print(user_vars_cost)
+    print(initial_interpretation)
+    print(cnf.clauses)
+
+    vars_expl = (set(user_vars) | set(-lit for lit in user_vars)) - initial_interpretation
     
     # Explanations
     Expl_seq = []
@@ -97,18 +102,19 @@ def explain(params, cnf: CNF, user_vars, user_vars_cost, initial_interpretation)
     # TODO: option1 End assignment derivable from current cnf and Interpretation
     lit_ass = optPropagate(cnf, I=initial_interpretation)
     Iend = lit_ass.intersection(vars_expl)
+    print(Iend)
 
     # current assignment I0 subset V'
     I = initial_interpretation
 
-    ous = COUS(cnf, user_vars, user_vars_cost, initial_interpretation, lit_ass)
+    # ous = COUS(cnf, user_vars, user_vars_cost, initial_interpretation, lit_ass)
 
     if params.warmstart:
         ous.warm_start()
 
     while(len(Iend - I) > 0):
         # Compute optimal explanation explanation
-        expl = ous.cOUS()
+        # expl = ous.cOUS()
         
         # facts used
         Ibest = I | expl
@@ -151,16 +157,19 @@ def optPropagate(cnf: CNF, I=[], focus=None):
     focus (set):
         focus on decision variables
     """
-    with Solver(bootstrap_with=cnf) as s:
-        s.solve(assumptions=I)
+    with Solver(bootstrap_with=cnf.clauses) as s:
+        s.solve(assumptions=list(I))
 
         model = set(s.get_model())
+        print(model)
         if focus:
             model &= focus
 
+        print(model)
         while(True):
             s.add_clause(list(-lit for lit in model))
-            solved = s.solve()
+            solved = s.solve(assumptions=list(I))
+            print(model)
 
             if solved:
                 new_model = set(s.get_model())
@@ -180,7 +189,7 @@ def add_assumptions(cnf):
     for id, cl in enumerate(cnf):
         ass = max_lit + id + 1
         cl.append(-ass)
-        assumptions.append([ass])
+        assumptions.append(ass)
         cnf_ass.append(cl)
 
     return cnf_ass, assumptions
@@ -210,10 +219,10 @@ def test_explain():
     user_vars_cost = [1] * len(s_user_vars) + [10] * len(assumptions)
 
     # if sudoku => int. += initial values of user_vars
-    initial_interpretation = assumptions
+    initial_interpretation = set(assumptions)
 
     # unit cost for deriving new information
-    simple_csp = explain(simple_cnf, user_vars=user_vars, user_vars_cost=user_vars_cost, initial_interpretation=initial_interpretation)
+    simple_csp = explain(params_cnf, simple_cnf, user_vars=user_vars, user_vars_cost=user_vars_cost, initial_interpretation=initial_interpretation)
 
     # TODO:
     # - remove all user vars with interpretation => remaining  = to explain.

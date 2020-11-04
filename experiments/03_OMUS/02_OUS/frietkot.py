@@ -235,7 +235,7 @@ def simpleProblem():
         andalouse.name+1:"andalouse"
     }
 
-    return [list(c) for c in cnf], explainable_facts.keys(), explainable_facts.values()
+    return [list(c) for c in cnf], [l for l in explainable_facts], explainable_facts.values()
 
 
 def frietKotProblem():

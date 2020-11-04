@@ -228,6 +228,7 @@ def simpleProblem():
     
     constraints = [c0, c1, c2, c3]
     cnf = cnf_to_pysat(constraints)
+    
     explainable_facts = {
         mayo.name+1:"mayo",
         ketchup.name+1:"ketchup",

@@ -6,7 +6,8 @@ import random
 # pysat imports
 from frietkot import simpleProblem, frietKotProblem, originProblem
 
-from pysat.formula import WCNF
+from pysat.formula import CNF, WCNF
+from pysat.solvers import Solver
 
 import cProfile
 import pstats
@@ -66,82 +67,108 @@ def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_d
     return inner
 
 
-class ExplainCSP:
-    def __init__(self, wcnf: WCNF, user_vars: list, user_vars_cost: list, initial_interpretation: list = list()):
-        """
-        ExplainCSP constructor uses hard clauses supplied in CNF format to
-        explain user variables with associated weights users_vars_cost based
-        on the initial interpretation.
+def explain(params, cnf: CNF, user_vars, user_vars_cost, initial_interpretation):
+    """
+    ExplainCSP constructor uses hard clauses supplied in CNF format to
+    explain user variables with associated weights users_vars_cost based
+    on the initial interpretation.
 
-        Args:
-            cnf (list):
-                weighted CNF C over V:
-                - hard clauses: original cnf (hard puzzle problems with
-                  indicator variables activate or de-active clues)
-                - soft clauses:
-                    + assumptions used for explanations
-                    + weights = cost of using a clue
-            user_vars (list):
-                User vocabulary V'
-            user_vars_cost (list):
-                Cost-to-use for each var in V'
-            initial_interpretation (set):
-                initial partial interpretation where I0 subset V'
-        TODO:
-            - Add user vars cost to objective function instead of 0.
-        """
+    Args:
+        cnf (list): CNF C over V:
+            hard puzzle problems with assumptions variables to activate or
+            de-active clues.
+        user_vars (list):
+            User vocabulary V'
+        user_vars_cost (list):
+            Cost-to-use for each v in V'
+        initial_interpretation (set):
+            initial partial interpretation where I0 subset V'
+    TODO:
+        - Add user vars cost to objective function instead of 0.
+    """
+    vars_expl = set(user_vars) | set(-lit for lit in user_vars) - initial_interpretation
+    
+    # Explanations
+    Expl_seq = []
+    
+    # TODO: option1 End assignment derivable from current cnf and Interpretation
+    Iend = optPropagate(cnf, I=initial_interpretation, focus=vars_expl)
 
-        # internal state variables
-        self.params = OusParams()
+    # TODO: option1 End assignment derivable from current cnf and Interpretation
+    lit_ass = optPropagate(cnf, I=initial_interpretation)
+    Iend = lit_ass.intersection(vars_expl)
 
-        # Build clauses from CNF
-        self.clauses = Clauses(wcnf, user_vars, user_vars_cost, initial_interpretation)
+    # current assignment I0 subset V'
+    I = initial_interpretation
 
-    def explain(self, warmstart=False):
-        """
-        Internal state
-        --------------
-            :params = Execution parameters
-            :COUS object = central object linked to different components (sat/opt solvers+clauses+grower):
-            - :clauses (Clauses) = Clause object to manipulate (add/remove/get inidices) clauses
-            - :sat solver = Init SAT solver bootstrapped with **cnf** (hard clauses)
-            - :opt_solver = Init optimisation solver with Given input
-            - :grower = set extension when growing
-        """
-        # TODO: setup optSolver
-        self.ous = COUS(params=self.params, clauses=self.clauses)
+    ous = COUS(cnf, user_vars, user_vars_cost, initial_interpretation, lit_ass)
 
-        if warmstart:
-            self.ous.warm_start()
+    if params.warmstart:
+        ous.warm_start()
 
-        while(len(self.facts - self.I) > 0):
-            hs, explanation, _ = self.ous.cOUS()
+    while(len(Iend - I) > 0):
+        # Compute optimal explanation explanation
+        expl = ous.cOUS()
+        
+        # facts used
+        Ibest = I | expl
+        
+        # assumptions used
+        Cbest = user_vars | expl
 
-            # TODO: explaining facts - use indices instead of the clause
-            E_i = [ci for ci in explanation if ci in self.I_cnf]
+        # New information derived "focused" on  
+        Nbest = optPropagate(cnf, I=Ibest + Cbest, focus=(Iend - I))
 
-            # constraint used ('and not ci in E_i': dont repeat unit clauses)
-            # TODO: constraints - use indices instead of the clause
-            S_i = [ci for ci in explanation if ci in self.clauses.soft and ci not in E_i]
+        Expl_seq.append((Ibest, Cbest, Nbest))
 
-            # TODO: Correct NEW facts derivation
-            New_info = self.satsolver.optPropagate(I=self.I, focus=self.all_unk, explanation=E_i + S_i)
-            N_i = New_info.intersection(self.facts) - self.I
+        print(f"\nOptimal explanation \t\t {Ibest} /\\ {Cbest} => {Nbest}\n")
 
-            # add new info
-            self.I |= N_i
-            self.I_cnf += [[lit] for lit in N_i if [lit] not in self.I_cnf]
+        I |= Nbest
 
-            self.clauses.add_derived_Icnf(N_i)
-            self.ous.optSolver.set_objective()
-            self.expl_seq.append((E_i, S_i, N_i))
-            # print(New_info)
-            print(f"\nOptimal explanation \t\t {E_i} /\\ {S_i} => {N_i}\n")
+    return Expl_seq
 
-        return self.expl_seq
 
-    def explain_lit(self, lit):
-        pass
+def optPropagate(cnf: CNF, I=[], focus=None):
+    """
+    Improvements:
+    - Extension 1:
+        + Reuse sat-solver bootstrapped with cnf
+    - Extension 2:
+        + Reuse solver bootstrapped with cnf
+        + Add new clause with assumption literal 
+            ex: a_i=7
+        + solve with assumption literal set to false.
+            solve(assumptions=[-7])
+        + Add all new assumptions as True to the solver (to disable clause). 
+            add_clauses([a_i]).
+    Args:
+    cnf (list): CNF C over V:
+            hard puzzle problems with assumptions variables to activate or
+            de-active clues.
+    I (list):
+        Assumptions + facts (partial assignment to the decision variables of 
+        the User vocabulary V')
+    focus (set):
+        focus on decision variables
+    """
+    with Solver(bootstrap_with=cnf) as s:
+        s.solve(assumptions=I)
+
+        model = set(s.get_model())
+        if focus:
+            model &= focus
+
+        while(True):
+            s.add_clause(list(-lit for lit in model))
+            solved = s.solve()
+
+            if solved:
+                new_model = set(s.get_model())
+                if focus:
+                    new_model &= focus
+                model = model.intersection(new_model)
+            else:
+                return model
 
 
 def add_assumptions(cnf):
@@ -172,30 +199,46 @@ def test_explain():
     params_cnf.extension = 'maxsat'
     params_cnf.ispuzzle = False
 
-    params_puzzle = OusParams()
-    params_puzzle.constrained = True
-    params_puzzle.incremental = False
-    params_puzzle.pre_seed = False
-    params_puzzle.sort_lits = False
-    params_puzzle.bounded = False
-    params_puzzle.post_opt = False
-    params_puzzle.post_opt_incremental = False
-    params_puzzle.post_opt_greedy = False
-    params_puzzle.extension = 'maxsat'
-    params_puzzle.ispuzzle = True
+    # test on simple case
+    s_cnf, s_user_vars, s_user_var_names = simpleProblem()
+    s_cnf_ass, assumptions = add_assumptions(s_cnf)
 
-    # # # test on simple case
-    simple_cnf, simple_facts, simple_names = simpleProblem()
-    simple_weights = random.choices(list(range(2, 10)), k=len(simple_cnf))
+    # transform list cnf into CNF object
+    simple_cnf = CNF(from_clauses=s_cnf_ass)
 
-    simple_csp = ExplainCSP(params=params_cnf, cnf=simple_cnf, user_vars=(simple_facts, )weights=simple_weights)
-    explanations = simple_csp.explain(warmstart=True)
+    user_vars = s_user_vars + assumptions
+    user_vars_cost = [1] * len(s_user_vars) + [10] * len(assumptions)
+
+    # if sudoku => int. += initial values of user_vars
+    initial_interpretation = assumptions
+
+    # unit cost for deriving new information
+    simple_csp = explain(simple_cnf, user_vars=user_vars, user_vars_cost=user_vars_cost, initial_interpretation=initial_interpretation)
+
+    # TODO:
+    # - remove all user vars with interpretation => remaining  = to explain.
+    # 
+
+    # generate explanations
 
     # #test on more difficult case
     # frietkot_cnf, frietkot_facts, frietkot_names = frietKotProblem()
     # frietkot_weights = random.choices(list(range(2, 10)), k=len(frietkot_cnf))
 
     # frietkot_expl = explain_csp(params, cnf=frietkot_cnf, factsToExplain=frietkot_facts, weights=frietkot_weights)
+
+
+    # params_puzzle = OusParams()
+    # params_puzzle.constrained = True
+    # params_puzzle.incremental = False
+    # params_puzzle.pre_seed = False
+    # params_puzzle.sort_lits = False
+    # params_puzzle.bounded = False
+    # params_puzzle.post_opt = False
+    # params_puzzle.post_opt_incremental = False
+    # params_puzzle.post_opt_greedy = False
+    # params_puzzle.extension = 'maxsat'
+    # params_puzzle.ispuzzle = True
 
     # # test on puzzle problem
     # originProblem()
@@ -208,3 +251,87 @@ def test_explain():
 
 if __name__ == "__main__":
     test_explain()
+
+# def optPropagate(solver: Solver, I_ass, focus=None):
+#     solver.solve(assumptions=I_ass)
+
+#     model = set(solver.get_model())
+#     if focus:
+#         model &= focus
+
+#     while(True):
+#         solver.add_clause(list(-lit for lit in model))
+#         solved = solver.solve()
+
+#         if solved:
+#             new_model = set(solver.get_model())
+#             if focus:
+#                 new_model &= focus
+#             model = model.intersection(new_model)
+#         else:
+#             return model
+
+
+# def optPropagate(solver: Solver, cnf: CNF, I: list = [], focus=None, reuse_solver=False):
+#     solved = solver.solve(assumptions=I)
+
+#     model = set(solver.get_model())
+#     if focus:
+#         model &= focus
+
+#     added_assumptions = []
+#     while(solved):
+#         if reuse_solver:
+#             # add new assumption variable
+#             assumption = solver.nof_vars() + 1
+#             added_assumptions.append([assumption])
+#             clause = list(-lit for lit in model) + [assumption]
+#             solver.add_clause(clause)
+
+#             # TODO: check if that makes sense
+#             solved = solver.solve(assumptions=[-assumption])
+#         else:
+#             solved = solver.solve()
+
+#         if solved:
+#             new_model = set(solver.get_model())
+#             if focus:
+#                 new_model &= focus
+#             model = model.intersection(new_model)
+
+#     if reuse_solver:
+#         solver.append_formula(added_assumptions, no_return=True)
+
+#     return model
+
+# def optPropagate(solver: Solver, cnf: CNF, I: list = [], focus=None, reuse_solver=False):
+#     solved = solver.solve(assumptions=I)
+
+#     model = set(solver.get_model())
+#     if focus:
+#         model &= focus
+
+#     added_assumptions = []
+#     while(solved):
+#         if reuse_solver:
+#             # add new assumption variable
+#             assumption = solver.nof_vars() + 1
+#             added_assumptions.append([assumption])
+#             clause = list(-lit for lit in model) + [assumption]
+#             solver.add_clause(clause)
+
+#             # TODO: check if that makes sense
+#             solved = solver.solve(assumptions=[-assumption])
+#         else:
+#             solved = solver.solve()
+
+#         if solved:
+#             new_model = set(solver.get_model())
+#             if focus:
+#                 new_model &= focus
+#             model = model.intersection(new_model)
+
+#     if reuse_solver:
+#         solver.append_formula(added_assumptions, no_return=True)
+
+#     return model

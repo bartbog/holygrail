@@ -4,32 +4,15 @@ ACTIVE FOLDER = "experiments/03_OMUS/02_OUS/"
 
 ## 0. Setup phase [**experiments/03_OMUS/02_OUS/explain.py**  (lines: 68 -> 97)]
 
-Input:
-- :cnf CNF C over V
+**Input:**
+- :cnf weighted CNF C over V
 - :user_vars User vocabulary V' subset V
 - :user_vars_cost Cost-to-use voor elke var in V'
 - :initial_intepretation I0 subset V' [partial interpretation]
 
-- :params = Execution parameters
-- :cnf = list of hard clauses
-user variables
-- <span style="color:red">:explainableVars = set of vars to explain (visible variables)</span>
-- :weights = indicator variables weights
-- :i_0 = initial interpretation (lits in factsToExplain) [part is assigned, but using it still has a cost]
-- :indicatorVars = list of indicator variables.
-  - *constrained*: indicator variables contains the soft clauses to enable or disable clue (trans/bij/clue) clauses
-  - *not-constrained*: indicator variables considered empty, and indicator variables are added to every hard clause and added as unit literal soft clauses:
-    - indicator vars = [max(lits in hard) + 1, max(lits in hard) + n_hard + 1]
 
-Internal state
+**Internal state**
 - clauses = Clause object to manipulate clauses
-- sat solver = initialise sat solver bootstrapped with **cnf** (hard clauses)
-    1. Computation end_interpretation
-- opt solver = initialisation Gurobi opt solver
-- grow extension = set extension when growing
-- (C)OUS object = central object linked to different components (sat/opt solvers+clauses+grower)
-
-
 
 <span style="color:red">
 - Disable clause
@@ -76,7 +59,15 @@ Internal state
 
     bounded              [True/False]
 
-## 1. Initialization: Warm-up phase
+## 1. c-OUS 
+
+**Internal State:**
+
+- sat solver = initialise sat solver bootstrapped with **cnf** (hard clauses)
+    1. Computation end_interpretation
+- opt solver = initialisation Gurobi opt solver
+- grow extension = set extension when growing
+- (C)OUS object = central object linked to different components (sat/opt solvers+clauses+grower)
 
 ### 1.1 c-OUS warm-up  [**experiments/03_OMUS/02_OUS/ous.py**  (lines: 26 -> 45)]
 
@@ -90,8 +81,9 @@ Internal state
 2. Grow set with all derivable facts (+/- lits) to satisfiable subset (SS) + add complement to *H* + constraint to gurobi solver
 
 ### 1.2 OUS warm-up
-
+<span style="color:red">
 *Not implemented yet.*
+</span>
 
     SSOfF ← ∅
     for S ∈ SSs do

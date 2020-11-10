@@ -73,6 +73,8 @@ def explain(params, cnf: CNF, user_vars, user_vars_cost, initial_interpretation)
     explain user variables with associated weights users_vars_cost based
     on the initial interpretation.
 
+    => hyp: cost is linear 
+
     Args:
         cnf (list): CNF C over V:
             hard puzzle problems with assumptions variables to activate or
@@ -80,7 +82,7 @@ def explain(params, cnf: CNF, user_vars, user_vars_cost, initial_interpretation)
         user_vars (list):
             User vocabulary V'
         user_vars_cost (list):
-            Cost-to-use for each v in V'
+            Cost-to-use for each lit in v in V'
         initial_interpretation (set):
             initial partial interpretation where I0 subset V'
     TODO:
@@ -101,26 +103,42 @@ def explain(params, cnf: CNF, user_vars, user_vars_cost, initial_interpretation)
 
     # TODO: option1 End assignment derivable from current cnf and Interpretation
     lit_ass = optPropagate(cnf, I=initial_interpretation)
-    Iend = lit_ass.intersection(vars_expl)
+    Iend = lit_ass & vars_expl
     print(Iend)
 
     # current assignment I0 subset V'
+    # *pointer* to interpretation (set)
     I = initial_interpretation
 
-    # ous = COUS(cnf, user_vars, user_vars_cost, initial_interpretation, lit_ass)
+    # INput
+    # best-step with multiple implementations possible (OUS/c-OUS/MUS...)
+    # 1. CNF
+    # 3. Iend = end interpretatie
+    # 4. user_vars
+    # 5. user_vars_cost
 
-    if params.warmstart:
-        ous.warm_start()
+    # TODO:
+    # 1. rename to best-step-computer
+    # 2. warm start to constructor
+    # - (optional) sat solver is best to leave how it is, instead of giving it 
+    # phases, might be better not modifying it.
+    # - check intersection
+    ous = COUS(cnf, user_vars, user_vars_cost, Iend)
 
     while(len(Iend - I) > 0):
         # Compute optimal explanation explanation
-        # expl = ous.cOUS()
+        # rename to best-step:
+        # internal state: (cnf, user_Vars, user_Vars_Cost, Iend)
+        # input: I
+        # output: assignemnt to subset of user_Vars 
+        # - {..., ..., ..., ... }
+        expl = ous.cOUS()
         
         # facts used
-        Ibest = I | expl
+        Ibest = I & expl
         
         # assumptions used
-        Cbest = user_vars | expl
+        Cbest = user_vars & expl
 
         # New information derived "focused" on  
         Nbest = optPropagate(cnf, I=Ibest + Cbest, focus=(Iend - I))
@@ -136,26 +154,30 @@ def explain(params, cnf: CNF, user_vars, user_vars_cost, initial_interpretation)
 
 def optPropagate(cnf: CNF, I=[], focus=None):
     """
+    optPropage produces the intersection of all models of cnf more precise 
+    than I projected on focus.
+
     Improvements:
+    + Add new clause with assumption literal 
+        ex: a_i=7
+    + solve with assumption literal set to false.
+    + Add 1 assumption only as True to the solver (to disable clause). 
+        add_clauses([a_i]).
     - Extension 1:
-        + Reuse sat-solver bootstrapped with cnf
+        + Reuse solver only for optpropagate
     - Extension 2:
-        + Reuse solver bootstrapped with cnf
-        + Add new clause with assumption literal 
-            ex: a_i=7
-        + solve with assumption literal set to false.
-            solve(assumptions=[-7])
-        + Add all new assumptions as True to the solver (to disable clause). 
-            add_clauses([a_i]).
+        + Reuse solver for all sat calls
+
     Args:
     cnf (list): CNF C over V:
             hard puzzle problems with assumptions variables to activate or
             de-active clues.
     I (list):
-        Assumptions + facts (partial assignment to the decision variables of 
+        Assumptions 
+        => TODO: .... Ei/Si(partial assignment to the decision variables of 
         the User vocabulary V')
     focus (set):
-        focus on decision variables
+        +/- literals of all user variables
     """
     with Solver(bootstrap_with=cnf.clauses) as s:
         s.solve(assumptions=list(I))

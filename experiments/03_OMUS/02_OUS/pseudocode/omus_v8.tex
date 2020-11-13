@@ -1,0 +1,181 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{float}
+\usepackage{amsthm}
+\usepackage{xspace}
+\usepackage{thmtools} 
+\usepackage[parfill]{parskip}
+\usepackage[normalem]{ulem}
+
+\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+\newcommand\m[1]{\mathcal{#1}}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{lem}{Lemma}
+\newtheorem{lemma}[lem]{Lemma}
+\newtheorem{propo}{Proposition}
+\newtheorem{proposition}[propo]{Proposition}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+
+\bibliographystyle{apalike}
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}#1}}}
+\newcommand{\bart}[1]{{\comment{\color{green}#1}}}
+\newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1}}}
+
+\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\F{\ensuremath{\m{F} }\xspace}
+% \newcommand\ohs{\ensuremath{\m{OHS} }\xspace}
+\newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+\newcommand\Iend{\ensuremath{\m{I}_\mathit{end} }\xspace}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulac{\ensuremath{\m{C} }\xspace}
+\newcommand\formulag{\ensuremath{\m{G} }\xspace}
+\newcommand\mm[1]{\ensuremath{#1}\xspace}
+\newcommand\nat{\mm{\mathbb{N}}}
+\newcommand\ltrue{\mm{\textbf{t}}}
+\newcommand\lfalse{\mm{\textbf{f}}}
+
+\newcommand\call[1]{\mm{\textsc{#1}}}
+\newcommand\geths{\mm{\call{GetHittingSet}}}
+\newcommand\ohs{\mm{\call{OptHittingSet}}}
+\newcommand\ghs{\mm{\call{GreedyHittingSet}}}
+\newcommand\ihs{\mm{\call{IncrementalHittingSet}}}
+\newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+\newcommand\sat{\mm{\call{sat}}}
+\newcommand\grow{\mm{\call{Grow}}}
+\newcommand\omus{\mm{\call{OUS}}}
+\newcommand\comus{\mm{\call{c-OUS}}}
+\newcommand\omusinc{\mm{\call{OUS-Inc}}}
+\newcommand\store{\mm{\call{Store}}}
+\newcommand\optprop{\mm{\call{OptimalPropagate}}}
+\newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+\newcommand\satsets{\mm{\mathbf{SSs}}}
+\newcommand\fall{\mm{\formula_{\mathit{all}}}}
+\begin{document}
+
+\section{Explanation Generation}
+
+\begin{algorithm}[h]
+  \caption{$\call{ExplainCSP}(\formulac,f)$}
+  \label{alg:explainCSP}
+$E \gets \langle \rangle$\;
+$\Iend \gets \optprop(\formulac)$\;
+$I \gets \emptyset$\;
+\While{$I \neq \Iend$}{
+    $X \gets \call{bestStep}({\cal C},f,I,\Iend)$\;
+	$I_{\mathit{best}} \gets I\cap X$\;
+    $\formulac_{\mathit{best}}\gets\formulac\cap X$\;
+	$N_{\mathit{best}} \gets \{\Iend \setminus I\} \cap \optprop(X) $\;
+	add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+	$I \gets I \cup N_{\mathit{best}}$\;
+  }
+\Return{E}\;
+\end{algorithm}
+
+\begin{algorithm}[h]
+  \caption{$\call{bestStep--OUS}({\cal C},f,I,\Iend)$}
+  \label{alg:bestStepOUS}
+$X_{best} \gets \{{\cal C} \land I \land \overline{\Iend}\}$\;
+\For{$l \in \{\Iend \setminus I\}$}{
+    $X \gets \omus{({\cal C} \land I \land \neg l,\  f)}$\;
+    \If{$f(X)<f(X_{best})$}{
+        $X_{best} \gets X$\;
+    }
+}
+\Return{$X_{best}$} 
+\end{algorithm}
+
+\begin{algorithm}[h]
+  \caption{$\call{bestStep--c-OUS}({\cal C},f,I,I_{end})$}
+  \label{alg:singleStepExplain3}
+$\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
+set $p$ such that exactly one of $\overline{\Iend}$ in the hitting set \textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
+\Return{$\comus(\formulag,f,p)$}\;
+\end{algorithm}
+
+\clearpage
+\section{OUS Algorithm}
+
+\newcommand\satsetsformula{\mm{\mathbf{SSOfF}}}
+% \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\begin{algorithm}[ht]
+  \DontPrintSemicolon
+  %$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+  $\satsetsformula\gets\emptyset$\;
+  \For{$S\in\satsets$ \label{line:for-inc-seed}}{
+    $S_\formula \gets {S}\cap \formula$\;
+    \If{$\lnot \exists {S}'\in\satsetsformula: {S}_\formula \subseteq{S}'$}{
+    	$S_\formula \gets \grow( {S}_\formula, \formula)$\;
+    	        $\setstohit \gets \setstohit\cup \{\formula \setminus {S}_\formula\}$\;
+        $\satsetsformula\gets\satsetsformula\cup\{{S}_\formula\}$
+        }
+    }
+  \While{true}{
+    $\F' \gets \ohs(\setstohit,f) $ \label{smus-hs} \;
+    \If{ $\lnot \sat(\F')$}{
+      \Return{$\F'$} \;
+    }
+    $\F'' \gets  \grow(\F',\F) $\;
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$\;
+    $\satsets\gets \satsets\cup \{(\F'',M)\}$ \label{line:store}
+    \;
+  }  \caption{$\omusinc(\formula,f)$ }
+  \label{alg:omus-inc}
+\end{algorithm}
+% 
+
+\begin{algorithm}[h]
+  \While{true}{
+      \While{$|\setstohit| > 0$}{
+        %$\F' \gets \ihs(\setstohit,f) $\;
+        $\F' \gets \F' + min_f$ element of last MCS in $\setstohit$\;
+          \If{ $\lnot \sat(\F')$}{
+            \textbf{break}
+          }
+          $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
+      }
+        $\F' \gets \ghs(\setstohit,f) $\;
+          \If{ $\lnot \sat(\F')$}{
+            \textbf{break}
+          }
+          $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
+  }
+  \caption{Postponing hitting set optimization for OUS (to be inserted before of )}
+  \end{algorithm}
+\clearpage
+\section{cOUS}
+
+
+
+
+\begin{algorithm}[h]
+  \DontPrintSemicolon
+  \While{true}{
+    $\F' \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    \If{ $\lnot \sat(\F')$}{
+      \Return{$\F'$} \;
+    }
+    $\F'' \gets  \grow(\F',\F) $\;
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+  }
+  \caption{$\comus(\formula,f,p)$ }
+  \label{alg:comus}
+\end{algorithm}
+
+
+
+\bibliography{omusrefs}
+
+\end{document}

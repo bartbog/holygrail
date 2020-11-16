@@ -1,5 +1,12 @@
 \documentclass{article}
-\usepackage{fullpage}
+%\usepackage{fullpage}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=10mm,
+ top=10mm,
+ }
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{xcolor}
@@ -38,7 +45,7 @@
 \newcommand\F{\ensuremath{\m{F} }\xspace}
 % \newcommand\ohs{\ensuremath{\m{OHS} }\xspace}
 \newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
-\newcommand\Iend{\ensuremath{\m{I}_\mathit{end} }\xspace}
+\newcommand\Iend{\ensuremath{I_\mathit{end} }\xspace}
 \newcommand\formula{\ensuremath{\m{F} }\xspace}
 \newcommand\formulac{\ensuremath{\m{C} }\xspace}
 \newcommand\formulag{\ensuremath{\m{G} }\xspace}
@@ -68,21 +75,57 @@
 \section{Explanation Generation}
 
 \begin{algorithm}[h]
+\DontPrintSemicolon
   \caption{$\call{ExplainCSP}(\formulac, U, f)$}
   \label{alg:explainCSP}
 $E \gets \langle \rangle$\;
-$\Iend \gets \optprop(\formulac)$\;
+$I_{end} \gets \optprop(\formulac, U)$ \tcp*{assignment on variables of U}
+$U \gets U \cap I_{end}$ \;
+$I_{expl} = \{i \in I_{end} | f(i) < inf \wedge f(-i) < inf\}$ \;
 $I \gets \emptyset$\;
-\While{$I \neq \Iend$}{
-    $X \gets \call{bestStep}({\cal C},f,I,\Iend)$\;
-	$I_{\mathit{best}} \gets I\cap X$\;
-    $\formulac_{\mathit{best}}\gets\formulac\cap X$\;
+\While{$I \neq I_{expl}$}{
+    $E \gets \call{bestStep}({\cal C},U, f,\Iend, I)$\;
+	$I_{\mathit{best}} \gets I \cap X$\;
+    $\formulac_{\mathit{best}}\gets \formulac\cap X$\;
 	$N_{\mathit{best}} \gets \{\Iend \setminus I\} \cap \optprop(X) $\;
 	add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
 	$I \gets I \cup N_{\mathit{best}}$\;
   }
 \Return{E}\;
 \end{algorithm}
+
+
+
+\begin{algorithm}[h]
+\DontPrintSemicolon
+  \caption{$\call{bestStep--c-OUS}({\cal C},U, f,\Iend, I)$}
+  \label{alg:singleStepExplain3}
+%$\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
+
+$A \gets I \cup (\overline{\Iend} \setminus \bar{I})$ \tcp*{Optimal US is subset of A}
+set $p$ such that exactly one of $\overline{\Iend}$ in the hitting set \; %\textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
+\Return{$\comus({\cal C},f,p, A)$}\;
+\end{algorithm}
+
+
+\begin{algorithm}[h]
+\tcp{Hyp: $C \cup A$ is unsatisfiable}
+  \DontPrintSemicolon
+  $\setstohit \gets \emptyset$ \;  
+  \While{true}{
+    $A' \gets \cohs(A, f, p,\setstohit) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    \If{ $\lnot \sat({\cal C} \cup A')$}{
+      \Return{$A'$} \;
+    }
+    $A'' \gets  \grow(A',A) $\;
+    $\setstohit  \gets \setstohit  \cup \{  A \setminus A''\}$ \tcp*{We can reuse the H across diff call to alg \ref{alg:explainCSP} was $H \cup \{F \setminus F''\}$ }
+  }
+  \caption{$\comus({\cal C},f,p, A)$ }
+  \label{alg:comus}
+\end{algorithm}
+
+\clearpage
+\section{OUS Algorithm}
 
 \begin{algorithm}[h]
   \caption{$\call{bestStep--OUS}({\cal C},f,I,\Iend)$}
@@ -96,17 +139,6 @@ $X_{best} \gets \{{\cal C} \land I \land \overline{\Iend}\}$\;
 }
 \Return{$X_{best}$} 
 \end{algorithm}
-
-\begin{algorithm}[h]
-  \caption{$\call{bestStep--c-OUS}({\cal C},f,I,I_{end})$}
-  \label{alg:singleStepExplain3}
-$\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
-set $p$ such that exactly one of $\overline{\Iend}$ in the hitting set \textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
-\Return{$\comus(\formulag,f,p)$}\;
-\end{algorithm}
-
-\clearpage
-\section{OUS Algorithm}
 
 \newcommand\satsetsformula{\mm{\mathbf{SSOfF}}}
 % \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
@@ -156,25 +188,6 @@ set $p$ such that exactly one of $\overline{\Iend}$ in the hitting set \textit{a
   \end{algorithm}
 \clearpage
 \section{cOUS}
-
-
-
-
-\begin{algorithm}[h]
-  \DontPrintSemicolon
-  \While{true}{
-    $\F' \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
-    \If{ $\lnot \sat(\F')$}{
-      \Return{$\F'$} \;
-    }
-    $\F'' \gets  \grow(\F',\F) $\;
-    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
-  }
-  \caption{$\comus(\formula,f,p)$ }
-  \label{alg:comus}
-\end{algorithm}
-
-
 
 \bibliography{omusrefs}
 

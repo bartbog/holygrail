@@ -132,7 +132,7 @@ def explain(params, cnf: CNF, user_vars, user_vars_cost, initial_interpretation)
         # input: I
         # output: assignemnt to subset of user_Vars 
         # - {..., ..., ..., ... }
-        expl = ous.cOUS()
+        expl = ous.cOUS(I)
         
         # facts used
         Ibest = I & expl

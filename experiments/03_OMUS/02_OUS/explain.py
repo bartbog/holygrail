@@ -9,6 +9,8 @@ from frietkot import simpleProblem, frietKotProblem, originProblem
 from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
 
+from gurobipy import GRB
+
 import cProfile
 import pstats
 from functools import wraps
@@ -67,98 +69,13 @@ def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_d
     return inner
 
 
-def explain(params, cnf: CNF, user_vars, user_vars_cost, initial_interpretation):
+def optPropagate(C, focus=None):
     """
-    ExplainCSP constructor uses hard clauses supplied in CNF format to
-    explain user variables with associated weights users_vars_cost based
-    on the initial interpretation.
-
-    => hyp: cost is linear 
-
-    Args:
-        cnf (list): CNF C over V:
-            hard puzzle problems with assumptions variables to activate or
-            de-active clues.
-        user_vars (list):
-            User vocabulary V'
-        user_vars_cost (list):
-            Cost-to-use for each lit in v in V'
-        initial_interpretation (set):
-            initial partial interpretation where I0 subset V'
-    TODO:
-        - Add user vars cost to objective function instead of 0.
-    """
-    print(user_vars)
-    print(user_vars_cost)
-    print(initial_interpretation)
-    print(cnf.clauses)
-
-    vars_expl = (set(user_vars) | set(-lit for lit in user_vars)) - initial_interpretation
-    
-    # Explanations
-    Expl_seq = []
-    
-    # TODO: option1 End assignment derivable from current cnf and Interpretation
-    Iend = optPropagate(cnf, I=initial_interpretation, focus=vars_expl)
-
-    # TODO: option1 End assignment derivable from current cnf and Interpretation
-    lit_ass = optPropagate(cnf, I=initial_interpretation)
-    Iend = lit_ass & vars_expl
-    print(Iend)
-
-    # current assignment I0 subset V'
-    # *pointer* to interpretation (set)
-    I = initial_interpretation
-
-    # INput
-    # best-step with multiple implementations possible (OUS/c-OUS/MUS...)
-    # 1. CNF
-    # 3. Iend = end interpretatie
-    # 4. user_vars
-    # 5. user_vars_cost
-
-    # TODO:
-    # 1. rename to best-step-computer
-    # 2. warm start to constructor
-    # - (optional) sat solver is best to leave how it is, instead of giving it 
-    # phases, might be better not modifying it.
-    # - check intersection
-    ous = COUS(cnf, user_vars, user_vars_cost, Iend)
-
-    while(len(Iend - I) > 0):
-        # Compute optimal explanation explanation
-        # rename to best-step:
-        # internal state: (cnf, user_Vars, user_Vars_Cost, Iend)
-        # input: I
-        # output: assignemnt to subset of user_Vars 
-        # - {..., ..., ..., ... }
-        expl = ous.cOUS(I)
-        
-        # facts used
-        Ibest = I & expl
-        
-        # assumptions used
-        Cbest = user_vars & expl
-
-        # New information derived "focused" on  
-        Nbest = optPropagate(cnf, I=Ibest + Cbest, focus=(Iend - I))
-
-        Expl_seq.append((Ibest, Cbest, Nbest))
-
-        print(f"\nOptimal explanation \t\t {Ibest} /\\ {Cbest} => {Nbest}\n")
-
-        I |= Nbest
-
-    return Expl_seq
-
-
-def optPropagate(cnf: CNF, I=[], focus=None):
-    """
-    optPropage produces the intersection of all models of cnf more precise 
-    than I projected on focus.
+    optPropage produces the intersection of all models of cnf more precise
+    projected on focus.
 
     Improvements:
-    + Add new clause with assumption literal 
+    + Add new clause with assumption literal
         ex: a_i=7
     + solve with assumption literal set to false.
     + Add 1 assumption only as True to the solver (to disable clause). 
@@ -179,27 +96,88 @@ def optPropagate(cnf: CNF, I=[], focus=None):
     focus (set):
         +/- literals of all user variables
     """
-    with Solver(bootstrap_with=cnf.clauses) as s:
-        s.solve(assumptions=list(I))
+    with Solver(bootstrap_with=C) as s:
+        s.solve()
 
         model = set(s.get_model())
-        print(model)
         if focus:
             model &= focus
 
-        print(model)
+        bi = CNF(C).nv + 1
         while(True):
-            s.add_clause(list(-lit for lit in model))
-            solved = s.solve(assumptions=list(I))
-            print(model)
+            s.add_clause([-bi] + [-lit for lit in model])
+            solved = s.solve(assumptions=[bi])
 
-            if solved:
+            if not solved:
                 new_model = set(s.get_model())
                 if focus:
                     new_model &= focus
                 model = model.intersection(new_model)
             else:
                 return model
+
+
+def explain(params, C, U, f):
+    """
+    ExplainCSP constructor uses hard clauses supplied in CNF format to
+    explain user variables with associated weights users_vars_cost based
+    on the initial interpretation.
+
+    => hyp: cost is linear 
+
+    Args:
+        cnf (list): CNF C over V:
+            hard puzzle problems with assumptions variables to activate or
+            de-active clues.
+        U (list):
+            User vocabulary V' [set of]
+        f (list):
+            f is a mapping of user vars to real cost.
+    """
+    # best-step with multiple implementations possible (OUS/c-OUS/MUS...)
+    # 1. rename to best-step-computer
+    # 2. warm start to constructor
+    # - (optional) sat solver is best to leave how it is, instead of giving it 
+    # phases, might be better not modifying it.
+    # - check intersection
+
+    # Explanation sequence
+    Expl_seq = []
+
+    # Most precise intersection of all models of C project on U
+    Iend = optPropagate(C, focus=U)
+
+    # Initial interpretation I0 subset V' (for puzzles: Assumption literals + already derived facts)
+    I = set(lit for lit in U if f(-lit) >= GRB.INFINITY)
+
+    ous = COUS(C, U, f, Iend)
+
+    while(len(Iend - I) > 0):
+        # Compute optimal explanation explanation
+        # rename to best-step:
+        # internal state: (cnf, user_Vars, user_Vars_Cost, Iend)
+        # input: I
+        # output: assignemnt to subset of user_Vars 
+        # - {..., ..., ..., ... }
+        expl = ous.cOUS(C, f, Iend, I)
+        
+        # facts used
+        Ibest = I & expl
+        
+        # assumptions used
+        Cbest = user_vars & expl
+
+        # New information derived "focused" on  
+        Nbest = optPropagate(cnf, I=Ibest + Cbest, focus=(Iend - I))
+
+        Expl_seq.append((Ibest, Cbest, Nbest))
+
+        print(f"\nOptimal explanation \t\t {Ibest} /\\ {Cbest} => {Nbest}\n")
+
+        I |= Nbest
+
+    return Expl_seq
+
 
 
 def add_assumptions(cnf):
@@ -236,15 +214,17 @@ def test_explain():
 
     # transform list cnf into CNF object
     simple_cnf = CNF(from_clauses=s_cnf_ass)
+    print(simple_cnf.clauses)
+    print(simple_cnf.nv)
 
-    user_vars = s_user_vars + assumptions
-    user_vars_cost = [1] * len(s_user_vars) + [10] * len(assumptions)
+    # user_vars = s_user_vars + assumptions
+    # user_vars_cost = [1] * len(s_user_vars) + [10] * len(assumptions)
 
-    # if sudoku => int. += initial values of user_vars
-    initial_interpretation = set(assumptions)
+    # # if sudoku => int. += initial values of user_vars
+    # initial_interpretation = set(assumptions)
 
-    # unit cost for deriving new information
-    simple_csp = explain(params_cnf, simple_cnf, user_vars=user_vars, user_vars_cost=user_vars_cost, initial_interpretation=initial_interpretation)
+    # # unit cost for deriving new information
+    # simple_csp = explain(params_cnf, simple_cnf, user_vars=user_vars, user_vars_cost=user_vars_cost, initial_interpretation=initial_interpretation)
 
     # TODO:
     # - remove all user vars with interpretation => remaining  = to explain.

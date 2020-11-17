@@ -1,0 +1,207 @@
+\documentclass{article}
+%\usepackage{fullpage}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=10mm,
+ top=10mm,
+ }
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{float}
+\usepackage{amsthm}
+\usepackage{xspace}
+\usepackage{thmtools} 
+\usepackage[parfill]{parskip}
+\usepackage[normalem]{ulem}
+
+\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+\newcommand\m[1]{\mathcal{#1}}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{lem}{Lemma}
+\newtheorem{lemma}[lem]{Lemma}
+\newtheorem{propo}{Proposition}
+\newtheorem{proposition}[propo]{Proposition}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+
+\bibliographystyle{apalike}
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}#1}}}
+\newcommand{\bart}[1]{{\comment{\color{green}#1}}}
+\newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1}}}
+
+\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\F{\ensuremath{\m{F} }\xspace}
+% \newcommand\ohs{\ensuremath{\m{OHS} }\xspace}
+\newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+\newcommand\Iend{\ensuremath{I_\mathit{end} }\xspace}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulac{\ensuremath{\m{C} }\xspace}
+\newcommand\formulag{\ensuremath{\m{G} }\xspace}
+\newcommand\mm[1]{\ensuremath{#1}\xspace}
+\newcommand\nat{\mm{\mathbb{N}}}
+\newcommand\ltrue{\mm{\textbf{t}}}
+\newcommand\lfalse{\mm{\textbf{f}}}
+\newcommand\uservars{\ensuremath{\m{U} }\xspace}
+
+\newcommand\call[1]{\mm{\textsc{#1}}}
+\newcommand\geths{\mm{\call{GetHittingSet}}}
+\newcommand\ohs{\mm{\call{OptHittingSet}}}
+\newcommand\ghs{\mm{\call{GreedyHittingSet}}}
+\newcommand\ihs{\mm{\call{IncrementalHittingSet}}}
+\newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+\newcommand\sat{\mm{\call{sat}}}
+\newcommand\grow{\mm{\call{Grow}}}
+\newcommand\omus{\mm{\call{OUS}}}
+\newcommand\comus{\mm{\call{c-OUS}}}
+\newcommand\omusinc{\mm{\call{OUS-Inc}}}
+\newcommand\store{\mm{\call{Store}}}
+\newcommand\optprop{\mm{\call{OptimalPropagate}}}
+\newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+\newcommand\satsets{\mm{\mathbf{SSs}}}
+\newcommand\fall{\mm{\formula_{\mathit{all}}}}
+\newcommand\algemilio[1]{\emilio{#1}\;}
+\begin{document}
+
+\section{Explanation Generation}
+
+\SetKwInOut{Input}{input}
+\SetKwInOut{OptInput}{optional}
+\SetKwInOut{Output}{output}
+\SetKwComment{command}{/*}{*/}
+
+
+\begin{algorithm}[H]
+  \Input{${\cal C}$  \textit{a CNF ${\cal C}$ over a vocabulary $V$} }
+  \Input{$U$ \textit{a user vocabulary $U \subseteq V$} }
+  \Input{$f$, \textit{a cost function $f : 2^{{\cal C}} \rightarrow  \mathbb{N} $ over CNF ${\cal C}$}}
+  \Input{$I$, \textit{a partial interpretation over $U$ }}
+  \Output{$E$, \textit{a sequence of explanation steps as tuples $I_{expl} \implies N_{expl}$}}
+  \DontPrintSemicolon
+  \caption{$\call{ExplainCSP}(\formulac, U, f, I)$}
+  \label{alg:explainCSP}
+  % \tcp{Hyp: f}
+  $E \gets \langle \rangle$\;
+  $I_{end} \gets \optprop(\formulac \cup I, U)$ \tcp*{assignment on variables of U}
+  %$U \gets U \cap I_{end}$ \;
+  %$I_{expl} = \{i \in I_{end} | f(i) < inf \wedge f(-i) < inf\}$ \;
+  % \algemilio{bart: What's a better way to get the initial interpr.?}
+  % $I \gets \{l \in I_{end} | f(\lnot l) = inf\}$ \;
+  \While{$I \neq I_{end}$}{
+    %$E \gets \call{bestStep}({\cal C},U, f,\Iend, I)$\;
+    $X \gets \call{bestStep}({\cal C},f,\Iend, I)$\;
+    $I_{\mathit{best}} \gets I \cap X$\;
+    %$\formulac_{\mathit{best}}\gets \formulac\cap X$\;
+    $N_{\mathit{best}} \gets \optprop(C \cup I_{\mathit{best}}, U) \setminus I$\;
+    %add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+    add $\{I_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+    $I \gets I \cup N_{\mathit{best}}$\;
+  }
+  \Return{E}\;
+\end{algorithm}
+
+\begin{algorithm}[H]
+  \DontPrintSemicolon
+  % \Input{${\cal C}$  \textit{a CNF } }
+  \Input{$\sat$, \textit{a $\sat$ solver bootstrapped with a CNF.} }
+  \Input{$\uservars$, \textit{a set of variables.} }
+  \OptInput{$I$, \textit{a set of assumption literals.} }
+  \Output{\textit{The projection onto U of the intersection of all models of U}}
+  \label{alg:optprop}
+  $sat?,\mu \gets \sat({I})$\;
+  $\mu \gets \{x \ | \ x \in \mu: \texttt{var}(x) \in U \}$\;
+  $b_i \gets$ a new blocking variable\;
+  % \algemilio{Should I add the blocking variables $b_i$ to the newly added clause ?}
+  \While{true}{
+    ${\cal C} \gets {\cal C} \wedge (\lnot b_i \underset{x \in \mu}{\bigvee} \lnot x)$\; 
+    $sat?,\mu' \gets \sat(I \wedge \{b_i\})$\;
+    \If{ $\lnot sat?$}{
+      add clause $(\lnot b_i)$ to $\sat$ solver \;
+      \Return{$\mu$} \;
+      }
+      $\mu \gets \mu \cap \{x' \ | \ x' \in \mu': \texttt{var}(x') \in U \}$\;
+      }
+      \caption{$\call{OptimalPropagate}({\sat}, \uservars [, I])$}
+\end{algorithm}
+
+
+\begin{algorithm}[H]
+  \DontPrintSemicolon
+  \caption{$\call{bestStep--c-OUS}({\cal C}, f,\Iend, I)$}
+  \label{alg:singleStepExplain3}
+  \Input{${\cal C}$, \textit{a CNF}.}
+  \Input{$f$, \textit{a cost function $f : 2^{{\cal C}} \rightarrow  \mathbb{N} $ over CNF ${\cal C}$}.}
+  \Input{$I_{end}$, \textit{the cautious consequence, the set of literals that hold in all models}.}
+  \Input{$I$, \textit{a partial interpretation s.t. $I \subseteq I_{end}$}.}
+  \Output{\textit{a single best explanation step}}
+  $A \gets I \cup (\overline{\Iend} \setminus \bar{I})$ \tcp*{Optimal US is subset of A}
+  set $p \triangleq \underset{l \in \overline{\Iend}}{\sum} l = 1$  i.e. exactly one of $\overline{\Iend}$ is present in the hitting set \; %\textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
+  \Return{$\comus({\cal C},f,p, A)$}\;
+\end{algorithm}
+
+
+
+
+
+% \begin{algorithm}[H]
+%   \Input{${\cal C}$  \textit{a CNF } }
+%   \Input{$U$ \textit{a set of variables} }
+%   \Output{The projection onto U of the intersection of all models of U}
+%   \DontPrintSemicolon
+%   \caption{$\call{OptimalPropagate}({\cal C}, \uservars)$}
+%   \label{alg:optprop}
+%   $sat?,\mu \gets \sat({\cal C})$\;
+%   $\mu \gets \{x \ | \ x \in \mu: \texttt{var}(x) \in U \}$\;
+%   % \algemilio{Should I add the blocking variables $b_i$ to the newly added clause ?}
+%   \While{true}{
+%     ${\cal C} \gets {\cal C} \wedge (\underset{x \in \mu}{\bigvee} \lnot x)$\; 
+%     $sat?,\mu' \gets \sat({\cal C})$\;
+%     \If{ $\lnot sat?$}{
+%       \Return{$\mu$} \;
+%     }
+%     $\mu \gets \mu \cap \{x' \ | \ x' \in \mu': \texttt{var}(x') \in U \}$\;
+%   }
+% \end{algorithm}
+
+% \clearpage
+
+
+% \bibliography{omusrefs}
+\clearpage
+
+
+\begin{algorithm}[H]
+  \Input{${\cal C}$, \textit{a CNF}.}
+  \Input{$f$, \textit{a cost function $f : 2^{{\cal C}} \rightarrow  \mathbb{N} $ over CNF ${\cal C}$}.}
+  \Input{$p$, \textit{a predicate $p: 2^{{\cal G}} \rightarrow \{ t, f\}$}.}
+  \Input{$A$, \textit{a set of assumption literals, s.t. ${\cal C} \cup A$ is unsatisfiable.}}
+  \Output{\textit{a $p$-constrained $f$-optimal unsatisfiable subset $(p, f)-OUS$.}}
+  % \tcp{Hyp: ${\cal C} \cup A$ is unsatisfiable}
+  \DontPrintSemicolon
+  $\setstohit \gets \emptyset$ \;
+  \While{true}{
+    $A' \gets \cohs(f, p, A, \setstohit) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    \If{ $\lnot \sat({\cal C} \cup A')$}{
+      \Return{$A'$} \;
+    }
+    \sout{$A'' \gets  \grow(C, f, p, A',A) $}\;
+    \algemilio{Optional Grow, if the sat solver can provide a provide a good model, we can skip the expensive call to the grow procedure. Needs to be checked experimentally!}
+    \sout{$\setstohit  \gets \setstohit  \cup \{  A \setminus A''\}$} \tcp*{We can reuse the H across diff call to alg \ref{alg:explainCSP} was $H \cup \{F \setminus F''\}$ }
+    $\setstohit  \gets \setstohit  \cup \{  A \setminus A'\}$\;
+  }
+  \caption{$\comus({\cal C},f,p, A)$ }
+  \label{alg:comus}
+\end{algorithm}
+
+\end{document}

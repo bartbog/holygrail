@@ -53,6 +53,7 @@
 \newcommand\nat{\mm{\mathbb{N}}}
 \newcommand\ltrue{\mm{\textbf{t}}}
 \newcommand\lfalse{\mm{\textbf{f}}}
+\newcommand\uservars{\ensuremath{\m{U} }\xspace}
 
 \newcommand\call[1]{\mm{\textsc{#1}}}
 \newcommand\geths{\mm{\call{GetHittingSet}}}
@@ -70,50 +71,55 @@
 \newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
 \newcommand\satsets{\mm{\mathbf{SSs}}}
 \newcommand\fall{\mm{\formula_{\mathit{all}}}}
+\newcommand\algemilio[1]{\emilio{#1}\;}
 \begin{document}
 
 \section{Explanation Generation}
 
-\begin{algorithm}[h]
-\DontPrintSemicolon
+\begin{algorithm}[H]
+  \DontPrintSemicolon
   \caption{$\call{ExplainCSP}(\formulac, U, f)$}
   \label{alg:explainCSP}
-$E \gets \langle \rangle$\;
-$I_{end} \gets \optprop(\formulac, U)$ \tcp*{assignment on variables of U}
-$U \gets U \cap I_{end}$ \;
-$I_{expl} = \{i \in I_{end} | f(i) < inf \wedge f(-i) < inf\}$ \;
-$I \gets \emptyset$\;
-\While{$I \neq I_{expl}$}{
-    $E \gets \call{bestStep}({\cal C},U, f,\Iend, I)$\;
-	$I_{\mathit{best}} \gets I \cap X$\;
-    $\formulac_{\mathit{best}}\gets \formulac\cap X$\;
-	$N_{\mathit{best}} \gets \{\Iend \setminus I\} \cap \optprop(X) $\;
-	add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
-	$I \gets I \cup N_{\mathit{best}}$\;
+  \tcp{Hyp: f}
+  $E \gets \langle \rangle$\;
+  $I_{end} \gets \optprop(\formulac, U)$ \tcp*{assignment on variables of U}
+  %$U \gets U \cap I_{end}$ \;
+  %$I_{expl} = \{i \in I_{end} | f(i) < inf \wedge f(-i) < inf\}$ \;
+  \algemilio{bart: What's a better way to get the initial interpr.?}
+  $I \gets \{i \in I_{end} | f(-i) = inf\}$ \tcp*{contains the indicator literals and the initial assignment}
+  \While{$I \neq I_{end}$}{
+    %$E \gets \call{bestStep}({\cal C},U, f,\Iend, I)$\;
+    $X \gets \call{bestStep}({\cal C},f,\Iend, I)$\;
+    $I_{\mathit{best}} \gets I \cap X$\;
+    %$\formulac_{\mathit{best}}\gets \formulac\cap X$\;
+    $N_{\mathit{best}} \gets \{\Iend \setminus I\} \cap \optprop(C \cup I_{\mathit{best}}, U) $\;
+    %add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+    add $\{I_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+    $I \gets I \cup N_{\mathit{best}}$\;
   }
-\Return{E}\;
+  \Return{E}\;
 \end{algorithm}
 
 
-
-\begin{algorithm}[h]
-\DontPrintSemicolon
-  \caption{$\call{bestStep--c-OUS}({\cal C},U, f,\Iend, I)$}
-  \label{alg:singleStepExplain3}
-%$\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
-
-$A \gets I \cup (\overline{\Iend} \setminus \bar{I})$ \tcp*{Optimal US is subset of A}
-set $p$ such that exactly one of $\overline{\Iend}$ in the hitting set \; %\textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
-\Return{$\comus({\cal C},f,p, A)$}\;
-\end{algorithm}
-
-
-\begin{algorithm}[h]
-\tcp{Hyp: $C \cup A$ is unsatisfiable}
+\begin{algorithm}[H]
   \DontPrintSemicolon
-  $\setstohit \gets \emptyset$ \;  
+  %\caption{$\call{bestStep--c-OUS}({\cal C},U, f,\Iend, I)$}
+  \caption{$\call{bestStep--c-OUS}({\cal C}, f,\Iend, I)$}
+  \label{alg:singleStepExplain3}
+  %$\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
+
+  $A \gets I \cup (\overline{\Iend} \setminus \bar{I})$ \tcp*{Optimal US is subset of A}
+  set $p$ such that exactly one of $\overline{\Iend}$ in the hitting set \; %\textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
+  \Return{$\comus({\cal C},f,p, A)$}\;
+\end{algorithm}
+
+
+\begin{algorithm}[H]
+  \tcp{Hyp: $C \cup A$ is unsatisfiable}
+  \DontPrintSemicolon
+  $\setstohit \gets \emptyset$ \;
   \While{true}{
-    $A' \gets \cohs(A, f, p,\setstohit) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    $A' \gets \cohs(f, p, A, \setstohit) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
     \If{ $\lnot \sat({\cal C} \cup A')$}{
       \Return{$A'$} \;
     }
@@ -124,36 +130,78 @@ set $p$ such that exactly one of $\overline{\Iend}$ in the hitting set \; %\text
   \label{alg:comus}
 \end{algorithm}
 
+\begin{algorithm}[H]
+  \DontPrintSemicolon
+  \caption{$\call{OptimalPropagate}({\cal C}, \uservars)$}
+  \label{alg:optprop}
+  $sat?,\mu \gets \sat({\cal C})$\;
+  $\mu \gets \mu \ \cap \ \uservars$\;
+  \algemilio{Should I add the blocking variables $b_i$ to the newly added clause ?}
+  \While{true}{
+    ${\cal C} \gets {\cal C} \wedge (\underset{1 \leq i \leq |\mu|}{\bigvee} \lnot x_i)$\; 
+    \algemilio{ or ${\cal C} \gets {\cal C} \wedge (\bigvee_{1 \leq i \leq |\mu|}  \lnot  x_i)$} \algemilio{ or ${\cal C} \gets {\cal C} \wedge ( \lnot  x_1 ... \vee \lnot x_{|\mu|})$}
+    \algemilio{ or ${\cal C} \gets {\cal C} \wedge ( \lnot b_i \bigvee_{1 \leq i \leq |\mu|}  \lnot  x_i)$}
+    \algemilio{ or ${\cal C} \gets {\cal C} \wedge ( \lnot b_i \vee  \lnot  x_1 ... \vee \lnot x_{|\mu|})$}
+    $sat?,\mu' \gets \sat({\cal C})$\;
+    \If{ $\lnot sat?$}{
+      \Return{$\mu$} \;
+    }
+    $\mu \gets \mu \cap \mu' \cap \uservars$\;
+  }
+\end{algorithm}
+
+
+% \begin{algorithm}[H]
+%   \DontPrintSemicolon
+%   \caption{$\call{OptimalPropagate}({\cal C}, \uservars)$}
+%   \label{alg:optprop}
+%   $sat?,\mu \gets \sat({\cal C})$\;
+%   $\mu \gets \mu \ \cap \ \uservars$\;
+%   \emilio{$b_i \gets$ new indicator variable}\;
+
+%   \While{true}{
+%     % ${\cal C} \gets {\cal C} \wedge ( \lnot b_i \underset{1 \leq i \leq |\mu|}{\bigvee}  \lnot  x_i)$ \emilio{Alternative writing : ${\cal C} \gets {\cal C} \wedge ( \lnot b_i \bigvee_{1 \leq i \leq |\mu|}  \lnot  x_i)$}\;
+%     ${\cal C} \gets {\cal C} \wedge ( \lnot b_i \vee  \lnot  x_1 ... \vee \lnot x_{|\mu|})$ \;
+%     $sat?,\mu' \gets \sat({\cal C})$\;
+%     \If{ $\lnot sat?$}{
+%       \emilio{${\cal C} \gets {\cal C} \wedge ( \lnot b_i)$} \;
+%       \Return{$\mu$} \;
+%     }
+%     $\mu \gets \mu \cap \mu' \cap \uservars$\;
+%   }
+% \end{algorithm}
+
 \clearpage
 \section{OUS Algorithm}
 
-\begin{algorithm}[h]
+\begin{algorithm}[H]
+  \DontPrintSemicolon
   \caption{$\call{bestStep--OUS}({\cal C},f,I,\Iend)$}
   \label{alg:bestStepOUS}
-$X_{best} \gets \{{\cal C} \land I \land \overline{\Iend}\}$\;
-\For{$l \in \{\Iend \setminus I\}$}{
+  $X_{best} \gets \{{\cal C} \land I \land \overline{\Iend}\}$\;
+  \For{$l \in \{\Iend \setminus I\}$}{
     $X \gets \omus{({\cal C} \land I \land \neg l,\  f)}$\;
     \If{$f(X)<f(X_{best})$}{
-        $X_{best} \gets X$\;
+      $X_{best} \gets X$\;
     }
-}
-\Return{$X_{best}$} 
+  }
+  \Return{$X_{best}$}
 \end{algorithm}
 
 \newcommand\satsetsformula{\mm{\mathbf{SSOfF}}}
 % \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
-\begin{algorithm}[ht]
+\begin{algorithm}[H]
   \DontPrintSemicolon
   %$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   $\satsetsformula\gets\emptyset$\;
   \For{$S\in\satsets$ \label{line:for-inc-seed}}{
     $S_\formula \gets {S}\cap \formula$\;
     \If{$\lnot \exists {S}'\in\satsetsformula: {S}_\formula \subseteq{S}'$}{
-    	$S_\formula \gets \grow( {S}_\formula, \formula)$\;
-    	        $\setstohit \gets \setstohit\cup \{\formula \setminus {S}_\formula\}$\;
-        $\satsetsformula\gets\satsetsformula\cup\{{S}_\formula\}$
-        }
+      $S_\formula \gets \grow( {S}_\formula, \formula)$\;
+      $\setstohit \gets \setstohit\cup \{\formula \setminus {S}_\formula\}$\;
+      $\satsetsformula\gets\satsetsformula\cup\{{S}_\formula\}$
     }
+  }
   \While{true}{
     $\F' \gets \ohs(\setstohit,f) $ \label{smus-hs} \;
     \If{ $\lnot \sat(\F')$}{
@@ -168,26 +216,24 @@ $X_{best} \gets \{{\cal C} \land I \land \overline{\Iend}\}$\;
 \end{algorithm}
 % 
 
-\begin{algorithm}[h]
+\begin{algorithm}[H]
   \While{true}{
-      \While{$|\setstohit| > 0$}{
-        %$\F' \gets \ihs(\setstohit,f) $\;
-        $\F' \gets \F' + min_f$ element of last MCS in $\setstohit$\;
-          \If{ $\lnot \sat(\F')$}{
-            \textbf{break}
-          }
-          $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
+    \While{$|\setstohit| > 0$}{
+      %$\F' \gets \ihs(\setstohit,f) $\;
+      $\F' \gets \F' + min_f$ element of last MCS in $\setstohit$\;
+      \If{ $\lnot \sat(\F')$}{
+        \textbf{break}
       }
-        $\F' \gets \ghs(\setstohit,f) $\;
-          \If{ $\lnot \sat(\F')$}{
-            \textbf{break}
-          }
-          $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
+      $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
+    }
+    $\F' \gets \ghs(\setstohit,f) $\;
+    \If{ $\lnot \sat(\F')$}{
+      \textbf{break}
+    }
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(\F',\F)\}$ \;
   }
   \caption{Postponing hitting set optimization for OUS (to be inserted before of )}
-  \end{algorithm}
-\clearpage
-\section{cOUS}
+\end{algorithm}
 
 \bibliography{omusrefs}
 

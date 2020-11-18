@@ -204,4 +204,44 @@
   \label{alg:comus}
 \end{algorithm}
 
+\section{MIP model}
+
+% For the set of clauses $\{c_1, ... c_{|C|}\}$ in the collection of sets $\m{H}$. For Example:
+% \[ \{c_3 \},\ \{c_2, c_4\},\ \{c_1, c_4\},\ \{c_1, c_5, c_7\} \]
+% The optimal hitting set can be formulated as an integer linear program.
+We define a set of user variables $U$ defined over a vocabulary $V$ of the CNF ${\cal C}$ as $U \subseteq V$. Given an initial assignment $I$, where $vars(I) \subseteq U$, $I_{end}$ is as the cautious consequence (the set of literals that hold in all models) of $U$.
+
+
+The Mixed Integer Programming model for computing c-OUSes has many similarities with a set covering problem. The \cohs computes the optimal hitting set over a $p$-constrained collection of weighted sets $\setstohit$.
+
+In practice, to ensure that MIP model takes advantage of the incrementality of the problem, namely across different c-OUS calls, the specification is defined on the full set of literals of $\Iend$.
+The constrained optimal hitting set is described by
+\begin{itemize}
+  \item $x_l = \{0, 1\} $ is a boolean decision variable if the literal is selected or not.
+  \item $w_l = f(l)$ is the cost assigned to deriving the literal or using the derived literal ($\infty$ otherwhise).
+  \item $c_{ij} = \{0, 1\}$ is 1 (0) if the literal l is (not) present in hitting set j.
+\end{itemize}
+
+\begin{equation} \label{eq:ILP:objective}
+  \underset{x}{min} \sum_{ l\  \in  \Iend \cup \overline{\Iend}} w_l \cdot x_l
+\end{equation}
+\begin{equation} \label{eq:ILP:hittingset}
+  \sum_{ l\  \in  \Iend \cup \overline{\Iend}} x_l \cdot w_{lj} \geq 1, \  \forall j \in \{1..|hs|\}
+\end{equation}
+\begin{equation} \label{eq:ILP:hittingset}
+  \sum_{ l\  \in \overline{\Iend} \setminus \bar{I}} x_l \geq 1, \  \forall j \in \{1..|hs|\}
+\end{equation}
+
+% \begin{equation} \label{eq:ILP:bool:xi}
+%   x_i = \{0,1\}
+% \end{equation}
+% \begin{equation} \label{eq:ILP:bool:wij}
+%   w_{ij} = \{0, 1\}
+% \end{equation}
+% \begin{itemize}
+%   \item $c_i$ is the cost associated with clause i in
+%   \item $x_i$ is a boolean decision variable if constraint/clause $c_i$ is chosen or not.
+%   \item Equation \ref{eq:ILP:hittingset} is a boolean decision variable if constraint/clause i is in hitting set j.
+% \end{itemize}
+
 \end{document}

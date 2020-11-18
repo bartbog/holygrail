@@ -85,9 +85,9 @@
 \begin{algorithm}[H]
   \Input{${\cal C}$  \textit{a CNF ${\cal C}$ over a vocabulary $V$} }
   \Input{$U$ \textit{a user vocabulary $U \subseteq V$} }
-  \Input{$f$, \textit{a cost function $f : 2^{{\cal C}} \rightarrow  \mathbb{N} $ over CNF ${\cal C}$}}
+  \Input{$f$, \textit{a cost function $f : 2^{{\cal G}} \rightarrow  \mathbb{N} $ over a CNF ${\cal G}$}}
   \Input{$I$, \textit{a partial interpretation over $U$ }}
-  \Output{$E$, \textit{a sequence of explanation steps as tuples $I_{expl} \implies N_{expl}$}}
+  \Output{$E$, \textit{a sequence of explanation steps as implications $I_{expl} \implies N_{expl}$}}
   \DontPrintSemicolon
   \caption{$\call{ExplainCSP}(\formulac, U, f, I)$}
   \label{alg:explainCSP}
@@ -115,7 +115,7 @@
   \DontPrintSemicolon
   % \Input{${\cal C}$  \textit{a CNF } }
   \Input{$\sat$, \textit{a $\sat$ solver bootstrapped with a CNF.} }
-  \Input{$\uservars$, \textit{a set of variables.} }
+  \Input{$U$ \textit{a user vocabulary $U \subseteq V$} }
   \OptInput{$I$, \textit{a set of assumption literals.} }
   \Output{\textit{The projection onto U of the intersection of all models of U}}
   \label{alg:optprop}
@@ -141,7 +141,7 @@
   \caption{$\call{bestStep--c-OUS}({\cal C}, f,\Iend, I)$}
   \label{alg:singleStepExplain3}
   \Input{${\cal C}$, \textit{a CNF}.}
-  \Input{$f$, \textit{a cost function $f : 2^{{\cal C}} \rightarrow  \mathbb{N} $ over CNF ${\cal C}$}.}
+  \Input{$f$, \textit{a cost function $f : 2^{{\cal G}} \rightarrow  \mathbb{N} $ over CNF ${\cal G}$}.}
   \Input{$I_{end}$, \textit{the cautious consequence, the set of literals that hold in all models}.}
   \Input{$I$, \textit{a partial interpretation s.t. $I \subseteq I_{end}$}.}
   \Output{\textit{a single best explanation step}}
@@ -183,8 +183,8 @@
 
 \begin{algorithm}[H]
   \Input{${\cal C}$, \textit{a CNF}.}
-  \Input{$f$, \textit{a cost function $f : 2^{{\cal C}} \rightarrow  \mathbb{N} $ over CNF ${\cal C}$}.}
-  \Input{$p$, \textit{a predicate $p: 2^{{\cal G}} \rightarrow \{ t, f\}$}.}
+  \Input{$f$, \textit{a cost function $f : 2^{{\cal G}} \rightarrow  \mathbb{N} $ over CNF ${\cal G}$}.}
+  \Input{$p$, \textit{a predicate $p: 2^{{\cal G}} \rightarrow \{ t, f\}$ over CNF ${\cal G}$}.}
   \Input{$A$, \textit{a set of assumption literals, s.t. ${\cal C} \cup A$ is unsatisfiable.}}
   \Output{\textit{a $p$-constrained $f$-optimal unsatisfiable subset $(p, f)-OUS$.}}
   % \tcp{Hyp: ${\cal C} \cup A$ is unsatisfiable}
@@ -197,7 +197,7 @@
     }
     \sout{$A'' \gets  \grow(C, f, p, A',A) $}\;
     \algemilio{Optional Grow, if the sat solver can provide a provide a good model, we can skip the expensive call to the grow procedure. Needs to be checked experimentally!}
-    \sout{$\setstohit  \gets \setstohit  \cup \{  A \setminus A''\}$} \tcp*{We can reuse the H across diff call to alg \ref{alg:explainCSP} was $H \cup \{F \setminus F''\}$ }
+    \sout{$\setstohit  \gets \setstohit  \cup \{  A \setminus A''\}$}\; %\tcp*{We can reuse the H across diff call to alg \ref{alg:explainCSP} was $H \cup \{F \setminus F''\}$ }
     $\setstohit  \gets \setstohit  \cup \{  A \setminus A'\}$\;
   }
   \caption{$\comus({\cal C},f,p, A)$ }

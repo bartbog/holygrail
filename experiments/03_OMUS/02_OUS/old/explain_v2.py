@@ -117,7 +117,7 @@ def optPropagate(C, focus=None):
                 return model
 
 
-def explain(C, U, f):
+def explain(params, C, U, f):
     """
     ExplainCSP constructor uses hard clauses supplied in CNF format to
     explain user variables with associated weights users_vars_cost based
@@ -179,6 +179,7 @@ def explain(C, U, f):
     return Expl_seq
 
 
+
 def add_assumptions(cnf):
     flat = set(abs(i) for lst in cnf for i in lst)
     max_lit = max(flat)
@@ -195,12 +196,26 @@ def add_assumptions(cnf):
 
 
 def test_explain():
+    params_cnf = OusParams()
+    params_cnf.constrained = True
+    params_cnf.incremental = False
+    params_cnf.pre_seed = False
+    params_cnf.sort_lits = False
+    params_cnf.bounded = False
+    params_cnf.post_opt = False
+    params_cnf.post_opt_incremental = False
+    params_cnf.post_opt_greedy = False
+    params_cnf.extension = 'maxsat'
+    params_cnf.ispuzzle = False
+
     # test on simple case
-    s_cnf = simpleProblem()
+    s_cnf, s_user_vars, s_user_var_names = simpleProblem()
     s_cnf_ass, assumptions = add_assumptions(s_cnf)
 
     # transform list cnf into CNF object
     simple_cnf = CNF(from_clauses=s_cnf_ass)
+    print(simple_cnf.clauses)
+    print(simple_cnf.nv)
 
     # user_vars = s_user_vars + assumptions
     # user_vars_cost = [1] * len(s_user_vars) + [10] * len(assumptions)
@@ -247,3 +262,87 @@ def test_explain():
 
 if __name__ == "__main__":
     test_explain()
+
+# def optPropagate(solver: Solver, I_ass, focus=None):
+#     solver.solve(assumptions=I_ass)
+
+#     model = set(solver.get_model())
+#     if focus:
+#         model &= focus
+
+#     while(True):
+#         solver.add_clause(list(-lit for lit in model))
+#         solved = solver.solve()
+
+#         if solved:
+#             new_model = set(solver.get_model())
+#             if focus:
+#                 new_model &= focus
+#             model = model.intersection(new_model)
+#         else:
+#             return model
+
+
+# def optPropagate(solver: Solver, cnf: CNF, I: list = [], focus=None, reuse_solver=False):
+#     solved = solver.solve(assumptions=I)
+
+#     model = set(solver.get_model())
+#     if focus:
+#         model &= focus
+
+#     added_assumptions = []
+#     while(solved):
+#         if reuse_solver:
+#             # add new assumption variable
+#             assumption = solver.nof_vars() + 1
+#             added_assumptions.append([assumption])
+#             clause = list(-lit for lit in model) + [assumption]
+#             solver.add_clause(clause)
+
+#             # TODO: check if that makes sense
+#             solved = solver.solve(assumptions=[-assumption])
+#         else:
+#             solved = solver.solve()
+
+#         if solved:
+#             new_model = set(solver.get_model())
+#             if focus:
+#                 new_model &= focus
+#             model = model.intersection(new_model)
+
+#     if reuse_solver:
+#         solver.append_formula(added_assumptions, no_return=True)
+
+#     return model
+
+# def optPropagate(solver: Solver, cnf: CNF, I: list = [], focus=None, reuse_solver=False):
+#     solved = solver.solve(assumptions=I)
+
+#     model = set(solver.get_model())
+#     if focus:
+#         model &= focus
+
+#     added_assumptions = []
+#     while(solved):
+#         if reuse_solver:
+#             # add new assumption variable
+#             assumption = solver.nof_vars() + 1
+#             added_assumptions.append([assumption])
+#             clause = list(-lit for lit in model) + [assumption]
+#             solver.add_clause(clause)
+
+#             # TODO: check if that makes sense
+#             solved = solver.solve(assumptions=[-assumption])
+#         else:
+#             solved = solver.solve()
+
+#         if solved:
+#             new_model = set(solver.get_model())
+#             if focus:
+#                 new_model &= focus
+#             model = model.intersection(new_model)
+
+#     if reuse_solver:
+#         solver.append_formula(added_assumptions, no_return=True)
+
+#     return model

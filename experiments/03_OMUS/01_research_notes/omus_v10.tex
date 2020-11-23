@@ -68,6 +68,7 @@
 \newcommand\omusinc{\mm{\call{OUS-Inc}}}
 \newcommand\store{\mm{\call{Store}}}
 \newcommand\optprop{\mm{\call{OptimalPropagate}}}
+\newcommand\initsat{\mm{\call{InitSat}}}
 \newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
 \newcommand\satsets{\mm{\mathbf{SSs}}}
 \newcommand\fall{\mm{\formula_{\mathit{all}}}}
@@ -76,9 +77,10 @@
 
 \section{Explanation Generation}
 
-\SetKwInOut{Input}{input}
-\SetKwInOut{OptInput}{optional}
-\SetKwInOut{Output}{output}
+\SetKwInOut{Input}{Input}
+\SetKwInOut{OptInput}{Optional}
+\SetKwInOut{Output}{Output}
+\SetKwInOut{State}{State}
 \SetKwComment{command}{/*}{*/}
 
 
@@ -91,9 +93,10 @@
   \DontPrintSemicolon
   \caption{$\call{ExplainCSP}(\formulac, U, f, I)$}
   \label{alg:explainCSP}
+  $\sat \gets \initsat({\cal C}$) \;
   % \tcp{Hyp: f}
   $E \gets \langle \rangle$\;
-  $I_{end} \gets \optprop(\formulac \cup I, U)$ \tcp*{assignment on variables of U}
+  $I_{end} \gets \optprop(U, I)$ \;
   %$U \gets U \cap I_{end}$ \;
   %$I_{expl} = \{i \in I_{end} | f(i) < inf \wedge f(-i) < inf\}$ \;
   % \algemilio{bart: What's a better way to get the initial interpr.?}
@@ -103,36 +106,37 @@
     $X \gets \call{bestStep}({\cal C},f,\Iend, I)$\;
     $I_{\mathit{best}} \gets I \cap X$\;
     %$\formulac_{\mathit{best}}\gets \formulac\cap X$\;
-    $N_{\mathit{best}} \gets \optprop(C \cup I_{\mathit{best}}, U) \setminus I$\;
+    $N_{\mathit{best}} \gets \optprop(U, I_{\mathit{best}}) \setminus I$\;
     %add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
     add $\{I_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
     $I \gets I \cup N_{\mathit{best}}$\;
-  }
-  \Return{E}\;
-\end{algorithm}
-
-\begin{algorithm}[H]
-  \DontPrintSemicolon
-  % \Input{${\cal C}$  \textit{a CNF } }
-  \Input{$\sat$, \textit{a $\sat$ solver bootstrapped with a CNF.} }
-  \Input{$U$ \textit{a user vocabulary $U \subseteq V$} }
+    }
+    \Return{E}\;
+  \end{algorithm}
+  
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+    % \Input{${\cal C}$  \textit{a CNF } }
+    \Input{$U$ \textit{a user vocabulary $U \subseteq V$} }
+    \State{$\sat$, \textit{a $\sat$ solver.}}
   \OptInput{$I$, \textit{a set of assumption literals.} }
   \Output{\textit{The projection onto U of the intersection of all models of U}}
   \label{alg:optprop}
   $sat?,\mu \gets \sat({I})$\;
-  $\mu \gets \{x \ | \ x \in \mu: \texttt{var}(x) \in U \}$\;
+  $\mu \gets \{l \ | \ l \in \mu: \texttt{var}(l) \in U \}$\;
   $b_i \gets$ a new blocking variable\;
   % \algemilio{Should I add the blocking variables $b_i$ to the newly added clause ?}
   \While{true}{
-    ${\cal C} \gets {\cal C} \wedge (\lnot b_i \underset{x \in \mu}{\bigvee} \lnot x)$\; 
+    \sout{${\cal C} \gets {\cal C} \wedge (\lnot b_i \underset{l \in \mu}{\bigvee} \lnot l)$}\; 
+    add $(\lnot b_i \underset{l \in \mu}{\bigvee} \lnot l)$ to $\sat$ solver\; 
     $sat?,\mu' \gets \sat(I \wedge \{b_i\})$\;
-    \If{ $\lnot sat?$}{
+    \If{ $not$ $ sat?$}{
       add clause $(\lnot b_i)$ to $\sat$ solver \;
       \Return{$\mu$} \;
       }
-      $\mu \gets \mu \cap \{x' \ | \ x' \in \mu': \texttt{var}(x') \in U \}$\;
+      $\mu \gets \mu \cap \{l' \ | \ l' \in \mu': \texttt{var}(l') \in U \}$\;
       }
-      \caption{$\call{OptimalPropagate}({\sat}, \uservars [, I])$}
+      \caption{$\call{OptimalPropagate}(\uservars, I)$}
 \end{algorithm}
 
 

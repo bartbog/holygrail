@@ -1,6 +1,4 @@
 import time
-from ous_utils import OusParams, Grower, OptSolver
-# from ous import COUS
 import random
 
 # pysat imports
@@ -69,7 +67,7 @@ def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_d
     return inner
 
 
-def optPropagate(C, focus=None):
+def optPropagateSolver(C, focus=None, I=[]):
     """
     optPropage produces the intersection of all models of cnf more precise
     projected on focus.
@@ -97,27 +95,72 @@ def optPropagate(C, focus=None):
         +/- literals of all user variables
     """
     with Solver(bootstrap_with=C) as s:
-        s.solve()
+        s.solve(assumptions=I)
 
         model = set(s.get_model())
         if focus:
             model &= focus
 
-        bi = CNF(C).nv + 1
+        bi = C.nv + 1
         while(True):
             s.add_clause([-bi] + [-lit for lit in model])
             solved = s.solve(assumptions=[bi])
 
             if not solved:
-                new_model = set(s.get_model())
-                if focus:
-                    new_model &= focus
-                model = model.intersection(new_model)
-            else:
                 return model
 
+            new_model = set(s.get_model())
+            model = model.intersection(new_model)
 
-def explain(C, U, f):
+
+def optimalPropagate(U=None, I=[], sat=None):
+    """
+    optPropage produces the intersection of all models of cnf more precise
+    projected on focus.
+
+    Improvements:
+    + Add new clause with assumption literal
+        ex: a_i=7
+    + solve with assumption literal set to false.
+    + Add 1 assumption only as True to the solver (to disable clause). 
+        add_clauses([a_i]).
+    - Extension 1:
+        + Reuse solver only for optpropagate
+    - Extension 2:
+        + Reuse solver for all sat calls
+
+    Args:
+    cnf (list): CNF C over V:
+            hard puzzle problems with assumptions variables to activate or
+            de-active clues.
+    I (list):
+        Assumptions 
+        => TODO: .... Ei/Si(partial assignment to the decision variables of 
+        the User vocabulary V')
+    focus (set):
+        +/- literals of all user variables
+    """
+    sat.solve(assumptions=I)
+
+    model = set(sat.get_model())
+    if U:
+        model &= U
+
+    bi = sat.nof_vars() + 1
+
+    while(True):
+        sat.add_clause([-bi] + [-lit for lit in model])
+        solved = sat.solve(assumptions=I + [bi])
+
+        if not solved:
+            sat.add_clause([bi])
+            return model
+
+        new_model = set(sat.get_model())
+        model = model.intersection(new_model)
+
+
+def explain(C, U, f, I):
     """
     ExplainCSP constructor uses hard clauses supplied in CNF format to
     explain user variables with associated weights users_vars_cost based
@@ -126,11 +169,14 @@ def explain(C, U, f):
     => hyp: cost is linear 
 
     Args:
-        cnf (list): CNF C over V:
+        cnf (list): CNF C over a vocabulary V:
+
             hard puzzle problems with assumptions variables to activate or
             de-active clues.
+
         U (list):
             User vocabulary V' [set of]
+
         f (list):
             f is a mapping of user vars to real cost.
     """
@@ -201,6 +247,9 @@ def test_explain():
 
     # transform list cnf into CNF object
     simple_cnf = CNF(from_clauses=s_cnf_ass)
+    print(simple_cnf.clauses)
+    with Solver(bootstrap_with=simple_cnf) as s:
+        print(s.nof_vars())
 
     # user_vars = s_user_vars + assumptions
     # user_vars_cost = [1] * len(s_user_vars) + [10] * len(assumptions)

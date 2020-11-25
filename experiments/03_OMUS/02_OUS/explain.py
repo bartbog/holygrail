@@ -45,7 +45,7 @@ class BestStepComputer(object):
         self.sat_solver = sat
         self.opt_model = CondOptHS(f, A)
 
-    def bestStep(self, I: set):
+    def bestStep(self, f,Iend, I: set):
         """bestStep computes a subset A' of A that satisfies p s.t.
         C u A' is UNSAT and A' is f-optimal.
 
@@ -65,11 +65,26 @@ class BestStepComputer(object):
 
         A = I.union(p)
 
-        return self.bestStepCOUS(p, A)
+        return self.bestStepCOUS(f, p, A)
 
-    def bestStepCOUS(p, A):
-        pass
+    def checksat(self, Ap):
+        solved = self.sat_solver.solve(assumptions=Ap)
+        model = set(self.sat_solver.get_model())
 
+        return solved, model
+
+    def bestStepCOUS(self, f, p, A):
+        H = set()
+
+        while(True):
+            Ap = self.opt_model.CondOptHittingSet(f, p, A)
+            sat, model = self.checksat(Ap)
+
+            if not sat:
+                return Ap
+            
+            H.add(A - Ap)
+            self.opt_model.addCorrectionSet(A - Ap)
 
 class CondOptHS(object):
     def __init__(self, f, A):
@@ -108,8 +123,10 @@ class CondOptHS(object):
         # add new constraint sum x[j] * hij >= 1
         self.opt_model.addConstr(gp.quicksum(x[i] for i in Ci) >= 1)
 
-    def optHS(self):
+    def CondOptHittingSet(self, f, p, A):
         self.opt_model.optimize()
+        # TODO: adapt f and predicate p
+
         x = self.opt_model.getVars()
         hs = set(lit for i, lit in enumerate(self.allLits) if x[i].x == 1)
 

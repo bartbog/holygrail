@@ -1,17 +1,128 @@
-import time
+import cProfile
+import pstats
 import random
+import time
+from functools import wraps
+
+# gurobi imports
+import gurobipy as gp
+from gurobipy import GRB
 
 # pysat imports
-from frietkot import simpleProblem, frietKotProblem, originProblem
-
 from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
 
-from gurobipy import GRB
+# Testing samples
+from frietkot import simpleProblem
 
-import cProfile
-import pstats
-from functools import wraps
+
+class UnsatError(Exception):
+    """Exception raised for errors in satisfiability check.
+
+    Attributes:
+        I -- partial interpretation given as assumptions
+    """
+    def __init__(self, I):
+        self.I = I
+        self.message = f"Partial interpretation is unsat:"
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f'{self.message}\n\t{self.I}'
+
+
+class BestStepComputer(object):
+    def __init__(self, f, Iend: set, I: set, sat: Solver):
+        # self.p = p
+        self.f = f
+        self.Iend = Iend
+
+        # compute initial A
+        notIend = {-l for l in Iend}
+        notI = {-l for l in I}
+        A = I.union(notIend - notI)
+
+        self.sat_solver = sat
+        self.opt_model = CondOptHS(f, A)
+
+    def bestStep(self, I: set):
+        """bestStep computes a subset A' of A that satisfies p s.t.
+        C u A' is UNSAT and A' is f-optimal.
+
+        Args:
+
+            f (list): A cost function mapping 2^A -> N.
+            Iend (set): The cautious consequence, the set of literals that hold in
+                        all models.
+            I (set): A partial interpretation such that I \subseteq Iend.
+            sat (pysat.Solver): A SAT solver initialized with a CNF.
+        """
+        notIend = {-l for l in Iend}
+        notI = {-l for l in I}
+
+        # sum(x[lit]) == 1
+        p = notIend - notI
+
+        A = I.union(p)
+
+        return self.bestStepCOUS(p, A)
+
+    def bestStepCOUS(p, A):
+        pass
+
+
+class CondOptHS(object):
+    def __init__(self, f, A):
+        self.A = A
+        self.notA = [-lit for lit in A]
+
+        # match A and -A to fix idx
+        self.litToIndex = {lit: i for i, lit in enumerate(self.A + self.notA)}
+
+        # idx to A + (-A)
+        self.allLits = self.A + self.notA
+        self.nAllLits = len(self.allLits)
+
+        # objective weights
+        self.objWeights = [f(lit) for lit in A] + [GRB.INFINITY] * len(self.notA)
+        self.opt_model = gp.Model('CondOptHittingSet')
+
+        # add var with objective
+        x = self.opt_model.addMVar(
+            shape=self.nAllLits,
+            vtype=GRB.BINARY,
+            obj=self.objWeights,
+            name="x")
+
+        # CONSTRAINTS
+        # Exactly one of the -literals
+        self.opt_model.addConstr(x[p].sum() == 1)
+
+        # update model
+        self.opt_model.update()
+
+    def addCorrectionSet(self, C):
+        x = self.opt_model.getVars()
+        Ci = [self.litToIndex[lit] for lit in C]
+
+        # add new constraint sum x[j] * hij >= 1
+        self.opt_model.addConstr(gp.quicksum(x[i] for i in Ci) >= 1)
+
+    def optHS(self):
+        self.opt_model.optimize()
+        x = self.opt_model.getVars()
+        hs = set(lit for i, lit in enumerate(self.allLits) if x[i].x == 1)
+
+        return hs
+
+    def updateObj(self):
+        x = self.opt_model.getVars()
+
+        for i, xi in enumerate(x):
+            xi.setAttr(GRB.Attr.Obj, self.clauses.obj_weights[i])
+
+    def __del__(self):
+        self.opt_model.dispose()
 
 
 def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_dirs=False):
@@ -119,28 +230,26 @@ def optimalPropagate(U=None, I=[], sat=None):
     projected on focus.
 
     Improvements:
-    + Add new clause with assumption literal
-        ex: a_i=7
-    + solve with assumption literal set to false.
-    + Add 1 assumption only as True to the solver (to disable clause). 
-        add_clauses([a_i]).
     - Extension 1:
         + Reuse solver only for optpropagate
     - Extension 2:
         + Reuse solver for all sat calls
+    - Extension 3: 
+        + Set phases 
 
     Args:
     cnf (list): CNF C over V:
             hard puzzle problems with assumptions variables to activate or
             de-active clues.
-    I (list):
-        Assumptions 
-        => TODO: .... Ei/Si(partial assignment to the decision variables of 
-        the User vocabulary V')
-    focus (set):
+    I (list): partial interpretation 
+
+    U (list):
         +/- literals of all user variables
     """
-    sat.solve(assumptions=I)
+    solved = sat.solve(assumptions=I)
+
+    if not solved:
+        raise UnsatError(I)
 
     model = set(sat.get_model())
     if U:
@@ -160,25 +269,26 @@ def optimalPropagate(U=None, I=[], sat=None):
         model = model.intersection(new_model)
 
 
-def explain(C, U, f, I):
-    """
-    ExplainCSP constructor uses hard clauses supplied in CNF format to
-    explain user variables with associated weights users_vars_cost based
-    on the initial interpretation.
+def bestStep
 
-    => hyp: cost is linear 
+
+def explain(C: CNF, U: list, f, I):
+    """
+    ExplainCSP uses hard clauses supplied in CNF format to explain user
+    variables with associated weights users_vars_cost based on the
+    initial interpretation.
+
+    => hyp: cost is linear
 
     Args:
-        cnf (list): CNF C over a vocabulary V:
 
-            hard puzzle problems with assumptions variables to activate or
-            de-active clues.
+        cnf (list): CNF C over a vocabulary V.
 
-        U (list):
-            User vocabulary V' [set of]
+        U (set): User vocabulary U subset of V.
 
-        f (list):
-            f is a mapping of user vars to real cost.
+        f (list): f is a mapping of user vars to real cost.
+
+        I (list): Initial interpretation subset of U.
     """
     # best-step with multiple implementations possible (OUS/c-OUS/MUS...)
     # 1. rename to best-step-computer
@@ -187,42 +297,39 @@ def explain(C, U, f, I):
     # phases, might be better not modifying it.
     # - check intersection
 
+    # check literals of I are all user vocabulary
+    assert all(True if abs(lit) in U else False for lit in I), f"Part of supplied literals not in U (user variables)."
+
+    # Initialise the sat solver with the cnf
+    sat = Solver(bootstrap_with=C.clauses)
+    assert sat.solve(), f"CNF is unsatisfiable."
+    assert sat.solve(assumptions=I), f"CNF is unsatisfiable with given assumptions {I}."
+
     # Explanation sequence
-    Expl_seq = []
+    E = []
 
     # Most precise intersection of all models of C project on U
-    Iend = optPropagate(C, focus=U)
+    Iend = optimalPropagate(U=U, I=I, sat=sat)
 
-    # Initial interpretation I0 subset V' (for puzzles: Assumption literals + already derived facts)
-    I = set(lit for lit in U if f(-lit) >= GRB.INFINITY)
-
-    ous = COUS(C, U, f, Iend)
+    sat.delete()
 
     while(len(Iend - I) > 0):
-        # Compute optimal explanation explanation
-        # rename to best-step:
-        # internal state: (cnf, user_Vars, user_Vars_Cost, Iend)
-        # input: I
-        # output: assignemnt to subset of user_Vars 
-        # - {..., ..., ..., ... }
-        expl = ous.cOUS(C, f, Iend, I)
-        
+        # Compute optimal explanation explanation assignment to subset of U.
+        expl = bestStep(f, Iend, I)
+
         # facts used
         Ibest = I & expl
-        
-        # assumptions used
-        Cbest = user_vars & expl
 
         # New information derived "focused" on  
-        Nbest = optPropagate(cnf, I=Ibest + Cbest, focus=(Iend - I))
+        Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
 
-        Expl_seq.append((Ibest, Cbest, Nbest))
+        E.append((Ibest, Nbest))
 
-        print(f"\nOptimal explanation \t\t {Ibest} /\\ {Cbest} => {Nbest}\n")
+        print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
 
         I |= Nbest
 
-    return Expl_seq
+    return E
 
 
 def add_assumptions(cnf):

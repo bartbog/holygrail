@@ -1,7 +1,5 @@
 import cProfile
 import pstats
-import random
-import time
 from functools import wraps
 
 # gurobi imports
@@ -9,7 +7,7 @@ import gurobipy as gp
 from gurobipy import GRB
 
 # pysat imports
-from pysat.formula import CNF, WCNF
+from pysat.formula import CNF
 from pysat.solvers import Solver
 
 # Testing samples
@@ -22,7 +20,7 @@ class UnsatError(Exception):
     Attributes:
         I -- partial interpretation given as assumptions
     """
-    def __init__(self, I):
+    def __init__(self, I: set):
         self.I = I
         self.message = f"Partial interpretation is unsat:"
         super().__init__(self.message)
@@ -32,20 +30,13 @@ class UnsatError(Exception):
 
 
 class BestStepComputer(object):
-    def __init__(self, f, Iend: set, I: set, sat: Solver):
-        # self.p = p
-        self.f = f
+    def __init__(self, Iend: set, sat: Solver):
+
         self.Iend = Iend
-
-        # compute initial A
-        notIend = {-l for l in Iend}
-        notI = {-l for l in I}
-        A = I.union(notIend - notI)
-
         self.sat_solver = sat
-        self.opt_model = CondOptHS(f, A)
+        self.opt_model = CondOptHS(Iend)
 
-    def bestStep(self, f,Iend, I: set):
+    def bestStep(self, f, Iend: set, I: set):
         """bestStep computes a subset A' of A that satisfies p s.t.
         C u A' is UNSAT and A' is f-optimal.
 
@@ -64,79 +55,110 @@ class BestStepComputer(object):
         p = notIend - notI
 
         A = I.union(p)
-
+        print("Iend=", Iend, "I=", I)
+        print("p=", p)
+        print("A=", A)
         return self.bestStepCOUS(f, p, A)
 
-    def checksat(self, Ap):
-        solved = self.sat_solver.solve(assumptions=Ap)
+    def checkSat(self, A: set, Ap: set):
+        solved = self.sat_solver.solve(assumptions=list(Ap))
+
+        if not solved:
+            return solved, None
+
         model = set(self.sat_solver.get_model())
+        model &= A
 
         return solved, model
 
-    def bestStepCOUS(self, f, p, A):
+    def bestStepCOUS(self, f, p: list, A: set):
+        self.opt_model.updateObjective(f, p, A)
         H = set()
 
         while(True):
-            Ap = self.opt_model.CondOptHittingSet(f, p, A)
-            sat, model = self.checksat(Ap)
+
+            Ap = self.opt_model.CondOptHittingSet()
+            sat, App = self.checkSat(A, Ap)
 
             if not sat:
                 return Ap
-            
-            H.add(A - Ap)
-            self.opt_model.addCorrectionSet(A - Ap)
+
+            self.opt_model.addCorrectionSet(A - App)
+
+    def __del__(self):
+        self.sat_solver.delete()
+
 
 class CondOptHS(object):
-    def __init__(self, f, A):
-        self.A = A
-        self.notA = [-lit for lit in A]
+    def __init__(self, Iend: set):
+        self.Iend = Iend
+        self.notIend = set(-lit for lit in Iend)
 
-        # match A and -A to fix idx
-        self.litToIndex = {lit: i for i, lit in enumerate(self.A + self.notA)}
 
         # idx to A + (-A)
-        self.allLits = self.A + self.notA
+        self.allLits = self.Iend | self.notIend
         self.nAllLits = len(self.allLits)
 
+        # match A and -A to fix idx
+        self.litToIndex = {lit: i for i, lit in enumerate(self.allLits)}
+
         # objective weights
-        self.objWeights = [f(lit) for lit in A] + [GRB.INFINITY] * len(self.notA)
+        self.objWeights = [1] * self.nAllLits
+
+        # optimisation model
         self.opt_model = gp.Model('CondOptHittingSet')
 
+        # model parameters
+        self.opt_model.Params.OutputFlag = 0
+        self.opt_model.Params.LogToConsole = 0
+        self.opt_model.Params.Threads = 8
+
         # add var with objective
-        x = self.opt_model.addMVar(
+        self.x = self.opt_model.addMVar(
             shape=self.nAllLits,
             vtype=GRB.BINARY,
             obj=self.objWeights,
             name="x")
 
         # CONSTRAINTS
-        # Exactly one of the -literals
-        self.opt_model.addConstr(x[p].sum() == 1)
 
         # update model
         self.opt_model.update()
 
-    def addCorrectionSet(self, C):
+    def addCorrectionSet(self, C: set):
         x = self.opt_model.getVars()
         Ci = [self.litToIndex[lit] for lit in C]
 
         # add new constraint sum x[j] * hij >= 1
         self.opt_model.addConstr(gp.quicksum(x[i] for i in Ci) >= 1)
 
-    def CondOptHittingSet(self, f, p, A):
+    def CondOptHittingSet(self):
         self.opt_model.optimize()
-        # TODO: adapt f and predicate p
 
         x = self.opt_model.getVars()
         hs = set(lit for i, lit in enumerate(self.allLits) if x[i].x == 1)
 
         return hs
 
-    def updateObj(self):
+    def updateObjective(self, f, p: list, A: set):
         x = self.opt_model.getVars()
 
+        # add the p-meta constraint
+        # exactly one of not Iend in the unsat subset
+        self.opt_model.addConstr(
+            gp.quicksum(x[self.litToIndex[lit]] for lit in p) == 1
+        )
+
+        # adapt the objective weights of the lits
+        for lit, pos in self.litToIndex.items():
+            if lit in A:
+                self.objWeights[pos] = f(lit)
+            else:
+                self.objWeights[pos] = GRB.INFINITY
+
+        # update the objective weights
         for i, xi in enumerate(x):
-            xi.setAttr(GRB.Attr.Obj, self.clauses.obj_weights[i])
+            xi.setAttr(GRB.Attr.Obj, self.objWeights[i])
 
     def __del__(self):
         self.opt_model.dispose()
@@ -241,7 +263,7 @@ def optPropagateSolver(C, focus=None, I=[]):
             model = model.intersection(new_model)
 
 
-def optimalPropagate(U=None, I=[], sat=None):
+def optimalPropagate(U=None, I=set(), sat=None):
     """
     optPropage produces the intersection of all models of cnf more precise
     projected on focus.
@@ -263,7 +285,7 @@ def optimalPropagate(U=None, I=[], sat=None):
     U (list):
         +/- literals of all user variables
     """
-    solved = sat.solve(assumptions=I)
+    solved = sat.solve(assumptions=list(I))
 
     if not solved:
         raise UnsatError(I)
@@ -276,20 +298,17 @@ def optimalPropagate(U=None, I=[], sat=None):
 
     while(True):
         sat.add_clause([-bi] + [-lit for lit in model])
-        solved = sat.solve(assumptions=I + [bi])
+        solved = sat.solve(assumptions=list(I) + [bi])
 
         if not solved:
-            sat.add_clause([bi])
+            sat.add_clause([-bi])
             return model
 
         new_model = set(sat.get_model())
         model = model.intersection(new_model)
 
 
-def bestStep
-
-
-def explain(C: CNF, U: list, f, I):
+def explain(C: CNF, U: set, f, I: set):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
     variables with associated weights users_vars_cost based on the
@@ -315,10 +334,11 @@ def explain(C: CNF, U: list, f, I):
     # - check intersection
 
     # check literals of I are all user vocabulary
-    assert all(True if abs(lit) in U else False for lit in I), f"Part of supplied literals not in U (user variables)."
+    assert all(True if abs(lit) in U else False for lit in I), f"Part of supplied literals not in U (user variables): {lits for lit in I if lit not in U}"
 
     # Initialise the sat solver with the cnf
     sat = Solver(bootstrap_with=C.clauses)
+    # print(C.clauses)
     assert sat.solve(), f"CNF is unsatisfiable."
     assert sat.solve(assumptions=I), f"CNF is unsatisfiable with given assumptions {I}."
 
@@ -327,12 +347,11 @@ def explain(C: CNF, U: list, f, I):
 
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I, sat=sat)
-
-    sat.delete()
+    c = BestStepComputer(Iend, sat)
 
     while(len(Iend - I) > 0):
         # Compute optimal explanation explanation assignment to subset of U.
-        expl = bestStep(f, Iend, I)
+        expl = c.bestStep(f, Iend, I)
 
         # facts used
         Ibest = I & expl
@@ -346,6 +365,7 @@ def explain(C: CNF, U: list, f, I):
 
         I |= Nbest
 
+    print(E)
     return E
 
 
@@ -364,6 +384,11 @@ def add_assumptions(cnf):
     return cnf_ass, assumptions
 
 
+def get_user_vars(cnf):
+    U = set(abs(l) for lst in cnf.clauses for l in lst)
+    return U | set(-abs(l) for l in U)
+
+
 def test_explain():
     # test on simple case
     s_cnf = simpleProblem()
@@ -371,52 +396,13 @@ def test_explain():
 
     # transform list cnf into CNF object
     simple_cnf = CNF(from_clauses=s_cnf_ass)
+    # print(simple_cnf.vpool())
     print(simple_cnf.clauses)
-    with Solver(bootstrap_with=simple_cnf) as s:
-        print(s.nof_vars())
-
-    # user_vars = s_user_vars + assumptions
-    # user_vars_cost = [1] * len(s_user_vars) + [10] * len(assumptions)
-
-    # # if sudoku => int. += initial values of user_vars
-    # initial_interpretation = set(assumptions)
-
-    # # unit cost for deriving new information
-    # simple_csp = explain(params_cnf, simple_cnf, user_vars=user_vars, user_vars_cost=user_vars_cost, initial_interpretation=initial_interpretation)
-
-    # TODO:
-    # - remove all user vars with interpretation => remaining  = to explain.
-    # 
-
-    # generate explanations
-
-    # #test on more difficult case
-    # frietkot_cnf, frietkot_facts, frietkot_names = frietKotProblem()
-    # frietkot_weights = random.choices(list(range(2, 10)), k=len(frietkot_cnf))
-
-    # frietkot_expl = explain_csp(params, cnf=frietkot_cnf, factsToExplain=frietkot_facts, weights=frietkot_weights)
-
-
-    # params_puzzle = OusParams()
-    # params_puzzle.constrained = True
-    # params_puzzle.incremental = False
-    # params_puzzle.pre_seed = False
-    # params_puzzle.sort_lits = False
-    # params_puzzle.bounded = False
-    # params_puzzle.post_opt = False
-    # params_puzzle.post_opt_incremental = False
-    # params_puzzle.post_opt_greedy = False
-    # params_puzzle.extension = 'maxsat'
-    # params_puzzle.ispuzzle = True
-
-    # # test on puzzle problem
-    # originProblem()
-    # puzzle_hard, puzzle_soft, puzzle_weights, puzzle_facts = originProblem()
-    # origin_csp = ExplainCSP(params=params_puzzle, cnf=puzzle_hard, factsToExplain=puzzle_facts, weights=puzzle_weights, indicatorVars=puzzle_soft)
-    # origin_csp.explain()
-
-    # puzzle_expl = explain_csp(params, cnf=puzzle_hard, factsToExplain=puzzle_facts, weights=puzzle_weights, indicatorVars=puzzle_soft, is_problem=True)
-
+    U = get_user_vars(simple_cnf)
+    f = lambda l: 1
+    I = set(assumptions)
+    # print(U)
+    explain(C=simple_cnf, U=U, f=f, I=I)
 
 if __name__ == "__main__":
     test_explain()

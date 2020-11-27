@@ -319,6 +319,7 @@ def optimalPropagate(U=None, I=set(), sat=None):
         new_model = set(sat.get_model())
         model = model.intersection(new_model)
 
+
 @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
 def explain(C: CNF, U: set, f, I: set):
     """
@@ -408,12 +409,9 @@ def test_explain():
 
     # transform list cnf into CNF object
     simple_cnf = CNF(from_clauses=s_cnf_ass)
-    # print(simple_cnf.vpool())
-    print(simple_cnf.clauses)
     U = get_user_vars(simple_cnf)
     f = lambda l: 1
     I = set(assumptions)
-    # print(U)
     explain(C=simple_cnf, U=U, f=f, I=I)
 
 if __name__ == "__main__":

@@ -13,6 +13,8 @@ from pysat.solvers import Solver
 # Testing samples
 from frietkot import simpleProblem
 
+from datetime import datetime
+
 
 class UnsatError(Exception):
     """Exception raised for errors in satisfiability check.
@@ -59,7 +61,7 @@ class BestStepComputer(object):
         print("p=", p)
         print("A=", A)
         return self.bestStepCOUS(f, p, A)
-    
+
     def grow(self, f, A, Ap):
         pass
 
@@ -317,7 +319,7 @@ def optimalPropagate(U=None, I=set(), sat=None):
         new_model = set(sat.get_model())
         model = model.intersection(new_model)
 
-
+@profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
 def explain(C: CNF, U: set, f, I: set):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user

@@ -56,13 +56,10 @@ class BestStepComputer(object):
         p = notIend - notI
 
         A = I.union(p)
-        # print("Iend=", Iend, "I=", I)
-        # print("p=", p)
-        # print("A=", A)
         return self.bestStepCOUS(f, p, A)
 
     def grow(self, f, A, Ap):
-        pass
+        return A - Ap
 
     def checkSat(self, A: set, Ap: set):
         solved = self.sat_solver.solve(assumptions=list(Ap))
@@ -76,8 +73,7 @@ class BestStepComputer(object):
         return solved, model
 
     def bestStepCOUS(self, f, p: list, A: set):
-        optcnt = 0
-        satcnt = 0
+        optcnt, satcnt = 0, 0
 
         self.opt_model.updateObjective(f, p, A)
         H = set()
@@ -87,14 +83,16 @@ class BestStepComputer(object):
             Ap = self.opt_model.CondOptHittingSet()
             optcnt += 1
 
-            sat, App = self.checkSat(A, Ap)
+            sat, Ap = self.checkSat(A, Ap)
             satcnt += 1
 
             if not sat:
                 print(optcnt, satcnt)
                 return Ap
 
-            self.opt_model.addCorrectionSet(A - App)
+            C = self.grow(f, A, Ap)
+            H.add(frozenset(C))
+            self.opt_model.addCorrectionSet(C)
 
     def __del__(self):
         self.sat_solver.delete()

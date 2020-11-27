@@ -35,9 +35,9 @@ def runParallel(fn, args):
         p.join()
 
 
-def generate_weights(instance):
-    clauses = CNF(from_file=instance).clauses
-    weights = random.choices(list(range(5, 21)), k=len(clauses))
+def generate_weights(n):
+    # clauses = CNF(from_file=instance).clauses
+    weights = random.choices(list(range(1, 21)), k=n)
     return weights
 
 
@@ -81,6 +81,7 @@ def main():
     instances = get_instances()[:2]
     for i_path, i_name in instances:
         i_clauses, i_assumptions = add_assumptions(CNF(from_file=i_path).clauses)
+        w = generate_weights(len(i_assumptions))
         # print(i_clauses)
         # print(i_assumptions)
         i_cnf = CNF(from_clauses=i_clauses)

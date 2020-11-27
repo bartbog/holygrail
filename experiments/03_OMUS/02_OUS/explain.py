@@ -15,7 +15,6 @@ from frietkot import simpleProblem
 
 from datetime import datetime
 
-
 class UnsatError(Exception):
     """Exception raised for errors in satisfiability check.
 
@@ -57,9 +56,9 @@ class BestStepComputer(object):
         p = notIend - notI
 
         A = I.union(p)
-        print("Iend=", Iend, "I=", I)
-        print("p=", p)
-        print("A=", A)
+        # print("Iend=", Iend, "I=", I)
+        # print("p=", p)
+        # print("A=", A)
         return self.bestStepCOUS(f, p, A)
 
     def grow(self, f, A, Ap):

@@ -1,5 +1,4 @@
 import sys
-import json
 import random
 import time
 from datetime import date, datetime
@@ -24,9 +23,10 @@ MINUTES = 60 * SECONDS
 HOURS = 60 * MINUTES
 TIMEOUT_EXP1 = 1 * HOURS
 
+
 def runParallel(fn, args):
     procs = []
-    for arg in zip(args):
+    for arg in args:
         p = Process(target=fn, args=arg)
         p.start()
         procs.append(p)
@@ -53,6 +53,7 @@ def get_instances():
     instances = [x for x in p.iterdir()]
     filenames = [(instance, instance.name) for instance in instances if '.cnf' in instance.name]
     sat_files = [(i, name) for i, name in filenames if checkSatFile(i)]
+    sorted(sat_files, key=lambda path: path[0].stat().st_size)
     return sat_files
 
 
@@ -76,8 +77,17 @@ def test_instance():
 
 
 def main():
-    instances = get_instances()
-    print(instances)
+    f = lambda l: 1
+    instances = get_instances()[:2]
+    for i_path, i_name in instances:
+        i_clauses, i_assumptions = add_assumptions(CNF(from_file=i_path).clauses)
+        # print(i_clauses)
+        # print(i_assumptions)
+        i_cnf = CNF(from_clauses=i_clauses)
+        U = get_user_vars(i_cnf)
+        I = set(i_assumptions)
+        explain(C=i_cnf, U=U, f=f, I=I)
+    # print(instances)
 
 
 if __name__ == "__main__":

@@ -59,6 +59,9 @@ class BestStepComputer(object):
         print("p=", p)
         print("A=", A)
         return self.bestStepCOUS(f, p, A)
+    
+    def grow(self, f, A, Ap):
+        pass
 
     def checkSat(self, A: set, Ap: set):
         solved = self.sat_solver.solve(assumptions=list(Ap))
@@ -72,15 +75,22 @@ class BestStepComputer(object):
         return solved, model
 
     def bestStepCOUS(self, f, p: list, A: set):
+        optcnt = 0
+        satcnt = 0
+
         self.opt_model.updateObjective(f, p, A)
         H = set()
 
         while(True):
 
             Ap = self.opt_model.CondOptHittingSet()
+            optcnt += 1
+
             sat, App = self.checkSat(A, Ap)
+            satcnt += 1
 
             if not sat:
+                print(optcnt, satcnt)
                 return Ap
 
             self.opt_model.addCorrectionSet(A - App)
@@ -356,7 +366,7 @@ def explain(C: CNF, U: set, f, I: set):
         # facts used
         Ibest = I & expl
 
-        # New information derived "focused" on  
+        # New information derived "focused" on
         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
 
         E.append((Ibest, Nbest))

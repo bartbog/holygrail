@@ -87,6 +87,7 @@ class BestStepComputer(object):
         while(True):
             Ap = self.opt_model.CondOptHittingSet()
             print("got HS", Ap)
+            print("HS manual cost:", [(l,f(l)) for l in Ap])
             optcnt += 1
 
             sat, Ap = self.checkSat(A, Ap)
@@ -110,6 +111,7 @@ class CondOptHS(object):
     def __init__(self, Iend: set):
         self.Iend = Iend
         self.notIend = set(-lit for lit in Iend)
+        # XXX this includes too many, for all those in 'I' you don't need their complement!
 
 
         # idx to A + (-A)
@@ -177,6 +179,7 @@ class CondOptHS(object):
                 self.objWeights[pos] = f(lit)
             else:
                 self.objWeights[pos] = GRB.INFINITY
+            print("obj", lit, self.objWeights[pos])
 
         # update the objective weights
         # XXX je kan DIT gewoon doen hierboven in de if doen? zonder die 'objWeights' array en
@@ -448,8 +451,11 @@ def test_explain():
     simple_cnf = CNF(from_clauses=s_cnf_ass)
     U = get_user_vars(simple_cnf)
     I = set(assumptions)
+    # XXX fix this crazy mess...
     f = cost(I)
-    explain(C=simple_cnf, U=U, f=f, I=I)
+    dct = {l: f(l) for l in U}
+    f2 = lambda x: dct[x]
+    explain(C=simple_cnf, U=U, f=f2, I=I)
 
 if __name__ == "__main__":
     test_explain()

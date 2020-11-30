@@ -99,8 +99,8 @@ class BestStepComputer(object):
                 return Ap
 
             # XXX wat moet dit hier? (noot: huidige hack zet ook -I erin)
-            H = A | {-l for l in A}
-            C = H - self.grow(f, A, Ap)
+            Stuff = A | {-l for l in A}
+            C = Stuff - self.grow(f, A, Ap)
             print("got C", C)
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)

@@ -59,38 +59,46 @@ class BestStepComputer(object):
         return self.bestStepCOUS(f, p, A)
 
     def grow(self, f, A, Ap):
-        return A - Ap
+        # no actual grow needed if 'Ap' contains all user vars
+        return Ap
 
     def checkSat(self, A: set, Ap: set):
+        # TODO: minimal doc of parameters
+        # TODO: voeg optie toe om polarities te zetten
         solved = self.sat_solver.solve(assumptions=list(Ap))
 
         if not solved:
             return solved, Ap
 
         model = set(self.sat_solver.get_model())
-        model &= A
+        # XXX onderstaande is correct voor latere code, maar niet conceptueel deel van 'checkSat'
+        #model &= A
 
         return solved, model
 
     def bestStepCOUS(self, f, p: list, A: set):
+        # TODO: minimal doc of parameters
         optcnt, satcnt = 0, 0
 
         self.opt_model.updateObjective(f, p, A)
+        print("updateObj, A=",A)
         H = set()
 
         while(True):
-
             Ap = self.opt_model.CondOptHittingSet()
+            print("got HS", Ap)
             optcnt += 1
 
             sat, Ap = self.checkSat(A, Ap)
+            print("got sat", sat, Ap)
             satcnt += 1
 
             if not sat:
                 print(optcnt, satcnt)
                 return Ap
 
-            C = self.grow(f, A, Ap)
+            C = A - self.grow(f, A, Ap)
+            print("got C", C)
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
 
@@ -147,13 +155,18 @@ class CondOptHS(object):
         x = self.opt_model.getVars()
         hs = set(lit for i, lit in enumerate(self.allLits) if x[i].x == 1)
 
+        print("hs: cost is ", self.opt_model.objval)
         return hs
 
     def updateObjective(self, f, p: list, A: set):
+        # TODO: minimal doc of params
         x = self.opt_model.getVars()
 
         # add the p-meta constraint
         # exactly one of not Iend in the unsat subset
+        # XXX this is not the objective? you are adding this each time!?
+        # just once for all vars is enough (because your obj is reducing the amount of possible vars)
+        print("upd obj, p=",p)
         self.opt_model.addConstr(
             gp.quicksum(x[self.litToIndex[lit]] for lit in p) == 1
         )
@@ -166,6 +179,8 @@ class CondOptHS(object):
                 self.objWeights[pos] = GRB.INFINITY
 
         # update the objective weights
+        # XXX je kan DIT gewoon doen hierboven in de if doen? zonder die 'objWeights' array en
+        # zonder dus alle vars te setAttr'en?
         for i, xi in enumerate(x):
             xi.setAttr(GRB.Attr.Obj, self.objWeights[i])
 
@@ -273,6 +288,7 @@ def optPropagateSolver(C, focus=None, I=[]):
 
 
 def optimalPropagate(U=None, I=set(), sat=None):
+    # XXX Tias: set optional vars at end, so (sat, I, U)
     """
     optPropage produces the intersection of all models of cnf more precise
     projected on focus.
@@ -319,6 +335,11 @@ def optimalPropagate(U=None, I=set(), sat=None):
 
 @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
 def explain(C: CNF, U: set, f, I: set):
+    print("Expl:")
+    print("\tcnf:",CNF)
+    print("\tU:", U)
+    print("\tf:", f)
+    print("\tI:", I)
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
     variables with associated weights users_vars_cost based on the
@@ -349,7 +370,7 @@ def explain(C: CNF, U: set, f, I: set):
     # Initialise the sat solver with the cnf
     sat = Solver(bootstrap_with=C.clauses)
     # print(C.clauses)
-    assert sat.solve(), f"CNF is unsatisfiable."
+    #assert sat.solve(), f"CNF is unsatisfiable."
     assert sat.solve(assumptions=I), f"CNF is unsatisfiable with given assumptions {I}."
 
     # Explanation sequence
@@ -357,6 +378,7 @@ def explain(C: CNF, U: set, f, I: set):
 
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I, sat=sat)
+    print("Iend", Iend)
     c = BestStepComputer(Iend, sat)
 
     while(len(Iend - I) > 0):
@@ -420,6 +442,7 @@ def test_explain():
     # test on simple case
     s_cnf = simpleProblem()
     s_cnf_ass, assumptions = add_assumptions(s_cnf)
+    print("prob:", s_cnf)
 
     # transform list cnf into CNF object
     simple_cnf = CNF(from_clauses=s_cnf_ass)

@@ -65,7 +65,7 @@ class BestStepComputer(object):
         solved = self.sat_solver.solve(assumptions=list(Ap))
 
         if not solved:
-            return solved, None
+            return solved, Ap
 
         model = set(self.sat_solver.get_model())
         model &= A
@@ -83,14 +83,14 @@ class BestStepComputer(object):
             Ap = self.opt_model.CondOptHittingSet()
             optcnt += 1
 
-            sat, App = self.checkSat(A, Ap)
+            sat, Ap = self.checkSat(A, Ap)
             satcnt += 1
 
             if not sat:
                 print(optcnt, satcnt)
                 return Ap
 
-            C = self.grow(f, A, App)
+            C = self.grow(f, A, Ap)
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
 

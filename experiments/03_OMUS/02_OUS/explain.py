@@ -395,6 +395,22 @@ def add_assumptions(cnf):
     return cnf_ass, assumptions
 
 
+def cost(I):
+    # This is the outer enclosing function
+    # litsU = set(l for l in U) | set(-abs(l) for l in U)
+    # litsUnotI = litsU - I
+
+    def cost_lit(lit):
+        # This is the nested function
+        # print(msg)
+        if lit in I or -lit in I:
+            return 20
+        else:
+            return 1
+
+    return cost_lit
+
+
 def get_user_vars(cnf):
     U = set(abs(l) for lst in cnf.clauses for l in lst)
     return U | set(-abs(l) for l in U)
@@ -408,8 +424,8 @@ def test_explain():
     # transform list cnf into CNF object
     simple_cnf = CNF(from_clauses=s_cnf_ass)
     U = get_user_vars(simple_cnf)
-    f = lambda l: 1
     I = set(assumptions)
+    f = cost(I)
     explain(C=simple_cnf, U=U, f=f, I=I)
 
 if __name__ == "__main__":

@@ -83,14 +83,14 @@ class BestStepComputer(object):
             Ap = self.opt_model.CondOptHittingSet()
             optcnt += 1
 
-            sat, Ap = self.checkSat(A, Ap)
+            sat, App = self.checkSat(A, Ap)
             satcnt += 1
 
             if not sat:
                 print(optcnt, satcnt)
                 return Ap
 
-            C = self.grow(f, A, Ap)
+            C = self.grow(f, A, App)
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
 
@@ -362,6 +362,7 @@ def explain(C: CNF, U: set, f, I: set):
     while(len(Iend - I) > 0):
         # Compute optimal explanation explanation assignment to subset of U.
         expl = c.bestStep(f, Iend, I)
+        print(expl)
 
         # facts used
         Ibest = I & expl

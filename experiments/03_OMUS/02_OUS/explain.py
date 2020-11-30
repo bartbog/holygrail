@@ -468,13 +468,14 @@ def test_explain():
     simple_cnf = CNF(from_clauses=s_cnf_ass)
     U = get_user_vars(simple_cnf)
     I = set(assumptions)
-    # f = cost(U, I)
+    f = cost(U, I)
     # explain(C=simple_cnf, U=U, f=f, I=I)
     # XXX fix this crazy mess...
-    f = cost(I)
-    dct = {l: f(l) for l in U}
-    f2 = lambda x: dct[x]
-    explain(C=simple_cnf, U=U, f=f2, I=I)
+    # f = cost(I)
+    # dct = {l: f(l) for l in U}
+    # f2 = lambda x: dct[x]
+    # explain(C=simple_cnf, U=U, f=f2, I=I)
+    explain(C=simple_cnf, U=U, f=f, I=I)
 
 if __name__ == "__main__":
     test_explain()

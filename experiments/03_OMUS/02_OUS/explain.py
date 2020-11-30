@@ -30,6 +30,22 @@ class UnsatError(Exception):
         return f'{self.message}\n\t{self.I}'
 
 
+class CostFunctionError(Exception):
+    """Exception raised for errors in satisfiability check.
+
+    Attributes:
+        I -- partial interpretation given as assumptions
+    """
+    def __init__(self, U:set, lit: int):
+        self.U = U
+        self.lit = lit
+        self.message = f"Cost function contains literal not in  user vars:"
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f'{self.message} {self.lit} not in {self.U}'
+
+
 class BestStepComputer(object):
     def __init__(self, Iend: set, sat: Solver):
 
@@ -417,19 +433,18 @@ def add_assumptions(cnf):
     return cnf_ass, assumptions
 
 
-def cost(I):
-    # This is the outer enclosing function
-    # litsU = set(l for l in U) | set(-abs(l) for l in U)
-    # litsUnotI = litsU - I
+def cost(U, I):
+    litsU = set(abs(l) for l in U) | set(-abs(l) for l in U)
+    I0 = set(I)
 
     def cost_lit(lit):
-        # This is the nested function
-        # print(msg)
-        if lit in I or -lit in I:
+        if lit not in litsU:
+            raise CostFunctionError(U, lit)
+        elif lit in I0 or -lit in I0:
+            print(I, lit)
             return 20
         else:
             return 1
-
     return cost_lit
 
 
@@ -448,7 +463,7 @@ def test_explain():
     simple_cnf = CNF(from_clauses=s_cnf_ass)
     U = get_user_vars(simple_cnf)
     I = set(assumptions)
-    f = cost(I)
+    f = cost(U, I)
     explain(C=simple_cnf, U=U, f=f, I=I)
 
 if __name__ == "__main__":

@@ -118,17 +118,17 @@ class BestStepComputer(object):
         optcnt, satcnt = 0, 0
 
         self.opt_model.updateObjective(f, A)
-        # print("updateObj, A=",A)
+        print("updateObj, A=",len(A))
         H = set()
 
         while(True):
             Ap = self.opt_model.CondOptHittingSet()
-            # print("got HS", Ap)
+            print("got HS", len(Ap))
             print("HS manual cost:", [(l,f(l)) for l in Ap])
             optcnt += 1
 
-            sat, Ap = self.checkSat(F, Ap)
-            # print("got sat", sat, Ap)
+            sat, Ap = self.checkSat(A, Ap)
+            print("got sat", sat, len(Ap))
             satcnt += 1
 
             if not sat:
@@ -137,8 +137,8 @@ class BestStepComputer(object):
 
             # XXX wat moet dit hier? (noot: huidige hack zet ook -I erin)
             # Stuff = 
-            C = F - self.grow(f, F, Ap)
-            # print("got C", C)
+            C = F - self.grow(f, A, Ap)
+            print("got C", len(C))
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
 
@@ -331,11 +331,11 @@ def explain(C: CNF, U: set, f, I: set):
 
         I (list): Initial interpretation subset of U.
     """
-    # print("Expl:")
-    # print("\tcnf:", C.clauses)
-    # print("\tU:", U)
-    # print("\tf:", f)
-    # print("\tI:", I)
+    print("Expl:")
+    print("\tcnf:", C.clauses)
+    print("\tU:", len(U))
+    print("\tf:", f)
+    print("\tI:", len(I))
     # best-step with multiple implementations possible (OUS/c-OUS/MUS...)
     # 1. rename to best-step-computer
     # 2. warm start to constructor

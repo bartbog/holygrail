@@ -15,6 +15,7 @@ from frietkot import simpleProblem
 
 from datetime import datetime
 
+
 class UnsatError(Exception):
     """Exception raised for errors in satisfiability check.
 
@@ -48,13 +49,11 @@ class CostFunctionError(Exception):
 
 
 class BestStepComputer(object):
-    def __init__(self, Iend: set, sat: Solver):
-
-        self.Iend = Iend
+    def __init__(self, sat: Solver, Iend: set, Iexpl: set):
         self.sat_solver = sat
-        self.opt_model = CondOptHS(Iend)
+        self.opt_model = CondOptHS(Iend=Iend, Iexpl=Iexpl)
 
-    def bestStep(self, f, Iend: set, I: set):
+    def bestStep(self, f, U: set, Iexpl: set, I: set):
         """bestStep computes a subset A' of A that satisfies p s.t.
         C u A' is UNSAT and A' is f-optimal.
 
@@ -66,14 +65,11 @@ class BestStepComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             sat (pysat.Solver): A SAT solver initialized with a CNF.
         """
-        notIend = {-l for l in Iend}
-        notI = {-l for l in I}
+        F = set(l for l in U) | set(-l for l in U)
+        F -= {-l for l in I}
+        print("F=", F)
 
-        # sum(x[lit]) == 1
-        p = notIend - notI
-
-        A = I.union(p)
-        F = A | {-l for l in A}
+        A = I | {-l for l in Iexpl}
         return self.bestStepCOUS(f, F, A)
 
     def grow(self, f, A, Ap):
@@ -137,12 +133,11 @@ class BestStepComputer(object):
 
 
 class CondOptHS(object):
-    def __init__(self, f, I:set, Iend: set):
-        Iexpl = list(Iend - I)
-        notIexpl = list(-lit for lit in Iexpl)
+    def __init__(self, Iend, Iexpl):
+        notIexpl = set(-lit for lit in Iexpl)
 
         # Iend + -Iexpl
-        self.allLits = Iend + notIexpl
+        self.allLits = list(l for l in Iend - Iexpl) + list(Iexpl) + list(notIexpl)
         self.nAllLits = len(self.allLits)
 
         # optimisation model
@@ -153,26 +148,22 @@ class CondOptHS(object):
         self.opt_model.Params.LogToConsole = 0
         self.opt_model.Params.Threads = 8
 
-        # add var with objective
+        # VARIABLE -- OBJECTIVE
         x = self.opt_model.addMVar(
             shape=self.nAllLits,
             vtype=GRB.BINARY,
-            obj=[1] * self.nAllLits,
+            obj=[GRB.INFINITY] * self.nAllLits,
             name="x")
 
-        # objective weights
-        for xi, lit in zip(x, self.allLits):
-            # literal derived or to be explained
-            if lit in notIexpl or lit in I:
-                xi.setAttr(GRB.Attr.Obj, f(lit))
-            # literal not yet derived
-            elif lit in Iexpl:
-                xi.setAttr(GRB.Attr.Obj, GRB.INFINITY)
-
         # CONSTRAINTS
+        print(self.allLits)
+        print(Iexpl)
+        print(notIexpl)
         # every explanation contains 1 neg Lit.
-        expl_vals = range(len(Iend), self.nAllLits)
-        self.opt_model.addConstr(x[expl_vals].sum() == 1)
+        posnegIexpl = range(len(Iend), self.nAllLits)
+        self.opt_model.addConstr(
+            x[posnegIexpl].sum() == 1
+        )
 
         # update model
         self.opt_model.update()
@@ -326,7 +317,7 @@ def explain(C: CNF, U: set, f, I: set):
         I (list): Initial interpretation subset of U.
     """
     print("Expl:")
-    print("\tcnf:",CNF)
+    print("\tcnf:", C.clauses)
     print("\tU:", U)
     print("\tf:", f)
     print("\tI:", I)
@@ -350,11 +341,11 @@ def explain(C: CNF, U: set, f, I: set):
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I, sat=sat)
     print("Iend", Iend)
-    c = BestStepComputer(Iend, sat)
+    c = BestStepComputer(sat=sat, Iend=Iend, Iexpl=Iend - I)
 
     while(len(Iend - I) > 0):
         # Compute optimal explanation explanation assignment to subset of U.
-        expl = c.bestStep(f, Iend, I)
+        expl = c.bestStep(f, U, Iend-I, I)
         print(expl)
 
         # facts used
@@ -404,7 +395,7 @@ def cost(U, I):
 
 
 def get_user_vars(cnf):
-    U = list(abs(l) for lst in cnf.clauses for l in lst)
+    U = set(abs(l) for lst in cnf.clauses for l in lst)
     return U
 
 

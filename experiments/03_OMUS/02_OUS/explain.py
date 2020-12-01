@@ -76,7 +76,7 @@ class BestStepComputer(object):
         # no actual grow needed if 'Ap' contains all user vars
         return Ap
 
-    def checkSat(self, A: set, Ap: set, polarity=False):
+    def checkSat(self, A: set, Ap: set, polarity=True):
         """Check satisfiability of given assignment of subset of the variables of Vocabulary V.
         If the subset is unsatisfiable, Ap is returned.
         If the subset is satisfiable, the model computed by the sat solver is returned.
@@ -88,7 +88,7 @@ class BestStepComputer(object):
             (bool, set): sat value, model assignment
         """
         if polarity:
-            self.sat_solver.set_phases(literals=list(A-Ap))
+            self.sat_solver.set_phases(literals=list(A - Ap - {-l for l in Ap}))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
 

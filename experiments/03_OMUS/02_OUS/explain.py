@@ -72,7 +72,7 @@ class BestStepComputer(object):
         p = notIend - notI
 
         A = I.union(p)
-        return self.bestStepCOUS(f, p, A)
+        return self.bestStepCOUS(f, A)
 
     def grow(self, f, A, Ap):
         # no actual grow needed if 'Ap' contains all user vars
@@ -92,11 +92,11 @@ class BestStepComputer(object):
 
         return solved, model
 
-    def bestStepCOUS(self, f, p: list, A: set):
+    def bestStepCOUS(self, f, A: set):
         # TODO: minimal doc of parameters
         optcnt, satcnt = 0, 0
 
-        self.opt_model.updateObjective(f, p, A)
+        self.opt_model.updateObjective(f, A)
         print("updateObj, A=",A)
         H = set()
 
@@ -126,21 +126,13 @@ class BestStepComputer(object):
 
 
 class CondOptHS(object):
-    def __init__(self, Iend: set):
-        self.Iend = Iend
-        self.notIend = set(-lit for lit in Iend)
-        # XXX this includes too many, for all those in 'I' you don't need their complement!
+    def __init__(self, f, I:set, Iend: set):
+        Iexpl = list(Iend - I)
+        notIexpl = list(-lit for lit in Iexpl)
 
-
-        # idx to A + (-A)
-        self.allLits = self.Iend | self.notIend
+        # Iend + -Iexpl
+        self.allLits = Iend + notIexpl
         self.nAllLits = len(self.allLits)
-
-        # match A and -A to fix idx
-        self.litToIndex = {lit: i for i, lit in enumerate(self.allLits)}
-
-        # objective weights
-        self.objWeights = [1] * self.nAllLits
 
         # optimisation model
         self.opt_model = gp.Model('CondOptHittingSet')
@@ -151,20 +143,32 @@ class CondOptHS(object):
         self.opt_model.Params.Threads = 8
 
         # add var with objective
-        self.x = self.opt_model.addMVar(
+        x = self.opt_model.addMVar(
             shape=self.nAllLits,
             vtype=GRB.BINARY,
-            obj=self.objWeights,
+            obj=[1] * self.nAllLits,
             name="x")
 
+        # objective weights
+        for xi, lit in zip(x, self.allLits):
+            # literal derived or to be explained
+            if lit in notIexpl or lit in I:
+                xi.setAttr(GRB.Attr.Obj, f(lit))
+            # literal not yet derived
+            elif lit in Iexpl:
+                xi.setAttr(GRB.Attr.Obj, GRB.INFINITY)
+
         # CONSTRAINTS
+        # every explanation contains 1 neg Lit.
+        expl_vals = range(len(Iend), self.nAllLits)
+        self.opt_model.addConstr(x[expl_vals].sum() == 1)
 
         # update model
         self.opt_model.update()
 
     def addCorrectionSet(self, C: set):
         x = self.opt_model.getVars()
-        Ci = [self.litToIndex[lit] for lit in C]
+        Ci = [self.allLits.index(lit) for lit in C]
 
         # add new constraint sum x[j] * hij >= 1
         self.opt_model.addConstr(gp.quicksum(x[i] for i in Ci) >= 1)
@@ -178,32 +182,16 @@ class CondOptHS(object):
         print("hs: cost is ", self.opt_model.objval)
         return hs
 
-    def updateObjective(self, f, p: list, A: set):
+    def updateObjective(self, f, A: set):
         # TODO: minimal doc of params
         x = self.opt_model.getVars()
 
-        # add the p-meta constraint
-        # exactly one of not Iend in the unsat subset
-        # XXX this is not the objective? you are adding this each time!?
-        # just once for all vars is enough (because your obj is reducing the amount of possible vars)
-        print("upd obj, p=",p)
-        self.opt_model.addConstr(
-            gp.quicksum(x[self.litToIndex[lit]] for lit in p) == 1
-        )
-
-        # adapt the objective weights of the lits
-        for lit, pos in self.litToIndex.items():
-            if lit in A:
-                self.objWeights[pos] = f(lit)
-            else:
-                self.objWeights[pos] = GRB.INFINITY
-            print("obj", lit, self.objWeights[pos])
-
         # update the objective weights
-        # XXX je kan DIT gewoon doen hierboven in de if doen? zonder die 'objWeights' array en
-        # zonder dus alle vars te setAttr'en?
-        for i, xi in enumerate(x):
-            xi.setAttr(GRB.Attr.Obj, self.objWeights[i])
+        for xi, lit in zip(x, self.allLits):
+            if lit in A:
+                xi.setAttr(GRB.Attr.Obj, f(lit))
+            else:
+                xi.setAttr(GRB.Attr.Obj, GRB.INFINITY)
 
     def __del__(self):
         self.opt_model.dispose()
@@ -262,54 +250,7 @@ def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_d
     return inner
 
 
-def optPropagateSolver(C, focus=None, I=[]):
-    """
-    optPropage produces the intersection of all models of cnf more precise
-    projected on focus.
-
-    Improvements:
-    + Add new clause with assumption literal
-        ex: a_i=7
-    + solve with assumption literal set to false.
-    + Add 1 assumption only as True to the solver (to disable clause). 
-        add_clauses([a_i]).
-    - Extension 1:
-        + Reuse solver only for optpropagate
-    - Extension 2:
-        + Reuse solver for all sat calls
-
-    Args:
-    cnf (list): CNF C over V:
-            hard puzzle problems with assumptions variables to activate or
-            de-active clues.
-    I (list):
-        Assumptions 
-        => TODO: .... Ei/Si(partial assignment to the decision variables of 
-        the User vocabulary V')
-    focus (set):
-        +/- literals of all user variables
-    """
-    with Solver(bootstrap_with=C) as s:
-        s.solve(assumptions=I)
-
-        model = set(s.get_model())
-        if focus:
-            model &= focus
-
-        bi = C.nv + 1
-        while(True):
-            s.add_clause([-bi] + [-lit for lit in model])
-            solved = s.solve(assumptions=[bi])
-
-            if not solved:
-                return model
-
-            new_model = set(s.get_model())
-            model = model.intersection(new_model)
-
-
-def optimalPropagate(U=None, I=set(), sat=None):
-    # XXX Tias: set optional vars at end, so (sat, I, U)
+def optimalPropagate(sat, I=set(), U=None):
     """
     optPropage produces the intersection of all models of cnf more precise
     projected on focus.
@@ -338,7 +279,7 @@ def optimalPropagate(U=None, I=set(), sat=None):
 
     model = set(sat.get_model())
     if U:
-        model &= U
+        model = set(l for l in model if abs(l) in U)
 
     bi = sat.nof_vars() + 1
 
@@ -356,11 +297,6 @@ def optimalPropagate(U=None, I=set(), sat=None):
 
 @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
 def explain(C: CNF, U: set, f, I: set):
-    print("Expl:")
-    print("\tcnf:",CNF)
-    print("\tU:", U)
-    print("\tf:", f)
-    print("\tI:", I)
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
     variables with associated weights users_vars_cost based on the
@@ -378,6 +314,11 @@ def explain(C: CNF, U: set, f, I: set):
 
         I (list): Initial interpretation subset of U.
     """
+    print("Expl:")
+    print("\tcnf:",CNF)
+    print("\tU:", U)
+    print("\tf:", f)
+    print("\tI:", I)
     # best-step with multiple implementations possible (OUS/c-OUS/MUS...)
     # 1. rename to best-step-computer
     # 2. warm start to constructor
@@ -390,8 +331,6 @@ def explain(C: CNF, U: set, f, I: set):
 
     # Initialise the sat solver with the cnf
     sat = Solver(bootstrap_with=C.clauses)
-    # print(C.clauses)
-    #assert sat.solve(), f"CNF is unsatisfiable."
     assert sat.solve(assumptions=I), f"CNF is unsatisfiable with given assumptions {I}."
 
     # Explanation sequence
@@ -446,16 +385,16 @@ def cost(U, I):
         if lit not in litsU:
             raise CostFunctionError(U, lit)
         elif lit in I0 or -lit in I0:
-            print(I, lit)
             return 20
         else:
             return 1
+
     return cost_lit
 
 
 def get_user_vars(cnf):
-    U = set(abs(l) for lst in cnf.clauses for l in lst)
-    return U | set(-abs(l) for l in U)
+    U = list(abs(l) for lst in cnf.clauses for l in lst)
+    return U
 
 
 def test_explain():

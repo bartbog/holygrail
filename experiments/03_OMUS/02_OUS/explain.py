@@ -49,9 +49,22 @@ class CostFunctionError(Exception):
 
 
 class BestStepComputer(object):
-    def __init__(self, sat: Solver, Iend: set, Iexpl: set):
+    def __init__(self, sat: Solver, U:set, Iend: set, I: set):
+
         self.sat_solver = sat
-        self.opt_model = CondOptHS(Iend=Iend, Iexpl=Iexpl)
+        self.opt_model = CondOptHS(U=U, Iend=Iend, I=I)
+
+        # XXX preseeding
+        preseeding = True
+
+        if preseeding:
+            F = set(l for l in U) | set(-l for l in U)
+            F -= {-l for l in I}
+
+            for l in Iend - I:
+                sat, Ap = self.checkSat(F, set({-l}))
+                C = F - Ap
+                self.opt_model.addCorrectionSet(C)
 
     def bestStep(self, f, U: set, Iend: set, I: set):
         """bestStep computes a subset A' of A that satisfies p s.t.
@@ -68,7 +81,7 @@ class BestStepComputer(object):
         Iexpl = Iend - I
         F = set(l for l in U) | set(-l for l in U)
         F -= {-l for l in I}
-        print("F=", F)
+        # print("F=", F)
 
         A = I | {-l for l in Iexpl}
         return self.bestStepCOUS(f, F, A)
@@ -77,7 +90,7 @@ class BestStepComputer(object):
         # no actual grow needed if 'Ap' contains all user vars
         return Ap
 
-    def checkSat(self, F: set, Ap: set, polarity=False):
+    def checkSat(self, F: set, Ap: set, polarity=True):
         """Check satisfiability of given assignment of subset of the variables of Vocabulary V.
         If the subset is unsatisfiable, Ap is returned.
         If the subset is satisfiable, the model computed by the sat solver is returned.
@@ -105,17 +118,17 @@ class BestStepComputer(object):
         optcnt, satcnt = 0, 0
 
         self.opt_model.updateObjective(f, A)
-        print("updateObj, A=",A)
+        # print("updateObj, A=",A)
         H = set()
 
         while(True):
             Ap = self.opt_model.CondOptHittingSet()
-            print("got HS", Ap)
+            # print("got HS", Ap)
             print("HS manual cost:", [(l,f(l)) for l in Ap])
             optcnt += 1
 
             sat, Ap = self.checkSat(F, Ap)
-            print("got sat", sat, Ap)
+            # print("got sat", sat, Ap)
             satcnt += 1
 
             if not sat:
@@ -125,7 +138,7 @@ class BestStepComputer(object):
             # XXX wat moet dit hier? (noot: huidige hack zet ook -I erin)
             # Stuff = 
             C = F - self.grow(f, F, Ap)
-            print("got C", C)
+            # print("got C", C)
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
 
@@ -134,11 +147,12 @@ class BestStepComputer(object):
 
 
 class CondOptHS(object):
-    def __init__(self, Iend, Iexpl):
+    def __init__(self, U, Iend, I):
+        Iexpl = Iend - I
         notIexpl = set(-lit for lit in Iexpl)
 
         # Iend + -Iexpl
-        self.allLits = list(l for l in Iend - Iexpl) + list(Iexpl) + list(notIexpl)
+        self.allLits = list(I) + list(Iexpl) + list(notIexpl)
         self.nAllLits = len(self.allLits)
 
         # optimisation model
@@ -157,14 +171,14 @@ class CondOptHS(object):
             name="x")
 
         # CONSTRAINTS
-        print(self.allLits)
-        print(Iexpl)
-        print(notIexpl)
         # every explanation contains 1 neg Lit.
         posnegIexpl = range(len(Iend), self.nAllLits)
         self.opt_model.addConstr(
             x[posnegIexpl].sum() == 1
         )
+
+        # # every explanation contains some literal info.
+        # self.opt_model.addConstr(x[range(len(Iend))].sum() >= 1)
 
         # update model
         self.opt_model.update()
@@ -317,11 +331,11 @@ def explain(C: CNF, U: set, f, I: set):
 
         I (list): Initial interpretation subset of U.
     """
-    print("Expl:")
-    print("\tcnf:", C.clauses)
-    print("\tU:", U)
-    print("\tf:", f)
-    print("\tI:", I)
+    # print("Expl:")
+    # print("\tcnf:", C.clauses)
+    # print("\tU:", U)
+    # print("\tf:", f)
+    # print("\tI:", I)
     # best-step with multiple implementations possible (OUS/c-OUS/MUS...)
     # 1. rename to best-step-computer
     # 2. warm start to constructor
@@ -341,13 +355,13 @@ def explain(C: CNF, U: set, f, I: set):
 
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I, sat=sat)
-    print("Iend", Iend)
-    c = BestStepComputer(sat=sat, Iend=Iend, Iexpl=Iend - I)
+    # print("Iend", Iend)
+    c = BestStepComputer(sat=sat, U=U, Iend=Iend, I=I)
 
     while(len(Iend - I) > 0):
         # Compute optimal explanation explanation assignment to subset of U.
         expl = c.bestStep(f, U, Iend, I)
-        print(expl)
+        # print(expl)
 
         # facts used
         Ibest = I & expl

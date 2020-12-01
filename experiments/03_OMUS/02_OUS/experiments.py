@@ -82,8 +82,6 @@ def main():
     for i_path, i_name in instances:
         i_clauses, i_assumptions = add_assumptions(CNF(from_file=i_path).clauses)
         w = generate_weights(len(i_assumptions))
-        # print(i_clauses)
-        # print(i_assumptions)
         i_cnf = CNF(from_clauses=i_clauses)
         U = get_user_vars(i_cnf)
         I = set(i_assumptions)

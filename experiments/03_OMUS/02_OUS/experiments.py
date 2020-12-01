@@ -53,7 +53,7 @@ def get_instances():
     instances = [x for x in p.iterdir()]
     filenames = [(instance, instance.name) for instance in instances if '.cnf' in instance.name]
     sat_files = [(i, name) for i, name in filenames if checkSatFile(i)]
-    sorted(sat_files, key=lambda path: path[0].stat().st_size)
+    # sat_files = sorted(sat_files, key=lambda path: path[0].stat().st_size)
     return sat_files
 
 

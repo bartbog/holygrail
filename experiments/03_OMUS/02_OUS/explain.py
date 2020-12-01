@@ -278,7 +278,7 @@ def optimalPropagate(sat, I=set(), U=None):
     cnf (list): CNF C over V:
             hard puzzle problems with assumptions variables to activate or
             de-active clues.
-    I (list): partial interpretation 
+    I (list): partial interpretation
 
     U (list):
         +/- literals of all user variables

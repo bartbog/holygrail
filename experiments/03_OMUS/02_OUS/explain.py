@@ -53,7 +53,7 @@ class BestStepComputer(object):
         self.sat_solver = sat
         self.opt_model = CondOptHS(Iend=Iend, Iexpl=Iexpl)
 
-    def bestStep(self, f, U: set, Iexpl: set, I: set):
+    def bestStep(self, f, U: set, Iend: set, I: set):
         """bestStep computes a subset A' of A that satisfies p s.t.
         C u A' is UNSAT and A' is f-optimal.
 
@@ -65,6 +65,7 @@ class BestStepComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             sat (pysat.Solver): A SAT solver initialized with a CNF.
         """
+        Iexpl = Iend - I
         F = set(l for l in U) | set(-l for l in U)
         F -= {-l for l in I}
         print("F=", F)
@@ -76,7 +77,7 @@ class BestStepComputer(object):
         # no actual grow needed if 'Ap' contains all user vars
         return Ap
 
-    def checkSat(self, A: set, Ap: set, polarity=True):
+    def checkSat(self, F: set, Ap: set, polarity=False):
         """Check satisfiability of given assignment of subset of the variables of Vocabulary V.
         If the subset is unsatisfiable, Ap is returned.
         If the subset is satisfiable, the model computed by the sat solver is returned.
@@ -88,7 +89,7 @@ class BestStepComputer(object):
             (bool, set): sat value, model assignment
         """
         if polarity:
-            self.sat_solver.set_phases(literals=list(A - Ap - {-l for l in Ap}))
+            self.sat_solver.set_phases(literals=list(F - Ap - {-l for l in Ap}))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
 
@@ -113,7 +114,7 @@ class BestStepComputer(object):
             print("HS manual cost:", [(l,f(l)) for l in Ap])
             optcnt += 1
 
-            sat, Ap = self.checkSat(A, Ap)
+            sat, Ap = self.checkSat(F, Ap)
             print("got sat", sat, Ap)
             satcnt += 1
 
@@ -123,7 +124,7 @@ class BestStepComputer(object):
 
             # XXX wat moet dit hier? (noot: huidige hack zet ook -I erin)
             # Stuff = 
-            C = F - self.grow(f, A, Ap)
+            C = F - self.grow(f, F, Ap)
             print("got C", C)
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
@@ -345,7 +346,7 @@ def explain(C: CNF, U: set, f, I: set):
 
     while(len(Iend - I) > 0):
         # Compute optimal explanation explanation assignment to subset of U.
-        expl = c.bestStep(f, U, Iend-I, I)
+        expl = c.bestStep(f, U, Iend, I)
         print(expl)
 
         # facts used

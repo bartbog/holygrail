@@ -78,7 +78,7 @@ def test_instance():
 
 def main():
     f = lambda l: 1
-    instances = get_instances()[:2]
+    instances = get_instances()[:1]
     for i_path, i_name in instances:
         i_clauses, i_assumptions = add_assumptions(CNF(from_file=i_path).clauses)
         w = generate_weights(len(i_assumptions))

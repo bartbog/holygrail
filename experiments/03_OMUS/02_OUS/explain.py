@@ -49,13 +49,28 @@ class CostFunctionError(Exception):
 
 
 class BestStepComputer(object):
-    def __init__(self, sat: Solver, U:set, Iend: set, I: set):
+    """
+        Class for computing conditional Optimal Unsatisfiable Subsets given
+        a sat solver bootstrapped with a CNF and user variables. Beststep
+        computer is implemented based on [1].
 
+        [1] 
+
+        Args:
+            sat (pysat.Solver): Sat solver bootstrapped with CNF on a
+                                vocabulary V.
+            U (set): Set of user variables subset of V.
+            Iend (set): The cautious consequence, the set of literals that hold in
+                        all models.
+            I (set): A partial interpretation such that I \subseteq Iend.
+            preseeding (bool, optional): [description]. Defaults to True.
+        """
+    def __init__(self, sat: Solver, U:set, Iend: set, I: set, preseeding=True):
+        """
+            Constructor.
+        """
         self.sat_solver = sat
         self.opt_model = CondOptHS(U=U, Iend=Iend, I=I)
-
-        # XXX preseeding
-        preseeding = True
 
         if preseeding:
             F = set(l for l in U) | set(-l for l in U)
@@ -90,10 +105,12 @@ class BestStepComputer(object):
         # no actual grow needed if 'Ap' contains all user vars
         return Ap
 
-    def checkSat(self, F: set, Ap: set, polarity=True):
-        """Check satisfiability of given assignment of subset of the variables of Vocabulary V.
-        If the subset is unsatisfiable, Ap is returned.
-        If the subset is satisfiable, the model computed by the sat solver is returned.
+    def checkSat(self, A: set, Ap: set, polarity=True):
+        """Check satisfiability of given assignment of subset of the variables
+        of Vocabulary V.
+            - If the subset is unsatisfiable, Ap is returned.
+            - If the subset is satisfiable, the model computed by the sat
+              solver is returned.
 
         Args:
             Ap (set): Susbet of literals
@@ -102,7 +119,7 @@ class BestStepComputer(object):
             (bool, set): sat value, model assignment
         """
         if polarity:
-            self.sat_solver.set_phases(literals=list(F - Ap - {-l for l in Ap}))
+            self.sat_solver.set_phases(literals=list(A - Ap))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
 
@@ -114,7 +131,19 @@ class BestStepComputer(object):
         return solved, model
 
     def bestStepCOUS(self, f, F, A: set):
-        # TODO: minimal doc of parameters
+        """Given a set of assumption literals A subset of F, bestStepCOUS
+        computes a subset a subset A' of A that satisfies p s.t C u A' is
+        UNSAT and A' is f-optimal based on [1].
+
+        Args:
+            f (func): Cost function mapping from lit to int.
+            F (set): Set of literals I + (Iend \\ I)) + (-Iend \\ -I).
+            A (set): Set of assumption literals I + (-Iend \\ -I).
+
+        Returns:
+            set: a subset A' of A that satisfies p s.t C u A' is UNSAT
+                 and A' is f-optimal.
+        """
         optcnt, satcnt = 0, 0
 
         self.opt_model.updateObjective(f, A)
@@ -135,19 +164,40 @@ class BestStepComputer(object):
                 print(optcnt, satcnt)
                 return Ap
 
-            # XXX wat moet dit hier? (noot: huidige hack zet ook -I erin)
-            # Stuff = 
-            C = F - self.grow(f, A, Ap)
+            C = F - self.grow(f, F, Ap)
             print("got C", len(C))
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
 
     def __del__(self):
+        """Ensure sat solver is deleted after garbage collection.
+        """
         self.sat_solver.delete()
 
 
 class CondOptHS(object):
     def __init__(self, U, Iend, I):
+        """Build optimisation model. The constrained optimal hitting set
+        is described by:
+        - x_l={0,1} is a boolean decision variable if the literal is selected
+                    or not.
+        - w_l=f(l) is the cost assigned to having the literal in the hitting
+                   set (INF otherwise).
+        - c_lj={0,1} is 1 (0) if the literal l is (not) present in hitting set j.
+
+        Objective:
+             min sum(x_l * w_l) over all l in Iend + (-Iend \ -I)
+        Subject to:
+            (1) sum x_l * c_lj >= 1 for all hitting sets j.
+                => Hitting set must hit all sets-to-hit.
+            (2) sum x_l == 1 for l in (-Iend \ -I)
+
+        Args:
+            U (set): User variables over a vocabulary V
+            Iend (set): Cautious consequence, the set of literals that hold in
+                        all models.
+            I (set): partial interpretation subset of Iend.
+        """
         Iexpl = Iend - I
         notIexpl = set(-lit for lit in Iexpl)
 
@@ -184,6 +234,14 @@ class CondOptHS(object):
         self.opt_model.update()
 
     def addCorrectionSet(self, C: set):
+        """Add new constraint of the form to the optimization model,
+        mapped back to decision variable lit => x[i].
+
+            sum x[j] * hij >= 1
+
+        Args:
+            C (set): set of assumption literals.
+        """
         x = self.opt_model.getVars()
         Ci = [self.allLits.index(lit) for lit in C]
 
@@ -191,6 +249,11 @@ class CondOptHS(object):
         self.opt_model.addConstr(gp.quicksum(x[i] for i in Ci) >= 1)
 
     def CondOptHittingSet(self):
+        """Compute conditional Optimal hitting set.
+
+        Returns:
+            set: Conditional optimal hitting mapped to assumption literals.
+        """
         self.opt_model.optimize()
 
         x = self.opt_model.getVars()
@@ -200,7 +263,16 @@ class CondOptHS(object):
         return hs
 
     def updateObjective(self, f, A: set):
-        # TODO: minimal doc of params
+        """Update objective of subset A {I + (-Iend\-I )}, a set of assumption
+        literals s.t C u A is unsatisfiable.
+
+        Costs of literals in A should be set to f(lit) and others not in A,
+        should be set to INF.
+
+        Args:
+            f (func): A cost function mapping literal to a int cost (> 0).
+            A (set): A set of assumption literals.
+        """
         x = self.opt_model.getVars()
 
         # update the objective weights
@@ -410,6 +482,14 @@ def cost(U, I):
 
 
 def get_user_vars(cnf):
+    """Flattens cnf into list of different variables.
+
+    Args:
+        cnf (CNF): CNF object
+
+    Returns:
+        set: lits of variables present in cnf.
+    """
     U = set(abs(l) for lst in cnf.clauses for l in lst)
     return U
 
@@ -425,12 +505,6 @@ def test_explain():
     U = get_user_vars(simple_cnf)
     I = set(assumptions)
     f = cost(U, I)
-    # explain(C=simple_cnf, U=U, f=f, I=I)
-    # XXX fix this crazy mess...
-    # f = cost(I)
-    # dct = {l: f(l) for l in U}
-    # f2 = lambda x: dct[x]
-    # explain(C=simple_cnf, U=U, f=f2, I=I)
     explain(C=simple_cnf, U=U, f=f, I=I)
 
 if __name__ == "__main__":

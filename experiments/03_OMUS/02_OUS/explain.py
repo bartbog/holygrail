@@ -31,10 +31,11 @@ class UnsatError(Exception):
 
 
 class CostFunctionError(Exception):
-    """Exception raised for errors in satisfiability check.
+    """Exception cost function, literal is not in User variables
 
     Attributes:
-        I -- partial interpretation given as assumptions
+        U -- user variables
+        lit -- literal
     """
     def __init__(self, U:set, lit: int):
         self.U = U
@@ -72,27 +73,37 @@ class BestStepComputer(object):
         p = notIend - notI
 
         A = I.union(p)
-        return self.bestStepCOUS(f, A)
+        F = A | {-l for l in A}
+        return self.bestStepCOUS(f, F, A)
 
     def grow(self, f, A, Ap):
         # no actual grow needed if 'Ap' contains all user vars
         return Ap
 
-    def checkSat(self, A: set, Ap: set):
-        # TODO: minimal doc of parameters
-        # TODO: voeg optie toe om polarities te zetten
+    def checkSat(self, A: set, Ap: set, polarity=False):
+        """Check satisfiability of given assignment of subset of the variables of Vocabulary V.
+        If the subset is unsatisfiable, Ap is returned.
+        If the subset is satisfiable, the model computed by the sat solver is returned.
+
+        Args:
+            Ap (set): Susbet of literals
+
+        Returns:
+            (bool, set): sat value, model assignment
+        """
+        if polarity:
+            self.sat_solver.set_phases(literals=list(A-Ap))
+
         solved = self.sat_solver.solve(assumptions=list(Ap))
 
         if not solved:
             return solved, Ap
 
         model = set(self.sat_solver.get_model())
-        # XXX onderstaande is correct voor latere code, maar niet conceptueel deel van 'checkSat'
-        #model &= A
 
         return solved, model
 
-    def bestStepCOUS(self, f, A: set):
+    def bestStepCOUS(self, f, F, A: set):
         # TODO: minimal doc of parameters
         optcnt, satcnt = 0, 0
 
@@ -115,8 +126,8 @@ class BestStepComputer(object):
                 return Ap
 
             # XXX wat moet dit hier? (noot: huidige hack zet ook -I erin)
-            Stuff = A | {-l for l in A}
-            C = Stuff - self.grow(f, A, Ap)
+            # Stuff = 
+            C = F - self.grow(f, A, Ap)
             print("got C", C)
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)

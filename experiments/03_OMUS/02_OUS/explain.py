@@ -385,7 +385,7 @@ def optimalPropagate(sat, I=set(), U=None):
 
 
 @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
-def explain(C: CNF, U: set, f, I: set):
+def explain(C: CNF, U: set, f, I0: set):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
     variables with associated weights users_vars_cost based on the
@@ -401,13 +401,13 @@ def explain(C: CNF, U: set, f, I: set):
 
         f (list): f is a mapping of user vars to real cost.
 
-        I (list): Initial interpretation subset of U.
+        I0 (list): Initial interpretation subset of U.
     """
     print("Expl:")
     print("\tcnf:", C.clauses)
     print("\tU:", len(U))
     print("\tf:", f)
-    print("\tI:", len(I))
+    print("\tI0:", len(I0))
     # best-step with multiple implementations possible (OUS/c-OUS/MUS...)
     # 1. rename to best-step-computer
     # 2. warm start to constructor
@@ -416,20 +416,21 @@ def explain(C: CNF, U: set, f, I: set):
     # - check intersection
 
     # check literals of I are all user vocabulary
-    assert all(True if abs(lit) in U else False for lit in I), f"Part of supplied literals not in U (user variables): {lits for lit in I if lit not in U}"
+    assert all(True if abs(lit) in U else False for lit in I0), f"Part of supplied literals not in U (user variables): {lits for lit in I if lit not in U}"
 
     # Initialise the sat solver with the cnf
     sat = Solver(bootstrap_with=C.clauses)
-    assert sat.solve(assumptions=I), f"CNF is unsatisfiable with given assumptions {I}."
+    assert sat.solve(assumptions=I0), f"CNF is unsatisfiable with given assumptions {I}."
 
     # Explanation sequence
     E = []
 
     # Most precise intersection of all models of C project on U
-    Iend = optimalPropagate(U=U, I=I, sat=sat)
+    Iend = optimalPropagate(U=U, I=I0, sat=sat)
     # print("Iend", Iend)
-    c = BestStepComputer(sat=sat, U=U, Iend=Iend, I=I)
+    c = BestStepComputer(sat=sat, U=U, Iend=Iend, I=I0)
 
+    I = set(I0) # copy
     while(len(Iend - I) > 0):
         # Compute optimal explanation explanation assignment to subset of U.
         expl = c.bestStep(f, U, Iend, I)
@@ -500,7 +501,7 @@ def test_puzzle():
     U = o_user_vars + set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost(U, I)
-    explain(C=o_cnf, U=U, f=f, I=I)
+    explain(C=o_cnf, U=U, f=f, I0=I)
 
 def test_explain():
     # test on simple case
@@ -513,7 +514,7 @@ def test_explain():
     U = get_user_vars(simple_cnf)
     I = set(assumptions)
     f = cost(U, I)
-    explain(C=simple_cnf, U=U, f=f, I=I)
+    explain(C=simple_cnf, U=U, f=f, I0=I)
 
 if __name__ == "__main__":
     test_explain()

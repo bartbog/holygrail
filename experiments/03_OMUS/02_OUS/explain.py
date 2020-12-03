@@ -11,7 +11,7 @@ from pysat.formula import CNF
 from pysat.solvers import Solver
 
 # Testing samples
-from frietkot import simpleProblem
+from frietkot import simpleProblem, originProblem
 
 from datetime import datetime
 
@@ -493,6 +493,14 @@ def get_user_vars(cnf):
     U = set(abs(l) for lst in cnf.clauses for l in lst)
     return U
 
+
+def test_puzzle():
+    o_clauses, o_assumptions, o_weights, o_user_vars = originProblem()
+    o_cnf = CNF(from_clauses=o_clauses)
+    U = o_user_vars + set(x for lst in o_assumptions for x in lst)
+    I = set(x for lst in o_assumptions for x in lst)
+    f = cost(U, I)
+    explain(C=o_cnf, U=U, f=f, I=I)
 
 def test_explain():
     # test on simple case

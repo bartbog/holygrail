@@ -72,6 +72,7 @@ class BestStepComputer(object):
         self.sat_solver = sat
         self.opt_model = CondOptHS(U=U, Iend=Iend, I=I)
 
+        preseeding_minimal = True
         if preseeding:
             print("Pre-seeding")
             F = set(l for l in U) | set(-l for l in U)
@@ -82,12 +83,18 @@ class BestStepComputer(object):
             C = F - Ap
             self.opt_model.addCorrectionSet(C)
             print("pre-seed","",C)
+            if preseeding_minimal:
+                covered = set(Iend) # already in an satsubset
 
             for l in F:
+                if preseeding_minimal and l in covered:
+                    continue
                 issat, Ap = self.checkSat(F, {l})
                 C = F - Ap
                 self.opt_model.addCorrectionSet(C)
                 print("pre-seed",l,C)
+                if preseeding_minimal:
+                    covered |= (Ap & F) # add covered lits of F
 
     def bestStep(self, f, U: set, Iend: set, I: set):
         """bestStep computes a subset A' of A that satisfies p s.t.

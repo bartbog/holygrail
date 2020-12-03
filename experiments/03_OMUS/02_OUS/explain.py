@@ -77,8 +77,14 @@ class BestStepComputer(object):
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
 
-            for l in Iend - I:
-                sat, Ap = self.checkSat(F, set({-l}))
+            # find (m)ss'es of F, add correction sets
+            Ap = Iend # satisfiable subset
+            C = F - Ap
+            self.opt_model.addCorrectionSet(C)
+            print("pre-seed","",C)
+
+            for l in F:
+                issat, Ap = self.checkSat(F, {l})
                 C = F - Ap
                 self.opt_model.addCorrectionSet(C)
                 print("pre-seed",l,C)
@@ -403,7 +409,7 @@ def explain(C: CNF, U: set, f, I0: set):
         I0 (list): Initial interpretation subset of U.
     """
     print("Expl:")
-    print("\tcnf:", C.clauses)
+    print("\tcnf:", len(C.clauses))
     print("\tU:", len(U))
     print("\tf:", f)
     print("\tI0:", len(I0))

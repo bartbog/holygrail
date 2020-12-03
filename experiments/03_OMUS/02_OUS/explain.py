@@ -1,5 +1,6 @@
 import cProfile
 import pstats
+import time
 from functools import wraps
 
 # gurobi imports
@@ -71,10 +72,12 @@ class BestStepComputer(object):
         """
         self.sat_solver = sat
         self.opt_model = CondOptHS(U=U, Iend=Iend, I=I)
+        self.I0 = set(I)
+        self.Iend = set(Iend)
 
         preseeding_minimal = True
         if preseeding:
-            print("Pre-seeding")
+            # print("Pre-seeding")
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
 
@@ -82,7 +85,7 @@ class BestStepComputer(object):
             Ap = Iend # satisfiable subset
             C = F - Ap
             self.opt_model.addCorrectionSet(C)
-            print("pre-seed","",C)
+            # print("pre-seed","",C)
             if preseeding_minimal:
                 covered = set(Iend) # already in an satsubset
 
@@ -92,7 +95,7 @@ class BestStepComputer(object):
                 issat, Ap = self.checkSat(F, {l})
                 C = F - Ap
                 self.opt_model.addCorrectionSet(C)
-                print("pre-seed",l,C)
+                # print("pre-seed",l,C)
                 if preseeding_minimal:
                     covered |= (Ap & F) # add covered lits of F
 
@@ -120,7 +123,7 @@ class BestStepComputer(object):
         # no actual grow needed if 'Ap' contains all user vars
         return Ap
 
-    def checkSat(self, A: set, Ap: set, polarity=True):
+    def checkSat(self, A: set, Ap: set, polarity=True, phases=set()):
         """Check satisfiability of given assignment of subset of the variables
         of Vocabulary V.
             - If the subset is unsatisfiable, Ap is returned.
@@ -134,7 +137,7 @@ class BestStepComputer(object):
             (bool, set): sat value, model assignment
         """
         if polarity:
-            self.sat_solver.set_phases(literals=list(A - Ap))
+            self.sat_solver.set_phases(literals=list(phases - Ap))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
 
@@ -159,26 +162,34 @@ class BestStepComputer(object):
             set: a subset A' of A that satisfies p s.t C u A' is UNSAT
                  and A' is f-optimal.
         """
-        optcnt, satcnt = 0, 0
-
+        t_expl = {
+            't_sat':[],
+            't_mip':[],
+            't_ous':0
+        }
+        tstart = time.time()
         self.opt_model.updateObjective(f, A)
         print("updateObj, A=",len(A))
         H = set()
 
         while(True):
-            Ap = self.opt_model.CondOptHittingSet()
-            print("\tgot HS", len(Ap), "cost", self.opt_model.opt_model.objval)
-            optcnt += 1
+            topt = time.time()
+            HS = self.opt_model.CondOptHittingSet()
+            t_expl['t_mip'].append(time.time() - topt)
+            # print("\tgot HS", len(Ap), "cost", self.opt_model.opt_model.objval)
 
-            sat, Ap = self.checkSat(A, Ap)
-            print("\tgot sat", sat, len(Ap))
-            satcnt += 1
+            tsat = time.time()
+            sat, Ap = self.checkSat(A, HS, phases=self.I0)
+            sat, App = self.checkSat(A, HS | (self.I0 & Ap), phases=self.Iend)
+            t_expl['t_sat'].append(time.time() - tsat)
+            # print("\tgot sat", sat, len(Ap))
 
             if not sat:
-                return Ap
+                t_expl['ous'] = time.time()-tstart
+                return App, t_expl
 
-            C = F - self.grow(f, F, Ap)
-            print("\tgot C", len(C))
+            C = F - self.grow(f, F, App)
+            # print("\tgot C", len(C))
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
 
@@ -396,6 +407,16 @@ def optimalPropagate(sat, I=set(), U=None):
         model = model.intersection(new_model)
 
 
+def print_timings(t_exp):
+    print("texpl=", round(t_exp['ous'], 3), "s")
+    print("\tSAT=", round(sum(t_exp['t_sat']), 3), f"s [{round(100*sum(t_exp['t_sat'])/t_exp['ous'])}%]\t", "t/call=", round(sum(t_exp['t_sat'])/len(t_exp['t_sat']), 3))
+    print("\tMIP=", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/t_exp['ous'])}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))
+
+
+def write_json_timings(t_exp):
+    pass
+
+
 @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
 def explain(C: CNF, U: set, f, I0: set):
     """
@@ -445,8 +466,8 @@ def explain(C: CNF, U: set, f, I0: set):
     I = set(I0) # copy
     while(len(Iend - I) > 0):
         # Compute optimal explanation explanation assignment to subset of U.
-        expl = c.bestStep(f, U, Iend, I)
-        # print(expl)
+        expl, t_exp = c.bestStep(f, U, Iend, I)
+        print_timings(t_exp)
 
         # facts used
         Ibest = I & expl
@@ -529,5 +550,5 @@ def test_explain():
     explain(C=simple_cnf, U=U, f=f, I0=I)
 
 if __name__ == "__main__":
-    test_explain()
+    # test_explain()
     test_puzzle()

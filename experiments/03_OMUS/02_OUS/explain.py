@@ -498,7 +498,7 @@ def get_user_vars(cnf):
 def test_puzzle():
     o_clauses, o_assumptions, o_weights, o_user_vars = originProblem()
     o_cnf = CNF(from_clauses=o_clauses)
-    U = o_user_vars + set(x for lst in o_assumptions for x in lst)
+    U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost(U, I)
     explain(C=o_cnf, U=U, f=f, I0=I)
@@ -518,3 +518,4 @@ def test_explain():
 
 if __name__ == "__main__":
     test_explain()
+    test_puzzle()

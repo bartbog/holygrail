@@ -73,6 +73,7 @@ class BestStepComputer(object):
         self.opt_model = CondOptHS(U=U, Iend=Iend, I=I)
 
         if preseeding:
+            print("Pre-seeding")
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
 
@@ -80,6 +81,7 @@ class BestStepComputer(object):
                 sat, Ap = self.checkSat(F, set({-l}))
                 C = F - Ap
                 self.opt_model.addCorrectionSet(C)
+                print("pre-seed",l,C)
 
     def bestStep(self, f, U: set, Iend: set, I: set):
         """bestStep computes a subset A' of A that satisfies p s.t.
@@ -152,20 +154,18 @@ class BestStepComputer(object):
 
         while(True):
             Ap = self.opt_model.CondOptHittingSet()
-            print("got HS", len(Ap))
-            print("HS manual cost:", [(l,f(l)) for l in Ap])
+            print("\tgot HS", len(Ap), "cost", self.opt_model.opt_model.objval)
             optcnt += 1
 
             sat, Ap = self.checkSat(A, Ap)
-            print("got sat", sat, len(Ap))
+            print("\tgot sat", sat, len(Ap))
             satcnt += 1
 
             if not sat:
-                print(optcnt, satcnt)
                 return Ap
 
             C = F - self.grow(f, F, Ap)
-            print("got C", len(C))
+            print("\tgot C", len(C))
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
 
@@ -259,7 +259,6 @@ class CondOptHS(object):
         x = self.opt_model.getVars()
         hs = set(lit for i, lit in enumerate(self.allLits) if x[i].x == 1)
 
-        print("hs: cost is ", self.opt_model.objval)
         return hs
 
     def updateObjective(self, f, A: set):

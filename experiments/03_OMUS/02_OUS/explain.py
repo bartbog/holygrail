@@ -123,7 +123,7 @@ class BestStepComputer(object):
         # no actual grow needed if 'Ap' contains all user vars
         return Ap
 
-    def checkSat(self, A: set, Ap: set, polarity=True, phases=set()):
+    def checkSat(self, Ap: set, polarity=True, phases=set()):
         """Check satisfiability of given assignment of subset of the variables
         of Vocabulary V.
             - If the subset is unsatisfiable, Ap is returned.
@@ -172,15 +172,29 @@ class BestStepComputer(object):
         print("updateObj, A=",len(A))
         H = set()
 
+        do_incremental = False
+        MODE_OPT, MODE_GREEDY, MODE_INCR = 3, 2, 1
+        mode = MODE_OPT
+
         while(True):
+            while(do_incremental):
+                if mode == MODE_INCR:
+                    # select a constraint to add
+                    pass
+                elif mode == MODE_GREEDY:
+                    # find a new greedy hitting set
+                    pass
+                elif mode == MODE_OPT:
+                    break
+
             topt = time.time()
             HS = self.opt_model.CondOptHittingSet()
             t_expl['t_mip'].append(time.time() - topt)
             # print("\tgot HS", len(Ap), "cost", self.opt_model.opt_model.objval)
 
             tsat = time.time()
-            sat, Ap = self.checkSat(A, HS, phases=self.I0)
-            sat, App = self.checkSat(A, HS | (self.I0 & Ap), phases=self.Iend)
+            sat, Ap = self.checkSat(HS, phases=self.I0)
+            sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
             t_expl['t_sat'].append(time.time() - tsat)
             # print("\tgot sat", sat, len(Ap))
 
@@ -409,6 +423,7 @@ def optimalPropagate(sat, I=set(), U=None):
 
 def print_timings(t_exp):
     print("texpl=", round(t_exp['ous'], 3), "s")
+    print("\t#HS=", len(t_exp['t_mip']))
     print("\tSAT=", round(sum(t_exp['t_sat']), 3), f"s [{round(100*sum(t_exp['t_sat'])/t_exp['ous'])}%]\t", "t/call=", round(sum(t_exp['t_sat'])/len(t_exp['t_sat']), 3))
     print("\tMIP=", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/t_exp['ous'])}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))
 

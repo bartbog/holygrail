@@ -249,12 +249,9 @@ def frietKotProblem():
 
     allwishes = [Nora, Leander, Benjamin, Behrouz, Guy, Daan, Celine, Anton, Danny, Luc]
     cnf = cnf_to_pysat(allwishes)
-    explainable_facts = {
-        mayo.name+1:"mayo", 
-        ketchup.name+1:"ketchup", 
-        andalouse.name+1:"andalouse", 
-        curry.name+1:"curry", 
-        samurai.name+1:"samurai"}
+    explainable_facts = set({
+        mayo.name+1, ketchup.name+1,andalouse.name+1, curry.name+1, samurai.name+1
+    })
 
-    return cnf, explainable_facts.keys(), explainable_facts
+    return [list(c) for c in cnf], explainable_facts
 

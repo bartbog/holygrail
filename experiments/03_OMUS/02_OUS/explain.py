@@ -1,6 +1,7 @@
 import cProfile
 import pstats
 import time
+# import random
 from functools import wraps
 
 # gurobi imports
@@ -12,7 +13,7 @@ from pysat.formula import CNF
 from pysat.solvers import Solver
 
 # Testing samples
-from frietkot import simpleProblem, originProblem
+from frietkot import simpleProblem, originProblem, frietKotProblem
 
 from datetime import datetime
 
@@ -92,7 +93,7 @@ class BestStepComputer(object):
             for l in F:
                 if preseeding_minimal and l in covered:
                     continue
-                issat, Ap = self.checkSat(F, {l})
+                issat, Ap = self.checkSat({l}, phases=F)
                 C = F - Ap
                 self.opt_model.addCorrectionSet(C)
                 # print("pre-seed",l,C)
@@ -148,7 +149,67 @@ class BestStepComputer(object):
 
         return solved, model
 
-    def bestStepCOUS(self, f, F, A: set):
+    def greedyHittingSet(self, H, f, A):
+        # trivial case: empty
+        # print(H)
+        if len(H) == 0:
+            return set()
+
+        # the hitting set
+        C = set()
+
+        # build vertical sets
+        V = dict()  # for each element in H: which sets it is in
+
+        for i, h in enumerate(H):
+            # TIAS: only take soft clauses
+            # h = [e for e in hi if self.obj_weights[e] < 1e50 and self.obj_weights[e] > 0]
+            # special case: only one element in the set, must be in hitting set
+            # h = hi& A
+            if len(h) == 1:
+                C.add(next(iter(h)))
+            else:
+                for e in h:
+                    if not e in V:
+                        V[e] = set([i])
+                    else:
+                        V[e].add(i)
+
+        # special cases, remove from V so they are not picked again
+        for c in C:
+            if c in V:
+                del V[c]
+
+        while len(V) > 0:
+            # special case, one element left
+            if len(V) == 1:
+                C.add(next(iter(V.keys())))
+                break
+
+            # get element that is in most sets, using the vertical views
+            (c, cover) = max(V.items(), key=lambda tpl: len(tpl[1]))
+            c_covers = [tpl for tpl in V.items() if len(tpl[1]) == len(cover)]
+
+            if len(c_covers) > 1:
+                # OMUS : find set of unsatisfiable clauses in hitting set with least total cost
+                # => get the clause with the most coverage but with the least total weight
+                # print(c_covers, weights)
+                (c, cover) = min(c_covers, key=lambda tpl: f(tpl[0]))
+
+            del V[c]
+            C.add(c)
+
+            # update vertical views, remove covered sets
+            for e in list(V):
+                # V will be changed in this loop
+                V[e] -= cover
+                # no sets remaining with this element?
+                if len(V[e]) == 0:
+                    del V[e]
+
+        return C
+
+    def bestStepCOUS(self, f, F, A: set, do_incremental=False):
         """Given a set of assumption literals A subset of F, bestStepCOUS
         computes a subset a subset A' of A that satisfies p s.t C u A' is
         UNSAT and A' is f-optimal based on [1].
@@ -167,25 +228,51 @@ class BestStepComputer(object):
             't_mip':[],
             't_ous':0
         }
+        # p = 
         tstart = time.time()
         self.opt_model.updateObjective(f, A)
         print("updateObj, A=",len(A))
-        H = set()
+        # print("A=", A)
+        # print(f, A)
+        H, C = set(), set()
+        HS, Ap, App=set(), set(), set()
 
-        do_incremental = False
         MODE_OPT, MODE_GREEDY, MODE_INCR = 3, 2, 1
         mode = MODE_OPT
-
         while(True):
+            HS_greedy = set(HS)
+
             while(do_incremental):
+                # print("incr")
+                # Computing a hitting set
                 if mode == MODE_INCR:
                     # select a constraint to add
-                    pass
+                    c = min(C, key=lambda l: f(l))
+                    HS_greedy.add(c)
                 elif mode == MODE_GREEDY:
                     # find a new greedy hitting set
-                    pass
+                    HS_greedy = self.greedyHittingSet(H, f, A)
                 elif mode == MODE_OPT:
                     break
+
+                # checking for satisfiability
+                sat, Ap_greedy = self.checkSat(HS_greedy, phases=self.I0)
+                sat, App_greedy = self.checkSat(HS_greedy | (self.I0 & Ap_greedy), phases=A)
+
+                # Did we find an OUS ?
+                if not sat:
+                    if mode == MODE_INCR:
+                        mode = MODE_GREEDY
+                        continue
+                    elif mode == MODE_GREEDY:
+                        mode = MODE_OPT
+                        break
+
+                C = F - self.grow(f, F, App_greedy)
+                # print("\tgot C", len(C))
+                H.add(frozenset(C))
+                self.opt_model.addCorrectionSet(C)
+                mode = MODE_INCR
 
             topt = time.time()
             HS = self.opt_model.CondOptHittingSet()
@@ -195,17 +282,22 @@ class BestStepComputer(object):
             tsat = time.time()
             sat, Ap = self.checkSat(HS, phases=self.I0)
             sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
+
             t_expl['t_sat'].append(time.time() - tsat)
             # print("\tgot sat", sat, len(Ap))
-
+            # print("\tHS=", HS)
+            # print("\tAp=", Ap)
+            # print("\tApp=", App)
             if not sat:
                 t_expl['ous'] = time.time()-tstart
                 return App, t_expl
 
             C = F - self.grow(f, F, App)
+            # print("\tC=", C, "\n")
             # print("\tgot C", len(C))
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
+            mode = MODE_INCR
 
     def __del__(self):
         """Ensure sat solver is deleted after garbage collection.
@@ -543,6 +635,22 @@ def get_user_vars(cnf):
     return U
 
 
+def test_frietkot():
+    f_cnf, f_user_vars = frietKotProblem()
+    f_cnf_ass, assumptions = add_assumptions(f_cnf)
+    print("prob:", f_cnf)
+
+    # transform list cnf into CNF object
+    frietkot_cnf = CNF(from_clauses=f_cnf_ass)
+    U = f_user_vars | set(abs(l) for l in assumptions)
+    I = set(assumptions)
+    f = cost(U, I)
+    print(U)
+    print(I)
+    print(frietkot_cnf.clauses)
+    explain(C=frietkot_cnf, U=U, f=f, I0=I)
+
+
 def test_puzzle():
     o_clauses, o_assumptions, o_weights, o_user_vars = originProblem()
     o_cnf = CNF(from_clauses=o_clauses)
@@ -566,4 +674,5 @@ def test_explain():
 
 if __name__ == "__main__":
     # test_explain()
+    # test_frietkot()
     test_puzzle()

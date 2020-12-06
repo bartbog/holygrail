@@ -71,9 +71,10 @@ class BestStepOUSComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             preseeding (bool, optional): [description]. Defaults to True.
         """
-    def __init__(self, sat: Solver, U: set, Iend, I: set, preseeding=True):
+    def __init__(self, sat: Solver, U: set, I: set, Iend:set, preseeding=True):
         self.sat = sat
         self.Iend = Iend
+        self.I0 = set(I)
         pass
 
     def bestStep(self, f, I: set):
@@ -91,6 +92,31 @@ class BestStepOUSComputer(object):
 
         return Xbest
 
+    def checkSat(self, Ap: set, polarity=True, phases=set()):
+        """Check satisfiability of given assignment of subset of the variables
+        of Vocabulary V.
+            - If the subset is unsatisfiable, Ap is returned.
+            - If the subset is satisfiable, the model computed by the sat
+              solver is returned.
+
+        Args:
+            Ap (set): Susbet of literals
+
+        Returns:
+            (bool, set): sat value, model assignment
+        """
+        if polarity:
+            self.sat_solver.set_phases(literals=list(phases - Ap))
+
+        solved = self.sat_solver.solve(assumptions=list(Ap))
+
+        if not solved:
+            return solved, Ap
+
+        model = set(self.sat_solver.get_model())
+
+        return solved, model
+
     def bestStepOUS(self, f, F, A):
         H = set()
         opt_model = OptHS()
@@ -107,6 +133,7 @@ class BestStepOUSComputer(object):
             C = F - self.grow(f, F, App)
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
+
 
 class BestStepCOUSComputer(object):
     """
@@ -364,7 +391,66 @@ class BestStepCOUSComputer(object):
 
 
 class OptHS(object):
-    pass
+    def __init__(self, U, I, l):
+        # notIexpl = set(-lit for lit in Iexpl)
+
+        # Iend + -Iexpl
+        self.allLits = list(I) + [l] + [-l]
+        self.nAllLits = len(self.allLits)
+
+        # optimisation model
+        self.opt_model = gp.Model('OptHittingSet')
+
+        # model parameters
+        self.opt_model.Params.OutputFlag = 0
+        self.opt_model.Params.LogToConsole = 0
+        self.opt_model.Params.Threads = 8
+
+        # VARIABLE -- OBJECTIVE
+        x = self.opt_model.addMVar(
+            shape=self.nAllLits,
+            vtype=GRB.BINARY,
+            obj=[f(l) for l in self.allLits],,
+            name="x")
+
+        # at least the negated literal
+        self.opt_model.addConstr(
+            x[self.nAllLits-1] == 1
+        )
+
+        self.opt_model.addConstr(
+            x.sum() >= 2
+        )
+        self.opt_model.update()
+
+    def addCorrectionSet(self, C: set):
+        """Add new constraint of the form to the optimization model,
+        mapped back to decision variable lit => x[i].
+
+            sum x[j] * hij >= 1
+
+        Args:
+            C (set): set of assumption literals.
+        """
+        x = self.opt_model.getVars()
+
+        Ci = [self.allLits.index(lit) for lit in C]
+
+        # add new constraint sum x[j] * hij >= 1
+        self.opt_model.addConstr(gp.quicksum(x[i] for i in Ci) >= 1)
+
+    def OptHittingSet(self):
+        """Compute conditional Optimal hitting set.
+
+        Returns:
+            set: Conditional optimal hitting mapped to assumption literals.
+        """
+        self.opt_model.optimize()
+
+        x = self.opt_model.getVars()
+        hs = set(lit for i, lit in enumerate(self.allLits) if x[i].x == 1)
+
+        return hs
 
 
 class CondOptHS(object):
@@ -415,12 +501,10 @@ class CondOptHS(object):
         # CONSTRAINTS
         # every explanation contains 1 neg Lit.
         posnegIexpl = range(len(Iend), self.nAllLits)
+
         self.opt_model.addConstr(
             x[posnegIexpl].sum() == 1
         )
-
-        # # every explanation contains some literal info.
-        # self.opt_model.addConstr(x[range(len(Iend))].sum() >= 1)
 
         # update model
         self.opt_model.update()

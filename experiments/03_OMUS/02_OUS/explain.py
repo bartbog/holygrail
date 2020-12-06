@@ -49,8 +49,66 @@ class CostFunctionError(Exception):
     def __str__(self):
         return f'{self.message} {self.lit} not in {self.U}'
 
-
 class BestStepComputer(object):
+    #preparing for inheritance
+    pass
+
+
+class BestStepOUSComputer(object):
+    """
+        Class for computing Optimal Unsatisfiable Subsets given
+        a sat solver bootstrapped with a CNF and user variables. Beststep
+        computer is implemented based on [1].
+
+        [1] 
+
+        Args:
+            sat (pysat.Solver): Sat solver bootstrapped with CNF on a
+                                vocabulary V.
+            U (set): Set of user variables subset of V.
+            Iend (set): The cautious consequence, the set of literals that hold in
+                        all models.
+            I (set): A partial interpretation such that I \subseteq Iend.
+            preseeding (bool, optional): [description]. Defaults to True.
+        """
+    def __init__(self, sat: Solver, U: set, Iend, I: set, preseeding=True):
+        self.sat = sat
+        self.Iend = Iend
+        pass
+
+    def bestStep(self, f, I: set):
+        # best cost
+        Xbest = I | {-l for l in  self.Iend - I}
+        f_xbest = sum(f(l) for l in Xbest)
+
+        for l in self.Iend - I:
+            X = self.bestStepOUS(f, F, I | set({-l}))
+            f_expl = sum(f(l) for l in X)
+
+            if f_expl < f_xbest:
+                Xbest = X
+                f_xbest = f_expl
+
+        return Xbest
+
+    def bestStepOUS(self, f, F, A):
+        H = set()
+        opt_model = OptHS()
+
+        while(True):
+            HS = opt_model.OptHittingSet()
+
+            sat, Ap = self.checkSat(HS, phases=self.I0)
+            sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
+
+            if not sat:
+                return App
+
+            C = F - self.grow(f, F, App)
+            H.add(frozenset(C))
+            self.opt_model.addCorrectionSet(C)
+
+class BestStepCOUSComputer(object):
     """
         Class for computing conditional Optimal Unsatisfiable Subsets given
         a sat solver bootstrapped with a CNF and user variables. Beststep
@@ -67,7 +125,7 @@ class BestStepComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             preseeding (bool, optional): [description]. Defaults to True.
         """
-    def __init__(self, sat: Solver, U:set, Iend: set, I: set, preseeding=True):
+    def __init__(self, sat: Solver, U: set, Iend: set, I: set, preseeding=True):
         """
             Constructor.
         """
@@ -303,6 +361,10 @@ class BestStepComputer(object):
         """Ensure sat solver is deleted after garbage collection.
         """
         self.sat_solver.delete()
+
+
+class OptHS(object):
+    pass
 
 
 class CondOptHS(object):
@@ -568,7 +630,7 @@ def explain(C: CNF, U: set, f, I0: set):
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
     # print("Iend", Iend)
-    c = BestStepComputer(sat=sat, U=U, Iend=Iend, I=I0)
+    c = BestStepCOUSComputer(sat=sat, U=U, Iend=Iend, I=I0)
 
     I = set(I0) # copy
     while(len(Iend - I) > 0):

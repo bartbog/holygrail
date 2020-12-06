@@ -259,4 +259,50 @@ The basic specification finds the optimal hitting set
 %   \item Equation \ref{eq:ILP:hittingset} is a boolean decision variable if constraint/clause i is in hitting set j.
 % \end{itemize}
 
+\subsection{Optimal Unsatisfiable Subsets}
+
+\begin{algorithm}[H]
+  % \Input{${\cal C}$, \textit{a CNF}.}
+
+  \Input{$f$, \textit{a cost function $f : 2^{{\cal A}} \rightarrow  \mathbb{N} $.}.}
+  \Input{$A$, \textit{a set of assumption literals, s.t. ${\cal C} \cup A$ is unsatisfiable.}}
+  \State{$\sat$, \textit{a $\sat$ solver initialised with a CNF.}}
+  \Output{\textit{$f-OUS$, A subset ${\cal A}'$ of ${\cal A}$ s.t. ${\cal C} \cup {\cal A}'$ is $UNSAT$ and  ${\cal A}'$ is $f$-optimal.}}
+  \vspace*{0.01cm}
+  % \tcp{Hyp: ${\cal C} \cup A$ is unsatisfiable}
+  \DontPrintSemicolon
+  $\setstohit \gets \emptyset$ \;
+  \While{true}{
+    ${\cal A}' \gets \ohs(f, {\cal A}, \setstohit) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    \If{ $\lnot \sat({\cal A}')$}{
+      \Return{${\cal A}'$} \;
+    }
+    $A'' \gets  \grow(f, A',A) $\;
+
+    % \sout{$\setstohit  \gets \setstohit  \cup \{  A \setminus A''\}$}\; %\tcp*{We can reuse the H across diff call to alg \ref{alg:explainCSP} was $H \cup \{F \setminus F''\}$ }
+    $\setstohit  \gets \setstohit  \cup \{  {\cal A} \setminus {\cal A}''\}$\;
+  }
+  \caption{$\omus(f, {\cal A}, \sat)$ }
+  \label{alg:comus}
+\end{algorithm}
+
+\begin{algorithm}[H]
+  \While{true}{
+      \While{$|\setstohit| > 0$}{
+        %$\F' \gets \ihs(\setstohit,f) $\;
+        $A' \gets A' + min_f$ element of last MCS in $\setstohit$\;
+          \If{ $\lnot \sat(A')$}{
+            \textbf{break}
+          }
+          $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(f, A', A)\}$ \;
+      }
+        $A' \gets \ghs(\setstohit,f) $\;
+          \If{ $\lnot \sat(A')$}{
+            \textbf{break}
+          }
+          $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \grow(f, A', A)\}$ \;
+  }
+  \caption{Postponing hitting set optimization for OUS}\label{alg:postomus}
+  \end{algorithm}
+
 \end{document}

@@ -614,7 +614,7 @@ class CondOptHS(object):
         # model parameters
         self.opt_model.Params.OutputFlag = 0
         self.opt_model.Params.LogToConsole = 0
-        self.opt_model.Params.Threads = 8
+        self.opt_model.Params.Threads = 1
 
         # VARIABLE -- OBJECTIVE
         x = self.opt_model.addMVar(

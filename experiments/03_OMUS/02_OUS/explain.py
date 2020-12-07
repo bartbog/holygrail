@@ -283,6 +283,14 @@ class BestStepComputer(object):
             sat, Ap = self.checkSat(HS, phases=self.I0)
             sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
 
+            do_subset_maximal = False
+            if do_subset_maximal:
+                # repeat until subset maximal wrt A
+                while (Ap != App):
+                    Ap = App
+                    sat, App = self.checkSat(HS | (A & Ap), phases=A)
+
+
             t_expl['t_sat'].append(time.time() - tsat)
             # print("\tgot sat", sat, len(Ap))
             # print("\tHS=", HS)

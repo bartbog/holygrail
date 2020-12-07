@@ -6,6 +6,8 @@ from pathlib import Path
 # import random
 from functools import wraps
 
+from multiprocessing import Process
+
 # gurobi imports
 import gurobipy as gp
 from gurobipy import GRB
@@ -1025,15 +1027,23 @@ def all_param_test():
                 all_params.append(p)
     return all_params
 
+def runParallel(fns, args):
+    procs = []
+    for fn in fns:
+        for arg in args:
+            p = Process(target=fn, args=arg)
+            p.start()
+            procs.append(p)
+
+    for p in procs:
+        p.join()
+
+
 if __name__ == "__main__":
     all_params = all_param_test()
+    fns = [test_explain, test_frietkot, test_puzzle, test_originProblemIff]
 
-    for params in all_params:
-        # time.sleep(1)
-        test_explain(params)
-        # time.sleep(1)
-        test_frietkot(params)
-
+    runParallel(fns, all_params)
     # params = ComputationParams()
     # # preseeding
     # params.pre_seeding = True

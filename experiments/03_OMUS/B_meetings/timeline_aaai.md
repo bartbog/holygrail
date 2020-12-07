@@ -1,3 +1,7 @@
+# Meeting Notes 07/12/2020
+
+
+
 # Meeting Notes 20/07/2020
 
 - Orthogonaal incrementaliteit van Davies, en SMUS
@@ -15,103 +19,96 @@
 
 2. CSP experiments:
 
- - Execution time incremental explain vs non-incremental
+   - Execution time incremental explain vs non-incremental
 
-	- OMUS eplanation vs previous version:
-		- Explanation cost OMUS vs previous journal explanation algon 
-			- Encodering must be the same !! 
-			- @Tias+Bart: make sure encoding the same idp problems to cppy
-			(Nice to have : Total runtime Performance idp vs python workflow)
-		(- Include nested explanations ? @Bart)
+     - OMUS eplanation vs previous version:
+       - Explanation cost OMUS vs previous journal explanation algon 
+       - Encodering must be the same !! 
 
-	- Reusing MSSes (w/o or w/ models)? (smart structure):
-		- Performance evaluation: 
-			- How much faster/overhead (not much for small problems, but expensive for big problems) created?
-				- How expensive is the first call
-				- Plot: call naar OMUS doorheen de sequence met en zonder re-use (x/y steps vs time)
+     - Nice to have : Total runtime Performance idp vs python workflow)
+     - Include nested explanations ?
 
-		- Sequence differences: 
-			(- What are there a differences with the generated explanation order (cost) with the MSSes?
-				- Cost zal hetzelfde zijn, betere )
-			- other things ? @Bart
+     - Reusing MSSes (w/o or w/ models)? (smart structure):
+     - Performance evaluation:
+       - How much faster/overhead (not much for small problems, but expensive for big problems) created?
+       - How expensive is the first call
+       - Plot: call naar OMUS doorheen de sequence met en zonder re-use (x/y steps vs time)
+
+     - Sequence differences:
+       - What are there a differences with the generated explanation order (cost) with the MSSes?
+         - Cost zal hetzelfde zijn of betere
+     - other things ? @Bart
 
 Optimalisatie:
 
 - Kunnen we literals verwijderen die altijd true zijn..?
 - Andere optimalisaties? abstract cores? 
-
-## Paper 
-
-- Incrementeel maken
-- De workflow maken die fatsoenlijk werkt
-
-### Related works:
-
-- @Bart SMUS (only QMaxsat?) problem
-	- How would you implement it ? Programming Language ?
 - check evolution of cost of MCSes for OMUS increasing ? (=> LB from here?)
-- abstract cores : MaxSAt htting-based potentieel nuttig voor OMUS
+
+<!-- ### Related works: -->
+
+<!-- - @Bart SMUS (only QMaxsat?) problem
+	- How would you implement it ? Programming Language ? -->
 
 ## Timeline
 
-T-5 weeks 27/07 - 31/07
-Status:
+### Status implementatie:
+
+- preseeding actief
+
+- OUS code traag na +- 6 stappen
+  - checksat heel goedkoop
+  - aan passing checksat => veel sneller voor de 13 eerste stappen (zoekt expl met 2 constraints => traag)
+  - postponing optimimsatie ?
+
+### Status Experimenten
 
 - Finishing cppy to cnf translation
-- Encoding started of idp problems into cppy
----- Zo dicht mogelijk bij de originele encodering blijven
-- Presentation almost finished
+- Encoding idp problems into cppy:
+  - only origin puzzle (p5)
+  - ***Zo dicht mogelijk bij de originele encodering blijven***
 
-Objectives:
+### Week 07- 11 Dec
 
-- Preparation full experimental stack ready to run
-- Exploring related works OMUS (qmaxsat implementation?)
-- Submit presentation to ECAI
+- Functional implementation of cOUS, ready to run on instances.
+- Contributions
+- Initial experiments:
+  - Check for bugs/performance increases/better ways to compute parts of the workflow
 
-Questions:
+Research note:
 
-- integration of the csp-explain algorithm (use additional variables for solving?)
-  -  already included in the IDP files: 
-     -  (bi) => !....
+- Design of experiments: Bencharmk data sets,  Selection of parameters, ...
+- Pseudocode:
+  - Resterende algorithme toevoegen + uitleg input/output.
+  - Uitleg.
+- Optmisatie model afwerken.
+  - description + cost function.
+- Structure of the paper
 
-T-4 weeks 10/08 - 14/08
+Week 07 Dec - 11 Dec
 
-- Evaluate Master's thesis
+Objectives End of week:
+- Experimental stack ready to run on HPC
 
-Objectives:
-
-- Debugging/finishing integration of the csp-explain algorithm
-- Debugging/Finishing experimental stack ready to run
-- Writing parts of the paper
-- Further Related works exploration
-
-T-3 weeks 17/08 - 21/08
-
+Week 14 Dec - 18 Dec
 - Running/analyzing/tweaking the experiments
-- End of week:
-	- First draft ready on paper
-		- Incrementaliteit duidelijk in de paper, ...
-- Check for bugs/performance increases/better ways to compute parts of the workflow
+- Related works section
+- Increase efficiency of parts of the algorithm
 
-Bonus:
+Week 21 Dec - 25 Dec
+- Experimenten klaar, interpretatie van de resultaten.
+- Abstract ready
+- First rough draft
 
-- Qmaxsat implementation?
----- niet direct (+bonus/nice to have/
----- workflow incrementaliteit
+Week 28 Dec - 1 Jan
+- Holiday ?
 
-Objectives:
-
-- Abstract ready for submission
-
-T-2 weeks 24/08 - 28/08
-
-- Final experiments run => interpretation of the results
-- Increase efficiency of grow algorithm
-- writing of the paper
-
-T-1 weeks 31/08 - 04/09
-
+Week 4 Jan  - 8 Jan
 - Polishing of the paper.
 - Send to collegues for proofreading
 
-T-4 days  07/09 - 10/09 13:00
+Objectives:
+- Abstract ready for submission
+
+Week 11 Jan - 18 Jan
+- Incorporate comments paper

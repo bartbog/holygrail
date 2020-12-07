@@ -362,14 +362,14 @@ class BestStepCOUSComputer(object):
             topt = time.time()
             HS = self.opt_model.CondOptHittingSet()
             t_expl['t_mip'].append(time.time() - topt)
-            # print("\tgot HS", len(Ap), "cost", self.opt_model.opt_model.objval)
+            print("\tgot HS", len(Ap), "cost", self.opt_model.opt_model.objval)
 
             tsat = time.time()
             sat, Ap = self.checkSat(HS, phases=self.I0)
             sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
 
             t_expl['t_sat'].append(time.time() - tsat)
-            # print("\tgot sat", sat, len(Ap))
+            print("\tgot sat", sat, len(App))
             # print("\tHS=", HS)
             # print("\tAp=", Ap)
             # print("\tApp=", App)
@@ -379,7 +379,7 @@ class BestStepCOUSComputer(object):
 
             C = F - self.grow(f, F, App)
             # print("\tC=", C, "\n")
-            # print("\tgot C", len(C))
+            print("\tgot C", len(C))
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
             mode = MODE_INCR
@@ -410,7 +410,7 @@ class OptHS(object):
         x = self.opt_model.addMVar(
             shape=self.nAllLits,
             vtype=GRB.BINARY,
-            obj=[f(l) for l in self.allLits],,
+            obj=[f(l) for l in self.allLits],
             name="x")
 
         # at least the negated literal

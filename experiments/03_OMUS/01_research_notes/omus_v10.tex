@@ -203,14 +203,19 @@
   $\setstohit \gets \emptyset$ \;
   \While{true}{
     ${\cal A}' \gets \cohs(f, p, {\cal A}, \setstohit) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
-    \If{ $\lnot \sat({\cal A}')$}{
-      \Return{${\cal A}'$} \;
-    }
-    % \sout{$A'' \gets  \grow(C, f, p, A',A) $}\;
+    \emilio{
+      $sat?,\ {\cal A}'' \gets \sat({\cal A}', I_0)$\;
+      $sat?,\ {\cal A}'' \gets \sat({\cal A}' \mid \{ {\cal A}'' \cap I_0\}, A)$\;
 
-    % \sout{$\setstohit  \gets \setstohit  \cup \{  A \setminus A''\}$}\; %\tcp*{We can reuse the H across diff call to alg \ref{alg:explainCSP} was $H \cup \{F \setminus F''\}$ }
-    $\setstohit  \gets \setstohit  \cup \{  {\cal A} \setminus {\cal A}'\}$\;
-  }
+      \If{ $\lnot \sat({\cal A}'')$}{
+        \Return{${\cal A}''$} \;
+        }
+        % \sout{$A'' \gets  \grow(C, f, p, A',A) $}\;
+
+        % \sout{$\setstohit  \gets \setstohit  \cup \{  A \setminus A''\}$}\; %\tcp*{We can reuse the H across diff call to alg \ref{alg:explainCSP} was $H \cup \{F \setminus F''\}$ }
+        $\setstohit  \gets \setstohit  \cup \{  {\cal A} \setminus {\cal A}''\}$\;
+        }
+        }
   \caption{$\comus(f,p, {\cal A}, \sat)$ }
   \label{alg:comus}
 \end{algorithm}

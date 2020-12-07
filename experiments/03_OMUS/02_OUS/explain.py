@@ -53,8 +53,8 @@ class ComputationParams(object):
         self.timeout = 2 * HOURS
 
         # output file
-        self.output_folder = "results/"
-        self.output_file = datetime.now().strftime("%Y%m%d%H%M%S.json")
+        self.output_folder = "results/" + datetime.now().strftime("%Y%m%d/")
+        self.output_file = datetime.now().strftime("%Y%m%d%H%M%S%f.json")
 
         # instance
         self.instance = ""
@@ -886,7 +886,9 @@ def explain(C: CNF, U: set, f, I0: set, params):
 
 
 def write_results(results, outputdir, outputfile):
-    file_path = Path(outputdir) / outputfile
+    if not Path(outputdir).exists():
+        Path(outputdir).mkdir()
+    file_path = Path(outputdir) / (params.instance + "_" + outputfile)
     with file_path.open('w') as f:
         json.dump(results, f)
 
@@ -934,7 +936,7 @@ def get_user_vars(cnf):
     return U
 
 
-def test_originProblemIff(param):
+def test_originProblemIff(params):
     params.instance = "origin-problem-iff"
     o_clauses, o_assumptions, o_weights, o_user_vars = originProblemIff()
     o_cnf = CNF(from_clauses=o_clauses)
@@ -983,22 +985,70 @@ def test_explain(params):
     f = cost(U, I)
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
-if __name__ == "__main__":
-    params = ComputationParams()
-    # preseeding
-    params.pre_seeding = True
-    params.pre_seeding_minimal = True
+def all_param_test():
+    params_base = ComputationParams()
 
-    # polarity of sat solver
-    params.polarity = True
+    # preseeding
+    params_preseed = ComputationParams()
+    params_preseed.pre_seeding = True
+    params_preseed.pre_seeding_minimal = True
+
+    # polarity sat only
+    params_polarity = ComputationParams()
+    params_polarity.polarity = True
 
     # sat - grow
-    params.subset_maximal = True
+    params_maximal = ComputationParams()
+    params_maximal.subset_maximal = True
 
-    # timeout
-    params.timeout = 2 * HOURS
+    # preseeding lits + polarity sat
+    params_preseed_polarity = ComputationParams()
+    params_preseed_polarity.polarity = True
+    params_preseed_polarity.pre_seeding = True
+    params_preseed_polarity.pre_seeding_minimal = True
 
-    test_explain(params)
-    test_frietkot(params)
+    all_params = []
+    for preseed in [True, False]:
+        for subset_maximal in [True, False]:
+            for polarity in [True, False]:
+                # preseeding
+                p = ComputationParams()
+                p.pre_seeding = preseed
+                p.pre_seeding_minimal = preseed
+
+                # polarity
+                p.polarity = polarity
+
+                # subset_maximal
+                p.subset_maximal = subset_maximal
+
+                all_params.append(p)
+    return all_params
+
+if __name__ == "__main__":
+    all_params = all_param_test()
+
+    for params in all_params:
+        # time.sleep(1)
+        test_explain(params)
+        # time.sleep(1)
+        test_frietkot(params)
+
+    # params = ComputationParams()
+    # # preseeding
+    # params.pre_seeding = True
+    # params.pre_seeding_minimal = True
+
+    # # polarity of sat solver
+    # params.polarity = True
+
+    # # sat - grow
+    # params.subset_maximal = True
+
+    # # timeout
+    # params.timeout = 1 * HOURS
+
+    # test_explain(params)
+    # test_frietkot(params)
     # test_puzzle()
     # test_originProblemIff()

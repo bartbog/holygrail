@@ -1,6 +1,8 @@
 import cProfile
 import pstats
 import time
+import json
+from pathlib import Path
 # import random
 from functools import wraps
 
@@ -12,10 +14,63 @@ from gurobipy import GRB
 from pysat.formula import CNF
 from pysat.solvers import Solver
 
+from datetime import datetime
+
+# datetime object containing current date and time
+
+
 # Testing samples
-from frietkot import simpleProblem, originProblem, frietKotProblem
+from frietkot import simpleProblem, originProblem, originProblemIff, frietKotProblem
 
 from datetime import datetime
+
+SECONDS = 1
+MINUTES = 60 * SECONDS
+HOURS = 60 * MINUTES
+
+
+class ComputationParams(object):
+    """
+    docstring
+    """
+    def __init__(self):
+        # intialisation: pre-seeding
+        self.pre_seeding = False
+        self.pre_seeding_minimal = False
+
+        # hitting set computation
+        self.postpone_opt = False
+        self.postpone_opt_incr = False
+        self.postpone_opt_greedy = False
+
+        # polarity of sat solver
+        self.polarity = False
+
+        # sat - grow
+        self.subset_maximal = False
+
+        # timeout
+        self.timeout = 2 * HOURS
+
+        # output file
+        self.output_folder = "results/"
+        self.output_file = datetime.now().strftime("%Y%m%d%H%M%S.json")
+
+        # instance
+        self.instance = ""
+
+    def to_dict(self):
+        return {
+            "preseeding": self.pre_seeding,
+            "preseeding-minimal": self.pre_seeding_minimal,
+            "sat-polarity": self.polarity,
+            "postpone_opt": self.postpone_opt,
+            "postpone_opt_incr": self.postpone_opt_incr,
+            "postpone_opt_greedy": self.postpone_opt_greedy,
+            "subset_maximal": self.subset_maximal,
+            "timeout": self.timeout,
+            "instance": self.instance,
+        }
 
 
 class UnsatError(Exception):
@@ -49,9 +104,37 @@ class CostFunctionError(Exception):
     def __str__(self):
         return f'{self.message} {self.lit} not in {self.U}'
 
+
 class BestStepComputer(object):
     #preparing for inheritance
-    pass
+    def grow(self, f, A, Ap):
+        # no actual grow needed if 'Ap' contains all user vars
+        return Ap
+
+    def checkSat(self, Ap: set, polarity=True, phases=set()):
+        """Check satisfiability of given assignment of subset of the variables
+        of Vocabulary V.
+            - If the subset is unsatisfiable, Ap is returned.
+            - If the subset is satisfiable, the model computed by the sat
+                solver is returned.
+
+        Args:
+            Ap (set): Susbet of literals
+
+        Returns:
+            (bool, set): sat value, model assignment
+        """
+        if polarity:
+            self.sat_solver.set_phases(literals=list(phases - Ap))
+
+        solved = self.sat_solver.solve(assumptions=list(Ap))
+
+        if not solved:
+            return solved, Ap
+
+        model = set(self.sat_solver.get_model())
+
+        return solved, model
 
 
 class BestStepOUSComputer(object):
@@ -71,7 +154,7 @@ class BestStepOUSComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             preseeding (bool, optional): [description]. Defaults to True.
         """
-    def __init__(self, sat: Solver, U: set, I: set, Iend:set, preseeding=True):
+    def __init__(self, sat: Solver, U: set, I: set, Iend: set, params: ComputationParams):
         self.sat = sat
         self.Iend = Iend
         self.I0 = set(I)
@@ -152,7 +235,7 @@ class BestStepCOUSComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             preseeding (bool, optional): [description]. Defaults to True.
         """
-    def __init__(self, sat: Solver, U: set, Iend: set, I: set, preseeding=True):
+    def __init__(self, sat: Solver, U: set, Iend: set, I: set, params: ComputationParams):
         """
             Constructor.
         """
@@ -160,9 +243,9 @@ class BestStepCOUSComputer(object):
         self.opt_model = CondOptHS(U=U, Iend=Iend, I=I)
         self.I0 = set(I)
         self.Iend = set(Iend)
+        self.params = params
 
-        preseeding_minimal = True
-        if preseeding:
+        if self.params.pre_seeding:
             # print("Pre-seeding")
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
@@ -172,20 +255,20 @@ class BestStepCOUSComputer(object):
             C = F - Ap
             self.opt_model.addCorrectionSet(C)
             # print("pre-seed","",C)
-            if preseeding_minimal:
+            if self.params.pre_seeding_minimal:
                 covered = set(Iend) # already in an satsubset
 
             for l in F:
-                if preseeding_minimal and l in covered:
+                if self.params.pre_seeding_minimal and l in covered:
                     continue
                 issat, Ap = self.checkSat({l}, phases=F)
                 C = F - Ap
                 self.opt_model.addCorrectionSet(C)
                 # print("pre-seed",l,C)
-                if preseeding_minimal:
+                if  self.params.pre_seeding_minimal:
                     covered |= (Ap & F) # add covered lits of F
 
-    def bestStep(self, f, U: set, Iend: set, I: set):
+    def bestStep(self, f, U: set, Iend: set, I: set, timeout=1 * HOURS):
         """bestStep computes a subset A' of A that satisfies p s.t.
         C u A' is UNSAT and A' is f-optimal.
 
@@ -203,13 +286,13 @@ class BestStepCOUSComputer(object):
         # print("F=", F)
 
         A = I | {-l for l in Iexpl}
-        return self.bestStepCOUS(f, F, A)
+        return self.bestStepCOUS(f, F, A, timeout=timeout)
 
     def grow(self, f, A, Ap):
         # no actual grow needed if 'Ap' contains all user vars
         return Ap
 
-    def checkSat(self, Ap: set, polarity=True, phases=set()):
+    def checkSat(self, Ap: set, phases=set()):
         """Check satisfiability of given assignment of subset of the variables
         of Vocabulary V.
             - If the subset is unsatisfiable, Ap is returned.
@@ -222,7 +305,7 @@ class BestStepCOUSComputer(object):
         Returns:
             (bool, set): sat value, model assignment
         """
-        if polarity:
+        if self.params.polarity:
             self.sat_solver.set_phases(literals=list(phases - Ap))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
@@ -294,7 +377,7 @@ class BestStepCOUSComputer(object):
 
         return C
 
-    def bestStepCOUS(self, f, F, A: set, do_incremental=False):
+    def bestStepCOUS(self, f, F, A: set, timeout):
         """Given a set of assumption literals A subset of F, bestStepCOUS
         computes a subset a subset A' of A that satisfies p s.t C u A' is
         UNSAT and A' is f-optimal based on [1].
@@ -309,67 +392,98 @@ class BestStepCOUSComputer(object):
                  and A' is f-optimal.
         """
         t_expl = {
+            't_post':[],
             't_sat':[],
             't_mip':[],
-            't_ous':0
+            't_ous':0,
+            '#H':0,
+            '#H_greedy':0,
+            '#H_incr':0,
         }
         # p = 
         tstart = time.time()
+
+        # UPDATE OBJECTIVE WEIGHTS
         self.opt_model.updateObjective(f, A)
+
         print("updateObj, A=",len(A))
-        # print("A=", A)
-        # print(f, A)
+
+        # VARIABLE INITIALISATION
         H, C = set(), set()
         HS, Ap, App=set(), set(), set()
 
-        MODE_OPT, MODE_GREEDY, MODE_INCR = 3, 2, 1
-        mode = MODE_OPT
-        while(True):
-            HS_greedy = set(HS)
+        if self.params.postpone_opt:
+            assert self.params.postpone_opt_greedy or self.params.postpone_opt_incr, "At least one greedy approach."
+            MODE_OPT, MODE_GREEDY, MODE_INCR = 3, 2, 1
+            mode = MODE_OPT
 
-            while(do_incremental):
-                # print("incr")
-                # Computing a hitting set
-                if mode == MODE_INCR:
-                    # select a constraint to add
+        while(True):
+            if time.time() - tstart > timeout:
+                t_expl['t_ous'] = time.time()-tstart
+                return App, t_expl, False
+
+            HS_greedy = set(App)
+
+            # POSTPONING OPTIMISATION
+            time_post = time.time()
+            while(self.params.postpone_opt):
+                while(self.params.postpone_opt and len(H) > 0):
+                    # Computing a hitting set
                     c = min(C, key=lambda l: f(l))
                     HS_greedy.add(c)
-                elif mode == MODE_GREEDY:
-                    # find a new greedy hitting set
-                    HS_greedy = self.greedyHittingSet(H, f, A)
-                elif mode == MODE_OPT:
-                    break
+
+                    # checking for satisfiability
+                    sat, Ap_incr = self.checkSat(HS_greedy, phases=self.I0)
+                    sat, App_incr = self.checkSat(HS_greedy | (self.I0 & Ap_incr), phases=A)
+
+                    # Did we find an OUS ?
+                    if not sat:
+                        break
+
+                    C = F - self.grow(f, F, App_incr)
+                    # print("\tgot C", len(C))
+                    H.add(frozenset(C))
+                    self.opt_model.addCorrectionSet(C)
+                    t_expl['#H_incr'] += 1
+
+                HS_greedy = self.greedyHittingSet(H, f, A)
+                t_expl['#H_greedy'] += 1
 
                 # checking for satisfiability
                 sat, Ap_greedy = self.checkSat(HS_greedy, phases=self.I0)
                 sat, App_greedy = self.checkSat(HS_greedy | (self.I0 & Ap_greedy), phases=A)
 
-                # Did we find an OUS ?
                 if not sat:
-                    if mode == MODE_INCR:
-                        mode = MODE_GREEDY
-                        continue
-                    elif mode == MODE_GREEDY:
-                        mode = MODE_OPT
-                        break
+                    break
 
                 C = F - self.grow(f, F, App_greedy)
                 # print("\tgot C", len(C))
                 H.add(frozenset(C))
                 self.opt_model.addCorrectionSet(C)
-                mode = MODE_INCR
+
+            # TIMING POSTPONE OPTIMISATION
+            time_post = time.time() - time_post
+            if self.params.postpone_opt:
+                t_expl["t_post"].append(time_post)
 
             topt = time.time()
+
+            # COMPUTING OPTIMAL HITTING SET
             HS = self.opt_model.CondOptHittingSet()
+
+            t_expl['#H'] += 1
+            # Timings
             t_expl['t_mip'].append(time.time() - topt)
             print("\tgot HS", len(Ap), "cost", self.opt_model.opt_model.objval)
 
             tsat = time.time()
+
+            # CHECKING SATISFIABILITY
             sat, Ap = self.checkSat(HS, phases=self.I0)
             sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
 
-            do_subset_maximal = False
-            if do_subset_maximal:
+            # GROWING W.R.T A
+            if self.params.subset_maximal:
                 # repeat until subset maximal wrt A
                 while (Ap != App):
                     Ap = App
@@ -378,19 +492,20 @@ class BestStepCOUSComputer(object):
 
             t_expl['t_sat'].append(time.time() - tsat)
             print("\tgot sat", sat, len(App))
-            # print("\tHS=", HS)
-            # print("\tAp=", Ap)
-            # print("\tApp=", App)
-            if not sat:
-                t_expl['ous'] = time.time()-tstart
-                return App, t_expl
 
+            # OUS FOUND?
+            if not sat:
+                t_expl['t_ous'] = time.time()-tstart
+                return App, t_expl, True
+
+            # GROW + COMPLEMENT
             C = F - self.grow(f, F, App)
-            # print("\tC=", C, "\n")
             print("\tgot C", len(C))
+
+            # ADD COMPLEMENT TO HITTING SET OPTIMISATION SOLVER
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
-            mode = MODE_INCR
+            # t_expl['#H'] += 1
 
     def __del__(self):
         """Ensure sat solver is deleted after garbage collection.
@@ -668,18 +783,14 @@ def optimalPropagate(sat, I=set(), U=None):
 
 
 def print_timings(t_exp):
-    print("texpl=", round(t_exp['ous'], 3), "s")
+    print("texpl=", round(t_exp['t_ous'], 3), "s")
     print("\t#HS=", len(t_exp['t_mip']))
-    print("\tSAT=", round(sum(t_exp['t_sat']), 3), f"s [{round(100*sum(t_exp['t_sat'])/t_exp['ous'])}%]\t", "t/call=", round(sum(t_exp['t_sat'])/len(t_exp['t_sat']), 3))
-    print("\tMIP=", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/t_exp['ous'])}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))
-
-
-def write_json_timings(t_exp):
-    pass
+    print("\tSAT=", round(sum(t_exp['t_sat']), 3), f"s [{round(100*sum(t_exp['t_sat'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_sat'])/len(t_exp['t_sat']), 3))
+    print("\tMIP=", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))
 
 
 @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
-def explain(C: CNF, U: set, f, I0: set):
+def explain(C: CNF, U: set, f, I0: set, params):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
     variables with associated weights users_vars_cost based on the
@@ -702,13 +813,22 @@ def explain(C: CNF, U: set, f, I0: set):
     print("\tU:", len(U))
     print("\tf:", f)
     print("\tI0:", len(I0))
-    # best-step with multiple implementations possible (OUS/c-OUS/MUS...)
-    # 1. rename to best-step-computer
-    # 2. warm start to constructor
-    # - (optional) sat solver is best to leave how it is, instead of giving it 
-    # phases, might be better not modifying it.
-    # - check intersection
-
+    # init experimental results
+    results = {
+        "config": params.to_dict(),
+        "results": {
+            "HS": [],
+            "HS_greedy": [],
+            "HS_incr": [],
+            "HS-opt-time": [],
+            "HS-postpone-time": [],
+            "SAT-time": [],
+            "#expl": 0,
+            "expl_seq": [],
+            "OUS-time": []
+        }
+    }
+    t_expl_start = time.time()
     # check literals of I are all user vocabulary
     assert all(True if abs(lit) in U else False for lit in I0), f"Part of supplied literals not in U (user variables): {lits for lit in I if lit not in U}"
 
@@ -722,13 +842,17 @@ def explain(C: CNF, U: set, f, I0: set):
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
     # print("Iend", Iend)
-    c = BestStepCOUSComputer(sat=sat, U=U, Iend=Iend, I=I0)
+    c = BestStepCOUSComputer(sat=sat, U=U, Iend=Iend, I=I0, params=params)
 
     I = set(I0) # copy
     while(len(Iend - I) > 0):
+        remaining_time = params.timeout - (time.time() - t_expl_start)
         # Compute optimal explanation explanation assignment to subset of U.
-        expl, t_exp = c.bestStep(f, U, Iend, I)
+        expl, t_exp, expl_found = c.bestStep(f, U, Iend, I, timeout=remaining_time)
+
         print_timings(t_exp)
+        if not expl_found:
+            break
 
         # facts used
         Ibest = I & expl
@@ -736,14 +860,35 @@ def explain(C: CNF, U: set, f, I0: set):
         # New information derived "focused" on
         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
 
-        E.append((Ibest, Nbest))
+        E.append({
+            "constraints": list(Ibest), 
+            "derived": list(Nbest)
+        })
 
         print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
 
         I |= Nbest
 
+        results["results"]["HS"].append(t_exp["#H"])
+        results["results"]["HS_greedy"].append(t_exp["#H_greedy"])
+        results["results"]["HS_incr"].append(t_exp["#H_incr"])
+        results["results"]["HS-opt-time"].append(sum(t_exp["t_mip"]))
+        results["results"]["HS-postpone-time"].append(sum(t_exp["t_post"]))
+        results["results"]["OUS-time"].append(t_exp["t_ous"])
+        results["results"]["SAT-time"].append(sum(t_exp["t_sat"]))
+        results["results"]["#expl"] += 1
+
     print(E)
+
+    results["results"]["expl_seq"] = E
+    write_results(results, params.output_folder, params.output_file)
     return E
+
+
+def write_results(results, outputdir, outputfile):
+    file_path = Path(outputdir) / outputfile
+    with file_path.open('w') as f:
+        json.dump(results, f)
 
 
 def add_assumptions(cnf):
@@ -789,7 +934,18 @@ def get_user_vars(cnf):
     return U
 
 
-def test_frietkot():
+def test_originProblemIff(param):
+    params.instance = "origin-problem-iff"
+    o_clauses, o_assumptions, o_weights, o_user_vars = originProblemIff()
+    o_cnf = CNF(from_clauses=o_clauses)
+    U = o_user_vars | set(x for lst in o_assumptions for x in lst)
+    I = set(x for lst in o_assumptions for x in lst)
+    f = cost(U, I)
+    explain(C=o_cnf, U=U, f=f, I0=I, params=params)
+
+def test_frietkot(params):
+    params.instance = "frietkot"
+
     f_cnf, f_user_vars = frietKotProblem()
     f_cnf_ass, assumptions = add_assumptions(f_cnf)
     print("prob:", f_cnf)
@@ -802,18 +958,19 @@ def test_frietkot():
     print(U)
     print(I)
     print(frietkot_cnf.clauses)
-    explain(C=frietkot_cnf, U=U, f=f, I0=I)
+    explain(C=frietkot_cnf, U=U, f=f, I0=I, params=params)
 
-
-def test_puzzle():
+def test_puzzle(params):
+    params.instance = "origin-problem"
     o_clauses, o_assumptions, o_weights, o_user_vars = originProblem()
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost(U, I)
-    explain(C=o_cnf, U=U, f=f, I0=I)
+    explain(C=o_cnf, U=U, f=f, I0=I, params=params)
 
-def test_explain():
+def test_explain(params):
+    params.instance = "simple"
     # test on simple case
     s_cnf = simpleProblem()
     s_cnf_ass, assumptions = add_assumptions(s_cnf)
@@ -824,9 +981,24 @@ def test_explain():
     U = get_user_vars(simple_cnf)
     I = set(assumptions)
     f = cost(U, I)
-    explain(C=simple_cnf, U=U, f=f, I0=I)
+    explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
 if __name__ == "__main__":
-    # test_explain()
-    # test_frietkot()
-    test_puzzle()
+    params = ComputationParams()
+    # preseeding
+    params.pre_seeding = True
+    params.pre_seeding_minimal = True
+
+    # polarity of sat solver
+    params.polarity = True
+
+    # sat - grow
+    params.subset_maximal = True
+
+    # timeout
+    params.timeout = 2 * HOURS
+
+    test_explain(params)
+    test_frietkot(params)
+    # test_puzzle()
+    # test_originProblemIff()

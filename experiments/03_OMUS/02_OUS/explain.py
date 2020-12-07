@@ -888,6 +888,8 @@ def explain(C: CNF, U: set, f, I0: set, params):
 
 
 def write_results(results, outputdir, outputfile):
+    if not Path(outputdir).parent.exists():
+        Path(outputdir).parent.mkdir()
     if not Path(outputdir).exists():
         Path(outputdir).mkdir()
     file_path = Path(outputdir) / outputfile

@@ -6,7 +6,7 @@ from pathlib import Path
 # import random
 from functools import wraps
 
-from multiprocessing import Process
+from multiprocessing import Process, Pool
 
 # gurobi imports
 import gurobipy as gp
@@ -883,14 +883,14 @@ def explain(C: CNF, U: set, f, I0: set, params):
     print(E)
 
     results["results"]["expl_seq"] = E
-    write_results(results, params.output_folder, params.output_file)
+    write_results(results, params.output_folder, params.instance + "_" + params.output_file)
     return E
 
 
 def write_results(results, outputdir, outputfile):
     if not Path(outputdir).exists():
         Path(outputdir).mkdir()
-    file_path = Path(outputdir) / (params.instance + "_" + outputfile)
+    file_path = Path(outputdir) / outputfile
     with file_path.open('w') as f:
         json.dump(results, f)
 
@@ -1031,7 +1031,7 @@ def runParallel(fns, args):
     procs = []
     for fn in fns:
         for arg in args:
-            p = Process(target=fn, args=arg)
+            p = Process(target=fn, args=(arg,))
             p.start()
             procs.append(p)
 

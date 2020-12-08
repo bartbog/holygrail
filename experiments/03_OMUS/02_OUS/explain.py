@@ -52,7 +52,7 @@ class ComputationParams(object):
         self.subset_maximal = False
 
         # timeout
-        self.timeout = 2 * HOURS
+        self.timeout = 24 * HOURS
 
         # output file
         self.output_folder = "results/" + datetime.now().strftime("%Y%m%d/")
@@ -421,7 +421,7 @@ class BestStepCOUSComputer(object):
 
         while(True):
             if time.time() - tstart > timeout:
-                t_expl['t_ous'] = time.time()-tstart
+                t_expl['t_ous'] = "TIMEOUT"
                 return App, t_expl, False
 
             HS_greedy = set(App)
@@ -853,6 +853,14 @@ def explain(C: CNF, U: set, f, I0: set, params):
         expl, t_exp, expl_found = c.bestStep(f, U, Iend, I, timeout=remaining_time)
 
         print_timings(t_exp)
+        results["results"]["HS"].append(t_exp["#H"])
+        results["results"]["HS_greedy"].append(t_exp["#H_greedy"])
+        results["results"]["HS_incr"].append(t_exp["#H_incr"])
+        results["results"]["HS-opt-time"].append(sum(t_exp["t_mip"]))
+        results["results"]["HS-postpone-time"].append(sum(t_exp["t_post"]))
+        results["results"]["OUS-time"].append(t_exp["t_ous"])
+        results["results"]["SAT-time"].append(sum(t_exp["t_sat"]))
+
         if not expl_found:
             break
 
@@ -871,13 +879,7 @@ def explain(C: CNF, U: set, f, I0: set, params):
 
         I |= Nbest
 
-        results["results"]["HS"].append(t_exp["#H"])
-        results["results"]["HS_greedy"].append(t_exp["#H_greedy"])
-        results["results"]["HS_incr"].append(t_exp["#H_incr"])
-        results["results"]["HS-opt-time"].append(sum(t_exp["t_mip"]))
-        results["results"]["HS-postpone-time"].append(sum(t_exp["t_post"]))
-        results["results"]["OUS-time"].append(t_exp["t_ous"])
-        results["results"]["SAT-time"].append(sum(t_exp["t_sat"]))
+
         results["results"]["#expl"] += 1
 
     print(E)

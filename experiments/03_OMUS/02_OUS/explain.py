@@ -421,7 +421,7 @@ class BestStepCOUSComputer(object):
 
         while(True):
             if time.time() - tstart > timeout:
-                t_expl['t_ous'] = "TIMEOUT"
+                t_expl['t_ous'] = timeout
                 return App, t_expl, False
 
             HS_greedy = set(App)
@@ -827,7 +827,8 @@ def explain(C: CNF, U: set, f, I0: set, params):
             "SAT-time": [],
             "#expl": 0,
             "expl_seq": [],
-            "OUS-time": []
+            "OUS-time": [],
+            "timeout": False
         }
     }
     t_expl_start = time.time()
@@ -862,6 +863,7 @@ def explain(C: CNF, U: set, f, I0: set, params):
         results["results"]["SAT-time"].append(sum(t_exp["t_sat"]))
 
         if not expl_found:
+            results["results"]['timeout'] = True
             break
 
         # facts used
@@ -992,27 +994,6 @@ def test_explain(params):
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
 def all_param_test():
-    params_base = ComputationParams()
-
-    # preseeding
-    params_preseed = ComputationParams()
-    params_preseed.pre_seeding = True
-    params_preseed.pre_seeding_minimal = True
-
-    # polarity sat only
-    params_polarity = ComputationParams()
-    params_polarity.polarity = True
-
-    # sat - grow
-    params_maximal = ComputationParams()
-    params_maximal.subset_maximal = True
-
-    # preseeding lits + polarity sat
-    params_preseed_polarity = ComputationParams()
-    params_preseed_polarity.polarity = True
-    params_preseed_polarity.pre_seeding = True
-    params_preseed_polarity.pre_seeding_minimal = True
-
     all_params = []
     for preseed in [True, False]:
         for subset_maximal in [True, False]:
@@ -1044,25 +1025,25 @@ def runParallel(fns, args):
 
 
 if __name__ == "__main__":
-    all_params = all_param_test()
-    fns = [test_explain, test_frietkot, test_puzzle, test_originProblemIff]
+    # all_params = all_param_test()
+    # fns = [test_explain, test_frietkot, test_puzzle, test_originProblemIff]
 
-    runParallel(fns, all_params)
-    # params = ComputationParams()
-    # # preseeding
-    # params.pre_seeding = True
-    # params.pre_seeding_minimal = True
+    # runParallel(fns, all_params)
+    params = ComputationParams()
+    # preseeding
+    params.pre_seeding = True
+    params.pre_seeding_minimal = True
 
-    # # polarity of sat solver
-    # params.polarity = True
+    # polarity of sat solver
+    params.polarity = True
 
-    # # sat - grow
-    # params.subset_maximal = True
+    # sat - grow
+    params.subset_maximal = True
 
-    # # timeout
-    # params.timeout = 1 * HOURS
+    # timeout
+    params.timeout = 1 * HOURS
 
     # test_explain(params)
-    # test_frietkot(params)
+    test_frietkot(params)
     # test_puzzle()
     # test_originProblemIff()

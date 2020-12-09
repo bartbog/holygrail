@@ -13,8 +13,9 @@ import gurobipy as gp
 from gurobipy import GRB
 
 # pysat imports
-from pysat.formula import CNF
+from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
+from pysat.examples.rc2 import RC2
 
 from datetime import datetime
 
@@ -29,7 +30,6 @@ from datetime import datetime
 SECONDS = 1
 MINUTES = 60 * SECONDS
 HOURS = 60 * MINUTES
-
 
 class ComputationParams(object):
     """
@@ -49,7 +49,9 @@ class ComputationParams(object):
         self.polarity = False
 
         # sat - grow
-        self.subset_maximal = False
+        self.grow = False
+        self.grow_subset_maximal = False
+        self.grow_maxsat = False
 
         # timeout
         self.timeout = 24 * HOURS
@@ -69,7 +71,9 @@ class ComputationParams(object):
             "postpone_opt": self.postpone_opt,
             "postpone_opt_incr": self.postpone_opt_incr,
             "postpone_opt_greedy": self.postpone_opt_greedy,
-            "subset_maximal": self.subset_maximal,
+            "grow": self.grow,
+            "grow_subset_maximal": self.grow_subset_maximal,
+            "grow_maxsat": self.grow_maxsat,
             "timeout": self.timeout,
             "instance": self.instance,
         }
@@ -237,7 +241,7 @@ class BestStepCOUSComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             preseeding (bool, optional): [description]. Defaults to True.
         """
-    def __init__(self, sat: Solver, U: set, Iend: set, I: set, params: ComputationParams):
+    def __init__(self, sat: Solver, U: set, Iend: set, I: set, params: ComputationParams, cnf: CNF = None):
         """
             Constructor.
         """
@@ -246,6 +250,7 @@ class BestStepCOUSComputer(object):
         self.I0 = set(I)
         self.Iend = set(Iend)
         self.params = params
+        self.cnf = cnf
 
         if self.params.pre_seeding:
             # print("Pre-seeding")
@@ -260,10 +265,12 @@ class BestStepCOUSComputer(object):
             if self.params.pre_seeding_minimal:
                 covered = set(Iend) # already in an satsubset
 
+            print(F, covered, F-covered)
             for l in F:
                 if self.params.pre_seeding_minimal and l in covered:
                     continue
-                issat, Ap = self.checkSat({l}, phases=F)
+                issat, Ap = self.checkSat(set({l}), phases=Iend)
+                print(issat)
                 C = F - Ap
                 self.opt_model.addCorrectionSet(C)
                 # print("pre-seed",l,C)
@@ -290,9 +297,46 @@ class BestStepCOUSComputer(object):
         A = I | {-l for l in Iexpl}
         return self.bestStepCOUS(f, F, A, timeout=timeout)
 
-    def grow(self, f, A, Ap):
+    def grow_maxsat(self, f, F, A, HS, model):
+        hs = set(HS) # take copy!!
+
+        wcnf = WCNF()
+
+        # add hard clauses of CNF
+        wcnf.extend(self.cnf.clauses + [[l] for l in HS])
+
+        # add soft clasues => F - HS
+        remaining = F - HS
+        for l in remaining:
+            wcnf.append([l], weight=f(l))
+        # wcnf.extend([[l] for l in remaining], [f(l) for l in remaining])
+
+        with RC2(wcnf) as rc2:
+            t_model = rc2.compute()
+            if t_model is None:
+                return hs, model
+            # print(hs, t_model)
+            # print(F)
+            # hs = hs | (set(t_model) & F)
+            return set(t_model)
+
+    def grow_subset_maximal(self, A, HS, Ap):
+        sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
+        # repeat until subset maximal wrt A
+        while (Ap != App):
+            Ap = App
+            sat, App = self.checkSat(HS | (A & Ap), phases=A)
+        print("\tgot sat", sat, len(App))
+        return App
+
+    def grow(self, f, F, A, HS, HS_model):
         # no actual grow needed if 'Ap' contains all user vars
-        return Ap
+        if not self.params.grow:
+            return HS
+        elif self.params.grow_subset_maximal:
+            return self.grow_subset_maximal(A, HS, HS_model)
+        elif self.params.grow_maxsat:
+            return self.grow_maxsat(f, F, A, HS, HS_model)
 
     def checkSat(self, Ap: set, phases=set()):
         """Check satisfiability of given assignment of subset of the variables
@@ -397,6 +441,7 @@ class BestStepCOUSComputer(object):
             't_post':[],
             't_sat':[],
             't_mip':[],
+            't_grow':[],
             't_ous':0,
             '#H':0,
             '#H_greedy':0,
@@ -476,33 +521,24 @@ class BestStepCOUSComputer(object):
             t_expl['#H'] += 1
             # Timings
             t_expl['t_mip'].append(time.time() - topt)
-            print("\tgot HS", len(Ap), "cost", self.opt_model.opt_model.objval)
+            print("\tgot HS", len(HS), "cost", self.opt_model.opt_model.objval)
 
             tsat = time.time()
 
             # CHECKING SATISFIABILITY
-            sat, Ap = self.checkSat(HS, phases=self.I0)
-            sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
-
-            # GROWING W.R.T A
-            if self.params.subset_maximal:
-                # repeat until subset maximal wrt A
-                while (Ap != App):
-                    Ap = App
-                    sat, App = self.checkSat(HS | (A & Ap), phases=A)
-
-
+            sat, HS_model = self.checkSat(HS, phases=self.I0)
             t_expl['t_sat'].append(time.time() - tsat)
-            print("\tgot sat", sat, len(App))
 
             # OUS FOUND?
             if not sat:
                 t_expl['t_ous'] = time.time()-tstart
-                return App, t_expl, True
+                return HS, t_expl, True
 
+            tgrow = time.time()
             # GROW + COMPLEMENT
-            C = F - self.grow(f, F, App)
-            print("\tgot C", len(C))
+            C = F - self.grow(f, F, A, HS, HS_model)
+            t_expl['t_grow'].append(time.time() - tgrow)
+            print("\tgot C", len(C), round(time.time() - tgrow,3), "s")
 
             # ADD COMPLEMENT TO HITTING SET OPTIMISATION SOLVER
             H.add(frozenset(C))
@@ -845,7 +881,7 @@ def explain(C: CNF, U: set, f, I0: set, params):
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
     # print("Iend", Iend)
-    c = BestStepCOUSComputer(sat=sat, U=U, Iend=Iend, I=I0, params=params)
+    c = BestStepCOUSComputer(sat=sat, U=U, Iend=Iend, I=I0, params=params, cnf=C)
 
     I = set(I0) # copy
     while(len(Iend - I) > 0):
@@ -1038,12 +1074,16 @@ if __name__ == "__main__":
     params.polarity = True
 
     # sat - grow
-    params.subset_maximal = True
+    params.grow = True
+    params.grow_maxsat = True
+    # params.grow_subset_maximal= True
+    # params.grow_maxsat = True
+    # params.subset_maximal = True
 
     # timeout
     params.timeout = 1 * HOURS
 
-    # test_explain(params)
+    test_explain(params)
     test_frietkot(params)
-    # test_puzzle()
+    test_puzzle(params)
     # test_originProblemIff()

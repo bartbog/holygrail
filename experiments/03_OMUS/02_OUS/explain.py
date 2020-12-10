@@ -307,9 +307,9 @@ class BestStepCOUSComputer(object):
 
         # add soft clasues => F - HS
         remaining = F - HS
-        for l in remaining:
-            wcnf.append([l], weight=f(l))
-        # wcnf.extend([[l] for l in remaining], [f(l) for l in remaining])
+        # for l in remaining:
+        #     wcnf.append([l], weight=f(l))
+        wcnf.extend([[l] for l in remaining], [f(l) for l in remaining])
 
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()

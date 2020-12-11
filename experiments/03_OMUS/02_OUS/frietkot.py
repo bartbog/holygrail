@@ -74,7 +74,11 @@ def originProblemIff():
             # one per column
             # bij += exactly_one(rel[:, col_ids])
             b1 = to_cnf(exactly_one(rel[:, col_ids]))
-            [bij.append(implies(bv_bij[cnt], clause) & implies(clause, bv_bij[cnt])) for clause in b1]
+            # [bij.append(implies(bv_bij[cnt], clause) & implies(clause, bv_bij[cnt])) for clause in b1]
+            # [bij.append(implies(bv_bij[cnt], clause) & implies(clause, bv_bij[cnt])) for clause in b1]
+            # [bij.append(implies(bv_bij[cnt], clause) == bv_bij[cnt]) for clause in b1]
+            [bij.append(implies(bv_bij[cnt], clause)) for clause in b1]
+            [bij.append(implies(clause, bv_bij[cnt])) for clause in b1]
             cnt += 1
         for (_,row) in rel.df.iterrows():
             # one per row
@@ -401,6 +405,65 @@ def originProblem():
     return hard_clauses, soft_clauses, weights, explainable_facts
 
 
+def simplestProblemIff():
+    (mayo, ketchup) = BoolVar(2)
+    b = BoolVar(2)
+    # print(mayo.name + 1, ketchup.name + 1)
+    # print(b[0].name + 1, b[1].name + 1)
+    c0 = (b[0] == mayo)
+    c1 = (b[1] == (~mayo | ketchup))
+
+    constraints = [c0, c1]
+    c = to_cnf(constraints)
+    cnf = cnf_to_pysat(c)
+    # print(c)
+    # print(cnf)
+    return cnf, [[bi.name + 1] for bi in b]
+
+def simpleProblemIff():
+    (mayo, ketchup, andalouse) = BoolVar(3)
+    b = BoolVar(4)
+
+    c0 = (b[0] == mayo)
+    c1 = (b[1] == (~mayo | ~andalouse | ketchup))
+    c2 = (b[2] == (~mayo | andalouse | ketchup))
+    c3 = (b[3] == (~ketchup | ~andalouse))
+
+    constraints = [c0, c1, c2, c3]
+    # print(mayo.name + 1, ketchup.name + 1, andalouse.name + 1)
+    # print(to_cnf(c0))
+    # print(to_cnf(constraints))
+    # print(to_cnf(implies(b[0], mayo) & implies(mayo, b[0])))
+    # print(to_cnf(c3))
+    # print(to_cnf(implies(b[3], (~ketchup | ~andalouse)) & implies((~ketchup | ~andalouse), b[3])))
+    # print(to_cnf(c1))
+    # print(to_cnf(c2))
+    # print(to_cnf(c3))
+    cnf_cppy = to_cnf(constraints)
+    # print(cnf_cppy)
+    for c in cnf_cppy:
+        print(c)
+    cnf = cnf_to_pysat(cnf_cppy)
+    print(cnf)
+
+    return [list(c) for c in cnf], [bi.name + 1 for bi in b]
+
+def simpleProblemImplies():
+    (mayo, ketchup, andalouse) = BoolVar(3)
+    b = BoolVar(4)
+
+    c0 = implies(b[0], mayo) & implies(mayo, b[0])
+    c1 = implies(b[1], (~mayo | ~andalouse | ketchup))& implies((~mayo | ~andalouse | ketchup), b[1])
+    c2 = implies(b[2], (~mayo | andalouse | ketchup))& implies((~mayo | andalouse | ketchup), b[2])
+    c3 = implies(b[3], (~ketchup | ~andalouse)) & implies((~ketchup | ~andalouse), b[3])
+
+    constraints = [c0, c1, c2, c3]
+    print(to_cnf(constraints))
+
+    cnf = cnf_to_pysat(to_cnf(constraints))
+    return [list(c) for c in cnf], [bi.name + 1 for bi in b]
+
+
 def simpleProblem():
     (mayo, ketchup, andalouse) = BoolVar(3)
 
@@ -408,10 +471,12 @@ def simpleProblem():
     c1 = ~mayo | ~andalouse | ketchup
     c2 = ~mayo | andalouse | ketchup
     c3 = ~ketchup | ~andalouse
-    
+
     constraints = [c0, c1, c2, c3]
+    # print()
+
     cnf = cnf_to_pysat(constraints)
-    
+
     return [list(c) for c in cnf]
 
 
@@ -438,3 +503,12 @@ def frietKotProblem():
 
     return [list(c) for c in cnf], explainable_facts
 
+# simpleProblemIff()
+def testTseitin():
+    (a, b) = BoolVar(2)
+        # print("a <=> ~b", to_cnf([a == ( ~b | c)]))
+    # print(to_cnf(implies(a , ~b | c) & implies(~b | c, a)))
+    cnf = [list(l) for l in cnf_to_pysat(to_cnf(a == b))]
+    # print(cnf)
+    # with Solver(bootstrap)
+    return cnf

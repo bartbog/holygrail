@@ -23,7 +23,7 @@ from datetime import datetime
 
 
 # Testing samples
-from frietkot import simpleProblem, originProblem, originProblemIff, frietKotProblem
+from frietkot import simpleProblem, originProblem, originProblemIff, frietKotProblem, simpleProblemIff, simpleProblemImplies, simplestProblemIff, testTseitin
 
 from datetime import datetime
 
@@ -309,7 +309,7 @@ class BestStepCOUSComputer(object):
         remaining = F - HS
         # for l in remaining:
         #     wcnf.append([l], weight=f(l))
-        wcnf.extend([[l] for l in remaining], [f(l) for l in remaining])
+        wcnf.extend([[l] for l in remaining], [-f(l) for l in remaining])
 
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()
@@ -480,14 +480,14 @@ class BestStepCOUSComputer(object):
                     HS_greedy.add(c)
 
                     # checking for satisfiability
-                    sat, Ap_incr = self.checkSat(HS_greedy, phases=self.I0)
-                    sat, App_incr = self.checkSat(HS_greedy | (self.I0 & Ap_incr), phases=A)
+                    sat, HS_model_incr = self.checkSat(HS_greedy, phases=self.I0)
+                    # sat, App_incr = self.checkSat(HS_greedy | (self.I0 & Ap_incr), phases=A)
 
                     # Did we find an OUS ?
                     if not sat:
                         break
 
-                    C = F - self.grow(f, F, App_incr)
+                    C = F - self.grow(f, F, A, HS_greedy, HS_model_incr)
                     # print("\tgot C", len(C))
                     H.add(frozenset(C))
                     self.opt_model.addCorrectionSet(C)
@@ -497,13 +497,13 @@ class BestStepCOUSComputer(object):
                 t_expl['#H_greedy'] += 1
 
                 # checking for satisfiability
-                sat, Ap_greedy = self.checkSat(HS_greedy, phases=self.I0)
-                sat, App_greedy = self.checkSat(HS_greedy | (self.I0 & Ap_greedy), phases=A)
+                sat, HS_model_greedy = self.checkSat(HS_greedy, phases=self.I0)
+                # sat, App_greedy = self.checkSat(HS_greedy | (self.I0 & Ap_greedy), phases=A)
 
                 if not sat:
                     break
 
-                C = F - self.grow(f, F, App_greedy)
+                C = F - self.grow(f, F, A, HS_greedy, HS_model_greedy)
                 # print("\tgot C", len(C))
                 H.add(frozenset(C))
                 self.opt_model.addCorrectionSet(C)
@@ -979,15 +979,19 @@ def get_user_vars(cnf):
     U = set(abs(l) for lst in cnf.clauses for l in lst)
     return U
 
-
 def test_originProblemIff(params):
     params.instance = "origin-problem-iff"
     o_clauses, o_assumptions, o_weights, o_user_vars = originProblemIff()
     o_cnf = CNF(from_clauses=o_clauses)
-    U = o_user_vars | set(x for lst in o_assumptions for x in lst)
-    I = set(x for lst in o_assumptions for x in lst)
-    f = cost(U, I)
-    explain(C=o_cnf, U=U, f=f, I0=I, params=params)
+    with Solver(bootstrap_with=o_cnf.clauses + o_assumptions) as s:
+        solved = s.solve()
+        for i, m in enumerate(s.enum_models()):
+            print(i)
+
+    # U = o_user_vars | set(x for lst in o_assumptions for x in lst)
+    # I = set(x for lst in o_assumptions for x in lst)
+    # f = cost(U, I)
+    # explain(C=o_cnf, U=U, f=f, I0=I, params=params)
 
 def test_frietkot(params):
     params.instance = "frietkot"
@@ -1021,11 +1025,57 @@ def test_explain(params):
     s_cnf = simpleProblem()
     s_cnf_ass, assumptions = add_assumptions(s_cnf)
     print("prob:", s_cnf)
+    print("prob:", s_cnf_ass)
+    print("prob:", assumptions)
+    with Solver(bootstrap_with=s_cnf + [[l] for l in assumptions]) as s:
+        solved = s.solve()
+        i = 0
+        for i, m in enumerate(s.enum_models()):
+            print(m)
+            if i > 0:
+                break
+        assert i == 0
 
     # transform list cnf into CNF object
     simple_cnf = CNF(from_clauses=s_cnf_ass)
     U = get_user_vars(simple_cnf)
     I = set(assumptions)
+    f = cost(U, I)
+    explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
+
+def test_explainImplies(params):
+    params.instance = "simpleIff"
+    s_cnf, s_ass = simpleProblemIff()
+    with Solver(bootstrap_with=s_cnf + [[l] for l in s_ass]) as s:
+        solved = s.solve()
+        i = 0
+        for i, m in enumerate(s.enum_models()):
+            if i > 0:
+                print(i)
+        assert i == 0
+    simple_cnf = CNF(from_clauses=s_cnf)
+    U = get_user_vars(simple_cnf)
+    I = set(s_ass)
+    f = cost(U, I)
+    explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
+
+def test_explainIff(params):
+    params.instance = "simpleIff"
+    s_cnf, s_ass = simpleProblemIff()
+    print(s_cnf)
+    print(s_ass)
+    with Solver(bootstrap_with=s_cnf + [[-l] for l in s_ass]) as s:
+        solved = s.solve()
+        i = 0
+        for i, m in enumerate(s.enum_models()):
+            print(m)
+            if i > 4:
+                break
+                # print(i)
+        assert i == 0
+    simple_cnf = CNF(from_clauses=s_cnf)
+    U = get_user_vars(simple_cnf)
+    I = set(s_ass)
     f = cost(U, I)
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
@@ -1083,7 +1133,23 @@ if __name__ == "__main__":
     # timeout
     params.timeout = 1 * HOURS
 
-    test_explain(params)
-    test_frietkot(params)
-    test_puzzle(params)
+    # test_explain(params)
+    # test_explainIff(params)
+    cnf, ass = simplestProblemIff()
+    with Solver(bootstrap_with=cnf + ass + [[-2]]) as s:
+        s.solve()
+        for m in s.enum_models():
+            print(m)
+    # test_explainIff(params)
+    # test_frietkot(params)
+    # test_puzzle(params)
+    # mycnf, ass= simpleProblemIff()
+    # print(mycnf)
+    # print(ass)
+    # test_explain(params)
+    # test_frietkot(params)
+    # test_explainImplies(params)
+    # test_originProblemIff(params)
     # test_originProblemIff()
+
+

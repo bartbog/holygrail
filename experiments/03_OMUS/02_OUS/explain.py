@@ -39,6 +39,7 @@ class ComputationParams(object):
         # intialisation: pre-seeding
         self.pre_seeding = False
         self.pre_seeding_minimal = False
+        self.pre_seeding_grow = False
 
         # hitting set computation
         self.postpone_opt = False
@@ -50,6 +51,7 @@ class ComputationParams(object):
 
         # sat - grow
         self.grow = False
+        self.grow_sat = False
         self.grow_subset_maximal = False
         self.grow_maxsat = False
 
@@ -67,11 +69,13 @@ class ComputationParams(object):
         return {
             "preseeding": self.pre_seeding,
             "preseeding-minimal": self.pre_seeding_minimal,
+            "preseeding-grow": self.pre_seeding_grow,
             "sat-polarity": self.polarity,
             "postpone_opt": self.postpone_opt,
             "postpone_opt_incr": self.postpone_opt_incr,
             "postpone_opt_greedy": self.postpone_opt_greedy,
             "grow": self.grow,
+            "grow_sat": self.grow_sat,
             "grow_subset_maximal": self.grow_subset_maximal,
             "grow_maxsat": self.grow_maxsat,
             "timeout": self.timeout,
@@ -241,7 +245,7 @@ class BestStepCOUSComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             preseeding (bool, optional): [description]. Defaults to True.
         """
-    def __init__(self, sat: Solver, U: set, Iend: set, I: set, params: ComputationParams, cnf: CNF = None):
+    def __init__(self, sat: Solver, f, U: set, Iend: set, I: set, params: ComputationParams, cnf: CNF = None):
         """
             Constructor.
         """
@@ -249,6 +253,7 @@ class BestStepCOUSComputer(object):
         self.opt_model = CondOptHS(U=U, Iend=Iend, I=I)
         self.I0 = set(I)
         self.Iend = set(Iend)
+        A = self.I0 | {-l for l in Iend-I}
         self.params = params
         self.cnf = cnf
 
@@ -259,19 +264,27 @@ class BestStepCOUSComputer(object):
 
             # find (m)ss'es of F, add correction sets
             Ap = Iend # satisfiable subset
-            C = F - Ap
+
+            if self.params.pre_seeding_grow:
+                C = F - self.grow(f, F=F, A=A, HS=Ap, HS_model=Ap)
+            else:
+                C = F - Ap
+
             self.opt_model.addCorrectionSet(C)
             # print("pre-seed","",C)
             if self.params.pre_seeding_minimal:
                 covered = set(Iend) # already in an satsubset
 
-            print(F, covered, F-covered)
             for l in F:
                 if self.params.pre_seeding_minimal and l in covered:
                     continue
                 issat, Ap = self.checkSat(set({l}), phases=Iend)
-                print(issat)
-                C = F - Ap
+                # print(issat)
+                if self.params.pre_seeding_grow:
+                    C = F - self.grow(f, F=F, A=A, HS=set({l}), HS_model=Ap)
+                else:
+                    C = F - Ap
+
                 self.opt_model.addCorrectionSet(C)
                 # print("pre-seed",l,C)
                 if  self.params.pre_seeding_minimal:
@@ -293,9 +306,10 @@ class BestStepCOUSComputer(object):
         F = set(l for l in U) | set(-l for l in U)
         F -= {-l for l in I}
         # print("F=", F)
+        p = {-l for l in Iexpl}
 
         A = I | {-l for l in Iexpl}
-        return self.bestStepCOUS(f, F, A, timeout=timeout)
+        return self.bestStepCOUS(f, F, A, timeout=timeout, p=p)
 
     def grow_maxsat(self, f, F, A, HS, model):
         hs = set(HS) # take copy!!
@@ -333,6 +347,8 @@ class BestStepCOUSComputer(object):
         # no actual grow needed if 'Ap' contains all user vars
         if not self.params.grow:
             return HS
+        elif self.params.grow_sat:
+            return HS_model
         elif self.params.grow_subset_maximal:
             return self.grow_subset_maximal(A, HS, HS_model)
         elif self.params.grow_maxsat:
@@ -363,7 +379,7 @@ class BestStepCOUSComputer(object):
 
         return solved, model
 
-    def greedyHittingSet(self, H, f, A):
+    def greedyHittingSet(self, H, f, A, p):
         # trivial case: empty
         # print(H)
         if len(H) == 0:
@@ -394,6 +410,8 @@ class BestStepCOUSComputer(object):
             if c in V:
                 del V[c]
 
+        #TODO: prioritize taking a literal from p
+
         while len(V) > 0:
             # special case, one element left
             if len(V) == 1:
@@ -423,7 +441,7 @@ class BestStepCOUSComputer(object):
 
         return C
 
-    def bestStepCOUS(self, f, F, A: set, timeout):
+    def bestStepCOUS(self, f, F, A: set, timeout, p=p):
         """Given a set of assumption literals A subset of F, bestStepCOUS
         computes a subset a subset A' of A that satisfies p s.t C u A' is
         UNSAT and A' is f-optimal based on [1].
@@ -457,12 +475,7 @@ class BestStepCOUSComputer(object):
 
         # VARIABLE INITIALISATION
         H, C = set(), set()
-        HS, Ap, App=set(), set(), set()
-
-        if self.params.postpone_opt:
-            assert self.params.postpone_opt_greedy or self.params.postpone_opt_incr, "At least one greedy approach."
-            MODE_OPT, MODE_GREEDY, MODE_INCR = 3, 2, 1
-            mode = MODE_OPT
+        HS, Ap, App = set(), set(), set()
 
         while(True):
             if time.time() - tstart > timeout:
@@ -476,12 +489,22 @@ class BestStepCOUSComputer(object):
             while(self.params.postpone_opt):
                 while(self.params.postpone_opt and len(H) > 0):
                     # Computing a hitting set
-                    c = min(C, key=lambda l: f(l))
+                    # making sure there is at least one of -Iexpl in c
+                    # minSet = set()
+                    if len(HS_greedy & p) == 0:
+                        # take the minimum cost literal
+                        if len(p & C) > 0:
+                            # prioritze literal in C
+                            c = min(p & C, key=lambda l: f(l))
+                        else:
+                            c = min(p, key=lambda l: f(l))
+                    else:
+                        c = min(C, key=lambda l: f(l))
+
                     HS_greedy.add(c)
 
                     # checking for satisfiability
                     sat, HS_model_incr = self.checkSat(HS_greedy, phases=self.I0)
-                    # sat, App_incr = self.checkSat(HS_greedy | (self.I0 & Ap_incr), phases=A)
 
                     # Did we find an OUS ?
                     if not sat:
@@ -493,7 +516,7 @@ class BestStepCOUSComputer(object):
                     self.opt_model.addCorrectionSet(C)
                     t_expl['#H_incr'] += 1
 
-                HS_greedy = self.greedyHittingSet(H, f, A)
+                HS_greedy = self.greedyHittingSet(H, f, A, p)
                 t_expl['#H_greedy'] += 1
 
                 # checking for satisfiability
@@ -846,6 +869,9 @@ def explain(C: CNF, U: set, f, I0: set, params):
 
         I0 (list): Initial interpretation subset of U.
     """
+    if params.postpone_opt:
+        assert params.postpone_opt_greedy or params.postpone_opt_incr, "At least one greedy approach."
+
     print("Expl:")
     print("\tcnf:", len(C.clauses))
     print("\tU:", len(U))
@@ -881,7 +907,7 @@ def explain(C: CNF, U: set, f, I0: set, params):
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
     # print("Iend", Iend)
-    c = BestStepCOUSComputer(sat=sat, U=U, Iend=Iend, I=I0, params=params, cnf=C)
+    c = BestStepCOUSComputer(f=f, sat=sat, U=U, Iend=Iend, I=I0, params=params, cnf=C)
 
     I = set(I0) # copy
     while(len(Iend - I) > 0):
@@ -950,6 +976,48 @@ def add_assumptions(cnf):
         cnf_ass.append(cl)
 
     return cnf_ass, assumptions
+
+
+def cost_puzzle(U, I, bij= set(), trans= set(), clues= set(), facts= set(), cost_bij= 50, cost_trans= 50, cost_clue= 100):
+    """
+    U = user variables
+    I = initial intepretation
+
+    bij/trans/clues = subset of user variables w/ specific cost.
+    """
+
+    # making sure there is no overlap
+    assert len(bij.intersection(clues)) == 0, "Overlap between bij/clues"
+    assert len(trans.intersection(clues)) == 0, "Overlap between trans/clues"
+    # assert len(facts.intersection(clues)) == 0, "Overlap between clues/facts"
+
+    assert len(trans.intersection(bij)) == 0, "Overlap between bij/trans"
+    # assert len(facts.intersection(bij)) == 0, "Overlap between bij/facts"
+
+    # assert len(facts.intersection(trans)) == 0, "Overlap between trans/facts"
+
+
+    litsU = set(abs(l) for l in U) | set(-abs(l) for l in U)
+    litBij = set(abs(l) for l in bij) | set(-abs(l) for l in bij)
+    litTrans = set(abs(l) for l in trans) | set(-abs(l) for l in trans)
+    litClues = set(abs(l) for l in clues) | set(-abs(l) for l in clues)
+
+    I0 = set(I)
+
+    def cost_lit(lit):
+        if lit not in litsU:
+            raise CostFunctionError(U, lit)
+        elif lit in litBij:
+            return cost_bij
+        elif lit in litTrans:
+            return cost_trans
+        elif lit in litClues:
+            return cost_clue
+        else:
+            # lit in 
+            return 1
+
+    return cost_lit
 
 
 def cost(U, I):
@@ -1125,21 +1193,22 @@ if __name__ == "__main__":
 
     # sat - grow
     params.grow = True
-    params.grow_maxsat = True
-    # params.grow_subset_maximal= True
+    # params.grow_maxsat = True
+    params.grow_subset_maximal= True
     # params.grow_maxsat = True
     # params.subset_maximal = True
+    test_puzzle(params)
 
     # timeout
     params.timeout = 1 * HOURS
 
     # test_explain(params)
     # test_explainIff(params)
-    cnf, ass = simplestProblemIff()
-    with Solver(bootstrap_with=cnf + ass + [[-2]]) as s:
-        s.solve()
-        for m in s.enum_models():
-            print(m)
+    # cnf, ass = simplestProblemIff()
+    # with Solver(bootstrap_with=cnf + ass + [[-2]]) as s:
+    #     s.solve()
+    #     for m in s.enum_models():
+    #         print(m)
     # test_explainIff(params)
     # test_frietkot(params)
     # test_puzzle(params)

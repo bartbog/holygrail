@@ -382,7 +382,7 @@ def originProblem():
     clues_cnf = cnf_to_pysat(to_cnf(clues))
     bij_cnf = cnf_to_pysat(to_cnf(bij))
     trans_cnf = cnf_to_pysat(to_cnf(trans))
-    print(len(clues_cnf))
+    # print(len(clues_cnf))
 
     hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
     soft_clauses = []
@@ -390,9 +390,13 @@ def originProblem():
     soft_clauses += [[bv1.name + 1]  for bv1 in bv_bij]
     soft_clauses += [[bv1.name + 1]  for bv1 in bv_trans]
 
-    weights = [100 for clause in bv_clues] + \
-              [60 for clause in bv_trans] + \
-              [60 for clause in bv_bij]
+    weights = {}
+    weights.update({bv.name + 1: 100 for bv in bv_clues})
+    weights.update({bv.name + 1: 60 for bv in bv_trans})
+    weights.update({bv.name + 1: 60 for bv in bv_bij})
+    weights.update({-(bv.name + 1): 100 for bv in bv_clues})
+    weights.update({-(bv.name + 1): 60 for bv in bv_trans})
+    weights.update({-(bv.name + 1): 60 for bv in bv_bij})
 
     explainable_facts = set()
     for rel in rels:

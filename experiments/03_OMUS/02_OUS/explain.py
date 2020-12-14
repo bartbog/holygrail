@@ -340,7 +340,7 @@ class BestStepCOUSComputer(object):
         while (Ap != App):
             Ap = App
             sat, App = self.checkSat(HS | (A & Ap), phases=A)
-        print("\tgot sat", sat, len(App))
+        # print("\tgot sat", sat, len(App))
         return App
 
     def grow(self, f, F, A, HS, HS_model):
@@ -502,6 +502,7 @@ class BestStepCOUSComputer(object):
             # POSTPONING OPTIMISATION
             time_post = time.time()
             while(self.params.postpone_opt):
+                # tincr = time.time()
                 while(self.params.postpone_opt_incr and len(H) > 0):
                     if len(C) == 0:
                         break
@@ -522,14 +523,18 @@ class BestStepCOUSComputer(object):
 
                     HS_greedy.add(c)
 
+                    tsat = time.time()
                     # checking for satisfiability
                     sat, HS_model_incr = self.checkSat(HS_greedy, phases=self.I0)
-
+                    t_expl['t_sat'].append(time.time() - tsat)
                     # Did we find an OUS ?
                     if not sat:
                         break
 
+                    tgrow = time.time()
                     C_incr = F - self.grow(f, F, A, HS_greedy, HS_model_incr)
+                    t_expl['t_grow'].append(time.time() - tgrow)
+
                     # print("\tgot C", len(C))
                     H.add(frozenset(C_incr))
                     self.opt_model.addCorrectionSet(C_incr)
@@ -542,14 +547,20 @@ class BestStepCOUSComputer(object):
                 t_expl['#H_greedy'] += 1
 
                 # checking for satisfiability
+                tsat = time.time()
                 sat, HS_model_greedy = self.checkSat(HS_greedy, phases=self.I0)
+                t_expl['t_sat'].append(time.time() - tsat)
 
                 if not sat:
                     break
 
+                tgrow = time.time()
                 C = F - self.grow(f, F, A, HS_greedy, HS_model_greedy)
+                t_expl['t_grow'].append(time.time() - tgrow)
+
                 H.add(frozenset(C))
                 self.opt_model.addCorrectionSet(C)
+
 
             # TIMING POSTPONE OPTIMISATION
             time_post = time.time() - time_post
@@ -863,10 +874,16 @@ def optimalPropagate(sat, I=set(), U=None):
 
 
 def print_timings(t_exp):
-    print("texpl=", round(t_exp['t_ous'], 3), "s")
-    print("\t#HS=", len(t_exp['t_mip']))
-    print("\tSAT=", round(sum(t_exp['t_sat']), 3), f"s [{round(100*sum(t_exp['t_sat'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_sat'])/len(t_exp['t_sat']), 3))
-    print("\tMIP=", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))
+    print("texpl=", round(t_exp['t_ous'], 3), "s\n")
+    print("\t#HS Opt:", t_exp['#H'], "\t Incr:", t_exp['#H_incr'], "\tGreedy:", t_exp['#H_greedy'], "\n")
+    if len(t_exp['t_mip']) > 0:
+        print("\tMIP=\t", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))
+    if len(t_exp['t_post']) > 0:
+        print("\tPOST=\t", round(sum(t_exp['t_post']), 3), f"s [{round(100*sum(t_exp['t_post'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_post'])/len(t_exp['t_post']), 3))
+    if len(t_exp['t_sat']) > 0:
+        print("\tSAT=\t", round(sum(t_exp['t_sat']), 3), f"s [{round(100*sum(t_exp['t_sat'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_sat'])/len(t_exp['t_sat']), 3))
+    if len(t_exp['t_grow']) > 0:
+        print("\tGROW=\t", round(sum(t_exp['t_grow']), 3), f"s [{round(100*sum(t_exp['t_grow'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_grow'])/len(t_exp['t_grow']), 3))
 
 
 @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
@@ -997,41 +1014,22 @@ def add_assumptions(cnf):
     return cnf_ass, assumptions
 
 
-def cost_puzzle(U, I, bij= set(), trans= set(), clues= set(), facts= set(), cost_bij= 50, cost_trans= 50, cost_clue= 100):
+def cost_puzzle(U, I, cost_clue):
     """
     U = user variables
     I = initial intepretation
 
     bij/trans/clues = subset of user variables w/ specific cost.
     """
-
-    # making sure there is no overlap
-    assert len(bij.intersection(clues)) == 0, "Overlap between bij/clues"
-    assert len(trans.intersection(clues)) == 0, "Overlap between trans/clues"
-    # assert len(facts.intersection(clues)) == 0, "Overlap between clues/facts"
-
-    assert len(trans.intersection(bij)) == 0, "Overlap between bij/trans"
-    # assert len(facts.intersection(bij)) == 0, "Overlap between bij/facts"
-
-    # assert len(facts.intersection(trans)) == 0, "Overlap between trans/facts"
-
-
     litsU = set(abs(l) for l in U) | set(-abs(l) for l in U)
-    litBij = set(abs(l) for l in bij) | set(-abs(l) for l in bij)
-    litTrans = set(abs(l) for l in trans) | set(-abs(l) for l in trans)
-    litClues = set(abs(l) for l in clues) | set(-abs(l) for l in clues)
 
     I0 = set(I)
 
     def cost_lit(lit):
         if lit not in litsU:
             raise CostFunctionError(U, lit)
-        elif lit in litBij:
-            return cost_bij
-        elif lit in litTrans:
-            return cost_trans
-        elif lit in litClues:
-            return cost_clue
+        elif lit in cost_clue:
+            return cost_clue[lit]
         else:
             # lit in 
             return 1
@@ -1085,24 +1083,12 @@ def test_frietkot(params):
 
     f_cnf, f_user_vars = frietKotProblem()
     f_cnf_ass, assumptions = add_assumptions(f_cnf)
-    print("prob:", f_cnf)
-    print(assumptions)
-    with Solver(bootstrap_with=f_cnf + [[l] for l in assumptions]) as s:
-        solved = s.solve()
-        i = 0
-        for i, m in enumerate(s.enum_models()):
-            print(m)
-            # if i > 0:
-            #     break
-        assert i == 0
+
     # transform list cnf into CNF object
     frietkot_cnf = CNF(from_clauses=f_cnf_ass)
     U = f_user_vars | set(abs(l) for l in assumptions)
     I = set(assumptions)
     f = cost(U, I)
-    print(U)
-    print(I)
-    print(frietkot_cnf.clauses)
     explain(C=frietkot_cnf, U=U, f=f, I0=I, params=params)
 
 def test_puzzle(params):
@@ -1111,7 +1097,9 @@ def test_puzzle(params):
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
-    f = cost(U, I)
+    # print(o_weights)
+    # return 
+    f = cost_puzzle(U, I, o_weights)
     explain(C=o_cnf, U=U, f=f, I0=I, params=params)
 
 def test_explain(params):
@@ -1119,18 +1107,6 @@ def test_explain(params):
     # test on simple case
     s_cnf = simpleProblem()
     s_cnf_ass, assumptions = add_assumptions(s_cnf)
-    print("prob:", s_cnf)
-    print("prob:", s_cnf_ass)
-    print("prob:", assumptions)
-    with Solver(bootstrap_with=s_cnf + [[l] for l in assumptions]) as s:
-        solved = s.solve()
-        i = 0
-        for i, m in enumerate(s.enum_models()):
-            print(m)
-            if i > 0:
-                break
-        assert i == 0
-
     # transform list cnf into CNF object
     simple_cnf = CNF(from_clauses=s_cnf_ass)
     U = get_user_vars(simple_cnf)
@@ -1214,28 +1190,25 @@ if __name__ == "__main__":
     # preseeding
     params.pre_seeding = True
     params.pre_seeding_minimal = True
+    params.pre_seeding_grow = True
 
     # polarity of sat solver
     params.polarity = True
 
     # sat - grow
     params.grow = True
-    # params.grow_maxsat = True
     params.grow_subset_maximal= True
     # params.grow_maxsat = True
-    # params.subset_maximal = True
-    # test_puzzle(params)
-    params.postpone_opt = True
-    params.postpone_opt_incr = True
-    params.postpone_opt_greedy = True
-    # params.postpone_opt = True
 
+    # params.postpone_opt = True
+    # params.postpone_opt_incr = True
+    # params.postpone_opt_greedy = True
 
     # timeout
     params.timeout = 1 * HOURS
 
     # test_explain(params)
-    test_frietkot(params)
+    # test_frietkot(params)
     # test_explainIff(params)
     # cnf, ass = simplestProblemIff()
     # with Solver(bootstrap_with=cnf + ass + [[-2]]) as s:
@@ -1244,7 +1217,7 @@ if __name__ == "__main__":
     #         print(m)
     # test_explainIff(params)
     # test_frietkot(params)
-    # test_puzzle(params)
+    test_puzzle(params)
     # mycnf, ass= simpleProblemIff()
     # print(mycnf)
     # print(ass)

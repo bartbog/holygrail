@@ -441,7 +441,7 @@ class BestStepCOUSComputer(object):
 
         return C
 
-    def bestStepCOUS(self, f, F, A: set, timeout, p=p):
+    def bestStepCOUS(self, f, F, A: set, timeout, p):
         """Given a set of assumption literals A subset of F, bestStepCOUS
         computes a subset a subset A' of A that satisfies p s.t C u A' is
         UNSAT and A' is f-optimal based on [1].

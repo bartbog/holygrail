@@ -379,9 +379,8 @@ class BestStepCOUSComputer(object):
 
         return solved, model
 
-    def greedyHittingSet(self, H, f, A, p):
+    def greedyHittingSet(self, H, f, p):
         # trivial case: empty
-        # print(H)
         if len(H) == 0:
             return set()
 
@@ -392,8 +391,6 @@ class BestStepCOUSComputer(object):
         V = dict()  # for each element in H: which sets it is in
 
         for i, h in enumerate(H):
-            # TIAS: only take soft clauses
-            # h = [e for e in hi if self.obj_weights[e] < 1e50 and self.obj_weights[e] > 0]
             # special case: only one element in the set, must be in hitting set
             # h = hi& A
             if len(h) == 1:
@@ -405,12 +402,32 @@ class BestStepCOUSComputer(object):
                     else:
                         V[e].add(i)
 
+        # make sure p constriant is validated
+        if len(p & C) == 0:
+            Vp = {key: V[key] for key in V.keys() & p}
+            assert len(Vp) > 0, "There should be at least one of p."
+
+            (c, cover) = max(Vp.items(), key=lambda tpl: len(tpl[1]))
+            c_covers = [tpl for tpl in Vp.items() if len(tpl[1]) == len(cover)]
+
+            if len(c_covers) > 1:
+                (c, cover) = min(c_covers, key=lambda tpl: f(tpl[0]))
+
+            del V[c]
+            C.add(c)
+
+            # update vertical views, remove covered sets
+            for e in list(V):
+                # V will be changed in this loop
+                V[e] -= cover
+                # no sets remaining with this element?
+                if len(V[e]) == 0:
+                    del V[e]
+
         # special cases, remove from V so they are not picked again
         for c in C:
             if c in V:
                 del V[c]
-
-        #TODO: prioritize taking a literal from p
 
         while len(V) > 0:
             # special case, one element left
@@ -441,7 +458,7 @@ class BestStepCOUSComputer(object):
 
         return C
 
-    def bestStepCOUS(self, f, F, A: set, timeout, p=p):
+    def bestStepCOUS(self, f, F, A: set, timeout, p):
         """Given a set of assumption literals A subset of F, bestStepCOUS
         computes a subset a subset A' of A that satisfies p s.t C u A' is
         UNSAT and A' is f-optimal based on [1].
@@ -465,7 +482,6 @@ class BestStepCOUSComputer(object):
             '#H_greedy':0,
             '#H_incr':0,
         }
-        # p = 
         tstart = time.time()
 
         # UPDATE OBJECTIVE WEIGHTS
@@ -474,32 +490,35 @@ class BestStepCOUSComputer(object):
         print("updateObj, A=",len(A))
 
         # VARIABLE INITIALISATION
-        H, C = set(), set()
-        HS, Ap, App = set(), set(), set()
+        H, C, HS = set(), set(), set()
 
         while(True):
             if time.time() - tstart > timeout:
                 t_expl['t_ous'] = timeout
-                return App, t_expl, False
+                return HS, t_expl, False
 
-            HS_greedy = set(App)
+            HS_greedy = set(HS)
 
             # POSTPONING OPTIMISATION
             time_post = time.time()
             while(self.params.postpone_opt):
-                while(self.params.postpone_opt and len(H) > 0):
+                while(self.params.postpone_opt_incr and len(H) > 0):
+                    if len(C) == 0:
+                        break
                     # Computing a hitting set
-                    # making sure there is at least one of -Iexpl in c
-                    # minSet = set()
+                    # p-cosntraint validation
                     if len(HS_greedy & p) == 0:
-                        # take the minimum cost literal
                         if len(p & C) > 0:
-                            # prioritze literal in C
                             c = min(p & C, key=lambda l: f(l))
+                            C.remove(c)
                         else:
                             c = min(p, key=lambda l: f(l))
+                            if -c in C:
+                                C.remove(-c)
+                        # take the minimum cost literal
                     else:
                         c = min(C, key=lambda l: f(l))
+                        C.remove(c)
 
                     HS_greedy.add(c)
 
@@ -510,24 +529,25 @@ class BestStepCOUSComputer(object):
                     if not sat:
                         break
 
-                    C = F - self.grow(f, F, A, HS_greedy, HS_model_incr)
+                    C_incr = F - self.grow(f, F, A, HS_greedy, HS_model_incr)
                     # print("\tgot C", len(C))
-                    H.add(frozenset(C))
-                    self.opt_model.addCorrectionSet(C)
+                    H.add(frozenset(C_incr))
+                    self.opt_model.addCorrectionSet(C_incr)
                     t_expl['#H_incr'] += 1
 
-                HS_greedy = self.greedyHittingSet(H, f, A, p)
+                if not self.params.postpone_opt_greedy:
+                    break
+
+                HS_greedy = self.greedyHittingSet(H, f, p)
                 t_expl['#H_greedy'] += 1
 
                 # checking for satisfiability
                 sat, HS_model_greedy = self.checkSat(HS_greedy, phases=self.I0)
-                # sat, App_greedy = self.checkSat(HS_greedy | (self.I0 & Ap_greedy), phases=A)
 
                 if not sat:
                     break
 
                 C = F - self.grow(f, F, A, HS_greedy, HS_model_greedy)
-                # print("\tgot C", len(C))
                 H.add(frozenset(C))
                 self.opt_model.addCorrectionSet(C)
 
@@ -566,7 +586,6 @@ class BestStepCOUSComputer(object):
             # ADD COMPLEMENT TO HITTING SET OPTIMISATION SOLVER
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
-            # t_expl['#H'] += 1
 
     def __del__(self):
         """Ensure sat solver is deleted after garbage collection.
@@ -1067,7 +1086,15 @@ def test_frietkot(params):
     f_cnf, f_user_vars = frietKotProblem()
     f_cnf_ass, assumptions = add_assumptions(f_cnf)
     print("prob:", f_cnf)
-
+    print(assumptions)
+    with Solver(bootstrap_with=f_cnf + [[l] for l in assumptions]) as s:
+        solved = s.solve()
+        i = 0
+        for i, m in enumerate(s.enum_models()):
+            print(m)
+            # if i > 0:
+            #     break
+        assert i == 0
     # transform list cnf into CNF object
     frietkot_cnf = CNF(from_clauses=f_cnf_ass)
     U = f_user_vars | set(abs(l) for l in assumptions)
@@ -1197,12 +1224,18 @@ if __name__ == "__main__":
     params.grow_subset_maximal= True
     # params.grow_maxsat = True
     # params.subset_maximal = True
-    test_puzzle(params)
+    # test_puzzle(params)
+    params.postpone_opt = True
+    params.postpone_opt_incr = True
+    params.postpone_opt_greedy = True
+    # params.postpone_opt = True
+
 
     # timeout
     params.timeout = 1 * HOURS
 
     # test_explain(params)
+    test_frietkot(params)
     # test_explainIff(params)
     # cnf, ass = simplestProblemIff()
     # with Solver(bootstrap_with=cnf + ass + [[-2]]) as s:

@@ -257,16 +257,7 @@ class BestStepCOUSComputer(object):
         A = self.I0 | {-l for l in Iend-I}
         self.params = params
         self.cnf = cnf
-        self.t_expl = {
-            't_post': [],
-            't_sat': [],
-            't_mip': [],
-            't_grow': [],
-            't_ous': 0,
-            '#H':0,
-            '#H_greedy': 0,
-            '#H_incr': 0,
-        }
+        self.t_expl = None
 
         if self.params.pre_seeding:
             # print("Pre-seeding")
@@ -352,19 +343,14 @@ class BestStepCOUSComputer(object):
 
     def grow(self, f, F, A, HS, HS_model):
         # no actual grow needed if 'Ap' contains all user vars
-        t_grow = time.time()
         if not self.params.grow:
-            SS = set(HS)
+            return HS
         elif self.params.grow_sat:
-            SS = set(HS_model)
+            return HS_model
         elif self.params.grow_subset_maximal:
-            SS = self.grow_subset_maximal(A, HS, HS_model)
+            return self.grow_subset_maximal(A, HS, HS_model)
         elif self.params.grow_maxsat:
-            SS = self.grow_maxsat(f, A, HS, HS_model)
-        else:
-            raise NotImplementedError("Grow")
-        self.t_expl['t_grow'].append(time.time() - t_grow)
-        return SS
+            return self.grow_maxsat(f, A, HS, HS_model)
 
     def checkSat(self, Ap: set, phases=set()):
         """Check satisfiability of given assignment of subset of the variables
@@ -379,19 +365,16 @@ class BestStepCOUSComputer(object):
         Returns:
             (bool, set): sat value, model assignment
         """
-        t_sat = time.time()
         if self.params.polarity:
             self.sat_solver.set_phases(literals=list(phases - Ap))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
 
         if not solved:
-            self.t_expl['t_sat'].append(time.time() - t_sat)
             return solved, Ap
 
         model = set(self.sat_solver.get_model())
 
-        self.t_expl['t_sat'].append(time.time() - t_sat)
         return solved, model
 
     def greedyHittingSet(self, H, f, p):
@@ -476,28 +459,20 @@ class BestStepCOUSComputer(object):
 
     def computeHittingSet(self, f, p, H, C, HS, mode):
         if mode == MODE_INCR:
-            t_incr = time.time()
             assert len(p.intersection(HS)) > 0, "Make sure there is at least one of p"
             hs = set(HS)
-            # print("incremental")
+            print("incremental")
             # p-cosntraint validation only 1 of p
             C -= p
             # take the minimum cost literal
             c = min(C, key=lambda l: f(l))
 
             hs.add(c)
-            self.t_expl['t_post'].append(time.time() - t_incr)
             return hs
         elif mode == MODE_GREEDY:
-            t_greedy = time.time()
-            hs = self.greedyHittingSet(H, f, p)
-            self.t_expl['t_post'].append(time.time() - t_greedy)
-            return hs
+            return self.greedyHittingSet(H, f, p)
         elif mode == MODE_OPT:
-            t_opt = time.time()
-            hs = self.opt_model.CondOptHittingSet()
-            self.t_expl['t_mip'].append(time.time() - t_opt)
-            return hs
+            return self.opt_model.CondOptHittingSet()
 
     def next_mode(self, sat, mode):
         # OPT stays OPT
@@ -533,16 +508,15 @@ class BestStepCOUSComputer(object):
                  and A' is f-optimal.
         """
         self.t_expl = {
-            't_post': [],
-            't_sat': [],
-            't_mip': [],
-            't_grow': [],
-            't_ous': 0,
+            't_post':[],
+            't_sat':[],
+            't_mip':[],
+            't_grow':[],
+            't_ous':0,
             '#H':0,
-            '#H_greedy': 0,
-            '#H_incr': 0,
+            '#H_greedy':0,
+            '#H_incr':0,
         }
-
         tstart = time.time()
 
         # UPDATE OBJECTIVE WEIGHTS
@@ -557,6 +531,59 @@ class BestStepCOUSComputer(object):
             if time.time() - tstart > timeout:
                 self.t_expl['t_ous'] = timeout
                 return HS, self.t_expl, False
+
+            # POSTPONING OPTIMISATION
+            # while(self.params.postpone_opt):
+            #     while(self.params.postpone_opt_incr and len(H) > 0):
+            #         assert len(p.intersection(HS_greedy)) > 0, "Make sure there is at least one of p"
+            #         print("incremental")
+            #         # p-cosntraint validation only 1 of p
+            #         C -= pnotp
+            #         # take the minimum cost literal
+            #         c = min(C, key=lambda l: f(l))
+
+            #         HS_greedy.add(c)
+
+            #         tsat = time.time()
+            #         # checking for satisfiability
+            #         sat, HS_model_incr = self.checkSat(HS_greedy, phases=self.I0)
+            #         t_expl['t_sat'].append(time.time() - tsat)
+
+            #         # Did we find an OUS ?
+            #         if not sat:
+            #             break
+
+            #         tgrow = time.time()
+            #         C = F - self.grow(f, F, A, HS_greedy, HS_model_incr)
+            #         t_expl['t_grow'].append(time.time() - tgrow)
+
+            #         H.add(frozenset(C))
+            #         self.opt_model.addCorrectionSet(C)
+            #         t_expl['#H_incr'] += 1
+
+            #     if not self.params.postpone_opt_greedy:
+            #         break
+
+            #     HS_greedy = self.greedyHittingSet(H, f, p)
+            #     t_expl['#H_greedy'] += 1
+
+            #     # checking for satisfiability
+            #     tsat = time.time()
+            #     sat, HS_model_greedy = self.checkSat(HS_greedy, phases=self.I0)
+            #     t_expl['t_sat'].append(time.time() - tsat)
+
+            #     if not sat:
+            #         break
+
+            #     tgrow = time.time()
+            #     C = F - self.grow(f, F, A, HS_greedy, HS_model_greedy)
+            #     t_expl['t_grow'].append(time.time() - tgrow)
+
+            #     H.add(frozenset(C))
+            #     self.opt_model.addCorrectionSet(C)
+
+
+            # TIMING POSTPONE OPTIMISATION
 
             # COMPUTING OPTIMAL HITTING SET
             HS = self.computeHittingSet(f=f, p=p, H=H, C=C, HS=HS, mode=mode)

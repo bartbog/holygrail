@@ -24,7 +24,7 @@ from datetime import datetime
 
 
 # Testing samples
-from frietkot import simpleProblem, originProblem, originProblemIff, frietKotProblem, simpleProblemIff, simpleProblemImplies, simplestProblemIff, testTseitin
+from frietkot import originProblemReify, originProblemReify2, originProblemWithVars, simplestProblemReify, originProblem, frietKotProblem, simpleProblem, frietKotProblemReify
 
 from datetime import datetime
 
@@ -38,6 +38,19 @@ modes = {
     MODE_GREEDY: "MODE_GREEDY",
     MODE_INCR: "MODE_INCR"
 }
+
+
+def runParallel(fns, args):
+    procs = []
+    for fn in fns:
+        for arg in args:
+            arg_copy = copy.deepcopy(arg)
+            p = Process(target=fn, args=(arg,))
+            p.start()
+            procs.append(p)
+
+    for p in procs:
+        p.join()
 
 
 class ComputationParams(object):
@@ -975,7 +988,7 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True):
 
     if verbose:
         print("Expl:")
-        print("\tcnf:", len(C.clauses))
+        print("\tcnf:", len(C.clauses), C.nv)
         print("\tU:", len(U))
         print("\tf:", f)
         print("\tI0:", len(I0))
@@ -1009,7 +1022,7 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True):
 
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
-    # print("Iend", Iend)
+    print(Iend)
     c = BestStepCOUSComputer(f=f, sat=sat, U=U, Iend=Iend, I=I0, params=params, cnf=C)
 
     I = set(I0) # copy
@@ -1033,17 +1046,21 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True):
 
         # facts used
         Ibest = I & expl
+        print("Ibest=", Ibest)
+        print("Explained=", expl-Ibest)
 
         # New information derived "focused" on
         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
+        assert len(Nbest - Iend) == 0
+        # print(I, Nbest)
 
         E.append({
             "constraints": list(Ibest), 
             "derived": list(Nbest)
         })
 
-        if verbose:
-            print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
+        # if verbose:
+        #     print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
 
         I |= Nbest
 
@@ -1134,21 +1151,6 @@ def get_user_vars(cnf):
     return U
 
 
-def test_originProblemIff(params):
-    params.instance = "origin-problem-iff"
-    o_clauses, o_assumptions, o_weights, o_user_vars = originProblemIff()
-    o_cnf = CNF(from_clauses=o_clauses)
-    with Solver(bootstrap_with=o_cnf.clauses + o_assumptions) as s:
-        solved = s.solve()
-        for i, m in enumerate(s.enum_models()):
-            print(i)
-
-    # U = o_user_vars | set(x for lst in o_assumptions for x in lst)
-    # I = set(x for lst in o_assumptions for x in lst)
-    # f = cost(U, I)
-    # explain(C=o_cnf, U=U, f=f, I0=I, params=params)
-
-
 def test_frietkot(params):
     params.instance = "frietkot"
 
@@ -1165,14 +1167,20 @@ def test_frietkot(params):
 
 def test_puzzle(params):
     params.instance = "origin-problem"
+    # o_clauses, o_assumptions, o_weights, o_user_vars = originProblemWithVars()
     o_clauses, o_assumptions, o_weights, o_user_vars = originProblem()
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
+    with Solver(bootstrap_with=o_clauses+o_assumptions) as s:
+        s.solve()
+        for m in s.enum_models():
+            print(len(m))
     # print(o_weights)
     # return 
     f = cost_puzzle(U, I, o_weights)
     explain(C=o_cnf, U=U, f=f, I0=I, params=params)
+
 
 def test_explain(params):
     params.instance = "simple"
@@ -1187,86 +1195,41 @@ def test_explain(params):
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
 
-def test_explainImplies(params):
-    params.instance = "simpleIff"
-    s_cnf, s_ass = simpleProblemIff()
-    with Solver(bootstrap_with=s_cnf + [[l] for l in s_ass]) as s:
-        solved = s.solve()
-        i = 0
-        for i, m in enumerate(s.enum_models()):
-            if i > 0:
-                print(i)
-        assert i == 0
-    simple_cnf = CNF(from_clauses=s_cnf)
-    U = get_user_vars(simple_cnf)
-    I = set(s_ass)
+def test_simpleReify(params):
+    cnf, assumptions, U = simplestProblemReify()
+    print(assumptions)
+    print(cnf)
+    print(U)
+    simple_cnf = CNF(from_clauses=cnf)
+    U = set(U) | set(assumptions)
+    I = set(assumptions)
     f = cost(U, I)
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
 
-def test_explainIff(params):
-    params.instance = "simpleIff"
-    s_cnf, s_ass = simpleProblemIff()
-    print(s_cnf)
-    print(s_ass)
-    with Solver(bootstrap_with=s_cnf + [[-l] for l in s_ass]) as s:
-        solved = s.solve()
-        i = 0
-        for i, m in enumerate(s.enum_models()):
-            print(m)
-            if i > 4:
-                break
-                # print(i)
-        assert i == 0
-    simple_cnf = CNF(from_clauses=s_cnf)
-    U = get_user_vars(simple_cnf)
-    I = set(s_ass)
+def test_frietkotReify(params):
+    cnf, assumptions, U = frietKotProblemReify()
+    simple_cnf = CNF(from_clauses=cnf)
+    U = set(U) | set(assumptions)
+    I = set(assumptions)
     f = cost(U, I)
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
 
-def all_param_test():
-    all_params = []
-    for preseed in [True, False]:
-        for subset_maximal in [True, False]:
-            for polarity in [True, False]:
-                # preseeding
-                p = ComputationParams()
-                p.pre_seeding = preseed
-                p.pre_seeding_minimal = preseed
-
-                # polarity
-                p.polarity = polarity
-
-                # subset_maximal
-                p.subset_maximal = subset_maximal
-
-                all_params.append(p)
-    return all_params
-
-
-def runParallel(fns, args):
-    procs = []
-    for fn in fns:
-        for arg in args:
-            arg_copy = copy.deepcopy(arg)
-            p = Process(target=fn, args=(arg,))
-            p.start()
-            procs.append(p)
-
-    for p in procs:
-        p.join()
-
+def test_puzzleReify(params):
+    p_clauses, p_assumptions, p_weights, p_expl_facts = originProblemReify2()
+    p_cnf = CNF(from_clauses=p_clauses)
+    U = p_expl_facts | set(p_assumptions)
+    I = set(p_assumptions)
+    f = cost_puzzle(U, I, p_weights)
+    explain(C=p_cnf, U=U, f=f, I0=I, params=params)
 
 if __name__ == "__main__":
-    # all_params = all_param_test()
-    # fns = [test_explain, test_frietkot, test_puzzle, test_originProblemIff]
-
     # runParallel(fns, all_params)
     params = ComputationParams()
     # preseeding
     params.pre_seeding = True
-    params.pre_seeding_subset_minimal = True
+    # params.pre_seeding_subset_minimal = True
     params.pre_seeding_grow = True
 
     # polarity of sat solver
@@ -1288,6 +1251,9 @@ if __name__ == "__main__":
     # test_explain(params)
     # test_frietkot(params)
     test_puzzle(params)
+    # test_simpleReify(params)
+    # test_simpleReify(params)
+    # test_puzzleReify(params)
 
 
     # test_explainIff(params)

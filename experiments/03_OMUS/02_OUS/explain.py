@@ -857,6 +857,7 @@ def optimalPropagate(sat, I=set(), U=None):
 
 def print_timings(t_exp):
     print("texpl=", round(t_exp['t_ous'], 3), "s\n")
+    t_exp['t_ous'] = max(t_exp['t_ous'], 0.00001) # no div zero
     print("\t#HS Opt:", t_exp['#H'], "\t Incr:", t_exp['#H_incr'], "\tGreedy:", t_exp['#H_greedy'], "\n")
     if len(t_exp['t_mip']) > 0:
         print("\tMIP=\t", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))

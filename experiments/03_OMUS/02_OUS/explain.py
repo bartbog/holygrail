@@ -553,7 +553,7 @@ class BestStepCOUSComputer(object):
     def computeHittingSet(self, f, p, H, C, HS, mode):
         if mode == MODE_INCR:
             t_incr = time.time()
-            assert len(p.intersection(HS)) > 0, "Make sure there is at least one of p"
+            # assert len(p.intersection(HS)) > 0, "Make sure there is at least one of p"
             hs = set(HS)
             # print("incremental")
             # p-cosntraint validation only 1 of p

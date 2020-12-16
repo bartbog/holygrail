@@ -10,7 +10,7 @@ from pysat.formula import CNF
 import itertools
 
 
-def rq1_frietkotProblem(params):
+def r_frietkotProblem(params):
     params.instance = "frietkot"
     f_cnf, f_user_vars = frietKotProblem()
     f_cnf_ass, assumptions = add_assumptions(f_cnf)
@@ -23,7 +23,7 @@ def rq1_frietkotProblem(params):
     explain(C=frietkot_cnf, U=U, f=f, I0=I, params=params, verbose=False)
 
 
-def rq1_originProblem(params):
+def r_originProblem(params):
     params.instance = "origin-problem"
     o_clauses, o_assumptions, o_weights, o_user_vars = originProblem()
     o_cnf = CNF(from_clauses=o_clauses)
@@ -33,7 +33,7 @@ def rq1_originProblem(params):
     explain(C=o_cnf, U=U, f=f, I0=I, params=params, verbose=False)
 
 
-def rq1_simpleProblem(params):
+def r_simpleProblem(params):
     params.instance = "simple"
     s_cnf = simpleProblem()
     s_cnf_ass, assumptions = add_assumptions(s_cnf)
@@ -85,14 +85,23 @@ def rq1_params():
                 p.grow_maxsat = grow_maxsat
 
                 p.timeout = 4 * HOURS
-                p.output_folder = "results/rq1/" + datetime.now().strftime("%Y%m%d/")
+                p.output_folder = "results/rq1_2/" + datetime.now().strftime("%Y%m%d/")
                 all_params_test.append(p)
     return all_params_test
 
 
+def rq2_params():
+    pass
+
+
 def rq1():
     all_params = rq1_params()
-    all_funs = [rq1_simpleProblem, rq1_frietkotProblem, rq1_originProblem]
+    all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
+    runParallel(all_funs, all_params)
+
+def rq2():
+    all_params = rq2_params()
+    all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
     runParallel(all_funs, all_params)
 
 if __name__ == "__main__":

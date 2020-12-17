@@ -24,7 +24,7 @@ from datetime import datetime
 
 
 # Testing samples
-from frietkot import originProblemReify, originProblemReify2, originProblemWithVars, simplestProblemReify, originProblem, frietKotProblem, simpleProblem, frietKotProblemReify
+from frietkot import originProblemReify, simplestProblemReify, originProblem, frietKotProblem, simpleProblem, frietKotProblemReify
 
 from datetime import datetime
 
@@ -849,6 +849,8 @@ class CondOptHS(object):
             else:
                 xi.setAttr(GRB.Attr.Obj, GRB.INFINITY)
 
+        self.opt_model.update()
+
     def __del__(self):
         self.opt_model.dispose()
 
@@ -1059,8 +1061,8 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True):
             "derived": list(Nbest)
         })
 
-        # if verbose:
-        #     print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
+        if verbose:
+            print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
 
         I |= Nbest
 
@@ -1167,7 +1169,6 @@ def test_frietkot(params):
 
 def test_puzzle(params):
     params.instance = "origin-problem"
-    # o_clauses, o_assumptions, o_weights, o_user_vars = originProblemWithVars()
     o_clauses, o_assumptions, o_weights, o_user_vars = originProblem()
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
@@ -1217,12 +1218,20 @@ def test_frietkotReify(params):
 
 
 def test_puzzleReify(params):
-    p_clauses, p_assumptions, p_weights, p_expl_facts = originProblemReify2()
-    p_cnf = CNF(from_clauses=p_clauses)
-    U = p_expl_facts | set(p_assumptions)
-    I = set(p_assumptions)
-    f = cost_puzzle(U, I, p_weights)
-    explain(C=p_cnf, U=U, f=f, I0=I, params=params)
+    params.instance = "origin-problem-Reify"
+    o_clauses, o_assumptions, o_weights, o_user_vars = originProblemReify()
+    o_cnf = CNF(from_clauses=o_clauses)
+    U = o_user_vars | set(x for lst in o_assumptions for x in lst)
+    I = set(x for lst in o_assumptions for x in lst)
+    with Solver(bootstrap_with=o_clauses+o_assumptions) as s:
+        s.solve()
+        for i, m in enumerate(s.enum_models()):
+            print(len(m))
+        assert i == 0
+    # print(o_weights)
+    # return 
+    f = cost_puzzle(U, I, o_weights)
+    explain(C=o_cnf, U=U, f=f, I0=I, params=params)
 
 if __name__ == "__main__":
     # runParallel(fns, all_params)

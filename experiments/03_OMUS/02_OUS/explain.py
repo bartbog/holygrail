@@ -1213,6 +1213,7 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True, matching_table=Non
         remaining_time = params.timeout - (time.time() - t_expl_start)
         # Compute optimal explanation explanation assignment to subset of U.
         expl, t_exp, expl_found = c.bestStep(f, U, Iend, I, timeout=remaining_time)
+
         if verbose:
             print_timings(t_exp)
 
@@ -1232,24 +1233,20 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True, matching_table=Non
 
         Ibest = I & expl
 
-        # print("Ibest=", Ibest)
-        # print("Explained=", expl-Ibest)
-
-        # if matching_table:
-        #     for i in Ibest:
-        #         if(i in matching_table['trans']):
-        #             print("trans", i)
-        #         elif(i in matching_table['bij']):
-        #             print("bij", i)
-        #         elif(i in matching_table['clues']):
-        #             print("clues n°", matching_table['clues'][i])
-        #         else:
-        #             print("Fact:", i)
+        if matching_table and verbose:
+            for i in Ibest:
+                if(i in matching_table['trans']):
+                    print("trans", i)
+                elif(i in matching_table['bij']):
+                    print("bij", i)
+                elif(i in matching_table['clues']):
+                    print("clues n°", matching_table['clues'][i])
+                else:
+                    print("Fact:", i)
 
         # New information derived "focused" on
         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
         assert len(Nbest - Iend) == 0
-        # print(I, Nbest)
 
         E.append({
             "constraints": list(Ibest), 

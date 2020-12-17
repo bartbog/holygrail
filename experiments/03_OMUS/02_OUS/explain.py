@@ -844,7 +844,7 @@ class BestStepCOUSComputer(object):
             # Timings
             # print(f"\t{modes[mode]}: got HS", len(HS), "cost", self.opt_model.opt_model.objval)
 
-            assert len(p.intersection(HS)) > 0, f"\n\n\nHS={HS}\np={p}"
+            # assert len(p.intersection(HS)) > 0, f"\n\n\nHS={HS}\np={p}"
 
             # CHECKING SATISFIABILITY
             sat, HS_model = self.checkSat(HS, phases=self.I0)

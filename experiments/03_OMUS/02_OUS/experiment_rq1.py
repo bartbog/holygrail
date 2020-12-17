@@ -25,7 +25,7 @@ def r_frietkotProblem(params):
 
 def r_originProblem(params):
     params.instance = "origin-problem"
-    o_clauses, o_assumptions, o_weights, o_user_vars = originProblem()
+    o_clauses, o_assumptions, o_weights, o_user_vars, _ = originProblem()
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)

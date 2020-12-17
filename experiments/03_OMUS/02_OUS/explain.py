@@ -14,9 +14,10 @@ import gurobipy as gp
 from gurobipy import GRB
 
 # pysat imports
-from pysat.formula import CNF, WCNF
+from pysat.formula import CNF, WCNF, WCNFPlus
 from pysat.solvers import Solver
 from pysat.examples.rc2 import RC2
+from pysat.examples.musx import MUSX
 
 from datetime import datetime
 
@@ -180,8 +181,11 @@ class CostFunctionError(Exception):
 
 
 class BestStepComputer(object):
-    def __init__(self, params):
+    def __init__(self, cnf: CNF, sat: Solver, params: ComputationParams):
         self.params = params
+        self.sat_solver = sat
+        self.cnf = cnf
+        self.opt_model = None
 
     #preparing for inheritance
     def grow(self, f, A, Ap):
@@ -316,13 +320,20 @@ class BestStepCOUSComputer(object):
         """
             Constructor.
         """
+        # Execution parameters
         self.sat_solver = sat
-        self.opt_model = CondOptHS(U=U, Iend=Iend, I=I)
-        self.I0 = set(I)
-        self.Iend = set(Iend)
-        A = self.I0 | {-l for l in Iend-I}
         self.params = params
         self.cnf = cnf
+
+        # Optimisation model
+        self.opt_model = CondOptHS(U=U, Iend=Iend, I=I)
+
+        # initial values
+        self.I0 = set(I)
+        self.Iend = set(Iend)
+
+        # Current formula
+        A = self.I0 | {-l for l in Iend-I}
 
         self.t_expl = {
             't_post': [],
@@ -334,10 +345,10 @@ class BestStepCOUSComputer(object):
             '#H_greedy': 0,
             '#H_incr': 0,
         }
+
         H = []
 
         if self.params.pre_seeding:
-            # print("Pre-seeding")
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
 
@@ -345,26 +356,30 @@ class BestStepCOUSComputer(object):
             Ap = Iend # satisfiable subset
 
             if self.params.pre_seeding_grow:
-                C = F - self.grow(f, F=F, A=A, HS=Ap, HS_model=Ap)
+                C = frozenset(F - self.grow(f, F=F, A=A, HS=Ap, HS_model=Ap))
             else:
-                C = F - Ap
+                C = frozenset(F - Ap)
 
             self.opt_model.addCorrectionSet(C)
-            # print("pre-seed","",C)
+            H.append(C)
+
             if self.params.pre_seeding_subset_minimal:
                 covered = set(Iend) # already in an satsubset
 
             SSes = []
-            # print()
             for l in F:
+
                 if self.params.pre_seeding_subset_minimal and l in covered:
                     continue
-                issat, Ap = self.checkSat(set({l}), phases=Iend)
-                # print(issat)
+
+                HS = set({l})
+                _, Ap = self.checkSat(Ap=HS, phases=Iend)
+
+                # growing the HS
                 if self.params.pre_seeding_grow_maxsat:
-                    C = frozenset(F - self.grow(f, F=F, A=A, HS=set({l}), HS_model=Ap))
+                    C = frozenset(F - self.grow(f, F=F, A=A, HS=HS, HS_model=Ap))
                 elif self.params.pre_seeding_grow:
-                    C = frozenset(F - self.grow_maxsat_preseeding(f, A, HS= set({l}), SSes=SSes))
+                    C = frozenset(F - self.grow_maxsat_preseeding(f=f, A=A, HS=HS, SSes=SSes))
                     SSes.append(C)
                 else:
                     C = frozenset(F - Ap)
@@ -372,13 +387,11 @@ class BestStepCOUSComputer(object):
                 if C not in H:
                     self.opt_model.addCorrectionSet(C)
                     H.append(C)
-                # print("pre-seed",l,C)
+
                 if  self.params.pre_seeding_subset_minimal:
                     covered |= (Ap & F) # add covered lits of F
 
     def grow_maxsat_preseeding(self, f, A, HS, SSes):
-        # hs = set(HS) # take copy!!
-
         wcnf = WCNF()
 
         # add hard clauses of CNF
@@ -397,7 +410,8 @@ class BestStepCOUSComputer(object):
             return set(t_model)
 
     def bestStep(self, f, U: set, Iend: set, I: set, timeout=1 * HOURS):
-        """bestStep computes a subset A' of A that satisfies p s.t.
+        """
+        bestStep computes a subset A' of A that satisfies p s.t.
         C u A' is UNSAT and A' is f-optimal.
 
         Args:
@@ -418,14 +432,12 @@ class BestStepCOUSComputer(object):
         return self.bestStepCOUS(f, F, A, timeout=timeout, p=p)
 
     def grow_maxsat(self, f, A, HS):
-        # hs = set(HS) # take copy!!
-
         wcnf = WCNF()
 
         # add hard clauses of CNF
         wcnf.extend(self.cnf.clauses + [[l] for l in HS])
 
-        # add soft clasues => F - HS
+        # TODO: is this really correct ? A - HS ? add soft clasues => F - HS
         remaining = A - HS
         wcnf.extend([[l] for l in remaining], [-f(l) for l in remaining])
 
@@ -449,7 +461,7 @@ class BestStepCOUSComputer(object):
     def grow(self, f, F, A, HS, HS_model):
         # no actual grow needed if 'Ap' contains all user vars
         t_grow = time.time()
-        
+
         if not self.params.grow:
             SS = set(HS)
         elif self.params.grow_sat:
@@ -457,7 +469,7 @@ class BestStepCOUSComputer(object):
         elif self.params.grow_subset_maximal:
             SS = self.grow_subset_maximal(A, HS, HS_model)
         elif self.params.grow_maxsat:
-            SS = self.grow_maxsat(f, A, HS)
+            SS = self.grow_maxsat(f=f, A=A, HS=HS)
         else:
             raise NotImplementedError("Grow")
         self.t_expl['t_grow'].append(time.time() - t_grow)
@@ -650,7 +662,6 @@ class BestStepCOUSComputer(object):
 
         # UPDATE OBJECTIVE WEIGHTS
         self.opt_model.updateObjective(f, A)
-        # print("updateObj, A=", len(A))
 
         # VARIABLE INITIALISATION
         H, C, HS = set(), set(), set()
@@ -1253,8 +1264,8 @@ if __name__ == "__main__":
 
     # sat - grow
     params.grow = True
-    params.grow_subset_maximal= True
-    # params.grow_maxsat = True
+    # params.grow_subset_maximal= True
+    params.grow_maxsat = True
 
     # params.postpone_opt = True
     # params.postpone_opt_incr = True

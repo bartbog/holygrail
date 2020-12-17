@@ -87,7 +87,7 @@ def rq1_params():
                     p.grow_maxsat = grow_maxsat
 
                     p.timeout = 4 * HOURS
-                    p.output_folder = "results/rq1_3/" + datetime.now().strftime("%Y%m%d/")
+                    p.output_folder = "results/rq1_4/" + datetime.now().strftime("%Y%m%d/")
                     all_params_test.append(p)
     return all_params_test
 

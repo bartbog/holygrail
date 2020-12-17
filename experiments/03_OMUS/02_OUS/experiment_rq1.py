@@ -1,4 +1,4 @@
-from explain import ComputationParams, cost_puzzle, cost, explain, add_assumptions, get_user_vars, runParallel
+from explain import ComputationParams, MINUTES, cost_puzzle, cost, explain, add_assumptions, get_user_vars, runParallel
 from explain import HOURS
 from multiprocessing import Process, Pool
 from datetime import datetime
@@ -84,7 +84,7 @@ def rq1_params():
                 p.grow_subset_maximal = grow_subset
                 p.grow_maxsat = grow_maxsat
 
-                p.timeout = 4 * HOURS
+                p.timeout = 1 * MINUTES
                 p.output_folder = "results/rq1_2/" + datetime.now().strftime("%Y%m%d/")
                 all_params_test.append(p)
     return all_params_test

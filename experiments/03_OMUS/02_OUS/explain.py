@@ -88,38 +88,42 @@ class ComputationParams(object):
         # instance
         self.instance = ""
 
+    def checkParams(self):
+        if self.postpone_opt:
+            assert (self.postpone_opt_incr or self.postpone_opt_greedy), "At least one of the two postponing heuristics"
+
+        if self.grow:
+            assert self.grow_sat ^ self.grow_subset_maximal ^ self.grow_maxsat, "Exactly 1 grow mechanism"
+
     def __str__(self):
         s = ""
-        if self.pre_seeding:
-            s += "pre-seeding \n"
         if self.pre_seeding_subset_minimal:
-            s += "\t pre-seeding-subset-minimal\n"
+            s += "pre-seeding-subset-minimal\n"
 
         if self.pre_seeding_grow:
-            s += "\t pre-seeding-grow-simple\n"
+            s += "pre-seeding-grow-simple\n"
 
         if self.pre_seeding_grow_maxsat:
-            s += "\t pre-seeding-grow-maxsat \n"
+            s += "pre-seeding-grow-maxsat \n"
 
         if self.postpone_opt:
             s += "postpone_opt \n"
         if self.postpone_opt_incr:
-            s += "\t postpone_opt_incr \n"
+            s += "postpone_opt_incr \n"
         if self.postpone_opt_greedy:
-            s += "\t postpone_opt_greedy \n"
+            s += "postpone_opt_greedy \n"
 
         # polarity of sat solver
         if self.polarity:
             s += "polarity \n"
+
         # sat - grow
-        if self.grow:
-            s += "grow\n"
         if self.grow_sat:
-            s += "\t grow_sat \n"
+            s += "\t grow-sat-model \n"
         if self.grow_subset_maximal:
-            s += "\t grow_subset_maximal \n"
+            s += "\t grow-subset-maximal \n"
         if self.grow_maxsat:
-            s += "\t grow_maxsat \n"
+            s += "\t grow-MaxSat \n"
 
         return s
 
@@ -176,6 +180,9 @@ class CostFunctionError(Exception):
 
 
 class BestStepComputer(object):
+    def __init__(self, params):
+        self.params = params
+
     #preparing for inheritance
     def grow(self, f, A, Ap):
         # no actual grow needed if 'Ap' contains all user vars
@@ -194,7 +201,7 @@ class BestStepComputer(object):
         Returns:
             (bool, set): sat value, model assignment
         """
-        if polarity:
+        if self.params.polarity:
             self.sat_solver.set_phases(literals=list(phases - Ap))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
@@ -316,6 +323,7 @@ class BestStepCOUSComputer(object):
         A = self.I0 | {-l for l in Iend-I}
         self.params = params
         self.cnf = cnf
+
         self.t_expl = {
             't_post': [],
             't_sat': [],
@@ -353,9 +361,9 @@ class BestStepCOUSComputer(object):
                     continue
                 issat, Ap = self.checkSat(set({l}), phases=Iend)
                 # print(issat)
-                if self.params.pre_seeding_grow:
+                if self.params.pre_seeding_grow_maxsat:
                     C = frozenset(F - self.grow(f, F=F, A=A, HS=set({l}), HS_model=Ap))
-                elif self.params.pre_seeding_grow_maxsat:
+                elif self.params.pre_seeding_grow:
                     C = frozenset(F - self.grow_maxsat_preseeding(f, A, HS= set({l}), SSes=SSes))
                     SSes.append(C)
                 else:
@@ -985,8 +993,7 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True):
 
         I0 (list): Initial interpretation subset of U.
     """
-    if params.postpone_opt:
-        assert params.postpone_opt_greedy or params.postpone_opt_incr, "At least one greedy approach."
+    params.checkParams()
 
     if verbose:
         print("Expl:")

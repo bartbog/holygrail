@@ -62,31 +62,33 @@ def rq1_params():
 
     for pre_grow, pre_subset, pre_maxsat in pre_grow_perms:
         for postopt in TF:
-            for grow, grow_sat, grow_subset, grow_maxsat in grow_perms:
-                p = COusParams()
+            for post_opt_greedy in TF:
+                for grow, grow_sat, grow_subset, grow_maxsat in grow_perms:
+                    p = COusParams()
 
-                # polarity
-                p.polarity = True
+                    # polarity
+                    p.polarity = True
 
-                # pre-seeding
-                p.pre_seeding = True
-                p.pre_seeding_grow = pre_subset
-                p.pre_seeding_subset_minimal = pre_grow
-                p.pre_seeding_grow_maxsat = pre_maxsat
+                    # pre-seeding
+                    p.pre_seeding = True
+                    p.pre_seeding_grow = pre_subset
+                    p.pre_seeding_subset_minimal = pre_grow
+                    p.pre_seeding_grow_maxsat = pre_maxsat
 
-                # hitting set computation
-                p.postpone_opt = postopt
-                p.postpone_opt_incr = postopt
+                    # hitting set computation
+                    p.postpone_opt = (postopt or post_opt_greedy)
+                    p.postpone_opt_incr = postopt
+                    p.postpone_opt_greedy = post_opt_greedy
 
-                # grow
-                p.grow = grow
-                p.grow_sat = grow_sat
-                p.grow_subset_maximal = grow_subset
-                p.grow_maxsat = grow_maxsat
+                    # grow
+                    p.grow = grow
+                    p.grow_sat = grow_sat
+                    p.grow_subset_maximal = grow_subset
+                    p.grow_maxsat = grow_maxsat
 
-                p.timeout = 4 * HOURS
-                p.output_folder = "results/rq1_3/" + datetime.now().strftime("%Y%m%d/")
-                all_params_test.append(p)
+                    p.timeout = 4 * HOURS
+                    p.output_folder = "results/rq1_3/" + datetime.now().strftime("%Y%m%d/")
+                    all_params_test.append(p)
     return all_params_test
 
 

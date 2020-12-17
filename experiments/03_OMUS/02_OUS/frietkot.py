@@ -586,8 +586,8 @@ def originProblem():
         # print()
         for item in rel.df.values:
             explainable_facts |= set(i.name+1 for i in item)
-
-    return hard_clauses, soft_clauses, weights, explainable_facts
+    
+    return hard_clauses, soft_clauses, weights, explainable_facts, {'trans': [bv.name + 1 for bv in bv_trans], 'bij': [bv.name + 1 for bv in bv_bij], 'clues' : {bv.name + 1: i for i, bv in enumerate(bv_clues)}}
 
 
 def simplestProblemReify():
@@ -605,6 +605,9 @@ def simplestProblemReify():
 
 def simpleProblem():
     (mayo, ketchup, andalouse) = BoolVar(3)
+    print("Mayo=", mayo.name+1)
+    print("ketchup=", ketchup.name+1)
+    print("andalouse=", andalouse.name+1)
 
     c0 = mayo
     c1 = ~mayo | ~andalouse | ketchup
@@ -622,6 +625,23 @@ def simpleProblem():
 def frietKotProblemReify():
     # Construct the model.
     (mayo, ketchup, curry, andalouse, samurai) = BoolVar(5)
+
+    print("Mayo=", mayo.name+1)
+    print("ketchup=", ketchup.name+1)
+    print("andalouse=", andalouse.name+1)
+    print("curry=", curry.name+1)
+    print("samurai=", samurai.name+1)
+
+    print(f"6.  Nora = {mayo.name+1} | {ketchup.name+1}", )
+    print(f"7.  Leander = ~{samurai.name+1} | {mayo.name+1}")
+    print(f"8.  Benjamin = ~{andalouse.name+1} | ~{curry.name+1} | ~{samurai.name+1}")
+    print(f"9.  Behrouz = {ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
+    print(f"10. Guy = ~{ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
+    print(f"11. Daan = ~{ketchup.name+1} | ~{curry.name+1} | {andalouse.name+1}")
+    print(f"12. Celine = ~{samurai.name+1}")
+    print(f"13. Anton = {mayo.name+1} | ~{curry.name+1} | ~{andalouse.name+1}")
+    print(f"14. Danny = ~{mayo.name+1} | {ketchup.name+1} | {andalouse.name+1} | {samurai.name+1}")
+    print(f"15. Luc = ~{mayo.name+1} | {samurai.name+1}")
 
     Nora = mayo | ketchup
     Leander = ~samurai | mayo
@@ -648,6 +668,23 @@ def frietKotProblemReify():
 def frietKotProblem():
     # Construct the model.
     (mayo, ketchup, curry, andalouse, samurai) = BoolVar(5)
+
+    print("Mayo=", mayo.name+1)
+    print("ketchup=", ketchup.name+1)
+    print("andalouse=", andalouse.name+1)
+    print("curry=", curry.name+1)
+    print("samurai=", samurai.name+1)
+
+    print(f"6.  Nora = {mayo.name+1} | {ketchup.name+1}", )
+    print(f"7.  Leander = ~{samurai.name+1} | {mayo.name+1}")
+    print(f"8.  Benjamin = ~{andalouse.name+1} | ~{curry.name+1} | ~{samurai.name+1}")
+    print(f"9.  Behrouz = {ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
+    print(f"10. Guy = ~{ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
+    print(f"11. Daan = ~{ketchup.name+1} | ~{curry.name+1} | {andalouse.name+1}")
+    print(f"12. Celine = ~{samurai.name+1}")
+    print(f"13. Anton = {mayo.name+1} | ~{curry.name+1} | ~{andalouse.name+1}")
+    print(f"14. Danny = ~{mayo.name+1} | {ketchup.name+1} | {andalouse.name+1} | {samurai.name+1}")
+    print(f"15. Luc = ~{mayo.name+1} | {samurai.name+1}")
 
     Nora = mayo | ketchup
     Leander = ~samurai | mayo

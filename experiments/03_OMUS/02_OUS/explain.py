@@ -54,7 +54,7 @@ def runParallel(fns, args):
         p.join()
 
 
-class ComputationParams(object):
+class COusParams(object):
     """
     docstring
     """
@@ -95,6 +95,31 @@ class ComputationParams(object):
 
         if self.grow:
             assert self.grow_sat ^ self.grow_subset_maximal ^ self.grow_maxsat, "Exactly 1 grow mechanism"
+
+    def to_dict(self):
+        return {
+            "preseeding": self.pre_seeding,
+            "preseeding-minimal": self.pre_seeding_subset_minimal,
+            "preseeding-grow": self.pre_seeding_grow,
+            "preseeding-grow-maxsat": self.pre_seeding_grow_maxsat,
+            "sat-polarity": self.polarity,
+            "postpone_opt": self.postpone_opt,
+            "postpone_opt_incr": self.postpone_opt_incr,
+            "postpone_opt_greedy": self.postpone_opt_greedy,
+            "grow": self.grow,
+            "grow_sat": self.grow_sat,
+            "grow_subset_maximal": self.grow_subset_maximal,
+            "grow_maxsat": self.grow_maxsat,
+            "timeout": self.timeout,
+            "instance": self.instance,
+            "output": self.output_folder+self.output_file,
+        }
+
+class OusParams(COusParams):
+    def __init__(self):
+        super().__init__()
+        self.reuse_SSes = False
+        self.reuse_costs = False
 
     def __str__(self):
         s = ""
@@ -181,18 +206,70 @@ class CostFunctionError(Exception):
 
 
 class BestStepComputer(object):
-    def __init__(self, cnf: CNF, sat: Solver, params: ComputationParams):
+    def __init__(self, cnf: CNF, sat: Solver, params, I0):
         self.params = params
         self.sat_solver = sat
         self.cnf = cnf
         self.opt_model = None
+        self.I0 = I0
 
-    #preparing for inheritance
-    def grow(self, f, A, Ap):
-        # no actual grow needed if 'Ap' contains all user vars
-        return Ap
+        self.t_expl = {
+            't_post': [],
+            't_sat': [],
+            't_mip': [],
+            't_grow': [],
+            't_ous': 0,
+            '#H':0,
+            '#H_greedy': 0,
+            '#H_incr': 0,
+        }
 
-    def checkSat(self, Ap: set, polarity=True, phases=set()):
+    def grow(self, f, F, A, HS, HS_model):
+        # no actual grow needed if 'HS_model' contains all user vars
+        t_grow = time.time()
+
+        if not self.params.grow:
+            SS = set(HS)
+        elif self.params.grow_sat:
+            SS = set(HS_model)
+        elif self.params.grow_subset_maximal:
+            SS = set(self.grow_subset_maximal(A=A, HS=HS, Ap=HS_model))
+        elif self.params.grow_maxsat:
+            SS = set(self.grow_maxsat(f=f, F=F, A=A, HS=HS))
+        else:
+            raise NotImplementedError("Grow")
+        self.t_expl['t_grow'].append(time.time() - t_grow)
+        return SS
+
+    def grow_maxsat(self, f, F, A, HS):
+        wcnf = WCNF()
+
+        # add hard clauses of CNF
+        wcnf.extend(self.cnf.clauses + [[l] for l in HS])
+
+        # TODO: is this really correct ? A - HS ? add soft clasues => F - HS
+        remaining = A - HS
+        wcnf.extend([[l] for l in remaining], [-f(l) for l in remaining])
+
+        with RC2(wcnf) as rc2:
+            t_model = rc2.compute()
+
+            if t_model is None:
+                return set(HS)
+
+            return set(t_model)
+
+    def grow_subset_maximal(self, A, HS, Ap):
+        sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
+
+        # repeat until subset maximal wrt A
+        while (Ap != App):
+            Ap = set(App)
+            sat, App = self.checkSat(HS | (A & Ap), phases=A)
+        # print("\tgot sat", sat, len(App))
+        return App
+
+    def checkSat(self, Ap: set, phases=set()):
         """Check satisfiability of given assignment of subset of the variables
         of Vocabulary V.
             - If the subset is unsatisfiable, Ap is returned.
@@ -218,7 +295,7 @@ class BestStepComputer(object):
         return solved, model
 
 
-class BestStepOUSComputer(object):
+class BestStepOUSComputer(BestStepComputer):
     """
         Class for computing Optimal Unsatisfiable Subsets given
         a sat solver bootstrapped with a CNF and user variables. Beststep
@@ -235,18 +312,26 @@ class BestStepOUSComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             preseeding (bool, optional): [description]. Defaults to True.
         """
-    def __init__(self, sat: Solver, U: set, I: set, Iend: set, params: ComputationParams):
-        self.sat = sat
-        self.Iend = Iend
-        self.I0 = set(I)
-        pass
+    def __init__(self, cnf, sat: Solver, Iend: set,  I: set, params: OusParams):
+        super().__init__(cnf, sat, params, I0=set(I))
+        self.SSes = set()
+        self.bestCosts = dict()
+        self.fullSS = set(Iend)
 
-    def bestStep(self, f, I: set):
+
+
+
+    def bestStep(self, f, Iend, I: set):
         # best cost
-        Xbest = I | {-l for l in  self.Iend - I}
+        Xbest = I | {-l for l in  Iend - I}
         f_xbest = sum(f(l) for l in Xbest)
 
-        for l in self.Iend - I:
+        for l in Iend - I:
+            # initialising the best cost
+            if l not in self.bestCosts or self.bestCosts[l] > f_xbest:
+                self.bestCosts[l] = f_xbest
+
+            F = I | {-l, l}
             X = self.bestStepOUS(f, F, I | set({-l}))
             f_expl = sum(f(l) for l in X)
 
@@ -256,47 +341,116 @@ class BestStepOUSComputer(object):
 
         return Xbest
 
-    def checkSat(self, Ap: set, polarity=True, phases=set()):
-        """Check satisfiability of given assignment of subset of the variables
-        of Vocabulary V.
-            - If the subset is unsatisfiable, Ap is returned.
-            - If the subset is satisfiable, the model computed by the sat
-              solver is returned.
+    def process_SSes(self, H):
+        self.SSes |= H
 
-        Args:
-            Ap (set): Susbet of literals
-
-        Returns:
-            (bool, set): sat value, model assignment
-        """
-        if polarity:
-            self.sat_solver.set_phases(literals=list(phases - Ap))
-
-        solved = self.sat_solver.solve(assumptions=list(Ap))
-
-        if not solved:
-            return solved, Ap
-
-        model = set(self.sat_solver.get_model())
-
-        return solved, model
+        # post-processing the MSSes
+        keep = set()
+        for m1, m1_model in self.SSes:
+            keep_m1 = True
+            for m2, _ in self.SSes:
+                if m1 != m2 and m1 < m2:
+                    keep_m1 = False
+            if keep_m1:
+                keep.add((m1, m1_model))
+        self.SSes = keep
 
     def bestStepOUS(self, f, F, A):
-        H = set()
-        opt_model = OptHS()
+        bestCost = min(self.bestCosts.values())
+        H, HS = set(), set()
+        SSes = set()
+        added_MSSes = set()
+        opt_model = OptHS(F)
+        lit_expl = next(iter(F - A))
+
+        if self.params.reuse_mss:
+            for SS in self.SSes:
+                if SS.issubset(self.fullSS):
+                    continue
+                if -lit_expl not in SS or lit_expl not in SS:
+                    continue
+
+                ss = SS & F
+
+                if any(ss.issubset(MSS) for MSS in added_MSSes):
+                    continue
+
+                C = F - ss
+
+                if C not in H:
+                    H.add(C)
+                    added_MSSes.append(ss & F)
+                    self.opt_model.addCorrectionSet(C)
 
         while(True):
+            while(self.params.postpone_opt):
+
+                while(self.params.postpone_opt_incr):
+                    hs = set(HS)
+                    # p-cosntraint validation only 1 of p
+                    # take the minimum cost literal
+                    c = min(C, key=lambda l: f(l))
+                    hs.add(c)
+
+                    sat, HSModel = self.checkSat(Ap=hs, phases=self.I0)
+
+                    if not sat:
+                        break
+
+                    costHS = sum(f(l) for l in HS)
+                    if self.params.reuse_costs and costHS > bestCost:
+                        return None, costHS
+
+                    SS = self.grow(f=f, F=F, A=A, HS=hs, HS_model=HSModel)
+                    C = F - SS
+                    H.add(frozenset(C))
+                    self.opt_model.addCorrectionSet(C)
+                    if self.params.reuse_SSes:
+                        SSes.add(frozenset(SS))
+
+                if not self.params.postpone_opt_greedy:
+                    break
+
+                HS = self.greedyHittingSet()
+
+                sat, HSModel = self.checkSat(Ap=HS, phases=self.I0)
+
+                costHS = sum(f(l) for l in HS)
+
+                if not sat:
+                    break
+
+                if self.params.reuse_costs and costHS > bestCost:
+                    return None, costHS
+
+                SS = self.grow(f=f, F=F, A=A, HS=HS, HS_model=HSModel)
+                C = F - SS
+                H.add(frozenset(C))
+                self.opt_model.addCorrectionSet(C)
+                if self.params.reuse_SSes:
+                    SSes.add(frozenset(SS))
+
             HS = opt_model.OptHittingSet()
 
-            sat, Ap = self.checkSat(HS, phases=self.I0)
-            sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
+            sat, HSModel = self.checkSat(HS, phases=self.I0)
+
+            costHS = sum(f(l) for l in HS)
 
             if not sat:
-                return App
+                if self.params.reuse_SSes:
+                    self.process_SSes(SSes)
 
-            C = F - self.grow(f, F, App)
+                return HS, costHS
+
+            if self.params.reuse_costs and costHS > bestCost:
+                return None, costHS
+
+            SS = self.grow(f=f, F=F, A=A, HS=HS, HS_model=HSModel)
+            C = F - SS
             H.add(frozenset(C))
             self.opt_model.addCorrectionSet(C)
+            if self.params.reuse_SSes:
+                SSes.add(frozenset(SS))
 
 
 class BestStepCOUSComputer(object):
@@ -316,7 +470,7 @@ class BestStepCOUSComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             preseeding (bool, optional): [description]. Defaults to True.
         """
-    def __init__(self, sat: Solver, f, U: set, Iend: set, I: set, params: ComputationParams, cnf: CNF = None):
+    def __init__(self, sat: Solver, f, U: set, Iend: set, I: set, params: COusParams, cnf: CNF = None):
         """
             Constructor.
         """
@@ -349,20 +503,20 @@ class BestStepCOUSComputer(object):
         H = []
 
         if self.params.pre_seeding:
-            print("Preseeding")
+            # print("Preseeding")
             print(U)
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
-            print("F=", F)
-            print("U=", U)
-            print("I", self.I0)
-            print("Iend", Iend)
+            # print("F=", F)
+            # print("U=", U)
+            # print("I", self.I0)
+            # print("Iend", Iend)
 
             # find (m)ss'es of F, add correction sets
             Ap = Iend # satisfiable subset
 
             C = frozenset(F - Ap)
-            print("C=", C)
+            # print("C=", C)
 
             self.opt_model.addCorrectionSet(C)
             H.append(C)
@@ -374,7 +528,7 @@ class BestStepCOUSComputer(object):
                 if l in covered:
                     continue
 
-                print("Seeding", {l})
+                # print("Seeding", {l})
                 HS = set({l})
                 _, Ap = self.checkSat(Ap=HS, phases=Iend)
 
@@ -597,7 +751,7 @@ class BestStepCOUSComputer(object):
 
     def computeHittingSet(self, f, p, H, C, HS, mode):
         if mode == MODE_INCR:
-            print("Incremental")
+            # print("Incremental")
             t_incr = time.time()
             hs = set(HS)
             # p-cosntraint validation only 1 of p
@@ -608,7 +762,7 @@ class BestStepCOUSComputer(object):
             self.t_expl['#H_incr'] += 1
             return hs
         elif mode == MODE_GREEDY:
-            print("Greedy")
+            # print("Greedy")
             t_greedy = time.time()
             hs = self.greedyHittingSet(H, f, p)
             self.t_expl['t_post'].append(time.time() - t_greedy)
@@ -616,7 +770,7 @@ class BestStepCOUSComputer(object):
             return hs
         elif mode == MODE_OPT:
             t_opt = time.time()
-            print("Opt!")
+            # print("Opt!")
             hs = self.opt_model.CondOptHittingSet()
             self.t_expl['t_mip'].append(time.time() - t_opt)
             self.t_expl['#H'] += 1
@@ -688,7 +842,7 @@ class BestStepCOUSComputer(object):
             # COMPUTING OPTIMAL HITTING SET
             HS = self.computeHittingSet(f=f, p=p, H=H, C=C, HS=HS, mode=mode)
             # Timings
-            print(f"\t{modes[mode]}: got HS", len(HS), "cost", self.opt_model.opt_model.objval)
+            # print(f"\t{modes[mode]}: got HS", len(HS), "cost", self.opt_model.opt_model.objval)
 
             assert len(p.intersection(HS)) > 0, f"\n\n\nHS={HS}\np={p}"
 
@@ -716,11 +870,9 @@ class BestStepCOUSComputer(object):
 
 
 class OptHS(object):
-    def __init__(self, U, I, l):
-        # notIexpl = set(-lit for lit in Iexpl)
-
+    def __init__(self, F, p):
         # Iend + -Iexpl
-        self.allLits = list(I) + [l] + [-l]
+        self.allLits = list(F)
         self.nAllLits = len(self.allLits)
 
         # optimisation model
@@ -729,7 +881,7 @@ class OptHS(object):
         # model parameters
         self.opt_model.Params.OutputFlag = 0
         self.opt_model.Params.LogToConsole = 0
-        self.opt_model.Params.Threads = 8
+        self.opt_model.Params.Threads = 1
 
         # VARIABLE -- OBJECTIVE
         x = self.opt_model.addMVar(
@@ -743,9 +895,6 @@ class OptHS(object):
             x[self.nAllLits-1] == 1
         )
 
-        self.opt_model.addConstr(
-            x.sum() >= 2
-        )
         self.opt_model.update()
 
     def addCorrectionSet(self, C: set):
@@ -1056,7 +1205,7 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True, matching_table=Non
 
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
-    print(Iend)
+    # print(Iend)
     c = BestStepCOUSComputer(f=f, sat=sat, U=U, Iend=Iend, I=I0, params=params, cnf=C)
 
     I = set(I0) # copy
@@ -1083,19 +1232,19 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True, matching_table=Non
 
         Ibest = I & expl
 
-        print("Ibest=", Ibest)
-        print("Explained=", expl-Ibest)
+        # print("Ibest=", Ibest)
+        # print("Explained=", expl-Ibest)
 
-        if matching_table:
-            for i in Ibest:
-                if(i in matching_table['trans']):
-                    print("trans", i)
-                elif(i in matching_table['bij']):
-                    print("bij", i)
-                elif(i in matching_table['clues']):
-                    print("clues n°", matching_table['clues'][i])
-                else:
-                    print("Fact:", i)
+        # if matching_table:
+        #     for i in Ibest:
+        #         if(i in matching_table['trans']):
+        #             print("trans", i)
+        #         elif(i in matching_table['bij']):
+        #             print("bij", i)
+        #         elif(i in matching_table['clues']):
+        #             print("clues n°", matching_table['clues'][i])
+        #         else:
+        #             print("Fact:", i)
 
         # New information derived "focused" on
         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
@@ -1219,12 +1368,6 @@ def test_puzzle(params):
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
-    with Solver(bootstrap_with=o_clauses+o_assumptions) as s:
-        s.solve()
-        for m in s.enum_models():
-            print(len(m))
-    # print(o_weights)
-    # return 
     f = cost_puzzle(U, I, o_weights)
     explain(C=o_cnf, U=U, f=f, I0=I, params=params, matching_table=matching_table)
 
@@ -1239,15 +1382,11 @@ def test_explain(params):
     U = get_user_vars(simple_cnf)
     I = set(assumptions)
     f = cost(U, I)
-    print(s_cnf_ass)
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
 
 def test_simpleReify(params):
     cnf, assumptions, U = simplestProblemReify()
-    print(assumptions)
-    print(cnf)
-    print(U)
     simple_cnf = CNF(from_clauses=cnf)
     U = set(U) | set(assumptions)
     I = set(assumptions)
@@ -1270,19 +1409,12 @@ def test_puzzleReify(params):
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
-    with Solver(bootstrap_with=o_clauses+o_assumptions) as s:
-        s.solve()
-        for i, m in enumerate(s.enum_models()):
-            print(len(m))
-        assert i == 0
-    # print(o_weights)
-    # return 
     f = cost_puzzle(U, I, o_weights)
     explain(C=o_cnf, U=U, f=f, I0=I, params=params)
 
 if __name__ == "__main__":
     # runParallel(fns, all_params)
-    params = ComputationParams()
+    params = COusParams()
     # preseeding
     params.pre_seeding = True
     # params.pre_seeding_subset_minimal = True

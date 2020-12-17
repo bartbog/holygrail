@@ -1,4 +1,4 @@
-from explain import ComputationParams, MINUTES, cost_puzzle, cost, explain, add_assumptions, get_user_vars, runParallel
+from explain import COusParams, MINUTES, cost_puzzle, cost, explain, add_assumptions, get_user_vars, runParallel
 from explain import HOURS
 from multiprocessing import Process, Pool
 from datetime import datetime
@@ -63,7 +63,7 @@ def rq1_params():
     for pre_grow, pre_subset, pre_maxsat in pre_grow_perms:
         for postopt in TF:
             for grow, grow_sat, grow_subset, grow_maxsat in grow_perms:
-                p = ComputationParams()
+                p = COusParams()
 
                 # polarity
                 p.polarity = True
@@ -85,7 +85,7 @@ def rq1_params():
                 p.grow_maxsat = grow_maxsat
 
                 p.timeout = 4 * HOURS
-                p.output_folder = "results/rq1_2/" + datetime.now().strftime("%Y%m%d/")
+                p.output_folder = "results/rq1_3/" + datetime.now().strftime("%Y%m%d/")
                 all_params_test.append(p)
     return all_params_test
 
@@ -98,6 +98,7 @@ def rq1():
     all_params = rq1_params()
     all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
     runParallel(all_funs, all_params)
+
 
 def rq2():
     all_params = rq2_params()

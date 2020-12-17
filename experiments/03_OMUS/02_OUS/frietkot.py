@@ -298,7 +298,6 @@ def originProblemReify():
 def originProblem():
     """
     Logic grid puzzle: 'origin' in CPpy
-
     Based on... to check originally, currently part of ZebraTutor
     Probably part of Jens Claes' master thesis, from a 'Byron...' booklet
     """
@@ -330,149 +329,38 @@ def originProblem():
         for col_ids in rel.df:
             # one per column
             # bij += exactly_one(rel[:, col_ids])
-            # b1 = to_cnf(exactly_one(rel[:, col_ids]))
-            [bij.append(implies(bv_bij[cnt], clause)) for clause in exactly_one(rel[:, col_ids])]
-
-            # [bij.append(implies(bv_bij[cnt], clause)) for clause in b1]
+            b1 = to_cnf(exactly_one(rel[:, col_ids]))
+            [bij.append(implies(bv_bij[cnt], clause)) for clause in b1]
             cnt += 1
         for (_,row) in rel.df.iterrows():
             # one per row
             # bij += exactly_one(row)
-            # b2 = to_cnf(exactly_one(row))
-            [bij.append( implies(bv_bij[cnt], clause) ) for clause in exactly_one(row)]
+            b2 = to_cnf(exactly_one(row))
+            [bij.append( implies(bv_bij[cnt] , clause) ) for clause in b2]
             cnt += 1
 
-    # # Transitivity
+    # Transitivity
     trans = []
-    bv_trans = [BoolVar() for i in range(12)]
-    # for x in person:
-    #     for z in birthplace:
-    #         for y in age:
-    #             # ! x y z:  from(x, z) & is_linked_with_1(y, z) => is_old(x, y).
-    #             # t0 = to_cnf(implies( native[x, z] & age_birth[y, z], is_old[x, y]))
-    #             trans.append(implies(bv_trans[0], ( ~native[x, z] | ~age_birth[y, z] | is_old[x, y] )))
-
-    #              # ! x y z:  ~from(x, z) & is_linked_with_1(y, z) => ~is_old[x, y].
-    #             trans.append(implies(bv_trans[1], ( native[x, z] | ~age_birth[y, z] | ~is_old[x, y] )))
-
-    #              # ! x y z:  from(x, z) & ~is_linked_with_1(y, z) => ~is_old[x, y].
-    #             trans.append(implies(bv_trans[2], ( ~native[x, z] | age_birth[y, z] | ~is_old[x, y] )))
-
-    # for x in person :
-    #     for y in age :
-    #         for z in city :
-
-    #             # ! x y z:  lives_in(x, z) & is_linked_with_2(y, z) => is_old[x, y].
-
-    #             trans.append(implies(bv_trans[3], ( ~lives_in[x, z] | ~age_city[y, z] | is_old[x, y] )))
-
-    #              # ! x y z:  ~from(x, z) & is_linked_with_1(y, z) => ~is_old[x, y].
-    #             trans.append(implies(bv_trans[4], ( lives_in[x, z] | ~age_city[y, z] | ~is_old[x, y] )))
-
-    #              # ! x y z:  from(x, z) & ~is_linked_with_1(y, z) => ~is_old[x, y].
-    #             trans.append(implies(bv_trans[5], ( ~lives_in[x, z] | age_city[y, z] | ~is_old[x, y] )))
-
-
-
-    # for x in person :
-    #     for y in birthplace :
-    #         for z in city :
-    #             # ! x y z:  lives_in(x, z) & is_linked_with_2(y, z) => is_old[x, y].
-    #             trans.append(implies(bv_trans[6], ( ~lives_in[x, z] | ~city_birth[z, y] | native[x, y] )))
-    #              # ! x y z:  ~from(x, z) & is_linked_with_1(y, z) => ~is_old[x, y].
-    #             trans.append(implies(bv_trans[7], ( lives_in[x, z] | ~city_birth[z, y] | ~native[x, y] )))
-    #              # ! x y z:  from(x, z) & ~is_linked_with_1(y, z) => ~is_old[x, y].
-    #             trans.append(implies(bv_trans[8], ( ~lives_in[x, z] | city_birth[z, y] | ~native[x, y] )))
-
-
-
-
-    # for x in age :
-    #     for y in birthplace:
-    #         for z in city :
-    #             #  ! x y z:  is_linked_with_2(x, z) & is_linked_with_3(y, z) => is_linked_with_1(x, y).
-    #             trans.append(implies(bv_trans[9], ( ~age_city[x, z] | ~city_birth[z, y] | age_birth[x, y] )))
-
-    #             # ! x y z:  ~is_linked_with_2(x, z) & is_linked_with_3(y, z) => ~is_linked_with_1(x, y).
-    #             trans.append(implies(bv_trans[10], ( age_city[x, z] | ~city_birth[z, y] | ~age_birth[x, y] )))
-
-    #             # ! x y z:  is_linked_with_2(x, z) & ~is_linked_with_3(y, z) => ~is_linked_with_1(x, y).
-    #             trans.append(implies(bv_trans[11], ( ~age_city[x, z] | city_birth[z, y] | ~age_birth[x, y] )))
-
-    # clues = []
-    # bv_clues = [BoolVar() for i in range(10)]
-    # clues.append(implies(bv_clues[0], is_old['Mattie', '113']))
-
-    # # The person who lives in Tehama is a native of either Kansas or Oregon
-    # [clues.append(implies(bv_clues[1], (~lives_in[p, 'Tehama'] | native[p, 'Kansas'] | native[p, 'Oregon']))) for p in person]
-
-    # # The Washington native is 1 year older than Ernesto
-    # [clues.append(implies(bv_clues[2], (~age_birth[a, 'Washington'] | is_old['Ernesto', str(int(a)-1)]) )) for a in age]
-
-    # # Roxanne is 2 years younger than the Kansas native
-    # [clues.append(implies(bv_clues[3], ( ~is_old['Roxanne', a] | age_birth[str(int(a)+2), 'Kansas']))) for a in age]
-
-    # # The person who lives in Zearing isn't a native of Alaska
-    # [clues.append(implies(bv_clues[4], ~lives_in[p, 'Zearing']| ~native[p, 'Alaska'])) for p in person]
-
-    # # The person who is 111 years old doesn't live in Plymouth
-    # [clues.append(implies(bv_clues[5], ~is_old[p, '111']| ~lives_in[p, 'Plymouth'])) for p in person]
-
-    # # The Oregon native is either Zachary or the person who lives in Tehama
-    # [clues.append(implies(bv_clues[6], ~native[p, 'Oregon'] | (p == 'Zachary') | lives_in[p, 'Tehama'])) for p in person]
-
-    # # The person who lives in Shaver Lake is 1 year younger than Roxanne
-    # [clues.append(implies(bv_clues[7], ~age_city[a, 'Shaver Lake'] | is_old['Roxanne', str(int(a)+1)])) for a in age]
-
-    # # The centenarian who lives in Plymouth isn't a native of Alaska
-    # [clues.append(implies(bv_clues[8], ~lives_in[p, 'Plymouth'] | ~native[p, 'Alaska'])) for p in person]
-
-    # # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
-    # c9a = to_cnf([implies(lives_in[p, 'Tehama'],
-    #                       (p != 'Mattie') &
-    #                       ((native['Mattie', 'Alaska'] & native[p, 'Kansas']) |
-    #                        (native[p, 'Alaska'] & native['Mattie', 'Kansas']))) for p in person])
-    # [clues.append(implies(bv_clues[9], clause)) for clause in c9a]
-    # for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
-    #     # for each relation
-    #     for col_ids in rel.df:
-    #         # one per column
-    #         # bij += exactly_one(rel[:, col_ids])
-    #         b1 = to_cnf(exactly_one(rel[:, col_ids]))
-    #         [bij.append(implies(bv_bij[cnt], clause)) for clause in b1]
-    #         cnt += 1
-    #     for (_,row) in rel.df.iterrows():
-    #         # one per row
-    #         # bij += exactly_one(row)
-    #         b2 = to_cnf(exactly_one(row))
-    #         [bij.append( implies(bv_bij[cnt] , clause) ) for clause in b2]
-    #         cnt += 1
-
-    # # Transitivity
-    # trans = []
-    # bv_trans =  [BoolVar() for i in range(12)]
+    bv_trans =  [BoolVar() for i in range(12)]
     for x in person:
         for z in birthplace:
             for y in age:
                 # ! x y z:  from(x, z) & is_linked_with_1(y, z) => is_old(x, y).
                 t0 = to_cnf(implies( native[x, z] & age_birth[y, z], is_old[x, y]))
                 [trans.append(implies(bv_trans[0], clause)) for clause in t0]
-                # trans.append( ~bv_trans[0] |  ~native[x, z] | ~age_birth[y, z] | is_old[x, y] )
 
                  # ! x y z:  ~from(x, z) & is_linked_with_1(y, z) => ~is_old[x, y].
-                # trans.append(implies(bv_trans[1], ( native[x, z] | ~age_birth[y, z] | ~is_old[x, y] )))
                 t1 = to_cnf(implies( ~native[x, z] & age_birth[y, z], ~is_old[x, y]))
                 [trans.append(implies(bv_trans[1], clause)) for clause in t1]
-                # trans.append(~ bv_trans[1] |  native[x, z] | ~ age_birth[y, z] | ~is_old[x, y])
 
-                # ! x y z:  from(x, z) & ~is_linked_with_1(y, z) => ~is_old[x, y].
+                 # ! x y z:  from(x, z) & ~is_linked_with_1(y, z) => ~is_old[x, y].
                 t2 = to_cnf(implies( native[x, z] & ~age_birth[y, z], ~is_old[x, y]))
                 [trans.append(implies(bv_trans[2], clause)) for clause in t2]
-                # trans.append(implies(bv_trans[2], ( ~native[x, z] | age_birth[y, z] | ~is_old[x, y] )))
 
     for x in person :
         for y in age :
             for z in city :
+
                 # ! x y z:  lives_in(x, z) & is_linked_with_2(y, z) => is_old[x, y].
                 t3 = to_cnf(implies( lives_in[x, z] & age_city[y, z], is_old[x, y]))
                 [trans.append(implies(bv_trans[3], clause)) for clause in t3]
@@ -576,9 +464,9 @@ def originProblem():
     weights.update({bv.name + 1: 100 for bv in bv_clues})
     weights.update({bv.name + 1: 60 for bv in bv_trans})
     weights.update({bv.name + 1: 60 for bv in bv_bij})
-    weights.update({-(bv.name + 1): 100 for bv in bv_clues})
-    weights.update({-(bv.name + 1): 60 for bv in bv_trans})
-    weights.update({-(bv.name + 1): 60 for bv in bv_bij})
+    # weights.update({-(bv.name + 1): 100 for bv in bv_clues})
+    # weights.update({-(bv.name + 1): 60 for bv in bv_trans})
+    # weights.update({-(bv.name + 1): 60 for bv in bv_bij})
 
     explainable_facts = set()
     for rel in rels:
@@ -587,7 +475,7 @@ def originProblem():
         for item in rel.df.values:
             explainable_facts |= set(i.name+1 for i in item)
 
-    return hard_clauses, soft_clauses, weights, explainable_facts
+    return hard_clauses, soft_clauses, weights, explainable_facts, {'trans': [bv.name + 1 for bv in bv_trans], 'bij': [bv.name + 1 for bv in bv_bij], 'clues' : {bv.name + 1: i for i, bv in enumerate(bv_clues)}}
 
 
 def simplestProblemReify():
@@ -605,6 +493,9 @@ def simplestProblemReify():
 
 def simpleProblem():
     (mayo, ketchup, andalouse) = BoolVar(3)
+    print("Mayo=", mayo.name+1)
+    print("ketchup=", ketchup.name+1)
+    print("andalouse=", andalouse.name+1)
 
     c0 = mayo
     c1 = ~mayo | ~andalouse | ketchup
@@ -622,6 +513,23 @@ def simpleProblem():
 def frietKotProblemReify():
     # Construct the model.
     (mayo, ketchup, curry, andalouse, samurai) = BoolVar(5)
+
+    print("Mayo=", mayo.name+1)
+    print("ketchup=", ketchup.name+1)
+    print("andalouse=", andalouse.name+1)
+    print("curry=", curry.name+1)
+    print("samurai=", samurai.name+1)
+
+    print(f"6.  Nora = {mayo.name+1} | {ketchup.name+1}", )
+    print(f"7.  Leander = ~{samurai.name+1} | {mayo.name+1}")
+    print(f"8.  Benjamin = ~{andalouse.name+1} | ~{curry.name+1} | ~{samurai.name+1}")
+    print(f"9.  Behrouz = {ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
+    print(f"10. Guy = ~{ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
+    print(f"11. Daan = ~{ketchup.name+1} | ~{curry.name+1} | {andalouse.name+1}")
+    print(f"12. Celine = ~{samurai.name+1}")
+    print(f"13. Anton = {mayo.name+1} | ~{curry.name+1} | ~{andalouse.name+1}")
+    print(f"14. Danny = ~{mayo.name+1} | {ketchup.name+1} | {andalouse.name+1} | {samurai.name+1}")
+    print(f"15. Luc = ~{mayo.name+1} | {samurai.name+1}")
 
     Nora = mayo | ketchup
     Leander = ~samurai | mayo
@@ -648,6 +556,23 @@ def frietKotProblemReify():
 def frietKotProblem():
     # Construct the model.
     (mayo, ketchup, curry, andalouse, samurai) = BoolVar(5)
+
+    print("Mayo=", mayo.name+1)
+    print("ketchup=", ketchup.name+1)
+    print("andalouse=", andalouse.name+1)
+    print("curry=", curry.name+1)
+    print("samurai=", samurai.name+1)
+
+    print(f"6.  Nora = {mayo.name+1} | {ketchup.name+1}", )
+    print(f"7.  Leander = ~{samurai.name+1} | {mayo.name+1}")
+    print(f"8.  Benjamin = ~{andalouse.name+1} | ~{curry.name+1} | ~{samurai.name+1}")
+    print(f"9.  Behrouz = {ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
+    print(f"10. Guy = ~{ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
+    print(f"11. Daan = ~{ketchup.name+1} | ~{curry.name+1} | {andalouse.name+1}")
+    print(f"12. Celine = ~{samurai.name+1}")
+    print(f"13. Anton = {mayo.name+1} | ~{curry.name+1} | ~{andalouse.name+1}")
+    print(f"14. Danny = ~{mayo.name+1} | {ketchup.name+1} | {andalouse.name+1} | {samurai.name+1}")
+    print(f"15. Luc = ~{mayo.name+1} | {samurai.name+1}")
 
     Nora = mayo | ketchup
     Leander = ~samurai | mayo

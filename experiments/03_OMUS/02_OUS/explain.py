@@ -349,25 +349,32 @@ class BestStepCOUSComputer(object):
         H = []
 
         if self.params.pre_seeding:
+            print("Preseeding")
+            print(U)
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
+            print("F=", F)
+            print("U=", U)
+            print("I", self.I0)
+            print("Iend", Iend)
 
             # find (m)ss'es of F, add correction sets
             Ap = Iend # satisfiable subset
 
             C = frozenset(F - Ap)
+            print("C=", C)
 
             self.opt_model.addCorrectionSet(C)
             H.append(C)
 
-            if self.params.pre_seeding_subset_minimal:
-                covered = set(Iend) # already in an satsubset
+            covered = set(Iend) # already in an satsubset
 
             SSes = []
             for l in F:
-                if self.params.pre_seeding_subset_minimal and l in covered:
+                if l in covered:
                     continue
 
+                print("Seeding", {l})
                 HS = set({l})
                 _, Ap = self.checkSat(Ap=HS, phases=Iend)
 
@@ -468,9 +475,9 @@ class BestStepCOUSComputer(object):
         elif self.params.grow_sat:
             SS = set(HS_model)
         elif self.params.grow_subset_maximal:
-            SS = self.grow_subset_maximal(A=A, HS=HS, Ap=HS_model)
+            SS = set(self.grow_subset_maximal(A=A, HS=HS, Ap=HS_model))
         elif self.params.grow_maxsat:
-            SS = self.grow_maxsat(f=f, F=F, A=A, HS=HS)
+            SS = set(self.grow_maxsat(f=f, F=F, A=A, HS=HS))
         else:
             raise NotImplementedError("Grow")
         self.t_expl['t_grow'].append(time.time() - t_grow)
@@ -549,6 +556,10 @@ class BestStepCOUSComputer(object):
                 # no sets remaining with this element?
                 if len(V[e]) == 0:
                     del V[e]
+        # only select 1!
+        else:
+            for e in p & C:
+                del V[e]
 
         # special cases, remove from V so they are not picked again
         for c in C:
@@ -680,7 +691,6 @@ class BestStepCOUSComputer(object):
             print(f"\t{modes[mode]}: got HS", len(HS), "cost", self.opt_model.opt_model.objval)
 
             assert len(p.intersection(HS)) > 0, f"\n\n\nHS={HS}\np={p}"
-
 
             # CHECKING SATISFIABILITY
             sat, HS_model = self.checkSat(HS, phases=self.I0)
@@ -1294,9 +1304,9 @@ if __name__ == "__main__":
     params.timeout = 1 * HOURS
 
     ## INSTANCES
-    # test_explain(params)
-    # test_frietkot(params)
-    test_puzzle(params)
+    test_explain(params)
+    test_frietkot(params)
+    # test_puzzle(params)
     # test_simpleReify(params)
     # test_simpleReify(params)
     # test_puzzleReify(params)

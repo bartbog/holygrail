@@ -1,0 +1,109 @@
+% !TeX root = ./main.tex
+
+% Research
+
+% \todo{The intro should be updated to reflect our new contributions: incremental and constrained OMUS}
+
+Generating minimal explanations in case of an unsatisfiable constraint satisfaction problem (CSP) is well-studied~\cite{junker2001quickxplain}. Explaining the inference that leads to the solution of a satisfiable CSP is less studied~\cite{sqalli1996inference,freuder2001explanation}. Recent work developed a general-purpose method for step-wise explaining the inferences needed to obtain a solution \cite{ecai/BogaertsGCG20}. 
+The techniques developed in the latter rely heavily on calls for  \emph{Minimal Unsatisfiable Subsets} (MUS), exploiting a one-to-one correspondence between so-called non-redundant explanations and MUSs. 
+Their algorithm has two weaknesses: first, it provides no guarantees on the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the cost function measuring quality (as defined in that work). 
+Secondly, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate implied fact. %replacing a potential single call for a cost-optimal unsatisfiable subset by multiple calls, 
+However, this high number of MUS calls causes severe efficiency problems: even for simple puzzles the explanation generation process takes several hours.
+
+
+Motivated by these observations, we develop algorithms for unsatisfiable subset optimization (i.e., for computing cost-optimal unsatisfiable subsets, from now on called OUSs). The algorithms we develop combine ideas from 
+\hitsetbased algorithms to compute cardinality-minimal MUSs \cite{ignatiev2015smallest} and from \maxsat solving \cite{DBLP:conf/sat/DaviesB13}.
+Furthermore, we show that techniques to speed up \hitsetbased \maxsat solving~\cite{davies} can be readily applied to speed up \hitsetbased OUS solving.
+%\todo{Also say this?}
+%Finally, we investigate how the ideas of \citet{davies} that were originally developed for \hitsetbased algorithms for solving \maxsat can be generalized to the case of constrained OUS generation. 
+
+As we require computing the OUS of several highly related problem instances, 
+%Furthermore, given the fact that a single call for generation of an explanation sequence internally employs several calls OUS calls for each explanation step, with all OUS calls using approximately the same theory,
+we investigate how to make the OUS algorithm \emph{incremental}, by reusing the information stored in the sets-to-hit of other OUS calls.
+
+In our setting, finding an optimal explanation step requires finding the OUS for each possible implied fact. Driven by this need, we show how all these OUS calls can be combined into a single OUS search for an optimal unsatisfiable subset \emph{under constraints}. The constraints here are meta-level constraints, that specify which types of subsets are deemed acceptable. 
+% In the case of our explanations, these are subsets involving exactly one unexplained implied fact.
+We show that minimal modifications to the original \hitsetbased OUS algorithm indeed yields a method to find such \emph{constrained optimal unsatisfiable subsets}.
+This allows us to reduce the explanation generation problem into that of finding a sequence of constrained OUSes.
+% Next, we develop, called \emph{unsatis
+
+
+%We implemented these ideas in the \call{cppy} framework \cite{cppy} and experimentally validate them on CNF problems from SOMEWHERE, as well as the problems considered in \citet{ecai/BogaertsGCG20}.
+
+%Our experimental results confirm that 
+%\begin{compactitem}
+%  \item Furthermore, significant speed-ups in run-time are obtained for the explanation-producing loop. 
+%  \item Both of our extensions (incremental, and constraint OUS generation) are instrumental in achieving this speed-up. 
+%  \item \todo{ confirm Davies's observations ???}
+%  \item The quality of the explanation sequence improves compared to the algorithm of \citet{ecai/BogaertsGCG20}. 
+%\end{compactitem}
+% the validity of incremental, as well as constrained generation of optimal 
+
+Summarized, the main contributions of our paper are:
+\begin{compactitem}
+  \item We generalize the algorithm of \cite{ignatiev2015smallest} to allow for arbitrary  optimization functions, resulting in the first algorithm for OUS generation;
+  %\item We translate \maxsat solving techniques to the constrained OUS setting.
+  \item We develop an \emph{incremental} version of our OUS algorithm by exploiting properties of the hitting set dualisation;
+  \item We generalize the OUS problem to a constrained OUS problem by allowing meta-level constraints on the unsatisfiable subsets; % and show how our algorithm generalizes to take those constraints into account;
+  \item We experimentally validate our algorithms in the context of explanation generation for CSPs. %, thereby showing improvements both in terms of the time required to find explanation sequences and the quality thereof. %of the developed explanation.
+\end{compactitem}
+
+
+
+\ignore{
+% the very many MUS calls have as a consequence that 
+\emilio{Rephrase Intro: In the last few years, as AI systems employ more advanced reasoning mechanisms and computation power, it becomes increasingly difficult to understand why certain decisions are made.
+Explainable (XAI), a subfield of AI, aims to fulfil the need for trustworthy AI systems to understand \emph{how} and \emph{why} the system made a decision, e.g. for verifying correctness of the system, as well as to control for biased or systematically unfair decisions.
+
+Despite the fact that we do not (specifically) aim to explain over-constrained problems, our algorithms will also internally make use of methods to extract a minimal set of conflicting constraints often called a \emph{\underline{M}inimal \underline{U}nsatisfiable \underline{S}ubset} (MUS) or \emph{Minimal Unsatisfiable Core} \cite{marques2010minimal}.
+
+While explainability of constraint optimisation has received little attention so far, in the related field of \textit{planning}, there is the emerging subfield of \textit{eXplainable AI planning} (XAIP)~\cite{fox2017explainable}, which is concerned with building planning systems that can explain their own behaviour.
+This includes answering queries such as ``why did the system (not) make a certain decision?'', ``why is this the best decision?'', etc. In contrast to explainable machine learning research~\cite{guidotti2018survey}, in explainable planning one can make use of the explicit \textit{model-based representation} over which the reasoning happens.
+Likewise, we will make use of the constraint specification available to constraint solvers, more specifically typed first-order logic~\cite{atcl/Wittocx13}.
+
+This research fits within the general topic of Explainable Agency~\cite{langley2017explainable}, whereby in order for people to trust autonomous agents, the latter must be able to \textit{explain their decisions} and the \textit{reasoning} that produced their choices.
+To provide the constraint solver with Explainable Agency~\cite{langley2017explainable}, we first formalize the problem of step-wise explaining the propagation of a constraint solver through a sequence of small inference steps.
+Next, we use an optimistic estimate of a given cost function quantifying human interpretability to guide the search to \textit{simple}, low-cost, explanations thereby making use of minimal unsatisfiable subsets.
+We extend this approach using \emph{reasoning by contradiction} to produce additional explanations of still difficult-to-understand inference steps.
+Finally, we discuss the challenges and some outlooks to explaining how to solve constraint satisfaction problems.
+
+
+\paragraph*{Publication history} This workshop paper is an extended abstract of previous papers presented at workshops and conferences \cite{claesuser,DBLP:conf/bnaic/ClaesBCGG19,ecai/BogaertsGCG20} and a journal paper under review \cite{bogaerts2020framework}.
+}
+
+\begin{compactenum}
+    \item XAI
+    \item MUS vs Overconstrained/Infeasibility
+    \item CSP
+    \item XOPT
+\end{compactenum}
+
+Contributions : 
+\begin{compactenum}
+    \item Efficient, greedy algorithm for explaining CSP based on OMUS 
+    \item Adapatation smallest MUS adaptation to OMUS (different hs + no maxsat) 
+    \item Improving OMUS algorithm from Davies' related delayed MaxSAT algorithm 
+    \item Incremental OMUS computation to speed-up explanations
+    \begin{compactitem}
+        \item hoe belangrijk is de incrementaliteit in het algorithme
+        \item kunnen  we nog meer incrementeel verder gaan
+    \end{compactitem}
+    \todo{
+    \begin{compactitem}
+        \item Bestaande SMUS/OMUS algorihtmes incrementeel veranderen
+        \begin{compactitem}
+            \item Bredere studie, SMUS => OMUS veralgemenen
+            \item Hoe efficient zijn ze om ons probleem op te lossen
+        \end{compactitem}
+    \end{compactitem}
+    }
+\end{compactenum}
+}
+
+
+The rest of this paper is structured as follows. We discuss related work in \cref{sec:related} and background on the hitting set duality in \cref{sec:background}. \cref{sec:omus} contains our algorithm for OUS generation, as well as insights as to how the ideas of \cite{davies} can be transferred to the OUS setting. \cref{sec:explain} shows how this can be used in a simplification of the explanation algorithm of \cite{ecai/BogaertsGCG20}. 
+Sections \ref{sec:incremental} and \ref{sec:constrained} contain our  conceptual extensions to the OUS problem and algorithm, namely incrementality and constrainedness. 
+% In \cref{sec:davies}\tias{maybe subsection of 4}, we discuss how the . 
+We  experimentally validate our  extensions in \cref{sec:experiments}, and conclude in \cref{sec:conclusion}.
+
+

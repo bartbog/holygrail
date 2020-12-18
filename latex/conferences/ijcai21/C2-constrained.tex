@@ -1,0 +1,136 @@
+Even when using an incremental OUS algorithm, calling \omusinc at each step for every literal is computationally demanding. %at each step we still need to call \omusinc for every literal.
+For this reason, we now aim to instead use an OUS-like algorithm to directly find the best OUS across all literals in $\Iend \setminus I$, where $I$ is the set of already explained literals, as in Algorithm~\ref{alg:bestStepOUS}. 
+
+It would be tempting to attempt this by a single call to 
+\[\omus(\formulac \cup I \cup \overline{\Iend\setminus I}).\]
+However, such an OUS would not result in an explanation of the form $I' \wedge \formulac' \implies N$ as the following example illustrates. 
+% To see this consider the following example: 
+\begin{example}
+Assume $I=\emptyset$, \begin{align*}
+         \formulac &= \{p\lor q, \lnot p \lor r, \lnot p \lor \lnot r, \lnot q\lor r, \lnot p \lor q \},
+%          I &= \emptyset
+       \end{align*}
+       and thus
+$         \Iend = \{ \lnot p, q, r\}.$
+In that case, 
+$\formulac\cup \overline{\Iend}$ 
+%= \{p\lor q, \lnot p \lor r, \lnot p \lor \lnot r, \lnot q\lor r, \lnot p \lor q , p,\lnot q,\lnot r \}\]
+has several cardinality-minimal OUSs, for instance 
+\begin{align*}
+X_1 &=    \{\lnot p \lor r, \lnot p \lor \lnot r, p\}\text{ and}\\
+X_2 &= \{\lnot p \lor q ,  p, \lnot q\}.
+\end{align*}
+out of these two, only $X_1$ would be considered to induce a good explanation: it represents the fact that the two constraints $\lnot p \lor r$ and $ \lnot p \lor \lnot r$ together entail $\lnot p$ (which can easily be seen by applying the resolution rule). However, $X_2$ does not have such an interpretation: it merely shows that the constraint $\lnot p \lor q$ entails that either $p$ should be false or $q$ should be true, which is uninformative. 
+\end{example}
+
+We can see that in general, for an OUS of $\formulac \cup \Iend \cup \overline{\Iend}$ to be a valid explanation, it needs to satisfy a number of constraints, namely 1) the OUS should explain exactly one literal, i.e., contain exactly one literal from $\overline{\Iend}$; 2) the OUS may not explain a literal that is already explained, that is, it may contain no literal in $\overline{I}$; and 3) the explanation can only use literals from the cautious consequence that are already explained, so no literals from $I_{end} \setminus I$.
+
+%The previous example shows that a naive \omus call with a large enough theory, would not yield valuable explanations.
+Hence, we are interested in searching for an OUS that is \emph{optimal} among those that satisfy these properties. 
+Phrasing this in a generic setting results in the following definition.
+
+\begin{definition}
+    If $\formulag$ is a formula, $f:2^{\formulag} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formulag}\to \{\ltrue,\lfalse\}$, then we call a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} ($(p,f)$-OUS) if \begin{compactitem}                                                                                                                                                                                                                         
+    \item $U$ is unsatisfiable,
+    \item $p(U)$ is true
+    \item for all other unsatisfiable $U'\subseteq \formulag$, if $p(U')=\ltrue$ then   $f(U')\geq f(U)$.                                                                                                                                                                                                                         \end{compactitem}
+\end{definition}
+
+The problem at hand is thus to compute a $(p,f)$-OUS of a given formula. 
+To tackle this challenge, we propose a modification to the OUS algorithm of \cref{alg:omus}, as depicted in \cref{alg:comus}. 
+As can be seen, the condition $p$ is simply passed to the procedure \cohs, which, in contrast to \ohs generates a hitting set that is optimal \emph{among the hitting sets satisfying $p$}.
+
+\begin{algorithm}[t]
+  \DontPrintSemicolon
+%  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+  \While{true}{
+    $\F' \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+% f{optimal} solution}
+    % \tcp{\small set with all unique clauses from hitting set}
+%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+    % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+    % \tcp{IF UNSAT, $hs$ is the OUS }
+    \If{ $\lnot \sat(\F')$}{
+      \Return{$\F'$} \;
+    }
+    $\F'' \gets  \grow(\F',\F) $\;
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+  }
+  \caption{$\comus(\formula,f,p)$ }
+  \label{alg:comus}
+\end{algorithm}
+%\tias{I would not show the above one as it is rather vague \bart{I would disagree with the vagueness. It makes abstraction of several things (what is $p$? what is $f$? How is Grow and CondOptHS implemented? But in my opinion that is good, since it shows close relation to the basic OUS algo as well as illustrating what is really going on and modularity.}, but immediately rewrite it as Alg2 the singleStepExplain:}
+%\bart{I would avoid that :-) That way we mix up ``how to compute constrained OUSs?'' with ``how to compute explanations using constrained OUSs?''. These are two different concerns. We should show that we also tackle the first .  That way, our new ``singlestepexplain2'' will also look a lot simpler than singleStepExplain1 (if we use one oracle call to cOUS}
+
+%\begin{algorithm}[ht]
+%  \caption{$\call{ExplainCSPcOUS}({\cal C},f)$}
+%  \label{alg:explainCSPcOUS}
+%$E \gets \langle \rangle$\;
+%$I_{end} \gets optimalPropagate({\cal C})$\;
+%$\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
+%$\setstohit \gets \{\formulag \setminus \{{\cal C} \cup I_{end}\}\}$\;
+%// preseeding\\
+%\For{$l \in I_{end}:$}{
+%  $\setstohit \gets \setstohit \cup \{\formulag \setminus \grow(-l,\formulag)\} $\;
+%}
+%$I \gets \emptyset$\;
+%$p \gets \{$exactly one of $\overline{\Iend}$ in the hitting set$\}$\; %, none of $I_{end}$ can be in the hitting set$\}$\;
+%
+%\While{$I \neq I_{end}$}{
+%	update $p$ such that none of $\{I_{end} \setminus I\}$ and none of $\bar{I}$ can be in the hitting set\;
+%    $X \gets \comus(\formulag,f,p,\setstohit)$\;
+%	$I_{\mathit{best}} \gets I\cap X$\;
+%    ${\cal C}_{\mathit{best}}\gets{\cal C}\cap X$\;
+%	$N_{\mathit{best}} \gets \{I_{end} \setminus I\} \cap optimalPropagate(X) $\;
+%	add $\{I_{\mathit{best}} \wedge {\cal C}_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+%	$I \gets I \cup N_{\mathit{best}}$\;
+%  }
+%\Return{E}\;
+%\end{algorithm}
+
+Soundness and completeness  follow from the fact that -- as before -- all sets added to \setstohit are correction subsets,  every unsatisfiable subset must thus hit all sets in \setstohit, and \cref{prop:K2}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
+ 
+\begin{proposition}\label{prop:K2}
+  Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 
+  If $\m{U}$ is a hitting set of \m{H} that is $f$-optimal among the hitting sets of \m{H} satisfying a predicate $p$, and  $\m{U}$ is unsatisfiable, then $\m{U}$ is a $(p,f)$-OUS of \formula. 
+  If  $\m{H}$ has no hitting sets satisfying $p$, then $\formula$ has no $(p,f)$-OUSs.
+\end{proposition}
+
+Now, since the search for optimal hitting sets is --- in implicit hitting set algorithms --- usually done with a MIP solver, it suffices to express the predicate $p$ as constraints on the MIP. Since the variables of the MIP encoding represent inclusion of certain constraints in the unsatisfiable subset, this is simple for  the 3 constraints that we need to obtain meaningful explanations. %needed to have meaningful in practice only predicates $p$ that can easily be encoded in MIP are useful. In such cases, we can directly use the MIP solver to implement \cohs as well. 
+
+\paragraph{Application to Explanations}
+%To apply this idea to the context of explanations, we note that at each step, the current interpretation, will be fixed. 
+%At each step, we are looking for an OUS that contains \emph{exactly one} negation of a derivable literal. 
+%Such an exactly-one constraint is easily expressible in MIP.
+%Furthermore, also the ``subtheory constraint'', as introduced for incremental MUS solving can be expressed in MIP. Namely, in \cref{sec:incremental}, we assumed that each OUS call would be done given a subtheory of the original theory. However, constraints of the form ``the OUS should be a subset of the given set \formula'' are easily expressible in MIP as well. 
+%As such, the idea of constrained OUS computation is actually more general than the formalization of incremental OUS. 
+% 
+Given such a constrained OUS algorithm, the procedure to find the single best explanation step now simplifies to \cref{alg:singleStepExplain3}.
+
+\begin{algorithm}[t]
+  \caption{$\call{bestStep--c-OUS}({\cal C},f,I,I_{end})$}
+  \label{alg:singleStepExplain3}
+$\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
+set $p$ such that exactly one of $\overline{\Iend}$ in the hitting set \textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
+\Return{$\comus(\formulag,f,p)$}\;
+\end{algorithm}
+
+% \tias{hard/soft temporarily hidden}
+% \ignore{
+\paragraph{Using Constraints to Encode Domain Knowledge}
+These constraints on OUSs can not only be used to restrict the set of solutions, but also to improve the solver performance by encoding domain knowledge.
+Indeed, if we know that all ``good'' OUSs will satisfy certain constraints, or if we know that it suffices to search for OUSs satisfying certain constraints (because each OUS can easily be extended to one such OUS),  we can also encode that knowledge in $p$, thereby restricting the possible options of the hitting set solver, aiming to improve overall performance of the algorithm. 
+
+In the explanation application, we encountered this phenomenon as follows. 
+The clues to be used in explanations were high-level (first-order) constraints. They were translated into clauses, using among other, a Tseitin transformation.
+Hence, in the end the transformation of a single high-level clue consists of several clauses, of which some are definitions of newly introduced variables. 
+Now, the associated cost function was only concerned with the issue ``\emph{was a certain clue used or not?}'', which translates at the lower level to ``\emph{does the OUS contain at least one clause from the translation of the clue?}''.
+Using such a cost function means that to compute the cost of an OUS, it does not matter if a single, or if all clauses corresponding to a given clue are used. As such, we might as well include all of them, which can be encoded in $p$ as well. 
+
+An alternative view on the same property is that we can \emph{reify} the high level constraint by considering an indicator variable defining satisfaction of the entire constraint. 
+We can then add the property to $p$ that all reified constraints are \emph{hard constraints}, in the sense that they have to be included in each OUS (and thus each hitting set). With that, only the truth/falsity of the single indicator variable is considered to be a clause of $\formulac$ that can be enabled/disabled by the hitting set algorithm. 
+% This variable then represent whether or not the high level constraint is active.
+It is easy to see that there is a one to one correspondence between the OUSs produced by the two approaches. In our implementation, we opted for the latter because of its simplicity. 
+%\tias{is this really to $p$? higher up we argued that we push $p$ into the MIP, but all hard clauses are kept outside of the MIP... I guess saying that har dlcauses are 'always included' is somehow doing that? it also means they are 'constant' in the MIP objective and hence can be removed from it, that is perhaps a more pragmatic view on it...}
+%\emilio{phrases are loooong.}
+

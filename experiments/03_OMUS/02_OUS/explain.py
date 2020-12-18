@@ -528,7 +528,7 @@ class BestStepCOUSComputer(object):
 
             SSes = []
             for l in F:
-                if l in covered:
+                if self.params.pre_seeding_subset_minimal and l in covered:
                     continue
 
                 # print("Seeding", {l})
@@ -626,7 +626,7 @@ class BestStepCOUSComputer(object):
     def grow(self, f, F, A, HS, HS_model):
         # no actual grow needed if 'HS_model' contains all user vars
         t_grow = time.time()
-
+        
         if not self.params.grow:
             SS = set(HS)
         elif self.params.grow_sat:

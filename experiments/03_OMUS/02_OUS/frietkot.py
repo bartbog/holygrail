@@ -154,89 +154,89 @@ def originProblemReify():
     bv_clues = [BoolVar() for i in range(10)]
     clues.append(bv_clues[0] == is_old['Mattie', '113'])
 
-    # The person who lives in Tehama is a native of either Kansas or Oregon
-    c1a = to_cnf([implies(lives_in[p, 'Tehama'], native[p, 'Kansas'] | native[p, 'Oregon']) for p in person])
+    # # The person who lives in Tehama is a native of either Kansas or Oregon
+    # c1a = to_cnf([implies(lives_in[p, 'Tehama'], native[p, 'Kansas'] | native[p, 'Oregon']) for p in person])
 
-    [clues.append(implies(bv_clues[1], clause)) for clause in c1a]
+    # [clues.append(implies(bv_clues[1], clause)) for clause in c1a]
 
-    # The Washington native is 1 year older than Ernesto
-    c2a = to_cnf([implies(age_birth[a, 'Washington'], is_old['Ernesto', str(int(a)-1)]) for a in age])
-    [clues.append(implies(bv_clues[2], clause)) for clause in c2a]
+    # # The Washington native is 1 year older than Ernesto
+    # c2a = to_cnf([implies(age_birth[a, 'Washington'], is_old['Ernesto', str(int(a)-1)]) for a in age])
+    # [clues.append(implies(bv_clues[2], clause)) for clause in c2a]
 
-    # Roxanne is 2 years younger than the Kansas native
-    c3a = to_cnf([implies(is_old['Roxanne', a], age_birth[str(int(a)+2), 'Kansas']) for a in age])
-    [clues.append(implies(bv_clues[3], clause)) for clause in c3a]
+    # # Roxanne is 2 years younger than the Kansas native
+    # c3a = to_cnf([implies(is_old['Roxanne', a], age_birth[str(int(a)+2), 'Kansas']) for a in age])
+    # [clues.append(implies(bv_clues[3], clause)) for clause in c3a]
 
-    # The person who lives in Zearing isn't a native of Alaska
-    c4a = to_cnf([implies(lives_in[p, 'Zearing'], ~native[p, 'Alaska']) for p in person])
-    [clues.append(implies(bv_clues[4], clause)) for clause in c4a]
+    # # The person who lives in Zearing isn't a native of Alaska
+    # c4a = to_cnf([implies(lives_in[p, 'Zearing'], ~native[p, 'Alaska']) for p in person])
+    # [clues.append(implies(bv_clues[4], clause)) for clause in c4a]
 
-    # The person who is 111 years old doesn't live in Plymouth
-    c5a = to_cnf([implies(is_old[p, '111'], ~lives_in[p, 'Plymouth']) for p in person])
-    [clues.append(implies(bv_clues[5], clause)) for clause in c5a]
+    # # The person who is 111 years old doesn't live in Plymouth
+    # c5a = to_cnf([implies(is_old[p, '111'], ~lives_in[p, 'Plymouth']) for p in person])
+    # [clues.append(implies(bv_clues[5], clause)) for clause in c5a]
 
-    # The Oregon native is either Zachary or the person who lives in Tehama
-    c6a = to_cnf([implies(native[p, 'Oregon'], (p == 'Zachary') | lives_in[p, 'Tehama']) for p in person])
-    [clues.append(implies(bv_clues[6], clause)) for clause in c6a]
+    # # The Oregon native is either Zachary or the person who lives in Tehama
+    # c6a = to_cnf([implies(native[p, 'Oregon'], (p == 'Zachary') | lives_in[p, 'Tehama']) for p in person])
+    # [clues.append(implies(bv_clues[6], clause)) for clause in c6a]
 
-    # The person who lives in Shaver Lake is 1 year younger than Roxanne
-    c7a = to_cnf([implies(age_city[a, 'Shaver Lake'], is_old['Roxanne', str(int(a)+1)]) for a in age])
-    [clues.append(implies(bv_clues[7], clause)) for clause in c7a]
+    # # The person who lives in Shaver Lake is 1 year younger than Roxanne
+    # c7a = to_cnf([implies(age_city[a, 'Shaver Lake'], is_old['Roxanne', str(int(a)+1)]) for a in age])
+    # [clues.append(implies(bv_clues[7], clause)) for clause in c7a]
 
-    # The centenarian who lives in Plymouth isn't a native of Alaska
-    c8a = to_cnf([implies(lives_in[p, 'Plymouth'], ~native[p, 'Alaska']) for p in person])
-    [clues.append(implies(bv_clues[8], clause)) for clause in c8a]
+    # # The centenarian who lives in Plymouth isn't a native of Alaska
+    # c8a = to_cnf([implies(lives_in[p, 'Plymouth'], ~native[p, 'Alaska']) for p in person])
+    # [clues.append(implies(bv_clues[8], clause)) for clause in c8a]
 
-    # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
-    c9a = to_cnf([implies(lives_in[p, 'Tehama'],
-                          (p != 'Mattie') &
-                          ((native['Mattie', 'Alaska'] & native[p, 'Kansas']) |
-                           (native[p, 'Alaska'] & native['Mattie', 'Kansas']))) for p in person])
-    [clues.append(implies(bv_clues[9], clause)) for clause in c9a]
+    # # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
+    # c9a = to_cnf([implies(lives_in[p, 'Tehama'],
+    #                       (p != 'Mattie') &
+    #                       ((native['Mattie', 'Alaska'] & native[p, 'Kansas']) |
+    #                        (native[p, 'Alaska'] & native['Mattie', 'Kansas']))) for p in person])
+    # [clues.append(implies(bv_clues[9], clause)) for clause in c9a]
 
 
     # clues = []
     # bv_clues = [BoolVar() for i in range(10)]
     
 
-    # # # The person who lives in Tehama is a native of either Kansas or Oregon
-    # c1a = [(~lives_in[p, 'Tehama'] | native[p, 'Kansas'] | native[p, 'Oregon']) for p in person]
+    # # The person who lives in Tehama is a native of either Kansas or Oregon
+    c1a = [(~lives_in[p, 'Tehama'] | native[p, 'Kansas'] | native[p, 'Oregon']) for p in person]
 
-    # # # The Washington native is 1 year older than Ernesto
-    # c2a = [(~age_birth[a, 'Washington']| is_old['Ernesto', str(int(a)-1)]) for a in age]
+    # # The Washington native is 1 year older than Ernesto
+    c2a = [(~age_birth[a, 'Washington']| is_old['Ernesto', str(int(a)-1)]) for a in age]
 
-    # # # Roxanne is 2 years younger than the Kansas native
-    # c3a = [(~is_old['Roxanne', a]| age_birth[str(int(a)+2), 'Kansas']) for a in age]
+    # # Roxanne is 2 years younger than the Kansas native
+    c3a = [(~is_old['Roxanne', a]| age_birth[str(int(a)+2), 'Kansas']) for a in age]
 
-    # # # The person who lives in Zearing isn't a native of Alaska
-    # c4a = [(~lives_in[p, 'Zearing'] | ~native[p, 'Alaska']) for p in person]
+    # # The person who lives in Zearing isn't a native of Alaska
+    c4a = [(~lives_in[p, 'Zearing'] | ~native[p, 'Alaska']) for p in person]
 
-    # # # The person who is 111 years old doesn't live in Plymouth
-    # c5a = [(~is_old[p, '111'] | ~lives_in[p, 'Plymouth']) for p in person]
+    # # The person who is 111 years old doesn't live in Plymouth
+    c5a = [(~is_old[p, '111'] | ~lives_in[p, 'Plymouth']) for p in person]
 
-    # # # The Oregon native is either Zachary or the person who lives in Tehama
-    # c6a = [(~native[p, 'Oregon'] | (p == 'Zachary') | lives_in[p, 'Tehama']) for p in person]
+    # # The Oregon native is either Zachary or the person who lives in Tehama
+    c6a = [(~native[p, 'Oregon'] | (p == 'Zachary') | lives_in[p, 'Tehama']) for p in person]
 
-    # # # The person who lives in Shaver Lake is 1 year younger than Roxanne
-    # c7a = [(~age_city[a, 'Shaver Lake'] | is_old['Roxanne', str(int(a)+1)]) for a in age]
+    # # The person who lives in Shaver Lake is 1 year younger than Roxanne
+    c7a = [(~age_city[a, 'Shaver Lake'] | is_old['Roxanne', str(int(a)+1)]) for a in age]
 
-    # # # The centenarian who lives in Plymouth isn't a native of Alaska
-    # c8a = [(~lives_in[p, 'Plymouth'] | ~native[p, 'Alaska']) for p in person]
+    # # The centenarian who lives in Plymouth isn't a native of Alaska
+    c8a = [(~lives_in[p, 'Plymouth'] | ~native[p, 'Alaska']) for p in person]
 
-    # # # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
-    # c9a = [(~lives_in[p, 'Tehama'] | ((p != 'Mattie') &
-    #                       ((native['Mattie', 'Alaska'] & native[p, 'Kansas']) |
-    #                        (native[p, 'Alaska'] & native['Mattie', 'Kansas'])))) for p in person]
+    # # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
+    c9a = [(~lives_in[p, 'Tehama'] | ((p != 'Mattie') &
+                          ((native['Mattie', 'Alaska'] & native[p, 'Kansas']) |
+                           (native[p, 'Alaska'] & native['Mattie', 'Kansas'])))) for p in person]
 
-    # [clues.append((bv_clues[1] == clause)) for clause in c1a]
-    # [clues.append((bv_clues[2] == clause)) for clause in c2a]
-    # [clues.append((bv_clues[3] == clause)) for clause in c3a]
-    # [clues.append((bv_clues[4] == clause)) for clause in c4a]
-    # [clues.append((bv_clues[5] == clause)) for clause in c5a]
-    # [clues.append((bv_clues[6] == clause)) for clause in c6a]
-    # [clues.append((bv_clues[7] == clause)) for clause in c7a]
-    # [clues.append((bv_clues[8] == clause)) for clause in c8a]
-    # [clues.append((bv_clues[9] == clause)) for clause in c9a]
+    [clues.append((bv_clues[1] == clause)) for clause in c1a]
+    [clues.append((bv_clues[2] == clause)) for clause in c2a]
+    [clues.append((bv_clues[3] == clause)) for clause in c3a]
+    [clues.append((bv_clues[4] == clause)) for clause in c4a]
+    [clues.append((bv_clues[5] == clause)) for clause in c5a]
+    [clues.append((bv_clues[6] == clause)) for clause in c6a]
+    [clues.append((bv_clues[7] == clause)) for clause in c7a]
+    [clues.append((bv_clues[8] == clause)) for clause in c8a]
+    [clues.append((bv_clues[9] == clause)) for clause in c9a]
 
     print(bv_clues)
 

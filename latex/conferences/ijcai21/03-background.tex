@@ -1,0 +1,118 @@
+% !TeX root = ./main.tex
+
+We discuss the background on the hitting set duality, which constitutes the core of our algorithm. 
+We present all results using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics is given in terms of a satisfaction relation  between expressions in the language and possible states of affairs (assignments of values to variables).
+ 
+%  
+% 
+% 
+% The overarching goal of this paper is to generate a sequence of small reasoning steps, each with an interpretable explanation, and for that we introduce the necessary background.
+% \begin{itemize}
+%     \item Explanation sequence : CSP journal paper ?
+%     \item concept of OMUS
+%     % \item Logic grid puzzles (depends on experiments)
+%     % \item Nested explanation still applicable?
+% \end{itemize}
+
+\newcommand\F{\formula}
+Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. 
+%\tias{clause constraint}
+%\tias{Can we keep it at general 'constraint' here? the only requirement is that we can check satisfiability of a set of constraints (SAT(F')) and that we can grow the set to a larger set (Grow(F',F)), so nothing clause-specific. The literal is then an assignment or its negation...} \bart{Yes, we can! But it's always a struggle. WE need to be very precise (Ive had reviewers complain the past because of not being explicit about what a formula is or is not allowed to be etc.) Also: we use MAX-sat calls in our algorithm; some care needed there}.
+A clause is a disjunction of literals. A formula $\formula$ is a conjunction of clauses. 
+Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses.
+% \todo{weight function comes later}
+% A \emph{weight function} $w$ on $\formula$ assigns to each clause in $\formula$ either a positive integer, or $\infty$. 
+A (partial) interpretation is a consistent (not containing both $p$ and $\lnot p$) set of literals. 
+% An interpretation is \emph{complete} if it contains either $p$ or $\lnot p$ for all symbols $p\in \voc$. 
+Satisfaction of a formula \formula by an interpretation is defined as usual. 
+A \emph{model} of \formula is an interpretation that satisfies \formula; 
+$\formula$ is said to be \emph{unsatisfiable} if it has no models.
+A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models. %; we denote this $\formula\models l$.
+If $I$ is a set of literals, we write \negset{I} for the set of literals $\{\lnot l\mid l\in I\}$.
+
+\begin{definition}
+  A \emph{Minimal Unsatisfiable Subset} (MUS) of \F is a set $\m{S} \subseteq \F$  that is unsatisfiable such that every strict subset of $\m{S} $ is satisfiable. 
+%   
+  %We write 
+  \muses{\F} denotes the set of MUSs of \F. 
+\end{definition}
+
+
+% Formally, we define a \textit{Minimum Unsatisfiable Subset} (MUS), as a set of clauses that taken together are unsatisfiable, but if any of the clauses are removed then the reduced formula becomes satisfiable.
+
+\begin{definition}
+    A set $\m{S} \subseteq \formula$ is a \emph{Maximal Satisfiable Subset} (MSS) of $ \formula$ if $\m{S}$ is satisfiable and for all $\m{S}'$ with $\m{S}  \subsetneq  \m{S}'\subseteq\formula $, $\m{S}'$ is unsatisfiable.
+\end{definition}
+
+\begin{definition}
+    A subset $\m{C} \subseteq \formula$ is a \emph{correction subset} of \formula if $\formula\setminus\m{C}$ is satisfiable. 
+    Such a \m{C} is a \emph{minimal correction subset} (MCS)  of \formula if no strict subset of \m{C} is also a correction subset. 
+%     if $\formula\setminus\m{C}$ is satisfiable, while for all 
+%     $ \m{C}' \subsetneq C$,  $\formula \setminus \m{C}'$ is unsatisfiable.
+    \mcses{\F} denotes the set of MCSs of \F. 
+\end{definition}
+
+It is well-known that if $\formula$ is unsatisfiable, each  MCS is the complement of an MSS and vice versa. 
+
+\begin{definition}\label{def:minimal-hs}
+    Given a collection of sets $\m{K}$, a hitting set $h$ is a set such that $\forall \ C \in \m{K}$, $h \cap C \neq \emptyset$. A hitting set is \emph{minimal} if no strict subset of it is also a hitting set. 
+\end{definition}
+
+% \noindent In fact, for a collection of sets $\m{K}$ there exist multiple possible minimal hitting sets on $\m{K}$. Consequently, we define the \textbf{minimum} hitting set as:
+
+% \begin{definition}\label{def:minimum-hs}
+% %     Let $\m{K}$ be a collection of sets and $HS(\m{K})$ be the collection of all minimal hitting sets on $\m{K}$.
+% %     A hitting set $hs$ is a \textbf{minimum} hitting set if $\forall \ h' \in HS(\m{K}): |hs| \leq |h'|$.
+%   \end{definition}
+
+The next proposition is the well-known hitting set duality \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}  between MCSs and MUSs that forms the basis of our algorithms, as well as algorithms to compute MSSs \citet{DBLP:conf/sat/DaviesB13} and \emph{cardinality-minimal MUSs} \cite{ignatiev2015smallest}.
+
+\begin{proposition}\label{prop:MCS-MUS-hittingset}
+%     Given an $ \formula$, let MUSes($\formula$), be the Minimal Unsatisfiable Subsets of F and MCSes($\formula$), be the Minimal Correction Subsets of F:
+%     
+    A set  $\m{C} \subseteq \formula$ is an MCS of $ \formula$ iff  $\m{C}$ is a \emph{minimal hitting set} of \muses{F}.
+% 
+%     \noindent
+    A set  $\m{U} \subseteq \formula$ is a MUS of $ \formula$ iff  $\m{U}$ is a \emph{minimal hitting set} of \mcses{F}.
+\end{proposition}
+ 
+% The duality of \cref{prop:MCS-MUS-hittingset} lies at the basis of various algorithms to compute MSSs, e.g., by \citet{DBLP:conf/sat/DaviesB13}. 
+% It was also used in an algorithm to find \, which our algorithm is based on. 
+% In the next section, we discuss our proposed OUS algorithm. 
+%The algorithm of \citet{ignatiev2015smallest} can be obtained from \cref{alg:omus} by using cardinality as a cost function, hence we do not give it explicitly here. They use a maxsat solver for the hitting sets...
+
+
+% 
+% % \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+% \begin{algorithm}[ht]
+%   \DontPrintSemicolon
+%   $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+%   \While{true}{
+%     $\F' \gets$ FindCardMinHittingSet($\setstohit $) \label{smus-hs} \;%\tcp*{\small Find \textbf{optimal} solution}
+%     % \tcp{\small set with all unique clauses from hitting set}
+% %     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+%     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+%     % \tcp{IF UNSAT, $hs$ is the OMUS }
+%     \If{ not sat($\F'$)}{
+%       \Return{$\F'$} \;
+%     }
+%     $\F'' \gets  \texttt{Grow}($\F'$) $\;
+%     $\setstohit  \gets \setstohit  \cup \{  \formula$ $\setminus \F''\}$ \;
+%   }
+%   \caption{\textsc{SMUS($\formula$)}}
+%   \label{alg:omus}
+% \end{algorithm}
+% \todo{notatie van algorithm calls uniform maken. textsc? texttt? plain text? Pick one. }
+% 
+% Maybe we should not even give it here... 
+% 
+% 
+% % Moreover, it is easy to see that the duality still holds when a cost-function is added. 
+% % \begin{proposition}
+% %   Let $\cost 
+% % \end{proposition}
+% 
+% % Let \cost 
+% Moreover, it is easy to see that to explaining how we can compute the SMUS in section \ref{sec:smus}. 
+% % TODO: add something here ?
+% In section \ref{sec:omus}, we further exploit this proposition for computing the OMUS for a given unsatisfiable CNF formula $\formula$.

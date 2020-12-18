@@ -14,8 +14,6 @@ def r_frietkotProblem(params):
     params.instance = "frietkot"
     f_cnf, f_user_vars = frietKotProblem()
     f_cnf_ass, assumptions = add_assumptions(f_cnf)
-    print(str(params))
-    # transform list cnf into CNF object
     frietkot_cnf = CNF(from_clauses=f_cnf_ass)
     U = f_user_vars | set(abs(l) for l in assumptions)
     I = set(assumptions)
@@ -62,7 +60,7 @@ def rq1_params():
 
     grow_maxsat_perms = []
     for c in [list(per) for per in itertools.permutations([True, False, False, False])]:
-        if c not in pre_grow_perms:
+        if c not in grow_maxsat_perms:
             grow_maxsat_perms.append(c)
 
     for pre_grow, pre_subset, pre_maxsat in pre_grow_perms:
@@ -135,7 +133,6 @@ def rq1_params():
                     p.output_folder = "results/rq1_4/" + datetime.now().strftime("%Y%m%d/")
                     all_params_test.append(p)
 
-    print(len(all_params_test))
     return all_params_test
 
 
@@ -145,13 +142,14 @@ def rq2_params():
 
 def rq1():
     all_params = rq1_params()
-    all_funs = [r_frietkotProblem]
-    # all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
-    for f in all_funs:
-        for p in all_params:
-            f(p)
+    # all_funs = [r_frietkotProblem]
+    all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
+    # print(len(all_params) * len(all_funs))
+    # for f in all_funs:
+    #     for p in all_params:
+    #         f(p)
             # return
-    # runParallel(all_funs, all_params)
+    runParallel(all_funs, all_params)
 
 
 def rq2():

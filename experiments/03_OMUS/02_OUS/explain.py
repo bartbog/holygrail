@@ -1,4 +1,5 @@
 import cProfile
+from collections import Counter
 import pstats
 import time
 import json
@@ -82,6 +83,11 @@ class COusParams(object):
         self.grow_subset_maximal = False
         self.grow_maxsat = False
 
+        self.grow_maxsat_neg_cost = False
+        self.grow_maxsat_pos_cost = False
+        self.grow_maxsat_max_cost_neg = False
+        self.grow_maxsat_unit = False
+
         # timeout
         self.timeout = 24 * HOURS
 
@@ -117,6 +123,46 @@ class COusParams(object):
             "instance": self.instance,
             "output": self.output_folder+self.output_file,
         }
+    def __str__(self):
+        s = ""
+        if self.pre_seeding_subset_minimal:
+            s += "pre-seeding-subset-minimal\n"
+
+        if self.pre_seeding_grow:
+            s += "pre-seeding-grow-simple\n"
+
+        if self.pre_seeding_grow_maxsat:
+            s += "pre-seeding-grow-maxsat \n"
+
+        if self.postpone_opt:
+            s += "postpone_opt \n"
+        if self.postpone_opt_incr:
+            s += "postpone_opt_incr \n"
+        if self.postpone_opt_greedy:
+            s += "postpone_opt_greedy \n"
+
+        # polarity of sat solver
+        if self.polarity:
+            s += "polarity \n"
+
+        # sat - grow
+        if self.grow_sat:
+            s += "\t grow-sat-model \n"
+        if self.grow_subset_maximal:
+            s += "\t grow-subset-maximal \n"
+        if self.grow_maxsat:
+            s += "\t grow-MaxSat"
+            if self.grow_maxsat_neg_cost:
+                s += "-neg_cost"
+            elif self.grow_maxsat_pos_cost:
+                s += "-pos_cost"
+            elif self.grow_maxsat_max_cost_neg:
+                s += "-max_cost_neg"
+            elif self.grow_maxsat_unit:
+                s += "-unit_cost"
+            s += "\n"
+
+        return s
 
 class OusParams(COusParams):
     def __init__(self):
@@ -152,7 +198,16 @@ class OusParams(COusParams):
         if self.grow_subset_maximal:
             s += "\t grow-subset-maximal \n"
         if self.grow_maxsat:
-            s += "\t grow-MaxSat \n"
+            s += "\t grow-MaxSat"
+            if self.grow_maxsat_neg_cost:
+                s += "-neg_cost"
+            elif self.grow_maxsat_pos_cost:
+                s += "-pos_cost"
+            elif self.grow_maxsat_max_cost_neg:
+                s += "-max_cost_neg"
+            elif self.grow_maxsat_unit:
+                s += "-unit_cost"
+            s += "\n"
 
         return s
 
@@ -487,6 +542,9 @@ class BestStepCOUSComputer(object):
 
         # initial values
         self.I0 = set(I)
+        self.U = set(U) | set(-l for l in U)
+        # print("U=", U)
+        self.U = set(U)
         self.Iend = set(Iend)
 
         # Current formula
@@ -506,8 +564,8 @@ class BestStepCOUSComputer(object):
         H = []
 
         if self.params.pre_seeding:
-            # print("Preseeding")
-            print(U)
+            # # print("Preseeding")
+            # print(U)
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
             # print("F=", F)
@@ -558,12 +616,30 @@ class BestStepCOUSComputer(object):
         wcnf.extend(self.cnf.clauses)
         # HS as hard clause
         wcnf.extend([[l] for l in HS])
-        # reuse previous Satisfiable subsets for diversity
-        wcnf.extend([[-l for l in SS] for SS in SSes])
+
+        if SSes:
+            # reuse previous Satisfiable subsets for diversity
+            wcnf.extend([[-l for l in SS] for SS in SSes])
 
         # add soft clasues => F - HS
-        remaining = F - HS
-        wcnf.extend([[l] for l in remaining], [-f(l) for l in remaining])
+        remaining = A - HS
+
+        weights = None
+
+        if self.params.grow_maxsat_neg_cost:
+            weights = [-f(l) for l in remaining]
+        elif self.params.grow_maxsat_pos_cost:
+            weights = [f(l) for l in remaining]
+        elif self.params.grow_maxsat_max_cost_neg:
+            max_weight = max(f(l) for l in remaining)
+            weights = [max_weight+1 - f(l) for l in remaining]
+        elif self.params.grow_maxsat_unit:
+            weights = [1] * len(remaining)
+        else:
+            # print("MaxSat Grow - Defaulting to unit weight!")
+            weights = [1] * len(remaining)
+
+        wcnf.extend([[l] for l in remaining], weights)
 
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()
@@ -603,7 +679,23 @@ class BestStepCOUSComputer(object):
 
         # TODO: is this really correct ? A - HS ? add soft clasues => F - HS
         remaining = A - HS
-        wcnf.extend([[l] for l in remaining], [-f(l) for l in remaining])
+
+        weights = None
+
+        if self.params.grow_maxsat_neg_cost:
+            weights = [-f(l) for l in remaining]
+        elif self.params.grow_maxsat_pos_cost:
+            weights = [f(l) for l in remaining]
+        elif self.params.grow_maxsat_max_cost_neg:
+            max_weight = max(f(l) for l in remaining)
+            weights = [max_weight+1 - f(l) for l in remaining]
+        elif self.params.grow_maxsat_unit:
+            weights = [1] * len(remaining)
+        else:
+            # print("MaxSat Grow - Defaulting to unit weight!")
+            weights = [1] * len(remaining)
+
+        wcnf.extend([[l] for l in remaining], weights)
 
         with RC2(wcnf) as rc2:
             t_model = rc2.compute()
@@ -668,7 +760,8 @@ class BestStepCOUSComputer(object):
         self.t_expl['t_sat'].append(time.time() - t_sat)
         return solved, model
 
-    def greedyHittingSet(self, H, f, p):
+    def greedyHittingSet(self, H, A, f, p):
+        hC = Counter(H)
         #TODO: need to be smarter only 1 of p !!!
         # trivial case: empty
         if len(H) == 0:
@@ -695,33 +788,47 @@ class BestStepCOUSComputer(object):
         # make sure p constriant is validated
         if len(p & C) == 0:
             Vp = {key: V[key] for key in V.keys() & p}
-            assert len(Vp) > 0, "There should be at least one of p."
+            if len(Vp) > 0:
+                (c, cover) = max(Vp.items(), key=lambda tpl: len(tpl[1]))
+                c_covers = [tpl for tpl in Vp.items() if len(tpl[1]) == len(cover)]
 
-            (c, cover) = max(Vp.items(), key=lambda tpl: len(tpl[1]))
-            c_covers = [tpl for tpl in Vp.items() if len(tpl[1]) == len(cover)]
+                if len(c_covers) > 1:
+                    (c, cover) = min(c_covers, key=lambda tpl: f(tpl[0]))
 
-            if len(c_covers) > 1:
-                (c, cover) = min(c_covers, key=lambda tpl: f(tpl[0]))
+                del V[c]
 
-            del V[c]
-            C.add(c)
+                if -c in V:
+                    del V[-c]
+                C.add(c)
 
-            # update vertical views, remove covered sets
-            for e in list(V):
-                # V will be changed in this loop
-                V[e] -= cover
-                # no sets remaining with this element?
-                if len(V[e]) == 0:
-                    del V[e]
+                # update vertical views, remove covered sets
+                for e in list(V):
+                    # V will be changed in this loop
+                    V[e] -= cover
+                    # no sets remaining with this element?
+                    if len(V[e]) == 0:
+                        del V[e]
+            else:
+                # C cannot contain p and -p
+                pNotC = p - {-l for l in C}
+                if len(pNotC) > 0:
+                    c = min(pNotC, key=lambda l: f(l))
+                else:
+                    c = min(p, key=lambda l: f(l))
+                C.add(c)
         # only select 1!
         else:
-            for e in p & C:
+            # remove rest of elems of p
+            for e in V.keys() & p:
+                # don't need to remove -e can be added
                 del V[e]
 
         # special cases, remove from V so they are not picked again
         for c in C:
             if c in V:
                 del V[c]
+            if -c in V:
+                del V[-c]
 
         while len(V) > 0:
             # special case, one element left
@@ -740,6 +847,10 @@ class BestStepCOUSComputer(object):
                 (c, cover) = min(c_covers, key=lambda tpl: f(tpl[0]))
 
             del V[c]
+
+            if -c in V:
+                del V[-c]
+
             C.add(c)
 
             # update vertical views, remove covered sets
@@ -750,16 +861,24 @@ class BestStepCOUSComputer(object):
                 if len(V[e]) == 0:
                     del V[e]
 
+        if len(C) == 1:
+            c = max(A-p - C, key= lambda l: hC[l])
+            C.add(c)
         return C
 
-    def computeHittingSet(self, f, p, H, C, HS, mode):
+    def computeHittingSet(self, A, f, p, H, C, HS, mode):
         if mode == MODE_INCR:
-            # print("Incremental")
             t_incr = time.time()
             hs = set(HS)
             # p-cosntraint validation only 1 of p
             # take the minimum cost literal
-            c = min(C - p, key=lambda l: f(l))
+            if len(p&hs) > 0:
+                # cannot select lit that is in p already and already in hs
+                selectable = C - (hs | {-l for l in hs} | p)
+            else:
+                selectable = p - {-l for l in hs}
+
+            c = min(selectable, key=lambda l: f(l))
             hs.add(c)
             self.t_expl['t_post'].append(time.time() - t_incr)
             self.t_expl['#H_incr'] += 1
@@ -767,7 +886,7 @@ class BestStepCOUSComputer(object):
         elif mode == MODE_GREEDY:
             # print("Greedy")
             t_greedy = time.time()
-            hs = self.greedyHittingSet(H, f, p)
+            hs = self.greedyHittingSet(H, A, f, p)
             self.t_expl['t_post'].append(time.time() - t_greedy)
             self.t_expl['#H_greedy'] += 1
             return hs
@@ -834,7 +953,7 @@ class BestStepCOUSComputer(object):
         self.opt_model.updateObjective(f, A)
 
         # VARIABLE INITIALISATION
-        H, C, HS = set(), set(), set()
+        H, C, HS = list(), set(), set()
         mode = MODE_OPT
 
         while(True):
@@ -842,12 +961,11 @@ class BestStepCOUSComputer(object):
                 self.t_expl['t_ous'] = timeout
                 return HS, self.t_expl, False
 
+            HS_incr = set(HS)
             # COMPUTING OPTIMAL HITTING SET
-            HS = self.computeHittingSet(f=f, p=p, H=H, C=C, HS=HS, mode=mode)
+            HS = self.computeHittingSet(f=f, A=A, p=p, H=H, C=C, HS=HS, mode=mode)
             # Timings
-            # print(f"\t{modes[mode]}: got HS", len(HS), "cost", self.opt_model.opt_model.objval)
-
-            # assert len(p.intersection(HS)) > 0, f"\n\n\nHS={HS}\np={p}"
+            # print(f"\t{modes[mode]}: got HS", HS, "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS))
 
             # CHECKING SATISFIABILITY
             sat, HS_model = self.checkSat(HS, phases=self.I0)
@@ -857,13 +975,29 @@ class BestStepCOUSComputer(object):
                 self.t_expl['t_ous'] = time.time() - tstart
                 return HS, self.t_expl, True
 
+            prev_mode = mode
             mode = self.next_mode(sat, mode)
+
+            if not sat:
+                if prev_mode == MODE_INCR:
+                    C = F - HS_incr
+                    # print(f"\t{modes[mode]}: got C", C)
+
+                    # ADD COMPLEMENT TO HITTING SET OPTIMISATION SOLVER
+                    H.append(frozenset(C))
+                    self.opt_model.addCorrectionSet(C)
+                # skip grow!
+                continue
 
             # GROW + COMPLEMENT
             C = F - self.grow(f, F, A, HS, HS_model)
+            # print(f"\t{modes[mode]}: got C", C)
+
+            if prev_mode == MODE_INCR:
+                continue
 
             # ADD COMPLEMENT TO HITTING SET OPTIMISATION SOLVER
-            H.add(frozenset(C))
+            H.append(frozenset(C))
             self.opt_model.addCorrectionSet(C)
 
     def __del__(self):
@@ -1188,6 +1322,7 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True, matching_table=Non
             "HS-opt-time": [],
             "HS-postpone-time": [],
             "SAT-time": [],
+            "grow-time": [],
             "#expl": 0,
             "expl_seq": [],
             "OUS-time": [],
@@ -1208,7 +1343,7 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True, matching_table=Non
 
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
-    print(Iend)
+    # print(Iend)
     c = BestStepCOUSComputer(f=f, sat=sat, U=U, Iend=Iend, I=I0, params=params, cnf=C)
 
     I = set(I0) # copy
@@ -1227,6 +1362,7 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True, matching_table=Non
         results["results"]["HS-postpone-time"].append(sum(t_exp["t_post"]))
         results["results"]["OUS-time"].append(t_exp["t_ous"])
         results["results"]["SAT-time"].append(sum(t_exp["t_sat"]))
+        results["results"]["grow-time"].append(sum(t_exp["t_grow"]))
 
         if not expl_found:
             results["results"]['timeout'] = True

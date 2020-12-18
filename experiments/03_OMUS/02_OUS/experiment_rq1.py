@@ -14,13 +14,13 @@ def r_frietkotProblem(params):
     params.instance = "frietkot"
     f_cnf, f_user_vars = frietKotProblem()
     f_cnf_ass, assumptions = add_assumptions(f_cnf)
-
+    print(str(params))
     # transform list cnf into CNF object
     frietkot_cnf = CNF(from_clauses=f_cnf_ass)
     U = f_user_vars | set(abs(l) for l in assumptions)
     I = set(assumptions)
     f = cost(U, I)
-    explain(C=frietkot_cnf, U=U, f=f, I0=I, params=params, verbose=False)
+    explain(C=frietkot_cnf, U=U, f=f, I0=I, params=params, verbose=True)
 
 
 def r_originProblem(params):
@@ -60,10 +60,49 @@ def rq1_params():
         if c not in grow_perms:
             grow_perms.append(c)
 
+    grow_maxsat_perms = []
+    for c in [list(per) for per in itertools.permutations([True, False, False, False])]:
+        if c not in pre_grow_perms:
+            grow_maxsat_perms.append(c)
+
     for pre_grow, pre_subset, pre_maxsat in pre_grow_perms:
-        for postopt in TF:
-            for post_opt_greedy in TF:
-                for grow, grow_sat, grow_subset, grow_maxsat in grow_perms:
+        for postopt, post_opt_greedy in itertools.product(TF, repeat=2):
+            for grow, grow_sat, grow_subset, grow_maxsat in grow_perms:
+                grow_maxsat_neg_cost, grow_maxsat_pos_cost, grow_maxsat_max_cost_neg, grow_maxsat_unit = False, False, False, False
+                if grow_maxsat:
+                    for grow_maxsat_neg_cost, grow_maxsat_pos_cost, grow_maxsat_max_cost_neg, grow_maxsat_unit in grow_maxsat_perms:
+                        p = COusParams()
+
+                        # polarity
+                        p.polarity = True
+
+                        # pre-seeding
+                        p.pre_seeding = True
+                        p.pre_seeding_grow = pre_subset
+                        p.pre_seeding_subset_minimal = pre_grow
+                        p.pre_seeding_grow_maxsat = pre_maxsat
+
+                        # hitting set computation
+                        p.postpone_opt = (postopt or post_opt_greedy)
+                        p.postpone_opt_incr = postopt
+                        p.postpone_opt_greedy = post_opt_greedy
+
+                        # grow
+                        p.grow = grow
+                        p.grow_sat = grow_sat
+                        p.grow_subset_maximal = grow_subset
+                        p.grow_maxsat = grow_maxsat
+
+
+                        p.grow_maxsat_neg_cost = grow_maxsat_neg_cost
+                        p.grow_maxsat_pos_cost = grow_maxsat_pos_cost
+                        p.grow_maxsat_max_cost_neg = grow_maxsat_max_cost_neg
+                        p.grow_maxsat_unit = grow_maxsat_unit
+
+                        p.timeout = 4 * HOURS
+                        p.output_folder = "results/rq1_4/" + datetime.now().strftime("%Y%m%d/")
+                        all_params_test.append(p)
+                else:
                     p = COusParams()
 
                     # polarity
@@ -86,9 +125,17 @@ def rq1_params():
                     p.grow_subset_maximal = grow_subset
                     p.grow_maxsat = grow_maxsat
 
+
+                    p.grow_maxsat_neg_cost = grow_maxsat_neg_cost
+                    p.grow_maxsat_pos_cost = grow_maxsat_pos_cost
+                    p.grow_maxsat_max_cost_neg = grow_maxsat_max_cost_neg
+                    p.grow_maxsat_unit = grow_maxsat_unit
+
                     p.timeout = 4 * HOURS
                     p.output_folder = "results/rq1_4/" + datetime.now().strftime("%Y%m%d/")
                     all_params_test.append(p)
+
+    print(len(all_params_test))
     return all_params_test
 
 
@@ -98,14 +145,19 @@ def rq2_params():
 
 def rq1():
     all_params = rq1_params()
-    all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
-    runParallel(all_funs, all_params)
+    all_funs = [r_frietkotProblem]
+    # all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
+    for f in all_funs:
+        for p in all_params:
+            f(p)
+            # return
+    # runParallel(all_funs, all_params)
 
 
 def rq2():
     all_params = rq2_params()
-    all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
-    runParallel(all_funs, all_params)
+    # all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
+    # runParallel(all_funs, all_params)
 
 if __name__ == "__main__":
     rq1()

@@ -25,7 +25,10 @@ from datetime import datetime
 
 
 # Testing samples
-from frietkot import originProblemReify, simplestProblemReify, originProblem, frietKotProblem, simpleProblem, frietKotProblemReify
+from frietkot import originProblem, originProblemReify
+from frietkot import simpleProblemReify, simplestProblemReify
+from frietkot import simpleProblem
+from frietkot import frietKotProblem, frietKotProblemReify
 
 from datetime import datetime
 
@@ -1205,7 +1208,7 @@ def explain(C: CNF, U: set, f, I0: set, params, verbose=True, matching_table=Non
 
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
-    # print(Iend)
+    print(Iend)
     c = BestStepCOUSComputer(f=f, sat=sat, U=U, Iend=Iend, I=I0, params=params, cnf=C)
 
     I = set(I0) # copy
@@ -1382,7 +1385,7 @@ def test_explain(params):
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
 
-def test_simpleReify(params):
+def test_simplestReify(params):
     cnf, assumptions, U = simplestProblemReify()
     simple_cnf = CNF(from_clauses=cnf)
     U = set(U) | set(assumptions)
@@ -1390,6 +1393,13 @@ def test_simpleReify(params):
     f = cost(U, I)
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
+def test_simpleReify(params):
+    cnf, assumptions, U = simpleProblemReify()
+    simple_cnf = CNF(from_clauses=cnf)
+    U = set(U) | set(assumptions)
+    I = set(assumptions)
+    f = cost(U, I)
+    explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
 def test_frietkotReify(params):
     cnf, assumptions, U = frietKotProblemReify()
@@ -1414,31 +1424,31 @@ if __name__ == "__main__":
     params = COusParams()
     # preseeding
     params.pre_seeding = True
-    # params.pre_seeding_subset_minimal = True
-    params.pre_seeding_grow = True
+    params.pre_seeding_subset_minimal = True
+    # params.pre_seeding_grow = True
 
     # polarity of sat solver
     params.polarity = True
 
     # sat - grow
     params.grow = True
-    # params.grow_subset_maximal= True
-    params.grow_maxsat = True
+    params.grow_subset_maximal= True
+    # params.grow_maxsat = True
 
-    # params.postpone_opt = True
-    # params.postpone_opt_incr = True
-    # params.postpone_opt_greedy = True
+    params.postpone_opt = True
+    params.postpone_opt_incr = True
+    params.postpone_opt_greedy = True
 
     # timeout
     params.timeout = 1 * HOURS
 
     ## INSTANCES
-    test_explain(params)
-    test_frietkot(params)
+    # test_explain(params)
+    # test_frietkot(params)
     # test_puzzle(params)
+    # test_simplestReify(params)
     # test_simpleReify(params)
-    # test_simpleReify(params)
-    # test_puzzleReify(params)
+    test_puzzleReify(params)
 
 
     # test_explainIff(params)

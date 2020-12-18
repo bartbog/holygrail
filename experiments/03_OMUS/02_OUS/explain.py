@@ -88,6 +88,9 @@ class COusParams(object):
         self.grow_maxsat_max_cost_neg = False
         self.grow_maxsat_unit = False
 
+        self.grow_skip_incremental = False
+        self.grow_skip_greedy = False
+
         # timeout
         self.timeout = 24 * HOURS
 
@@ -543,8 +546,6 @@ class BestStepCOUSComputer(object):
         # initial values
         self.I0 = set(I)
         self.U = set(U) | set(-l for l in U)
-        # print("U=", U)
-        self.U = set(U)
         self.Iend = set(Iend)
 
         # Current formula
@@ -564,7 +565,7 @@ class BestStepCOUSComputer(object):
         H = []
 
         if self.params.pre_seeding:
-            # # print("Preseeding")
+            print("Preseeding")
             # print(U)
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
@@ -577,7 +578,6 @@ class BestStepCOUSComputer(object):
             Ap = Iend # satisfiable subset
 
             C = frozenset(F - Ap)
-            # print("C=", C)
 
             self.opt_model.addCorrectionSet(C)
             H.append(C)
@@ -589,7 +589,7 @@ class BestStepCOUSComputer(object):
                 if self.params.pre_seeding_subset_minimal and l in covered:
                     continue
 
-                # print("Seeding", {l})
+                print("Seeding", {l})
                 HS = set({l})
                 _, Ap = self.checkSat(Ap=HS, phases=Iend)
 
@@ -761,6 +761,70 @@ class BestStepCOUSComputer(object):
         return solved, model
 
     def greedyHittingSet(self, H, A, f, p):
+        #TODO: need to be smarter only 1 of p !!!
+        # trivial case: empty
+        if len(H) == 0:
+            return set()
+
+        # the hitting set
+        C = set()
+
+        # build vertical sets
+        V = dict()  # for each element in H: which sets it is in
+
+        for i, h in enumerate(H):
+            # special case: only one element in the set, must be in hitting set
+            # h = hi& A
+            if len(h) == 1:
+                C.add(next(iter(h)))
+            else:
+                for e in h:
+                    if not e in V:
+                        V[e] = set([i])
+                    else:
+                        V[e].add(i)
+
+        # special cases, remove from V so they are not picked again
+        for c in C:
+            if c in V:
+                del V[c]
+            if -c in V:
+                del V[-c]
+
+        while len(V) > 0:
+            # special case, one element left
+            if len(V) == 1:
+                C.add(next(iter(V.keys())))
+                break
+
+            # get element that is in most sets, using the vertical views
+            (c, cover) = max(V.items(), key=lambda tpl: len(tpl[1]))
+            c_covers = [tpl for tpl in V.items() if len(tpl[1]) == len(cover)]
+
+            if len(c_covers) > 1:
+                # OMUS : find set of unsatisfiable clauses in hitting set with least total cost
+                # => get the clause with the most coverage but with the least total weight
+                # print(c_covers, weights)
+                (c, cover) = max(c_covers, key=lambda tpl: f(tpl[0]))
+
+            del V[c]
+
+            if -c in V:
+                del V[-c]
+
+            C.add(c)
+
+            # update vertical views, remove covered sets
+            for e in list(V):
+                # V will be changed in this loop
+                V[e] -= cover
+                # no sets remaining with this element?
+                if len(V[e]) == 0:
+                    del V[e]
+
+        return C
+
+    def ConstrainedGreedyHittingSet(self, H, A, f, p):
         hC = Counter(H)
         #TODO: need to be smarter only 1 of p !!!
         # trivial case: empty
@@ -961,11 +1025,10 @@ class BestStepCOUSComputer(object):
                 self.t_expl['t_ous'] = timeout
                 return HS, self.t_expl, False
 
-            HS_incr = set(HS)
             # COMPUTING OPTIMAL HITTING SET
             HS = self.computeHittingSet(f=f, A=A, p=p, H=H, C=C, HS=HS, mode=mode)
             # Timings
-            # print(f"\t{modes[mode]}: got HS", HS, "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS))
+            print(f"\t{modes[mode]}: got HS",len(HS), "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS))
 
             # CHECKING SATISFIABILITY
             sat, HS_model = self.checkSat(HS, phases=self.I0)
@@ -975,26 +1038,19 @@ class BestStepCOUSComputer(object):
                 self.t_expl['t_ous'] = time.time() - tstart
                 return HS, self.t_expl, True
 
-            prev_mode = mode
             mode = self.next_mode(sat, mode)
 
             if not sat:
-                if prev_mode == MODE_INCR:
-                    C = F - HS_incr
-                    # print(f"\t{modes[mode]}: got C", C)
-
-                    # ADD COMPLEMENT TO HITTING SET OPTIMISATION SOLVER
-                    H.append(frozenset(C))
-                    self.opt_model.addCorrectionSet(C)
                 # skip grow!
                 continue
 
-            # GROW + COMPLEMENT
-            C = F - self.grow(f, F, A, HS, HS_model)
-            # print(f"\t{modes[mode]}: got C", C)
+            # XXX Idea for grow- skip the grow when incremental!
+            if (mode == MODE_INCR and self.params.grow_skip_incremental) or (mode == MODE_GREEDY and self.params.grow_skip_greedy):
+                SS = HS_model
+            else:
+                SS = self.grow(f, F, A, HS, HS_model)
 
-            if prev_mode == MODE_INCR:
-                continue
+            C = F - SS
 
             # ADD COMPLEMENT TO HITTING SET OPTIMISATION SOLVER
             H.append(frozenset(C))
@@ -1285,7 +1341,7 @@ def print_timings(t_exp):
         print("\tGROW=\t", round(sum(t_exp['t_grow']), 3), f"s [{round(100*sum(t_exp['t_grow'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_grow'])/len(t_exp['t_grow']), 3))
 
 
-#@profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
+@profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
 def explain(C: CNF, U: set, f, I0: set, params, verbose=True, matching_table=None):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
@@ -1505,7 +1561,7 @@ def test_puzzle(params):
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost_puzzle(U, I, o_weights)
-    explain(C=o_cnf, U=U, f=f, I0=I, params=params, matching_table=matching_table)
+    explain(C=o_cnf, U=U, f=f, I0=I, params=params, matching_table=matching_table, verbose=True)
 
 
 def test_explain(params):
@@ -1560,20 +1616,21 @@ if __name__ == "__main__":
     params = COusParams()
     # preseeding
     params.pre_seeding = True
-    params.pre_seeding_subset_minimal = True
-    # params.pre_seeding_grow = True
+    # params.pre_seeding_subset_minimal = True
+    params.pre_seeding_grow = True
 
     # polarity of sat solver
     params.polarity = True
 
     # sat - grow
     params.grow = True
-    params.grow_subset_maximal= True
-    # params.grow_maxsat = True
+    # params.grow_subset_maximal= True
+    params.grow_maxsat = True
+    params.grow_maxsat_max_cost_neg = True
 
     params.postpone_opt = True
     params.postpone_opt_incr = True
-    params.postpone_opt_greedy = True
+    # params.postpone_opt_greedy = True
 
     # timeout
     params.timeout = 1 * HOURS
@@ -1581,10 +1638,10 @@ if __name__ == "__main__":
     ## INSTANCES
     # test_explain(params)
     # test_frietkot(params)
-    # test_puzzle(params)
+    test_puzzle(params)
     # test_simplestReify(params)
     # test_simpleReify(params)
-    test_puzzleReify(params)
+    # test_puzzleReify(params)
 
 
     # test_explainIff(params)

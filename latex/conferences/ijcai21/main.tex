@@ -1,7 +1,5 @@
 %%%% ijcai21.tex
 
-\typeout{IJCAI--21 Instructions for Authors}
-
 % These are the instructions for authors for IJCAI-21.
 
 \documentclass{article}
@@ -21,6 +19,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{amsthm}
 \usepackage{booktabs}
+\usepackage{natbib}
 % \usepackage{algorithm}
 % \usepackage{algorithmic}
 \urlstyle{same}
@@ -44,14 +43,56 @@
 \newcommand{\bart}[1]{{\comment{\color{green}\textsc{BB:}#1}}}
 \newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1} }}
 \newcommand\voc{\ensuremath{\Sigma}\xspace}
-\newtheorem{definition}{Definition}
-\newtheorem{proposition}{Proposition}
-\newtheorem{lemma}{Lemma}
-\newtheorem{example}{Example}
+% \newtheorem{definition}{Definition}
+% \newtheorem{proposition}{Proposition}
+% \newtheorem{lemma}{Lemma}
+% \newtheorem{example}{Example}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{lem}{Lemma}
+\newtheorem{lemma}[lem]{Lemma}
+\newtheorem{propo}{Proposition}
+\newtheorem{proposition}[propo]{Proposition}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+
 \newcommand\muses[1]{\ensuremath{\mathit{MUSs}(#1)}\xspace}
 \newcommand\mcses[1]{\ensuremath{\mathit{MCSs}(#1)}\xspace}
+
+% \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+% \newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+% \newcommand\formula{\ensuremath{\m{F} }\xspace}
+% \newcommand\formulac{\ensuremath{\m{C} }\xspace}
+% \newcommand\formulag{\ensuremath{\m{G} }\xspace}
+% \newcommand\mm[1]{\ensuremath{#1}\xspace}
+% \newcommand\nat{\mm{\mathbb{N}}}
+% \newcommand\ltrue{\mm{\textbf{t}}}
+% \newcommand\lfalse{\mm{\textbf{f}}}
+
+% \newcommand\call[1]{\mm{\textsc{#1}}}
+% \newcommand\geths{\mm{\call{GetHittingSet}}}
+% \newcommand\ohs{\mm{\call{OptHittingSet}}}
+% \newcommand\ghs{\mm{\call{GreedyHittingSet}}}
+% \newcommand\ihs{\mm{\call{IncrementalHittingSet}}}
+% \newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+% \newcommand\sat{\mm{\call{sat}}}
+% \newcommand\grow{\mm{\call{Grow}}}
+% \newcommand\omus{\mm{\call{OUS}}}
+% \newcommand\comus{\mm{\call{c-OUS}}}
+% \newcommand\omusinc{\mm{\call{OUS-Inc}}}
+% \newcommand\store{\mm{\call{Store}}}
+% \newcommand\optprop{\mm{\call{OptimalPropagate}}}
+% \newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+
+
 \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\F{\ensuremath{\m{F} }\xspace}
+% \newcommand\ohs{\ensuremath{\m{OHS} }\xspace}
 \newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+\newcommand\Iend{\ensuremath{I_\mathit{end} }\xspace}
 \newcommand\formula{\ensuremath{\m{F} }\xspace}
 \newcommand\formulac{\ensuremath{\m{C} }\xspace}
 \newcommand\formulag{\ensuremath{\m{G} }\xspace}
@@ -59,6 +100,10 @@
 \newcommand\nat{\mm{\mathbb{N}}}
 \newcommand\ltrue{\mm{\textbf{t}}}
 \newcommand\lfalse{\mm{\textbf{f}}}
+\newcommand\uservars{\ensuremath{\m{U} }\xspace}
+
+\newcommand\satsets{\mm{\mathbf{SSs}}}
+\newcommand\fall{\mm{\formula_{\mathit{all}}}}
 
 \newcommand\call[1]{\mm{\textsc{#1}}}
 \newcommand\geths{\mm{\call{GetHittingSet}}}
@@ -66,23 +111,35 @@
 \newcommand\ghs{\mm{\call{GreedyHittingSet}}}
 \newcommand\ihs{\mm{\call{IncrementalHittingSet}}}
 \newcommand\cohs{\mm{\call{CondOptHittingSet}}}
-\newcommand\sat{\mm{\call{sat}}}
+\newcommand\chs{\mm{\call{CondHittingSet}}}
+\newcommand\sat{\texttt{{SAT}}}
 \newcommand\grow{\mm{\call{Grow}}}
 \newcommand\omus{\mm{\call{OUS}}}
 \newcommand\comus{\mm{\call{c-OUS}}}
 \newcommand\omusinc{\mm{\call{OUS-Inc}}}
 \newcommand\store{\mm{\call{Store}}}
 \newcommand\optprop{\mm{\call{OptimalPropagate}}}
+\newcommand\initsat{\mm{\call{InitSat}}}
 \newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+% \newcommand\fall{\mm{\formula_{\mathit{all}}}}
+\newcommand\algemilio[1]{\emilio{#1}\;}
+
 % \call{}
 % \usepackage{amsthm}
+
+\SetKwInOut{Input}{Input}
+\SetKwInOut{OptInput}{Optional}
+\SetKwInOut{Output}{Output}
+\SetKwInOut{State}{State}
+\SetKwInOut{Ext.}{Ext}
+\SetKwComment{command}{/*}{*/}
 
 \renewcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
 \renewcommand{\emilio}[1]{{\comment{\color{orange}\textsc{EG:}#1}}}
 \renewcommand{\bart}[1]{{\comment{\color{green}\textsc{BB:}#1}}}
 \renewcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1} }}
 \newcommand\negset[1]{\mm{\overline{#1}}}
-\newcommand\Iend{\mm{I_{\mathit{end}}}}
+% \newcommand\Iend{\mm{I_{\mathit{end}}}}
 \newcommand\maxsat{MaxSAT\xspace}
 
 %PDF Info Is REQUIRED.
@@ -157,13 +214,14 @@
 \label{sec:experiments}
 % \todo{2 column}
 \input{06-experiments.tex}
-% \section{Discussion}
+% \section{Discussion}   
 % \todo{1 1/2 column}
-% \input{07-discussion.tex}
+% \input{07-discussion.tex} 
 \section{Conclusion, Challenges and Future work}\label{sec:conclusion}
 % \todo{1/2 column}
 \input{08-conclusion.tex}
 
+\input{09-additional-algorithms.tex}
 %% The file named.bst is a bibliography style file for BibTeX 0.99c
 \bibliography{krrlib,mybibfile,ref}
 \bibliography{ijcai21}

@@ -45,17 +45,19 @@ modes = {
 }
 
 
-def smap(f, *args):
-    return f(*args)
+def smap(f, args):
+    print(args)
+    print(f)
+    return f(args)
 
 
-def runPool(fns, args):
+def runPool(fn, args):
     nprocs = 8
     if "PBS_NP" in os.environ:
         nprocs = int(os.environ["PBS_NP"])
 
     with Pool(processes=nprocs) as pool:
-        pool.map(smap, fns, args)
+        pool.map(fn, args)
 
 
 def runParallel(fns, args):

@@ -1,4 +1,4 @@
-from explain import COusParams, MINUTES, cost_puzzle, cost, explain, add_assumptions, get_user_vars, runParallel
+from explain import COusParams, MINUTES, cost_puzzle, cost, explain, add_assumptions, get_user_vars, runParallel, runPool
 from explain import HOURS
 from multiprocessing import Process, Pool
 from datetime import datetime
@@ -142,14 +142,9 @@ def rq2_params():
 
 def rq1():
     all_params = rq1_params()
-    # all_funs = [r_frietkotProblem]
     all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
-    # print(len(all_params) * len(all_funs))
-    # for f in all_funs:
-    #     for p in all_params:
-    #         f(p)
-            # return
-    runParallel(all_funs, all_params)
+    print(len(all_params) * len(all_funs))
+    runPool(all_funs, all_params)
 
 
 def rq2():

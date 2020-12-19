@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 # import random
 from functools import wraps
+import os
 import copy
 
 from multiprocessing import Process, Pool
@@ -23,7 +24,6 @@ from pysat.examples.musx import MUSX
 from datetime import datetime
 
 # datetime object containing current date and time
-
 
 # Testing samples
 from frietkot import originProblem, originProblemReify
@@ -43,6 +43,19 @@ modes = {
     MODE_GREEDY: "MODE_GREEDY",
     MODE_INCR: "MODE_INCR"
 }
+
+
+def smap(f, *args):
+    return f(*args)
+
+
+def runPool(fns, args):
+    nprocs = 8
+    if "PBS_NP" in os.environ:
+        nprocs = int(os.environ["PBS_NP"])
+
+    with Pool(processes=nprocs) as pool:
+        pool.map(smap, fns, args)
 
 
 def runParallel(fns, args):

@@ -142,11 +142,11 @@ def rq2_params():
 
 def rq1():
     all_params = rq1_params()
-    all_funs = [r_originProblem]
-    all_funs = r_simpleProblem
+    print(len(all_params))
+    myFun = r_originProblem
     # all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
     # print(len(all_params) * len(all_funs))
-    runPool(all_funs, all_params)
+    runPool(myFun, all_params)
 
 
 def rq2():
@@ -155,7 +155,7 @@ def rq2():
     # runParallel(all_funs, all_params)
 
 if __name__ == "__main__":
-    all_params = rq1_params()
-    for p in all_params:
-        r_simpleProblem(p)
-    # rq1()
+    # all_params = rq1_params()
+    # for p in all_params:
+    #     r_simpleProblem(p)
+    rq1()   

@@ -945,7 +945,7 @@ class BestStepCOUSComputer(object):
             C.add(c)
         return C
 
-    def computeHittingSet(self, A, f, p, H, C, HS, mode):
+    def computeHittingSet(self, F, A, f, p, H, C, HS, mode):
         if mode == MODE_INCR:
             t_incr = time.time()
             hs = set(HS)
@@ -957,7 +957,10 @@ class BestStepCOUSComputer(object):
             else:
                 selectable = p - {-l for l in hs}
 
-            c = min(selectable, key=lambda l: f(l))
+            if len(selectable) > 0:
+                c = min(selectable, key=lambda l: f(l))
+            else:
+                c = min(F - HS, key=lambda l: f(l) )
             hs.add(c)
             self.t_expl['t_post'].append(time.time() - t_incr)
             self.t_expl['#H_incr'] += 1
@@ -1041,7 +1044,7 @@ class BestStepCOUSComputer(object):
                 return HS, self.t_expl, False
 
             # COMPUTING OPTIMAL HITTING SET
-            HS = self.computeHittingSet(f=f, A=A, p=p, H=H, C=C, HS=HS, mode=mode)
+            HS = self.computeHittingSet(f=f, F=F, A=A, p=p, H=H, C=C, HS=HS, mode=mode)
             # Timings
             print(f"\t{modes[mode]}: got HS",len(HS), "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS))
 

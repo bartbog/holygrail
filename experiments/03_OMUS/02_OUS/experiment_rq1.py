@@ -155,4 +155,7 @@ def rq2():
     # runParallel(all_funs, all_params)
 
 if __name__ == "__main__":
-    rq1()
+    all_params = rq1_params()
+    for p in all_params:
+        r_simpleProblem(p)
+    # rq1()

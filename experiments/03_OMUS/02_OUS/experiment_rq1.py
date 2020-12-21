@@ -149,7 +149,7 @@ def rq1():
     ray.init(address='auto')
     # EXAMPLE 1: write a greeting to stdout
     all_params = rq1_params()
-    futures = [r_simpleProblem.remote(params) for params in all_params]
+    futures = [r_originProblem.remote(params) for params in all_params]
     ray.get(futures)
 
 

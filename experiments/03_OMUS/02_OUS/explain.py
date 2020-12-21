@@ -182,6 +182,7 @@ class COusParams(object):
 
         return s
 
+
 class OusParams(COusParams):
     def __init__(self):
         super().__init__()
@@ -394,10 +395,7 @@ class BestStepOUSComputer(BestStepComputer):
         self.bestCosts = dict()
         self.fullSS = set(Iend)
 
-
-
-
-    def bestStep(self, f, Iend, I: set):
+    def bestStep(self, f, U, Iend, I: set, timeout=None):
         # best cost
         Xbest = I | {-l for l in  Iend - I}
         f_xbest = sum(f(l) for l in Xbest)
@@ -1359,8 +1357,133 @@ def print_timings(t_exp):
         print("\tGROW=\t", round(sum(t_exp['t_grow']), 3), f"s [{round(100*sum(t_exp['t_grow'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_grow'])/len(t_exp['t_grow']), 3))
 
 
-@profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
-def explain(C: CNF, U: set, f, I0: set, params, verbose=True, matching_table=None):
+def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=True, matching_table=None):
+    """
+    ExplainCSP uses hard clauses supplied in CNF format to explain user
+    variables with associated weights users_vars_cost based on the
+    initial interpretation.
+
+    => hyp: cost is linear
+
+    Args:
+
+        cnf (list): CNF C over a vocabulary V.
+
+        U (set): User vocabulary U subset of V.
+
+        f (list): f is a mapping of user vars to real cost.
+
+        I0 (list): Initial interpretation subset of U.
+    """
+    params.checkParams()
+
+    if verbose:
+        print("Expl:")
+        print("\tcnf:", len(C.clauses), C.nv)
+        print("\tU:", len(U))
+        print("\tf:", f)
+        print("\tI0:", len(I0))
+
+    # init experimental results
+    # init experimental results
+    results = {
+        "config": params.to_dict(),
+        "results": {
+            "HS": [],
+            "HS_greedy": [],
+            "HS_incr": [],
+            "HS-opt-time": [],
+            "HS-postpone-time": [],
+            "SAT-time": [],
+            "grow-time": [],
+            "#expl": 0,
+            "expl_seq": [],
+            "OUS-time": [],
+            "timeout": False
+        }
+    }
+
+    t_expl_start = time.time()
+    # check literals of I are all user vocabulary
+    assert all(True if abs(lit) in U else False for lit in I0), f"Part of supplied literals not in U (user variables): {lits for lit in I if lit not in U}"
+
+    # Initialise the sat solver with the cnf
+    sat = Solver(bootstrap_with=C.clauses)
+    assert sat.solve(assumptions=I0), f"CNF is unsatisfiable with given assumptions {I}."
+
+    # Explanation sequence
+    E = []
+
+    # Most precise intersection of all models of C project on U
+    Iend = optimalPropagate(U=U, I=I0, sat=sat)
+
+    # print(Iend)
+    c = BestStepOUSComputer(f=f, cnf=C, sat=sat, I=I0, params=params)
+
+    I = set(I0) # copy
+    while(len(Iend - I) > 0):
+        remaining_time = params.timeout - (time.time() - t_expl_start)
+        # Compute optimal explanation explanation assignment to subset of U.
+        expl, t_exp, expl_found = c.bestStep(f, U, Iend, I, timeout=remaining_time)
+
+        if verbose:
+            print_timings(t_exp)
+
+        results["results"]["HS"].append(t_exp["#H"])
+        results["results"]["HS_greedy"].append(t_exp["#H_greedy"])
+        results["results"]["HS_incr"].append(t_exp["#H_incr"])
+        results["results"]["HS-opt-time"].append(sum(t_exp["t_mip"]))
+        results["results"]["HS-postpone-time"].append(sum(t_exp["t_post"]))
+        results["results"]["OUS-time"].append(t_exp["t_ous"])
+        results["results"]["SAT-time"].append(sum(t_exp["t_sat"]))
+        results["results"]["grow-time"].append(sum(t_exp["t_grow"]))
+
+        if not expl_found:
+            results["results"]['timeout'] = True
+            break
+
+        # facts used
+
+        Ibest = I & expl
+
+        if matching_table and verbose:
+            for i in Ibest:
+                if(i in matching_table['trans']):
+                    print("trans", i)
+                elif(i in matching_table['bij']):
+                    print("bij", i)
+                elif(i in matching_table['clues']):
+                    print("clues n°", matching_table['clues'][i])
+                else:
+                    print("Fact:", i)
+
+        # New information derived "focused" on
+        Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
+        assert len(Nbest - Iend) == 0
+
+        E.append({
+            "constraints": list(Ibest), 
+            "derived": list(Nbest)
+        })
+
+        if verbose:
+            print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
+
+        I |= Nbest
+
+
+        results["results"]["#expl"] += 1
+
+    if verbose:
+        print(E)
+
+    results["results"]["expl_seq"] = E
+    write_results(results, params.output_folder, params.instance + "_" + params.output_file)
+    return E
+
+
+# @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
+def explain(C: CNF, U: set, f, I0: set, COusParams, verbose=True, matching_table=None):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
     variables with associated weights users_vars_cost based on the

@@ -238,7 +238,7 @@ class OusParams(COusParams):
         return s
 
     def to_dict(self):
-        super_dict = super.to_dict()
+        super_dict = super().to_dict()
         super_dict.update({
             "reuse_SSes": self.reuse_SSes,
             "reuse_costs": self.reuse_costs
@@ -486,7 +486,7 @@ class BestStepOUSComputer(BestStepComputer):
             I (set): A partial interpretation such that I \subseteq Iend.
             preseeding (bool, optional): [description]. Defaults to True.
         """
-    def __init__(self, cnf, sat: Solver, Iend: set,  I: set, params: OusParams):
+    def __init__(self, cnf, sat: Solver, f, Iend: set,  I: set, params: OusParams):
         super().__init__(cnf, sat, params, I0=set(I))
 
         # keeping track of the satisfiable subsets
@@ -523,7 +523,7 @@ class BestStepOUSComputer(BestStepComputer):
 
             # expl is None when cutoff (timeout or cost exceeds current best Cost)
             remainingTime = timeout - (time.time() - tstart_expl)
-            expl, costExpl, t_exp = self.bestStepOUS(f, F=F, A=I | set({-l}), timeout=remainingTime)
+            expl, costExpl, t_exp = self.bestStepOUS(f, F=F, A=I | set({-l}), p=-l, timeout=remainingTime)
 
             # can only keep the costs of the optHittingSet computer
             if costExpl < self.bestCosts[l] and expl is not None:
@@ -578,12 +578,12 @@ class BestStepOUSComputer(BestStepComputer):
             return hs
         elif mode == MODE_OPT:
             t_opt = time.time()
-            hs = self.opt_model.OptHittingSet()
+            hs = self.optHSComputer.OptHittingSet()
             self.t_expl['t_mip'].append(time.time() - t_opt)
             self.t_expl['#H'] += 1
             return hs
 
-    def bestStepOUS(self, f, F, A, timeout=None):
+    def bestStepOUS(self, f, F, A, p, timeout=None):
         tstart = time.time()
 
         self.t_expl = {
@@ -609,17 +609,17 @@ class BestStepOUSComputer(BestStepComputer):
         mode = MODE_OPT
 
         # OPTIMISATION MODEL
-        self.optHSComputer = OptHS(F)
+        self.optHSComputer = OptHS(f, F, p)
 
         # lit to explain!
         lit_expl = next(iter(F - A))
 
-        if self.params.reuse_mss:
+        if self.params.reuse_SSes:
             for SS in self.SSes:
                 if SS.issubset(self.fullSS):
                     continue
 
-                if -lit_expl not in SS or lit_expl not in SS:
+                if p not in SS or -p not in SS:
                     continue
 
                 ss = SS & F
@@ -668,7 +668,7 @@ class BestStepOUSComputer(BestStepComputer):
             SS = self.grow(f=f, F=F, A=A, HS=HS, HS_model=HSModel)
             C = F - SS
             H.add(frozenset(C))
-            self.opt_model.addCorrectionSet(C)
+            self.optHSComputer.addCorrectionSet(C)
             if self.params.reuse_SSes:
                 SSes.add(frozenset(SS))
 
@@ -1224,7 +1224,7 @@ class BestStepCOUSComputer(object):
 
 
 class OptHS(object):
-    def __init__(self, F, p):
+    def __init__(self, f, F, p):
         # Iend + -Iexpl
         self.allLits = list(F)
         self.nAllLits = len(self.allLits)
@@ -1244,9 +1244,10 @@ class OptHS(object):
             obj=[f(l) for l in self.allLits],
             name="x")
 
-        # at least the negated literal
+        # at least the negated literald
+        pos_lit_expl = self.allLits.index(p)
         self.opt_model.addConstr(
-            x[self.nAllLits-1] == 1
+            x[pos_lit_expl] == 1
         )
 
         self.opt_model.update()
@@ -1592,7 +1593,7 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
 
     # print(Iend)
-    c = BestStepOUSComputer(f=f, cnf=C, sat=sat, I=I0, params=params)
+    c = BestStepOUSComputer(f=f, cnf=C, sat=sat, Iend=Iend, I=I0, params=params)
 
     I = set(I0) # copy
     while(len(Iend - I) > 0):
@@ -1921,6 +1922,8 @@ def test_puzzleReify(params):
 
 if __name__ == "__main__":
     # runParallel(fns, all_params)
+    greedy_params = OusParams()
+
     params = COusParams()
     # preseeding
     params.pre_seeding = True
@@ -1944,7 +1947,8 @@ if __name__ == "__main__":
     params.timeout = 1 * HOURS
 
     ## INSTANCES
-    test_explain(params)
+    #test_explain(params)
+    test_explainGreedy(greedy_params)
     # test_frietkot(params)
     # test_puzzle(params)
     # test_simplestReify(params)

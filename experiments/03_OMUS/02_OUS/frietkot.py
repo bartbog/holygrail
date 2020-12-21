@@ -8,6 +8,7 @@ sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src
 sys.path.append('/home/emilio/Documents/cppy_src/')
 sys.path.append('/home/emilio/documents/cppy_mysrc/')
 sys.path.append('/user/brussel/101/vsc10143/cppy_src')
+sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
 
 from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
 

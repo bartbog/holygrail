@@ -14,6 +14,9 @@ from multiprocessing import Process, Pool
 # gurobi imports
 import gurobipy as gp
 from gurobipy import GRB
+import sys
+sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
+
 
 # pysat imports
 from pysat.formula import CNF, WCNF, WCNFPlus

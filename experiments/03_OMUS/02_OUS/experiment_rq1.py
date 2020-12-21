@@ -1,7 +1,9 @@
-from explain import COusParams, MINUTES, cost_puzzle, cost, explain, add_assumptions, get_user_vars, runParallel, runPool
+from explain import COusParams, MINUTES, SECONDS, cost_puzzle, cost, explain, add_assumptions, get_user_vars, runParallel, runPool
 from explain import HOURS
 from multiprocessing import Process, Pool
 from datetime import datetime
+
+import ray
 
 # Testing samples
 from frietkot import simpleProblem, originProblem, frietKotProblem
@@ -9,7 +11,7 @@ from pysat.formula import CNF
 
 import itertools
 
-
+@ray.remote
 def r_frietkotProblem(params):
     params.instance = "frietkot"
     f_cnf, f_user_vars = frietKotProblem()
@@ -20,7 +22,7 @@ def r_frietkotProblem(params):
     f = cost(U, I)
     explain(C=frietkot_cnf, U=U, f=f, I0=I, params=params, verbose=True)
 
-
+@ray.remote
 def r_originProblem(params):
     params.instance = "origin-problem"
     o_clauses, o_assumptions, o_weights, o_user_vars, _ = originProblem()
@@ -30,7 +32,7 @@ def r_originProblem(params):
     f = cost_puzzle(U, I, o_weights)
     explain(C=o_cnf, U=U, f=f, I0=I, params=params, verbose=False)
 
-
+@ray.remote
 def r_simpleProblem(params):
     params.instance = "simple"
     s_cnf = simpleProblem()
@@ -129,8 +131,8 @@ def rq1_params():
                     p.grow_maxsat_max_cost_neg = grow_maxsat_max_cost_neg
                     p.grow_maxsat_unit = grow_maxsat_unit
 
-                    p.timeout = 4 * HOURS
-                    p.output_folder = "results/rq1_4/" + datetime.now().strftime("%Y%m%d/")
+                    p.timeout = 30 * SECONDS
+                    p.output_folder = "results/rq1_5/" + datetime.now().strftime("%Y%m%d/")
                     all_params_test.append(p)
 
     return all_params_test
@@ -141,21 +143,12 @@ def rq2_params():
 
 
 def rq1():
+    ray.init(address='auto')
+    # EXAMPLE 1: write a greeting to stdout
     all_params = rq1_params()
-    print(len(all_params))
-    myFun = r_originProblem
-    # all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
-    # print(len(all_params) * len(all_funs))
-    runPool(myFun, all_params)
+    futures = [r_simpleProblem.remote(params) for params in all_params]
+    ray.get(futures)
 
-
-def rq2():
-    all_params = rq2_params()
-    # all_funs = [r_simpleProblem, r_frietkotProblem, r_originProblem]
-    # runParallel(all_funs, all_params)
 
 if __name__ == "__main__":
-    # all_params = rq1_params()
-    # for p in all_params:
-    #     r_simpleProblem(p)
-    rq1()   
+    rq1()

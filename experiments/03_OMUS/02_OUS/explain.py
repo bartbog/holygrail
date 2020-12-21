@@ -1483,7 +1483,7 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=True, m
 
 
 # @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
-def explain(C: CNF, U: set, f, I0: set, COusParams, verbose=True, matching_table=None):
+def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matching_table=None):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
     variables with associated weights users_vars_cost based on the
@@ -1777,9 +1777,9 @@ if __name__ == "__main__":
     params.timeout = 1 * HOURS
 
     ## INSTANCES
-    # test_explain(params)
+    test_explain(params)
     # test_frietkot(params)
-    test_puzzle(params)
+    # test_puzzle(params)
     # test_simplestReify(params)
     # test_simpleReify(params)
     # test_puzzleReify(params)

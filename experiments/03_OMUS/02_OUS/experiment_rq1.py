@@ -134,7 +134,7 @@ def rq1_params():
                     p.grow_maxsat_max_cost_neg = grow_maxsat_max_cost_neg
                     p.grow_maxsat_unit = grow_maxsat_unit
 
-                    p.timeout = 30 * SECONDS
+                    p.timeout = 4 * HOURS
                     p.output_folder = "/user/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS/results/rq1_5/" + datetime.now().strftime("%Y%m%d%H") + "/"
                     all_params_test.append(p)
 

@@ -1,3 +1,7 @@
+import sys
+sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
+import ray
+
 from explain import COusParams, MINUTES, SECONDS, cost_puzzle, cost, explain, add_assumptions, get_user_vars, runParallel, runPool
 from explain import HOURS
 from multiprocessing import Process, Pool
@@ -6,10 +10,7 @@ from datetime import datetime
 
 # Testing samples
 from frietkot import simpleProblem, originProblem, frietKotProblem
-import sys
-sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
 
-import ray
 from pysat.formula import CNF
 
 import itertools

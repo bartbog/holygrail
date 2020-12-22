@@ -70,7 +70,6 @@ class COusParams(object):
         self.pre_seeding = False
         self.pre_seeding_subset_minimal = False
         self.pre_seeding_grow = False
-        self.pre_seeding_grow_maxsat = False
 
         # hitting set computation
         self.postpone_opt = False
@@ -116,7 +115,6 @@ class COusParams(object):
             "preseeding": self.pre_seeding,
             "preseeding-minimal": self.pre_seeding_subset_minimal,
             "preseeding-grow": self.pre_seeding_grow,
-            "preseeding-grow-maxsat": self.pre_seeding_grow_maxsat,
             "sat-polarity": self.polarity,
             "postpone_opt": self.postpone_opt,
             "postpone_opt_incr": self.postpone_opt_incr,
@@ -730,7 +728,6 @@ class BestStepCOUSComputer(object):
 
             covered = set(Iend) # already in an satsubset
 
-            SSes = []
             for l in F:
                 if self.params.pre_seeding_subset_minimal and l in covered:
                     continue

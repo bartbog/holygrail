@@ -1,19 +1,20 @@
 import sys
 sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
-import ray
+import itertools
 
-from explain import COusParams, MINUTES, SECONDS, cost_puzzle, cost, explain, add_assumptions, get_user_vars, runParallel, runPool
-from explain import HOURS
+import ray
+from explain import COusParams, cost_puzzle, cost, explain
+from explain import add_assumptions, get_user_vars
+from explain import runParallel
+from explain import HOURS, MINUTES, SECONDS
 from multiprocessing import Process, Pool
 from datetime import datetime
-
 
 # Testing samples
 from frietkot import simpleProblem, originProblem, frietKotProblem
 
 from pysat.formula import CNF
 
-import itertools
 
 @ray.remote
 def r_frietkotProblem(params):
@@ -49,7 +50,63 @@ def r_simpleProblem(params):
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params, verbose=False)
 
 
-def rq1_params():
+def rq1_maxsat_grow():
+    all_exec_params = []
+    polarity = True
+    preseeding = True
+    preseeding_grow = True
+
+    # grow
+    grow = True
+    grow_maxsat = True
+
+    grow_maxsat_perms = []
+    for c in [list(per) for per in itertools.permutations([True, False, False, False])]:
+        if c not in grow_maxsat_perms:
+            grow_maxsat_perms.append(c)
+
+    postponeOpt_perms = [
+        [False, False, False],
+        [True, False, True],
+        [True, True, False],
+        [True, True, True]
+    ]
+
+    for postOpt, postIncr, postGreedy in postponeOpt_perms:
+        for neg_cost, pos_cost, max_cost_neg, unit in grow_maxsat_perms:
+            p = COusParams()
+
+            # intialisation: pre-seeding
+            p.pre_seeding = preseeding
+            p.pre_seeding_grow = preseeding_grow
+
+            # hitting set computation
+            p.postpone_opt = postOpt
+            p.postpone_opt_incr = postIncr
+            p.postpone_opt_greedy = postGreedy
+
+            # polarity of sat solver
+            p.polarity = polarity
+
+            # sat - grow
+            p.grow = grow
+            p.grow_maxsat = grow_maxsat
+
+            p.grow_maxsat_neg_cost = neg_cost
+            p.grow_maxsat_pos_cost = pos_cost
+            p.grow_maxsat_max_cost_neg = max_cost_neg
+            p.grow_maxsat_unit = unit
+
+            # timeout
+            p.timeout = 2 * HOURS
+
+            p.output_folder = "/user/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS/results/maxsat/" + datetime.now().strftime("%Y%m%d%H") + "/"
+            all_exec_params.append(p)
+
+    return all_exec_params
+
+
+def rq1_all_params():
 
     # checking the effect on preseeding with grow
     TF = [True, False]
@@ -149,10 +206,12 @@ def rq2_params():
 def rq1():
     ray.init(address='auto')
     # EXAMPLE 1: write a greeting to stdout
-    all_params = rq1_params()
+    all_params = rq1_all_params()
     futures = [r_originProblem.remote(params) for params in all_params]
     ray.get(futures)
 
 
 if __name__ == "__main__":
-    rq1()
+    # rq1()
+    maxSatGrowparams = rq1_maxsat_grow()
+    print(len(maxSatGrowparams))

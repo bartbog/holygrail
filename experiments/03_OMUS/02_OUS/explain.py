@@ -48,27 +48,12 @@ modes = {
 }
 
 
-def smap(f, args):
-    print(args)
-    print(f)
-    return f(args)
-
-
-def runPool(fn, args):
-    nprocs = 8
-    if "PBS_NP" in os.environ:
-        nprocs = int(os.environ["PBS_NP"])
-
-    with Pool(processes=nprocs) as pool:
-        pool.map(fn, args)
-
-
 def runParallel(fns, args):
     procs = []
     for fn in fns:
         for arg in args:
             arg_copy = copy.deepcopy(arg)
-            p = Process(target=fn, args=(arg,))
+            p = Process(target=fn, args=(arg_copy,))
             p.start()
             procs.append(p)
 
@@ -475,7 +460,7 @@ class BestStepOUSComputer(BestStepComputer):
         a sat solver bootstrapped with a CNF and user variables. Beststep
         computer is implemented based on [1].
 
-        [1] 
+        [1]
 
         Args:
             sat (pysat.Solver): Sat solver bootstrapped with CNF on a
@@ -679,7 +664,7 @@ class BestStepCOUSComputer(object):
         a sat solver bootstrapped with a CNF and user variables. Beststep
         computer is implemented based on [1].
 
-        [1] 
+        [1]
 
         Args:
             sat (pysat.Solver): Sat solver bootstrapped with CNF on a
@@ -724,14 +709,16 @@ class BestStepCOUSComputer(object):
         H = []
 
         if self.params.pre_seeding:
-            # print("Preseeding")
             # print(U)
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
-            # print("F=", F)
+            print("F=", F)
+            print("A=", A)
+            print("I=", I)
+            print("U=", U)
             # print("U=", U)
             # print("I", self.I0)
-            # print("Iend", Iend)
+            print("Iend=", Iend)
 
             # find (m)ss'es of F, add correction sets
             Ap = Iend # satisfiable subset
@@ -753,10 +740,7 @@ class BestStepCOUSComputer(object):
                 _, Ap = self.checkSat(Ap=HS, phases=Iend)
 
                 # growing the HS
-                if self.params.pre_seeding_grow_maxsat:
-                    C = frozenset(F - self.grow_maxsat_preseeding(f=f, F=F, A=A, HS=HS, SSes=SSes))
-                    SSes.append(C)
-                elif self.params.pre_seeding_grow:
+                if self.params.pre_seeding_grow:
                     C = frozenset(F - self.grow(f, F=F, A=A, HS=HS, HS_model=Ap))
                 else:
                     C = frozenset(F - Ap)
@@ -765,7 +749,7 @@ class BestStepCOUSComputer(object):
                     self.opt_model.addCorrectionSet(C)
                     H.append(C)
 
-                if  self.params.pre_seeding_subset_minimal:
+                if self.params.pre_seeding_subset_minimal:
                     covered |= (Ap & F) # add covered lits of F
 
     def grow_maxsat_preseeding(self, f, F, A, HS, SSes):
@@ -877,7 +861,7 @@ class BestStepCOUSComputer(object):
     def grow(self, f, F, A, HS, HS_model):
         # no actual grow needed if 'HS_model' contains all user vars
         t_grow = time.time()
-        
+
         if not self.params.grow:
             SS = set(HS)
         elif self.params.grow_sat:
@@ -1182,6 +1166,7 @@ class BestStepCOUSComputer(object):
         mode = MODE_OPT
 
         while(True):
+            print("remainingTime=", timeout - (time.time() - tstart))
             if time.time() - tstart > timeout:
                 self.t_expl['t_ous'] = timeout
                 return HS, self.t_expl, False
@@ -1458,8 +1443,8 @@ def optimalPropagate(sat, I=set(), U=None):
         + Reuse solver only for optpropagate
     - Extension 2:
         + Reuse solver for all sat calls
-    - Extension 3: 
-        + Set phases 
+    - Extension 3:
+        + Set phases
 
     Args:
     cnf (list): CNF C over V:
@@ -1616,7 +1601,7 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
         assert len(Nbest - Iend) == 0
 
         E.append({
-            "constraints": list(Ibest), 
+            "constraints": list(Ibest),
             "derived": list(Nbest)
         })
 
@@ -1740,7 +1725,7 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
         assert len(Nbest - Iend) == 0
 
         E.append({
-            "constraints": list(Ibest), 
+            "constraints": list(Ibest),
             "derived": list(Nbest)
         })
 
@@ -1802,7 +1787,7 @@ def cost_puzzle(U, I, cost_clue):
         elif lit in cost_clue:
             return cost_clue[lit]
         else:
-            # lit in 
+            # lit in
             return 1
 
     return cost_lit
@@ -1870,7 +1855,7 @@ def test_explain(params):
     U = get_user_vars(simple_cnf)
     I = set(assumptions)
     f = cost(U, I)
-    explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
+    explain(C=simple_cnf, U=U, f=f, I0=I, params=params, verbose=True)
 
 
 def test_explainGreedy(params):
@@ -1935,12 +1920,12 @@ if __name__ == "__main__":
 
     # sat - grow
     params.grow = True
-    # params.grow_subset_maximal= True
-    params.grow_maxsat = True
-    params.grow_maxsat_max_cost_neg = True
+    params.grow_subset_maximal= True
+    # params.grow_maxsat = True
+    # params.grow_maxsat_max_cost_neg = True
 
-    params.postpone_opt = True
-    params.postpone_opt_incr = True
+    # params.postpone_opt = True
+    # params.postpone_opt_incr = True
     # params.postpone_opt_greedy = True
 
     # timeout
@@ -1948,8 +1933,8 @@ if __name__ == "__main__":
 
     ## INSTANCES
     #test_explain(params)
-    test_explainGreedy(greedy_params)
-    # test_frietkot(params)
+    # test_explainGreedy(greedy_params)
+    test_frietkot(params)
     # test_puzzle(params)
     # test_simplestReify(params)
     # test_simpleReify(params)

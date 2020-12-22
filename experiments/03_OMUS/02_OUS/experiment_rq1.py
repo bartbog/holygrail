@@ -103,7 +103,7 @@ def rq1_maxsat_grow():
             p.output_folder = "/user/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS/results/maxsat/" + datetime.now().strftime("%Y%m%d%H") + "/"
             all_exec_params.append(p)
 
-    runParallel([r_simpleProblem], all_exec_params)
+    runParallel([r_originProblem], all_exec_params)
     # return all_exec_params
 
 

@@ -2,7 +2,7 @@ import sys
 sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
 import itertools
 
-import ray
+# import ray
 from explain import COusParams, cost_puzzle, cost, explain
 from explain import add_assumptions, get_user_vars
 from explain import runParallel
@@ -16,7 +16,7 @@ from frietkot import simpleProblem, originProblem, frietKotProblem
 from pysat.formula import CNF
 
 
-@ray.remote
+# @ray.remote
 def r_frietkotProblem(params):
     params.instance = "frietkot"
     f_cnf, f_user_vars = frietKotProblem()
@@ -27,7 +27,7 @@ def r_frietkotProblem(params):
     f = cost(U, I)
     explain(C=frietkot_cnf, U=U, f=f, I0=I, params=params, verbose=True)
 
-@ray.remote
+# @ray.remote
 def r_originProblem(params):
     params.instance = "origin-problem"
     o_clauses, o_assumptions, o_weights, o_user_vars, _ = originProblem()
@@ -37,7 +37,7 @@ def r_originProblem(params):
     f = cost_puzzle(U, I, o_weights)
     explain(C=o_cnf, U=U, f=f, I0=I, params=params, verbose=False)
 
-@ray.remote
+# @ray.remote
 def r_simpleProblem(params):
     params.instance = "simple"
     s_cnf = simpleProblem()
@@ -103,7 +103,8 @@ def rq1_maxsat_grow():
             p.output_folder = "/user/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS/results/maxsat/" + datetime.now().strftime("%Y%m%d%H") + "/"
             all_exec_params.append(p)
 
-    return all_exec_params
+    runParallel([r_simpleProblem], all_exec_params)
+    # return all_exec_params
 
 
 def rq1_all_params():
@@ -203,15 +204,16 @@ def rq2_params():
     pass
 
 
-def rq1():
-    ray.init(address='auto')
-    # EXAMPLE 1: write a greeting to stdout
-    all_params = rq1_all_params()
-    futures = [r_originProblem.remote(params) for params in all_params]
-    ray.get(futures)
+# def rq1():
+#     ray.init(address='auto')
+#     # EXAMPLE 1: write a greeting to stdout
+#     all_params = rq1_all_params()
+#     futures = [r_originProblem.remote(params) for params in all_params]
+#     ray.get(futures)
 
 
 if __name__ == "__main__":
     # rq1()
-    maxSatGrowparams = rq1_maxsat_grow()
-    print(len(maxSatGrowparams))
+    # maxSatGrowparams = rq1_maxsat_grow()
+    # print(len(maxSatGrowparams))
+    rq1_maxsat_grow()

@@ -94,7 +94,7 @@ class COusParams(object):
         self.grow_skip_greedy = False
 
         # timeout
-        self.timeout = 24 * HOURS
+        self.timeout = 2 * HOURS
 
         # output file
         self.output_folder = "results/" + datetime.now().strftime("%Y%m%d/")
@@ -112,22 +112,33 @@ class COusParams(object):
 
     def to_dict(self):
         return {
+            # preseeding
             "preseeding": self.pre_seeding,
             "preseeding-minimal": self.pre_seeding_subset_minimal,
             "preseeding-grow": self.pre_seeding_grow,
+            # sat polarities
             "sat-polarity": self.polarity,
+            # postpone optimisation
             "postpone_opt": self.postpone_opt,
             "postpone_opt_incr": self.postpone_opt_incr,
             "postpone_opt_greedy": self.postpone_opt_greedy,
+            # grow type
             "grow": self.grow,
             "grow_sat": self.grow_sat,
             "grow_subset_maximal": self.grow_subset_maximal,
             "grow_maxsat": self.grow_maxsat,
+            # can we skip grow on incremental and greedy ?
+            "grow_skip_incremental": self.grow_skip_incremental,
+            "grow_skip_greedy": self.grow_skip_greedy,
+            # maxsat costs
+            "grow_maxsat_neg_cost": self.grow_maxsat_neg_cost,
+            "grow_maxsat_pos_cost": self.grow_maxsat_pos_cost,
+            "grow_maxsat_max_cost_neg": self.grow_maxsat_max_cost_neg,
+            "grow_maxsat_unit": self.grow_maxsat_unit,
+            # run parameters
             "timeout": self.timeout,
             "instance": self.instance,
-            "output": self.output_folder+self.output_file,
-            "grow_skip_incremental": self.grow_skip_incremental,
-            "grow_skip_greedy": self.grow_skip_greedy
+            "output": self.output_folder+self.output_file
         }
 
     def __str__(self):
@@ -710,13 +721,13 @@ class BestStepCOUSComputer(object):
             # print(U)
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
-            print("F=", F)
-            print("A=", A)
-            print("I=", I)
-            print("U=", U)
+            # print("F=", F)
+            # # print("A=", A)
+            # print("I=", I)
+            # print("U=", U)
             # print("U=", U)
             # print("I", self.I0)
-            print("Iend=", Iend)
+            # print("Iend=", Iend)
 
             # find (m)ss'es of F, add correction sets
             Ap = Iend # satisfiable subset
@@ -1163,7 +1174,7 @@ class BestStepCOUSComputer(object):
         mode = MODE_OPT
 
         while(True):
-            print("remainingTime=", timeout - (time.time() - tstart))
+            # print("remainingTime=", timeout - (time.time() - tstart))
             if time.time() - tstart > timeout:
                 self.t_expl['t_ous'] = timeout
                 return HS, self.t_expl, False
@@ -1743,6 +1754,9 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
 
 
 def write_results(results, outputdir, outputfile):
+    print(outputdir)
+    print(Path(outputdir).parent)
+    print(outputfile)
     if not Path(outputdir).parent.exists():
         Path(outputdir).parent.mkdir()
     if not Path(outputdir).exists():

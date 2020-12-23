@@ -721,44 +721,48 @@ class BestStepCOUSComputer(object):
             # print(U)
             F = set(l for l in U) | set(-l for l in U)
             F -= {-l for l in I}
-            # print("F=", F)
-            # # print("A=", A)
-            # print("I=", I)
-            # print("U=", U)
-            # print("U=", U)
-            # print("I", self.I0)
-            # print("Iend=", Iend)
+            print("F=", F)
+            print("A=", A)
+            print("I=", I)
+            print("U=", U)
+            print("U=", U)
+            print("I", self.I0)
+            print("Iend=", Iend)
 
             # find (m)ss'es of F, add correction sets
             Ap = Iend # satisfiable subset
 
             C = frozenset(F - Ap)
-
+            # print('Adding C=', C)
             self.opt_model.addCorrectionSet(C)
             H.append(C)
 
             covered = set(Iend) # already in an satsubset
 
-            for l in F:
-                if self.params.pre_seeding_subset_minimal and l in covered:
-                    continue
+            for l in F - Iend:
+                # if l in covered:
+                #     continue
 
-                # print("Seeding", {l})
+                print("Seeding", {l})
                 HS = set({l})
                 _, Ap = self.checkSat(Ap=HS, phases=Iend)
 
                 # growing the HS
                 if self.params.pre_seeding_grow:
-                    C = frozenset(F - self.grow(f, F=F, A=A, HS=HS, HS_model=Ap))
+                    SS = self.grow(f, F=F, A=A, HS=HS, HS_model=Ap)
+                    # print("l=", l)
+                    # print("SS=", SS)
+                    C = frozenset(F - SS)
+                    # print("C=", C)
                 else:
                     C = frozenset(F - Ap)
 
                 if C not in H:
+                    # print('Adding C=', C)
                     self.opt_model.addCorrectionSet(C)
                     H.append(C)
 
-                if self.params.pre_seeding_subset_minimal:
-                    covered |= (Ap & F) # add covered lits of F
+                # covered |= (Ap & F) # add covered lits of F
 
     def grow_maxsat_preseeding(self, f, F, A, HS, SSes):
         wcnf = WCNF()
@@ -1154,10 +1158,10 @@ class BestStepCOUSComputer(object):
                  and A' is f-optimal.
         """
         self.t_expl = {
-            't_post': [],
-            't_sat': [],
-            't_mip': [],
-            't_grow': [],
+            't_post': [0],
+            't_sat': [0],
+            't_mip': [0],
+            't_grow': [0],
             't_ous': 0,
             '#H':0,
             '#H_greedy': 0,
@@ -1182,7 +1186,7 @@ class BestStepCOUSComputer(object):
             # COMPUTING OPTIMAL HITTING SET
             HS = self.computeHittingSet(f=f, F=F, A=A, p=p, H=H, C=C, HS=HS, mode=mode)
             # Timings
-            # print(f"\t{modes[mode]}: got HS",len(HS), "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS))
+            print(f"\t{modes[mode]}: got HS",len(HS), "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS),"\tMIP:", round(self.t_expl["t_mip"][-1],3), "s\tGROW:", round(self.t_expl["t_grow"][-1],3))
 
             # CHECKING SATISFIABILITY
             sat, HS_model = self.checkSat(HS, phases=self.I0)
@@ -1199,11 +1203,7 @@ class BestStepCOUSComputer(object):
                 continue
 
             # XXX Idea for grow- skip the grow when incremental!
-            if (mode == MODE_INCR and self.params.grow_skip_incremental) or (mode == MODE_GREEDY and self.params.grow_skip_greedy):
-                SS = HS_model
-            else:
-                SS = self.grow(f, F, A, HS, HS_model)
-
+            SS = self.grow(f, F, A, HS, HS_model)
             C = F - SS
 
             # ADD COMPLEMENT TO HITTING SET OPTIMISATION SOLVER
@@ -1898,6 +1898,7 @@ def test_simpleReify(params):
     f = cost(U, I)
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
+
 def test_frietkotReify(params):
     cnf, assumptions, U = frietKotProblemReify()
     simple_cnf = CNF(from_clauses=cnf)
@@ -1923,7 +1924,7 @@ if __name__ == "__main__":
     params = COusParams()
     # preseeding
     params.pre_seeding = True
-    # params.pre_seeding_subset_minimal = True
+    # # params.pre_seeding_subset_minimal = True
     params.pre_seeding_grow = True
 
     # polarity of sat solver
@@ -1931,10 +1932,15 @@ if __name__ == "__main__":
 
     # sat - grow
     params.grow = True
-    params.grow_subset_maximal= True
-    # params.grow_maxsat = True
+    # params.grow_subset_maximal= True
+    params.grow_maxsat = True
     # params.grow_maxsat_max_cost_neg = True
 
+    # params.grow_maxsat_unit = True
+    # params.grow_maxsat_pos_cost = True
+    params.grow_maxsat_max_cost_neg = True
+    # params.grow_maxsat_neg_cost = True
+    # params.grow_maxsat_unit = True
     # params.postpone_opt = True
     # params.postpone_opt_incr = True
     # params.postpone_opt_greedy = True
@@ -1945,8 +1951,8 @@ if __name__ == "__main__":
     ## INSTANCES
     #test_explain(params)
     # test_explainGreedy(greedy_params)
-    test_frietkot(params)
-    # test_puzzle(params)
+    # test_frietkot(params)
+    test_puzzle(params)
     # test_simplestReify(params)
     # test_simpleReify(params)
     # test_puzzleReify(params)

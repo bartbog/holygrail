@@ -68,7 +68,6 @@ class COusParams(object):
     def __init__(self):
         # intialisation: pre-seeding
         self.pre_seeding = False
-        self.pre_seeding_subset_minimal = False
         self.pre_seeding_grow = False
 
         # hitting set computation
@@ -76,8 +75,12 @@ class COusParams(object):
         self.postpone_opt_incr = False
         self.postpone_opt_greedy = False
 
+        # intialise new sat solver everytime ?
+        self.new_sat_solver = False
+
         # polarity of sat solver
         self.polarity = False
+        self.polarity_initial = False
 
         # sat - grow
         self.grow = False
@@ -85,11 +88,14 @@ class COusParams(object):
         self.grow_subset_maximal = False
         self.grow_maxsat = False
 
+        # MAXSAT growing
         self.grow_maxsat_neg_cost = False
         self.grow_maxsat_pos_cost = False
         self.grow_maxsat_max_cost_neg = False
         self.grow_maxsat_unit = False
+        self.grow_maxsat_init = False
 
+        # skip a step if expensive ?
         self.grow_skip_incremental = False
         self.grow_skip_greedy = False
 
@@ -108,16 +114,27 @@ class COusParams(object):
             assert (self.postpone_opt_incr or self.postpone_opt_greedy), "At least one of the two postponing heuristics"
 
         if self.grow:
-            assert self.grow_sat ^ self.grow_subset_maximal ^ self.grow_maxsat, "Exactly 1 grow mechanism"
+            assert self.grow_sat ^ \
+                   self.grow_subset_maximal ^ \
+                   self.grow_maxsat, \
+                   "Exactly 1 grow mechanism"
+
+        if self.grow_maxsat:
+            assert self.grow_maxsat_neg_cost ^ \
+                   self.grow_maxsat_pos_cost ^ \
+                   self.grow_maxsat_max_cost_neg ^ \
+                   self.grow_maxsat_unit ^ \
+                   self.grow_maxsat_init, \
+                   "Only 1 type of maxsat grow."
 
     def to_dict(self):
         return {
             # preseeding
             "preseeding": self.pre_seeding,
-            "preseeding-minimal": self.pre_seeding_subset_minimal,
             "preseeding-grow": self.pre_seeding_grow,
             # sat polarities
             "sat-polarity": self.polarity,
+            "sat-polarity-initial": self.polarity_initial,
             # postpone optimisation
             "postpone_opt": self.postpone_opt,
             "postpone_opt_incr": self.postpone_opt_incr,
@@ -135,6 +152,7 @@ class COusParams(object):
             "grow_maxsat_pos_cost": self.grow_maxsat_pos_cost,
             "grow_maxsat_max_cost_neg": self.grow_maxsat_max_cost_neg,
             "grow_maxsat_unit": self.grow_maxsat_unit,
+            "grow_maxsat_init": self.grow_maxsat_init,
             # run parameters
             "timeout": self.timeout,
             "instance": self.instance,
@@ -149,9 +167,6 @@ class COusParams(object):
         if self.pre_seeding_grow:
             s += "pre-seeding-grow-simple\n"
 
-        if self.pre_seeding_grow_maxsat:
-            s += "pre-seeding-grow-maxsat \n"
-
         if self.postpone_opt:
             s += "postpone_opt \n"
         if self.postpone_opt_incr:
@@ -162,6 +177,8 @@ class COusParams(object):
         # polarity of sat solver
         if self.polarity:
             s += "polarity \n"
+        elif self.polarity_initial:
+            s += "polarity-initial interpretation \n"
 
         # sat - grow
         if self.grow_sat:
@@ -178,6 +195,8 @@ class COusParams(object):
                 s += "-max_cost_neg"
             elif self.grow_maxsat_unit:
                 s += "-unit_cost"
+            elif self.grow_maxsat_init:
+                s += "-initial_interpretation"
             s += "\n"
 
         return s
@@ -715,94 +734,40 @@ class BestStepCOUSComputer(object):
             '#H_incr': 0,
         }
 
-        H = []
+        F = set(l for l in U) | set(-l for l in U)
+        F -= set(-l for l in I)
 
         if self.params.pre_seeding:
-            # print(U)
-            F = set(l for l in U) | set(-l for l in U)
-            F -= {-l for l in I}
-            print("F=", F)
-            print("A=", A)
-            print("I=", I)
-            print("U=", U)
-            print("U=", U)
-            print("I", self.I0)
-            print("Iend=", Iend)
+            print("Warm start!")
 
-            # find (m)ss'es of F, add correction sets
             Ap = Iend # satisfiable subset
 
-            C = frozenset(F - Ap)
-            # print('Adding C=', C)
+            # ensures at least one of the -lits in HS
+            C = F - Ap
             self.opt_model.addCorrectionSet(C)
-            H.append(C)
 
-            covered = set(Iend) # already in an satsubset
+            seedable = set(-i for i in Iend - I)
 
-            for l in F - Iend:
-                # if l in covered:
-                #     continue
+            while len(seedable) > 0:
+                l = next(iter(seedable))
 
-                print("Seeding", {l})
+                print(f"Seeding {l} [{len(seedable)} remaining]")
+
                 HS = set({l})
                 _, Ap = self.checkSat(Ap=HS, phases=Iend)
 
-                # growing the HS
                 if self.params.pre_seeding_grow:
                     SS = self.grow(f, F=F, A=A, HS=HS, HS_model=Ap)
-                    # print("l=", l)
-                    # print("SS=", SS)
-                    C = frozenset(F - SS)
-                    # print("C=", C)
                 else:
-                    C = frozenset(F - Ap)
+                    SS = Ap
+                C = frozenset(F - SS)
 
-                if C not in H:
-                    # print('Adding C=', C)
-                    self.opt_model.addCorrectionSet(C)
-                    H.append(C)
+                self.opt_model.addCorrectionSet(C)
 
-                # covered |= (Ap & F) # add covered lits of F
-
-    def grow_maxsat_preseeding(self, f, F, A, HS, SSes):
-        wcnf = WCNF()
-
-        # add hard clauses of CNF
-        wcnf.extend(self.cnf.clauses)
-        # HS as hard clause
-        wcnf.extend([[l] for l in HS])
-
-        if SSes:
-            # reuse previous Satisfiable subsets for diversity
-            wcnf.extend([[-l for l in SS] for SS in SSes])
-
-        # add soft clasues => F - HS
-        remaining = A - HS
-
-        weights = None
-
-        if self.params.grow_maxsat_neg_cost:
-            weights = [-f(l) for l in remaining]
-        elif self.params.grow_maxsat_pos_cost:
-            weights = [f(l) for l in remaining]
-        elif self.params.grow_maxsat_max_cost_neg:
-            max_weight = max(f(l) for l in remaining)
-            weights = [max_weight+1 - f(l) for l in remaining]
-        elif self.params.grow_maxsat_unit:
-            weights = [1] * len(remaining)
-        else:
-            # print("MaxSat Grow - Defaulting to unit weight!")
-            weights = [1] * len(remaining)
-
-        wcnf.extend([[l] for l in remaining], weights)
-
-        with RC2(wcnf) as rc2:
-            t_model = rc2.compute()
-
-            if t_model is None:
-                return HS
-
-            return set(t_model)
+                other_seeds = seedable & frozenset(SS)
+                # no need to 'grow' a literal that already has an MSS
+                seedable -= other_seeds
+            print("Finished pre-seeding")
 
     def bestStep(self, f, U: set, Iend: set, I: set, timeout=1 * HOURS):
         """
@@ -826,50 +791,6 @@ class BestStepCOUSComputer(object):
         A = I | {-l for l in Iexpl}
         return self.bestStepCOUS(f, F, A, timeout=timeout, p=p)
 
-    def grow_maxsat(self, f, F, A, HS):
-        wcnf = WCNF()
-
-        # add hard clauses of CNF
-        wcnf.extend(self.cnf.clauses + [[l] for l in HS])
-
-        # TODO: is this really correct ? A - HS ? add soft clasues => F - HS
-        remaining = A - HS
-
-        weights = None
-
-        if self.params.grow_maxsat_neg_cost:
-            weights = [-f(l) for l in remaining]
-        elif self.params.grow_maxsat_pos_cost:
-            weights = [f(l) for l in remaining]
-        elif self.params.grow_maxsat_max_cost_neg:
-            max_weight = max(f(l) for l in remaining)
-            weights = [max_weight+1 - f(l) for l in remaining]
-        elif self.params.grow_maxsat_unit:
-            weights = [1] * len(remaining)
-        else:
-            # print("MaxSat Grow - Defaulting to unit weight!")
-            weights = [1] * len(remaining)
-
-        wcnf.extend([[l] for l in remaining], weights)
-
-        with RC2(wcnf) as rc2:
-            t_model = rc2.compute()
-
-            if t_model is None:
-                return set(HS)
-
-            return set(t_model)
-
-    def grow_subset_maximal(self, A, HS, Ap):
-        sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
-
-        # repeat until subset maximal wrt A
-        while (Ap != App):
-            Ap = set(App)
-            sat, App = self.checkSat(HS | (A & Ap), phases=A)
-        # print("\tgot sat", sat, len(App))
-        return App
-
     def grow(self, f, F, A, HS, HS_model):
         # no actual grow needed if 'HS_model' contains all user vars
         t_grow = time.time()
@@ -887,21 +808,120 @@ class BestStepCOUSComputer(object):
         self.t_expl['t_grow'].append(time.time() - t_grow)
         return SS
 
-    def checkSat(self, Ap: set, phases=set()):
-        """Check satisfiability of given assignment of subset of the variables
+    def grow_maxsat(self, f, F, A, HS):
+        print("Growing!", A, HS)
+        wcnf = WCNF()
+
+        # add hard clauses of CNF
+        wcnf.extend(self.cnf.clauses + [[l] for l in HS])
+
+        # cost is associated for assigning a truth value to literal not in
+        # contrary to A.
+        remaining = A - HS
+
+        # associate small neg cost to expensive literals
+        # intuitively grow the most expensive SS to have cheapest
+        # complement
+        if self.params.grow_maxsat_neg_cost:
+            weights = [-f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        # intuitively grow the cheapestSS to have expensive
+        # complement
+        elif self.params.grow_maxsat_pos_cost:
+            weights = [f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        # ensure costs are positive (same as maxsat with neg costs)
+        elif self.params.grow_maxsat_max_cost_neg:
+            max_weight = max(f(l) for l in remaining)
+            weights = [max_weight+1 - f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        # unit cost similar to sat call
+        elif self.params.grow_maxsat_unit:
+            weights = [1] * len(remaining)
+            wcnf.extend([[l] for l in remaining], weights)
+        # maxsat with initial 
+        elif self.params.grow_maxsat_init:
+            remaining = self.I0 - HS
+            weights = [f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+
+        with RC2(wcnf, verbose=2) as rc2:
+            t_model = rc2.compute()
+
+            return set(t_model)
+
+    def grow_subset_maximal(self, A, HS, Ap):
+        sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
+
+        # repeat until subset maximal wrt A
+        while (Ap != App):
+            Ap = set(App)
+            sat, App = self.checkSat(HS | (A & Ap), phases=A)
+        # print("\tgot sat", sat, len(App))
+        return App
+
+    def checkSatNoSolver(self, Ap: set, phases=set()):
+        """
+        Instantiate new sat solver at every call.
+
+        Check satisfiability of given assignment of subset of the variables
         of Vocabulary V.
+
             - If the subset is unsatisfiable, Ap is returned.
             - If the subset is satisfiable, the model computed by the sat
               solver is returned.
 
         Args:
+
             Ap (set): Susbet of literals
 
         Returns:
+
             (bool, set): sat value, model assignment
         """
         t_sat = time.time()
-        if self.params.polarity:
+
+        sat_solver = Solver(bootstrap_with=self.cnf.clauses + [[l] for l in Ap])
+
+        if self.params.polarity_initial:
+            sat_solver.set_phases(literals=list(self.I0 - Ap))
+        elif self.params.polarity:
+            sat_solver.set_phases(literals=list(phases - Ap))
+
+        solved = sat_solver.solve()
+
+        if not solved:
+            self.t_expl['t_sat'].append(time.time() - t_sat)
+            return solved, Ap
+
+        model = set(sat_solver.get_model())
+
+        sat_solver.delet()
+
+        self.t_expl['t_sat'].append(time.time() - t_sat)
+        return solved, model
+
+    def checkSat(self, Ap: set, phases=set()):
+        """Check satisfiability of given assignment of subset of the variables
+        of Vocabulary V.
+
+            - If the subset is unsatisfiable, Ap is returned.
+            - If the subset is satisfiable, the model computed by the sat
+              solver is returned.
+
+        Args:
+
+            Ap (set): Susbet of literals
+
+        Returns:
+
+            (bool, set): sat value, model assignment
+        """
+        t_sat = time.time()
+
+        if self.params.polarity_initial:
+            self.sat_solver.set_phases(literals=list(self.I0 - Ap))
+        elif self.params.polarity:
             self.sat_solver.set_phases(literals=list(phases - Ap))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
@@ -1090,7 +1110,7 @@ class BestStepCOUSComputer(object):
             hs = set(HS)
             # p-cosntraint validation only 1 of p
             # take the minimum cost literal
-            if len(p&hs) > 0:
+            if len(p & hs) > 0:
                 # cannot select lit that is in p already and already in hs
                 selectable = C - (hs | {-l for l in hs} | p)
             else:
@@ -1099,7 +1119,8 @@ class BestStepCOUSComputer(object):
             if len(selectable) > 0:
                 c = min(selectable, key=lambda l: f(l))
             else:
-                c = min(F - HS, key=lambda l: f(l) )
+                c = min(F - HS, key=lambda l: f(l))
+
             hs.add(c)
             self.t_expl['t_post'].append(time.time() - t_incr)
             self.t_expl['#H_incr'] += 1
@@ -1185,6 +1206,7 @@ class BestStepCOUSComputer(object):
 
             # COMPUTING OPTIMAL HITTING SET
             HS = self.computeHittingSet(f=f, F=F, A=A, p=p, H=H, C=C, HS=HS, mode=mode)
+
             # Timings
             print(f"\t{modes[mode]}: got HS",len(HS), "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS),"\tMIP:", round(self.t_expl["t_mip"][-1],3), "s\tGROW:", round(self.t_expl["t_grow"][-1],3))
 
@@ -1207,7 +1229,7 @@ class BestStepCOUSComputer(object):
             C = F - SS
 
             # ADD COMPLEMENT TO HITTING SET OPTIMISATION SOLVER
-            H.append(frozenset(C))
+            H.append(C)
             self.opt_model.addCorrectionSet(C)
 
     def __del__(self):
@@ -1219,6 +1241,9 @@ class BestStepCOUSComputer(object):
 class OptHS(object):
     def __init__(self, f, F, p):
         # Iend + -Iexpl
+        print(F)
+        print("I=", [l for l in F if -l not in F])
+        print("Iend/Iexpl=", [l for l in F if -l in F])
         self.allLits = list(F)
         self.nAllLits = len(self.allLits)
 
@@ -1279,33 +1304,50 @@ class OptHS(object):
 
 
 class CondOptHS(object):
-    def __init__(self, U, Iend, I):
-        """Build optimisation model. The constrained optimal hitting set
-        is described by:
+    def __init__(self, U: set, Iend: set, I: set):
+        """
+        # Optimisation model:
+
+        The constrained optimal hitting set is described by:
+
         - x_l={0,1} is a boolean decision variable if the literal is selected
                     or not.
+
         - w_l=f(l) is the cost assigned to having the literal in the hitting
                    set (INF otherwise).
+
         - c_lj={0,1} is 1 (0) if the literal l is (not) present in hitting set j.
 
         Objective:
+
              min sum(x_l * w_l) over all l in Iend + (-Iend \ -I)
+
         Subject to:
+
             (1) sum x_l * c_lj >= 1 for all hitting sets j.
-                => Hitting set must hit all sets-to-hit.
+
+                = Hitting set must hit all sets-to-hit.
+
             (2) sum x_l == 1 for l in (-Iend \ -I)
 
         Args:
+
             U (set): User variables over a vocabulary V
+
             Iend (set): Cautious consequence, the set of literals that hold in
                         all models.
+
             I (set): partial interpretation subset of Iend.
+
         """
         Iexpl = Iend - I
         notIexpl = set(-lit for lit in Iexpl)
 
         # Iend + -Iexpl
-        self.allLits = list(I) + list(Iexpl) + list(notIexpl)
+        # print("I=", [l for l in F if -l not in F])
+        # print("Iend/Iexpl=", [l for l in F if -l in F])
+
+        self.allLits = list(Iend) + list(notIexpl)
         self.nAllLits = len(self.allLits)
 
         # optimisation model
@@ -1717,16 +1759,7 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
 
         Ibest = I & expl
 
-        if matching_table and verbose:
-            for i in Ibest:
-                if(i in matching_table['trans']):
-                    print("trans", i)
-                elif(i in matching_table['bij']):
-                    print("bij", i)
-                elif(i in matching_table['clues']):
-                    print("clues n°", matching_table['clues'][i])
-                else:
-                    print("Fact:", i)
+        print_expl(matching_table, Ibest)
 
         # New information derived "focused" on
         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
@@ -1921,26 +1954,47 @@ if __name__ == "__main__":
     # runParallel(fns, all_params)
     greedy_params = OusParams()
 
+    optimalParams = COusParams
+    # preseeding
+    optimalParams.pre_seeding = True
+    optimalParams.pre_seeding_grow = True
+    # params.pre_seeding_subset_minimal = True
+
+    # polarity of sat solver
+    # params.polarity = True
+    optimalParams.polarity_initial = True
+
+    # sat - grow
+    optimalParams.grow = True
+    optimalParams.grow_maxsat = True
+    optimalParams.grow_maxsat_init = True
+
+    # timeout
+    optimalParams.timeout = 1 * HOURS
+
     params = COusParams()
     # preseeding
     params.pre_seeding = True
-    # # params.pre_seeding_subset_minimal = True
     params.pre_seeding_grow = True
+    # params.pre_seeding_subset_minimal = True
 
     # polarity of sat solver
     params.polarity = True
+    # params.polarity_initial = True
 
     # sat - grow
     params.grow = True
-    # params.grow_subset_maximal= True
     params.grow_maxsat = True
-    # params.grow_maxsat_max_cost_neg = True
+    # params.grow_subset_maximal= True
 
+    # params.grow_maxsat_max_cost_neg = True
     # params.grow_maxsat_unit = True
     # params.grow_maxsat_pos_cost = True
-    params.grow_maxsat_max_cost_neg = True
     # params.grow_maxsat_neg_cost = True
-    # params.grow_maxsat_unit = True
+    params.grow_maxsat_unit = True
+    # params.grow_maxsat_init = True
+
+    ## Postponing Hitting set solver call
     # params.postpone_opt = True
     # params.postpone_opt_incr = True
     # params.postpone_opt_greedy = True
@@ -1949,30 +2003,10 @@ if __name__ == "__main__":
     params.timeout = 1 * HOURS
 
     ## INSTANCES
-    #test_explain(params)
+    # test_explain(params)
     # test_explainGreedy(greedy_params)
     # test_frietkot(params)
     test_puzzle(params)
     # test_simplestReify(params)
     # test_simpleReify(params)
     # test_puzzleReify(params)
-
-
-    # test_explainIff(params)
-    # cnf, ass = simplestProblemIff()
-    # with Solver(bootstrap_with=cnf + ass + [[-2]]) as s:
-    #     s.solve()
-    #     for m in s.enum_models():
-    #         print(m)
-    # test_explainIff(params)
-    # test_frietkot(params)
-    # mycnf, ass= simpleProblemIff()
-    # print(mycnf)
-    # print(ass)
-    # test_explain(params)
-    # test_frietkot(params)
-    # test_explainImplies(params)
-    # test_originProblemIff(params)
-    # test_originProblemIff()
-
-

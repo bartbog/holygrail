@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 # import random
 from functools import wraps
-import os
 import copy
 
 from multiprocessing import Process, Pool
@@ -14,9 +13,9 @@ from multiprocessing import Process, Pool
 # gurobi imports
 import gurobipy as gp
 from gurobipy import GRB
+
 import sys
 sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
-
 
 # pysat imports
 from pysat.formula import CNF, WCNF, WCNFPlus
@@ -24,9 +23,8 @@ from pysat.solvers import Solver
 from pysat.examples.rc2 import RC2
 from pysat.examples.musx import MUSX
 
-from datetime import datetime
-
 # datetime object containing current date and time
+from datetime import datetime
 
 # Testing samples
 from frietkot import originProblem, originProblemReify
@@ -34,7 +32,6 @@ from frietkot import simpleProblemReify, simplestProblemReify
 from frietkot import simpleProblem
 from frietkot import frietKotProblem, frietKotProblemReify
 
-from datetime import datetime
 
 SECONDS = 1
 MINUTES = 60 * SECONDS
@@ -360,13 +357,16 @@ class BestStepComputer(object):
             return set(t_model)
 
     def grow_subset_maximal(self, A, HS, Ap):
-        sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
+        _, App = self.checkSat(HS | (self.I0 & Ap), phases=self.I0)
+        if self.params.subset_maximal_I0:
+            while (Ap != App):
+                Ap = set(App)
+                _, App = self.checkSat(HS | (self.I0 & Ap), phases=self.I0)
 
         # repeat until subset maximal wrt A
         while (Ap != App):
             Ap = set(App)
-            sat, App = self.checkSat(HS | (A & Ap), phases=A)
-        # print("\tgot sat", sat, len(App))
+            _, App = self.checkSat(HS | (A & Ap), phases=A)
         return App
 
     def checkSat(self, Ap: set, phases=set()):
@@ -809,7 +809,7 @@ class BestStepCOUSComputer(object):
         return SS
 
     def grow_maxsat(self, f, F, A, HS):
-        print("Growing!", A, HS)
+        # print("Growing!", A, HS)
         wcnf = WCNF()
 
         # add hard clauses of CNF
@@ -845,7 +845,7 @@ class BestStepCOUSComputer(object):
             weights = [f(l) for l in remaining]
             wcnf.extend([[l] for l in remaining], weights)
 
-        with RC2(wcnf, verbose=2) as rc2:
+        with RC2(wcnf) as rc2:
             t_model = rc2.compute()
 
             return set(t_model)
@@ -1783,7 +1783,78 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
 
     results["results"]["expl_seq"] = E
     write_results(results, params.output_folder, params.instance + "_" + params.output_file)
+    write_explanations(E, matching_table, f, params.output_folder, params.instance + datetime.now().strftime("%Y%m%d%H%M%S%f") + ".output.json")
+
     return E
+
+
+def to_json_expl(explanation, matching_table, f):
+    constraints = list(explanation["constraints"])
+    derived = list(explanation["derived"])
+
+    json_explanation = {
+        "cost": sum(f(l) for l in constraints),
+        "clue": None,
+        "assumptions": [],
+        "derivations": []
+    }
+
+    for fact in derived:
+        json_fact = matching_table['bvRel'][abs(fact)]
+        json_fact["value"] = True if fact > 0 else False
+        json_explanation["derivations"].append(json_fact)
+
+    clue = []
+    nTrans = 0
+    nBij = 0
+    nClue = 0
+
+    for c in constraints:
+        if(c in matching_table['Transitivity constraint']):
+            nTrans += 1
+        elif(c in matching_table['Bijectivity']):
+            nBij += 1
+        elif(c in matching_table['clues']):
+            nClue += 1
+            clue.append(matching_table['clues'][c])
+        else:
+            json_fact = matching_table['bvRel'][abs(c)]
+            json_fact["value"] = True if c > 0 else False
+            json_explanation["assumptions"].append(json_fact)
+
+
+    if nClue == 0:
+        if nTrans == 0 and nBij == 1:
+            json_explanation["clue"] = "Bijectivity"
+        elif nTrans == 1 and nBij == 0:
+            json_explanation["clue"] = "Transitivity constraint"
+        else:
+            json_explanation["clue"] = "Combination of logigram constraints"
+    elif nClue == 1:
+        if nTrans + nBij >= 1:
+            json_explanation["clue"] = "Clue and implicit Constraint"
+        else:
+            json_explanation["clue"] = clue[0]
+    else:
+        json_explanation["clue"] = "Multiple clues"
+
+    return json_explanation
+
+
+def write_explanations(explanations, matching_table, f, outputdir, outputfile):
+    if not Path(outputdir).parent.exists():
+        Path(outputdir).parent.mkdir()
+    if not Path(outputdir).exists():
+        Path(outputdir).mkdir()
+    file_path = Path(outputdir) / outputfile
+    json_explanations = []
+
+    for e in explanations:
+        json_explanation = to_json_expl(e, matching_table, f)
+        json_explanations.append(json_explanation)
+
+    with file_path.open('w') as f:
+        json.dump(json_explanations, f)
 
 
 def write_results(results, outputdir, outputfile):
@@ -1865,6 +1936,13 @@ def get_user_vars(cnf):
     return U
 
 
+def read_json(pathstr):
+    f_path = Path(pathstr)
+    with f_path.open('r') as fp:
+        json_dict = json.load(fp)
+    return json_dict
+
+
 def test_frietkot(params):
     params.instance = "frietkot"
 
@@ -1882,6 +1960,7 @@ def test_frietkot(params):
 def test_puzzle(params):
     params.instance = "origin-problem"
     o_clauses, o_assumptions, o_weights, o_user_vars, matching_table = originProblem()
+    
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
@@ -1951,10 +2030,12 @@ def test_puzzleReify(params):
     explain(C=o_cnf, U=U, f=f, I0=I, params=params)
 
 if __name__ == "__main__":
-    # runParallel(fns, all_params)
-    greedy_params = OusParams()
+    # Translating the explanation sequence generated to website visualisation
+    # d = read_json("expl_seq.json")
+    # write_explanations(d["results"]["expl_seq"], matching_table, f, './', 'explanatons_puzzle.json')
 
-    optimalParams = COusParams
+    # runParallel(fns, all_params)
+    optimalParams = COusParams()
     # preseeding
     optimalParams.pre_seeding = True
     optimalParams.pre_seeding_grow = True
@@ -2006,7 +2087,7 @@ if __name__ == "__main__":
     # test_explain(params)
     # test_explainGreedy(greedy_params)
     # test_frietkot(params)
-    test_puzzle(params)
+    test_puzzle(optimalParams)
     # test_simplestReify(params)
     # test_simpleReify(params)
     # test_puzzleReify(params)

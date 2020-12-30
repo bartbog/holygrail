@@ -425,6 +425,20 @@ def originProblem():
                            (native[p, 'Alaska'] & native['Mattie', 'Kansas']))) for p in person])
     [clues.append(implies(bv_clues[9], clause)) for clause in c9a]
 
+    # match clue in cnf to textual representation
+    clueTexts = [
+        "Mattie is 113 years old",
+        "The person who lives in Tehama is a native of either Kansas or Oregon",
+        "The Washington native is 1 year older than Ernesto",
+        "Roxanne is 2 years younger than the Kansas native",
+        "The person who lives in Zearing isn't a native of Alaska",
+        "The person who is 111 years old doesn't live in Plymouth",
+        "The Oregon native is either Zachary or the person who lives in Tehama",
+        "The person who lives in Shaver Lake is 1 year younger than Roxanne",
+        "The centenarian who lives in Plymouth isn't a native of Alaska",
+        "Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas"
+    ]
+
     rels = [is_old, lives_in, native, age_city, age_birth, city_birth]
 
     clues_cnf = cnf_to_pysat(to_cnf(clues))
@@ -447,13 +461,28 @@ def originProblem():
     # weights.update({-(bv.name + 1): 60 for bv in bv_bij})
 
     explainable_facts = set()
-    for rel in rels:
-        print(rel.df)
-        # print()
+    bvRels = {}
+    for rel, relStr in zip(rels, ["is_old", "lives_in", "native", "age_city", "age_birth", "city_birth"]):
+        rowNames = list(rel.df.index)
+        columnNames = list(rel.df.columns)
+        for r in rowNames:
+            for c in columnNames:
+                print(relStr, "row=",r, "col=", c, rel.df.at[r, c])
+                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr, "subject" : r, "object": c}
         for item in rel.df.values:
             explainable_facts |= set(i.name+1 for i in item)
 
-    return hard_clauses, soft_clauses, weights, explainable_facts, {'trans': [bv.name + 1 for bv in bv_trans], 'bij': [bv.name + 1 for bv in bv_bij], 'clues' : {bv.name + 1: i for i, bv in enumerate(bv_clues)}}
+
+    matching_table = {
+        'bvRel': bvRels,
+        'Transitivity constraint': [bv.name + 1 for bv in bv_trans],
+        'Bijectivity': [bv.name + 1 for bv in bv_bij],
+        'clues' : {
+            bv.name + 1: clueTexts[i] for i, bv in enumerate(bv_clues)
+        }
+    }
+
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
 
 
 def simplestProblemReify():

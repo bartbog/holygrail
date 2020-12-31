@@ -1557,9 +1557,9 @@ def print_expl(matching_table, Ibest):
         return
 
     for i in Ibest:
-        if(i in matching_table['trans']):
+        if(i in matching_table['Transitivity constraint']):
             print("trans", i)
-        elif(i in matching_table['bij']):
+        elif(i in matching_table['Bijectivity']):
             print("bij", i)
         elif(i in matching_table['clues']):
             print("clues n°", matching_table['clues'][i])
@@ -1966,6 +1966,8 @@ def test_puzzle(params):
     I = set(x for lst in o_assumptions for x in lst)
     f = cost_puzzle(U, I, o_weights)
     explain(C=o_cnf, U=U, f=f, I0=I, params=params, matching_table=matching_table, verbose=True)
+    # d = read_json("expl_seq.json")
+    # write_explanations(d["results"]["expl_seq"], matching_table, f, '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/visualization/src/source_explanations', 'explanatons_puzzle.output.json')
 
 
 def test_explain(params):

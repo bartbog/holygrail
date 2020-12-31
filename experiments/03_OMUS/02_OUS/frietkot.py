@@ -44,6 +44,32 @@ def exactly_one_at_most(lst):
     return any(lst), allpairs
 
 
+def pastaPuzzle():
+    """
+    Logic grid puzzle: 'pasta' in CPpy
+    Based on... to check originally, currently part of ZebraTutor
+    Probably part of Jens Claes' master thesis, from a 'Byron...' booklet
+    """
+    dollar = ['4', '8', '12', '16']
+    person = ['angie', 'damon', 'claudia', 'elisa']
+    sauce = ['the_other_type1', 'arrabiata_sauce', 'marinara_sauce', 'puttanesca_sauce'] 
+    pasta = ['capellini', 'farfalle', 'tagliolini', 'rotini']
+
+    types = [dollar, person, sauce, pasta]
+    n = len(types)
+    m = len(types[0])
+    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
+
+    chose = Relation(person, sauce)
+    paid = Relation(person, dollar)
+    ordered = Relation(person, pasta)
+    # is_linked_with_1(sauce, dollar)
+    # is_linked_with_2(sauce, pasta)
+    # is_linked_with_3(dollar, pasta)
+
+
+    return
+
 def originProblemReify():
     """
     Logic grid puzzle: 'origin' in CPpy
@@ -300,22 +326,46 @@ def originProblem():
     # Bijectivity
     cnt = 0
     bij = []
-    bv_bij = [BoolVar() for i in range(60)]
+    # bv_bij = [BoolVar() for i in range(60)]
+
+    bv_bij = []
 
     for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
         # for each relation
         for col_ids in rel.df:
+            bv1 = BoolVar()
+            bv2 = BoolVar()
             # one per column
-            # bij += exactly_one(rel[:, col_ids])
-            b1 = to_cnf(exactly_one(rel[:, col_ids]))
-            [bij.append(implies(bv_bij[cnt], clause)) for clause in b1]
-            cnt += 1
+            atleast, atmost = exactly_one_at_most(rel[:, col_ids])
+            [bij.append(implies(bv1, clause)) for clause in atmost]
+            bij.append(implies(bv2, atleast))
+            bv_bij.append(bv1)
+            bv_bij.append(bv2)
+
         for (_,row) in rel.df.iterrows():
+            bv3 = BoolVar()
+            bv4 = BoolVar()
             # one per row
-            # bij += exactly_one(row)
-            b2 = to_cnf(exactly_one(row))
-            [bij.append( implies(bv_bij[cnt] , clause) ) for clause in b2]
-            cnt += 1
+            atleast, atmost = exactly_one_at_most(row)
+            [bij.append(implies(bv3, clause)) for clause in atmost]
+            bij.append(implies(bv4, atleast))
+            bv_bij.append(bv3)
+            bv_bij.append(bv4)
+
+    # for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
+    #     # for each relation
+    #     for col_ids in rel.df:
+    #         # one per column
+    #         # bij += exactly_one(rel[:, col_ids])
+    #         b1 = to_cnf(exactly_one(rel[:, col_ids]))
+    #         [bij.append(implies(bv_bij[cnt], clause)) for clause in b1]
+    #         cnt += 1
+    #     for (_,row) in rel.df.iterrows():
+    #         # one per row
+    #         # bij += exactly_one(row)
+    #         b2 = to_cnf(exactly_one(row))
+    #         [bij.append( implies(bv_bij[cnt] , clause) ) for clause in b2]
+    #         cnt += 1
 
     # Transitivity
     trans = []
@@ -468,7 +518,7 @@ def originProblem():
         for r in rowNames:
             for c in columnNames:
                 print(relStr, "row=",r, "col=", c, rel.df.at[r, c])
-                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr, "subject" : r, "object": c}
+                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr.lower(), "subject" : r.lower(), "object": c.lower()}
         for item in rel.df.values:
             explainable_facts |= set(i.name+1 for i in item)
 

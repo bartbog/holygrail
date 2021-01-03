@@ -50,6 +50,11 @@ def pastaPuzzle():
     Based on... to check originally, currently part of ZebraTutor
     Probably part of Jens Claes' master thesis, from a 'Byron...' booklet
     """
+    # type1 = sauce
+    # type2 = pasta
+    # type3 = differences between values of type dollar
+    # type4 = differences between values of type dollar
+    # type5 = differences between values of type dollar
     dollar = ['4', '8', '12', '16']
     person = ['angie', 'damon', 'claudia', 'elisa']
     sauce = ['the_other_type1', 'arrabiata_sauce', 'marinara_sauce', 'puttanesca_sauce'] # type1
@@ -151,13 +156,6 @@ def pastaPuzzle():
     clues = []
     bv_clues = [BoolVar() for i in range(8)]
 
-    # type1 = sauce
-    # person
-    # type2 = pasta
-    # type3 = differences between values of type dollar
-    # type4 = differences between values of type dollar
-    # type5 = differences between values of type dollar
-
     # 0.The person who ordered capellini paid less than the person who chose arrabiata sauce
     # assumption_satisfied( 0  ) => ?a [person] b [type3] c [dollar] d [person] e [dollar]: ordered(a,capellini) & b>0 & chose(d,arrabiata_sauce) & paid(d,c) & e = c-b & paid(a,e).
     c0a = []
@@ -248,7 +246,6 @@ def pastaPuzzle():
     clues_cnf = cnf_to_pysat(to_cnf(clues))
     bij_cnf = cnf_to_pysat(to_cnf(bij))
     trans_cnf = cnf_to_pysat(to_cnf(trans))
-    # print(len(clues_cnf))
 
     hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
     soft_clauses = []
@@ -266,13 +263,15 @@ def pastaPuzzle():
     for rel, relStr in zip(rels, ["chose", "paid", "ordered", "sauce_dollar", "sauce_pasta", "dollar_pasta"]):
         rowNames = list(rel.df.index)
         columnNames = list(rel.df.columns)
+
+        # production of explanations json file
         for r in rowNames:
             for c in columnNames:
-                print(relStr, "row=",r, "col=", c, rel.df.at[r, c])
                 bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr.lower(), "subject" : r.lower(), "object": c.lower()}
+
+        # facts to explain
         for item in rel.df.values:
             explainable_facts |= set(i.name+1 for i in item)
-
 
     matching_table = {
         'bvRel': bvRels,

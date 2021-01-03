@@ -1672,7 +1672,7 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
     return E
 
 
-# @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=10, strip_dirs=True)
+@profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=20, strip_dirs=True)
 def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matching_table=None):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user

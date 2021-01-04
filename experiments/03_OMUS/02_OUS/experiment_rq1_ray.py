@@ -2,7 +2,7 @@ import sys
 sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
 import itertools
 
-# import ray
+import ray
 from explain import COusParams, cost_puzzle, cost, explain
 from explain import add_assumptions, get_user_vars
 from explain import runParallel
@@ -16,6 +16,7 @@ from frietkot import simpleProblem, originProblem, frietKotProblem
 from pysat.formula import CNF
 
 
+@ray.remote
 def r_frietkotProblem(params):
     params.instance = "frietkot"
     f_cnf, f_user_vars = frietKotProblem()
@@ -27,6 +28,7 @@ def r_frietkotProblem(params):
     explain(C=frietkot_cnf, U=U, f=f, I0=I, params=params, verbose=True)
 
 
+@ray.remote
 def r_originProblem(params):
     params.instance = "origin-problem"
     o_clauses, o_assumptions, o_weights, o_user_vars, _ = originProblem()
@@ -37,6 +39,7 @@ def r_originProblem(params):
     explain(C=o_cnf, U=U, f=f, I0=I, params=params, verbose=False)
 
 
+@ray.remote
 def r_simpleProblem(params):
     params.instance = "simple"
     s_cnf = simpleProblem()
@@ -203,6 +206,13 @@ def rq1_all_params():
 def rq2_params():
     pass
 
+def rq1():
+    ray.init(address='auto')
+    # EXAMPLE 1: write a greeting to stdout
+    all_params = rq1_all_params()
+    futures = [r_originProblem.remote(params) for params in all_params]
+    ray.get(futures)
+
 
 def rq1_args(func, num_node, cores_per_node):
     offset = (num_node-1)*cores_per_node
@@ -217,3 +227,4 @@ if __name__ == "__main__":
         print ('Number of arguments:', len(sys.argv), 'arguments.')
         print ('Argument List:', str(sys.argv))
         print(len(rq1_all_params()))
+        # rq1()

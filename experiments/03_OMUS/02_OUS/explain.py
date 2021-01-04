@@ -83,6 +83,7 @@ class COusParams(object):
         self.grow = False
         self.grow_sat = False
         self.grow_subset_maximal = False
+        self.subset_maximal_I0 = False
         self.grow_maxsat = False
 
         # MAXSAT growing
@@ -1635,7 +1636,9 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
         remaining_time = params.timeout - (time.time() - t_expl_start)
         # Compute optimal explanation explanation assignment to subset of U.
         expl, t_exp = c.bestStep(f, Iend, I, timeout=remaining_time)
-
+        print(expl)
+        print(t_expl)
+        return
         saveResults(results, t_exp)
 
         if expl is None:
@@ -1672,7 +1675,7 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
     return E
 
 
-@profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=20, strip_dirs=True)
+# @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=20, strip_dirs=True)
 def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matching_table=None):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
@@ -1983,8 +1986,15 @@ def test_explain(params):
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params, verbose=True)
 
 
-def test_explainGreedy(params):
+def test_explainGreedy():
     params = OusParams()
+
+    params.pre_seeding = True
+    params.polarity = True
+
+    params.grow = True
+    params.grow_subset_maximal = True
+
     s_cnf = simpleProblem()
     s_cnf_ass, assumptions = add_assumptions(s_cnf)
     # transform list cnf into CNF object
@@ -2087,7 +2097,7 @@ if __name__ == "__main__":
 
     ## INSTANCES
     # test_explain(params)
-    # test_explainGreedy(greedy_params)
+    # test_explainGreedy()
     # test_frietkot(params)
     test_puzzle(optimalParams)
     # test_simplestReify(params)

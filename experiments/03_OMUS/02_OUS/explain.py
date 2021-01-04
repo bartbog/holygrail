@@ -96,10 +96,6 @@ class COusParams(object):
         self.grow_maxsat_initial_interpretation = False
         self.grow_maxsat_actual_interpretation = False
 
-        # skip a step if expensive ?
-        self.grow_skip_incremental = False
-        self.grow_skip_greedy = False
-
         # timeout
         self.timeout = 2 * HOURS
 
@@ -822,7 +818,7 @@ class BestStepCOUSComputer(object):
             SS = set(HS)
         elif self.params.grow_sat:
             SS = set(HS_model)
-        elif self.params.grow_subset_maximal:
+        elif self.params.grow_subset_maximal or self.params.subset_maximal_I0:
             SS = set(self.grow_subset_maximal(A=A, HS=HS, Ap=HS_model))
         elif self.params.grow_maxsat:
             SS = set(self.grow_maxsat(f=f, F=F, A=A, HS=HS))
@@ -1757,6 +1753,7 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
             print("OUS: Timeout Explanation :-( ")
             expl_found = False
         finally:
+            # ensure we don't get a timeout outside
             signal.alarm(0)
 
         # keeping track of the timings

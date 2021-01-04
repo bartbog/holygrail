@@ -206,6 +206,27 @@ def rq1_all_params():
 def rq2_params():
     pass
 
+
+def effectOfPreseeding():
+    all_exec_params = []
+
+    
+
+    return all_exec_params
+
+
+def effectOfPostPoningOpt():
+    all_exec_params = []
+
+    return all_exec_params
+
+
+def effectOfGrow():
+    all_exec_params = []
+
+    return all_exec_params
+
+
 def rq1():
     ray.init(address='auto')
     # EXAMPLE 1: write a greeting to stdout

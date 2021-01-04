@@ -72,9 +72,6 @@ class COusParams(object):
         self.postpone_opt_incr = False
         self.postpone_opt_greedy = False
 
-        # intialise new sat solver everytime ?
-        self.new_sat_solver = False
-
         # polarity of sat solver
         self.polarity = False
         self.polarity_initial = False
@@ -91,7 +88,8 @@ class COusParams(object):
         self.grow_maxsat_pos_cost = False
         self.grow_maxsat_max_cost_neg = False
         self.grow_maxsat_unit = False
-        self.grow_maxsat_init = False
+        self.grow_maxsat_initial_interpretation = False
+        self.grow_maxsat_actual_interpretation = False
 
         # skip a step if expensive ?
         self.grow_skip_incremental = False
@@ -122,7 +120,8 @@ class COusParams(object):
                    self.grow_maxsat_pos_cost ^ \
                    self.grow_maxsat_max_cost_neg ^ \
                    self.grow_maxsat_unit ^ \
-                   self.grow_maxsat_init, \
+                   self.grow_maxsat_initial_interpretation ^ \
+                   self.grow_maxsat_actual_interpretation, \
                    "Only 1 type of maxsat grow."
 
     def to_dict(self):
@@ -150,7 +149,8 @@ class COusParams(object):
             "grow_maxsat_pos_cost": self.grow_maxsat_pos_cost,
             "grow_maxsat_max_cost_neg": self.grow_maxsat_max_cost_neg,
             "grow_maxsat_unit": self.grow_maxsat_unit,
-            "grow_maxsat_init": self.grow_maxsat_init,
+            "grow_maxsat_initial": self.grow_maxsat_initial_interpretation,
+            "grow_maxsat_actual": self.grow_maxsat_actual_interpretation,
             # run parameters
             "timeout": self.timeout,
             "instance": self.instance,
@@ -193,8 +193,10 @@ class COusParams(object):
                 s += "-max_cost_neg"
             elif self.grow_maxsat_unit:
                 s += "-unit_cost"
-            elif self.grow_maxsat_init:
+            elif self.grow_maxsat_initial_interpretation:
                 s += "-initial_interpretation"
+            elif self.grow_maxsat_actual_interpretation:
+                s += "-actual_interpretation"
             s += "\n"
 
         return s
@@ -718,6 +720,7 @@ class BestStepCOUSComputer(object):
 
         # initial values
         self.I0 = set(I)
+        self.I = set(I)
         self.U = set(U) | set(-l for l in U)
         self.Iend = set(Iend)
 
@@ -783,6 +786,7 @@ class BestStepCOUSComputer(object):
             I (set): A partial interpretation such that I \subseteq Iend.
             sat (pysat.Solver): A SAT solver initialized with a CNF.
         """
+        self.I = set(I)
         Iexpl = Iend - I
         F = set(l for l in U) | set(-l for l in U)
         F -= {-l for l in I}
@@ -840,9 +844,14 @@ class BestStepCOUSComputer(object):
         elif self.params.grow_maxsat_unit:
             weights = [1] * len(remaining)
             wcnf.extend([[l] for l in remaining], weights)
-        # maxsat with initial 
-        elif self.params.grow_maxsat_init:
+        # maxsat with initial interpretation
+        elif self.params.grow_maxsat_initial_interpretation:
             remaining = self.I0 - HS
+            weights = [f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        # maxsat with actual interpretation
+        elif self.params.grow_maxsat_actual_interpretation:
+            remaining = self.I - HS
             weights = [f(l) for l in remaining]
             wcnf.extend([[l] for l in remaining], weights)
 
@@ -860,47 +869,6 @@ class BestStepCOUSComputer(object):
             sat, App = self.checkSat(HS | (A & Ap), phases=A)
         # print("\tgot sat", sat, len(App))
         return App
-
-    def checkSatNoSolver(self, Ap: set, phases=set()):
-        """
-        Instantiate new sat solver at every call.
-
-        Check satisfiability of given assignment of subset of the variables
-        of Vocabulary V.
-
-            - If the subset is unsatisfiable, Ap is returned.
-            - If the subset is satisfiable, the model computed by the sat
-              solver is returned.
-
-        Args:
-
-            Ap (set): Susbet of literals
-
-        Returns:
-
-            (bool, set): sat value, model assignment
-        """
-        t_sat = time.time()
-
-        sat_solver = Solver(bootstrap_with=self.cnf.clauses + [[l] for l in Ap])
-
-        if self.params.polarity_initial:
-            sat_solver.set_phases(literals=list(self.I0 - Ap))
-        elif self.params.polarity:
-            sat_solver.set_phases(literals=list(phases - Ap))
-
-        solved = sat_solver.solve()
-
-        if not solved:
-            self.t_expl['t_sat'].append(time.time() - t_sat)
-            return solved, Ap
-
-        model = set(sat_solver.get_model())
-
-        sat_solver.delet()
-
-        self.t_expl['t_sat'].append(time.time() - t_sat)
-        return solved, model
 
     def checkSat(self, Ap: set, phases=set()):
         """Check satisfiability of given assignment of subset of the variables
@@ -1432,11 +1400,15 @@ class CondOptHS(object):
 
 
 def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_dirs=False):
-    """A time profiler decorator.
+    """
+    A time profiler decorator.
     Inspired by and modified the profile decorator of Giampaolo Rodola:
+
     http://code.activestate.com/recipes/577817-profile-decorator/
     src:
+
     https://towardsdatascience.com/how-to-profile-your-code-in-python-e70c834fad89
+    
     Args:
         output_file: str or None. Default is None
             Path of the output file. If only name of the file is given, it's
@@ -1638,7 +1610,6 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
         expl, t_exp = c.bestStep(f, Iend, I, timeout=remaining_time)
         print(expl)
         print(t_expl)
-        return
         saveResults(results, t_exp)
 
         if expl is None:
@@ -1675,7 +1646,7 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
     return E
 
 
-@profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=20, strip_dirs=True)
+# @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=20, strip_dirs=True)
 def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matching_table=None):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
@@ -2060,7 +2031,8 @@ if __name__ == "__main__":
     # sat - grow
     optimalParams.grow = True
     optimalParams.grow_maxsat = True
-    optimalParams.grow_maxsat_init = True
+    # optimalParams.grow_maxsat_initial_interpretation = True
+    optimalParams.grow_maxsat_actual_interpretation = True
 
     # timeout
     optimalParams.timeout = 1 * HOURS
@@ -2085,7 +2057,7 @@ if __name__ == "__main__":
     # params.grow_maxsat_pos_cost = True
     # params.grow_maxsat_neg_cost = True
     params.grow_maxsat_unit = True
-    # params.grow_maxsat_init = True
+    # params.grow_maxsat_initial_interpretation = True
 
     ## Postponing Hitting set solver call
     # params.postpone_opt = True

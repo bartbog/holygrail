@@ -165,8 +165,8 @@ def pastaPuzzle():
             for c in dollar:
                 for d in person:
                     for e in dollar:
-                        if e == c-b:
-                            c0a.append(ordered[a, "capellini"] & chose[d, "arrabiata_sauce"] & paid[d, str(c)] & paid[a, str(e)])
+                        if int(e) == int(c) - b:
+                            c0a.append(implies(ordered[a, "capellini"], chose[d, "arrabiata_sauce"] & paid[d, c] & paid[a, e]))
     [clues.append(implies(bv_clues[0], clause)) for clause in c0a]
 
     # 1. The person who chose arrabiata sauce ordered farfalle
@@ -183,8 +183,8 @@ def pastaPuzzle():
             for i in dollar:
                 for j in person:
                     for k in dollar:
-                        if k == i - h:
-                            c2a.append(ordered[g, "taglioni"] & chose[j, "marinara_sauce"] & paid[str(j), str(i)] & paid[g, str(k)])
+                        if int(k) == int(i) - h:
+                            c2a.append(implies(ordered[g, "taglioni"], chose[j, "marinara_sauce"] & paid[str(j), str(i)] & paid[g, str(k)]))
     [clues.append(implies(bv_clues[2], clause)) for clause in c2a]
 
     #  3. The person who ordered tagliolini paid more than Angie
@@ -192,10 +192,11 @@ def pastaPuzzle():
     c3a = []
     for p in person:
         for o in dollar:
-            for n in [-4, 4, -8, 8, -12, 12]:
+            for n in dollar:
                 for m in [4, 8, 12]:
-                    if o == n + m:
-                        c3a.append(ordered[p, "taglioni"] & paid["angie", str(n)] & paid[p, str(o)])
+                    if int(o) == int(n) + m:
+                        c3a.append(implies(ordered[p, "taglioni"], paid["angie", str(n)] & paid[p, str(o)]))
+
     [clues.append(implies(bv_clues[3], clause)) for clause in c3a]
 
     #  4. The person who ordered rotini is either the person who paid $8 more than Damon or the person who paid $8 less than Damon
@@ -205,15 +206,14 @@ def pastaPuzzle():
     for p in person:
         for r in dollar:
             for s in dollar:
-                if s == r + 8 or s == r - 8:
+                if int(s) == int(r) + 8 or int(s) == int(r) - 8:
                     c4a.append(
                         implies(
                             ordered[p, "rotini"],
-                            paid["damon", str(r)] & paid[p, str(s)]
+                            paid["damon", r] & paid[p, s]
                         )
                     )
     [clues.append(implies(bv_clues[4], clause)) for clause in c4a]
-
 
     # 5. Claudia did not choose puttanesca sauce
     # assumption_satisfied( 0  ) => ~ chose(claudia,puttanesca_sauce).
@@ -221,16 +221,13 @@ def pastaPuzzle():
 
     #  6. The person who ordered capellini is either Damon or Claudia
     # assumption_satisfied( 0  ) => ?w [person]: ordered(w,capellini) & (damon = w | claudia = w).
-    clues.append(implies(bv_clues[6],  (ordered["claudia", "capellini"] & ~ordered["damon", "capellini"]) | (~ordered["claudia", "capellini"] & ordered["damon" , "capellini"])))
+    c6a = to_cnf([implies(ordered[p, 'capellini'], (p == 'claudia') | (p == 'damon')) for p in person])
+    [clues.append(implies(bv_clues[6], clause)) for clause in c6a]
 
     # 7. The person who chose arrabiata sauce is either Angie or Elisa => XOR
     # assumption_satisfied( 0  ) => ?x [person]: chose(x,arrabiata_sauce) & (angie = x | elisa = x).
-    clues.append(
-        implies(
-            bv_clues[7],
-            (chose["angie", "arrabiata_sauce"] & ~chose["elisa", "arrabiata_sauce"]) | (~chose["angie", "arrabiata_sauce"] & chose["elisa", "arrabiata_sauce"])
-        )
-    )
+    c7a = to_cnf([implies(chose[p, 'arrabiata_sauce'], (p == 'angie') | (p == 'elisa')) for p in person])
+    [clues.append(implies(bv_clues[7], clause)) for clause in c7a]
 
     clueTexts = [
         "The person who ordered capellini paid less than the person who chose arrabiata sauce",

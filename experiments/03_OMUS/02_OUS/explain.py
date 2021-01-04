@@ -7,6 +7,7 @@ from pathlib import Path
 # import random
 from functools import wraps
 import copy
+import signal
 
 from multiprocessing import Process, Pool
 
@@ -56,6 +57,10 @@ def runParallel(fns, args):
 
     for p in procs:
         p.join()
+
+
+def timeoutHandler(signum, frame):
+    raise OUSTimeoutError()
 
 
 class COusParams(object):
@@ -257,6 +262,20 @@ class OusParams(COusParams):
             "reuse_costs": self.reuse_costs
         })
         return super_dict
+
+
+class OUSTimeoutError(Exception):
+    """Exception raised for errors in satisfiability check.
+
+    Attributes:
+        I -- partial interpretation given as assumptions
+    """
+    def __init__(self):
+        self.message = f"Ous explain Timeout !"
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f'{self.message}'
 
 
 class UnsatError(Exception):
@@ -521,7 +540,7 @@ class BestStepOUSComputer(BestStepComputer):
         # end-interperation
         self.fullSS = set(Iend)
 
-    def bestStep(self, f, Iend, I: set, timeout=None):
+    def bestStep(self, f, Iend, I: set):
         tstart_expl = time.time()
 
         # best cost
@@ -538,8 +557,7 @@ class BestStepOUSComputer(BestStepComputer):
             F = I | {-l, l}
 
             # expl is None when cutoff (timeout or cost exceeds current best Cost)
-            remainingTime = timeout - (time.time() - tstart_expl)
-            expl, costExpl, t_exp = self.bestStepOUS(f, F=F, A=I | set({-l}), p=-l, timeout=remainingTime)
+            expl, costExpl, t_exp = self.bestStepOUS(f, F=F, A=I | set({-l}), p=-l)
 
             # can only keep the costs of the optHittingSet computer
             if costExpl < self.bestCosts[l] and expl is not None:
@@ -599,7 +617,7 @@ class BestStepOUSComputer(BestStepComputer):
             self.t_expl['#H'] += 1
             return hs
 
-    def bestStepOUS(self, f, F, A, p, timeout=None):
+    def bestStepOUS(self, f, F, A, p):
         tstart = time.time()
 
         self.t_expl = {
@@ -652,8 +670,8 @@ class BestStepOUSComputer(BestStepComputer):
                     self.optHSComputer.addCorrectionSet(C)
 
         while(True):
-            if time.time() - tstart > timeout:
-                return None, costHS, None
+            # if time.time() - tstart > timeout:
+            #     return None, costHS, None
 
             HS = self.computeHittingSet(f, HCounter, H, C, HS, mode)
 
@@ -773,7 +791,7 @@ class BestStepCOUSComputer(object):
                 seedable -= other_seeds
             print("Finished pre-seeding")
 
-    def bestStep(self, f, U: set, Iend: set, I: set, timeout=1 * HOURS):
+    def bestStep(self, f, U: set, Iend: set, I: set):
         """
         bestStep computes a subset A' of A that satisfies p s.t.
         C u A' is UNSAT and A' is f-optimal.
@@ -794,7 +812,7 @@ class BestStepCOUSComputer(object):
         p = {-l for l in Iexpl}
 
         A = I | {-l for l in Iexpl}
-        return self.bestStepCOUS(f, F, A, timeout=timeout, p=p)
+        return self.bestStepCOUS(f, F, A, p=p)
 
     def grow(self, f, F, A, HS, HS_model):
         # no actual grow needed if 'HS_model' contains all user vars
@@ -1133,7 +1151,7 @@ class BestStepCOUSComputer(object):
         # print(modes[mode], "->", modes[MODE_OPT])
         return MODE_OPT
 
-    def bestStepCOUS(self, f, F, A: set, timeout, p):
+    def bestStepCOUS(self, f, F, A: set, p):
         """Given a set of assumption literals A subset of F, bestStepCOUS
         computes a subset a subset A' of A that satisfies p s.t C u A' is
         UNSAT and A' is f-optimal based on [1].
@@ -1164,14 +1182,14 @@ class BestStepCOUSComputer(object):
         self.opt_model.updateObjective(f, A)
 
         # VARIABLE INITIALISATION
-        H, C, HS = list(), set(), set()
+        H, C, HS, SS = list(), set(), set(), set()
         mode = MODE_OPT
 
         while(True):
             # print("remainingTime=", timeout - (time.time() - tstart))
-            if time.time() - tstart > timeout:
-                self.t_expl['t_ous'] = timeout
-                return HS, self.t_expl, False
+            # if time.time() - tstart > timeout:
+            #     self.t_expl['t_ous'] = timeout
+            #     return HS, self.t_expl, False
 
             # COMPUTING OPTIMAL HITTING SET
             HS = self.computeHittingSet(f=f, F=F, A=A, p=p, H=H, C=C, HS=HS, mode=mode)
@@ -1185,7 +1203,7 @@ class BestStepCOUSComputer(object):
             # OUS FOUND?
             if not sat and mode == MODE_OPT:
                 self.t_expl['t_ous'] = time.time() - tstart
-                return HS, self.t_expl, True
+                return HS
 
             mode = self.next_mode(sat, mode)
 
@@ -1408,7 +1426,7 @@ def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_d
     src:
 
     https://towardsdatascience.com/how-to-profile-your-code-in-python-e70c834fad89
-    
+
     Args:
         output_file: str or None. Default is None
             Path of the output file. If only name of the file is given, it's
@@ -1501,16 +1519,20 @@ def optimalPropagate(sat, I=set(), U=None):
         model = model.intersection(new_model)
 
 
-def print_timings(t_exp):
+def print_timings(t_exp, timedout):
+    if timedout:
+        return
+
     print("texpl=", round(t_exp['t_ous'], 3), "s\n")
     print("\t#HS Opt:", t_exp['#H'], "\t Incr:", t_exp['#H_incr'], "\tGreedy:", t_exp['#H_greedy'], "\n")
-    if len(t_exp['t_mip']) > 0:
+
+    if len(t_exp['t_mip']) > 1:
         print("\tMIP=\t", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))
-    if len(t_exp['t_post']) > 0:
+    if len(t_exp['t_post']) > 1:
         print("\tPOST=\t", round(sum(t_exp['t_post']), 3), f"s [{round(100*sum(t_exp['t_post'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_post'])/len(t_exp['t_post']), 3))
-    if len(t_exp['t_sat']) > 0:
+    if len(t_exp['t_sat']) > 1:
         print("\tSAT=\t", round(sum(t_exp['t_sat']), 3), f"s [{round(100*sum(t_exp['t_sat'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_sat'])/len(t_exp['t_sat']), 3))
-    if len(t_exp['t_grow']) > 0:
+    if len(t_exp['t_grow']) > 1:
         print("\tGROW=\t", round(sum(t_exp['t_grow']), 3), f"s [{round(100*sum(t_exp['t_grow'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_grow'])/len(t_exp['t_grow']), 3))
 
 
@@ -1605,9 +1627,9 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
 
     I = set(I0) # copy
     while(len(Iend - I) > 0):
-        remaining_time = params.timeout - (time.time() - t_expl_start)
+        # remaining_time = params.timeout - (time.time() - t_expl_start)
         # Compute optimal explanation explanation assignment to subset of U.
-        expl, t_exp = c.bestStep(f, Iend, I, timeout=remaining_time)
+        expl, t_exp = c.bestStep(f, Iend, I)
         print(expl)
         print(t_expl)
         saveResults(results, t_exp)
@@ -1704,17 +1726,45 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
 
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
-    # print(Iend)
-    c = BestStepCOUSComputer(f=f, sat=sat, U=U, Iend=Iend, I=I0, params=params, cnf=C)
+
+    # TIMEOUT Handler!
+    remaining_time = round(params.timeout - (time.time() - t_expl_start))
+    _ = signal.signal(signal.SIGALRM, timeoutHandler)
+
+    # ensure max-time is not exceeded!
+    signal.alarm(remaining_time)
+
+    try:
+        c = BestStepCOUSComputer(f=f, sat=sat, U=U, Iend=Iend, I=I0, params=params, cnf=C)
+    # only handling timeout error!
+    except OUSTimeoutError:
+        print("Pre-seeding timeout !")
+        write_results(results, params.output_folder, params.instance + "_" + params.output_file)
+        return E
 
     I = set(I0) # copy
     while(len(Iend - I) > 0):
-        remaining_time = params.timeout - (time.time() - t_expl_start)
+        # ensure timeout in cOUS ocmputation
+        remaining_time = round(params.timeout - (time.time() - t_expl_start))
+        signal.alarm(remaining_time)
+
         # Compute optimal explanation explanation assignment to subset of U.
-        expl, t_exp, expl_found = c.bestStep(f, U, Iend, I, timeout=remaining_time)
+        expl_found = True
+        try:
+            expl = c.bestStep(f, U, Iend, I)
+        # only handling timeout error!
+        except OUSTimeoutError:
+            print("OUS: Timeout Explanation :-( ")
+            expl_found = False
+        finally:
+            signal.alarm(0)
+
+        # keeping track of the timings
+        t_exp = c.t_expl
+        print(expl_found)
 
         if verbose:
-            print_timings(t_exp)
+            print_timings(t_exp, not expl_found)
 
         results["results"]["HS"].append(t_exp["#H"])
         results["results"]["HS_greedy"].append(t_exp["#H_greedy"])
@@ -2031,11 +2081,11 @@ if __name__ == "__main__":
     # sat - grow
     optimalParams.grow = True
     optimalParams.grow_maxsat = True
-    # optimalParams.grow_maxsat_initial_interpretation = True
-    optimalParams.grow_maxsat_actual_interpretation = True
+    optimalParams.grow_maxsat_initial_interpretation = True
+    # optimalParams.grow_maxsat_actual_interpretation = True
 
     # timeout
-    optimalParams.timeout = 1 * HOURS
+    optimalParams.timeout = 1 * MINUTES
 
     params = COusParams()
     # preseeding

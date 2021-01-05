@@ -842,6 +842,7 @@ def frietKotProblemReify():
 def frietKotProblem():
     # Construct the model.
     (mayo, ketchup, curry, andalouse, samurai) = BoolVar(5)
+    offset = samurai.name+1
 
     print("Mayo=", mayo.name+1)
     print("ketchup=", ketchup.name+1)
@@ -849,16 +850,16 @@ def frietKotProblem():
     print("curry=", curry.name+1)
     print("samurai=", samurai.name+1)
 
-    print(f"6.  Nora = {mayo.name+1} | {ketchup.name+1}", )
-    print(f"7.  Leander = ~{samurai.name+1} | {mayo.name+1}")
-    print(f"8.  Benjamin = ~{andalouse.name+1} | ~{curry.name+1} | ~{samurai.name+1}")
-    print(f"9.  Behrouz = {ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
-    print(f"10. Guy = ~{ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
-    print(f"11. Daan = ~{ketchup.name+1} | ~{curry.name+1} | {andalouse.name+1}")
-    print(f"12. Celine = ~{samurai.name+1}")
-    print(f"13. Anton = {mayo.name+1} | ~{curry.name+1} | ~{andalouse.name+1}")
-    print(f"14. Danny = ~{mayo.name+1} | {ketchup.name+1} | {andalouse.name+1} | {samurai.name+1}")
-    print(f"15. Luc = ~{mayo.name+1} | {samurai.name+1}")
+    print(f"{offset + 1}. Nora = {mayo.name+1} | {ketchup.name+1}", )
+    print(f"{offset + 2}. Leander = ~{samurai.name+1} | {mayo.name+1}")
+    print(f"{offset + 3}. Benjamin = ~{andalouse.name+1} | ~{curry.name+1} | ~{samurai.name+1}")
+    print(f"{offset + 4}. Behrouz = {ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
+    print(f"{offset + 5}. Guy = ~{ketchup.name+1} | {curry.name+1} | {andalouse.name+1}")
+    print(f"{offset + 6}. Daan = ~{ketchup.name+1} | ~{curry.name+1} | {andalouse.name+1}")
+    print(f"{offset + 7}. Celine = ~{samurai.name+1}")
+    print(f"{offset + 8}. Anton = {mayo.name+1} | ~{curry.name+1} | ~{andalouse.name+1}")
+    print(f"{offset + 9}. Danny = ~{mayo.name+1} | {ketchup.name+1} | {andalouse.name+1} | {samurai.name+1}")
+    print(f"{offset + 10}. Luc = ~{mayo.name+1} | {samurai.name+1}")
 
     Nora = mayo | ketchup
     Leander = ~samurai | mayo

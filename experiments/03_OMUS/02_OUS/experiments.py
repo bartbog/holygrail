@@ -72,10 +72,10 @@ python3 experiment_rq1.py {startpos} {taskspernode}
             f.write(baseScript)
 
     # script for submission of the jobs
-    allFpaths = [todaysJobPath / f"jobName_{i}.pbs" for i in range(nodes)]
+    allFpaths = [todaysJobPath / f"{jobName}_{i}.pbs" for i in range(nodes)]
 
     allStrPaths = ['#!/usr/bin/env bash', '']
-    allStrPaths += ["qsub "+str(p).replace('/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments/', '') for p in allFpaths]
+    allStrPaths += ["qsub "+ str(p).replace('/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments/', '') for p in allFpaths]
     allStrPaths += ['']
 
     scriptPath = hpcPath / "launchJobs.sh"

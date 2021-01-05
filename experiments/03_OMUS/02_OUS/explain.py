@@ -298,7 +298,7 @@ class BestStepCOUSComputer(object):
         F -= set(-l for l in I)
 
         if self.params.pre_seeding:
-            print("Warm start!")
+            # print("Warm start!")
 
             Ap = Iend # satisfiable subset
 
@@ -311,7 +311,7 @@ class BestStepCOUSComputer(object):
             while len(seedable) > 0:
                 l = next(iter(seedable))
 
-                print(f"Seeding {l} [{len(seedable)} remaining]")
+                # print(f"Seeding {l} [{len(seedable)} remaining]")
 
                 HS = set({l})
                 _, Ap = self.checkSat(Ap=HS, phases=Iend)
@@ -327,7 +327,7 @@ class BestStepCOUSComputer(object):
                 other_seeds = seedable & frozenset(SS)
                 # no need to 'grow' a literal that already has an MSS
                 seedable -= other_seeds
-            print("Finished pre-seeding")
+            # print("Finished pre-seeding")
 
     def bestStep(self, f, U: set, Iend: set, I: set):
         """
@@ -733,7 +733,7 @@ class BestStepCOUSComputer(object):
             HS = self.computeHittingSet(f=f, F=F, A=A, p=p, H=H, C=C, HS=HS, mode=mode)
 
             # Timings
-            print(f"\t{modes[mode]}: got HS",len(HS), "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS),"\tMIP:", round(self.t_expl["t_mip"][-1],3), "s\tGROW:", round(self.t_expl["t_grow"][-1],3))
+            # print(f"\t{modes[mode]}: got HS",len(HS), "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS),"\tMIP:", round(self.t_expl["t_mip"][-1],3), "s\tGROW:", round(self.t_expl["t_grow"][-1],3))
 
             # CHECKING SATISFIABILITY
             sat, HS_model = self.checkSat(HS, phases=self.I0)
@@ -1113,6 +1113,11 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
     while(len(Iend - I) > 0):
         # ensure timeout in cOUS ocmputation
         remaining_time = round(params.timeout - (time.time() - t_expl_start))
+
+        if remaining_time < 0:
+            results["results"]['timeout'] = True
+            break
+
         signal.alarm(remaining_time)
 
         # Compute optimal explanation explanation assignment to subset of U.
@@ -1129,7 +1134,6 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
 
         # keeping track of the timings
         t_exp = c.t_expl
-        print(expl_found)
 
         if verbose:
             print_timings(t_exp, not expl_found)
@@ -1148,10 +1152,7 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
             break
 
         # facts used
-
         Ibest = I & expl
-
-        print_expl(matching_table, Ibest)
 
         # New information derived "focused" on
         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
@@ -1163,10 +1164,10 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
         })
 
         if verbose:
+            print_expl(matching_table, Ibest)
             print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
 
         I |= Nbest
-
 
         results["results"]["#expl"] += 1
 
@@ -1251,9 +1252,9 @@ def write_explanations(explanations, matching_table, f, outputdir, outputfile):
 
 
 def write_results(results, outputdir, outputfile):
-    print(outputdir)
-    print(Path(outputdir).parent)
-    print(outputfile)
+    # print(outputdir)
+    # print(Path(outputdir).parent)
+    # print(outputfile)
     if not Path(outputdir).parent.exists():
         Path(outputdir).parent.mkdir()
     if not Path(outputdir).exists():

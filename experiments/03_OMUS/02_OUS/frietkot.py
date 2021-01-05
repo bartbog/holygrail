@@ -563,21 +563,6 @@ def originProblem():
             bv_bij.append(bv3)
             bv_bij.append(bv4)
 
-    # for rel in [is_old, lives_in, native, age_city, age_birth, city_birth]:
-    #     # for each relation
-    #     for col_ids in rel.df:
-    #         # one per column
-    #         # bij += exactly_one(rel[:, col_ids])
-    #         b1 = to_cnf(exactly_one(rel[:, col_ids]))
-    #         [bij.append(implies(bv_bij[cnt], clause)) for clause in b1]
-    #         cnt += 1
-    #     for (_,row) in rel.df.iterrows():
-    #         # one per row
-    #         # bij += exactly_one(row)
-    #         b2 = to_cnf(exactly_one(row))
-    #         [bij.append( implies(bv_bij[cnt] , clause) ) for clause in b2]
-    #         cnt += 1
-
     # Transitivity
     trans = []
     bv_trans =  [BoolVar() for i in range(12)]
@@ -717,9 +702,6 @@ def originProblem():
     weights.update({bv.name + 1: 100 for bv in bv_clues})
     weights.update({bv.name + 1: 60 for bv in bv_trans})
     weights.update({bv.name + 1: 60 for bv in bv_bij})
-    # weights.update({-(bv.name + 1): 100 for bv in bv_clues})
-    # weights.update({-(bv.name + 1): 60 for bv in bv_trans})
-    # weights.update({-(bv.name + 1): 60 for bv in bv_bij})
 
     explainable_facts = set()
     bvRels = {}
@@ -761,9 +743,9 @@ def simplestProblemReify():
 
 def simpleProblem():
     (mayo, ketchup, andalouse) = BoolVar(3)
-    print("Mayo=", mayo.name+1)
-    print("ketchup=", ketchup.name+1)
-    print("andalouse=", andalouse.name+1)
+    # print("Mayo=", mayo.name+1)
+    # print("ketchup=", ketchup.name+1)
+    # print("andalouse=", andalouse.name+1)
 
     c0 = mayo
     c1 = ~mayo | ~andalouse | ketchup
@@ -779,9 +761,9 @@ def simpleProblem():
 def simpleProblemReify():
     (mayo, ketchup, andalouse) = BoolVar(3)
     b = BoolVar(4)
-    print("Mayo=", mayo.name+1)
-    print("ketchup=", ketchup.name+1)
-    print("andalouse=", andalouse.name+1)
+    # print("Mayo=", mayo.name+1)
+    # print("ketchup=", ketchup.name+1)
+    # print("andalouse=", andalouse.name+1)
 
     c0 = (b[0] == mayo)
     c1 = (b[1] == (~mayo | ~andalouse | ketchup))

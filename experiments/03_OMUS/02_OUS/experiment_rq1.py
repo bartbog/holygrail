@@ -46,9 +46,8 @@ def r_simpleProblem(params):
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params, verbose=False)
 
 
-def rq1_args(func, num_node, cores_per_node):
-    offset = (num_node-1)*cores_per_node
-    params = rq1_all_params()[offset:]
+def rq1_args(func, start, numTasks):
+    params = effectOfPreseeding()[start:start+numTasks]
     runParallel([func], params)
 
 

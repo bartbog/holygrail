@@ -1395,13 +1395,16 @@ def test_PastaPuzzle(params):
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost_puzzle(U, I, o_weights)
+    prev = None
     with Solver(bootstrap_with=o_clauses + o_assumptions) as s:
         sat = s.solve()
         print(sat)
         for id, m in enumerate(s.enum_models()):
             print(len(m))
-            if id > 0:
-                break
+            if not prev is None:
+                print("diff", set(prev) - set(m))
+            prev = m
+
     return
     explain(C=o_cnf, U=U, f=f, I0=I, params=params, matching_table=matching_table, verbose=True)
 

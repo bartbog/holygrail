@@ -201,7 +201,7 @@ def effectOfPreseeding():
 
     # maxsat Perms
     maxsatPerms = []
-    for p in itertools.permutations([True] + [False] * 5):
+    for p in itertools.permutations([True] + [False] * 3):
         if list(p) not in maxsatPerms:
             maxsatPerms.append(list(p))
 
@@ -225,7 +225,7 @@ def effectOfPreseeding():
         else:
             growPerms.append({
                 "grow": perm,
-                "maxsat": [False] * 6
+                "maxsat": [False] * 4
             })
 
     print("preseedPerms=", len(preseedPerms))
@@ -238,7 +238,7 @@ def effectOfPreseeding():
             for postpone_opt, postpone_opt_incr, postpone_opt_greedy in postOptPers:
                 for growPerm in growPerms:
                     g_grow, g_sat, g_subsetmax, g_subsetI0, g_maxsat = growPerm["grow"]
-                    m_neg, m_pos, m_maxneg, m_unit, m_init, m_actual = growPerm["maxsat"]
+                    m_init, m_actual_pos, m_actual_inv, m_actual_unif = growPerm["maxsat"]
                     # Parameters
                     params = COusParams()
                     # intialisation: pre-seeding
@@ -262,12 +262,14 @@ def effectOfPreseeding():
                     params.grow_maxsat = g_maxsat
 
                     # MAXSAT growing
-                    params.grow_maxsat_neg_cost = m_neg
-                    params.grow_maxsat_pos_cost = m_pos
-                    params.grow_maxsat_max_cost_neg = m_maxneg
-                    params.grow_maxsat_unit = m_unit
+                    params.grow_maxsat_neg_cost = False
+                    params.grow_maxsat_pos_cost = False
+                    params.grow_maxsat_max_cost_neg = False
+                    params.grow_maxsat_unit = False
                     params.grow_maxsat_initial_interpretation = m_init
-                    params.grow_maxsat_actual_interpretation = m_actual
+                    params.grow_maxsat_actual_pos = m_actual_pos
+                    params.grow_maxsat_actual_inv = m_actual_inv
+                    params.grow_maxsat_actual_unif = m_actual_unif
 
                     # timeout
                     params.timeout = timeout

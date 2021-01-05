@@ -88,7 +88,7 @@ def jobEffectOfPreseeding():
     jobName = "EffectOfpreseeding"
     hpcOutputFolder = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments"
     params = effectOfPreseeding()
-    taskspernode = 10
+    taskspernode = 40
     nodes = ceil(len(params)/taskspernode)
     print(nodes, taskspernode)
     genPBSjobs(hpcOutputFolder, jobName, nodes, taskspernode)

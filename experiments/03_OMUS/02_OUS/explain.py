@@ -1188,7 +1188,8 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
 
         if verbose:
             print_expl(matching_table, Ibest)
-            print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
+            qual = sum([f(l) for l in Ibest])
+            print(f"\nOptimal explanation \t\t {Ibest} => {Nbest} \t (cost: {qual})\n")
 
         I |= Nbest
 

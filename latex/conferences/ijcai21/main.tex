@@ -1,0 +1,230 @@
+%%%% ijcai21.tex
+
+% These are the instructions for authors for IJCAI-21.
+
+\documentclass{article}
+\pdfpagewidth=8.5in
+\pdfpageheight=11in
+% The file ijcai21.sty is NOT the same than previous years'
+\usepackage{ijcai21}
+
+% Use the postscript times font!
+\usepackage{times}
+\usepackage{soul}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[small]{caption}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{natbib}
+% \usepackage{algorithm}
+% \usepackage{algorithmic}
+\urlstyle{same}
+
+\usepackage{xcolor}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+% \usepackage{color (if used in text)
+\usepackage{xspace}
+% the following package is optional:
+%\usepackage{latexsym}
+\usepackage{paralist}
+
+
+\newcommand\m[1]{\ensuremath{\mathcal{#1}}}
+\newcommand\ignore[1]{}
+\usepackage[capitalise]{cleveref}
+\newcommand\comment[1]{\marginpar{\parbox{\marginparwidth}{\tiny #1}}}
+% \renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{orange}\textsc{EG:}#1}}}
+\newcommand{\bart}[1]{{\comment{\color{green}\textsc{BB:}#1}}}
+\newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1} }}
+\newcommand\voc{\ensuremath{\Sigma}\xspace}
+% \newtheorem{definition}{Definition}
+% \newtheorem{proposition}{Proposition}
+% \newtheorem{lemma}{Lemma}
+% \newtheorem{example}{Example}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{lem}{Lemma}
+\newtheorem{lemma}[lem]{Lemma}
+\newtheorem{propo}{Proposition}
+\newtheorem{proposition}[propo]{Proposition}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+
+\newcommand\muses[1]{\ensuremath{\mathit{MUSs}(#1)}\xspace}
+\newcommand\mcses[1]{\ensuremath{\mathit{MCSs}(#1)}\xspace}
+
+% \newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+% \newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+% \newcommand\formula{\ensuremath{\m{F} }\xspace}
+% \newcommand\formulac{\ensuremath{\m{C} }\xspace}
+% \newcommand\formulag{\ensuremath{\m{G} }\xspace}
+% \newcommand\mm[1]{\ensuremath{#1}\xspace}
+% \newcommand\nat{\mm{\mathbb{N}}}
+% \newcommand\ltrue{\mm{\textbf{t}}}
+% \newcommand\lfalse{\mm{\textbf{f}}}
+
+% \newcommand\call[1]{\mm{\textsc{#1}}}
+% \newcommand\geths{\mm{\call{GetHittingSet}}}
+% \newcommand\ohs{\mm{\call{OptHittingSet}}}
+% \newcommand\ghs{\mm{\call{GreedyHittingSet}}}
+% \newcommand\ihs{\mm{\call{IncrementalHittingSet}}}
+% \newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+% \newcommand\sat{\mm{\call{sat}}}
+% \newcommand\grow{\mm{\call{Grow}}}
+% \newcommand\omus{\mm{\call{OUS}}}
+% \newcommand\comus{\mm{\call{c-OUS}}}
+% \newcommand\omusinc{\mm{\call{OUS-Inc}}}
+% \newcommand\store{\mm{\call{Store}}}
+% \newcommand\optprop{\mm{\call{OptimalPropagate}}}
+% \newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+
+
+\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\F{\ensuremath{\m{F} }\xspace}
+% \newcommand\ohs{\ensuremath{\m{OHS} }\xspace}
+\newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+\newcommand\Iend{\ensuremath{I_\mathit{end} }\xspace}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulac{\ensuremath{\m{C} }\xspace}
+\newcommand\formulag{\ensuremath{\m{G} }\xspace}
+\newcommand\mm[1]{\ensuremath{#1}\xspace}
+\newcommand\nat{\mm{\mathbb{N}}}
+\newcommand\ltrue{\mm{\textbf{t}}}
+\newcommand\lfalse{\mm{\textbf{f}}}
+\newcommand\uservars{\ensuremath{\m{U} }\xspace}
+
+\newcommand\satsets{\mm{\mathbf{SSs}}}
+\newcommand\fall{\mm{\formula_{\mathit{all}}}}
+
+\newcommand\call[1]{\mm{\textsc{#1}}}
+\newcommand\geths{\mm{\call{GetHittingSet}}}
+\newcommand\ohs{\mm{\call{OptHittingSet}}}
+\newcommand\ghs{\mm{\call{GreedyHittingSet}}}
+\newcommand\ihs{\mm{\call{IncrementalHittingSet}}}
+\newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+\newcommand\chs{\mm{\call{CondHittingSet}}}
+\newcommand\sat{\texttt{{SAT}}}
+\newcommand\grow{\mm{\call{Grow}}}
+\newcommand\omus{\mm{\call{OUS}}}
+\newcommand\comus{\mm{\call{c-OUS}}}
+\newcommand\omusinc{\mm{\call{OUS-Inc}}}
+\newcommand\store{\mm{\call{Store}}}
+\newcommand\optprop{\mm{\call{OptimalPropagate}}}
+\newcommand\initsat{\mm{\call{InitSat}}}
+\newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+% \newcommand\fall{\mm{\formula_{\mathit{all}}}}
+\newcommand\algemilio[1]{\emilio{#1}\;}
+
+% \call{}
+% \usepackage{amsthm}
+
+\SetKwInOut{Input}{Input}
+\SetKwInOut{OptInput}{Optional}
+\SetKwInOut{Output}{Output}
+\SetKwInOut{State}{State}
+\SetKwInOut{Ext.}{Ext}
+\SetKwComment{command}{/*}{*/}
+
+\renewcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
+\renewcommand{\emilio}[1]{{\comment{\color{orange}\textsc{EG:}#1}}}
+\renewcommand{\bart}[1]{{\comment{\color{green}\textsc{BB:}#1}}}
+\renewcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1} }}
+\newcommand\negset[1]{\mm{\overline{#1}}}
+% \newcommand\Iend{\mm{I_{\mathit{end}}}}
+\newcommand\maxsat{MaxSAT\xspace}
+
+%PDF Info Is REQUIRED.
+\pdfinfo{
+/Title (Incremental and Constrained Optimal Unsatisfiable Subsets for Explaining CSPs)
+/Author (Anyonymous)
+/TemplateVersion (IJCAI.2021.0)
+}
+
+\title{Incremental and Constrained Optimal Unsatisfiable Subsets for Explaining CSPs}
+
+% Single author syntax
+\author{Anonymous}
+
+\include{common-citations}
+
+\begin{document}
+
+\maketitle
+
+% -------- Deze zin is weird.
+% -------
+\begin{abstract}
+    Our work is situated in eXplainable Artificial Intelligence (XAI) --- in particular explainable constraint satisfaction.
+    An explanation here is a sequence of `simple' inference steps, where the difficulty of an inference step depends on the number and types of constraints used.
+    This raises the need for algorithms that can compute unsatisfiable subsets of a logical specification that are optimal with respect to a certain cost criterion.
+    We tackle this challenge by developing an algorithm for computing cost-optimal unsatisfiable subsets inspired by minimal hitting set dualization approaches for finding cardinality-minimal unsatisfiable subsets and for solving partial weighted \maxsat.
+    For generating explanations, many subsequent calls for cost-optimal unsatisfiable subsets will be performed on closely related theories.
+    Inspired by this, we show how the hitting set dualization approach allows us to reuse computation results when solving many variations of the same problems.
+    We generalize our approach to a setting that allows for imposing constraints on the structure of the unsatisfiable subsets of interest.
+    We evaluate all our algorithms in the explanation-generation context.
+    % in terms of the runtime and computational feasibility, as well as the quality of the obtained explanation sequence.
+\end{abstract}
+
+\section{Introduction}
+% \todo{1 - 1 1/2 column}
+\input{01-intro.tex}
+\section{Related Work}\label{sec:related}
+% \todo{1 column}
+\input{02-related-work.tex}
+\section{Background}\label{sec:backgr}\label{sec:background}
+% \todo{1 1/2 -2 columns}
+\input{03-background.tex}
+
+\section{Optimal Unsatisfiable Subsets}\label{sec:omus}
+% \todo{2 column}\label{
+\input{04-omus.tex}
+
+\section{Producing Explanations with OUS}\label{sec:Greedy}\label{sec:explain}
+% \todo{2 column}
+\input{03b-greedy-explain.tex}
+
+
+\section{Incremental OUS computation} \label{sec:incremental}
+\input{C1-incremental.tex}
+
+\section{Constrained OUS computation} \label{sec:constrained}
+\input{C2-constrained.tex}
+
+\ignore{
+    \section{Implementation considerations}\label{sec:impl}
+    \todo{REMOVE}
+    REMOVE
+    When we check the satisfiability of a set $\F'$ we initialise the polarity of the literals to $I_{end}$. We use assumptions to keep the solver warm across different sets $\F'$.
+
+    The implementation of \grow can be achieved in different ways.
+    In our algorithms we use the model found by the $\sat(\F')$ call and let a MaxSAT solver complete it to a full assignment over $\F$. Our custom implementations of a greedy grow were consistently outperformed by the MaxSAT call. We believe this is because typically only a fraction of literals of $\F$ are left unassigned in the model of $\F'$ and a MaxSAT solver has highly optimized data-structures to manage $\F$.  %We note that typically many literals are part of the found model of $\formula'$ and hence this MAX-SAT problem is considerably smaller than $\formula$. 
+
+    In $\comus$, we keep the MIP solver warm and reuse it across all $\comus$ calls. We only ever add constraints to the solver. To handle the changes in $p$ with respect to literals that cannot be chosen, we enforce this by temporarily setting the objective weight to $+\infty$ for literals.
+}
+\section{Experiments}
+\label{sec:experiments}
+% \todo{2 column}
+\input{06-experiments.tex}
+% \section{Discussion}   
+% \todo{1 1/2 column}
+% \input{07-discussion.tex} 
+\section{Conclusion, Challenges and Future work}\label{sec:conclusion}
+% \todo{1/2 column}
+\input{08-conclusion.tex}
+
+\input{09-additional-algorithms.tex}
+%% The file named.bst is a bibliography style file for BibTeX 0.99c
+\bibliography{krrlib,mybibfile,ref}
+\bibliography{ijcai21}
+
+\end{document}
+

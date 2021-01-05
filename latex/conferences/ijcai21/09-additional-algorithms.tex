@@ -1,0 +1,109 @@
+% !TeX root = ./main.tex
+\clearpage
+\begin{algorithm}[ht]
+    \Input{${\cal C}$,  \textit{a CNF ${\cal C}$ over a vocabulary $V$} }
+    \Input{$U$, \textit{a user vocabulary $U \subseteq V$} }
+    \Input{$f$, \textit{a cost function $f : 2^{lits({U})} \rightarrow  \mathbb{N} $.}}
+    \Input{$I$, \textit{a partial interpretation over $U$}}
+    \Output{$E$, \textit{a sequence of explanation steps as implications $I_{expl} \implies N_{expl}$}}
+    % \vspace*{0.01cm}
+    % \DontPrintSemicolon
+    \caption{$\call{ExplainCSP}(\formulac, U, f, I)$}
+    \label{alg:explainCSP2}
+    $\sat \gets \initsat({\cal C}$) \;
+        % \tcp{Hyp: f}
+    $E \gets \langle \rangle$\;
+    $I_{end} \gets \optprop(U, I)$ \;
+    %$U \gets U \cap I_{end}$ \;
+    %$I_{expl} = \{i \in I_{end} | f(i) < inf \wedge f(-i) < inf\}$ \;
+    % \algemilio{bart: What's a better way to get the initial interpr.?}
+    % $I \gets \{l \in I_{end} | f(\lnot l) = inf\}$ \;
+    \While{$I \neq I_{end}$}{
+        %$E \gets \call{bestStep}({\cal C},U, f,\Iend, I)$\;
+        $X \gets \call{bestStep}({\cal C},f,\Iend, I)$\;
+        $I_{\mathit{best}} \gets I \cap X$\;
+        %$\formulac_{\mathit{best}}\gets \formulac\cap X$\;
+        $N_{\mathit{best}} \gets \optprop(U, I_{\mathit{best}}) \setminus I$\;
+        %add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+        add $\{I_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+        $I \gets I \cup N_{\mathit{best}}$\;
+    }
+    \Return{E}\;
+\end{algorithm}
+
+\begin{algorithm}[ht]
+    \DontPrintSemicolon
+    \Input{$U$, \textit{a user vocabulary $U \subseteq V$} }
+    \OptInput{$I$, \textit{a partial interpretation over $U$.} }
+    \State{$\sat$, \textit{a $\sat$ solver initialised with a CNF.}}
+    \Output{\textit{The projection onto U of the intersection more precise than $I$.}}
+    \label{alg:optprop}
+    $sat?,\mu \gets \sat.\texttt{solve(}I\texttt{)}$\;
+    $\mu \gets \{l \mid \texttt{var}(l) \in U \}$\;
+    $b \gets$ a new blocking variable\;
+    % \algemilio{Should I add the blocking variables $b_i$ to the newly added clause ?}
+    \While{true}{
+        % \sout{${\cal C} \gets {\cal C} \wedge (\lnot b_i \underset{l \in \mu}{\bigvee} \lnot l)$}\; 
+        $\sat.\texttt{addClause(}\lnot b_i \underset{l \in \mu}{\bigvee} \lnot l\texttt{)}$\;
+        % add $(\lnot b_i \underset{l \in \mu}{\bigvee} \lnot l)$ to $\sat$ solver\; 
+        $sat?,\mu' \gets \sat.\texttt{solve(}I \wedge \{b_i\}\texttt{)}$\;
+        \If{ $not$ $ sat?$}{
+            $\sat.\texttt{addClause(}\lnot b_i\texttt{)}$\;
+            \Return{$\mu$} \;
+        }
+        $\mu \gets \mu \cap \mu' $\;
+    }
+    \caption{$\call{OptimalPropagate}(\uservars [, I], \sat)$}
+\end{algorithm}
+
+
+\begin{algorithm}[ht]
+    \DontPrintSemicolon
+    \caption{$\call{bestStep--c-OUS}(f,\Iend, I, \sat)$}
+    \label{alg:singleStepExplain3}
+    % \Input{${\cal C}$, \textit{a CNF}.}
+    \Input{$f$, \textit{a cost function $f : 2^{{\cal G}} \rightarrow  \mathbb{N} $ over CNF ${\cal G}$}.}
+    \Input{$I_{end}$, \textit{the cautious consequence, the set of literals that hold in all models}.}
+    \Input{$I$, \textit{a partial interpretation s.t. $I \subseteq I_{end}$}.}
+    \State{$\sat$, \textit{a $\sat$ solver initialised with a CNF.}}
+    \Output{\textit{a single best explanation step}}
+    \vspace*{0.01cm}
+    ${\cal A} \gets I \cup (\overline{\Iend} \setminus \bar{I})$ \tcp*{Optimal US is subset of A}
+    set $p \triangleq \underset{l \in \overline{\Iend}}{\sum} l = 1$  i.e. exactly one of $\overline{\Iend}$ in the unsatisfiable subset. \; %\textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
+    % \Return{$\comus(f,p, {\cal A})$}\;
+\end{algorithm}
+
+
+\begin{algorithm}[ht]
+    % \Input{${\cal C}$, \textit{a CNF}.}
+    \Input{$f$, \textit{a cost function $f : 2^{{\cal A}} \rightarrow  \mathbb{N} $.}.}
+    \Input{$p$, \textit{a predicate $p: 2^{{\cal A}} \rightarrow \{ t, f\}$.}.}
+    \Input{$A$, \textit{a set of assumption literals, s.t. ${\cal C} \cup A$ is unsatisfiable.}}
+    \State{$\sat$, \textit{a $\sat$ solver initialised with a CNF.}}
+    % \Output{\textit{$(p, f)-OUS$, a subset ${\cal A}'$ of ${\cal A}$ that satisfies $p$ s.t. ${\cal C} \cup {\cal A}'$ is $UNSAT$ and  ${\cal A}'$ is $f$-optimal.}}
+    \Output{\textit{$(p, f)-OUS$, a subset ${\cal HS}$ of ${\cal A}$ that satisfies $p$ s.t. ${\cal C} \cup {\cal HS}$ is $UNSAT$ and  ${\cal HS}$ is $f$-optimal.}}
+    % \tcp{Hyp: ${\cal C} \cup A$ is unsatisfiable}
+    \DontPrintSemicolon
+    $\setstohit \gets \emptyset$ \;
+    % $mode \gets $ \texttt{OPT} \;
+    \While{true}{
+        % ${\cal A}' \gets \cohs(f, p, {\cal A}, \setstohit) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    %     % ${\cal A}' \gets \chs(f, p, {\cal A}, \setstohit) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+        ${\cal HS} \gets \cohs(f, p, {\cal A}, \setstohit) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    %     % \emilio{
+        \tcp{Add mode to algorithm for postponing optimisation. Mode switch corresponds to switching between heuristic conditional Hitting set computation and the optimizer.}\;
+        $sat?,\ \mu \gets \sat({\cal HS})$\;
+    %     % $sat?,\ {\cal A}'' \gets \sat({\cal HS}')$\;
+    %     % $sat?,\ {\cal A}'' \gets \sat({\cal A}' \mid \{ {\cal A}'' \cap I_0\}, A)$\;
+        \If{ $\lnot \sat({\cal HS})$}{
+            \Return{${\cal HS}$} \;
+        }
+        % \sout{$A'' \gets  \grow(C, f, p, A',A) $}\;
+        % \sout{$\setstohit  \gets \setstohit  \cup \{  A \setminus A''\}$}\; %\tcp*{We can reuse the H across diff call to alg \ref{alg:explainCSP} was $H \cup \{F \setminus F''\}$ }
+        $SS \gets  \grow(C, f, p, A, HS) $\;
+        $\setstohit  \gets \setstohit  \cup \{  {\cal A} \setminus {\cal SS}\}$\;
+    % }
+    }
+    \caption{$\comus(f,p, {\cal A}, \sat)$}
+    % \label{alg:comus}
+\end{algorithm}

@@ -1,0 +1,92 @@
+% !TeX root = ./main.tex
+
+We now recall the general explanation setting of \citet{ecai/BogaertsGCG20}. 
+In that work, the goal was to --- starting from a constraint satisfaction problem and a partial interpretation $I$ --- explain the cautious consequence (the set of all literals that hold in all models) through a sequence of simple steps. 
+%In our formulation (following \citet{ecai/BogaertsGCG20}), we assume that the formulation is done in propositional logic, but the ideas carry on to richer representation formalisms as well. 
+We will use \formulac to denote the constraint satisfaction problem (a CNF formula in this case), to avoid confusion with the formula \formula used in \omus calls.
+
+The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by a cost function $f$. 
+An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals from the cautious consequence which is not yet explained.
+To obtain a sequence of such steps, we iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$. A high-level algorithm is shown in Algorithm~\ref{alg:explainCSP}; details of the \optprop routine that computes the cautious consequence can be found in~\cite{ecai/BogaertsGCG20}.
+
+\begin{algorithm}[t]
+  \caption{$\call{ExplainCSP}(\formulac,f)$}
+  \label{alg:explainCSP}
+$E \gets \langle \rangle$\;
+$\Iend \gets \optprop(\formulac)$\;
+$I \gets \emptyset$\;
+\While{$I \neq \Iend$}{
+    $X \gets \call{bestStep}({\cal C},f,I,\Iend)$\;
+	$I_{\mathit{best}} \gets I\cap X$\;
+    $\formulac_{\mathit{best}}\gets\formulac\cap X$\;
+	$N_{\mathit{best}} \gets \{\Iend \setminus I\} \cap \optprop(X) $\;
+	add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+	$I \gets I \cup N_{\mathit{best}}$\;
+  }
+\Return{E}\;
+\end{algorithm}
+
+\citet{ecai/BogaertsGCG20} could not take advantage of an Optimal Unsatisfiable Subset algorithm, and hence implemented $\call{bestStep}$ by a heuristic method that extracts MUSs of increasingly larger subsets of $\formulac\wedge I \wedge \lnot l$ for all $l \in \{\Iend \setminus I\}$.
+
+
+\begin{algorithm}[t]
+  \caption{$\call{bestStep--OUS}({\cal C},f,I,\Iend)$}
+  \label{alg:bestStepOUS}
+$X_{best} \gets \{{\cal C} \land I \land \overline{\Iend}\}$\;
+\For{$l \in \{\Iend \setminus I\}$}{
+    $X \gets \omus{({\cal C} \land I \land \neg l,\  f)}$\;
+    \If{$f(X)<f(X_{best})$}{
+        $X_{best} \gets X$\;
+    }
+}
+\Return{$X_{best}$} 
+\end{algorithm}
+
+\cref{alg:bestStepOUS} depicts an OUS-based algorithm to find the simplest next explanation step in the sequence. 
+%Compared to the method proposed in \cite{ecai/BogaertsGCG20}, this is already a simplified one that uses a single OUS call to find a ``good'' explanation instead of multiple MUS calls to approximate the optimal OUSs. 
+% Note that we write $\overline{\Iend} = \{-l \ | \  l \in \Iend\}$.
+In this algorithm, an OUS call is used to compute an explanation for each candidate consequence $l$ using the combination of $\formulac$ and the assignment so far with $\lnot l$. 
+It was shown that MUSs of $\formulac\land I\land\lnot l$ correspond to non-redundant explanations of $l$ in terms of $\formulac$ and $I$ and hence an OUS is a ``best'' explanation of $l$. 
+The loop in \cref{alg:bestStepOUS} serves to guarantee that at each point, the literal with the best explanation is selected. 
+
+
+
+\ignore{
+\begin{algorithm}
+    \DontPrintSemicolon
+    \todo{CLEANUP: is it S or T?}
+    $\m\Iend \gets$ \textsc{propagate($\m{I}_0$, $\m{T}$)} \;
+    $\m{I} \gets \m{I}_0$  \;
+    $Seq \gets \emptyset$  \;
+    \While{  $\m{I} \neq \m\Iend$ }{
+      \For{$i \in \m\Iend \setminus \m{I}$}{
+        $X_i \gets$ \textsc{OMUS($\{\neg i\} \wedge \m{I} \wedge \m{S}$)}\label{alg:best:ous} \;
+        $E_i \gets$ $\m{I} \cap X_i$  \;
+        $S_i \gets$ $\m{T} \cap X_i$  \;
+        $\m{N}_i \gets$ \textsc{propagate($E_i \wedge \m{S}_i$)} \;
+        }
+        $(E_{best}, S_{best}, N_{best}) \gets (E_i,S_i,N_i)$ with lowest $f(E_i,S_i,N_i)$ \;
+        append $( E_{best}, S_{best}, N_{best})$ to $Seq$ \;
+        $\m{I} \gets \m{I} \cup \{N_{best}\}$ \;
+    }
+  \caption{CSP-Explain($\m{T} ,\ f \ [,  \ \m{I}_0 ]$)}
+  \todo{present as simple as possible}
+  \label{alg:cspExplain2}
+\end{algorithm}
+
+\todo{explain what the goal is, and what is going on here.}
+
+\bart{I would take the focus away from ``CSP''. This paperi s about SAT-like problems}
+}
+
+
+When investigating \cref{alg:bestStepOUS}, we see ample room for improvement. 
+First of all, the many calls to \omus share a large part of the formula they are called with, namely $\formulac \land I$.
+This suggests the opportunity of developing \emph{incremental} OUS algorithms that reuse results from previous calls. 
+More generally, \cref{alg:bestStepOUS} loops over all possibly derivable  literals, searches for each of them an OUS and subsequently selects the best. %, the best of those is taken. 
+Ideally, this whole loop could be done in a single call to a solver that exploits all possible information at once, and interleaves the search for the best literal to explain next with the search for its best explanation. 
+These two ideas are explored in the next two sections.
+%In its most general form, this idea can be phrased as the search for a MUS of a given theory that is subject to certain constraints. 
+% In Section \ref{sec:constrained}, we explore this idea in the generic setting and develop an algorithm that searches for an OUS satisfying a given set of meta-level constraints. 
+% In \cref{sec:incrementalExp}, we combine these two ideas to develop a simpler, and more efficient explanation-generation algorithm. 
+% \tias{a bit repetitive this teaser...}

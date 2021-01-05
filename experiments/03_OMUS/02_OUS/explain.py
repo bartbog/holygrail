@@ -19,10 +19,9 @@ import sys
 sys.path.append('/user/brussel/101/vsc10143/pysathq/')
 
 # pysat imports
-from pysat.formula import CNF, WCNF, WCNFPlus
+from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
 from pysat.examples.rc2 import RC2
-from pysat.examples.musx import MUSX
 
 # datetime object containing current date and time
 from datetime import datetime

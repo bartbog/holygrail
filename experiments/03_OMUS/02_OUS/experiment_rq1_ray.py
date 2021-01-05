@@ -1,12 +1,12 @@
 import sys
-sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
+sys.path.append('/user/brussel/101/vsc10143/pysathq/')
 
 import ray
 from explain import COusParams, cost_puzzle, cost, explain
 from explain import add_assumptions, get_user_vars
-from explain import runParallel
-from explain import HOURS, MINUTES, SECONDS
-from multiprocessing import Process, Pool
+# from explain import runParallel
+# from explain import HOURS, MINUTES, SECONDS
+# from multiprocessing import Process, Pool
 
 from gen_params import *
 

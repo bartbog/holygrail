@@ -16,7 +16,7 @@ import gurobipy as gp
 from gurobipy import GRB
 
 import sys
-sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
+sys.path.append('/user/brussel/101/vsc10143/pysathq/')
 
 # pysat imports
 from pysat.formula import CNF, WCNF, WCNFPlus
@@ -142,9 +142,6 @@ class COusParams(object):
             "grow_sat": self.grow_sat,
             "grow_subset_maximal": self.grow_subset_maximal,
             "grow_maxsat": self.grow_maxsat,
-            # can we skip grow on incremental and greedy ?
-            "grow_skip_incremental": self.grow_skip_incremental,
-            "grow_skip_greedy": self.grow_skip_greedy,
             # maxsat costs
             "grow_maxsat_neg_cost": self.grow_maxsat_neg_cost,
             "grow_maxsat_pos_cost": self.grow_maxsat_pos_cost,
@@ -553,7 +550,10 @@ class BestStepOUSComputer(BestStepComputer):
             F = I | {-l, l}
 
             # expl is None when cutoff (timeout or cost exceeds current best Cost)
-            expl, costExpl, t_exp = self.bestStepOUS(f, F=F, A=I | set({-l}), p=-l)
+            A = I | set({-l})
+            p = -l
+
+            expl, costExpl, t_exp = self.bestStepOUS(f, F=F, A=A, p=-l)
 
             # can only keep the costs of the optHittingSet computer
             if costExpl < self.bestCosts[l] and expl is not None:
@@ -666,9 +666,6 @@ class BestStepOUSComputer(BestStepComputer):
                     self.optHSComputer.addCorrectionSet(C)
 
         while(True):
-            # if time.time() - tstart > timeout:
-            #     return None, costHS, None
-
             HS = self.computeHittingSet(f, HCounter, H, C, HS, mode)
 
             sat, HSModel = self.checkSat(HS, phases=self.I0)
@@ -1627,7 +1624,7 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
         # Compute optimal explanation explanation assignment to subset of U.
         expl, t_exp = c.bestStep(f, Iend, I)
         print(expl)
-        print(t_expl)
+        print(t_exp)
         saveResults(results, t_exp)
 
         if expl is None:
@@ -2134,10 +2131,10 @@ if __name__ == "__main__":
 
     ## INSTANCES
     # test_explain(params)
-    # test_explainGreedy()
+    test_explainGreedy()
     # test_frietkot(params)
     # test_puzzle(optimalParams)
-    test_PastaPuzzle(optimalParams)
+    # test_PastaPuzzle(optimalParams)
     # test_simplestReify(params)
     # test_simpleReify(params)
     # test_puzzleReify(params)

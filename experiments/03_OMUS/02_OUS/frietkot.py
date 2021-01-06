@@ -45,6 +45,977 @@ def exactly_one_at_most(lst):
     return any(lst), allpairs
 
 
+def buildBijectivity(rels):
+    bij = []
+    bv_bij = []
+    for rel in rels:
+        # bijection for all columns inside relation
+        bv1 = BoolVar()
+        bv2 = BoolVar()
+        # for each relation
+        for col_ids in rel.df:
+            # one per column
+            atleast, atmost = exactly_one_at_most(rel[:, col_ids])
+            [bij.append(implies(bv1, clause)) for clause in atmost]
+            bij.append(implies(bv2, atleast))
+        bv_bij.append(bv1)
+        bv_bij.append(bv2)
+
+        # bijection for all rows inside relation
+        bv3 = BoolVar()
+        bv4 = BoolVar()
+        for (_,row) in rel.df.iterrows():
+            # one per row
+            atleast, atmost = exactly_one_at_most(row)
+            [bij.append(implies(bv3, clause)) for clause in atmost]
+            bij.append(implies(bv4, atleast))
+        bv_bij.append(bv3)
+        bv_bij.append(bv4)
+    return bij, bv_bij
+
+
+def p19():
+    pass
+
+
+def p18():
+    type1 = ["the_other_type1", "glendale", "olema", "evansdale", "lakota"]
+    person = ["the_other_person", "al_allen", "kelly_kirby", "bev_baird", "ed_ewing"]
+    candidate = ["the_other_candidate", "academic", "teacher", "writer", "doctor"]
+    vote = ["8500", "9000", "9500", "10000", "10500"] # isa int
+    type2 = [-500, 500, -1000, 1000, -1500, 1500, -2000, 2000] # differences between values of type vote
+
+    types = [type1, person, candidate, vote]
+    n = len(types)
+    m = len(types[0])
+    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
+
+    person_type1 = Relation(person, type1) # from(person, type1)
+    acts_as = Relation(person, candidate) # acts_as(person, candidate)
+    finished_with = Relation(person, vote) # finished_with(person, vote)
+    received = Relation(candidate, vote) # received(candidate, vote)
+    is_linked_with_1 = Relation(type1, candidate) # is_linked_with_1(type1, candidate)
+    is_linked_with_2 = Relation(type1, vote) # is_linked_with_2(type1, vote)
+
+    rels = [person_type1, acts_as, finished_with, received, is_linked_with_1, is_linked_with_2]
+
+    # Bijectivity
+    bij, bv_bij = buildBijectivity(rels)
+
+    # Transitivity
+    trans = []
+    bv_trans =  [BoolVar() for i in range(12)]
+    for x in person:
+        for y in type1:
+            for z in candidate:
+                t0 = to_cnf(implies(acts_as[x, z] & is_linked_with_1[y, z], person_type1[x, y]))
+                [trans.append(implies(bv_trans[0], clause)) for clause in t0]
+
+                t1 = to_cnf(implies(~acts_as[x, z] & is_linked_with_1[y, z], ~person_type1[x, y]))
+                [trans.append(implies(bv_trans[1], clause)) for clause in t1]
+
+                t2 = to_cnf(implies(acts_as[x, z] & ~is_linked_with_1[y, z], ~person_type1[x, y]))
+                [trans.append(implies(bv_trans[2], clause)) for clause in t2]
+
+    for x in person:
+        for y in type1:
+            for z in vote:
+                t3 = to_cnf(implies(finished_with[x, z] & is_linked_with_2[y, z], person_type1[x, y]))
+                [trans.append(implies(bv_trans[3], clause)) for clause in t3]
+
+                t4 = to_cnf(implies(~finished_with[x, z] & is_linked_with_2[y, z], ~person_type1[x, y]))
+                [trans.append(implies(bv_trans[4], clause)) for clause in t4]
+
+                t5 = to_cnf(implies(finished_with[x, z] & ~is_linked_with_2[y, z], ~person_type1[x, y]))
+                [trans.append(implies(bv_trans[5], clause)) for clause in t5]
+
+    for x in person:
+        for y in candidate:
+            for z in vote:
+                t6 = to_cnf(implies(finished_with[x, z] & received[y, z], acts_as[x, y]))
+                [trans.append(implies(bv_trans[6], clause)) for clause in t6]
+
+                t7 = to_cnf(implies(~finished_with[x, z] & received[y, z], ~acts_as[x, y]))
+                [trans.append(implies(bv_trans[7], clause)) for clause in t7]
+
+                t8 = to_cnf(implies(finished_with[x, z] & ~received[y, z], ~acts_as[x, y]))
+                [trans.append(implies(bv_trans[8], clause)) for clause in t8]
+
+    for x in candidate:
+        for y in vote:
+            for z in type1:
+                t9 = to_cnf(implies(is_linked_with_1[z, x] & is_linked_with_2[z, y], received[x, y]))
+                [trans.append(implies(bv_trans[9], clause)) for clause in t9]
+
+                t10 = to_cnf(implies(~is_linked_with_1[z, x] & is_linked_with_2[z, y], ~received[x, y]))
+                [trans.append(implies(bv_trans[10], clause)) for clause in t10]
+
+                t11 = to_cnf(implies(is_linked_with_1[z, x] & ~is_linked_with_2[z, y], ~received[x, y]))
+                [trans.append(implies(bv_trans[11], clause)) for clause in t11]
+
+    clues = []
+    bv_clues = [BoolVar() for i in range(12)]
+
+    # 0. Al allen is from glendale
+    # assumption_satisfied( 0  ) => person_type1(al_allen,glendale).
+    clues.append(implies(bv_clues[0], person_type1["al_allen","glendale"]))
+
+    # 1. Kelly Kirby finished 1000 votes ahead of the person who acts as the academic
+    # assumption_satisfied( 0  ) => ?a [vote] b [person] c [vote]: acts_as(b,academic) & finished_with(b,a) & c = a+1000 & finished_with(kelly_kirby,c).
+    c1a = []
+    for a in vote:
+        for b in person:
+            for c in vote:
+                if int(c) == int(a) + 1000:
+                    c1a.append(acts_as[b,"academic"] & finished_with[b,a] & finished_with["kelly_kirby",c])
+
+    for cl in to_cnf(any(c1a)):
+        clues.append(implies(bv_clues[1], cl))
+    # 2.The academic received 500 votes less than the teacher
+    # assumption_satisfied( 0  ) => ?d [vote] e [vote]: received(teacher,d) & e = d-500 & received(academic,e).
+    c2a = []
+    for d in vote:
+        for e in vote:
+            if int(e) == int(d) - 500:
+                c2a.append(received["teacher",d] & received["academic",e])
+
+    for cl in to_cnf(any(c2a)):
+        clues.append(implies(bv_clues[2], cl))
+
+    # 3. The candidate who received 10500 votes isn't the writer
+    # assumption_satisfied( 0  ) => ?f [candidate]: received(f,10500) & ~ (writer = f).
+    c3a = []
+    for f in candidate:
+        c3a.append(received[f, "10500"] & ~ ("writer" == f) )
+
+    for cl in to_cnf(any(c3a)):
+        clues.append(implies(bv_clues[3], cl))
+    # 4. Kelly Kirby isn't from Olema
+    # assumption_satisfied( 0  ) => ~ person_type1(kelly_kirby,olema).
+    clues.append(implies(bv_clues[4],  ~ person_type1["kelly_kirby","olema"]))
+
+    # 5. The glendale native finished somewhat ahead of the Olema native
+    # assumption_satisfied( 0  ) => ?g [person] h [type2] i [vote] j [person] k [vote]: h>0 & finished_with(j,i) & person_type1(j,olema) & k = i+h & finished_with(g,k) & person_type1(g,glendale).
+    c5a = []
+    for g in person:
+        for h in type2:
+            for i in vote:
+                for j in person:
+                    for k in vote:
+                        if int(h) > 0 and int(k) == int(i) + int(h):
+                            c5a.append(finished_with[j,i] & person_type1[j,"olema"] & finished_with[g,k] & person_type1[g,"glendale"])
+
+    for cl in to_cnf(any(c5a)):
+        clues.append(implies(bv_clues[5], cl))
+    # 6. Bev Baird ended up with 8500 votes
+    # assumption_satisfied( 0  ) => finished_with(bev_baird,8500).
+    clues.append(implies(bv_clues[6],  finished_with["bev_baird","8500"]))
+
+    # 7. Ed Ewing finished 500 votes ahead of the Evansdale native
+    # assumption_satisfied( 0  ) => ?l [vote] m [person] n [vote]: finished_with(m,l) & person_type1(m,evansdale) & n = l+500 & finished_with(ed_ewing,n).
+    c7a = []
+    for l in vote:
+        for m in person:
+            for n in vote:
+                if int(n) == int(l) + 500:
+                    c7a.append(finished_with[m,l] & person_type1[m,"evansdale"] & finished_with["ed_ewing",n])
+
+    for cl in to_cnf(any(c7a)):
+        clues.append(implies(bv_clues[7], cl))
+    # 8. The man who received 9500 votes isn't the doctor
+    # assumption_satisfied( 0  ) =>  ?o [candidate]: received(o,9500) & ~ (doctor = o).
+
+    c8a = []
+    for o in candidate:
+        c8a.append(received[o,9500] & ~("doctor" == o))
+
+    for cl in to_cnf(any(c8a)):
+        clues.append(implies(bv_clues[8], cl))
+    # 9. Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes
+    # assumption_satisfied( 0  ) => ? p [person]: acts_as(p,academic) & ~ (p = al_allen) & (finished_with(p,10000) & finished_with(al_allen,8500) | finished_with(al_allen,10000) & finished_with(p,8500)).
+    c9a = []
+    for p in person:
+        if not (p == "al_allen"):
+            c9a.append(acts_as[p,"academic"] & ((finished_with[p,"10000"] & finished_with["al_allen","8500"]) | (finished_with["al_allen","10000"] & finished_with[p,"8500"])))
+
+    for cl in to_cnf(any(c9a)):
+        clues.append(implies(bv_clues[9], cl))
+    # 10. The politician who finished with 10500 votes isn't from Lakota
+    # assumption_satisfied( 0  ) => ?q [person]: finished_with(q,10500) & ~ person_type1(q,lakota).
+    c10a = []
+    for q in person:
+        c10a.append(finished_with[q,"10500"] & ~ person_type1[q,"lakota"])
+
+    for cl in to_cnf(any(c10a)):
+        clues.append(implies(bv_clues[10], cl))
+    # 11. The person acting as doctor was either the politician who finished with 10000 votes or Kelly Kirby
+    # assumption_satisfied( 0  ) => ?r [person]: acts_as(r,doctor) & ((?s [person]: finished_with(s,10000) & s = r) | kelly_kirby = r).
+    c11a = []
+    for r in person:
+        subformula = any(
+            finished_with[s,"10000"] & (s == r)
+            for s in person
+        )
+        c11a.append(acts_as[r,"doctor"] & (subformula | "kelly_kirby" == r))
+
+    for cl in to_cnf(any(c11a)):
+        clues.append(implies(bv_clues[11], cl))
+
+    clueTexts =[
+        "Al allen is from glendale",
+        "Kelly Kirby finished 1000 votes ahead of the person who acts as the academic",
+        "The academic received 500 votes less than the teacher",
+        "The candidate who received 10500 votes isn't the writer",
+        "Kelly Kirby isn't from Olema",
+        "The glendale native finished somewhat ahead of the Olema native",
+        "Bev Baird ended up with 8500 votes",
+        "Ed Ewing finished 500 votes ahead of the Evansdale native",
+        "The man who received 9500 votes isn't the doctor",
+        "Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes",
+        "The politician who finished with 10500 votes isn't from Lakota",
+        "The person acting as doctor was either the politician who finished with 10000 votes or Kelly Kirby"
+    ]
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [[bv1.name + 1] for bv1 in bv_clues]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_bij]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_trans]
+
+    weights = {}
+    weights.update({bv.name + 1: 100 for bv in bv_clues})
+    weights.update({bv.name + 1: 60 for bv in bv_trans})
+    weights.update({bv.name + 1: 60 for bv in bv_bij})
+
+    explainable_facts = set()
+    bvRels = {}
+    for rel, relStr in zip(rels, ["person_type1", "acts_as", "finished_with", "received", "is_linked_with_1", "is_linked_with_2"]):
+        rowNames = list(rel.df.index)
+        columnNames = list(rel.df.columns)
+
+        # production of explanations json file
+        for r in rowNames:
+            for c in columnNames:
+                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr.lower(), "subject" : r.lower(), "object": c.lower()}
+
+        # facts to explain
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
+    matching_table = {
+        'bvRel': bvRels,
+        'Transitivity constraint': [bv.name + 1 for bv in bv_trans],
+        'Bijectivity': [bv.name + 1 for bv in bv_bij],
+        'clues' : {
+            bv.name + 1: clueTexts[i] for i, bv in enumerate(bv_clues)
+        }
+    }
+
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+
+def p16():
+    type1 = ["the_other_type1", "rings", "mobile_phones", "flashlights", "rubber_balls"]
+    juggler = ["the_other_juggler", "howard", "otis", "gerald", "floyd"]
+    type2 = ["the_other_type2", "quasqueton", "kingsburg", "carbon", "nice"]
+    spot = ["1", "2", "3", "4", "5"]
+
+    used = Relation(juggler, type1)
+    juggler_type2 = Relation(juggler, type2) #from
+    went = Relation(juggler, spot) 
+    type1_type2 = Relation(type1, type2) #is_linked_with_1
+    type1_spot = Relation(type1, spot) #is_linked_with_2
+    type2_spot = Relation(type2, spot) #is_linked_with_3
+
+    types = [type1, juggler, type2, spot]
+    n = len(types)
+    m = len(types[0])
+    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
+
+    rels = [used, juggler_type2, went, type1_type2, type1_spot, type2_spot]
+
+    # Bijectivity
+    bij, bv_bij = buildBijectivity(rels)
+
+    # Transitivity
+    trans = []
+    bv_trans =  [BoolVar() for i in range(12)]
+    for x in juggler:
+        for y in type1:
+            for z in type2:
+                t0 = to_cnf(implies(juggler_type2[x, z] & type1_type2[y, z], used[x, y]))
+                [trans.append(implies(bv_trans[0], clause)) for clause in t0]
+
+                t1 = to_cnf(implies(~juggler_type2[x, z] & type1_type2[y, z], ~used[x, y]))
+                [trans.append(implies(bv_trans[1], clause)) for clause in t1]
+
+                t2 = to_cnf(implies(juggler_type2[x, z] & ~type1_type2[y, z], ~used[x, y]))
+                [trans.append(implies(bv_trans[2], clause)) for clause in t2]
+
+    for x in juggler:
+        for y in type1:
+            for z in spot:
+                t3 = to_cnf(implies(went[x, z] & type1_spot[y, z], used[x, y]))
+                [trans.append(implies(bv_trans[3], clause)) for clause in t3]
+
+                t4 = to_cnf(implies(~went[x, z] & type1_spot[y, z], ~used[x, y]))
+                [trans.append(implies(bv_trans[4], clause)) for clause in t4]
+
+                t5 = to_cnf(implies(went[x, z] & ~type1_spot[y, z], ~used[x, y]))
+                [trans.append(implies(bv_trans[5], clause)) for clause in t5]
+
+    for x in juggler:
+        for y in type2:
+            for z in spot:
+                t6 = to_cnf(implies(went[x, z] & type2_spot[y, z], juggler_type2[x, y]))
+                [trans.append(implies(bv_trans[6], clause)) for clause in t6]
+
+                t7 = to_cnf(implies(~went[x, z] & type2_spot[y, z], ~juggler_type2[x, y]))
+                [trans.append(implies(bv_trans[7], clause)) for clause in t7]
+
+                t8 = to_cnf(implies(went[x, z] & ~type2_spot[y, z], ~juggler_type2[x, y]))
+                [trans.append(implies(bv_trans[8], clause)) for clause in t8]
+
+    for x in type1:
+        for y in type2:
+            for z in spot:
+                t9 = to_cnf(implies(type1_spot[x, z] & type2_spot[y, z], type1_type2[x, y]))
+                [trans.append(implies(bv_trans[9], clause)) for clause in t9]
+
+                t10 = to_cnf(implies(~type1_spot[x, z] & type2_spot[y, z], ~type1_type2[x, y]))
+                [trans.append(implies(bv_trans[10], clause)) for clause in t10]
+
+                t11 = to_cnf(implies(type1_spot[x, z] & ~type2_spot[y, z], ~type1_type2[x, y]))
+                [trans.append(implies(bv_trans[11], clause)) for clause in t11]
+
+    clues = []
+    bv_clues = [BoolVar() for i in range(11)]
+    # 0. The juggler who went fourth was either the performer from Quasqueton or the juggler who used rings
+    # assumption_satisfied( 0  ) => ?a [juggler]: went(a,4) & ((?b [juggler]: from(b,quasqueton) & b = a) | (?c [juggler]: used(c,rings) & c = a)).
+    c0a = []
+    for a in juggler:
+        formule1 = any(
+            juggler_type2[b,"quasqueton"]
+            for b in juggler if b == a
+        )
+        formule2 = any(
+            used[c, "rings"]
+            for c in juggler if c == a
+        )
+        c0a.append(went[a, "4"] & (formule1 | formule2))
+
+    for cl in to_cnf(any(c0a)):
+        clues.append(implies(bv_clues[0], cl))
+    # 1. The juggler who used flashlights performed one spot after the person who used mobile phones
+    # assumption_satisfied( 0  ) => ?d [juggler] e [spot] f [juggler] g [spot]: used(d,flashlights) & used(f,mobile_phones) & went(f,e) & g = e+1 & went(d,g).
+    c1a = []
+    for d in juggler:
+        for e in spot:
+            for f in juggler:
+                for g in spot:
+                    if int(g) == int(e) + 1:
+                        c1a.append(used[d,"flashlights"] & used[f,"mobile_phones"] & went[f,e] & went[d,g])
+
+    for cl in to_cnf(any(c1a)):
+        clues.append(implies(bv_clues[1], cl))
+    # 2. The performer from Kingsburg performed one spot before Howard
+    # assumption_satisfied( 0  ) => ?h [juggler] i [spot] j [spot]: from(h,kingsburg) & went(howard,i) & j = i-1 & went(h,j).
+    c2a = []
+    for h in juggler:
+        for i in spot:
+            for j in spot:
+                if int(j) == int(i) - 1:
+                    c2a.append(juggler_type2[h,"kingsburg"] & went["howard",i] & went[h,j])
+
+    for cl in to_cnf(any(c2a)):
+        clues.append(implies(bv_clues[2], cl))
+    # 3. Otis wasn't from Carbon
+    # assumption_satisfied( 0  ) => ~ from(otis,carbon).
+    clues.append(implies(bv_clues[3], juggler_type2["otis","carbon"]))
+
+    # 4. Of the performer who went second and the juggler who used rings, one was from Carbon and the other is Howard
+    # assumption_satisfied( 0  ) => ?k [juggler] l [juggler]: went(k,2) & used(l,rings) & ~ (k = l) & (from(k,carbon) & howard = l | from(l,carbon) & howard = k).
+    c4a = []
+    for k in juggler:
+        for l in juggler:
+            if not (k == l):
+                c4a.append(went[k,"2"] & used[l,"rings"] & (juggler_type2[k,"carbon"] & "howard" == l | juggler_type2[l,"carbon"] & "howard" == k))
+
+    for cl in to_cnf(any(c4a)):
+        clues.append(implies(bv_clues[4], cl))
+    # 5. The performer who went third, Gerald and the person from Kingsburg are three different people
+    # assumption_satisfied( 0  ) => ?m [juggler] n [juggler]: ~ (m = gerald) & ~ (m = n) & ~ (gerald = n) & went(m,3) & from(n,kingsburg).
+    c5a = []
+    for m in juggler:
+        for n in juggler:
+            if not (m == "gerald") and not(m == n) and not("gerald" == n):
+                c5a.append(went[m,"3"] & juggler_type2[n,"kingsburg"])
+
+    for cl in to_cnf(any(c5a)):
+        clues.append(implies(bv_clues[5], cl))
+    # 6. Floyd was either the juggler who went second or the juggler from Quasqueton
+    # assumption_satisfied( 0  ) => (?o [juggler]: went(o,2) & o = floyd) | (?p [juggler]: from(p,quasqueton) & p = floyd).
+    c6a = []
+    for o in juggler:
+        c6a.append(went[o,"2"] & (o == "floyd"))
+
+    c6b = []
+    for p in juggler:
+        c6b.append(juggler_type2[p,"quasqueton"] & (p == "floyd"))
+
+    for cl in to_cnf(any(c6a) | c6b):
+        clues.append(implies(bv_clues[6], cl))
+
+    # 7. The person who went third used rings
+    # assumption_satisfied( 0  ) => ?q [juggler]: went(q,3) & used(q,rings).
+    c7a = []
+    for q in juggler:
+        c7a.append(went[q,"3"] & used[q,"rings"])
+
+    for cl in to_cnf(any(c7a)):
+        clues.append(implies(bv_clues[7], cl))
+
+    # 8. The juggler who went second wasn't from Nice
+    # assumption_satisfied( 0  ) =>  ?r [juggler]: went(r,2) & ~ from(r,nice).
+    c8a = []
+    for r in juggler:
+        c8a.append(went[r, "2"] & ~juggler_type2[r, "nice"])
+
+    for cl in to_cnf(any(c8a)):
+        clues.append(implies(bv_clues[8], cl))
+
+    # 9. Floyd juggles rubber balls
+    # assumption_satisfied( 0  ) => used(floyd,rubber_balls).
+    clues.append(implies(bv_clues[9], used["floyd","rubber_balls"]))
+
+
+    clueTexts =[
+        "The juggler who went fourth was either the performer from Quasqueton or the juggler who used rings",
+        "The juggler who used flashlights performed one spot after the person who used mobile phones",
+        "The performer from Kingsburg performed one spot before Howard",
+        "Otis wasn't from Carbon",
+        "Of the performer who went second and the juggler who used rings, one was from Carbon and the other is Howard",
+        "The performer who went third, Gerald and the person from Kingsburg are three different people",
+        "Floyd was either the juggler who went second or the juggler from Quasqueton",
+        "The person who went third used rings",
+        "The juggler who went second wasn't from Nice",
+        "Floyd juggles rubber balls"
+    ]
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [[bv1.name + 1] for bv1 in bv_clues]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_bij]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_trans]
+
+    weights = {}
+    weights.update({bv.name + 1: 100 for bv in bv_clues})
+    weights.update({bv.name + 1: 60 for bv in bv_trans})
+    weights.update({bv.name + 1: 60 for bv in bv_bij})
+
+    explainable_facts = set()
+    bvRels = {}
+    for rel, relStr in zip(rels, ["used", "juggler_type2", "went", "type1_type2", "type1_spot", "type2_spot"]):
+        rowNames = list(rel.df.index)
+        columnNames = list(rel.df.columns)
+
+        # production of explanations json file
+        for r in rowNames:
+            for c in columnNames:
+                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr.lower(), "subject" : r.lower(), "object": c.lower()}
+
+        # facts to explain
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
+    matching_table = {
+        'bvRel': bvRels,
+        'Transitivity constraint': [bv.name + 1 for bv in bv_trans],
+        'Bijectivity': [bv.name + 1 for bv in bv_bij],
+        'clues' : {
+            bv.name + 1: clueTexts[i] for i, bv in enumerate(bv_clues)
+        }
+    }
+
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+
+def p13():
+    dollar = ["750", "1000", "1250", "1500", "1750"]
+    piece = ["the_other_piece", "valencia", "waldarama", "tombawomba", "sniffletoe"]
+    person = ["kelly", "isabel", "lucas", "nicole", "herman"]
+    city = ["the_other_type2", "vancouver", "ypsilanti", "mexico_city", "st_moritz"]
+    diffdollar = [-250, 250, -500, 500, -750, 750, -1000, 1000]
+
+
+    types = [dollar, piece, person, city]
+    n = len(types)
+    m = len(types[0])
+    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
+
+    #type1 = person
+    #type2 = city
+    #type3 = diffdollar
+
+    # from(piece, type1) = piece_person  = Relation(piece, person)
+    # is_linked_with_1(dollar, type1)     dollar_person = Relation(dollar, person)
+    # is_linked_with_2(dollar, type2)    dollar_city = Relation(dollar, city)
+    # is_linked_with_3(type1, type2)    person_city = Relation(person, city)
+
+    cost = Relation(piece, dollar)
+    go_to = Relation(piece, city)
+    piece_person = Relation(piece, person)
+    dollar_person = Relation(dollar, person)
+    dollar_city = Relation(dollar, city)
+    person_city = Relation(person, city)
+    rels = [cost, go_to, piece_person, dollar_person, dollar_city, person_city]
+
+    # Bijectivity
+    bij, bv_bij = buildBijectivity(rels)
+
+    # Transitivity
+    trans = []
+    bv_trans =  [BoolVar() for i in range(12)]
+
+    for x in piece:
+        for y in dollar:
+            for z in city:
+                t0 = to_cnf(implies(go_to[x, z] & dollar_city[y, z], cost[x, y]))
+                [trans.append(implies(bv_trans[0], clause)) for clause in t0]
+
+                t1 = to_cnf(implies(~go_to[x, z] & dollar_city[y, z], ~cost[x, y]))
+                [trans.append(implies(bv_trans[1], clause)) for clause in t1]
+
+                t2 = to_cnf(implies(go_to[x, z] & ~dollar_city[y, z], ~cost[x, y]))
+                [trans.append(implies(bv_trans[2], clause)) for clause in t2]
+
+    for x in piece:
+        for y in dollar:
+            for z in person:
+                t3 = to_cnf(implies(piece_person[x, z] & dollar_person[y, z], cost[x, y]))
+                [trans.append(implies(bv_trans[3], clause)) for clause in t3]
+
+                t4 = to_cnf(implies(~piece_person[x, z] & dollar_person[y, z], ~cost[x, y]))
+                [trans.append(implies(bv_trans[4], clause)) for clause in t4]
+
+                t5 = to_cnf(implies(piece_person[x, z] & ~dollar_person[y, z], ~cost[x, y]))
+                [trans.append(implies(bv_trans[5], clause)) for clause in t5]
+
+    for x in piece:
+        for y in person:
+            for z in city:
+                t6 = to_cnf(implies(go_to[x, z] & person_city[y, z], piece_person[x, y]))
+                [trans.append(implies(bv_trans[6], clause)) for clause in t6]
+
+                t7 = to_cnf(implies(~go_to[x, z] & person_city[y, z], ~piece_person[x, y]))
+                [trans.append(implies(bv_trans[7], clause)) for clause in t7]
+
+                t8 = to_cnf(implies(go_to[x, z] & ~person_city[y, z], ~piece_person[x, y]))
+                [trans.append(implies(bv_trans[8], clause)) for clause in t8]
+
+    for x in dollar:
+        for y in person:
+            for z in city:
+                t9 = to_cnf(implies(dollar_city[x, z] & person_city[y, z], dollar_person[x, y]))
+                [trans.append(implies(bv_trans[9], clause)) for clause in t9]
+
+                t10 = to_cnf(implies(~dollar_city[x, z] & person_city[y, z], ~dollar_person[x, y]))
+                [trans.append(implies(bv_trans[10], clause)) for clause in t10]
+
+                t11 = to_cnf(implies(dollar_city[x, z] & ~person_city[y, z], ~dollar_person[x, y]))
+                [trans.append(implies(bv_trans[11], clause)) for clause in t11]
+
+    clues = []
+    bv_clues = [BoolVar() for i in range(11)]
+
+    # 0. Kelly's piece didn't cost $1250
+    # assumption_satisfied( 0  ) => ?a [piece]: ~ cost(a,1250) & from(a,kelly).
+    c0a = []
+    for a in piece:
+        c0a.append(~cost[a, "1250"] & piece_person[a, "kelly"])
+
+    for clause in to_cnf(any(c0a)):
+        clues.append(implies(bv_clues[0], clause))
+
+    #type1 = person
+    #type2 = city
+    #type3 = diffdollar
+    # from(piece, type1) = piece_person  = Relation(piece, person)
+    # is_linked_with_1(dollar, type1)     dollar_person = Relation(dollar, person)
+    # is_linked_with_2(dollar, type2)    dollar_city = Relation(dollar, city)
+    # is_linked_with_3(type1, type2)    person_city = Relation(person, city)
+
+    # 1. Valencia cost somewhat more than Isabel's dummy
+    # assumption_satisfied( 0  ) => ?b [type3] c [dollar] d [piece] e [dollar]: b>0 & cost(d,c) & from(d,isabel) & e = c+b & cost(valencia,e).
+    c1a = []
+    for b in diffdollar:
+        for c in dollar:
+            for d in piece:
+                for e in dollar:
+                    if (b > 0) and int(e) == int(c) + b:
+                        c1a.append(cost[d, c] & piece_person[d, "isabel"] & cost["valencia",e])
+
+
+    for clause in to_cnf(any(c1a)):
+        clues.append(implies(bv_clues[1], clause))
+
+    # 2. The puppet going to Vancouver, the $750 dummy and the $1500 piece are three different dummies
+    # assumption_satisfied( 0  ) => ?f [piece] g [piece] h [piece]: ~ (f = g) & ~ (f = h) & ~ (g = h) & go_to(f,vancouver) & cost(g,750) & cost(h,1500).
+    c2a = []
+    for f in piece:
+        for g in piece:
+            for h in piece:
+                if not (f == g) and not (f ==h) and not (g == h):
+                    c2a.append(go_to[f,"vancouver"] & cost[g,"750"] & cost[h,"1500"])
+
+    for clause in to_cnf(any(c2a)):
+        clues.append(implies(bv_clues[2], clause))
+
+    # 3. Waldarama didn't cost $750 or $1500
+    # assumption_satisfied( 0  ) => ~ (cost(waldarama,750) | cost(waldarama,1500)).
+    clues.append(implies(bv_clues[3], ~ (cost["waldarama","750"] | cost["waldarama","1500"])))
+
+
+    # 4. Kelly's puppet isn't going to Ypsilanti
+    # assumption_satisfied( 0  ) => ?i [piece]: ~ go_to(i,ypsilanti) & from(i,kelly).
+    c4a = []
+    for i in piece:
+        c4a.append(~ go_to[i,"ypsilanti"] & piece_person[i,"kelly"])
+
+    for clause in to_cnf(any(c4a)):
+        clues.append(implies(bv_clues[4], clause))
+
+    # 5. The dummy going to Mexico City is either Tombawomba or Lucas's puppet
+    # assumption_satisfied( 0  ) => ?j [piece]: go_to(j,mexico_city) & (tombawomba = j | (?k [piece]: k = j & from(k,lucas))).
+    c5a = []
+    for j in piece:
+        formule = any([piece_person[k,"lucas"] for k in piece if k == j])
+        c5a.append(go_to[j,"mexico_city"] & ("tombawomba" == j | formule))
+
+    for clause in to_cnf(any(c5a)):
+        clues.append(implies(bv_clues[5], clause))
+
+
+    # 6. Nicole's puppet, the $1000 piece and the puppet going to Ypsilanti are three different dummies
+    # assumption_satisfied( 0  ) => ?l [piece] m [piece] n [piece]: ~ (l = m) & ~ (l = n) & ~ (m = n) & from(l,nicole) & cost(m,1000) & go_to(n,ypsilanti).
+    c6a = []
+    for l in piece:
+        for m in piece:
+            for n in piece:
+                if not (l == m) and not (l == n) and not (m == n):
+                    c6a.append(piece_person[l,"nicole"] & cost[m,"1000"] & go_to[n,"ypsilanti"])
+
+    for clause in to_cnf(any(c6a)):
+        clues.append(implies(bv_clues[6], clause))
+
+    # 7. Of the $750 puppet and the piece going to Mexico City, one is Tombawomba and the other is Isabel's puppet
+    # assumption_satisfied( 0  ) => ?o [piece] p [piece]: go_to(p,mexico_city) & ~ (o = p) & ((?q [piece]: tombawomba = o & q = p & from(q,isabel)) | (?r [piece]: tombawomba = p & r = o & from(r,isabel)) ) & cost(o,750).
+    c7a = []
+    for o in piece:
+        for p in piece:
+            if not o == p:
+                # (?q [piece]: tombawomba = o & q = p & from(q,isabel))
+                formule1 = any(
+                    [("tombawomba" == o) & (q == p) & piece_person[q,"isabel"] for q in piece]
+                )
+                # (?r [piece]: tombawomba = p & r = o & from(r,isabel))
+                formule2 = any(
+                    [("tombawomba" == p) & (r == o) & piece_person[r,"isabel"] for r in piece]
+                )
+                groteformule = formule1 | formule2
+                c7a.append(go_to[p, "mexico_city"] & groteformule & cost[o, "750"])
+
+    for clause in to_cnf(any(c7a)):
+        clues.append(implies(bv_clues[7], clause))
+
+    # 8. The puppet going to Ypsilanti cost $250 more than the puppet going to St. Moritz.
+    # assumption_satisfied( 0  ) => ?s [piece] t [dollar] u [piece] v [dollar]: go_to(s,ypsilanti) & go_to(u,st_moritz) & cost(u,t) & v = t+250 & cost(s,v).
+    c8a = []
+    for s in piece:
+        for t in dollar:
+            for u in piece:
+                for v in dollar:
+                    if int(v) == int(t) + 250:
+                        c8a.append(go_to[s,"ypsilanti"] & go_to[u,"st_moritz"] & cost[u,t] & cost[s,v])
+
+    for clause in to_cnf(any(c8a)):
+        clues.append(implies(bv_clues[8], clause))
+
+    # 9. Of the $1000 dummy and the $1250 dummy, one is from Herman and the other is going to Mexico City
+    # assumption_satisfied( 0  ) => ?w [piece] x [piece]: ~ (w = x) & (from(w,herman) & go_to(x,mexico_city) | from(x,herman) & go_to(w,mexico_city)) & cost(x,1250) & cost(w,1000).
+    c9a = []
+    for w in piece:
+        for x in piece:
+            if not (w == x):
+                c9a.append((piece_person[w,"herman"] & go_to[x,"mexico_city"] | piece_person[x,"herman"] & go_to[w,"mexico_city"]) & cost[x,"1250"] & cost[w,"1000"])
+
+    for clause in to_cnf(any(c9a)):
+        clues.append(implies(bv_clues[9], clause))
+
+    # 10. Sniffletoe sold for $1000
+    # assumption_satisfied( 0  ) => cost(sniffletoe,1000).
+    clues.append(implies(bv_clues[9], cost["sniffletoe","1000"]))
+
+    clueTexts =[
+        "Kelly's piece didn't cost $1250",
+        "Valencia cost somewhat more than Isabel's dummy",
+        "The puppet going to Vancouver, the $750 dummy and the $1500 piece are three different dummies",
+        "Waldarama didn't cost $750 or $1500",
+        "Kelly's puppet isn't going to Ypsilanti",
+        "The dummy going to Mexico City is either Tombawomba or Lucas's puppet",
+        "Nicole's puppet, the $1000 piece and the puppet going to Ypsilanti are three different dummies",
+        "Of the $750 puppet and the piece going to Mexico City, one is Tombawomba and the other is Isabel's puppet",
+        "The puppet going to Ypsilanti cost $250 more than the puppet going to St. Moritz.",
+        "Of the $1000 dummy and the $1250 dummy, one is from Herman and the other is going to Mexico City",
+        "Sniffletoe sold for $1000"
+    ]
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [[bv1.name + 1] for bv1 in bv_clues]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_bij]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_trans]
+
+    weights = {}
+    weights.update({bv.name + 1: 100 for bv in bv_clues})
+    weights.update({bv.name + 1: 60 for bv in bv_trans})
+    weights.update({bv.name + 1: 60 for bv in bv_bij})
+
+    explainable_facts = set()
+    bvRels = {}
+    for rel, relStr in zip(rels, ["cost", "go_to", "piece_person", "dollar_person", "dollar_city", "person_city"]):
+        rowNames = list(rel.df.index)
+        columnNames = list(rel.df.columns)
+
+        # production of explanations json file
+        for r in rowNames:
+            for c in columnNames:
+                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr.lower(), "subject" : r.lower(), "object": c.lower()}
+
+        # facts to explain
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
+    matching_table = {
+        'bvRel': bvRels,
+        'Transitivity constraint': [bv.name + 1 for bv in bv_trans],
+        'Bijectivity': [bv.name + 1 for bv in bv_bij],
+        'clues' : {
+            bv.name + 1: clueTexts[i] for i, bv in enumerate(bv_clues)
+        }
+    }
+
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+
+
+def p12():
+    """
+    Logic grid puzzle: 'p12' in CPpy
+    Based on... to check originally, currently part of ZebraTutor
+    Probably part of Jens Claes' master thesis, from a 'Byron...' booklet
+    """
+    # type1 = drink
+    # type2 = food
+    drink = ["the_other_type1", "water", "lemonade", "iced_tea", "orange_soda"]
+    order = ["the_other_order", "homer", "glen", "wallace", "oliver"]
+    dollar = ["5", "6", "7", "8", "9"]
+    food = ["the_other_type2", "sloppy_joe", "spaghetti", "hamburger", "turkey_plate"]
+
+    types = [drink, order, dollar, food]
+    n = len(types)
+    m = len(types[0])
+    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
+
+    order_drink = Relation(order, drink) #with
+    cost = Relation(order, dollar)
+    ordered = Relation(order, food)
+    drink_dollar = Relation(drink, dollar) #     is_linked_with_1(type1, dollar)
+    drink_food = Relation(drink, food) #     is_linked_with_2(type1, type2)
+    dollar_food = Relation(dollar, food) #     is_linked_with_3(dollar, type2)
+    rels = [order_drink, cost, ordered, drink_dollar, drink_food, dollar_food]
+
+    # Bijectivity
+    cnt = 0
+    bij, bv_bij = buildBijectivity(rels)
+
+    # Transitivity
+    trans = []
+    bv_trans =  [BoolVar() for i in range(12)]
+
+    for x in order:
+        for y in drink:
+            for z in dollar:
+                t0 = to_cnf(implies(cost[x, z] & drink_dollar[y, z], order_drink[x, y]))
+                [trans.append(implies(bv_trans[0], clause)) for clause in t0]
+
+                t1 = to_cnf(implies(~cost[x, z] & drink_dollar[y, z], ~order_drink[x, y]))
+                [trans.append(implies(bv_trans[1], clause)) for clause in t1]
+
+                t2 = to_cnf(implies(cost[x, z] & ~drink_dollar[y, z], ~order_drink[x, y]))
+                [trans.append(implies(bv_trans[2], clause)) for clause in t2]
+
+    for x in order:
+        for y in drink:
+            for z in food:
+                t3 = to_cnf(implies(ordered[x, z] & drink_food[y, z], order_drink[x, y]))
+                [trans.append(implies(bv_trans[3], clause)) for clause in t3]
+
+                t4 = to_cnf(implies(~ordered[x, z] & drink_food[y, z], ~order_drink[x, y]))
+                [trans.append(implies(bv_trans[4], clause)) for clause in t4]
+
+                t5 = to_cnf(implies(ordered[x, z] & ~drink_food[y, z], ~order_drink[x, y]))
+                [trans.append(implies(bv_trans[5], clause)) for clause in t5]
+
+    for x in order:
+        for y in dollar:
+            for z in food:
+                t6 = to_cnf(implies(ordered[x, z] & dollar_food[y, z], cost[x, y]))
+                [trans.append(implies(bv_trans[6], clause)) for clause in t6]
+
+                t7 = to_cnf(implies(~ordered[x, z] & dollar_food[y, z], ~cost[x, y]))
+                [trans.append(implies(bv_trans[7], clause)) for clause in t7]
+
+                t8 = to_cnf(implies(ordered[x, z] & ~dollar_food[y, z], ~cost[x, y]))
+                [trans.append(implies(bv_trans[8], clause)) for clause in t8]
+
+    for x in drink:
+        for y in dollar:
+            for z in food:
+                t9 = to_cnf(implies(drink_food[x, z] & dollar_food[y, z], drink_dollar[x, y]))
+                [trans.append(implies(bv_trans[9], clause)) for clause in t9]
+
+                t10 = to_cnf(implies(~drink_food[x, z] & dollar_food[y, z], ~drink_dollar[x, y]))
+                [trans.append(implies(bv_trans[10], clause)) for clause in t10]
+
+                t11 = to_cnf(implies(drink_food[x, z] & ~dollar_food[y, z], ~drink_dollar[x, y]))
+                [trans.append(implies(bv_trans[11], clause)) for clause in t11]
+
+    clues = []
+    bv_clues = [BoolVar() for i in range(8)]
+    # 0. The order with the lemonade cost $1 more than the order with the water
+    # assumption_satisfied( 0  ) => ?a [order] b [dollar] c [order] d [dollar]: with(a,lemonade) & with(c,water) & cost(c,b) & d = b+1 & cost(a,d).
+    c0a = []
+    for a in order:
+        for b in dollar:
+            for c in order:
+                for d in dollar:
+                    if int(d) == int(b) + 1:
+                        c0a.append(order_drink[a, "lemonade"] & order_drink[c, "water"] & cost[c, b] & cost[a, d])
+    for clause in to_cnf(any(c0a)):
+        clues.append(implies(bv_clues[0], clause))
+
+    # 1. Homer paid $7
+    # assumption_satisfied( 0  ) => cost(homer,7).
+    clues.append(implies(bv_clues[0], cost["homer", "7"]))
+
+    # 2. Glen paid $3 less than whoever ordered the sloppy joe
+    # assumption_satisfied( 0  ) => ?e [dollar] f [order] g [dollar]: ordered(f,sloppy_joe) & cost(f,e) & g = e-3 & cost(glen,g).
+    c2a = []
+    for e in dollar:
+        for f in order:
+            for g in dollar:
+                if int(g) == int(e) - 3:
+                    c2a.append(ordered[f,"sloppy_joe"] & cost[f, e] & cost["glen", g])
+
+    for clause in to_cnf(any(c2a)):
+        clues.append(implies(bv_clues[2], clause))
+
+    # 3. Wallace didn't have the iced tea
+    # assumption_satisfied( 0  ) => ~ with(wallace,iced_tea).
+    clues.append(implies(bv_clues[3], ~order_drink["wallace","iced_tea"]))
+
+    # 4. Of the diner who paid $6 and Homer, one ordered the spaghetti and the other drank the water
+    # assumption_satisfied( 0  ) => ?h [order]: cost(h,6) & ~ (h = homer) & (ordered(h,spaghetti) & with(homer,water) | ordered(homer,spaghetti) & with(h,water)).
+    c4a = []
+    for h in order:
+        c4a.append(cost[h, "6"] & (ordered[h,"spaghetti"] & order_drink["homer", "water"] | ordered["homer", "spaghetti"] & order_drink[h, "water"]))
+
+    for clause in to_cnf(any(c4a)):
+        clues.append(implies(bv_clues[4], clause))
+
+    # 5. Oliver ordered the hamburger
+    # assumption_satisfied( 0  ) => ordered(oliver,hamburger).
+    clues.append(implies(bv_clues[5], ordered["oliver","hamburger"]))
+
+    # 6. The five diners were whoever ordered the turkey plate, Oliver, Glen, the person who got the iced tea and the person who paid $5
+    # assumption_satisfied( 0  ) => ?i [order] j [order] k [order]: ~ (i = oliver) & ~ (i = glen) & ~ (i = j) & ~ (i = k) & ~ (oliver = glen) & ~ (oliver = j) & ~ (oliver = k) & ~ (glen = j) & ~ (glen = k) & ~ (j = k) & ordered(i,turkey_plate) & with(j,iced_tea) & cost(k,5).
+    c6a = []
+    for i in order:
+        for j in order:
+            for k in order:
+                if not (i == "oliver") and not (i == "glen") and not (i == j) and not (i == k) and not ("oliver" == j) and not ("oliver" == k) and not("glen" == j) and not ("glen" == k) and not (j == k):
+                    c6a.append(ordered[i,"turkey_plate"] & order_drink[j,"iced_tea"] & cost[k, "5"])
+
+    for clause in to_cnf(any(c6a)):
+        clues.append(implies(bv_clues[6], clause))
+
+    # 7. Glen didn't have the orange soda
+    # assumption_satisfied( 0  ) => ~ with(glen,orange_soda).
+    clues.append(implies(bv_clues[7], ~order_drink["glen", "orange_soda"]))
+
+    clueTexts = [
+        "The order with the lemonade cost $1 more than the order with the water",
+        "Homer paid $7",
+        "Glen paid $3 less than whoever ordered the sloppy joe",
+        "Wallace didn't have the iced tea",
+        "Of the diner who paid $6 and Homer, one ordered the spaghetti and the other drank the water",
+        "Oliver ordered the hamburger",
+        "The five diners were whoever ordered the turkey plate, Oliver, Glen, the person who got the iced tea and the person who paid $5",
+        "Glen didn't have the orange soda"
+    ]
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [[bv1.name + 1] for bv1 in bv_clues]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_bij]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_trans]
+
+    weights = {}
+    weights.update({bv.name + 1: 100 for bv in bv_clues})
+    weights.update({bv.name + 1: 60 for bv in bv_trans})
+    weights.update({bv.name + 1: 60 for bv in bv_bij})
+
+    explainable_facts = set()
+    bvRels = {}
+    for rel, relStr in zip(rels, ["order_drink", "cost", "ordered", "drink_dollar", "drink_food", "dollar_food"]):
+        rowNames = list(rel.df.index)
+        columnNames = list(rel.df.columns)
+
+        # production of explanations json file
+        for r in rowNames:
+            for c in columnNames:
+                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr.lower(), "subject" : r.lower(), "object": c.lower()}
+
+        # facts to explain
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
+    matching_table = {
+        'bvRel': bvRels,
+        'Transitivity constraint': [bv.name + 1 for bv in bv_trans],
+        'Bijectivity': [bv.name + 1 for bv in bv_bij],
+        'clues' : {
+            bv.name + 1: clueTexts[i] for i, bv in enumerate(bv_clues)
+        }
+    }
+
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+
+
 def pastaPuzzle():
     """
     Logic grid puzzle: 'pasta' in CPpy

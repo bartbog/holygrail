@@ -27,7 +27,7 @@ from pysat.examples.rc2 import RC2
 from datetime import datetime
 
 # Testing samples
-from frietkot import originProblem, originProblemReify, pastaPuzzle
+from frietkot import originProblem, originProblemReify, p12, pastaPuzzle
 from frietkot import simpleProblemReify, simplestProblemReify
 from frietkot import simpleProblem
 from frietkot import frietKotProblem, frietKotProblemReify
@@ -1390,6 +1390,28 @@ def test_puzzle(params):
     # write_explanations(d["results"]["expl_seq"], matching_table, f, '/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/visualization/src/source_explanations', 'explanatons_puzzle.output.json')
 
 
+def test_p12Puzzle(params):
+    params.instance = "p12"
+    o_clauses, o_assumptions, o_weights, o_user_vars, matching_table = p12()
+    o_cnf = CNF(from_clauses=o_clauses)
+    U = o_user_vars | set(x for lst in o_assumptions for x in lst)
+    I = set(x for lst in o_assumptions for x in lst)
+    f = cost_puzzle(U, I, o_weights)
+
+    with Solver(bootstrap_with=o_clauses + o_assumptions) as s:
+        sat = s.solve()
+        print(sat)
+        prev = None
+        for id, m in enumerate(s.enum_models()):
+            print(f"{id}: model found")
+            if not prev is None:
+                print("diff", sorted(set(prev) - set(m), key=lambda l: abs(l)))
+            prev = m
+
+    return
+    explain(C=o_cnf, U=U, f=f, I0=I, params=params, matching_table=matching_table, verbose=True)
+
+
 def test_PastaPuzzle(params):
     params.instance = "pasta"
     o_clauses, o_assumptions, o_weights, o_user_vars, matching_table, true_facts, rels = pastaPuzzle()
@@ -1575,7 +1597,8 @@ if __name__ == "__main__":
     # test_frietkot(params)
     # test_puzzle(params)
     # test_puzzle(optimalParams)
-    test_PastaPuzzle(optimalParams)
+    # test_PastaPuzzle(optimalParams)
+    test_p12Puzzle(optimalParams)
     # test_simplestReify(params)
     # test_simpleReify(params)
     # test_puzzleReify(params)

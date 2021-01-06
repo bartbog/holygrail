@@ -1392,19 +1392,70 @@ def test_puzzle(params):
 
 def test_PastaPuzzle(params):
     params.instance = "pasta"
-    o_clauses, o_assumptions, o_weights, o_user_vars, matching_table = pastaPuzzle()
+    o_clauses, o_assumptions, o_weights, o_user_vars, matching_table, true_facts, rels = pastaPuzzle()
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost_puzzle(U, I, o_weights)
     prev = None
-    with Solver(bootstrap_with=o_clauses + o_assumptions) as s:
+    setTrueFacts = set({67, 50, 9, 70, 56, 14, 73, 59, 7, 80, 61, 4})
+
+    dlit = {}
+    for rel, relStr in zip(rels, ["chose", "paid", "ordered", "sauce_dollar", "sauce_pasta", "dollar_pasta"]):
+        rowNames = list(rel.df.index)
+        columnNames = list(rel.df.columns)
+        for r in rowNames:
+            for c in columnNames:
+                dlit[rel.df.at[r, c].name + 1] = f"{relStr.lower()}({r.lower()}, {c.lower()})."
+                dlit[f"{relStr.lower()}({r.lower()},{c.lower()})"] = rel.df.at[r, c].name + 1
+                dlit[f"~{relStr.lower()}({r.lower()},{c.lower()})"] = -(rel.df.at[r, c].name + 1)
+                dlit[-(rel.df.at[r, c].name + 1)] = f"~{relStr.lower()}({r.lower()}, {c.lower()})."
+                # print(r,c, )
+    print(dlit)
+    # print(dlit.values())
+    with Solver(bootstrap_with=o_clauses + o_assumptions+true_facts) as s:
         sat = s.solve()
         print(sat)
         for id, m in enumerate(s.enum_models()):
-            print(len(m))
+            print(f"{id}: model found")
+            print(set(m).intersection({4, 17, 61, 36, 84, -92, -88, -96, -33, -82, -95}))
+
+            dollar = ['4', '8', '12', '16']
+            person = ['angie', 'damon', 'claudia', 'elisa']
+            sauce = ['the_other_type1', 'arrabiata_sauce', 'marinara_sauce', 'puttanesca_sauce'] # type1
+            pasta = ['capellini', 'farfalle', 'tagliolini', 'rotini']  # type2
+            for g in person:
+                for h in [-4, 4, -8, 8, -12, 12]:
+                    if h > 0:
+                        for i in dollar:
+                            for j in person:
+                                for k in dollar:
+                                    if int(k) == int(i) - h:
+                                        strOrdered = f"ordered({g},tagliolini)"
+                                        strChose = f"chose({j},marinara_sauce)"
+                                        strpaidji = f"paid({j},{i})"
+                                        strpaidgk = f"paid({g},{k})"
+                                        inModel = {dlit[strOrdered], dlit[strChose] , dlit[strpaidji], dlit[strpaidgk]}
+                                        print(len(inModel.intersection(m)))
+                                        if len(inModel.intersection(m)) == 4:
+                                            print(g, h, i, j, k)
+                                            print(f" {dlit[strOrdered]} & {dlit[strChose]} & {dlit[strpaidji]} & {dlit[strpaidgk]} ")
+                                        # c2a.append(ordered[g, "taglioni"] & chose[j, "marinara_sauce"] & paid[j, i] & paid[g, k])
+
+            for lit in m :
+                if lit > 0 and lit in dlit:
+                    print(dlit[lit])
+            if len(set(m).intersection(setTrueFacts)) == len(setTrueFacts):
+                print("solution:")
+                # angie puttanesca => 4
+                # angie 4 => 17
+                # puttanesca 4 => 61
+                # angie rotini => 36
+                # rotini 4 => 84
+                # rotini 8,12, 16
             if not prev is None:
-                print("diff", set(prev) - set(m))
+                print("diff", sorted(set(prev) - set(m), key=lambda l: abs(l)))
+            #         print("prev is solution", prev)
             prev = m
 
     return
@@ -1522,9 +1573,9 @@ if __name__ == "__main__":
     ## INSTANCES
     # test_explain(params)
     # test_frietkot(params)
-    test_puzzle(params)
+    # test_puzzle(params)
     # test_puzzle(optimalParams)
-    # test_PastaPuzzle(optimalParams)
+    test_PastaPuzzle(optimalParams)
     # test_simplestReify(params)
     # test_simpleReify(params)
     # test_puzzleReify(params)

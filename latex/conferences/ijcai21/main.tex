@@ -19,10 +19,12 @@
 \usepackage{amsmath,amssymb}
 \usepackage{amsthm}
 \usepackage{booktabs}
-\usepackage{natbib}
+% \usepackage{natbib}
 % \usepackage{algorithm}
 % \usepackage{algorithmic}
 \urlstyle{same}
+\newcommand\citet[1]{\citeauthor{#1}~[\citeyear{#1}]}
+
 
 \usepackage{xcolor}
 \usepackage[ruled,linesnumbered]{algorithm2e}
@@ -67,7 +69,7 @@
 % \newcommand\formula{\ensuremath{\m{F} }\xspace}
 % \newcommand\formulac{\ensuremath{\m{C} }\xspace}
 % \newcommand\formulag{\ensuremath{\m{G} }\xspace}
-% \newcommand\mm[1]{\ensuremath{#1}\xspace}
+% \newcommand\mm[1]{\ensuremath{#1}\xspace} 
 % \newcommand\nat{\mm{\mathbb{N}}}
 % \newcommand\ltrue{\mm{\textbf{t}}}
 % \newcommand\lfalse{\mm{\textbf{f}}}
@@ -149,7 +151,9 @@
 /TemplateVersion (IJCAI.2021.0)
 }
 
-\title{Incremental and Constrained Optimal Unsatisfiable Subsets for Explaining CSPs}
+% \title{Incremental and Constrained Optimal Unsatisfiable Subsets for Explaining CSPs}
+% \title{Constrained Optimal Unsatisfiable Subsets for Explaining CSPs}
+\title{Efficient Explanations of CSPs with Constrained Optimal Unsatisfiable Subsets}
 
 % Single author syntax
 \author{Anonymous}
@@ -163,19 +167,27 @@
 % -------- Deze zin is weird.
 % -------
 \begin{abstract}
-    Our work is situated in eXplainable Artificial Intelligence (XAI) --- in particular explainable constraint satisfaction.
-    An explanation here is a sequence of `simple' inference steps, where the difficulty of an inference step depends on the number and types of constraints used.
-    This raises the need for algorithms that can compute unsatisfiable subsets of a logical specification that are optimal with respect to a certain cost criterion.
-    We tackle this challenge by developing an algorithm for computing cost-optimal unsatisfiable subsets inspired by minimal hitting set dualization approaches for finding cardinality-minimal unsatisfiable subsets and for solving partial weighted \maxsat.
-    For generating explanations, many subsequent calls for cost-optimal unsatisfiable subsets will be performed on closely related theories.
-    Inspired by this, we show how the hitting set dualization approach allows us to reuse computation results when solving many variations of the same problems.
-    We generalize our approach to a setting that allows for imposing constraints on the structure of the unsatisfiable subsets of interest.
-    We evaluate all our algorithms in the explanation-generation context.
-    % in terms of the runtime and computational feasibility, as well as the quality of the obtained explanation sequence.
+    Recently, a novel method for explaining solutions of constraint satisfaction problems was proposed, 
+    explaining the solution-finding process in a human-understandable way. 
+    The resulting explanation there is a 
+    sequence of `simple' inference steps, where the difficulty of an inference step depends on the number and types of constraints used.
+    While the algorithms developed there generate good explanations, they suffer from performance problems, and cannot guarantee that the result is optimal with respect to the defined difficulty. 
+    To overcome these limitations, we define the problem of \emph{constrained optimal unsatisfiable subset (cOUS) generation}. 
+    We develop a generic, incremental, algorithm for computing cOUSs, inspired by the well-known hitting set duality that lies at the basis of many \maxsat algorithms,    
+    as well as optimizations of the algorithm specifically for explanation generation.  
+    Our experimental results show that this results in qualitative improvements of the resulting explanation, as well as in an order of magnitude speed-up in the time needed to generate the explanation sequence. 
+    
+%     This raises the need for algorithms that can compute unsatisfiable subsets of a logical specification that are optimal with respect to a certain cost criterion.
+%     We tackle this challenge by developing an algorithm for computing cost-optimal unsatisfiable subsets inspired by minimal hitting set dualization approaches for finding cardinality-minimal unsatisfiable subsets and for solving partial weighted \maxsat.
+%     For generating explanations, many subsequent calls for cost-optimal unsatisfiable subsets will be performed on closely related theories.
+%     Inspired by this, we show how the hitting set dualization approach allows us to reuse computation results when solving many variations of the same problems.
+%     We generalize our approach to a setting that allows for imposing constraints on the structure of the unsatisfiable subsets of interest.
+%     We evaluate all our algorithms in the explanation-generation context.
+%     % in terms of the runtime and computational feasibility, as well as the quality of the obtained explanation sequence.
 \end{abstract}
 
 \section{Introduction}
-% \todo{1 - 1 1/2 column}
+% \todo{1 - 1 1/2 column} 
 \input{01-intro.tex}
 \section{Related Work}\label{sec:related}
 % \todo{1 column}
@@ -223,8 +235,9 @@
 
 \input{09-additional-algorithms.tex}
 %% The file named.bst is a bibliography style file for BibTeX 0.99c
-\bibliography{krrlib,mybibfile,ref}
-\bibliography{ijcai21}
+\bibliographystyle{named}
+\bibliography{krrlib,mybibfile,ref} 
+% \bibliographystyle{ijcai21}
 
 \end{document}
 

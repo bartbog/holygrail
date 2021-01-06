@@ -1188,7 +1188,8 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
 
         if verbose:
             print_expl(matching_table, Ibest)
-            print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
+            qual = sum([f(l) for l in Ibest])
+            print(f"\nOptimal explanation \t\t {Ibest} => {Nbest} \t (cost: {qual})\n")
 
         I |= Nbest
 
@@ -1503,7 +1504,7 @@ if __name__ == "__main__":
     # neg cost => very fast pre-seeding! (0s)
     # params.grow_maxsat_neg_cost = True
     # initial cost => FAST pre-seeding!
-    # params.grow_maxsat_initial_interpretation = True
+    params.grow_maxsat_initial_interpretation = True
 
     ## Postponing Hitting set solver call
     # params.postpone_opt = True

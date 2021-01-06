@@ -756,7 +756,7 @@ class BestStepCOUSComputer(object):
             HS = self.computeHittingSet(f=f, F=F, A=A, p=p, H=H, C=C, HS=HS, mode=mode)
 
             # Timings
-            # print(f"\t{modes[mode]}: got HS",len(HS), "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS),"\tMIP:", round(self.t_expl["t_mip"][-1],3), "s\tGROW:", round(self.t_expl["t_grow"][-1],3))
+            print(f"\t{modes[mode]}: got HS",len(HS), "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS),"\tMIP:", round(self.t_expl["t_mip"][-1],3), "s\tGROW:", round(self.t_expl["t_grow"][-1],3))
 
             # CHECKING SATISFIABILITY
             sat, HS_model = self.checkSat(HS, phases=self.I0)
@@ -1132,12 +1132,14 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
         write_results(results, params.output_folder, params.instance + "_" + params.output_file)
         return E
 
+    signal.alarm(0)
+
     I = set(I0) # copy
     while(len(Iend - I) > 0):
         # ensure timeout in cOUS ocmputation
         remaining_time = round(params.timeout - (time.time() - t_expl_start))
 
-        if remaining_time < 0:
+        if remaining_time <= 0:
             results["results"]['timeout'] = True
             break
 

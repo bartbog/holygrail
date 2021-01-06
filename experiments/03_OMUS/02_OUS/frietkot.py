@@ -219,7 +219,7 @@ def pastaPuzzle():
                 for j in person:
                     for k in dollar:
                         if int(k) == int(i) - h:
-                            c2a.append(ordered[g, "taglioni"] & chose[j, "marinara_sauce"] & paid[str(j), str(i)] & paid[g, str(k)]))
+                            c2a.append(ordered[g, "taglioni"] & chose[j, "marinara_sauce"] & paid[str(j), str(i)] & paid[g, str(k)])
     [clues.append(implies(bv_clues[2], clause)) for clause in to_cnf(any(c2a))]
 
     #  3. The person who ordered tagliolini paid more than Angie

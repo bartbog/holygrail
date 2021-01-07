@@ -74,8 +74,701 @@ def buildBijectivity(rels):
     return bij, bv_bij
 
 
-def p19():
-    pass
+def p93():
+    linkedin_connection = ["57", "59", "64", "68", "78"]
+    person = ["opal", "neil", "rosie", "arnold", "georgia"]
+    facebook_friend = ["120", "130", "140", "150", "160"]
+    twitter_follower = ["589", "707", "715", "789", "809"]
+    type1 = [-10, 10, -20, 20, -30, 30, -40, 40]
+
+
+    types = [linkedin_connection, person, facebook_friend, twitter_follower]
+    n = len(types)
+    m = len(types[0])
+    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
+
+    connected_to = Relation(person, linkedin_connection) # connected_to(person, linkedin_connection)
+    person_facebook_friend = Relation(person, facebook_friend) # with(person, facebook_friend)
+    followed_by = Relation(person, twitter_follower) # followed_by(person, twitter_follower)
+    is_linked_with_1 = Relation(linkedin_connection, facebook_friend) # is_linked_with_1(linkedin_connection, facebook_friend)
+    is_linked_with_2 = Relation(linkedin_connection, twitter_follower) # is_linked_with_2(linkedin_connection, twitter_follower)
+    is_linked_with_3 = Relation(facebook_friend, twitter_follower) # is_linked_with_3(facebook_friend, twitter_follower)
+    rels = [connected_to, person_facebook_friend, followed_by, is_linked_with_1, is_linked_with_2, is_linked_with_3]
+    relStrs = ["connected_to", "person_facebook_friend", "followed_by", "is_linked_with_1", "is_linked_with_2", "is_linked_with_3"]
+
+    # Bijectivity
+    cnt = 0
+    bij, bv_bij = buildBijectivity(rels)
+
+    # Transitivity
+    trans = []
+    bv_trans =  [BoolVar() for i in range(12)]
+
+
+    for x in person:
+        for y in linkedin_connection:
+            for z in facebook_friend:
+                t0 = to_cnf(implies(person_facebook_friend[x, z] & is_linked_with_1[y, z], connected_to[x, y]))
+                [trans.append(implies(bv_trans[0], clause)) for clause in t0]
+
+                t1 = to_cnf(implies(~person_facebook_friend[x, z] & is_linked_with_1[y, z], ~connected_to[x, y]))
+                [trans.append(implies(bv_trans[1], clause)) for clause in t1]
+
+                t2 = to_cnf(implies(person_facebook_friend[x, z] & ~is_linked_with_1[y, z], ~connected_to[x, y]))
+                [trans.append(implies(bv_trans[2], clause)) for clause in t2]
+
+    for x in person:
+        for y in linkedin_connection:
+            for z in twitter_follower:
+                t3 = to_cnf(implies(followed_by[x, z] & is_linked_with_2[y, z], connected_to[x, y]))
+                [trans.append(implies(bv_trans[3], clause)) for clause in t3]
+
+                t4 = to_cnf(implies(~followed_by[x, z] & is_linked_with_2[y, z], ~connected_to[x, y]))
+                [trans.append(implies(bv_trans[4], clause)) for clause in t4]
+
+                t5 = to_cnf(implies(followed_by[x, z] & ~is_linked_with_2[y, z], ~connected_to[x, y]))
+                [trans.append(implies(bv_trans[5], clause)) for clause in t5]
+
+    for x in person:
+        for y in facebook_friend:
+            for z in twitter_follower:
+                t6 = to_cnf(implies(followed_by[x, z] & is_linked_with_3[y, z], person_facebook_friend[x, y]))
+                [trans.append(implies(bv_trans[6], clause)) for clause in t6]
+
+                t7 = to_cnf(implies(~followed_by[x, z] & is_linked_with_3[y, z], ~person_facebook_friend[x, y]))
+                [trans.append(implies(bv_trans[7], clause)) for clause in t7]
+
+                t8 = to_cnf(implies(followed_by[x, z] & ~is_linked_with_3[y, z], ~person_facebook_friend[x, y]))
+                [trans.append(implies(bv_trans[8], clause)) for clause in t8]
+
+    for x in linkedin_connection:
+        for y in facebook_friend:
+            for z in twitter_follower:
+                t9 = to_cnf(implies(is_linked_with_2[x, z] & is_linked_with_3[y, z], is_linked_with_1[x, y]))
+                [trans.append(implies(bv_trans[9], clause)) for clause in t9]
+
+                t10 = to_cnf(implies(~is_linked_with_2[x, z] & is_linked_with_3[y, z], ~is_linked_with_1[x, y]))
+                [trans.append(implies(bv_trans[10], clause)) for clause in t10]
+
+                t11 = to_cnf(implies(is_linked_with_2[x, z] & ~is_linked_with_3[y, z], ~is_linked_with_1[x, y]))
+                [trans.append(implies(bv_trans[11], clause)) for clause in t11]
+
+    clues = []
+    bv_clues = [BoolVar() for i in range(11)]
+
+    # 0. Opal is connected to 64 LinkedIn connections
+    # assumption_satisfied( 0  ) => connected_to(opal,64).
+    clues.append(implies(bv_clues[0], clause))
+
+    # 1. The person followed by 809 Twitter followers, the person with 140 facebook friends and the person connected to 78 linkedin connections are three different people
+    # assumption_satisfied( 0  ) => ?a [person] b [person] c [person]: ~ (a = b) & ~ (a = c) & ~ (b = c) & followed_by(a,809) & with(b,140) & connected_to(c,78).
+    c1a = []
+    for a in person:
+        for b in person:
+            for c in person:
+                if not (a == b) and not (a == c) and not (b == c):
+                    c1a.append(followed_by[a,"809"] & person_facebook_friend[b,"140"] & connected_to[c,"78"])
+
+    for clause in to_cnf(any(c1a)):
+        clues.append(implies(bv_clues[1], clause))
+
+    # 2. Of rosie and neil, one is connected to 68 linkedin connections and the other is followed by 789 twitter followers
+    # assumption_satisfied( 0  ) => ~ (rosie = neil) & (connected_to(rosie,68) & followed_by(neil,789) | connected_to(neil,68) & followed_by(rosie,789)).
+    clues.append(implies(bv_clues[2],
+        (connected_to["rosie","68"] & followed_by["neil","789"]) | (connected_to["neil","68"] & followed_by["rosie","789"])
+    ))
+
+    # 3. The person connected to 57 linkedin connections has 10 facebook friends less than the person followed by 715 twitter followers
+    # assumption_satisfied( 0  ) => ?d [person] e [facebook_friend] f [person] g [facebook_friend]: connected_to(d,57) & followed_by(f,715) & person_facebook_friend(f,e) & g = e-10 & with(d,g).
+    c3a = []
+    for d in person:
+        for e in facebook_friend:
+            for f in person:
+                for g in facebook_friend:
+                    if int(g) == int(e) - 10:
+                        c3a.append(connected_to[d,"57"] & followed_by[f,"715"] & person_facebook_friend[f,e] & person_facebook_friend[d,g])
+
+    for clause in to_cnf(any(c3a)):
+        clues.append(implies(bv_clues[3], clause))
+
+    # 4. Arnold isn't followed by 589 twitter followers
+    # assumption_satisfied( 0  ) => ~ followed_by(arnold,589).
+    clues.append(implies(bv_clues[4], ~ followed_by["arnold","589"]))
+
+    # 5. The person followed by 809 twitter followers isn't connected to 68 linkedin connections
+    # assumption_satisfied( 0  ) => ?h [person]: followed_by(h,809) & ~ connected_to(h,68).
+    c5a = []
+    for h in person:
+        c5a.append(followed_by[h,"809"] & ~ connected_to[h,"68"])
+
+    for clause in to_cnf(any(c5a)):
+        clues.append(implies(bv_clues[5], clause))
+    # 6. Of the person connected to 57 linkedin connections and arnold, one has 140 facebook friends and the other is followed by 789 twitter followers
+    # assumption_satisfied( 0  ) => ?i [person]: connected_to(i,57) & ~ (i = arnold) & (person_facebook_friend(i,140) & followed_by(arnold,789) | with(arnold,140) & followed_by(i,789)).
+    c6a = []
+    for i in person:
+        if not (i == "arnold"):
+            c6a.append(connected_to[i,"57"] & ((person_facebook_friend[i,"140"] & followed_by["arnold","789"]) | (person_facebook_friend["arnold","140"] & followed_by[i,"789"])))
+
+    for clause in to_cnf(any(c6a)):
+        clues.append(implies(bv_clues[6], clause))
+
+    #7. opal doesn't have 150 facebook friends
+    # assumption_satisfied( 0  ) => ~ person_facebook_friend(opal,150).
+    clues.append(implies(bv_clues[7], ~ person_facebook_friend["opal","150"]))
+
+    # 8. the person connected to 57 linkedin connections has 10 facebook friends less than georgia
+    # assumption_satisfied( 0  ) => ?j [person] k [facebook_friend] l [facebook_friend]: connected_to(j,57) & person_facebook_friend(georgia,k) & l = k-10 & person_facebook_friend(j,l).
+    c8a = []
+    for j in person:
+        for k in facebook_friend:
+            for l in facebook_friend:
+                if int(l) == int(k) - 10:
+                    c8a.append(connected_to[j,"57"] & person_facebook_friend["georgia",k] & person_facebook_friend[j,l])
+
+    for clause in to_cnf(any(c8a)):
+        clues.append(implies(bv_clues[8], clause))
+    # 9. The person with 130 facebook friends is either arnold or the person followed by 715 twitter followers
+    # assumption_satisfied( 0  ) => ?m [person]: person_facebook_friend(m,130) & (arnold = m | (?n [person]: followed_by(n,715) & n = m)).
+    c9a = []
+    for m in person:
+        subformula = any(
+            followed_by[n,"715"] & (n == m)
+            for n in person
+        )
+        c9a.append(person_facebook_friend[m,130] & ("arnold" == m | subformula))
+
+    for clause in to_cnf(any(c9a)):
+        clues.append(implies(bv_clues[9], clause))
+    # 10/ the person followed by 789 twitter followers has somewhat less than rosie
+    # assumption_satisfied( 0  ) => ?o [person] p [type1] q [facebook_friend] r [facebook_friend]: followed_by(o,789) & p>0 & person_facebook_friend(rosie,q) & r = q-p & person_facebook_friend(o,r).
+    c10a = []
+    for o in person:
+        for p in type1:
+            for q in facebook_friend:
+                for r in facebook_friend:
+                    if int(p) > 0 and int(r) == int(q) - int(p):
+                        c10a.append(followed_by[o,"789"] & person_facebook_friend["rosie",q] & person_facebook_friend[o,r])
+
+    for clause in to_cnf(any(c10a)):
+        clues.append(implies(bv_clues[10], clause))
+
+    clueTexts = [
+        "Opal is connected to 64 LinkedIn connections",
+        "The person followed by 809 Twitter followers, the person with 140 facebook friends and the person connected to 78 linkedin connections are three different people",
+        "Of rosie and neil, one is connected to 68 linkedin connections and the other is followed by 789 twitter followers",
+        "The person connected to 57 linkedin connections has 10 facebook friends less than the person followed by 715 twitter followers",
+        "Arnold isn't followed by 589 twitter followers",
+        "The person followed by 809 twitter followers isn't connected to 68 linkedin connections",
+        "Of the person connected to 57 linkedin connections and arnold, one has 140 facebook friends and the other is followed by 789 twitter followers",
+        "opal doesn't have 150 facebook friends",
+        "the person connected to 57 linkedin connections has 10 facebook friends less than georgia",
+        "The person with 130 facebook friends is either arnold or the person followed by 715 twitter followers",
+        "the person followed by 789 twitter followers has somewhat less than rosie"
+    ]
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [[bv1.name + 1] for bv1 in bv_clues]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_bij]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_trans]
+
+    weights = {}
+    weights.update({bv.name + 1: 100 for bv in bv_clues})
+    weights.update({bv.name + 1: 60 for bv in bv_trans})
+    weights.update({bv.name + 1: 60 for bv in bv_bij})
+
+    explainable_facts = set()
+    bvRels = {}
+    for rel, relStr in zip(rels, relStrs):
+        rowNames = list(rel.df.index)
+        columnNames = list(rel.df.columns)
+
+        # production of explanations json file
+        for r in rowNames:
+            for c in columnNames:
+                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr.lower(), "subject" : r.lower(), "object": c.lower()}
+
+        # facts to explain
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
+    matching_table = {
+        'bvRel': bvRels,
+        'Transitivity constraint': [bv.name + 1 for bv in bv_trans],
+        'Bijectivity': [bv.name + 1 for bv in bv_bij],
+        'clues' : {
+            bv.name + 1: clueTexts[i] for i, bv in enumerate(bv_clues)
+        }
+    }
+
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+
+def p20():
+    month = ["1", "2", "3", "4", "5"]
+    home  = ["the_other_home", "hughenden", "wolfenden", "markmanor", "barnhill"]
+    type1 = ["the_other_type1", "circle_drive", "bird_road", "grant_place", "fifth_avenue"]
+    type2 = ["the_other_type2", "victor", "lady_grey", "brunhilde", "abigail"]
+    # isa int differences between values of type month
+    type3 = [-1, 1, -2, 2, -3, 3, -4, 4]
+
+    types = [month, home, type1, type2]
+    n = len(types)
+    m = len(types[0])
+    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
+
+    # relations between types
+    investigated_in = Relation(home, month) # investigated_in(home, month)
+    on = Relation(home, type1) # on(home, type1)
+    haunted_by = Relation(home, type2) # haunted_by(home, type2)
+    is_linked_with_1 = Relation(month, type1) # is_linked_with_1(month, type1)
+    is_linked_with_2 = Relation(month, type2) # is_linked_with_2(month, type2)
+    is_linked_with_3 = Relation(type1, type2) # is_linked_with_3(type1, type2)
+
+    rels = [investigated_in, on, haunted_by, is_linked_with_1, is_linked_with_2, is_linked_with_3]
+
+    # Bijectivity
+    bij, bv_bij = buildBijectivity(rels)
+
+    # Transitivity
+    trans = []
+    bv_trans =  [BoolVar() for i in range(12)]
+    for x in home:
+        for y in month:
+            for z in type1:
+                t0 = to_cnf(implies(on[x, z] & is_linked_with_1[y, z], investigated_in[x, y]))
+                [trans.append(implies(bv_trans[0], clause)) for clause in t0]
+
+                t1 = to_cnf(implies(~on[x, z] & is_linked_with_1[y, z], ~investigated_in[x, y]))
+                [trans.append(implies(bv_trans[1], clause)) for clause in t1]
+
+                t2 = to_cnf(implies(on[x, z] & ~is_linked_with_1[y, z], ~investigated_in[x, y]))
+                [trans.append(implies(bv_trans[2], clause)) for clause in t2]
+
+    for x in home:
+        for y in month:
+            for z in type2:
+                t3 = to_cnf(implies(haunted_by[x, z] & is_linked_with_2[y, z], investigated_in[x, y]))
+                [trans.append(implies(bv_trans[3], clause)) for clause in t3]
+
+                t4 = to_cnf(implies(~haunted_by[x, z] & is_linked_with_2[y, z], ~investigated_in[x, y]))
+                [trans.append(implies(bv_trans[4], clause)) for clause in t4]
+
+                t5 = to_cnf(implies(haunted_by[x, z] & ~is_linked_with_2[y, z], ~investigated_in[x, y]))
+                [trans.append(implies(bv_trans[5], clause)) for clause in t5]
+
+    for x in home:
+        for y in type1:
+            for z in type2:
+                t6 = to_cnf(implies(haunted_by[x, z] & is_linked_with_3[y, z], on[x, y]))
+                [trans.append(implies(bv_trans[6], clause)) for clause in t6]
+
+                t7 = to_cnf(implies(~haunted_by[x, z] & is_linked_with_3[y, z], ~on[x, y]))
+                [trans.append(implies(bv_trans[7], clause)) for clause in t7]
+
+                t8 = to_cnf(implies(haunted_by[x, z] & ~is_linked_with_3[y, z], ~on[x, y]))
+                [trans.append(implies(bv_trans[8], clause)) for clause in t8]
+
+
+    for x in month:
+        for y in type1:
+            for z in type2:
+                t9 = to_cnf(implies(is_linked_with_2[x, z] & is_linked_with_3[y, z], is_linked_with_1[x, y]))
+                [trans.append(implies(bv_trans[9], clause)) for clause in t9]
+
+                t10 = to_cnf(implies(~is_linked_with_2[x, z] & is_linked_with_3[y, z], ~is_linked_with_1[x, y]))
+                [trans.append(implies(bv_trans[10], clause)) for clause in t10]
+
+                t11 = to_cnf(implies(is_linked_with_2[x, z] & ~is_linked_with_3[y, z], ~is_linked_with_1[x, y]))
+                [trans.append(implies(bv_trans[11], clause)) for clause in t11]
+
+    clues = []
+    bv_clues = [BoolVar() for i in range(11)]
+
+    # 0. The home visited in April was either Markmanor or the home haunted by Brunhilde
+    # assumption_satisfied( 0  ) => ?q [home]: investigated_in(q,4) & (markmanor = q | (?r [home]: haunted_by(r,brunhilde) & r = q)).
+    c0a = []
+    for q in home:
+        subformula = any(
+
+        )
+    for clause in to_cnf(any(c0a)):
+        clues.append(implies(bv_clues[0], clause))
+
+    # 1. Hughenden wasn't investigated in march
+    # assumption_satisfied( 0  ) => ~ investigated_in(hughenden,3).
+    clues.append(implies(bv_clues[1], clause))
+
+    # 2. The home on Circle Drive was investigated sometime before Wolfenden
+    # assumption_satisfied( 0  ) => ?a [home] b [type3] c [month] d [month]: on(a,circle_drive) & b>0 & investigated_in(wolfenden,c) & d = c-b & investigated_in(a,d).
+    c2a = []
+    for a in home:
+        for b in type3:
+            for c in month:
+                for d in month:
+                    if b > 0 and int(d) == int(c) - b:
+                        c2a.append(on[a,"circle_drive"] & investigated_in["wolfenden",c] & investigated_in[a,d])
+
+    for clause in to_cnf(any(c2a)):
+        clues.append(implies(bv_clues[2], clause))
+
+    # 3. Of the building haunted by Lady Grey and the building haunted by Victor, one was Markmanor and the other was visited in January
+    # assumption_satisfied( 0  ) => ?e [home] f [home]: haunted_by(e,lady_grey) & haunted_by(f,victor) & ~ (e = f) & (markmanor = e & investigated_in(f,1) | markmanor = f & investigated_in(e,1)).
+    c3a = []
+    for e in home:
+        for f in home:
+            if not (e == f):
+                c3a.append(
+                    haunted_by[e,"lady_grey"] & haunted_by[f,"victor"] & ((("markmanor" == e) & investigated_in[f,"1"]) | (("markmanor" == f) & investigated_in[e,1]))
+                )
+
+    for clause in to_cnf(any(c3a)):
+        clues.append(implies(bv_clues[3], clause))
+
+    # 4. The house haunted by Victor was visited 1 month after the house haunted by Lady Grey
+    # assumption_satisfied( 0  ) => ?g [home] h [month] i [home] j [month]: haunted_by(g,victor) & haunted_by(i,lady_grey) & investigated_in(i,h) & j = h+1 & investigated_in(g,j).
+    c4a = []
+    for g in home:
+        for h in month:
+            for i in home:
+                for j in month:
+                    if int(j) == int(h) + 1:
+                        c4a.append(
+                            haunted_by[g,"victor"] & haunted_by[i,"lady_grey"] & investigated_in[i,h] & investigated_in[g,j]
+                        )
+    
+    for clause in to_cnf(any(c4a)):
+        clues.append(implies(bv_clues[4], clause))
+
+    # 5. Of the home on Bird Road and Barnhill, one was visited in January and the other was haunted by Brunhilde
+    # assumption_satisfied( 0  ) => ?k [home]: on(k,bird_road) & ~ (k = barnhill) & (investigated_in(k,1) & haunted_by(barnhill,brunhilde) | investigated_in(barnhill,1) & haunted_by(k,brunhilde)).
+    c5a = []
+    for k in home:
+        if not k == "barnhill":
+            c5a.append(on[k,"bird_road"] & (investigated_in[k,"1"] & haunted_by["barnhill","brunhilde"] | investigated_in["barnhill","1"] & haunted_by[k,"brunhilde"]))
+    
+    for clause in to_cnf(any(c5a)):
+        clues.append(implies(bv_clues[5], clause))
+
+    # 6. Markmanor was visited 1 month after the home on Grant Place
+    # assumption_satisfied( 0  ) => ?l [month] m [home] n [month]: on(m,grant_place) & investigated_in(m,l) & n = l+1 & investigated_in(markmanor,n).
+    c6a = []
+    for l in month:
+        for m in home:
+            for m in month:
+                if int(n) == int(l) + 1:
+                    c6a.append(on[m,"grant_place"] & investigated_in[m,l] & investigated_in["markmanor",n])
+    
+    for clause in to_cnf(any(c6a)):
+        clues.append(implies(bv_clues[6], clause))
+
+    # 7. The house visited in march wasn't located on Circle Drive
+    # assumption_satisfied( 0  ) => ?o [home]: investigated_in(o,3) & ~ on(o,circle_drive).
+    c7a = []
+    for o in home:
+        c7a.append(investigated_in[o,"3"] & ~ on[o,"circle_drive"])
+
+    for clause in to_cnf(any(c7a)):
+        clues.append(implies(bv_clues[7], clause))
+
+    # 8. Hughenden wasn't haunted by Abigail
+    # assumption_satisfied( 0  ) => ~ haunted_by(hughenden,abigail).
+    clues.append(implies(bv_clues[8], ~ haunted_by["hughenden","abigail"]))
+
+    # 9. Wolfenden was haunted by Brunhilde
+    # assumption_satisfied( 0  ) => haunted_by(wolfenden,brunhilde).
+    clues.append(implies(bv_clues[9], haunted_by["wolfenden","brunhilde"]))
+
+    # 10. The building visited in May wasn't located on Fifth Avenue
+    # assumption_satisfied( 0  ) => ?p [home]: investigated_in(p,5) & ~ on(p,fifth_avenue).
+    c10a = []
+    for p in home:
+        c10a.append(investigated_in[p,"5"] & ~ on[p,"fifth_avenue"])
+    
+    for clause in to_cnf(any(c10a)):
+        clues.append(implies(bv_clues[10], clause))
+
+    clueTexts = [
+        "Hughenden wasn't investigated in march",
+        "The home on Circle Drive was investigated sometime before Wolfenden",
+        "Of the building haunted by Lady Grey and the building haunted by Victor, one was Markmanor and the other was visited in January",
+        "The house haunted by Victor was visited 1 month after the house haunted by Lady Grey",
+        "Of the home on Bird Road and Barnhill, one was visited in January and the other was haunted by Brunhilde",
+        "Markmanor was visited 1 month after the home on Grant Place",
+        "The house visited in march wasn't located on Circle Drive",
+        "Hughenden wasn't haunted by Abigail",
+        "Wolfenden was haunted by Brunhilde",
+        "The building visited in May wasn't located on Fifth Avenue",
+        "The home visited in April was either Markmanor or the home haunted by Brunhilde"
+    ]
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [[bv1.name + 1] for bv1 in bv_clues]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_bij]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_trans]
+
+    weights = {}
+    weights.update({bv.name + 1: 100 for bv in bv_clues})
+    weights.update({bv.name + 1: 60 for bv in bv_trans})
+    weights.update({bv.name + 1: 60 for bv in bv_bij})
+
+    explainable_facts = set()
+    bvRels = {}
+    for rel, relStr in zip(rels, ["investigated_in", "on", "haunted_by", "is_linked_with_1", "is_linked_with_2", "is_linked_with_3"]):
+        rowNames = list(rel.df.index)
+        columnNames = list(rel.df.columns)
+
+        # production of explanations json file
+        for r in rowNames:
+            for c in columnNames:
+                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr.lower(), "subject" : r.lower(), "object": c.lower()}
+
+        # facts to explain
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
+    matching_table = {
+        'bvRel': bvRels,
+        'Transitivity constraint': [bv.name + 1 for bv in bv_trans],
+        'Bijectivity': [bv.name + 1 for bv in bv_bij],
+        'clues' : {
+            bv.name + 1: clueTexts[i] for i, bv in enumerate(bv_clues)
+        }
+    }
+
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+
+
+def p25():
+    month = ["3", "4", "5", "6", "7"] 
+    application = ["the_other_application", "flowcarts", "vitalinks", "bubble_boms", "angry_ants"]
+    type1 = ["the_other_type1", "vortia", "apptastic", "gadingo", "digibits"]
+    download = ["2300000", "4200000", "5500000", "6800000", "8900000"]
+
+    types = [month, application, type1, download]
+    n = len(types)
+    m = len(types[0])
+    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
+
+    released_in = Relation(application, month) # released_in(application, month)
+    made_by = Relation(application, type1) # made_by(application, type1)
+    application_download = Relation(application, download) # with(application, download)
+    is_linked_with_1 = Relation(month, type1) # is_linked_with_1(month, type1)
+    is_linked_with_2 = Relation(month, download) # is_linked_with_2(month, download)
+    is_linked_with_3 = Relation(type1, download) # is_linked_with_3(type1, download)
+
+    rels = [released_in, made_by, application_download, is_linked_with_1, is_linked_with_2, is_linked_with_3]
+
+    # Bijectivity
+    bij, bv_bij = buildBijectivity(rels)
+
+
+    # Transitivity
+    trans = []
+    bv_trans =  [BoolVar() for i in range(12)]
+    for x in application:
+        for y in month:
+            for z in type1:
+                t0 = to_cnf(implies(made_by[x, z] & is_linked_with_1[y, z], released_in[x, y]))
+                [trans.append(implies(bv_trans[0], clause)) for clause in t0]
+
+                t1 = to_cnf(implies(~made_by[x, z] & is_linked_with_1[y, z], ~released_in[x, y]))
+                [trans.append(implies(bv_trans[1], clause)) for clause in t1]
+
+                t2 = to_cnf(implies(made_by[x, z] & ~is_linked_with_1[y, z], ~released_in[x, y]))
+                [trans.append(implies(bv_trans[2], clause)) for clause in t2]
+
+    for x in application:
+        for y in month:
+            for z in download:
+                t3 = to_cnf(implies(application_download[x, z] & is_linked_with_2[y, z], released_in[x, y]))
+                [trans.append(implies(bv_trans[3], clause)) for clause in t3]
+
+                t4 = to_cnf(implies(~application_download[x, z] & is_linked_with_2[y, z], ~released_in[x, y]))
+                [trans.append(implies(bv_trans[4], clause)) for clause in t4]
+
+                t5 = to_cnf(implies(application_download[x, z] & ~is_linked_with_2[y, z], ~released_in[x, y]))
+                [trans.append(implies(bv_trans[5], clause)) for clause in t5]
+
+    for x in application:
+        for y in type1:
+            for z in download:
+                t6 = to_cnf(implies(application_download[x, z] & is_linked_with_3[y, z], made_by[x, y]))
+                [trans.append(implies(bv_trans[6], clause)) for clause in t6]
+
+                t7 = to_cnf(implies(~application_download[x, z] & is_linked_with_3[y, z], ~made_by[x, y]))
+                [trans.append(implies(bv_trans[7], clause)) for clause in t7]
+
+                t8 = to_cnf(implies(application_download[x, z] & ~is_linked_with_3[y, z], ~made_by[x, y]))
+                [trans.append(implies(bv_trans[8], clause)) for clause in t8]
+
+    for x in month:
+        for y in type1:
+            for z in download:
+                t9 = to_cnf(implies(is_linked_with_2[x, z] & is_linked_with_3[y, z], is_linked_with_1[x, y]))
+                [trans.append(implies(bv_trans[9], clause)) for clause in t9]
+
+                t10 = to_cnf(implies(~is_linked_with_2[x, z] & is_linked_with_3[y, z], ~is_linked_with_1[x, y]))
+                [trans.append(implies(bv_trans[10], clause)) for clause in t10]
+
+                t11 = to_cnf(implies(is_linked_with_2[x, z] & ~is_linked_with_3[y, z], ~is_linked_with_1[x, y]))
+                [trans.append(implies(bv_trans[11], clause)) for clause in t11]
+
+    # clues
+    clues = []
+    bv_clues = [BoolVar() for i in range(8)]
+
+    #0. The game released in July is either the game with 6800000 downloads or the app released by Gadingo
+    # assumption_satisfied( 0  ) => ?n [application]: released_in(n,7) & ((?o [application]: with(o,6800000) & o = n) | (?p [application]: made_by(p,gadingo) & p = n)).
+    c0a = []
+    for n in application:
+        subformula01 = any(
+            application_download[o,"6800000"]
+            for o in application if o == n
+        )
+        subformula02 = any(
+            made_by[p,"gadingo"]
+            for p in application if p == n
+        )
+        c0a.append(released_in[n,"7"] & (subformula01 | subformula02))
+
+    for clause in to_cnf(any(c0a)):
+        clues.append(implies(bv_clues[0], clause))
+    #1. Of Flowcarts and the application with 5500000 downloads, one was made by Vortia and the other was released in May
+    # assumption_satisfied( 0  ) => ?a [application]: application_download(a,5500000) & ~ (flowcarts = a) & (made_by(flowcarts,vortia) & released_in(a,5) | made_by(a,vortia) & released_in(flowcarts,5)).
+    c1a = []
+    for a in application:
+        if not ("flowcarts" == a):
+            c1a.append(
+                application_download[a,"5500000"]  & (made_by["flowcarts","vortia"] & released_in[a,"5"] | made_by[a,"vortia"] & released_in["flowcarts","5"])
+            )
+
+    for clause in to_cnf(any(c1a)):
+        clues.append(implies(bv_clues[1], clause))
+    #2. The app released in July, the app developed by Apptastic and Vitalinks are three different games
+    # assumption_satisfied( 0  ) => ?b [application] c [application]: ~ (b = c) & ~ (b = vitalinks) & ~ (c = vitalinks) & released_in(b,7) & made_by(c,apptastic).
+    c2a = []
+    for b in application:
+        for c in application:
+            if not (b == c) and not (b == "vitalinks") and not (c == "vitalinks"):
+                c2a.append(released_in[b,7] & made_by[c,"apptastic"])
+
+    for clause in to_cnf(any(c2a)):
+        clues.append(implies(bv_clues[2], clause))
+    #3. Neither the game released by Gadingo nor the apptastic app has 2300000 downloads
+    # assumption_satisfied( 0  ) => ~ (?d [application]: made_by(d,gadingo) & application_download(d,2300000)) & ~ (?e [application]: application_download(e,2300000) & made_by(e,apptastic)).
+    formule31 = any(
+        made_by[d,"gadingo"] & application_download[d,"2300000"]
+        for d in application
+    )
+
+    formule32 = any(
+        application_download[e,"2300000"] & made_by[e,"apptastic"]
+        for e in application
+    )
+
+    for clause in to_cnf((~ formule31) | (~ formule32)):
+        clues.append(implies(bv_clues[3], clause))
+
+    #4. The five apps are Bubble Boms, the app released in April, the app released in July, the application released by Apptastic and the app released by Digibits
+    # assumption_satisfied( 0  ) => ?f [application] g [application] h [application] i [application]: ~ (bubble_boms = f) & ~ (bubble_boms = g) & ~ (bubble_boms = h) & ~ (bubble_boms = i) & ~ (f = g) & ~ (f = h) & ~ (f = i) & ~ (g = h) & ~ (g = i) & ~ (h = i) & released_in(f,4) & released_in(g,7) & made_by(h,apptastic) & made_by(i,digibits).
+    c4a = []
+    for f in application:
+        for g in application:
+            for h in application:
+                for i in application:
+                    if not ("bubble_boms" == f) and not ("bubble_boms" == g) and not ("bubble_boms" == h) and not ("bubble_boms" == i) and \
+                        not (f ==g) and not (f==h) and not (f == i) and not (g == h)  and not (g == i) and not (h == i):
+                        c4a.append(
+                            released_in[f,"4"] & released_in[g,"7"] & made_by[h,"apptastic"] & made_by[i,"digibits"]
+                        )
+
+    for clause in to_cnf(any(c4a)):
+        clues.append(implies(bv_clues[4], clause))
+    #5. Vortia's app came out in march
+    # assumption_satisfied( 0  ) => ?j [application]: released_in(j,3) & made_by(j,vortia).
+    c5a = []
+    for j in application:
+        c5a.append(released_in[j,"3"] & made_by[j,"vortia"])
+
+    for clause in to_cnf(any(c5a)):
+        clues.append(implies(bv_clues[5], clause))
+    #6. Angry Ants was released 2 months earlier than the app with 6800000 downloads
+    # assumption_satisfied( 0  ) => ?k [month] l [application] m [month]: with(l,6800000) & released_in(l,k) & m = k-2 & released_in(angry_ants,m).
+    c6a = []
+    for k in month:
+        for l in application:
+            for m in month:
+                if int(m) == int(k)-2:
+                    c6a.append(application_download[l,"6800000"] & released_in[l,k] & released_in["angry_ants",m])
+
+    for clause in to_cnf(any(c6a)):
+        clues.append(implies(bv_clues[6], clause))
+
+    #7. Flowcarts doesn't have 4200000 downloads
+    # assumption_satisfied( 0  ) => ~ with(flowcarts,4200000).
+    clues.append(implies(bv_clues[7], ~ application_download["flowcarts","4200000"]))
+
+    clueTexts = [
+        "Of Flowcarts and the application with 5500000 downloads, one was made by Vortia and the other was released in May",
+        "The app released in July, the app developed by Apptastic and Vitalinks are three different games",
+        "Neither the game released by Gadingo nor the apptastic app has 2300000 downloads",
+        "The five apps are Bubble Boms, the app released in April, the app released in July, the application released by Apptastic and the app released by Digibits",
+        "Vortia's app came out in march",
+        "Angry Ants was released 2 months earlier than the app with 6800000 downloads",
+        "Flowcarts doesn't have 4200000 downloads",
+        "The game released in July is either the game with 6800000 downloads or the app released by Gadingo"
+    ]
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [[bv1.name + 1] for bv1 in bv_clues]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_bij]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_trans]
+
+    weights = {}
+    weights.update({bv.name + 1: 100 for bv in bv_clues})
+    weights.update({bv.name + 1: 60 for bv in bv_trans})
+    weights.update({bv.name + 1: 60 for bv in bv_bij})
+
+    explainable_facts = set()
+    bvRels = {}
+    for rel, relStr in zip(rels, ["released_in", "made_by", "application_download", "is_linked_with_1", "is_linked_with_2", "is_linked_with_3"]):
+        rowNames = list(rel.df.index)
+        columnNames = list(rel.df.columns)
+
+        # production of explanations json file
+        for r in rowNames:
+            for c in columnNames:
+                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr.lower(), "subject" : r.lower(), "object": c.lower()}
+
+        # facts to explain
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
+    matching_table = {
+        'bvRel': bvRels,
+        'Transitivity constraint': [bv.name + 1 for bv in bv_trans],
+        'Bijectivity': [bv.name + 1 for bv in bv_bij],
+        'clues' : {
+            bv.name + 1: clueTexts[i] for i, bv in enumerate(bv_clues)
+        }
+    }
+
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
 
 
 def p18():

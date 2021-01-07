@@ -285,6 +285,6 @@ def effectOfPreseeding():
 
     return all_exec_params
 
-if __name__ == "main":
+if __name__ == "__main__":
     print("running checks")
     effectOfPreseeding()

@@ -40,7 +40,7 @@
 \newcommand\ignore[1]{}
 \usepackage[capitalise]{cleveref}
 \newcommand\comment[1]{\marginpar{\parbox{\marginparwidth}{\tiny #1}}}
-% \renewcommand\comment[1]{#1}
+\renewcommand\comment[1]{#1}
 \newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
 \newcommand{\emilio}[1]{{\comment{\color{orange}\textsc{EG:}#1}}}
 \newcommand{\bart}[1]{{\comment{\color{green}\textsc{BB:}#1}}}
@@ -57,8 +57,8 @@
 \newtheorem{property}[prop]{Property}
 \newtheorem{lem}{Lemma}
 \newtheorem{lemma}[lem]{Lemma}
-\newtheorem{propo}{Proposition}
-\newtheorem{proposition}[propo]{Proposition}
+\newtheorem{proposition}[thm]{Proposition} 
+\newtheorem{theorem}[thm]{Theorem}
 \newtheorem{ex}{Example}
 \newtheorem{example}[ex]{Example}
 
@@ -115,7 +115,7 @@
 \newcommand\ihs{\mm{\call{IncrementalHittingSet}}}
 \newcommand\cohs{\mm{\call{CondOptHittingSet}}}
 \newcommand\chs{\mm{\call{CondHittingSet}}}
-\newcommand\sat{\texttt{{SAT}}}
+\newcommand\sat{\mm{\call{{SAT}}}}
 \newcommand\grow{\mm{\call{Grow}}}
 \newcommand\omus{\mm{\call{OUS}}}
 \newcommand\comus{\mm{\call{c-OUS}}}
@@ -130,6 +130,12 @@
 
 % \call{}
 % \usepackage{amsthm}
+
+%REDUCE BIB SIZE                                                                                                                                                        
+\let\OLDthebibliography\thebibliography
+\renewcommand\thebibliography[1]{
+\OLDthebibliography{#1}
+\setlength{\parskip}{0pt}                                                                                                                                                \setlength{\itemsep}{0pt}                                                                                                                                              }                                                                                                                                                                             
 
 \SetKwInOut{Input}{Input}
 \SetKwInOut{OptInput}{Optional}
@@ -202,47 +208,15 @@
 \input{04-motivation}
 
 \section{A Basic cOUS Algorithm} 
-\todo{basic algo}
+% \todo{basic algo}
+\input{05-cOUS-HS}
 
-\todo{Variants of the algorithm}
+% \todo{Variants of the algorithm}
 
-\section{Efficient cOUS computation}
-\todo{Optimizations: of cOUS for explanations: incrementality, novel grows taking expl task into account.}
+\section{Efficient cOUS Computation for Explanations}
+% \todo{Optimizations: of cOUS for explanations: incrementality, novel grows taking expl task into account.}
+\input{06-efficient}
 
-
----------------------------
-
------------------------------
-
----------------------------
-
------------------------------
-
----------------------------
-
------------------------------
-
-% \ignore{
-% TO BE PUT BACK:
-\section{Optimal Unsatisfiable Subsets}\label{sec:omus}
-\todo{OLD SECTION}OLD SECTION
-% \todo{2 column}\label{
-\input{04-omus.tex}
-
-\section{Producing Explanations with OUS}\label{sec:Greedy}\label{sec:explain}
-\todo{OLD SECTION}OLD SECTION
-% \todo{2 column}
-\input{03b-greedy-explain.tex}
-
-
-\section{Incremental OUS computation} \label{sec:incremental}
-\todo{OLD SECTION}OLD SECTION
-\input{C1-incremental.tex}
-
-\section{Constrained OUS computation} \label{sec:constrained}
-\todo{OLD SECTION}OLD SECTION
-\input{C2-constrained.tex}
-% }
 
 
 \ignore{
@@ -273,11 +247,45 @@
 % \todo{1/2 column}
 \input{08-conclusion.tex}
 
-\input{09-additional-algorithms.tex}
+\newpage
+{\color{red}This should be page (at most) 7. Limit is 6 real pages, 1 page of references. Proofs go in appendix. If references are too long, I will shorten them. That is not an issue}
+\newpage
+
+{
+\footnotesize
 %% The file named.bst is a bibliography style file for BibTeX 0.99c
 \bibliographystyle{named}
 \bibliography{krrlib,mybibfile,ref} 
+}
 % \bibliographystyle{ijcai21}
+
+
+
+\input{09-additional-algorithms.tex}
+
+\color{red}
+% \ignore{
+% TO BE PUT BACK:
+\section{Optimal Unsatisfiable Subsets}\label{sec:omus}
+\todo{OLD SECTION}OLD SECTION
+% \todo{2 column}\label{
+\input{04-omus.tex}
+
+\section{Producing Explanations with OUS}\label{sec:Greedy}\label{sec:explain}
+\todo{OLD SECTION}OLD SECTION
+% \todo{2 column}
+\input{03b-greedy-explain.tex}
+
+
+\section{Incremental OUS computation} \label{sec:incremental}
+\todo{OLD SECTION}OLD SECTION
+\input{C1-incremental.tex}
+
+\section{Constrained OUS computation} \label{sec:constrained}
+\todo{OLD SECTION}OLD SECTION
+\input{C2-constrained.tex}
+% }
+
 
 \end{document}
 

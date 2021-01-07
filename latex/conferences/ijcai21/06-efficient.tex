@@ -1,0 +1,33 @@
+In this section, we discuss optimizations to the basic algorithm to compute $(p,f)$-OUSs. 
+While our optimizations are inspired by the explanation generation problem, and tailored to solving this as efficiently as possible, the ideas presented here can also be used when other forms of domain knowledge are present.  
+
+
+\paragraph{Incremental cOUS computation}
+\todo{copy paste some old text about reuse of MSSs}
+
+
+\paragraph{Using Initialization to Add Domain Knowledge}
+\todo{TO BE DETERMIEND IF WE WANT TO SAY SOMETHING AOBUT PRESEEDING.}\bart{ I still dont believe it makes a difference. TO be tested first!} 
+
+
+
+\paragraph{Domain-Specific Implementations of \grow}
+\todo{``old maxsat'' comes here}
+
+
+\paragraph{Using Constraints to Encode Domain Knowledge}
+The constraints on OUSs can not only be used to restrict the set of solutions, but also to improve the solver performance by encoding domain knowledge.
+Indeed, if we know that all ``good'' OUSs will satisfy certain constraints, or if we know that it suffices to search for OUSs satisfying certain constraints (because each OUS can easily be extended to one such OUS),  we can also encode that knowledge in $p$, thereby restricting the possible options of the hitting set solver, aiming to improve overall performance of the algorithm. 
+
+In the explanation application, we encountered this phenomenon as follows. 
+The clues to be used in explanations were high-level (first-order) constraints. They were translated into clauses, using among other, a Tseitin transformation.
+Hence, in the end the transformation of a single high-level clue consists of several clauses, of which some are definitions of newly introduced variables. 
+Now, the associated cost function was only concerned with the issue ``\emph{was a certain clue used or not?}'', which translates at the lower level to ``\emph{does the OUS contain at least one clause from the translation of the clue?}''.
+Using such a cost function means that to compute the cost of an OUS, it does not matter if a single, or if all clauses corresponding to a given clue are used. As such, we might as well include all of them, which can be encoded in $p$ as well. 
+
+An alternative view on the same property is that we can \emph{reify} the high level constraint by considering an indicator variable defining satisfaction of the entire constraint. 
+We can then add the property to $p$ that all reified constraints are \emph{hard constraints}, in the sense that they have to be included in each OUS (and thus each hitting set). With that, only the truth/falsity of the single indicator variable is considered to be a clause of $\formulac$ that can be enabled/disabled by the hitting set algorithm. 
+% This variable then represent whether or not the high level constraint is active.
+It is easy to see that there is a one to one correspondence between the OUSs produced by the two approaches. In our implementation, we opted for the latter because of its simplicity. 
+%\tias{is this really to $p$? higher up we argued that we push $p$ into the MIP, but all hard clauses are kept outside of the MIP... I guess saying that har dlcauses are 'always included' is somehow doing that? it also means they are 'constant' in the MIP objective and hence can be removed from it, that is perhaps a more pragmatic view on it...}
+%\emilio{phrases are loooong.}

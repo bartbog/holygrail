@@ -1,0 +1,108 @@
+In order to compute a $(p,f)$-OUS of a given formula, we propose to build on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
+For this, we will assume to have access to a solver \cohs that can compute hitting sets of a given collection of sets that are \emph{optimal} (w.r.t.\ a given cost function $f$) among all hitting sets \emph{satisfying a condition $p$}. 
+In our practical implementation we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, and use the MIP solver \todo{WHICH ONE?} to compute such hitting sets. 
+The choice of the underlying hitting set solver will thus determine which types of cost function and constraints are possible. 
+Our generic algorithm for computing $(p,f)$-OUSs is depicted in \cref{alg:comus}.  
+\begin{algorithm}[t]
+  \DontPrintSemicolon
+%  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+  \While{true}{
+    $\F' \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+% f{optimal} solution}
+    % \tcp{\small set with all unique clauses from hitting set}
+%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+    % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+    % \tcp{IF UNSAT, $hs$ is the OUS }
+    \If{ $\lnot \sat(\F')$}{
+      \Return{$\F'$} \;
+    }
+    $\F'' \gets  \grow(\F',\F) $ \label{line:grow}\;
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+  }
+  \caption{$\comus(\formula,f,p)$ }
+  \label{alg:comus}
+\end{algorithm}
+%\tias{I would not show the above one as it is rather vague \bart{I would disagree with the vagueness. It makes abstraction of several things (what is $p$? what is $f$? How is Grow and CondOptHS implemented? But in my opinion that is good, since it shows close relation to the basic OUS algo as well as illustrating what is really going on and modularity.}, but immediately rewrite it as Alg2 the singleStepExplain:}
+%\bart{I would avoid that :-) That way we mix up ``how to compute constrained OUSs?'' with ``how to compute explanations using constrained OUSs?''. These are two different concerns. We should show that we also tackle the first .  That way, our new ``singlestepexplain2'' will also look a lot simpler than singleStepExplain1 (if we use one oracle call to cOUS}
+
+%\begin{algorithm}[ht]
+%  \caption{$\call{ExplainCSPcOUS}({\cal C},f)$}
+%  \label{alg:explainCSPcOUS}
+%$E \gets \langle \rangle$\;
+%$I_{end} \gets optimalPropagate({\cal C})$\;
+%$\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
+%$\setstohit \gets \{\formulag \setminus \{{\cal C} \cup I_{end}\}\}$\;
+%// preseeding\\
+%\For{$l \in I_{end}:$}{
+%  $\setstohit \gets \setstohit \cup \{\formulag \setminus \grow(-l,\formulag)\} $\;
+%}
+%$I \gets \emptyset$\;
+%$p \gets \{$exactly one of $\overline{\Iend}$ in the hitting set$\}$\; %, none of $I_{end}$ can be in the hitting set$\}$\;
+%
+%\While{$I \neq I_{end}$}{
+%	update $p$ such that none of $\{I_{end} \setminus I\}$ and none of $\bar{I}$ can be in the hitting set\;
+%    $X \gets \comus(\formulag,f,p,\setstohit)$\;
+%	$I_{\mathit{best}} \gets I\cap X$\;
+%    ${\cal C}_{\mathit{best}}\gets{\cal C}\cap X$\;
+%	$N_{\mathit{best}} \gets \{I_{end} \setminus I\} \cap optimalPropagate(X) $\;
+%	add $\{I_{\mathit{best}} \wedge {\cal C}_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+%	$I \gets I \cup N_{\mathit{best}}$\; 
+%  }
+%\Return{E}\;
+%\end{algorithm}
+
+Similar to algorithms for maximum satisfiability \cite{} and smallest MUS computation \cite{}, our algorithm builds on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
+Taking abstraction of \cref{line:grow} for a moment, 
+the algorithm alternate calls to a hitting set solver with calls to a \sat oracle on a subset $\formula'$ of $\formula$. 
+In case the \sat oracle returns true, i.e., the subset $\formula'$ is satisfiable, the complement of $\formula'$ is a correction subset and is added to \setstohit. 
+Instead of directly adding the complement of $\formula'$, similar to \cite{}, our proposed algorithm includes a call to \grow, which extends $\formula'$ into a larger subset of $\formula$ that is still satisfiable (if possible).
+We discuss the different possible implementaions of \grow later and evaluate their performance in \cref{sec:experiments}. 
+
+Soundness and completeness of the proposal follow from the fact that all sets added to \setstohit are correction subsets, and \cref{prop:K2}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
+ 
+\begin{theorem}\label{thm:soundcomplete}
+  Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 
+  If $\m{U}$ is a hitting set of \m{H} that is $f$-optimal among the hitting sets of \m{H} satisfying a predicate $p$, and  $\m{U}$ is unsatisfiable, then $\m{U}$ is a $(p,f)$-OUS of \formula. 
+  
+  If  $\m{H}$ has no hitting sets satisfying $p$, then $\formula$ has no $(p,f)$-OUSs.
+\end{theorem}
+\begin{proof}
+For the first claim, it is clear that $\m{U}$ is unsatisfiable and satisfies $p$. Hence all we need to show is $f$-optimality of $\m{U}$.
+  If some other unsatisfiable subset $\m{U}'$ that satisfies $p$ would exists with $f(\m{U}')\leq f(\m{U})$, we know that $\m{U}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction set is the superset of a minimal correction set).
+  Since $\m{U}$ is $f$-optimal among hitting sets of $\m{H}$ satisfying $p$ and $\m{U}'$ also hits $\m{H}$ and satisfies $p$, it must thus be that $f(\m{U})=f(\m{U'})$. 
+%  
+
+The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the fact that a $(p,f)$-OUS is an unsatisfiable subset of $\formula$. 
+\end{proof}
+
+
+Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver. 
+
+
+
+\paragraph{Generic Implementations of \grow}
+\todo{TO BE WRITTEN DOWN} 
+
+
+% Now, since the search for optimal hitting sets is --- in implicit hitting set algorithms --- usually done with a MIP solver, it suffices to express the predicate $p$ as constraints on the MIP. Since the variables of the MIP encoding represent inclusion of certain constraints in the unsatisfiable subset, this is simple for  the 3 constraints that we need to obtain meaningful explanations. %needed to have meaningful in practice only predicates $p$ that can easily be encoded in MIP are useful. In such cases, we can directly use the MIP solver to implement \cohs as well. 
+
+% \paragraph{Application to Explanations}
+% %To apply this idea to the context of explanations, we note that at each step, the current interpretation, will be fixed. 
+% %At each step, we are looking for an OUS that contains \emph{exactly one} negation of a derivable literal. 
+% %Such an exactly-one constraint is easily expressible in MIP.
+% %Furthermore, also the ``subtheory constraint'', as introduced for incremental MUS solving can be expressed in MIP. Namely, in \cref{sec:incremental}, we assumed that each OUS call would be done given a subtheory of the original theory. However, constraints of the form ``the OUS should be a subset of the given set \formula'' are easily expressible in MIP as well. 
+% %As such, the idea of constrained OUS computation is actually more general than the formalization of incremental OUS. 
+% % 
+% Given such a constrained OUS algorithm, the procedure to find the single best explanation step now simplifies to \cref{alg:singleStepExplain3}.
+% 
+% \begin{algorithm}[t]
+%   \caption{$\call{bestStep--c-OUS}({\cal C},f,I,I_{end})$}
+%   \label{alg:singleStepExplain3}
+% $\formulag \gets {\cal C} \cup I_{end} \cup \overline{\Iend}$\;
+% set $p$ such that exactly one of $\overline{\Iend}$ in the hitting set \textit{and} none of $\{I_{end} \setminus I\}$ \textit{and} none of $\bar{I}$ can be in the hitting set\;
+% \Return{$\comus(\formulag,f,p)$}\;
+% \end{algorithm}
+
+% \tias{hard/soft temporarily hidden}
+% \ignore{
+

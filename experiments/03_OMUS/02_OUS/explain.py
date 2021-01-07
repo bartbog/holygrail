@@ -114,6 +114,7 @@ class COusParams(object):
         if self.grow:
             assert self.grow_sat ^ \
                    self.grow_subset_maximal ^ \
+                   self.subset_maximal_I0 ^ \
                    self.grow_maxsat, \
                    "Exactly 1 grow mechanism"
 

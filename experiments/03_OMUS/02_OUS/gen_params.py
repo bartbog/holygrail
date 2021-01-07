@@ -279,7 +279,12 @@ def effectOfPreseeding():
 
                     # instance
                     params.instance = "unnamed"
+                    params.checkParams()
 
                     all_exec_params.append(params)
 
     return all_exec_params
+
+if __name__ == "main":
+    print("running checks")
+    effectOfPreseeding()

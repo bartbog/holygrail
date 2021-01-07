@@ -174,7 +174,7 @@ def effectOfGrow():
 
 def effectOfPreseeding():
     all_exec_params = []
-    timeout = 3 * HOURS
+    timeout = 2 * HOURS
     usr = getpass.getuser()
 
     # ensure we can write results on HPC

@@ -179,7 +179,7 @@ def effectOfPreseeding():
 
     # ensure we can write results on HPC
     if usr == "vsc10143":
-        resultsFolder = "/user/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS/results/"
+        resultsFolder = "/data/brussel/101/vsc10143/OUSResults/"
     else:
         resultsFolder = "results/"
 

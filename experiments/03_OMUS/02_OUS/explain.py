@@ -45,6 +45,64 @@ modes = {
 }
 
 
+def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_dirs=False):
+    """
+    A time profiler decorator.
+    Inspired by and modified the profile decorator of Giampaolo Rodola:
+
+    http://code.activestate.com/recipes/577817-profile-decorator/
+    src:
+
+    https://towardsdatascience.com/how-to-profile-your-code-in-python-e70c834fad89
+
+    Args:
+        output_file: str or None. Default is None
+            Path of the output file. If only name of the file is given, it's
+            saved in the current directory.
+            If it's None, the name of the decorated function is used.
+        sort_by: str or SortKey enum or tuple/list of str/SortKey enum
+            Sorting criteria for the Stats object.
+            For a list of valid string and SortKey refer to:
+            https://docs.python.org/3/library/profile.html#pstats.Stats.sort_stats
+        lines_to_print: int or None
+            Number of lines to print. Default (None) is for all the lines.
+            This is useful in reducing the size of the printout, especially
+            that sorting by 'cumulative', the time consuming operations
+            are printed toward the top of the file.
+        strip_dirs: bool
+            Whether to remove the leading path info from file names.
+            This is also useful in reducing the size of the printout
+    Returns:
+        Profile of the decorated function
+    """
+
+    def inner(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            _output_file = output_file or func.__name__ + '.prof'
+            pr = cProfile.Profile()
+            pr.enable()
+            retval = func(*args, **kwargs)
+            pr.disable()
+            pr.dump_stats(_output_file)
+
+            with open(_output_file, 'w') as f:
+                ps = pstats.Stats(pr, stream=f)
+                if strip_dirs:
+                    ps.strip_dirs()
+                if isinstance(sort_by, (tuple, list)):
+                    ps.sort_stats(*sort_by)
+                else:
+                    ps.sort_stats(sort_by)
+                ps.print_stats(lines_to_print)
+            return retval
+
+        return wrapper
+
+    return inner
+
+
+
 def runParallel(fns, args):
     procs = []
     for fn in fns:
@@ -67,6 +125,9 @@ class COusParams(object):
     docstring
     """
     def __init__(self):
+        # reinitialising the HS solver at every OUS call
+        self.disableConstrained = False
+
         # intialisation: pre-seeding
         self.pre_seeding = False
 
@@ -805,7 +866,7 @@ class BestStepCOUSComputer(object):
     def __del__(self):
         """Ensure sat solver is deleted after garbage collection.
         """
-        self.sat_solver.delete()
+        self.opt_model.__del__()
 
 
 class CondOptHS(object):
@@ -933,63 +994,6 @@ class CondOptHS(object):
 
     def __del__(self):
         self.opt_model.dispose()
-
-
-def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_dirs=False):
-    """
-    A time profiler decorator.
-    Inspired by and modified the profile decorator of Giampaolo Rodola:
-
-    http://code.activestate.com/recipes/577817-profile-decorator/
-    src:
-
-    https://towardsdatascience.com/how-to-profile-your-code-in-python-e70c834fad89
-
-    Args:
-        output_file: str or None. Default is None
-            Path of the output file. If only name of the file is given, it's
-            saved in the current directory.
-            If it's None, the name of the decorated function is used.
-        sort_by: str or SortKey enum or tuple/list of str/SortKey enum
-            Sorting criteria for the Stats object.
-            For a list of valid string and SortKey refer to:
-            https://docs.python.org/3/library/profile.html#pstats.Stats.sort_stats
-        lines_to_print: int or None
-            Number of lines to print. Default (None) is for all the lines.
-            This is useful in reducing the size of the printout, especially
-            that sorting by 'cumulative', the time consuming operations
-            are printed toward the top of the file.
-        strip_dirs: bool
-            Whether to remove the leading path info from file names.
-            This is also useful in reducing the size of the printout
-    Returns:
-        Profile of the decorated function
-    """
-
-    def inner(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            _output_file = output_file or func.__name__ + '.prof'
-            pr = cProfile.Profile()
-            pr.enable()
-            retval = func(*args, **kwargs)
-            pr.disable()
-            pr.dump_stats(_output_file)
-
-            with open(_output_file, 'w') as f:
-                ps = pstats.Stats(pr, stream=f)
-                if strip_dirs:
-                    ps.strip_dirs()
-                if isinstance(sort_by, (tuple, list)):
-                    ps.sort_stats(*sort_by)
-                else:
-                    ps.sort_stats(sort_by)
-                ps.print_stats(lines_to_print)
-            return retval
-
-        return wrapper
-
-    return inner
 
 
 def optimalPropagate(sat, I=set(), U=None):
@@ -1138,7 +1142,6 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
 
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
-    print(Iend)
 
     # TIMEOUT Handler!
     remaining_time = round(params.timeout - (time.time() - t_expl_start))
@@ -1154,6 +1157,10 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
         print("Pre-seeding timeout !")
         write_results(results, params.output_folder, params.instance + "_" + params.output_file)
         return E
+
+    # keeping track of the timings
+    t_exp = c.t_expl
+    saveResults(results, t_exp)
 
     signal.alarm(0)
 
@@ -1174,26 +1181,17 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
             expl = c.bestStep(f, U, Iend, I)
         # only handling timeout error!
         except OUSTimeoutError:
-            print("OUS: Timeout Explanation :-( ")
             expl_found = False
         finally:
             # ensure we don't get a timeout outside
             signal.alarm(0)
 
-        # keeping track of the timings
-        t_exp = c.t_expl
+            # keeping track of the timings
+            t_exp = c.t_expl
+            saveResults(results, t_exp)
 
         if verbose:
             print_timings(t_exp, not expl_found)
-
-        results["results"]["HS"].append(t_exp["#H"])
-        results["results"]["HS_greedy"].append(t_exp["#H_greedy"])
-        results["results"]["HS_incr"].append(t_exp["#H_incr"])
-        results["results"]["HS-opt-time"].append(sum(t_exp["t_mip"]))
-        results["results"]["HS-postpone-time"].append(sum(t_exp["t_post"]))
-        results["results"]["OUS-time"].append(t_exp["t_ous"])
-        results["results"]["SAT-time"].append(sum(t_exp["t_sat"]))
-        results["results"]["grow-time"].append(sum(t_exp["t_grow"]))
 
         if not expl_found:
             results["results"]['timeout'] = True
@@ -1206,10 +1204,7 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
         assert len(Nbest - Iend) == 0
 
-        E.append({
-            "constraints": list(Ibest),
-            "derived": list(Nbest)
-        })
+        E.append({"constraints": list(Ibest), "derived": list(Nbest)})
 
         if verbose:
             print_expl(matching_table, Ibest)
@@ -1220,11 +1215,34 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
 
         results["results"]["#expl"] += 1
 
+        if params.disableConstrained:
+            c.__del__()
+            remaining_time = round(params.timeout - (time.time() - t_expl_start))
+            if remaining_time <= 0:
+                results["results"]['timeout'] = True
+                break
+
+            # ensure max-time is not exceeded!
+            signal.alarm(remaining_time)
+
+            try:
+                c = BestStepCOUSComputer(f=f, sat=sat, U=U, Iend=Iend, I=I, params=params, cnf=C)
+            # only handling timeout error!
+            except OUSTimeoutError:
+                break
+            finally:
+                signal.alarm(0)
+                # keeping track of the timings
+                t_exp = c.t_expl
+                saveResults(results, t_exp)
+
     if verbose:
         print(E)
 
     results["results"]["expl_seq"] = E
     write_results(results, params.output_folder, params.instance + "_" + params.output_file)
+
+    # produce some explanation file to be visualised
     if matching_table:
         write_explanations(E, matching_table, f, params.output_folder, params.instance + datetime.now().strftime("%Y%m%d%H%M%S%f") + ".output.json")
 

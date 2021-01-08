@@ -1615,10 +1615,10 @@ if __name__ == "__main__":
 
     ## INSTANCES
     # test_explain(params)
-    test_frietkot(params)
+    # test_frietkot(params)
     # test_puzzle(params)
     # test_puzzle(optimalParams)
-    #test_PastaPuzzle(optimalParams)
+    test_PastaPuzzle(optimalParams)
     # test_p12Puzzle(optimalParams)
     # test_simplestReify(params)
     # test_simpleReify(params)

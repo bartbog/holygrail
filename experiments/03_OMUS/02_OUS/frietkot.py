@@ -30,6 +30,7 @@ class Relation(object):
         try:
             return self.df.loc[key]
         except KeyError:
+            print("Warning:",key,"not in this relation")
             return False
 
 
@@ -1771,75 +1772,6 @@ def pastaPuzzle():
     trans = []
     bv_trans =  [BoolVar() for i in range(12)]
 
-    # for rel in rels:
-    #     type1_1 = rel.rows
-    #     type1_2= rel.cols
-    #     for rel2 in rels:
-    #         type2_1=rel2.rows
-    #         type2_2=rel2.cols
-    #         if type2_1:
-    #             break
-    #         for rel3 in rels:
-    # for rel in rels:
-    #     type1_1 = rel.rows
-    #     type1_2= rel.cols
-    #     for rel2 in rels:
-    #         type2_1=rel2.rows
-    #         type2_2=rel2.cols
-    #         if type2_1:
-    #             break
-    #         for rel3 in rels:
-    #             if not rel3 > rel 2:
-    #                 break
-    #             bv1 = BoolVar()
-    #             bv2 = BoolVar()
-    #             bv3 = BoolVar()
-    #             #GENERATE ALLE SETS OF THREE "MATHCING RELATIONS"
-    #             # e.g. p(T1,T2) p2(T2,T3), p3(T1,T3)
-    #             # or p(T1,T2) p2(T2,T3), p3(T3,T1)
-    #             # EASIER: GENERATE ALL SETS OF THREE DIFFERENT TYPES. 
-    #             # Make procedure that gives you the right relation given two types (possibly "swapped")
-    #             # map constructed when making relations. R
-    #             for x in person:
-    #                 for y in sauce:
-    #                     for z in dollar:
-
-    #                         t0 = to_cnf(implies(paid[x, z] & sauce_dollar[y, z], chose[x, y]))
-    #                         [trans.append(implies(bv_trans[0], clause)) for clause in t0]
-
-    #                         t1 = to_cnf(implies(~paid[x, z] & sauce_dollar[y, z], ~chose[x, y]))
-    #                         [trans.append(implies(bv_trans[1], clause)) for clause in t1]
-
-    #                         t2 = to_cnf(implies(paid[x, z] & ~sauce_dollar[y, z], ~chose[x, y]))
-    #                         [trans.append(implies(bv_trans[2], clause)) for clause in t2]
-    #             if not rel3 > rel 2:
-    #                 break
-    #             bv1 = BoolVar()
-    #             bv2 = BoolVar()
-    #             bv3 = BoolVar()
-    #             #GENERATE ALLE SETS OF THREE "MATHCING RELATIONS"
-    #             # e.g. p(T1,T2) p2(T2,T3), p3(T1,T3)
-    #             # or p(T1,T2) p2(T2,T3), p3(T3,T1)
-    #             # EASIER: GENERATE ALL SETS OF THREE DIFFERENT TYPES. 
-    #             # Make procedure that gives you the right relation given two types (possibly "swapped")
-    #             # map constructed when making relations. R
-    #             for x in person:
-    #                 for y in sauce:
-    #                     for z in dollar:
-
-    #                         t0 = to_cnf(implies(paid[x, z] & sauce_dollar[y, z], chose[x, y]))
-    #                         [trans.append(implies(bv_trans[0], clause)) for clause in t0]
-
-    #                         t1 = to_cnf(implies(~paid[x, z] & sauce_dollar[y, z], ~chose[x, y]))
-    #                         [trans.append(implies(bv_trans[1], clause)) for clause in t1]
-
-    #                         t2 = to_cnf(implies(paid[x, z] & ~sauce_dollar[y, z], ~chose[x, y]))
-    #                         [trans.append(implies(bv_trans[2], clause)) for clause in t2]
-
-# angie puttanesca => 4
-# angie 4 => 17
-# puttanesca 4 => 61
-
 
     for x in person:
         for y in sauce:
@@ -1895,18 +1827,18 @@ def pastaPuzzle():
 
     # 0.The person who ordered capellini paid less than the person who chose arrabiata sauce
     # assumption_satisfied( 0  ) => ?a [person] b [type3] c [dollar] d [person] e [dollar]: ordered(a,capellini) & b>0 & chose(d,arrabiata_sauce) & paid(d,c) & e = c-b & paid(a,e).
-    clue0 =  [ordered[a, "capellini"] & chose[d, "arrabiata_sauce"] & paid[d, c] & paid[a, e]
+    clue0 = to_cnf(any([ordered[a, "capellini"] & chose[d, "arrabiata_sauce"] & paid[d, c] & paid[a, e]
                 for a in person
                 for b in [-4, 4, -8, 8,  -12, 12]
                 for c in dollar
                 for d in person
-                for e in dollar if (b > 0) and (int(e) == int(c)-b)]
-    [clues.append(implies(bv_clues[0], cl)) for cl in to_cnf(any(clue0)) ]
+                for e in dollar if (b > 0) and (int(e) == int(c)-b)]))
+    [clues.append(implies(bv_clues[0], cl)) for cl in clue0 ]
 
     # 1. The person who chose arrabiata sauce ordered farfalle
     # assumption_satisfied( 0  ) => ?f [person]: chose(f,arrabiata_sauce) & ordered(f,farfalle).
-    clue1 = any( [ chose[f,  "arrabiata_sauce"] & ordered[f, "farfalle"] for f in person])
-    [clues.append(implies(bv_clues[1], cl)) for cl in to_cnf(clue1) ]
+    clue1 = to_cnf( any( [ chose[f,  "arrabiata_sauce"] & ordered[f, "farfalle"] for f in person]))
+    [clues.append(implies(bv_clues[1], cl)) for cl in clue1 ]
 
     # assumption_satisfied( 0  ) => !f [person]: chose(f,arrabiata_sauce) => ordered(f,farfalle).
     # was ok maar vertaling van iets anders:
@@ -1923,9 +1855,9 @@ def pastaPuzzle():
                     for j in person:
                         for k in dollar:
                             if int(k) == int(i) - h:
-                                c2a.append(ordered[g, "taglioni"] & chose[j, "marinara_sauce"] & paid[j, i] & paid[g, k])
-    print(any.__code__)
-    [clues.append(implies(bv_clues[2], clause)) for clause in to_cnf(any(c2a))]
+                                c2a.append(ordered[g, "tagliolini"] & chose[j, "marinara_sauce"] & paid[j, i] & paid[g, k])
+    c2a = to_cnf(any(c2a))
+    [clues.append(implies(bv_clues[2], clause)) for clause in c2a]
 
     #  3. The person who ordered tagliolini paid more than Angie
     # assumption_satisfied( 0  ) => ?l [person] m [type5] n [dollar] o [dollar]: ordered(l,tagliolini) & m>0 & paid(angie,n) & o = n+m & paid(l,o).
@@ -1936,8 +1868,9 @@ def pastaPuzzle():
                 for n in dollar:
                     for o in dollar:
                         if int(o) == int(n) + m:
-                            c3a.append(ordered[l, "taglioni"] & paid["angie", n] & paid[l, o])
-    [clues.append(implies(bv_clues[3], clause)) for clause in to_cnf(any(c3a))]
+                            c3a.append(ordered[l, "tagliolini"] & paid["angie", n] & paid[l, o])
+    c3a = to_cnf(any(c3a))
+    [clues.append(implies(bv_clues[3], clause)) for clause in c3a]
 
     #  4. The person who ordered rotini is either the person who paid $8 more than Damon or the person who paid $8 less than Damon
     # assumption_satisfied( 0  ) => ?
@@ -1956,23 +1889,25 @@ def pastaPuzzle():
         )
         groteformule = formule1 | formule2
         c4a.append(ordered[p, "rotini"] & groteformule)
+    c4a = to_cnf(any(c4a))
 
-    for clause in to_cnf(any(c4a)):
+    for clause in c4a:
         clues.append(implies(bv_clues[4], clause))
 
     # 5. Claudia did not choose puttanesca sauce
     # assumption_satisfied( 0  ) => ~ chose(claudia,puttanesca_sauce).
-    clues.append(implies(bv_clues[5],  ~chose["claudia", "puttanesca_sauce"]))
+    c5a = to_cnf(implies(bv_clues[5],  ~chose["claudia", "puttanesca_sauce"]))
+    clues.append(c5a)
 
     #  6. The person who ordered capellini is either Damon or Claudia
     # assumption_satisfied( 0  ) => ?w [person]: ordered(w,capellini) & (damon = w | claudia = w).
-    c6a = [ordered[p, 'capellini'] & ( (p == 'claudia') | (p == 'damon')) for p in person]
-    [clues.append(implies(bv_clues[6], clause)) for clause in to_cnf(any(c6a))]
+    c6a = to_cnf(any([ordered[p, 'capellini'] & ( (p == 'claudia') | (p == 'damon')) for p in person]))
+    [clues.append(implies(bv_clues[6], clause)) for clause in c6a]
 
     # 7. The person who chose arrabiata sauce is either Angie or Elisa => XOR
     # assumption_satisfied( 0  ) => ?x [person]: chose(x,arrabiata_sauce) & (angie = x | elisa = x).
-    c7a = [chose[p, 'arrabiata_sauce'] &  ( (p == 'angie') | (p == 'elisa'))  for p in person] 
-    [clues.append(implies(bv_clues[7], clause)) for clause in to_cnf(any(c7a))]
+    c7a = to_cnf(any([chose[p, 'arrabiata_sauce'] &  ( (p == 'angie') | (p == 'elisa'))  for p in person]))
+    [clues.append(implies(bv_clues[7], clause)) for clause in c7a]
 
     clueTexts = [
         "The person who ordered capellini paid less than the person who chose arrabiata sauce",
@@ -2022,9 +1957,7 @@ def pastaPuzzle():
             for c in columnNames:
                 print(r, c, rel.df.at[r, c].name + 1)
 
-    print(explainable_facts)
-    # true_facts = [67, 50, 9, 70, 56, 14, 73, 59, 7, 80, 61, 4]
-    true_facts = [67, 50, 9, 70, 56, 14, 73]
+    #print(explainable_facts)
 
     matching_table = {
         'bvRel': bvRels,
@@ -2035,7 +1968,7 @@ def pastaPuzzle():
         }
     }
 
-    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table, [[l] for l in true_facts], rels
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table, rels
 
 
 def originProblemReify():

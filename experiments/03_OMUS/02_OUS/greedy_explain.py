@@ -92,7 +92,7 @@ class BestStepParams(object):
         self.grow_maxsat_pos_cost = False
         self.grow_maxsat_max_cost_neg = False
         self.grow_maxsat_unit = False
-        self.grow_maxsat_initial_interpretation = False
+        self.grow_maxsat_initial_pos = False
         self.grow_maxsat_actual_interpretation = False
 
         # timeout
@@ -120,7 +120,7 @@ class BestStepParams(object):
                    self.grow_maxsat_pos_cost ^ \
                    self.grow_maxsat_max_cost_neg ^ \
                    self.grow_maxsat_unit ^ \
-                   self.grow_maxsat_initial_interpretation ^ \
+                   self.grow_maxsat_initial_pos ^ \
                    self.grow_maxsat_actual_interpretation, \
                    "Only 1 type of maxsat grow."
 
@@ -146,7 +146,7 @@ class BestStepParams(object):
             "grow_maxsat_pos_cost": self.grow_maxsat_pos_cost,
             "grow_maxsat_max_cost_neg": self.grow_maxsat_max_cost_neg,
             "grow_maxsat_unit": self.grow_maxsat_unit,
-            "grow_maxsat_initial": self.grow_maxsat_initial_interpretation,
+            "grow_maxsat_initial": self.grow_maxsat_initial_pos,
             "grow_maxsat_actual": self.grow_maxsat_actual_interpretation,
             # run parameters
             "timeout": self.timeout,
@@ -190,7 +190,7 @@ class BestStepParams(object):
                 s += "-max_cost_neg"
             elif self.grow_maxsat_unit:
                 s += "-unit_cost"
-            elif self.grow_maxsat_initial_interpretation:
+            elif self.grow_maxsat_initial_pos:
                 s += "-initial_interpretation"
             elif self.grow_maxsat_actual_interpretation:
                 s += "-actual_interpretation"

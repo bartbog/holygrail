@@ -92,7 +92,7 @@ class COusParams(object):
         self.grow_maxsat_pos_cost = False
         self.grow_maxsat_max_cost_neg = False
         self.grow_maxsat_unit = False
-        self.grow_maxsat_initial_interpretation = False
+        self.grow_maxsat_initial_pos = False
         self.grow_maxsat_actual_pos = False
         self.grow_maxsat_actual_unif = False
         self.grow_maxsat_actual_inv = False
@@ -123,7 +123,7 @@ class COusParams(object):
                    self.grow_maxsat_pos_cost ^ \
                    self.grow_maxsat_max_cost_neg ^ \
                    self.grow_maxsat_unit ^ \
-                   self.grow_maxsat_initial_interpretation ^ \
+                   self.grow_maxsat_initial_pos ^ \
                    self.grow_maxsat_actual_unif ^ \
                    self.grow_maxsat_actual_inv ^ \
                    self.grow_maxsat_actual_pos, \
@@ -151,7 +151,7 @@ class COusParams(object):
             "grow_maxsat_pos_cost": self.grow_maxsat_pos_cost,
             "grow_maxsat_max_cost_neg": self.grow_maxsat_max_cost_neg,
             "grow_maxsat_unit": self.grow_maxsat_unit,
-            "grow_maxsat_initial": self.grow_maxsat_initial_interpretation,
+            "grow_maxsat_initial": self.grow_maxsat_initial_pos,
             "grow_maxsat_actual_pos": self.grow_maxsat_actual_pos,
             "grow_maxsat_actual_unif": self.grow_maxsat_actual_unif,
             "grow_maxsat_actual_inv": self.grow_maxsat_actual_inv,
@@ -197,7 +197,7 @@ class COusParams(object):
                 s += "-max_cost_neg"
             elif self.grow_maxsat_unit:
                 s += "-unit_cost"
-            elif self.grow_maxsat_initial_interpretation:
+            elif self.grow_maxsat_initial_pos:
                 s += "-initial_interpretation"
             elif self.grow_maxsat_actual_pos:
                 s += "-actual_int_pos"
@@ -416,9 +416,18 @@ class BestStepCOUSComputer(object):
             weights = [1] * len(remaining)
             wcnf.extend([[l] for l in remaining], weights)
         # maxsat with initial interpretation
-        elif self.params.grow_maxsat_initial_interpretation:
+        elif self.params.grow_maxsat_initial_pos:
             remaining = self.I0 - HS
             weights = [f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_initial_unif:
+            remaining = self.I0 - HS
+            weights = [1 for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_initial_inv:
+            remaining = self.I0 - HS
+            max_weight = max(f(l) for l in remaining)
+            weights = [max_weight+1 - f(l) for l in remaining]
             wcnf.extend([[l] for l in remaining], weights)
         # maxsat with actual interpretation
         elif self.params.grow_maxsat_actual_pos:
@@ -436,6 +445,7 @@ class BestStepCOUSComputer(object):
             wcnf.extend([[l] for l in remaining], weights)
 
         with RC2(wcnf) as rc2:
+            # rc2.oracle.set_phases()
             t_model = rc2.compute()
 
             return set(t_model)
@@ -1553,7 +1563,7 @@ if __name__ == "__main__":
     # sat - grow
     optimalParams.grow = True
     optimalParams.grow_maxsat = True
-    optimalParams.grow_maxsat_initial_interpretation = True
+    optimalParams.grow_maxsat_initial_pos = True
     # optimalParams.grow_maxsat_actual_pos = True
 
     # timeout
@@ -1577,13 +1587,13 @@ if __name__ == "__main__":
     # max cost neg => fast pre-seeding! (0s)
     # params.grow_maxsat_max_cost_neg = True
     # unit => SLOW pre-seeding! (325s)
-    # params.grow_maxsat_unit = True
+    params.grow_maxsat_unit = True
     # pos cost => FAST pre-seeding! (6s)
     # params.grow_maxsat_pos_cost = True
     # neg cost => very fast pre-seeding! (0s)
     # params.grow_maxsat_neg_cost = True
     # initial cost => FAST pre-seeding!
-    params.grow_maxsat_initial_interpretation = True
+    # params.grow_maxsat_initial_pos = True
 
     ## Postponing Hitting set solver call
     # params.postpone_opt = True
@@ -1591,15 +1601,15 @@ if __name__ == "__main__":
     # params.postpone_opt_greedy = True
 
     # timeout
-    params.timeout = 1 * HOURS
+    params.timeout = 30*SECONDS
 
     ## INSTANCES
     # test_explain(params)
     # test_frietkot(params)
     # test_puzzle(params)
     # test_puzzle(optimalParams)
-    # test_PastaPuzzle(optimalParams)
-    test_p12Puzzle(optimalParams)
+    test_PastaPuzzle(optimalParams)
+    # test_p12Puzzle(optimalParams)
     # test_simplestReify(params)
     # test_simpleReify(params)
     # test_puzzleReify(params)

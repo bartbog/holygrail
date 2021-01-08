@@ -234,6 +234,7 @@ def effectOfPreseeding():
     print("growPerm=", len(growPerms))
 
     for pre_seeding, pre_seeding_grow in preseedPerms:
+        print(pre_seeding, pre_seeding_grow)
         for polarity, polarity_initial in satPolPerms:
             for postpone_opt, postpone_opt_incr, postpone_opt_greedy in postOptPers:
                 for growPerm in growPerms:
@@ -266,7 +267,7 @@ def effectOfPreseeding():
                     params.grow_maxsat_pos_cost = False
                     params.grow_maxsat_max_cost_neg = False
                     params.grow_maxsat_unit = False
-                    params.grow_maxsat_initial_interpretation = m_init
+                    params.grow_maxsat_initial_pos = m_init
                     params.grow_maxsat_actual_pos = m_actual_pos
                     params.grow_maxsat_actual_inv = m_actual_inv
                     params.grow_maxsat_actual_unif = m_actual_unif

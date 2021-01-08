@@ -1917,7 +1917,6 @@ def pastaPuzzle():
     # assumption_satisfied( 0  ) => ?g [person] h [type4] i [dollar] j [person] k [dollar]: ordered(g,tagliolini) & h>0 & chose(j,marinara_sauce) & paid(j,i) & k = i-h & paid(g,k).
     c2a = []
     for g in person:
-
         for h in [-4, 4, -8, 8, -12, 12]:
             if h > 0:
                 for i in dollar:

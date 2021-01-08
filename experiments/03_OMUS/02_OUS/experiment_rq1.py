@@ -1,3 +1,4 @@
+import multiprocessing
 import sys
 sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
 
@@ -46,6 +47,12 @@ def r_simpleProblem(params):
     explain(C=simple_cnf, U=U, f=f, I0=I, params=params, verbose=False)
 
 
+def rq1_args_pool(func, start, taskspernode, maxTaskspernode):
+    params = effectOfPreseeding()[start:start+taskspernode * maxTaskspernode]
+    p = multiprocessing.Pool(taskspernode)
+    p.map(func, params)
+
+
 def rq1_args(func, start, numTasks):
     params = effectOfPreseeding()[start:start+numTasks]
     runParallel([func], params)
@@ -54,6 +61,8 @@ def rq1_args(func, start, numTasks):
 if __name__ == "__main__":
     if len(sys.argv) == 3:
         rq1_args(r_originProblem, int(sys.argv[1]), int(sys.argv[2]))
+    elif len(sys.argv) == 4:
+        rq1_args_pool(r_originProblem, int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))
     else:
         print ('Number of arguments:', len(sys.argv), 'arguments.')
         print ('Argument List:', str(sys.argv))

@@ -69,7 +69,6 @@ class COusParams(object):
     def __init__(self):
         # intialisation: pre-seeding
         self.pre_seeding = False
-        self.pre_seeding_grow = False
 
         # hitting set computation
         self.postpone_opt = False
@@ -88,11 +87,15 @@ class COusParams(object):
         self.grow_maxsat = False
 
         # MAXSAT growing
-        self.grow_maxsat_neg_cost = False
-        self.grow_maxsat_pos_cost = False
-        self.grow_maxsat_max_cost_neg = False
-        self.grow_maxsat_unit = False
+        self.maxsat_polarities = False
+
+        #type of grow
+        self.grow_maxsat_full_pos = False
+        self.grow_maxsat_full_inv = False
+        self.grow_maxsat_full_unif = False
         self.grow_maxsat_initial_pos = False
+        self.grow_maxsat_initial_inv = False
+        self.grow_maxsat_initial_unif = False
         self.grow_maxsat_actual_pos = False
         self.grow_maxsat_actual_unif = False
         self.grow_maxsat_actual_inv = False
@@ -119,21 +122,21 @@ class COusParams(object):
                    "Exactly 1 grow mechanism"
 
         if self.grow_maxsat:
-            assert self.grow_maxsat_neg_cost ^ \
-                   self.grow_maxsat_pos_cost ^ \
-                   self.grow_maxsat_max_cost_neg ^ \
-                   self.grow_maxsat_unit ^ \
-                   self.grow_maxsat_initial_pos ^ \
-                   self.grow_maxsat_actual_unif ^ \
-                   self.grow_maxsat_actual_inv ^ \
-                   self.grow_maxsat_actual_pos, \
+            assert self.grow_maxsat_full_pos ^ \
+                    self.grow_maxsat_full_inv ^ \
+                    self.grow_maxsat_full_unif ^ \
+                    self.grow_maxsat_initial_pos ^ \
+                    self.grow_maxsat_initial_inv ^ \
+                    self.grow_maxsat_initial_unif ^ \
+                    self.grow_maxsat_actual_pos ^ \
+                    self.grow_maxsat_actual_unif ^ \
+                    self.grow_maxsat_actual_inv, \
                    "Only 1 type of maxsat grow."
 
     def to_dict(self):
         return {
             # preseeding
             "preseeding": self.pre_seeding,
-            "preseeding-grow": self.pre_seeding_grow,
             # sat polarities
             "sat-polarity": self.polarity,
             "sat-polarity-initial": self.polarity_initial,
@@ -147,14 +150,16 @@ class COusParams(object):
             "grow_subset_maximal": self.grow_subset_maximal,
             "grow_maxsat": self.grow_maxsat,
             # maxsat costs
-            "grow_maxsat_neg_cost": self.grow_maxsat_neg_cost,
-            "grow_maxsat_pos_cost": self.grow_maxsat_pos_cost,
-            "grow_maxsat_max_cost_neg": self.grow_maxsat_max_cost_neg,
-            "grow_maxsat_unit": self.grow_maxsat_unit,
-            "grow_maxsat_initial": self.grow_maxsat_initial_pos,
+            "grow_maxsat_full_pos": self.grow_maxsat_full_pos,
+            "grow_maxsat_full_inv": self.grow_maxsat_full_inv,
+            "grow_maxsat_full_unif": self.grow_maxsat_full_unif,
+            "grow_maxsat_initial_pos": self.grow_maxsat_initial_pos,
+            "grow_maxsat_initial_inv": self.grow_maxsat_initial_inv,
+            "grow_maxsat_initial_unif": self.grow_maxsat_initial_unif,
             "grow_maxsat_actual_pos": self.grow_maxsat_actual_pos,
             "grow_maxsat_actual_unif": self.grow_maxsat_actual_unif,
             "grow_maxsat_actual_inv": self.grow_maxsat_actual_inv,
+
             # run parameters
             "timeout": self.timeout,
             "instance": self.instance,
@@ -163,12 +168,7 @@ class COusParams(object):
 
     def __str__(self):
         s = ""
-        if self.pre_seeding_subset_minimal:
-            s += "pre-seeding-subset-minimal\n"
-
-        if self.pre_seeding_grow:
-            s += "pre-seeding-grow-simple\n"
-
+ 
         if self.postpone_opt:
             s += "postpone_opt \n"
         if self.postpone_opt_incr:
@@ -188,16 +188,9 @@ class COusParams(object):
         if self.grow_subset_maximal:
             s += "\t grow-subset-maximal \n"
         if self.grow_maxsat:
+            # TODO add the str version!
             s += "\t grow-MaxSat"
-            if self.grow_maxsat_neg_cost:
-                s += "-neg_cost"
-            elif self.grow_maxsat_pos_cost:
-                s += "-pos_cost"
-            elif self.grow_maxsat_max_cost_neg:
-                s += "-max_cost_neg"
-            elif self.grow_maxsat_unit:
-                s += "-unit_cost"
-            elif self.grow_maxsat_initial_pos:
+            if self.grow_maxsat_initial_pos:
                 s += "-initial_interpretation"
             elif self.grow_maxsat_actual_pos:
                 s += "-actual_int_pos"
@@ -218,6 +211,20 @@ class OUSTimeoutError(Exception):
     """
     def __init__(self):
         self.message = f"Ous explain Timeout !"
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f'{self.message}'
+
+
+class MaxSatExtensionError(Exception):
+    """Exception raised for errors in satisfiability check.
+
+    Attributes:
+        I -- partial interpretation given as assumptions
+    """
+    def __init__(self, params):
+        self.message = f"Wrong Maxsat extension.\nParams:\n\n" + str(params.to_dict())
         super().__init__(self.message)
 
     def __str__(self):
@@ -328,7 +335,7 @@ class BestStepCOUSComputer(object):
                 HS = set({l})
                 _, Ap = self.checkSat(Ap=HS, phases=Iend)
                 tsartseed = time.time()
-                if self.params.pre_seeding_grow:
+                if self.params.grow:
                     SS = self.grow(f, F=F, A=A, HS=HS, HS_model=Ap)
                 else:
                     SS = Ap
@@ -393,30 +400,14 @@ class BestStepCOUSComputer(object):
 
         # cost is associated for assigning a truth value to literal not in
         # contrary to A.
-        remaining = A - HS
+        remaining = None
 
         # associate small neg cost to expensive literals
         # intuitively grow the most expensive SS to have cheapest
         # complement
-        if self.params.grow_maxsat_neg_cost:
-            weights = [-f(l) for l in remaining]
-            wcnf.extend([[l] for l in remaining], weights)
-        # intuitively grow the cheapestSS to have expensive
-        # complement
-        elif self.params.grow_maxsat_pos_cost:
-            weights = [f(l) for l in remaining]
-            wcnf.extend([[l] for l in remaining], weights)
-        # ensure costs are positive (same as maxsat with neg costs)
-        elif self.params.grow_maxsat_max_cost_neg:
-            max_weight = max(f(l) for l in remaining)
-            weights = [max_weight+1 - f(l) for l in remaining]
-            wcnf.extend([[l] for l in remaining], weights)
         # unit cost similar to sat call
-        elif self.params.grow_maxsat_unit:
-            weights = [1] * len(remaining)
-            wcnf.extend([[l] for l in remaining], weights)
         # maxsat with initial interpretation
-        elif self.params.grow_maxsat_initial_pos:
+        if self.params.grow_maxsat_initial_pos:
             remaining = self.I0 - HS
             weights = [f(l) for l in remaining]
             wcnf.extend([[l] for l in remaining], weights)
@@ -443,15 +434,35 @@ class BestStepCOUSComputer(object):
             max_weight = max(f(l) for l in remaining)
             weights = [max_weight+1 - f(l) for l in remaining]
             wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_full_pos:
+            remaining = A - HS
+            weights = [f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_full_unif:
+            remaining = A - HS
+            weights = [1 for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_full_inv:
+            remaining = A - HS
+            max_weight = max(f(l) for l in remaining)
+            weights = [max_weight+1 - f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        else:
+            raise MaxSatExtensionError()
 
         with RC2(wcnf) as rc2:
-            # rc2.oracle.set_phases()
+            if self.params.maxsat_polarities:
+                rc2.oracle.set_phases(literals=list(self.Iend))
             t_model = rc2.compute()
 
             return set(t_model)
 
     def grow_subset_maximal(self, A, HS, Ap):
-        sat, App = self.checkSat(HS | (self.I0 & Ap), phases=A)
+        _, App = self.checkSat(HS | (self.I0 & Ap), phases=self.I0)
+        if self.params.subset_maximal_I0:
+            while (Ap != App):
+                Ap = set(App)
+                _, App = self.checkSat(HS | (self.I0 & Ap), phases=self.I0)
 
         # repeat until subset maximal wrt A
         while (Ap != App):
@@ -481,7 +492,7 @@ class BestStepCOUSComputer(object):
         if self.params.polarity_initial:
             self.sat_solver.set_phases(literals=list(self.I0 - Ap))
         elif self.params.polarity:
-            self.sat_solver.set_phases(literals=list(phases - Ap))
+            self.sat_solver.set_phases(literals=list(self.Iend - Ap))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
 
@@ -1554,7 +1565,6 @@ if __name__ == "__main__":
     optimalParams = COusParams()
     # preseeding
     optimalParams.pre_seeding = True
-    optimalParams.pre_seeding_grow = True
     # params.pre_seeding_subset_minimal = True
 
     # polarity of sat solver
@@ -1573,7 +1583,6 @@ if __name__ == "__main__":
     params = COusParams()
     # preseeding
     params.pre_seeding = True
-    params.pre_seeding_grow = True
     # params.pre_seeding_subset_minimal = True
 
     # polarity of sat solver

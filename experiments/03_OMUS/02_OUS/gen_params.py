@@ -186,10 +186,10 @@ def effectOfPreseeding():
     outputFolder = resultsFolder + "effectPreseeding/" + datetime.now().strftime("%Y%m%d%H") + "/"
 
     # preseeding
-    preseedPerms = [[False, False], [True, False], [True, True]]
+    preseedPerms = [False, True]
 
     # polarity sat solver
-    satPolPerms = list(itertools.permutations([True, False]))
+    satPolPerms = [[False] * 2] + list(itertools.permutations([True, False]))
 
     # postponing optimisation
     postOptPers = [
@@ -201,23 +201,29 @@ def effectOfPreseeding():
 
     # maxsat Perms
     maxsatPerms = []
-    for p in itertools.permutations([True] + [False] * 3):
+    for p in itertools.permutations([True] + [False] * 8):
         if list(p) not in maxsatPerms:
             maxsatPerms.append(list(p))
 
-    # grow procedure
-    growPerms = []
-    perms = [[False] * 5]
+    polmaxsatPerms = []
+    for tf in [True, False]:
+        for p in maxsatPerms:
+            polmaxsatPerms.append([tf] + p)
 
+    # grow procedure
+    perms = [[False] * 5] # no grow
+
+    # at least one grow/sat/subsetmax/subsetI0/maxsat
     for p in itertools.permutations([True] + [False] * 3):
         l = [True] + list(p)
         if l not in perms:
             perms.append(l)
 
+    growPerms = []
     for perm in perms:
-        # maxsat ?
+        # if maxsat we add all different permutations possible
         if perm[-1]:
-            for m in maxsatPerms:
+            for m in polmaxsatPerms:
                 growPerms.append({
                     "grow": list(perm),
                     "maxsat": m
@@ -225,7 +231,7 @@ def effectOfPreseeding():
         else:
             growPerms.append({
                 "grow": perm,
-                "maxsat": [False] * 4
+                "maxsat": [False] * 10
             })
 
     print("preseedPerms=", len(preseedPerms))
@@ -233,18 +239,16 @@ def effectOfPreseeding():
     print("postOptPers=", len(postOptPers))
     print("growPerm=", len(growPerms))
 
-    for pre_seeding, pre_seeding_grow in preseedPerms:
-        print(pre_seeding, pre_seeding_grow)
+    for pre_seeding in preseedPerms:
         for polarity, polarity_initial in satPolPerms:
             for postpone_opt, postpone_opt_incr, postpone_opt_greedy in postOptPers:
                 for growPerm in growPerms:
                     g_grow, g_sat, g_subsetmax, g_subsetI0, g_maxsat = growPerm["grow"]
-                    m_init, m_actual_pos, m_actual_inv, m_actual_unif = growPerm["maxsat"]
+                    maxsatPolarities, m_full_pos, m_full_inv, m_full_unif, m_initial_inv, m_initial_unif, m_initial_pos, m_actual_pos, m_actual_inv, m_actual_unif = growPerm["maxsat"]
                     # Parameters
                     params = COusParams()
                     # intialisation: pre-seeding
                     params.pre_seeding = pre_seeding
-                    params.pre_seeding_grow = pre_seeding_grow
 
                     # hitting set computation
                     params.postpone_opt = postpone_opt
@@ -263,11 +267,16 @@ def effectOfPreseeding():
                     params.grow_maxsat = g_maxsat
 
                     # MAXSAT growing
-                    params.grow_maxsat_neg_cost = False
-                    params.grow_maxsat_pos_cost = False
-                    params.grow_maxsat_max_cost_neg = False
-                    params.grow_maxsat_unit = False
-                    params.grow_maxsat_initial_pos = m_init
+                    params.maxsat_polarities = maxsatPolarities
+
+                    # MAXSAT growing
+                    #type of grow
+                    params.grow_maxsat_full_pos = m_full_pos
+                    params.grow_maxsat_full_inv = m_full_inv
+                    params.grow_maxsat_full_unif = m_full_unif
+                    params.grow_maxsat_initial_inv = m_initial_inv
+                    params.grow_maxsat_initial_unif = m_initial_unif
+                    params.grow_maxsat_initial_pos = m_initial_pos
                     params.grow_maxsat_actual_pos = m_actual_pos
                     params.grow_maxsat_actual_inv = m_actual_inv
                     params.grow_maxsat_actual_unif = m_actual_unif
@@ -288,4 +297,4 @@ def effectOfPreseeding():
 
 if __name__ == "__main__":
     print("running checks")
-    effectOfPreseeding()
+    print(len(effectOfPreseeding()))

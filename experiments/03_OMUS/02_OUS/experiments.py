@@ -1,3 +1,4 @@
+from explain import OUSTimeoutError, timeoutHandler
 from gen_params import effectOfPreseeding
 import sys
 import random
@@ -5,10 +6,13 @@ import time
 from datetime import date, datetime
 from pathlib import Path
 from math import ceil
+import signal
+import shutil
 
 # pysat imports
 from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
+from pysat.examples.musx import MUSX
 
 # omus imports
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
@@ -34,7 +38,64 @@ def runParallel(fn, args):
         p.join()
 
 
-def genPBSjobs(hpcDir, jobName, nodes, taskspernode):
+def getMUSFiles(benchmarkDir, fileList):
+    fileListPath = Path(benchmarkDir + fileList)
+    allMUSfiles = []
+    with fileListPath.open('r') as f:
+        allMUSfiles = list(map(lambda fileName: fileName.replace('\n', '')[2:], f.readlines()))
+
+    return allMUSfiles
+
+
+def extractMUS(wcnf):
+    with MUSX(wcnf) as m:
+        mus = m.compute()
+        return False if mus is None else True
+
+
+def selectMUSFiles():
+    """
+        Select only cnfs where MUS extractor finds the MUS in less than 10 seconds.
+        Because finding the SMUS or finding the OUS is more difficult than extracting a MUS.
+    """
+    # initialising the timeouthandler
+    _ = signal.signal(signal.SIGALRM, timeoutHandler)
+    
+    # benchmark
+    benchmarkDir = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_benchmarksOUS/"
+    fileList = "file_list.txt"
+    targetFolder = "data/mus_instances/"
+
+    # sorting files on increasing file size
+    MUSFiles = getMUSFiles(benchmarkDir, fileList)
+    MUSPaths = list(map(lambda f: Path(benchmarkDir + f), MUSFiles))
+    MUSPaths.sort(key=lambda f: f.stat().st_size)
+
+    MUSExtractable = []
+
+    # checking all files and copying them to target folder
+    for f in MUSPaths:
+        extractedMUS = False
+        cnf = CNF(from_file=f)
+        clauses = cnf.clauses
+        wcnf = WCNF()
+        wcnf.extend(clauses, [1] * len(clauses))
+        signal.alarm(11)
+        try:
+            extractedMUS = extractMUS(wcnf)
+        except OUSTimeoutError:
+            extractedMUS = False
+        finally:
+            signal.alarm(0)
+
+        print(extractedMUS, f)
+        if extractedMUS:
+            shutil.copy(f, targetFolder + f.name)
+
+    return MUSExtractable
+
+
+def genPBSjobs(hpcDir, jobName, nodes, taskspernode, maxTaskspernode):
     jobName = "effectOfPreseeding"
 
     # creating the appropriate directories
@@ -50,12 +111,12 @@ def genPBSjobs(hpcDir, jobName, nodes, taskspernode):
     # generating the jobs
     for i in range(nodes):
         fpath = todaysJobPath / f"{jobName}_{i}.pbs"
-        startpos = i * taskspernode
+        startpos = i * taskspernode * maxTaskspernode
         baseScript = f"""#!/usr/bin/env bash
 
 #PBS -N {jobName}
 #PBS -l nodes=1:ppn={taskspernode}:skylake
-#PBS -l walltime=04:00:00
+#PBS -l walltime=24:00:00
 #PBS -M emilio.gamba@vub.be
 #PBS -m abe
 
@@ -66,7 +127,7 @@ conda init bash
 source .bashrc
 conda activate ousExp37
 cd /user/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS
-python3 experiment_rq1.py {startpos} {taskspernode}
+python3 experiment_rq1.py {startpos} {taskspernode} {maxTaskspernode}
 """
         with fpath.open('w+') as f:
             f.write(baseScript)
@@ -89,9 +150,11 @@ def jobEffectOfPreseeding():
     hpcOutputFolder = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments"
     params = effectOfPreseeding()
     taskspernode = 40
-    nodes = ceil(len(params)/taskspernode)
-    print(nodes, taskspernode)
-    genPBSjobs(hpcOutputFolder, jobName, nodes, taskspernode)
+    maxTaskspernode = 6
+    nodes = ceil(len(params)/(taskspernode * maxTaskspernode))
+    print(nodes, taskspernode, maxTaskspernode)
+    genPBSjobs(hpcOutputFolder, jobName, nodes, taskspernode, maxTaskspernode)
 
 if __name__ == "__main__":
     jobEffectOfPreseeding()
+    # selectMUSFiles()

@@ -1127,6 +1127,7 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matchi
 
     # Most precise intersection of all models of C project on U
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
+    print(Iend)
 
     # TIMEOUT Handler!
     remaining_time = round(params.timeout - (time.time() - t_expl_start))
@@ -1605,10 +1606,10 @@ if __name__ == "__main__":
 
     ## INSTANCES
     # test_explain(params)
-    # test_frietkot(params)
+    test_frietkot(params)
     # test_puzzle(params)
     # test_puzzle(optimalParams)
-    test_PastaPuzzle(optimalParams)
+    #test_PastaPuzzle(optimalParams)
     # test_p12Puzzle(optimalParams)
     # test_simplestReify(params)
     # test_simpleReify(params)

@@ -69,7 +69,6 @@ class BestStepParams(object):
     def __init__(self):
         # intialisation: pre-seeding
         self.pre_seeding = False
-        self.pre_seeding_grow = False
 
         # hitting set computation
         self.postpone_opt = False
@@ -128,7 +127,6 @@ class BestStepParams(object):
         return {
             # preseeding
             "preseeding": self.pre_seeding,
-            "preseeding-grow": self.pre_seeding_grow,
             # sat polarities
             "sat-polarity": self.polarity,
             "sat-polarity-initial": self.polarity_initial,

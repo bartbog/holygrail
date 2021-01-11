@@ -282,6 +282,50 @@ if __name__ == "__main__":
 #         else:
 #             return model
 
+def optPropagateSolver(C, focus=None, I=[]):
+    """
+    optPropage produces the intersection of all models of cnf more precise
+    projected on focus.
+
+    Improvements:
+    + Add new clause with assumption literal
+        ex: a_i=7
+    + solve with assumption literal set to false.
+    + Add 1 assumption only as True to the solver (to disable clause). 
+        add_clauses([a_i]).
+    - Extension 1:
+        + Reuse solver only for optpropagate
+    - Extension 2:
+        + Reuse solver for all sat calls
+
+    Args:
+    cnf (list): CNF C over V:
+            hard puzzle problems with assumptions variables to activate or
+            de-active clues.
+    I (list):
+        Assumptions 
+        => TODO: .... Ei/Si(partial assignment to the decision variables of 
+        the User vocabulary V')
+    focus (set):
+        +/- literals of all user variables
+    """
+    with Solver(bootstrap_with=C) as s:
+        s.solve(assumptions=I)
+
+        model = set(s.get_model())
+        if focus:
+            model &= focus
+
+        bi = C.nv + 1
+        while(True):
+            s.add_clause([-bi] + [-lit for lit in model])
+            solved = s.solve(assumptions=[bi])
+
+            if not solved:
+                return model
+
+            new_model = set(s.get_model())
+            model = model.intersection(new_model)
 
 # def optPropagate(solver: Solver, cnf: CNF, I: list = [], focus=None, reuse_solver=False):
 #     solved = solver.solve(assumptions=I)

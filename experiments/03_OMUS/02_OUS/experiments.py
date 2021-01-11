@@ -1,38 +1,36 @@
-import json
-import random
+from explain import OUSTimeoutError, timeoutHandler
+from gen_params import effectOfPreseeding
 import sys
+import random
 import time
 from datetime import date, datetime
 from pathlib import Path
+from math import ceil
+import signal
+import shutil
 
 # pysat imports
 from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
+from pysat.examples.musx import MUSX
 
 # omus imports
-from ous import OUS
-from ous_utils import Clauses, OusParams
-
 sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
 sys.path.append('/home/emilio/Documents/cppy_src/')
 sys.path.append('/home/emilio/documents/cppy_mysrc/')
 
 from multiprocessing import Process
 
-from cppy import BoolVarImpl, Comparison, Model, Operator, cnf_to_pysat
-from cppy.model_tools import to_cnf
-
-from frietkot import frietKotProblem, simpleProblem
-
 SECONDS = 1
 MINUTES = 60 * SECONDS
 HOURS = 60 * MINUTES
-TIMEOUT_EXP1 = 10 * MINUTES
+TIMEOUT_EXP1 = 1 * HOURS
+
 
 def runParallel(fn, args):
     procs = []
-    for arg in zip(args):
-        p = Process(target=fn, args=arg)
+    for arg in args:
+        p = Process(target=fn, args=(arg,))
         p.start()
         procs.append(p)
 
@@ -40,89 +38,123 @@ def runParallel(fn, args):
         p.join()
 
 
-def generate_weights(instance):
-    clauses = CNF(from_file=instance).clauses
-    weights = random.choices(list(range(5, 21)), k=len(clauses))
-    return weights
+def getMUSFiles(benchmarkDir, fileList):
+    fileListPath = Path(benchmarkDir + fileList)
+    allMUSfiles = []
+    with fileListPath.open('r') as f:
+        allMUSfiles = list(map(lambda fileName: fileName.replace('\n', '')[2:], f.readlines()))
+
+    return allMUSfiles
 
 
-def checkSatFile(instance):
-    cnf = CNF(from_file=instance)
-    with Solver(bootstrap_with=cnf.clauses) as s:
-        solved = s.solve()
-        return solved
+def extractMUS(wcnf):
+    with MUSX(wcnf) as m:
+        mus = m.compute()
+        return False if mus is None else True
 
 
-def get_instances():
-    p = Path('data/cnf_instances/')
-    instances = [x for x in p.iterdir()]
-    filenames = [(instance, instance.name) for instance in instances if '.cnf' in instance.name]
-    sat_files = [(i, name) for i, name in filenames if checkSatFile(i)]
-    return sat_files
+def selectMUSFiles():
+    """
+        Select only cnfs where MUS extractor finds the MUS in less than 10 seconds.
+        Because finding the SMUS or finding the OUS is more difficult than extracting a MUS.
+    """
+    # initialising the timeouthandler
+    _ = signal.signal(signal.SIGALRM, timeoutHandler)
+    
+    # benchmark
+    benchmarkDir = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_benchmarksOUS/"
+    fileList = "file_list.txt"
+    targetFolder = "data/mus_instances/"
+
+    # sorting files on increasing file size
+    MUSFiles = getMUSFiles(benchmarkDir, fileList)
+    MUSPaths = list(map(lambda f: Path(benchmarkDir + f), MUSFiles))
+    MUSPaths.sort(key=lambda f: f.stat().st_size)
+
+    MUSExtractable = []
+
+    # checking all files and copying them to target folder
+    for f in MUSPaths:
+        extractedMUS = False
+        cnf = CNF(from_file=f)
+        clauses = cnf.clauses
+        wcnf = WCNF()
+        wcnf.extend(clauses, [1] * len(clauses))
+        signal.alarm(11)
+        try:
+            extractedMUS = extractMUS(wcnf)
+        except OUSTimeoutError:
+            extractedMUS = False
+        finally:
+            signal.alarm(0)
+
+        print(extractedMUS, f)
+        if extractedMUS:
+            shutil.copy(f, targetFolder + f.name)
+
+    return MUSExtractable
 
 
-def experiment1():
-    today = date.today().strftime("%Y_%m_%d")
-    outputDir = 'data/experiment1/results/'+today + '/'
-    filepath = Path(outputDir)
-    filepath.mkdir(parents=True, exist_ok=True)
+def genPBSjobs(hpcDir, jobName, nodes, taskspernode, maxTaskspernode):
+    jobName = "effectOfPreseeding"
 
-    # setup experiments
-    sat_instances = get_instances()
-    print(sat_instances)
+    # creating the appropriate directories
+    hpcPath = Path(hpcDir)
+    jobPath = hpcPath / "jobs/"
+    if not jobPath.exists():
+        jobPath.mkdir()
+    today = datetime.now().strftime("%Y%m%d%H") + "/"
+    todaysJobPath = jobPath / today
+    if not todaysJobPath.exists():
+        todaysJobPath.mkdir()
 
-    # setup arguments
-    incrs = [True, False]
-    pre_seeds = [True, False]
-    constraineds = [True, False]
-    post_opts = [True, False]
-    post_opt_incrs = [True, False]
-    post_opt_greedys = [True, False]
-    boundeds = [True, False]
+    # generating the jobs
+    for i in range(nodes):
+        fpath = todaysJobPath / f"{jobName}_{i}.pbs"
+        startpos = i * taskspernode * maxTaskspernode
+        baseScript = f"""#!/usr/bin/env bash
 
-    running_params = []
-    for fpath, fname in sat_instances:
-        cnt = 0
-        for incr in incrs:
-            for constrained in constraineds:
-                for pre_seed in pre_seeds:
-                    for post_opt in post_opts:
-                        if post_opt:
-                            for post_opt_incr in post_opt_incrs:
-                                for post_opt_greedy in post_opt_greedys:
-                                    for bounded in boundeds:
-                                        outputFile = outputDir + fname.replace('.cnf','') + ".json"
-                                        ousParam = OusParams()
-                                        ousParam.pre_seed = pre_seed
-                                        ousParam.constrained = constrained
-                                        ousParam.incremental = incr
-                                        ousParam.post_opt = post_opt
-                                        ousParam.post_opt_incremental = post_opt_incr
-                                        ousParam.post_opt_greedy = post_opt_greedy
-                                        ousParam.bounded = bounded
-                                        running_params.append((ousParam, fpath, fname, outputFile))
-                                        cnt += 1
-    # print(running_params)
-    runParallel(exp1_instance, running_params)
+#PBS -N {jobName}
+#PBS -l nodes=1:ppn={taskspernode}:skylake
+#PBS -l walltime=24:00:00
+#PBS -M emilio.gamba@vub.be
+#PBS -m abe
 
+module load Gurobi/9.0.1-GCCcore-8.3.0-Python-3.7.4
 
-def exp1_instance(args):
-    ousParam, fpath, fname, outputFile = args
-    print("File:", fpath)
-    print("File:", fname, outputFile)
+# own code
+conda init bash
+source .bashrc
+conda activate ousExp37
+cd /user/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS
+python3 experiment_rq1.py {startpos} {taskspernode} {maxTaskspernode}
+"""
+        with fpath.open('w+') as f:
+            f.write(baseScript)
+
+    # script for submission of the jobs
+    allFpaths = [todaysJobPath / f"{jobName}_{i}.pbs" for i in range(nodes)]
+
+    allStrPaths = ['#!/usr/bin/env bash', '']
+    allStrPaths += ["qsub "+ str(p).replace('/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments/', '') for p in allFpaths]
+    allStrPaths += ['']
+
+    scriptPath = hpcPath / "launchJobs.sh"
+
+    with scriptPath.open('w+') as f:
+        f.write('\n'.join(allStrPaths))
 
 
-def main():
-    # experiment1()
-    cnf, facts = simpleProblem()
-    print(cnf)
-    # clauses = Clauses()
-    o = OUS()
-    o.add_hardClauses(cnf)
-    o.add_IndicatorVars()
-    print(o.hard_clauses)
-    print(o.soft_clauses)
-    # print(p)
+def jobEffectOfPreseeding():
+    jobName = "EffectOfpreseeding"
+    hpcOutputFolder = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments"
+    params = effectOfPreseeding()
+    taskspernode = 40
+    maxTaskspernode = 6
+    nodes = ceil(len(params)/(taskspernode * maxTaskspernode))
+    print(nodes, taskspernode, maxTaskspernode)
+    genPBSjobs(hpcOutputFolder, jobName, nodes, taskspernode, maxTaskspernode)
 
 if __name__ == "__main__":
-    main()
+    jobEffectOfPreseeding()
+    # selectMUSFiles()

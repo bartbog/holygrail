@@ -7,6 +7,7 @@ from pathlib import Path
 # import random
 from functools import wraps
 import copy
+from itertools import chain, combinations
 import signal
 
 from multiprocessing import Process, Pool
@@ -849,15 +850,57 @@ def print_expl(matching_table, Ibest):
             print("Fact:", i)
 
 
-def MUSexplain(C: CNF, U: set, f, I0: set, verbose=False):
-    if verbose:
-        print("Expl:")
-        print("\tcnf:", len(C.clauses), C.nv)
-        print("\tU:", len(U))
-        print("\tf:", f)
-        print("\tI0:", len(I0))
+# def powerset(f, iterable):
+#     """
+
+#     https://stackoverflow.com/questions/1482308/how-to-get-all-subsets-of-a-set-powerset
+
+#         powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)
+
+#     """
+#     s = list(iterable)
+#     ch = list(chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1)))
+#     ch.sort(key=lambda s: sum(f(l) for l in s))
+#     for subset in ch:
+#         yield subset
+
+
+# def MUSexplain(C: CNF, U: set, f, I0: set, verbose=False):
+#     if verbose:
+#         print("Expl:")
+#         print("\tcnf:", len(C.clauses), C.nv)
+#         print("\tU:", len(U))
+#         print("\tf:", f)
+#         print("\tI0:", len(I0))
     
-    
+#     # check literals of I are all user vocabulary
+#     assert all(True if abs(lit) in U else False for lit in I0), f"Part of supplied literals not in U (user variables): {lits for lit in I if lit not in U}"
+
+#     # Initialise the sat solver with the cnf
+#     sat = Solver(bootstrap_with=C.clauses)
+
+#     # Explanation sequence
+#     E = []
+
+#     # Most precise intersection of all models of C project on U
+#     Iend = optimalPropagate(U=U, I=I0, sat=sat)
+
+#     # print(Iend)
+#     I = set(I0) # copy
+
+#     while(len(Iend - I) > 0):
+
+#         expl = minExplanation(f, I, C)
+
+#         Ibest = I & expl
+
+#         # New information derived "focused" on
+#         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
+#         assert len(Nbest - Iend) == 0
+
+#         I |= Nbest
+
+#     return E
 
 
 def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, matching_table=None):

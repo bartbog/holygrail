@@ -719,7 +719,7 @@ class OptHS(object):
             name="x")
 
         # at least the negated literald
-        pos_lit_expl = self.allLits.index(p)
+        # pos_lit_expl = self.allLits.index(p)
 
         # hack not even necessary
         # self.opt_model.addConstr(
@@ -759,63 +759,6 @@ class OptHS(object):
 
     def dispose(self):
         self.opt_model.dispose()
-
-
-def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_dirs=False):
-    """
-    A time profiler decorator.
-    Inspired by and modified the profile decorator of Giampaolo Rodola:
-
-    http://code.activestate.com/recipes/577817-profile-decorator/
-    src:
-
-    https://towardsdatascience.com/how-to-profile-your-code-in-python-e70c834fad89
-
-    Args:
-        output_file: str or None. Default is None
-            Path of the output file. If only name of the file is given, it's
-            saved in the current directory.
-            If it's None, the name of the decorated function is used.
-        sort_by: str or SortKey enum or tuple/list of str/SortKey enum
-            Sorting criteria for the Stats object.
-            For a list of valid string and SortKey refer to:
-            https://docs.python.org/3/library/profile.html#pstats.Stats.sort_stats
-        lines_to_print: int or None
-            Number of lines to print. Default (None) is for all the lines.
-            This is useful in reducing the size of the printout, especially
-            that sorting by 'cumulative', the time consuming operations
-            are printed toward the top of the file.
-        strip_dirs: bool
-            Whether to remove the leading path info from file names.
-            This is also useful in reducing the size of the printout
-    Returns:
-        Profile of the decorated function
-    """
-
-    def inner(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            _output_file = output_file or func.__name__ + '.prof'
-            pr = cProfile.Profile()
-            pr.enable()
-            retval = func(*args, **kwargs)
-            pr.disable()
-            pr.dump_stats(_output_file)
-
-            with open(_output_file, 'w') as f:
-                ps = pstats.Stats(pr, stream=f)
-                if strip_dirs:
-                    ps.strip_dirs()
-                if isinstance(sort_by, (tuple, list)):
-                    ps.sort_stats(*sort_by)
-                else:
-                    ps.sort_stats(sort_by)
-                ps.print_stats(lines_to_print)
-            return retval
-
-        return wrapper
-
-    return inner
 
 
 def optimalPropagate(sat, I=set(), U=None):
@@ -904,6 +847,17 @@ def print_expl(matching_table, Ibest):
             print("clues n°", matching_table['clues'][i])
         else:
             print("Fact:", i)
+
+
+def MUSexplain(C: CNF, U: set, f, I0: set, verbose=False):
+    if verbose:
+        print("Expl:")
+        print("\tcnf:", len(C.clauses), C.nv)
+        print("\tU:", len(U))
+        print("\tf:", f)
+        print("\tI0:", len(I0))
+    
+    
 
 
 def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, matching_table=None):

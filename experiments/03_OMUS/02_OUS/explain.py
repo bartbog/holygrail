@@ -1455,13 +1455,12 @@ def test_p12Puzzle(params):
 
 def test_PastaPuzzle(params):
     params.instance = "pasta"
-    o_clauses, o_assumptions, o_weights, o_user_vars, matching_table, true_facts, rels = pastaPuzzle()
+    o_clauses, o_assumptions, o_weights, o_user_vars, matching_table, rels = pastaPuzzle()
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost_puzzle(U, I, o_weights)
     prev = None
-    setTrueFacts = set({67, 50, 9, 70, 56, 14, 73, 59, 7, 80, 61, 4})
 
     dlit = {}
     for rel, relStr in zip(rels, ["chose", "paid", "ordered", "sauce_dollar", "sauce_pasta", "dollar_pasta"]):
@@ -1474,9 +1473,9 @@ def test_PastaPuzzle(params):
                 dlit[f"~{relStr.lower()}({r.lower()},{c.lower()})"] = -(rel.df.at[r, c].name + 1)
                 dlit[-(rel.df.at[r, c].name + 1)] = f"~{relStr.lower()}({r.lower()}, {c.lower()})."
                 # print(r,c, )
-    print(dlit)
+
     # print(dlit.values())
-    with Solver(bootstrap_with=o_clauses + o_assumptions+true_facts) as s:
+    with Solver(bootstrap_with=o_clauses + o_assumptions) as s:
         sat = s.solve()
         print(sat)
         for id, m in enumerate(s.enum_models()):
@@ -1508,20 +1507,11 @@ def test_PastaPuzzle(params):
             for lit in m :
                 if lit > 0 and lit in dlit:
                     print(dlit[lit])
-            if len(set(m).intersection(setTrueFacts)) == len(setTrueFacts):
-                print("solution:")
-                # angie puttanesca => 4
-                # angie 4 => 17
-                # puttanesca 4 => 61
-                # angie rotini => 36
-                # rotini 4 => 84
-                # rotini 8,12, 16
             if not prev is None:
                 print("diff", sorted(set(prev) - set(m), key=lambda l: abs(l)))
             #         print("prev is solution", prev)
             prev = m
 
-    return
     explain(C=o_cnf, U=U, f=f, I0=I, params=params, matching_table=matching_table, verbose=True)
 
 

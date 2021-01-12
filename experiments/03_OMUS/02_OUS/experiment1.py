@@ -22,8 +22,8 @@ HOURS = 60 * MINUTES
 TIMEOUT_EXP1 = 1 * HOURS
 
 
-def puzzleToExplain(execParams):
-    params, puzzleFun, puzzleName = execParams
+def puzzleToExplain(args):
+    params, puzzleFun, puzzleName = args
     params.instance = puzzleName
     o_clauses, o_assumptions, o_weights, o_user_vars, _ = puzzleFun()
     o_cnf = CNF(from_clauses=o_clauses)
@@ -132,10 +132,10 @@ def runPuzzle(problemName, taskspernode):
         "p20": frietkot.p20,
         "p93": frietkot.p93
     }
-    params = Experiment1Params()
-    p = multiprocessing.Pool(taskspernode)
     puzzleFunc = puzzle_funs[problemName]
-    p.map(puzzleFunc, params)
+    params = [(p, puzzleFunc, problemName) for p in Experiment1Params()]
+    p = multiprocessing.Pool(taskspernode)
+    p.map(puzzleToExplain, params)
 
 
 def jobExperiment1():

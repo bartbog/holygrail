@@ -17,9 +17,10 @@ from cppy.model_tools.to_cnf import *
 # Relation between 'rows' and 'cols', Boolean Variables in a pandas dataframe
 class Relation(object):
     # rows, cols: list of names
-    def __init__(self, rows, cols):
+    def __init__(self, rows, cols, name=""):
         self.cols = cols
         self.rows = rows
+        self.name = name
         rel = BoolVar((len(rows), len(cols)))
         self.df = pd.DataFrame(index=rows, columns=cols)
         for i,r in enumerate(rows):
@@ -30,7 +31,7 @@ class Relation(object):
         try:
             return self.df.loc[key]
         except KeyError:
-            print("Warning:",key,"not in this relation")
+            print(f"Warning: {self.name}{key} not in this relation")
             return False
 
 
@@ -159,7 +160,7 @@ def p93():
 
     # 0. Opal is connected to 64 LinkedIn connections
     # assumption_satisfied( 0  ) => connected_to(opal,64).
-    clues.append(implies(bv_clues[0], clause))
+    clues.append(implies(bv_clues[0], connected_to["opal","64"]))
 
     # 1. The person followed by 809 Twitter followers, the person with 140 facebook friends and the person connected to 78 linkedin connections are three different people
     # assumption_satisfied( 0  ) => ?a [person] b [person] c [person]: ~ (a = b) & ~ (a = c) & ~ (b = c) & followed_by(a,809) & with(b,140) & connected_to(c,78).
@@ -237,7 +238,7 @@ def p93():
             followed_by[n,"715"] & (n == m)
             for n in person
         )
-        c9a.append(person_facebook_friend[m,130] & ("arnold" == m | subformula))
+        c9a.append(person_facebook_friend[m,"130"] & (("arnold" == m) | subformula))
 
     for clause in to_cnf(any(c9a)):
         clues.append(implies(bv_clues[9], clause))
@@ -308,6 +309,7 @@ def p93():
     }
 
     return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+
 
 def p20():
     month = ["1", "2", "3", "4", "5"]
@@ -395,17 +397,20 @@ def p20():
     c0a = []
     for q in home:
         subformula = any(
-
+            haunted_by[r,"brunhilde"]
+            for r in home if r == q
         )
+        c0a.append(  investigated_in[q,"4"] & (("markmanor" == q) | subformula ))
+
     for clause in to_cnf(any(c0a)):
         clues.append(implies(bv_clues[0], clause))
 
-    # 1. Hughenden wasn't investigated in march
-    # assumption_satisfied( 0  ) => ~ investigated_in(hughenden,3).
-    clues.append(implies(bv_clues[1], clause))
+    # # 1. Hughenden wasn't investigated in march
+    # # assumption_satisfied( 0  ) => ~ investigated_in(hughenden,3).
+    clues.append(implies(bv_clues[1],  ~ investigated_in["hughenden","3"]))
 
-    # 2. The home on Circle Drive was investigated sometime before Wolfenden
-    # assumption_satisfied( 0  ) => ?a [home] b [type3] c [month] d [month]: on(a,circle_drive) & b>0 & investigated_in(wolfenden,c) & d = c-b & investigated_in(a,d).
+    # # 2. The home on Circle Drive was investigated sometime before Wolfenden
+    # # assumption_satisfied( 0  ) => ?a [home] b [type3] c [month] d [month]: on(a,circle_drive) & b>0 & investigated_in(wolfenden,c) & d = c-b & investigated_in(a,d).
     c2a = []
     for a in home:
         for b in type3:
@@ -417,21 +422,21 @@ def p20():
     for clause in to_cnf(any(c2a)):
         clues.append(implies(bv_clues[2], clause))
 
-    # 3. Of the building haunted by Lady Grey and the building haunted by Victor, one was Markmanor and the other was visited in January
-    # assumption_satisfied( 0  ) => ?e [home] f [home]: haunted_by(e,lady_grey) & haunted_by(f,victor) & ~ (e = f) & (markmanor = e & investigated_in(f,1) | markmanor = f & investigated_in(e,1)).
+    # # 3. Of the building haunted by Lady Grey and the building haunted by Victor, one was Markmanor and the other was visited in January
+    # # assumption_satisfied( 0  ) => ?e [home] f [home]: haunted_by(e,lady_grey) & haunted_by(f,victor) & ~ (e = f) & (markmanor = e & investigated_in(f,1) | markmanor = f & investigated_in(e,1)).
     c3a = []
     for e in home:
         for f in home:
             if not (e == f):
                 c3a.append(
-                    haunted_by[e,"lady_grey"] & haunted_by[f,"victor"] & ((("markmanor" == e) & investigated_in[f,"1"]) | (("markmanor" == f) & investigated_in[e,1]))
+                    haunted_by[e,"lady_grey"] & haunted_by[f,"victor"] & ((("markmanor" == e) & investigated_in[f,"1"]) | (("markmanor" == f) & investigated_in[e,"1"]))
                 )
 
     for clause in to_cnf(any(c3a)):
         clues.append(implies(bv_clues[3], clause))
 
-    # 4. The house haunted by Victor was visited 1 month after the house haunted by Lady Grey
-    # assumption_satisfied( 0  ) => ?g [home] h [month] i [home] j [month]: haunted_by(g,victor) & haunted_by(i,lady_grey) & investigated_in(i,h) & j = h+1 & investigated_in(g,j).
+    # # 4. The house haunted by Victor was visited 1 month after the house haunted by Lady Grey
+    # # assumption_satisfied( 0  ) => ?g [home] h [month] i [home] j [month]: haunted_by(g,victor) & haunted_by(i,lady_grey) & investigated_in(i,h) & j = h+1 & investigated_in(g,j).
     c4a = []
     for g in home:
         for h in month:
@@ -445,30 +450,30 @@ def p20():
     for clause in to_cnf(any(c4a)):
         clues.append(implies(bv_clues[4], clause))
 
-    # 5. Of the home on Bird Road and Barnhill, one was visited in January and the other was haunted by Brunhilde
-    # assumption_satisfied( 0  ) => ?k [home]: on(k,bird_road) & ~ (k = barnhill) & (investigated_in(k,1) & haunted_by(barnhill,brunhilde) | investigated_in(barnhill,1) & haunted_by(k,brunhilde)).
+    # # 5. Of the home on Bird Road and Barnhill, one was visited in January and the other was haunted by Brunhilde
+    # # assumption_satisfied( 0  ) => ?k [home]: on(k,bird_road) & ~ (k = barnhill) & (investigated_in(k,1) & haunted_by(barnhill,brunhilde) | investigated_in(barnhill,1) & haunted_by(k,brunhilde)).
     c5a = []
     for k in home:
         if not k == "barnhill":
-            c5a.append(on[k,"bird_road"] & (investigated_in[k,"1"] & haunted_by["barnhill","brunhilde"] | investigated_in["barnhill","1"] & haunted_by[k,"brunhilde"]))
+            c5a.append(on[k,"bird_road"] & ((investigated_in[k,"1"] & haunted_by["barnhill","brunhilde"]) | (investigated_in["barnhill","1"] & haunted_by[k,"brunhilde"])))
     
     for clause in to_cnf(any(c5a)):
         clues.append(implies(bv_clues[5], clause))
 
-    # 6. Markmanor was visited 1 month after the home on Grant Place
-    # assumption_satisfied( 0  ) => ?l [month] m [home] n [month]: on(m,grant_place) & investigated_in(m,l) & n = l+1 & investigated_in(markmanor,n).
+    # # 6. Markmanor was visited 1 month after the home on Grant Place
+    # # assumption_satisfied( 0  ) => ?l [month] m [home] n [month]: on(m,grant_place) & investigated_in(m,l) & n = l+1 & investigated_in(markmanor,n).
     c6a = []
     for l in month:
         for m in home:
-            for m in month:
+            for n in month:
                 if int(n) == int(l) + 1:
                     c6a.append(on[m,"grant_place"] & investigated_in[m,l] & investigated_in["markmanor",n])
     
     for clause in to_cnf(any(c6a)):
         clues.append(implies(bv_clues[6], clause))
 
-    # 7. The house visited in march wasn't located on Circle Drive
-    # assumption_satisfied( 0  ) => ?o [home]: investigated_in(o,3) & ~ on(o,circle_drive).
+    # # 7. The house visited in march wasn't located on Circle Drive
+    # # assumption_satisfied( 0  ) => ?o [home]: investigated_in(o,3) & ~ on(o,circle_drive).
     c7a = []
     for o in home:
         c7a.append(investigated_in[o,"3"] & ~ on[o,"circle_drive"])
@@ -476,15 +481,15 @@ def p20():
     for clause in to_cnf(any(c7a)):
         clues.append(implies(bv_clues[7], clause))
 
-    # 8. Hughenden wasn't haunted by Abigail
-    # assumption_satisfied( 0  ) => ~ haunted_by(hughenden,abigail).
+    # # 8. Hughenden wasn't haunted by Abigail
+    # # assumption_satisfied( 0  ) => ~ haunted_by(hughenden,abigail).
     clues.append(implies(bv_clues[8], ~ haunted_by["hughenden","abigail"]))
 
-    # 9. Wolfenden was haunted by Brunhilde
-    # assumption_satisfied( 0  ) => haunted_by(wolfenden,brunhilde).
+    # # 9. Wolfenden was haunted by Brunhilde
+    # # assumption_satisfied( 0  ) => haunted_by(wolfenden,brunhilde).
     clues.append(implies(bv_clues[9], haunted_by["wolfenden","brunhilde"]))
 
-    # 10. The building visited in May wasn't located on Fifth Avenue
+    # # 10. The building visited in May wasn't located on Fifth Avenue
     # assumption_satisfied( 0  ) => ?p [home]: investigated_in(p,5) & ~ on(p,fifth_avenue).
     c10a = []
     for p in home:
@@ -549,8 +554,358 @@ def p20():
     return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
 
 
+def p19():
+    year = ["21", "30", "42", "47", "58"]
+    orbital_period = ["orbital_period_1", "orbital_period_2", "orbital_period_3", "orbital_period_4", "orbital_period_5"]
+    comet = ["the_other_comet", "gostroma", "trosny", "casputi", "sporrin"]
+    type1 = ["the_other_type1", "whitaker", "tillman", "underwood", "parks"]
+    cycle = ["2008", "2009", "2010", "2011", "2012"]
+
+    types = [year, orbital_period, comet, type1, cycle]
+    n = len(types)
+    m = len(types[0])
+    assert all(len(types[i]) == m for i in range(n)), "all types should have equal length"
+
+    of = Relation(orbital_period, year, "of")
+    has = Relation(comet, orbital_period, "has")
+    discovered_by = Relation(comet, type1, "discovered_by")
+    discovered_in = Relation(comet, cycle, "discoverd_in")
+    is_linked_with_1 = Relation(year, comet, "is_linked_with_1")
+    is_linked_with_2 = Relation(year, type1, "is_linked_with_2")
+    is_linked_with_3 = Relation(year, cycle, "is_linked_with_3")
+    is_linked_with_4 = Relation(orbital_period, type1, "is_linked_with_4")
+    is_linked_with_5 = Relation(orbital_period, cycle, "is_linked_with_5")
+    is_linked_with_6 = Relation(type1, cycle, "is_linked_with_6")
+
+    rels = [of,
+            has,
+            discovered_by,
+            discovered_in,
+            is_linked_with_1,
+            is_linked_with_2,
+            is_linked_with_3,
+            is_linked_with_4,
+            is_linked_with_5,
+            is_linked_with_6
+    ]
+
+    relStrs = [
+        "of",
+        "has",
+        "discovered_by",
+        "discovered_in",
+        "is_linked_with_1",
+        "is_linked_with_2",
+        "is_linked_with_3",
+        "is_linked_with_4",
+        "is_linked_with_5",
+        "is_linked_with_6"
+    ]
+
+    # Bijectivity
+    bij, bv_bij = buildBijectivity(rels)
+
+    # Transitivity
+    trans = []
+    bv_trans =  [BoolVar() for i in range(27)]
+
+    for x in orbital_period:
+        for y in year:
+            for z in type1:
+                t0 = to_cnf(implies(is_linked_with_4[x, z] & is_linked_with_2[y, z], of[x, y]))
+                [trans.append(implies(bv_trans[0], clause)) for clause in t0]
+
+                t1 = to_cnf(implies(~is_linked_with_4[x, z] & is_linked_with_2[y, z], ~of[x, y]))
+                [trans.append(implies(bv_trans[1], clause)) for clause in t1]
+
+                t2 = to_cnf(implies(is_linked_with_4[x, z] & ~is_linked_with_2[y, z], ~of[x, y]))
+                [trans.append(implies(bv_trans[2], clause)) for clause in t2]
+
+    for x in orbital_period:
+        for y in year:
+            for z in cycle:
+                t3 = to_cnf(implies(is_linked_with_5[x, z] & is_linked_with_3[y, z], of[x, y]))
+                [trans.append(implies(bv_trans[3], clause)) for clause in t3]
+
+                t4 = to_cnf(implies(~is_linked_with_5[x, z] & is_linked_with_3[y, z], ~of[x, y]))
+                [trans.append(implies(bv_trans[4], clause)) for clause in t4]
+
+                t5 = to_cnf(implies(is_linked_with_5[x, z] & ~is_linked_with_3[y, z], ~of[x, y]))
+                [trans.append(implies(bv_trans[5], clause)) for clause in t5]
+
+    for x in comet:
+        for y in orbital_period:
+            for z in type1:
+                t6 = to_cnf(implies(discovered_by[x, z] & is_linked_with_4[y, z], has[x, y]))
+                [trans.append(implies(bv_trans[6], clause)) for clause in t6]
+
+                t7 = to_cnf(implies(~discovered_by[x, z] & is_linked_with_4[y, z], ~has[x, y]))
+                [trans.append(implies(bv_trans[7], clause)) for clause in t7]
+
+                t8 = to_cnf(implies(discovered_by[x, z] & ~is_linked_with_4[y, z], ~has[x, y]))
+                [trans.append(implies(bv_trans[8], clause)) for clause in t8]
+
+    for x in comet:
+        for y in orbital_period:
+            for z in cycle:
+                t9 = to_cnf(implies(discovered_in[x, z] & is_linked_with_5[y, z], has[x, y]))
+                [trans.append(implies(bv_trans[9], clause)) for clause in t9]
+
+                t10 = to_cnf(implies(~discovered_in[x, z] & is_linked_with_5[y, z], ~has[x, y]))
+                [trans.append(implies(bv_trans[10], clause)) for clause in t10]
+
+                t11 = to_cnf(implies(discovered_in[x, z] & ~is_linked_with_5[y, z], ~has[x, y]))
+                [trans.append(implies(bv_trans[11], clause)) for clause in t11]
+    
+    for x in comet:
+        for y in type1:
+            for z in cycle:
+                t12 = to_cnf(implies(discovered_in[x, z] & is_linked_with_6[y, z], discovered_by[x, y]))
+                [trans.append(implies(bv_trans[12], clause)) for clause in t12]
+
+                t13 = to_cnf(implies(~discovered_in[x, z] & is_linked_with_6[y, z], ~discovered_by[x, y]))
+                [trans.append(implies(bv_trans[13], clause)) for clause in t13]
+
+                t14 = to_cnf(implies(discovered_in[x, z] & ~is_linked_with_6[y, z], ~discovered_by[x, y]))
+                [trans.append(implies(bv_trans[14], clause)) for clause in t14]
+
+    for x in comet:
+        for y in type1:
+            for z in year:
+                t15 = to_cnf(implies(is_linked_with_1[z, x] & is_linked_with_2[z, y], discovered_by[x, y]))
+                [trans.append(implies(bv_trans[15], clause)) for clause in t15]
+
+                t16 = to_cnf(implies(~is_linked_with_1[z, x] & is_linked_with_2[z, y], ~discovered_by[x, y]))
+                [trans.append(implies(bv_trans[16], clause)) for clause in t16]
+
+                t17 = to_cnf(implies(is_linked_with_1[z, x] & ~is_linked_with_2[z, y], ~discovered_by[x, y]))
+                [trans.append(implies(bv_trans[17], clause)) for clause in t17]
+
+    for x in comet:
+        for y in cycle:
+            for z in year:
+                t18 = to_cnf(implies(is_linked_with_1[z, x] & is_linked_with_3[z, y], discovered_in[x, y]))
+                [trans.append(implies(bv_trans[18], clause)) for clause in t18]
+
+                t19 = to_cnf(implies(~is_linked_with_1[z, x] & is_linked_with_3[z, y], ~discovered_in[x, y]))
+                [trans.append(implies(bv_trans[19], clause)) for clause in t19]
+
+                t20 = to_cnf(implies(is_linked_with_1[z, x] & ~is_linked_with_3[z, y], ~discovered_in[x, y]))
+                [trans.append(implies(bv_trans[20], clause)) for clause in t20]
+
+    for x in year:
+        for y in type1:
+            for z in cycle:
+                t21 = to_cnf(implies(is_linked_with_3[x, z] & is_linked_with_6[y, z], is_linked_with_2[x, y]))
+                [trans.append(implies(bv_trans[21], clause)) for clause in t21]
+
+                t22 = to_cnf(implies(~is_linked_with_3[x, z] & is_linked_with_6[y, z], ~is_linked_with_2[x, y]))
+                [trans.append(implies(bv_trans[22], clause)) for clause in t22]
+
+                t23 = to_cnf(implies(is_linked_with_3[x, z] & ~is_linked_with_6[y, z], ~is_linked_with_2[x, y]))
+                [trans.append(implies(bv_trans[23], clause)) for clause in t23]
+
+    for x in orbital_period:
+        for y in type1:
+            for z in cycle:
+                t24 = to_cnf(implies(is_linked_with_5[x, z] & is_linked_with_6[y, z], is_linked_with_4[x, y]))
+                [trans.append(implies(bv_trans[24], clause)) for clause in t24]
+
+                t25 = to_cnf(implies(~is_linked_with_5[x, z] & is_linked_with_6[y, z], ~is_linked_with_4[x, y]))
+                [trans.append(implies(bv_trans[25], clause)) for clause in t25]
+
+                t26 = to_cnf(implies(is_linked_with_5[x, z] & ~is_linked_with_6[y, z], ~is_linked_with_4[x, y]))
+                [trans.append(implies(bv_trans[26], clause)) for clause in t26]
+
+    # clues
+    clues = []
+    bv_clues = [BoolVar() for i in range(11)]
+
+    # 0. The comet discovered by Whitaker doesn't have an orbital period of 30 years
+    # assumption_satisfied( 0  ) => ?a [comet]: discovered_by(a,whitaker) & ~ (?b [orbital_period]: of(b,30) & has(a,b)).
+    c0a = []
+    for a in comet:
+        subformula0 = any(
+            of[b,"30"] & has[a,b]
+            for b in orbital_period
+        )
+        c0a.append(discovered_by[a,"whitaker"] & ~ subformula0)
+
+    for cl in to_cnf(any(c0a)):
+        clues.append(implies(bv_clues[0], cl))
+
+    # 1. Gostroma was discovered 1 cycle after the comet discovered by Tillman
+    # assumption_satisfied( 0  ) => ?c [cycle] d [comet] e [cycle]: discovered_by(d,tillman) & discovered_in(d,c) & e = c+1 & discovered_in(gostroma,e).
+    c1a = []
+    for c in cycle:
+        for d in comet:
+            for e in cycle:
+                if int(e) ==  int(c) + 1:
+                    c1a.append(discovered_by[d,"tillman"] & discovered_in[d,c] & discovered_in["gostroma",e])
+
+    for cl in to_cnf(any(c1a)):
+        clues.append(implies(bv_clues[1], cl))
+
+    # 2. Of the comet discovered by Underwood and the comet with an orbital period of 42 years, one was found in 2009 and the other is Trosny
+    # assumption_satisfied( 0  ) => ?f [comet] g [comet] h [orbital_period]: discovered_by(f,underwood) & of(h,42) & has(g,h) & ~ (f = g) & (discovered_in(f,2009) & trosny = g | discovered_in(g,2009) & trosny = f).
+    c2a = []
+    for f in comet:
+        for g in comet:
+            for h in orbital_period:
+                if not (f == g):
+                    c2a.append(
+                        discovered_by[f,"underwood"] & of[h,"42"] & has[g,h] & ((discovered_in[f,"2009"] & ("trosny" == g)) | (discovered_in[g,"2009"] & ("trosny" == f)))
+                    )
+
+    for cl in to_cnf(any(c2a)):
+        clues.append(implies(bv_clues[2], cl))
+
+    # 3. The comet with an orbital period of 21 years is either the comet discovered by Whitaker or Casputi
+    # assumption_satisfied( 0  ) => ?i [comet] j [orbital_period]: of(j,21) & has(i,j) & ((?k [comet]: discovered_by(k,whitaker) & k = i) | casputi = i).
+    c3a = []
+    for i in comet:
+        for j in orbital_period:
+            subformula3a = any(
+                discovered_by[k,"whitaker"]
+                for k in comet if k == i
+            )
+            c3a.append(
+                of[j,"21"] & has[i,j] & ( subformula3a | ("casputi" == i))
+            )
+
+    for cl in to_cnf(any(c3a)):
+        clues.append(implies(bv_clues[3], cl))
+
+    # 4. The comet discovered in 2010 doesn't have an orbital period of 21 years
+    # assumption_satisfied( 0  ) => ?l [comet]: discovered_in(l,2010) & ~ (?m [orbital_period]: of(m,21) & has(l,m)).
+    c4a = []
+    for l in comet:
+        subformula4a = any(
+            of[m,"21"] & has[l,m]
+            for m in orbital_period
+        )
+        c4a.append(discovered_in[l,"2010"] & (~subformula4a))
+
+    for cl in to_cnf(any(c4a)):
+        clues.append(implies(bv_clues[4], cl))
+
+    # 5. The comet discovered by Tillman, the comet discovered in 2011 and Casputi are three different comets
+    # assumption_satisfied( 0  ) => ?n [comet] o [comet]: ~ (n = o) & ~ (n = casputi) & ~ (o = casputi) & discovered_by(n,tillman) & discovered_in(o,2011).
+    c5a = []
+    for n in comet:
+        for o in comet:
+            if (not (n == o)) and (not (n == "casputi")) and (not (o == "casputi")):
+                c5a.append(discovered_by[n,"tillman"] & discovered_in[o,"2011"])
+
+    for cl in to_cnf(any(c5a)):
+        clues.append(implies(bv_clues[5], cl))
+
+    # 6. Sporrin wasn't found in 2010
+    # assumption_satisfied( 0  ) => ~ discovered_in(sporrin,2010).
+    clues.append(implies(bv_clues[6], ~ discovered_in["sporrin","2010"]))
+
+    # 7. Whitaker's comet was discovered in 2010
+    # assumption_satisfied( 0  ) => ?p [comet]: discovered_in(p,2010) & discovered_by(p,whitaker).
+    c7a = []
+    for p in comet:
+        c7a.append(discovered_in[p,"2010"] & discovered_by[p,"whitaker"])
+
+    for cl in to_cnf(any(c7a)):
+        clues.append(implies(bv_clues[7], cl))
+    # 8. The comet discovered by Parks was discovered 1 cycle before Whitaker's comet
+    # assumption_satisfied( 0  ) => ?q [comet] r [cycle] s [comet] t [cycle]: discovered_by(q,parks) & discovered_in(s,r) & discovered_by(s,whitaker) & t = r-1 & discovered_in(q,t).
+    c8a = []
+    for q in comet:
+        for r in cycle:
+            for s in comet:
+                for t in cycle:
+                    if int(t) == int(r) - 1:
+                        c8a.append(discovered_by[q,"parks"] & discovered_in[s,r] & discovered_by[s,"whitaker"]& discovered_in[q,t])
+
+    for cl in to_cnf(any(c8a)):
+        clues.append(implies(bv_clues[8], cl))
+
+    # 9. The comet discovered in 2011 doesn't have an orbital period of 47 years
+    # assumption_satisfied( 0  ) => ?u [comet]: discovered_in(u,2011) & ~ (?v [orbital_period]: of(v,47) & has(u,v)).
+    c9a = []
+    for u in comet:
+        subformula9 = any(
+            of[v, "47"] & has[u,v]
+            for v in orbital_period
+        )
+        c9a.append(discovered_in[u,"2011"] & ~subformula9)
+
+    for cl in to_cnf(any(c9a)):
+        clues.append(implies(bv_clues[9], cl))
+
+    # 10. The comet discovered by Underwood has an orbital period of either 47 or 58 years
+    # assumption_satisfied( 0  ) => ?w [comet] x [orbital_period]: discovered_by(w,underwood) & (of(x,47) | of(x,58)) & has(w,x).
+    c10a = []
+    for w in comet:
+        for x in orbital_period:
+            c10a.append(discovered_by[w,"underwood"] & (of[x,"47"] | of[x,"58"]) & has[w,x])
+
+    for cl in to_cnf(any(c10a)):
+        clues.append(implies(bv_clues[10], cl))
+
+    clueTexts = [
+        "The comet discovered by Whitaker doesn't have an orbital period of 30 years",
+        "Gostroma was discovered 1 cycle after the comet discovered by Tillman",
+        "Of the comet discovered by Underwood and the comet with an orbital period of 42 years, one was found in 2009 and the other is Trosny",
+        "The comet with an orbital period of 21 years is either the comet discovered by Whitaker or Casputi",
+        "The comet discovered in 2010 doesn't have an orbital period of 21 years",
+        "The comet discovered by Tillman, the comet discovered in 2011 and Casputi are three different comets",
+        "Sporrin wasn't found in 2010",
+        "Whitaker's comet was discovered in 2010",
+        "The comet discovered by Parks was discovered 1 cycle before Whitaker's comet",
+        "The comet discovered in 2011 doesn't have an orbital period of 47 years",
+        "The comet discovered by Underwood has an orbital period of either 47 or 58 years"
+    ]
+
+    clues_cnf = cnf_to_pysat(to_cnf(clues))
+    bij_cnf = cnf_to_pysat(to_cnf(bij))
+    trans_cnf = cnf_to_pysat(to_cnf(trans))
+
+    hard_clauses = [c for c in clues_cnf + bij_cnf + trans_cnf]
+    soft_clauses = []
+    soft_clauses += [[bv1.name + 1] for bv1 in bv_clues]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_bij]
+    soft_clauses += [[bv1.name + 1]  for bv1 in bv_trans]
+
+    weights = {}
+    weights.update({bv.name + 1: 100 for bv in bv_clues})
+    weights.update({bv.name + 1: 60 for bv in bv_trans})
+    weights.update({bv.name + 1: 60 for bv in bv_bij})
+
+    explainable_facts = set()
+    bvRels = {}
+    for rel, relStr in zip(rels, relStrs):
+        rowNames = list(rel.df.index)
+        columnNames = list(rel.df.columns)
+
+        # production of explanations json file
+        for r in rowNames:
+            for c in columnNames:
+                bvRels[rel.df.at[r, c].name + 1] = {"pred" : relStr.lower(), "subject" : r.lower(), "object": c.lower()}
+
+        # facts to explain
+        for item in rel.df.values:
+            explainable_facts |= set(i.name+1 for i in item)
+
+    matching_table = {
+        'bvRel': bvRels,
+        'Transitivity constraint': [bv.name + 1 for bv in bv_trans],
+        'Bijectivity': [bv.name + 1 for bv in bv_bij],
+        'clues' : {
+            bv.name + 1: clueTexts[i] for i, bv in enumerate(bv_clues)
+        }
+    }
+
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+
+
 def p25():
-    month = ["3", "4", "5", "6", "7"] 
+    month = ["3", "4", "5", "6", "7"]
     application = ["the_other_application", "flowcarts", "vitalinks", "bubble_boms", "angry_ants"]
     type1 = ["the_other_type1", "vortia", "apptastic", "gadingo", "digibits"]
     download = ["2300000", "4200000", "5500000", "6800000", "8900000"]
@@ -628,96 +983,96 @@ def p25():
     clues = []
     bv_clues = [BoolVar() for i in range(8)]
 
-    #0. The game released in July is either the game with 6800000 downloads or the app released by Gadingo
-    # assumption_satisfied( 0  ) => ?n [application]: released_in(n,7) & ((?o [application]: with(o,6800000) & o = n) | (?p [application]: made_by(p,gadingo) & p = n)).
+    # .Of Flowcarts and the application with 5500000 downloads, one was made by Vortia and the other was released in May
+    # assumption_satisfied( 0  ) => ?a [application]: with(a,5500000) & ~ (flowcarts = a) & (made_by(flowcarts,vortia) & released_in(a,5) | made_by(a,vortia) & released_in(flowcarts,5)).
     c0a = []
-    for n in application:
-        subformula01 = any(
-            application_download[o,"6800000"]
-            for o in application if o == n
-        )
-        subformula02 = any(
-            made_by[p,"gadingo"]
-            for p in application if p == n
-        )
-        c0a.append(released_in[n,"7"] & (subformula01 | subformula02))
-
-    for clause in to_cnf(any(c0a)):
-        clues.append(implies(bv_clues[0], clause))
-    #1. Of Flowcarts and the application with 5500000 downloads, one was made by Vortia and the other was released in May
-    # assumption_satisfied( 0  ) => ?a [application]: application_download(a,5500000) & ~ (flowcarts = a) & (made_by(flowcarts,vortia) & released_in(a,5) | made_by(a,vortia) & released_in(flowcarts,5)).
-    c1a = []
     for a in application:
         if not ("flowcarts" == a):
-            c1a.append(
-                application_download[a,"5500000"]  & (made_by["flowcarts","vortia"] & released_in[a,"5"] | made_by[a,"vortia"] & released_in["flowcarts","5"])
-            )
+            c0a.append(application_download[a,"5500000"] & ((made_by["flowcarts","vortia"] & released_in[a,"5"]) | (made_by[a,"vortia"] & released_in["flowcarts","5"])))
 
-    for clause in to_cnf(any(c1a)):
-        clues.append(implies(bv_clues[1], clause))
-    #2. The app released in July, the app developed by Apptastic and Vitalinks are three different games
+    for cl in to_cnf(any(c0a)):
+        clues.append(implies(bv_clues[0], cl))
+
+    # .The app released in July, the app developed by Apptastic and Vitalinks are three different games
     # assumption_satisfied( 0  ) => ?b [application] c [application]: ~ (b = c) & ~ (b = vitalinks) & ~ (c = vitalinks) & released_in(b,7) & made_by(c,apptastic).
-    c2a = []
+    c1a = []
     for b in application:
         for c in application:
-            if not (b == c) and not (b == "vitalinks") and not (c == "vitalinks"):
-                c2a.append(released_in[b,7] & made_by[c,"apptastic"])
+            if (not (b == c)) and (not (b == "vitalinks")) and (not(c == "vitalinks")):
+                c1a.append(released_in[b,"7"] & made_by[c,"apptastic"])
+    
+    for cl in to_cnf(any(c1a)):
+        clues.append(implies(bv_clues[1], cl))
 
-    for clause in to_cnf(any(c2a)):
-        clues.append(implies(bv_clues[2], clause))
-    #3. Neither the game released by Gadingo nor the apptastic app has 2300000 downloads
-    # assumption_satisfied( 0  ) => ~ (?d [application]: made_by(d,gadingo) & application_download(d,2300000)) & ~ (?e [application]: application_download(e,2300000) & made_by(e,apptastic)).
-    formule31 = any(
-        made_by[d,"gadingo"] & application_download[d,"2300000"]
-        for d in application
-    )
+    # .Neither the game released by Gadingo nor the apptastic app has 2300000 downloads
+    # assumption_satisfied( 0  ) => ~ (?d [application]: made_by(d,gadingo) & with(d,2300000)) & ~ (?e [application]: with(e,2300000) & made_by(e,apptastic)).
+    c2a = []
+    for d in application:
+        subformula = any(
+            application_download[e, "2300000"]  & made_by[e,"apptastic"]
+            for e in application
+        )
+        c2a.append(made_by[d,"gadingo"] & application_download[d,"2300000"] & ~ subformula)
 
-    formule32 = any(
-        application_download[e,"2300000"] & made_by[e,"apptastic"]
-        for e in application
-    )
+    for cl in to_cnf(any(c2a)):
+        clues.append(implies(bv_clues[2], cl))
 
-    for clause in to_cnf((~ formule31) | (~ formule32)):
-        clues.append(implies(bv_clues[3], clause))
-
-    #4. The five apps are Bubble Boms, the app released in April, the app released in July, the application released by Apptastic and the app released by Digibits
+    # .The five apps are Bubble Boms, the app released in April, the app released in July, the application released by Apptastic and the app released by Digibits
     # assumption_satisfied( 0  ) => ?f [application] g [application] h [application] i [application]: ~ (bubble_boms = f) & ~ (bubble_boms = g) & ~ (bubble_boms = h) & ~ (bubble_boms = i) & ~ (f = g) & ~ (f = h) & ~ (f = i) & ~ (g = h) & ~ (g = i) & ~ (h = i) & released_in(f,4) & released_in(g,7) & made_by(h,apptastic) & made_by(i,digibits).
-    c4a = []
+    c3a = []
     for f in application:
         for g in application:
             for h in application:
                 for i in application:
-                    if not ("bubble_boms" == f) and not ("bubble_boms" == g) and not ("bubble_boms" == h) and not ("bubble_boms" == i) and \
-                        not (f ==g) and not (f==h) and not (f == i) and not (g == h)  and not (g == i) and not (h == i):
-                        c4a.append(
+                    if (not ("bubble_boms" == f)) and (not("bubble_boms" == g)) and  (not("bubble_boms" == h)) and (not("bubble_boms" == i)) and (not(f == g)) and (not (f == h)) and (not (f == i)) and (not (g == h)) and (not (g == i)) and (not (h == i)):
+                        c3a.append(
                             released_in[f,"4"] & released_in[g,"7"] & made_by[h,"apptastic"] & made_by[i,"digibits"]
                         )
+    for cl in to_cnf(any(c3a)):
+        clues.append(implies(bv_clues[3], cl))
 
-    for clause in to_cnf(any(c4a)):
-        clues.append(implies(bv_clues[4], clause))
-    #5. Vortia's app came out in march
+    # .Vortia's app came out in march
     # assumption_satisfied( 0  ) => ?j [application]: released_in(j,3) & made_by(j,vortia).
-    c5a = []
+    c4a = []
     for j in application:
-        c5a.append(released_in[j,"3"] & made_by[j,"vortia"])
+        c4a.append(released_in[j,"3"] & made_by[j,"vortia"])
+    
+    for cl in to_cnf(any(c4a)):
+        clues.append(implies(bv_clues[4], cl))
 
-    for clause in to_cnf(any(c5a)):
-        clues.append(implies(bv_clues[5], clause))
-    #6. Angry Ants was released 2 months earlier than the app with 6800000 downloads
+    # .Angry Ants was released 2 months earlier than the app with 6800000 downloads
     # assumption_satisfied( 0  ) => ?k [month] l [application] m [month]: with(l,6800000) & released_in(l,k) & m = k-2 & released_in(angry_ants,m).
-    c6a = []
+    c5a = []
     for k in month:
         for l in application:
             for m in month:
-                if int(m) == int(k)-2:
-                    c6a.append(application_download[l,"6800000"] & released_in[l,k] & released_in["angry_ants",m])
+                if int(m) == int(k) - 2:
+                    c5a.append(
+                        application_download[l,"6800000"] & released_in[l,k] & released_in["angry_ants",m]
+                    )
+    for cl in to_cnf(any(c5a)):
+        clues.append(implies(bv_clues[5], cl))
 
-    for clause in to_cnf(any(c6a)):
-        clues.append(implies(bv_clues[6], clause))
-
-    #7. Flowcarts doesn't have 4200000 downloads
+    # .Flowcarts doesn't have 4200000 downloads
     # assumption_satisfied( 0  ) => ~ with(flowcarts,4200000).
-    clues.append(implies(bv_clues[7], ~ application_download["flowcarts","4200000"]))
+    clues.append(implies(bv_clues[6], ~application_download["flowcarts","4200000"]))
+
+    # .The game released in July is either the game with 6800000 downloads or the app released by Gadingo
+    # assumption_satisfied( 0  ) => ?n [application]: released_in(n,7) & ((?o [application]: with(o,6800000) & o = n) | (?p [application]: made_by(p,gadingo) & p = n)).
+    c7a = []
+    for n in application:
+        subformula1=any(
+            application_download[o, "6800000"]
+            for o in application if o == n
+        )
+        subformula2=any(
+            made_by[p,"gadingo"]
+            for p in application if p == n
+        )
+        c7a.append(released_in[n,"7"] & (subformula1 | subformula2))
+
+    for cl in to_cnf(any(c7a)):
+        clues.append(implies(bv_clues[7], cl))
 
     clueTexts = [
         "Of Flowcarts and the application with 5500000 downloads, one was made by Vortia and the other was released in May",
@@ -854,8 +1209,8 @@ def p18():
     # assumption_satisfied( 0  ) => person_type1(al_allen,glendale).
     clues.append(implies(bv_clues[0], person_type1["al_allen","glendale"]))
 
-    # 1. Kelly Kirby finished 1000 votes ahead of the person who acts as the academic
-    # assumption_satisfied( 0  ) => ?a [vote] b [person] c [vote]: acts_as(b,academic) & finished_with(b,a) & c = a+1000 & finished_with(kelly_kirby,c).
+    # # 1. Kelly Kirby finished 1000 votes ahead of the person who acts as the academic
+    # # assumption_satisfied( 0  ) => ?a [vote] b [person] c [vote]: acts_as(b,academic) & finished_with(b,a) & c = a+1000 & finished_with(kelly_kirby,c).
     c1a = []
     for a in vote:
         for b in person:
@@ -865,8 +1220,8 @@ def p18():
 
     for cl in to_cnf(any(c1a)):
         clues.append(implies(bv_clues[1], cl))
-    # 2.The academic received 500 votes less than the teacher
-    # assumption_satisfied( 0  ) => ?d [vote] e [vote]: received(teacher,d) & e = d-500 & received(academic,e).
+    # # 2.The academic received 500 votes less than the teacher
+    # # assumption_satisfied( 0  ) => ?d [vote] e [vote]: received(teacher,d) & e = d-500 & received(academic,e).
     c2a = []
     for d in vote:
         for e in vote:
@@ -876,11 +1231,12 @@ def p18():
     for cl in to_cnf(any(c2a)):
         clues.append(implies(bv_clues[2], cl))
 
-    # 3. The candidate who received 10500 votes isn't the writer
-    # assumption_satisfied( 0  ) => ?f [candidate]: received(f,10500) & ~ (writer = f).
+    # # 3. The candidate who received 10500 votes isn't the writer
+    # # assumption_satisfied( 0  ) => ?f [candidate]: received(f,10500) & ~ (writer = f).
     c3a = []
     for f in candidate:
-        c3a.append(received[f, "10500"] & ~ ("writer" == f) )
+        if not ("writer" == f):
+            c3a.append(received[f, "10500"])
 
     for cl in to_cnf(any(c3a)):
         clues.append(implies(bv_clues[3], cl))
@@ -888,8 +1244,8 @@ def p18():
     # assumption_satisfied( 0  ) => ~ person_type1(kelly_kirby,olema).
     clues.append(implies(bv_clues[4],  ~ person_type1["kelly_kirby","olema"]))
 
-    # 5. The glendale native finished somewhat ahead of the Olema native
-    # assumption_satisfied( 0  ) => ?g [person] h [type2] i [vote] j [person] k [vote]: h>0 & finished_with(j,i) & person_type1(j,olema) & k = i+h & finished_with(g,k) & person_type1(g,glendale).
+    # # 5. The glendale native finished somewhat ahead of the Olema native
+    # # assumption_satisfied( 0  ) => ?g [person] h [type2] i [vote] j [person] k [vote]: h>0 & finished_with(j,i) & person_type1(j,olema) & k = i+h & finished_with(g,k) & person_type1(g,glendale).
     c5a = []
     for g in person:
         for h in type2:
@@ -901,12 +1257,12 @@ def p18():
 
     for cl in to_cnf(any(c5a)):
         clues.append(implies(bv_clues[5], cl))
-    # 6. Bev Baird ended up with 8500 votes
-    # assumption_satisfied( 0  ) => finished_with(bev_baird,8500).
+    # # 6. Bev Baird ended up with 8500 votes
+    # # assumption_satisfied( 0  ) => finished_with(bev_baird,8500).
     clues.append(implies(bv_clues[6],  finished_with["bev_baird","8500"]))
 
-    # 7. Ed Ewing finished 500 votes ahead of the Evansdale native
-    # assumption_satisfied( 0  ) => ?l [vote] m [person] n [vote]: finished_with(m,l) & person_type1(m,evansdale) & n = l+500 & finished_with(ed_ewing,n).
+    # # 7. Ed Ewing finished 500 votes ahead of the Evansdale native
+    # # assumption_satisfied( 0  ) => ?l [vote] m [person] n [vote]: finished_with(m,l) & person_type1(m,evansdale) & n = l+500 & finished_with(ed_ewing,n).
     c7a = []
     for l in vote:
         for m in person:
@@ -916,17 +1272,18 @@ def p18():
 
     for cl in to_cnf(any(c7a)):
         clues.append(implies(bv_clues[7], cl))
-    # 8. The man who received 9500 votes isn't the doctor
-    # assumption_satisfied( 0  ) =>  ?o [candidate]: received(o,9500) & ~ (doctor = o).
+    # # 8. The man who received 9500 votes isn't the doctor
+    # # assumption_satisfied( 0  ) =>  ?o [candidate]: received(o,9500) & ~ (doctor = o).
 
     c8a = []
     for o in candidate:
-        c8a.append(received[o,9500] & ~("doctor" == o))
+        if not (o == "doctor"):
+            c8a.append(received[o,"9500"])
 
     for cl in to_cnf(any(c8a)):
         clues.append(implies(bv_clues[8], cl))
-    # 9. Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes
-    # assumption_satisfied( 0  ) => ? p [person]: acts_as(p,academic) & ~ (p = al_allen) & (finished_with(p,10000) & finished_with(al_allen,8500) | finished_with(al_allen,10000) & finished_with(p,8500)).
+    # # 9. Of the person acting as academic and Al Allen, one ended up with 10000 votes and the other ended up with 8500 votes
+    # # assumption_satisfied( 0  ) => ? p [person]: acts_as(p,academic) & ~ (p = al_allen) & (finished_with(p,10000) & finished_with(al_allen,8500) | finished_with(al_allen,10000) & finished_with(p,8500)).
     c9a = []
     for p in person:
         if not (p == "al_allen"):
@@ -934,23 +1291,23 @@ def p18():
 
     for cl in to_cnf(any(c9a)):
         clues.append(implies(bv_clues[9], cl))
-    # 10. The politician who finished with 10500 votes isn't from Lakota
-    # assumption_satisfied( 0  ) => ?q [person]: finished_with(q,10500) & ~ person_type1(q,lakota).
+    # # 10. The politician who finished with 10500 votes isn't from Lakota
+    # # assumption_satisfied( 0  ) => ?q [person]: finished_with(q,10500) & ~ person_type1(q,lakota).
     c10a = []
     for q in person:
         c10a.append(finished_with[q,"10500"] & ~ person_type1[q,"lakota"])
 
     for cl in to_cnf(any(c10a)):
         clues.append(implies(bv_clues[10], cl))
-    # 11. The person acting as doctor was either the politician who finished with 10000 votes or Kelly Kirby
-    # assumption_satisfied( 0  ) => ?r [person]: acts_as(r,doctor) & ((?s [person]: finished_with(s,10000) & s = r) | kelly_kirby = r).
+    # # 11. The person acting as doctor was either the politician who finished with 10000 votes or Kelly Kirby
+    # # assumption_satisfied( 0  ) => ?r [person]: acts_as(r,doctor) & ((?s [person]: finished_with(s,10000) & s = r) | kelly_kirby = r).
     c11a = []
     for r in person:
         subformula = any(
             finished_with[s,"10000"] & (s == r)
             for s in person
         )
-        c11a.append(acts_as[r,"doctor"] & (subformula | "kelly_kirby" == r))
+        c11a.append(acts_as[r,"doctor"] & (subformula | ("kelly_kirby" == r)))
 
     for cl in to_cnf(any(c11a)):
         clues.append(implies(bv_clues[11], cl))
@@ -1010,6 +1367,7 @@ def p18():
     }
 
     return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+
 
 def p16():
     type1 = ["the_other_type1", "rings", "mobile_phones", "flashlights", "rubber_balls"]
@@ -1086,62 +1444,67 @@ def p16():
                 [trans.append(implies(bv_trans[11], clause)) for clause in t11]
 
     clues = []
-    bv_clues = [BoolVar() for i in range(11)]
+    bv_clues = [BoolVar() for i in range(10)]
     # 0. The juggler who went fourth was either the performer from Quasqueton or the juggler who used rings
     # assumption_satisfied( 0  ) => ?a [juggler]: went(a,4) & ((?b [juggler]: from(b,quasqueton) & b = a) | (?c [juggler]: used(c,rings) & c = a)).
     c0a = []
     for a in juggler:
         formule1 = any(
-            juggler_type2[b,"quasqueton"]
-            for b in juggler if b == a
+            juggler_type2[b,"quasqueton"] & (b == a)
+            for b in juggler
         )
         formule2 = any(
-            used[c, "rings"]
-            for c in juggler if c == a
+            used[c, "rings"] & (c == a)
+            for c in juggler
         )
         c0a.append(went[a, "4"] & (formule1 | formule2))
 
     for cl in to_cnf(any(c0a)):
         clues.append(implies(bv_clues[0], cl))
-    # 1. The juggler who used flashlights performed one spot after the person who used mobile phones
-    # assumption_satisfied( 0  ) => ?d [juggler] e [spot] f [juggler] g [spot]: used(d,flashlights) & used(f,mobile_phones) & went(f,e) & g = e+1 & went(d,g).
+    # # 1. The juggler who used flashlights performed one spot after the person who used mobile phones
+    # # assumption_satisfied( 0  ) => ?d [juggler] e [spot] f [juggler] g [spot]: used(d,flashlights) & used(f,mobile_phones) & went(f,e) & g = e+1 & went(d,g).
     c1a = []
     for d in juggler:
         for e in spot:
             for f in juggler:
                 for g in spot:
-                    if int(g) == int(e) + 1:
+                    if (int(g) == int(e) + 1):
                         c1a.append(used[d,"flashlights"] & used[f,"mobile_phones"] & went[f,e] & went[d,g])
 
     for cl in to_cnf(any(c1a)):
         clues.append(implies(bv_clues[1], cl))
-    # 2. The performer from Kingsburg performed one spot before Howard
-    # assumption_satisfied( 0  ) => ?h [juggler] i [spot] j [spot]: from(h,kingsburg) & went(howard,i) & j = i-1 & went(h,j).
+
+    # # 2. The performer from Kingsburg performed one spot before Howard
+    # # assumption_satisfied( 0  ) => ?h [juggler] i [spot] j [spot]: from(h,kingsburg) & went(howard,i) & j = i-1 & went(h,j).
     c2a = []
     for h in juggler:
         for i in spot:
             for j in spot:
-                if int(j) == int(i) - 1:
+                if (int(j) == int(i) - 1):
                     c2a.append(juggler_type2[h,"kingsburg"] & went["howard",i] & went[h,j])
 
     for cl in to_cnf(any(c2a)):
         clues.append(implies(bv_clues[2], cl))
-    # 3. Otis wasn't from Carbon
-    # assumption_satisfied( 0  ) => ~ from(otis,carbon).
+
+    # # 3. Otis wasn't from Carbon
+    # # assumption_satisfied( 0  ) => ~ from(otis,carbon).
     clues.append(implies(bv_clues[3], juggler_type2["otis","carbon"]))
 
-    # 4. Of the performer who went second and the juggler who used rings, one was from Carbon and the other is Howard
-    # assumption_satisfied( 0  ) => ?k [juggler] l [juggler]: went(k,2) & used(l,rings) & ~ (k = l) & (from(k,carbon) & howard = l | from(l,carbon) & howard = k).
+    # # 4. Of the performer who went second and the juggler who used rings, one was from Carbon and the other is Howard
+    # # assumption_satisfied( 0  ) => ?k [juggler] l [juggler]: went(k,2) & used(l,rings) & ~ (k = l) & (from(k,carbon) & howard = l | from(l,carbon) & howard = k).
     c4a = []
     for k in juggler:
         for l in juggler:
             if not (k == l):
-                c4a.append(went[k,"2"] & used[l,"rings"] & (juggler_type2[k,"carbon"] & "howard" == l | juggler_type2[l,"carbon"] & "howard" == k))
+                c4a.append(went[k,"2"] & used[l,"rings"] & ((juggler_type2[k,"carbon"] & ("howard" == l)) | (juggler_type2[l,"carbon"] & ("howard" == k))))
+    # print(any(c4a))
+    # print(to_cnf(any(c4a)))
 
     for cl in to_cnf(any(c4a)):
         clues.append(implies(bv_clues[4], cl))
-    # 5. The performer who went third, Gerald and the person from Kingsburg are three different people
-    # assumption_satisfied( 0  ) => ?m [juggler] n [juggler]: ~ (m = gerald) & ~ (m = n) & ~ (gerald = n) & went(m,3) & from(n,kingsburg).
+
+    # # 5. The performer who went third, Gerald and the person from Kingsburg are three different people
+    # # assumption_satisfied( 0  ) => ?m [juggler] n [juggler]: ~ (m = gerald) & ~ (m = n) & ~ (gerald = n) & went(m,3) & from(n,kingsburg).
     c5a = []
     for m in juggler:
         for n in juggler:
@@ -1150,8 +1513,8 @@ def p16():
 
     for cl in to_cnf(any(c5a)):
         clues.append(implies(bv_clues[5], cl))
-    # 6. Floyd was either the juggler who went second or the juggler from Quasqueton
-    # assumption_satisfied( 0  ) => (?o [juggler]: went(o,2) & o = floyd) | (?p [juggler]: from(p,quasqueton) & p = floyd).
+    # # 6. Floyd was either the juggler who went second or the juggler from Quasqueton
+    # # assumption_satisfied( 0  ) => (?o [juggler]: went(o,2) & o = floyd) | (?p [juggler]: from(p,quasqueton) & p = floyd).
     c6a = []
     for o in juggler:
         c6a.append(went[o,"2"] & (o == "floyd"))
@@ -1160,11 +1523,11 @@ def p16():
     for p in juggler:
         c6b.append(juggler_type2[p,"quasqueton"] & (p == "floyd"))
 
-    for cl in to_cnf(any(c6a) | c6b):
+    for cl in to_cnf(any(c6a) | any(c6b)):
         clues.append(implies(bv_clues[6], cl))
 
-    # 7. The person who went third used rings
-    # assumption_satisfied( 0  ) => ?q [juggler]: went(q,3) & used(q,rings).
+    # # 7. The person who went third used rings
+    # # assumption_satisfied( 0  ) => ?q [juggler]: went(q,3) & used(q,rings).
     c7a = []
     for q in juggler:
         c7a.append(went[q,"3"] & used[q,"rings"])
@@ -1172,8 +1535,8 @@ def p16():
     for cl in to_cnf(any(c7a)):
         clues.append(implies(bv_clues[7], cl))
 
-    # 8. The juggler who went second wasn't from Nice
-    # assumption_satisfied( 0  ) =>  ?r [juggler]: went(r,2) & ~ from(r,nice).
+    # # 8. The juggler who went second wasn't from Nice
+    # # assumption_satisfied( 0  ) =>  ?r [juggler]: went(r,2) & ~ from(r,nice).
     c8a = []
     for r in juggler:
         c8a.append(went[r, "2"] & ~juggler_type2[r, "nice"])
@@ -1181,8 +1544,8 @@ def p16():
     for cl in to_cnf(any(c8a)):
         clues.append(implies(bv_clues[8], cl))
 
-    # 9. Floyd juggles rubber balls
-    # assumption_satisfied( 0  ) => used(floyd,rubber_balls).
+    # # 9. Floyd juggles rubber balls
+    # # assumption_satisfied( 0  ) => used(floyd,rubber_balls).
     clues.append(implies(bv_clues[9], used["floyd","rubber_balls"]))
 
 
@@ -1239,6 +1602,7 @@ def p16():
     }
 
     return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+
 
 def p13():
     dollar = ["750", "1000", "1250", "1500", "1750"]
@@ -1389,8 +1753,8 @@ def p13():
     # assumption_satisfied( 0  ) => ?j [piece]: go_to(j,mexico_city) & (tombawomba = j | (?k [piece]: k = j & from(k,lucas))).
     c5a = []
     for j in piece:
-        formule = any([piece_person[k,"lucas"] for k in piece if k == j])
-        c5a.append(go_to[j,"mexico_city"] & ("tombawomba" == j | formule))
+        subformule = [((k == j) & piece_person[k, "lucas"]) for k in piece]
+        c5a.append(go_to[j,"mexico_city"] & (("tombawomba" == j) | any(subformule) ))
 
     for clause in to_cnf(any(c5a)):
         clues.append(implies(bv_clues[5], clause))
@@ -2083,51 +2447,6 @@ def originProblemReify():
     clues.append(bv_clues[0] == is_old['Mattie', '113'])
 
     # # The person who lives in Tehama is a native of either Kansas or Oregon
-    # c1a = to_cnf([implies(lives_in[p, 'Tehama'], native[p, 'Kansas'] | native[p, 'Oregon']) for p in person])
-
-    # [clues.append(implies(bv_clues[1], clause)) for clause in c1a]
-
-    # # The Washington native is 1 year older than Ernesto
-    # c2a = to_cnf([implies(age_birth[a, 'Washington'], is_old['Ernesto', str(int(a)-1)]) for a in age])
-    # [clues.append(implies(bv_clues[2], clause)) for clause in c2a]
-
-    # # Roxanne is 2 years younger than the Kansas native
-    # c3a = to_cnf([implies(is_old['Roxanne', a], age_birth[str(int(a)+2), 'Kansas']) for a in age])
-    # [clues.append(implies(bv_clues[3], clause)) for clause in c3a]
-
-    # # The person who lives in Zearing isn't a native of Alaska
-    # c4a = to_cnf([implies(lives_in[p, 'Zearing'], ~native[p, 'Alaska']) for p in person])
-    # [clues.append(implies(bv_clues[4], clause)) for clause in c4a]
-
-    # # The person who is 111 years old doesn't live in Plymouth
-    # c5a = to_cnf([implies(is_old[p, '111'], ~lives_in[p, 'Plymouth']) for p in person])
-    # [clues.append(implies(bv_clues[5], clause)) for clause in c5a]
-
-    # # The Oregon native is either Zachary or the person who lives in Tehama
-    # c6a = to_cnf([implies(native[p, 'Oregon'], (p == 'Zachary') | lives_in[p, 'Tehama']) for p in person])
-    # [clues.append(implies(bv_clues[6], clause)) for clause in c6a]
-
-    # # The person who lives in Shaver Lake is 1 year younger than Roxanne
-    # c7a = to_cnf([implies(age_city[a, 'Shaver Lake'], is_old['Roxanne', str(int(a)+1)]) for a in age])
-    # [clues.append(implies(bv_clues[7], clause)) for clause in c7a]
-
-    # # The centenarian who lives in Plymouth isn't a native of Alaska
-    # c8a = to_cnf([implies(lives_in[p, 'Plymouth'], ~native[p, 'Alaska']) for p in person])
-    # [clues.append(implies(bv_clues[8], clause)) for clause in c8a]
-
-    # # Of the person who lives in Tehama and Mattie, one is a native of Alaska and the other is from Kansas
-    # c9a = to_cnf([implies(lives_in[p, 'Tehama'],
-    #                       (p != 'Mattie') &
-    #                       ((native['Mattie', 'Alaska'] & native[p, 'Kansas']) |
-    #                        (native[p, 'Alaska'] & native['Mattie', 'Kansas']))) for p in person])
-    # [clues.append(implies(bv_clues[9], clause)) for clause in c9a]
-
-
-    # clues = []
-    # bv_clues = [BoolVar() for i in range(10)]
-    
-
-    # # The person who lives in Tehama is a native of either Kansas or Oregon
     c1a = [(~lives_in[p, 'Tehama'] | native[p, 'Kansas'] | native[p, 'Oregon']) for p in person]
 
     # # The Washington native is 1 year older than Ernesto
@@ -2427,7 +2746,7 @@ def simplestProblemReify():
     constraints = [c0, c1]
     c = to_cnf(constraints)
     cnf = cnf_to_pysat(c)
-    user_vars = [mayo.name+1, ketchup.name+1]
+    user_vars = [mayo.name+1, ketchup.name+1] 
     return cnf, [bi.name + 1 for bi in b], user_vars
 
 

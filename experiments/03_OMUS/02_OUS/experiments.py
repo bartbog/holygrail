@@ -1,23 +1,28 @@
-from explain import OUSTimeoutError, timeoutHandler
-from gen_params import effectOfPreseeding
+import itertools
+import multiprocessing
 import sys
-import random
-import time
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 from math import ceil
 import signal
 import shutil
+import getpass
+import ray
 
 # pysat imports
 from pysat.formula import CNF, WCNF
-from pysat.solvers import Solver
 from pysat.examples.musx import MUSX
 
-# omus imports
-sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src')
-sys.path.append('/home/emilio/Documents/cppy_src/')
-sys.path.append('/home/emilio/documents/cppy_mysrc/')
+# puzzle problems import
+import frietkot
+
+# explanations import
+from explain import COusParams, OUSTimeoutError, cost_puzzle, explain, timeoutHandler
+
+# parameter testing imports
+from gen_params import effectOfPreseeding
+
+# cppy imports
 
 from multiprocessing import Process
 
@@ -60,7 +65,7 @@ def selectMUSFiles():
     """
     # initialising the timeouthandler
     _ = signal.signal(signal.SIGALRM, timeoutHandler)
-    
+
     # benchmark
     benchmarkDir = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_benchmarksOUS/"
     fileList = "file_list.txt"
@@ -120,12 +125,10 @@ def genPBSjobs(hpcDir, jobName, nodes, taskspernode, maxTaskspernode):
 #PBS -M emilio.gamba@vub.be
 #PBS -m abe
 
-module load Gurobi/9.0.1-GCCcore-8.3.0-Python-3.7.4
+module load Gurobi/9.0.1-GCCcore-9.3.0-Python-3.8.2
+module load PySAT/0.1.6.dev11-GCC-9.3.0-Python-3.8.2
 
 # own code
-conda init bash
-source .bashrc
-conda activate ousExp37
 cd /user/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS
 python3 experiment_rq1.py {startpos} {taskspernode} {maxTaskspernode}
 """
@@ -145,6 +148,41 @@ python3 experiment_rq1.py {startpos} {taskspernode} {maxTaskspernode}
         f.write('\n'.join(allStrPaths))
 
 
+
+
+def jobExperiment4():
+    """
+        \paragraph{RQ3}
+        Comparing the efficiency of explanation specific grows!
+
+        Table:
+            [row]: puzzle
+            [col]: configuration
+            [entry]: Time to first solution + total execution time
+
+        Strategy:
+        - Select the best not maxat strategy
+        - Select the 2 best maxsat strategy from RQ1
+        - Use I/I0 with maxsat unif/pos/maxneg cost
+    """
+    pass
+
+
+def jobExperiment56():
+    """
+        \paragraph{RQ4}
+
+        How does the explanation strategy compare between optimal and non-optimal explanation generation?
+
+        Strategy:
+        - Greedy explain reuse SSes (incremental)
+        - Greedy explain not reuse SSes (non-incremental)
+        - cOUS explain
+        - MUS extraction for explanation generation
+    """
+    pass
+
+
 def jobEffectOfPreseeding():
     jobName = "EffectOfpreseeding"
     hpcOutputFolder = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments"
@@ -156,5 +194,6 @@ def jobEffectOfPreseeding():
     genPBSjobs(hpcOutputFolder, jobName, nodes, taskspernode, maxTaskspernode)
 
 if __name__ == "__main__":
-    jobEffectOfPreseeding()
+    # jobEffectOfPreseeding()
+    print(len(Experiment1Params()))
     # selectMUSFiles()

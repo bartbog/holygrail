@@ -15,9 +15,6 @@ from multiprocessing import Process, Pool
 import gurobipy as gp
 from gurobipy import GRB
 
-import sys
-sys.path.append('/user/brussel/101/vsc10143/pysathq/')
-
 # pysat imports
 from pysat.formula import CNF, WCNF
 from pysat.solvers import Solver
@@ -1085,7 +1082,7 @@ def print_expl(matching_table, Ibest):
 
 
 # @profile(output_file=f'profiles/explain_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=20, strip_dirs=True)
-def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=True, matching_table=None):
+def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=False, matching_table=None):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
     variables with associated weights users_vars_cost based on the

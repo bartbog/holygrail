@@ -4,7 +4,6 @@ import sys
 # import numpy
 import pandas as pd
 
-sys.path.append('/home/crunchmonster/Documents/VUB/01_SharedProjects/01_cppy_src/')
 sys.path.append('/home/emilio/Documents/cppy_src/')
 sys.path.append('/home/emilio/documents/cppy_mysrc/')
 sys.path.append('/user/brussel/101/vsc10143/cppy_src/')
@@ -2332,7 +2331,7 @@ def pastaPuzzle():
         }
     }
 
-    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table, rels
+    hard_clauses, soft_clauses, weights, explainable_facts, matching_table
 
 
 def originProblemReify():

@@ -1,6 +1,4 @@
 import multiprocessing
-import sys
-sys.path.append('/data/brussel/101/vsc10143/miniconda3/envs/ousExp37/lib/python3.7/site-packages')
 
 from explain import COusParams, cost_puzzle, cost, explain
 from explain import add_assumptions, get_user_vars

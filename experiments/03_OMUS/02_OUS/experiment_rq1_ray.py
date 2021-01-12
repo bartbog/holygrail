@@ -1,13 +1,7 @@
-import sys
-sys.path.append('/user/brussel/101/vsc10143/pysathq/')
 
 import ray
 from explain import COusParams, cost_puzzle, cost, explain
 from explain import add_assumptions, get_user_vars
-# from explain import runParallel
-# from explain import HOURS, MINUTES, SECONDS
-# from multiprocessing import Process, Pool
-
 from gen_params import *
 
 # Testing samples

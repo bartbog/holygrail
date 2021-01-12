@@ -2331,7 +2331,7 @@ def pastaPuzzle():
         }
     }
 
-    hard_clauses, soft_clauses, weights, explainable_facts, matching_table
+    return hard_clauses, soft_clauses, weights, explainable_facts, matching_table
 
 
 def originProblemReify():

@@ -1518,11 +1518,13 @@ def test_p12Puzzle(params):
 
 def test_PastaPuzzle(params):
     params.instance = "pasta"
-    o_clauses, o_assumptions, o_weights, o_user_vars, matching_table, rels = pastaPuzzle()
+    o_clauses, o_assumptions, o_weights, o_user_vars, matching_table = pastaPuzzle()
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost_puzzle(U, I, o_weights)
+    print()
+    return
     explain(C=o_cnf, U=U, f=f, I0=I, params=params, matching_table=matching_table, verbose=True)
 
 
@@ -1637,12 +1639,13 @@ if __name__ == "__main__":
     # test_frietkot(params)
     # test_puzzle(params)
     # test_puzzle(optimalParams)
+    test_PastaPuzzle(optimalParams)
     # test_PastaPuzzle(optimalParams)
     # test_p12Puzzle(optimalParams)
     # test_p13Puzzle(optimalParams)
     # test_p16Puzzle(optimalParams)
     # test_p18Puzzle(optimalParams)
-    test_p19Puzzle(optimalParams)
+    # test_p19Puzzle(optimalParams)
     # test_p25(optimalParams)
     # test_p20(optimalParams)
     # test_p93(optimalParams)

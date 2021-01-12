@@ -186,7 +186,7 @@ def genPBSjobExperiment1(puzzle_funs, taskspernode):
         fpath = todaysJobPath / f"{jobName}_{puzzleName}.pbs"
         baseScript = f"""#!/usr/bin/env bash
 
-#PBS -N {jobName}
+#PBS -N {jobName}_{puzzleName}
 #PBS -l nodes=1:ppn={taskspernode}:skylake
 #PBS -l walltime=04:00:00
 #PBS -M emilio.gamba@vub.be

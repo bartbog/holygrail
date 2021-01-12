@@ -20,19 +20,7 @@ HOURS = 60 * MINUTES
 TIMEOUT_EXP1 = 1 * HOURS
 
 
-@ray.remote
-def puzzleToExplain(execParams):
-    params, puzzleFun, puzzleName = execParams
-    params.instance = puzzleName
-    o_clauses, o_assumptions, o_weights, o_user_vars, _ = puzzleFun()
-    o_cnf = CNF(from_clauses=o_clauses)
-    U = o_user_vars | set(x for lst in o_assumptions for x in lst)
-    I = set(x for lst in o_assumptions for x in lst)
-    f = cost_puzzle(U, I, o_weights)
-    explain(C=o_cnf, U=U, f=f, I0=I, params=params)
-
-
-def Experiment1Params():
+def Experiment3():
     all_exec_params = []
     timeout = 2 * HOURS
     usr = getpass.getuser()

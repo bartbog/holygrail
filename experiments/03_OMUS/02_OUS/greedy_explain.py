@@ -77,6 +77,9 @@ class BestStepParams(object):
         self.polarity = False
         self.polarity_initial = False
 
+        # MAXSAT growing
+        self.maxsat_polarities = False
+
         # sat - grow
         self.grow = False
         self.grow_sat = False
@@ -85,12 +88,15 @@ class BestStepParams(object):
         self.grow_maxsat = False
 
         # MAXSAT growing
-        self.grow_maxsat_neg_cost = False
-        self.grow_maxsat_pos_cost = False
-        self.grow_maxsat_max_cost_neg = False
-        self.grow_maxsat_unit = False
+        self.grow_maxsat_full_pos = False
+        self.grow_maxsat_full_inv = False
+        self.grow_maxsat_full_unif = False
         self.grow_maxsat_initial_pos = False
-        self.grow_maxsat_actual_interpretation = False
+        self.grow_maxsat_initial_inv = False
+        self.grow_maxsat_initial_unif = False
+        self.grow_maxsat_actual_pos = False
+        self.grow_maxsat_actual_unif = False
+        self.grow_maxsat_actual_inv = False
 
         # timeout
         self.timeout = 2 * HOURS
@@ -113,12 +119,15 @@ class BestStepParams(object):
                    "Exactly 1 grow mechanism"
 
         if self.grow_maxsat:
-            assert self.grow_maxsat_neg_cost ^ \
-                   self.grow_maxsat_pos_cost ^ \
-                   self.grow_maxsat_max_cost_neg ^ \
-                   self.grow_maxsat_unit ^ \
-                   self.grow_maxsat_initial_pos ^ \
-                   self.grow_maxsat_actual_interpretation, \
+            assert self.grow_maxsat_full_pos ^ \
+                    self.grow_maxsat_full_inv ^ \
+                    self.grow_maxsat_full_unif ^ \
+                    self.grow_maxsat_initial_pos ^ \
+                    self.grow_maxsat_initial_inv ^ \
+                    self.grow_maxsat_initial_unif ^ \
+                    self.grow_maxsat_actual_pos ^ \
+                    self.grow_maxsat_actual_unif ^ \
+                    self.grow_maxsat_actual_inv, \
                    "Only 1 type of maxsat grow."
 
     def to_dict(self):
@@ -137,13 +146,18 @@ class BestStepParams(object):
             "grow_sat": self.grow_sat,
             "grow_subset_maximal": self.grow_subset_maximal,
             "grow_maxsat": self.grow_maxsat,
+            # maxsat polarities
+            "maxsat_polarities": self.maxsat_polarities,
             # maxsat costs
-            "grow_maxsat_neg_cost": self.grow_maxsat_neg_cost,
-            "grow_maxsat_pos_cost": self.grow_maxsat_pos_cost,
-            "grow_maxsat_max_cost_neg": self.grow_maxsat_max_cost_neg,
-            "grow_maxsat_unit": self.grow_maxsat_unit,
-            "grow_maxsat_initial": self.grow_maxsat_initial_pos,
-            "grow_maxsat_actual": self.grow_maxsat_actual_interpretation,
+            "grow_maxsat_full_pos": self.grow_maxsat_full_pos,
+            "grow_maxsat_full_inv": self.grow_maxsat_full_inv,
+            "grow_maxsat_full_unif": self.grow_maxsat_full_unif,
+            "grow_maxsat_initial_pos": self.grow_maxsat_initial_pos,
+            "grow_maxsat_initial_inv": self.grow_maxsat_initial_inv,
+            "grow_maxsat_initial_unif": self.grow_maxsat_initial_unif,
+            "grow_maxsat_actual_pos": self.grow_maxsat_actual_pos,
+            "grow_maxsat_actual_unif": self.grow_maxsat_actual_unif,
+            "grow_maxsat_actual_inv": self.grow_maxsat_actual_inv,
             # run parameters
             "timeout": self.timeout,
             "instance": self.instance,
@@ -177,19 +191,16 @@ class BestStepParams(object):
         if self.grow_subset_maximal:
             s += "\t grow-subset-maximal \n"
         if self.grow_maxsat:
+            # TODO add the str version!
             s += "\t grow-MaxSat"
-            if self.grow_maxsat_neg_cost:
-                s += "-neg_cost"
-            elif self.grow_maxsat_pos_cost:
-                s += "-pos_cost"
-            elif self.grow_maxsat_max_cost_neg:
-                s += "-max_cost_neg"
-            elif self.grow_maxsat_unit:
-                s += "-unit_cost"
-            elif self.grow_maxsat_initial_pos:
+            if self.grow_maxsat_initial_pos:
                 s += "-initial_interpretation"
-            elif self.grow_maxsat_actual_interpretation:
-                s += "-actual_interpretation"
+            elif self.grow_maxsat_actual_pos:
+                s += "-actual_int_pos"
+            elif self.grow_maxsat_actual_inv:
+                s += "-actual_int_inv"
+            elif self.grow_maxsat_actual_unif:
+                s += "-actual_int_unif"
             s += "\n"
 
         return s
@@ -204,12 +215,6 @@ class OusParams(BestStepParams):
 
     def __str__(self):
         s = ""
-        if self.pre_seeding_subset_minimal:
-            s += "pre-seeding-subset-minimal\n"
-
-        if self.pre_seeding_grow:
-            s += "pre-seeding-grow-simple\n"
-
         if self.postpone_opt:
             s += "postpone_opt \n"
         if self.postpone_opt_incr:
@@ -227,15 +232,16 @@ class OusParams(BestStepParams):
         if self.grow_subset_maximal:
             s += "\t grow-subset-maximal \n"
         if self.grow_maxsat:
+            # TODO add the str version!
             s += "\t grow-MaxSat"
-            if self.grow_maxsat_neg_cost:
-                s += "-neg_cost"
-            elif self.grow_maxsat_pos_cost:
-                s += "-pos_cost"
-            elif self.grow_maxsat_max_cost_neg:
-                s += "-max_cost_neg"
-            elif self.grow_maxsat_unit:
-                s += "-unit_cost"
+            if self.grow_maxsat_initial_pos:
+                s += "-initial_interpretation"
+            elif self.grow_maxsat_actual_pos:
+                s += "-actual_int_pos"
+            elif self.grow_maxsat_actual_inv:
+                s += "-actual_int_inv"
+            elif self.grow_maxsat_actual_unif:
+                s += "-actual_int_unif"
             s += "\n"
 
         return s
@@ -296,12 +302,14 @@ class CostFunctionError(Exception):
 
 
 class BestStepComputer(object):
-    def __init__(self, cnf: CNF, sat: Solver, params: OusParams, I0):
+    def __init__(self, cnf: CNF, sat: Solver, params: OusParams, I0, Iend):
         self.params = params
         self.sat_solver = sat
         self.cnf = cnf
         self.opt_model = None
         self.I0 = I0
+        self.I = set()
+        self.Iend = Iend
 
         self.t_expl = {
             't_post': [],
@@ -322,7 +330,7 @@ class BestStepComputer(object):
             SS = set(HS)
         elif self.params.grow_sat:
             SS = set(HS_model)
-        elif self.params.grow_subset_maximal:
+        elif self.params.grow_subset_maximal or self.params.subset_maximal_I0:
             SS = set(self.grow_subset_maximal(A=A, HS=HS, Ap=HS_model))
         elif self.params.grow_maxsat:
             SS = set(self.grow_maxsat(f=f, F=F, A=A, HS=HS))
@@ -332,34 +340,66 @@ class BestStepComputer(object):
         return SS
 
     def grow_maxsat(self, f, F, A, HS):
+        # print("Growing!", A, HS)
         wcnf = WCNF()
 
         # add hard clauses of CNF
         wcnf.extend(self.cnf.clauses + [[l] for l in HS])
 
-        # TODO: is this really correct ? A - HS ? add soft clasues => F - HS
-        remaining = A - HS
-        weights = None
+        # cost is associated for assigning a truth value to literal not in
+        # contrary to A.
+        remaining = None
 
-        if self.params.grow_maxsat_neg_cost:
-            weights = [-f(l) for l in remaining]
-        elif self.params.grow_maxsat_pos_cost:
+        # associate small neg cost to expensive literals
+        # intuitively grow the most expensive SS to have cheapest
+        # complement
+        # unit cost similar to sat call
+        # maxsat with initial interpretation
+        if self.params.grow_maxsat_initial_pos:
+            remaining = self.I0 - HS
             weights = [f(l) for l in remaining]
-        elif self.params.grow_maxsat_max_cost_neg:
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_initial_unif:
+            remaining = self.I0 - HS
+            weights = [1 for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_initial_inv:
+            remaining = self.I0 - HS
             max_weight = max(f(l) for l in remaining)
             weights = [max_weight+1 - f(l) for l in remaining]
-        elif self.params.grow_maxsat_unit:
-            weights = [1] * len(remaining)
-        else:
-            weights = [1] * len(remaining)
-
-        wcnf.extend([[l] for l in remaining], weights)
+            wcnf.extend([[l] for l in remaining], weights)
+        # maxsat with actual interpretation
+        elif self.params.grow_maxsat_actual_pos:
+            remaining = self.I - HS
+            weights = [f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_actual_unif:
+            remaining = self.I - HS
+            weights = [1 for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_actual_inv:
+            remaining = self.I - HS
+            max_weight = max(f(l) for l in remaining)
+            weights = [max_weight+1 - f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_full_pos:
+            remaining = A - HS
+            weights = [f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_full_unif:
+            remaining = A - HS
+            weights = [1 for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
+        elif self.params.grow_maxsat_full_inv:
+            remaining = A - HS
+            max_weight = max(f(l) for l in remaining)
+            weights = [max_weight+1 - f(l) for l in remaining]
+            wcnf.extend([[l] for l in remaining], weights)
 
         with RC2(wcnf) as rc2:
+            if self.params.maxsat_polarities:
+                rc2.oracle.set_phases(literals=list(self.Iend))
             t_model = rc2.compute()
-
-            if t_model is None:
-                return set(HS)
 
             return set(t_model)
 
@@ -389,16 +429,18 @@ class BestStepComputer(object):
         Returns:
             (bool, set): sat value, model assignment
         """
+        tstart = time.time()
         if self.params.polarity:
             self.sat_solver.set_phases(literals=list(phases - Ap))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
 
         if not solved:
+            self.t_expl['t_sat'].append(time.time() - tstart)
             return solved, Ap
 
         model = set(self.sat_solver.get_model())
-
+        self.t_expl['t_sat'].append(time.time() - tstart)
         return solved, model
 
     def greedyHittingSet(self, H, f):
@@ -507,7 +549,7 @@ class BestStepOUSComputer(BestStepComputer):
             preseeding (bool, optional): [description]. Defaults to True.
         """
     def __init__(self, cnf, sat: Solver, f, Iend: set,  I: set, params: OusParams):
-        super().__init__(cnf, sat, params, I0=set(I))
+        super().__init__(cnf, sat, params, I0=set(I), Iend=set(Iend))
 
         # keeping track of the satisfiable subsets
         self.SSes = set()
@@ -526,6 +568,20 @@ class BestStepOUSComputer(BestStepComputer):
         self.fullSS = set(Iend)
 
     def bestStep(self, f, Iend, I: set):
+        bestExpl, bestLit = None, None
+        timings = dict()
+        self.I = set(I)
+        self.t_expl = {
+            't_post': [],
+            't_sat': [],
+            't_mip': [],
+            't_grow': [],
+            't_ous': [],
+            '#H': 0,
+            '#H_greedy': 0,
+            '#H_incr': 0,
+        }
+
         tstart_expl = time.time()
 
         # best cost
@@ -534,8 +590,6 @@ class BestStepOUSComputer(BestStepComputer):
             remaining.sort(key=lambda l: self.bestCosts[l])
 
         bestCost = min(self.bestCosts.values())
-        bestExpl, bestLit, bestTiming = None, None, None
-
 
         for l in remaining:
             # initialising the best cost
@@ -543,9 +597,8 @@ class BestStepOUSComputer(BestStepComputer):
 
             # expl is None when cutoff (timeout or cost exceeds current best Cost)
             A = I | set({-l})
-            p = -l
 
-            expl, costExpl, t_exp = self.bestStepOUS(f, F=F, A=A, p=-l)
+            expl, costExpl, t_exp = self.bestStepOUS(f, F=F, A=A)
 
             # can only keep the costs of the optHittingSet computer
             if costExpl < self.bestCosts[l] and expl is not None:
@@ -556,12 +609,11 @@ class BestStepOUSComputer(BestStepComputer):
                 bestExpl = expl
                 bestLit = l
                 bestCost = costExpl
-                bestTiming = t_exp
 
-        bestTiming["texpl"] = time.time() - tstart_expl
+        self.t_expl["texpl"] = time.time() - tstart_expl
         # literal already found, remove its cost
         del self.bestCosts[bestLit]
-        return bestExpl, bestTiming
+        return bestExpl, self.t_expl
 
     def process_SSes(self, H):
         self.SSes |= H
@@ -605,19 +657,8 @@ class BestStepOUSComputer(BestStepComputer):
             self.t_expl['#H'] += 1
             return hs
 
-    def bestStepOUS(self, f, F, A, p):
+    def bestStepOUS(self, f, F, A):
         tstart = time.time()
-
-        self.t_expl = {
-            't_post': [],
-            't_sat': [],
-            't_mip': [],
-            't_grow': [],
-            't_ous': 0,
-            '#H': 0,
-            '#H_greedy': 0,
-            '#H_incr': 0,
-        }
 
         # initial running varaibles
         HCounter = Counter()
@@ -631,7 +672,7 @@ class BestStepOUSComputer(BestStepComputer):
         mode = MODE_OPT
 
         # OPTIMISATION MODEL
-        self.optHSComputer = OptHS(f, F, A, p)
+        self.optHSComputer = OptHS(f, F, A)
 
         # lit to explain!
         lit_expl = next(iter(F - A))
@@ -641,7 +682,7 @@ class BestStepOUSComputer(BestStepComputer):
                 if SS.issubset(self.fullSS):
                     continue
 
-                if p not in SS or -p not in SS:
+                if lit_expl not in SS or -lit_expl not in SS:
                     continue
 
                 ss = SS & F
@@ -665,11 +706,12 @@ class BestStepOUSComputer(BestStepComputer):
             costHS = sum(f(l) for l in HS)
 
             if self.params.reuse_costs and mode == MODE_OPT and costHS > bestCost:
-                return None, costHS
+                self.t_expl['t_ous'].append(time.time() - tstart)
+                return None, costHS, self.t_expl
 
             # OUS FOUND?
             if not sat and mode == MODE_OPT:
-                self.t_expl['t_ous'] = time.time() - tstart
+                self.t_expl['t_ous'].append(time.time() - tstart)
                 # cleaning up!
                 self.optHSComputer.dispose()
 
@@ -686,6 +728,7 @@ class BestStepOUSComputer(BestStepComputer):
 
             SS = self.grow(f=f, F=F, A=A, HS=HS, HS_model=HSModel)
             C = F - SS
+            HCounter.update(C)
             H.add(frozenset(C))
             self.optHSComputer.addCorrectionSet(C)
             if self.params.reuse_SSes:
@@ -693,7 +736,7 @@ class BestStepOUSComputer(BestStepComputer):
 
 
 class OptHS(object):
-    def __init__(self, f, F, A, p):
+    def __init__(self, f, F, A):
         # Iend + -Iexpl
         # print(F)
         # print("I=", [l for l in F if -l not in F])
@@ -715,14 +758,6 @@ class OptHS(object):
             vtype=GRB.BINARY,
             obj=[f(l) if l in A else GRB.INFINITY for l in self.allLits],
             name="x")
-
-        # at least the negated literald
-        # pos_lit_expl = self.allLits.index(p)
-
-        # hack not even necessary
-        # self.opt_model.addConstr(
-        #     x[pos_lit_expl] == 1
-        # )
 
         self.opt_model.update()
 
@@ -808,17 +843,17 @@ def print_timings(t_exp, timedout=False):
     if timedout:
         return
 
-    print("texpl=", round(t_exp['t_ous'], 3), "s\n")
+    print("texpl=", round(sum(t_exp['t_ous']), 3), "s\n")
     print("\t#HS Opt:", t_exp['#H'], "\t Incr:", t_exp['#H_incr'], "\tGreedy:", t_exp['#H_greedy'], "\n")
 
     if len(t_exp['t_mip']) > 1:
-        print("\tMIP=\t", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))
+        print("\tMIP=\t", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/sum(t_exp['t_ous']))}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))
     if len(t_exp['t_post']) > 1:
-        print("\tPOST=\t", round(sum(t_exp['t_post']), 3), f"s [{round(100*sum(t_exp['t_post'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_post'])/len(t_exp['t_post']), 3))
+        print("\tPOST=\t", round(sum(t_exp['t_post']), 3), f"s [{round(100*sum(t_exp['t_post'])/sum(t_exp['t_ous']))}%]\t", "t/call=", round(sum(t_exp['t_post'])/len(t_exp['t_post']), 3))
     if len(t_exp['t_sat']) > 1:
-        print("\tSAT=\t", round(sum(t_exp['t_sat']), 3), f"s [{round(100*sum(t_exp['t_sat'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_sat'])/len(t_exp['t_sat']), 3))
+        print("\tSAT=\t", round(sum(t_exp['t_sat']), 3), f"s [{round(100*sum(t_exp['t_sat'])/sum(t_exp['t_ous']))}%]\t", "t/call=", round(sum(t_exp['t_sat'])/len(t_exp['t_sat']), 3))
     if len(t_exp['t_grow']) > 1:
-        print("\tGROW=\t", round(sum(t_exp['t_grow']), 3), f"s [{round(100*sum(t_exp['t_grow'])/t_exp['t_ous'])}%]\t", "t/call=", round(sum(t_exp['t_grow'])/len(t_exp['t_grow']), 3))
+        print("\tGROW=\t", round(sum(t_exp['t_grow']), 3), f"s [{round(100*sum(t_exp['t_grow'])/sum(t_exp['t_ous']))}%]\t", "t/call=", round(sum(t_exp['t_grow'])/len(t_exp['t_grow']), 3))
 
 
 def saveResults(results, t_exp):
@@ -845,59 +880,6 @@ def print_expl(matching_table, Ibest):
             print("clues n°", matching_table['clues'][i])
         else:
             print("Fact:", i)
-
-
-# def powerset(f, iterable):
-#     """
-
-#     https://stackoverflow.com/questions/1482308/how-to-get-all-subsets-of-a-set-powerset
-
-#         powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)
-
-#     """
-#     s = list(iterable)
-#     ch = list(chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1)))
-#     ch.sort(key=lambda s: sum(f(l) for l in s))
-#     for subset in ch:
-#         yield subset
-
-
-# def MUSexplain(C: CNF, U: set, f, I0: set, verbose=False):
-#     if verbose:
-#         print("Expl:")
-#         print("\tcnf:", len(C.clauses), C.nv)
-#         print("\tU:", len(U))
-#         print("\tf:", f)
-#         print("\tI0:", len(I0))
-    
-#     # check literals of I are all user vocabulary
-#     assert all(True if abs(lit) in U else False for lit in I0), f"Part of supplied literals not in U (user variables): {lits for lit in I if lit not in U}"
-
-#     # Initialise the sat solver with the cnf
-#     sat = Solver(bootstrap_with=C.clauses)
-
-#     # Explanation sequence
-#     E = []
-
-#     # Most precise intersection of all models of C project on U
-#     Iend = optimalPropagate(U=U, I=I0, sat=sat)
-
-#     # print(Iend)
-#     I = set(I0) # copy
-
-#     while(len(Iend - I) > 0):
-
-#         expl = minExplanation(f, I, C)
-
-#         Ibest = I & expl
-
-#         # New information derived "focused" on
-#         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
-#         assert len(Nbest - Iend) == 0
-
-#         I |= Nbest
-
-#     return E
 
 
 def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, matching_table=None):
@@ -1206,5 +1188,5 @@ if __name__ == "__main__":
     params.grow_subset_maximal = True
 
     # INSTANCES
-    simpleGreedy()
-    # frietkotGreedy()
+    # simpleGreedy(params)
+    frietkotGreedy(params)

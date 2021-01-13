@@ -45,7 +45,7 @@ def Experiment4Params():
         resultsFolder = "results/"
 
     outputFolder = resultsFolder + "experiment4/" + datetime.now().strftime("%Y%m%d%H") + "/"
-    
+
     pre_seeding_perms = [False, True]
 
     postponeOpt_perms = [

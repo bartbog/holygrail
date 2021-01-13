@@ -218,10 +218,10 @@ python3 experiment1.py {puzzleName} {taskspernode}
 
 
 if __name__ == "__main__":
-    print(Experiment1Params())
-    # if len(sys.argv) == 3:
-    #     problemname = sys.argv[1]
-    #     tasksParallel = int(sys.argv[2])
-    #     runPuzzle(problemname, tasksParallel)
-    # else:
-    #     jobExperiment1()
+    # print(Experiment1Params())
+    if len(sys.argv) == 3:
+        problemname = sys.argv[1]
+        tasksParallel = int(sys.argv[2])
+        runPuzzle(problemname, tasksParallel)
+    else:
+        jobExperiment1()

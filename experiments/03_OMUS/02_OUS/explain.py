@@ -829,16 +829,10 @@ class BestStepCOUSComputer(object):
         mode = MODE_OPT
 
         while(True):
-            # print("remainingTime=", timeout - (time.time() - tstart))
-            # if time.time() - tstart > timeout:
-            #     self.t_expl['t_ous'] = timeout
-            #     return HS, self.t_expl, False
-
             # COMPUTING OPTIMAL HITTING SET
             HS = self.computeHittingSet(f=f, F=F, A=A, p=p, H=H, C=C, HS=HS, mode=mode)
 
             # Timings
-            print(f"\t{modes[mode]}: got HS",len(HS), "cost", self.opt_model.opt_model.objval if mode == MODE_OPT else sum(f(l) for l in HS),"\tMIP:", round(self.t_expl["t_mip"][-1],3), "s\tGROW:", round(self.t_expl["t_grow"][-1],3))
 
             # CHECKING SATISFIABILITY
             sat, HS_model = self.checkSat(HS, phases=self.I0)

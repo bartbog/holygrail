@@ -43,6 +43,65 @@ modes = {
 }
 
 
+def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_dirs=False):
+    """
+    A time profiler decorator.
+    Inspired by and modified the profile decorator of Giampaolo Rodola:
+
+    http://code.activestate.com/recipes/577817-profile-decorator/
+    src:
+
+    https://towardsdatascience.com/how-to-profile-your-code-in-python-e70c834fad89
+
+    Args:
+        output_file: str or None. Default is None
+            Path of the output file. If only name of the file is given, it's
+            saved in the current directory.
+            If it's None, the name of the decorated function is used.
+        sort_by: str or SortKey enum or tuple/list of str/SortKey enum
+            Sorting criteria for the Stats object.
+            For a list of valid string and SortKey refer to:
+            https://docs.python.org/3/library/profile.html#pstats.Stats.sort_stats
+        lines_to_print: int or None
+            Number of lines to print. Default (None) is for all the lines.
+            This is useful in reducing the size of the printout, especially
+            that sorting by 'cumulative', the time consuming operations
+            are printed toward the top of the file.
+        strip_dirs: bool
+            Whether to remove the leading path info from file names.
+            This is also useful in reducing the size of the printout
+    Returns:
+        Profile of the decorated function
+    """
+
+    def inner(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            _output_file = output_file or func.__name__ + '.prof'
+            pr = cProfile.Profile()
+            pr.enable()
+            retval = func(*args, **kwargs)
+            pr.disable()
+            pr.dump_stats(_output_file)
+
+            with open(_output_file, 'w') as f:
+                ps = pstats.Stats(pr, stream=f)
+                if strip_dirs:
+                    ps.strip_dirs()
+                if isinstance(sort_by, (tuple, list)):
+                    ps.sort_stats(*sort_by)
+                else:
+                    ps.sort_stats(sort_by)
+                ps.print_stats(lines_to_print)
+            return retval
+
+        return wrapper
+
+    return inner
+
+
+
+
 def timeoutHandler(signum, frame):
     raise OUSTimeoutError()
 
@@ -210,7 +269,6 @@ class OusParams(BestStepParams):
     def __init__(self):
         super().__init__()
         self.reuse_SSes = False
-        self.reuse_costs = False
         self.sort_literals = False
 
     def __str__(self):
@@ -586,12 +644,17 @@ class BestStepOUSComputer(BestStepComputer):
 
         # best cost
         remaining = list(Iend - I)
+        for i in I:
+            if i in self.bestCosts:
+                del self.bestCosts[i]
+
         if self.params.sort_literals:
             remaining.sort(key=lambda l: self.bestCosts[l])
 
         bestCost = min(self.bestCosts.values())
 
-        for l in remaining:
+        for id, l in enumerate(remaining):
+            print(f"OUS lit {id+1}/{len(remaining)+1}", flush=True, end='\r')
             # initialising the best cost
             F = I | {-l, l}
 
@@ -605,7 +668,7 @@ class BestStepOUSComputer(BestStepComputer):
                 self.bestCosts[l] = costExpl
 
             # store explanation
-            if costExpl < bestCost and expl is not None:
+            if costExpl <= bestCost and expl is not None:
                 bestExpl = expl
                 bestLit = l
                 bestCost = costExpl
@@ -620,13 +683,13 @@ class BestStepOUSComputer(BestStepComputer):
 
         # post-processing the MSSes
         keep = set()
-        for m1, m1_model in self.SSes:
+        for m1 in self.SSes:
             keep_m1 = True
-            for m2, _ in self.SSes:
+            for m2 in self.SSes:
                 if m1 != m2 and m1 < m2:
                     keep_m1 = False
             if keep_m1:
-                keep.add((m1, m1_model))
+                keep.add(m1)
         self.SSes = keep
 
     def computeHittingSet(self, f, HCounter, H, C, HS, mode):
@@ -705,7 +768,7 @@ class BestStepOUSComputer(BestStepComputer):
 
             costHS = sum(f(l) for l in HS)
 
-            if self.params.reuse_costs and mode == MODE_OPT and costHS > bestCost:
+            if mode == MODE_OPT and costHS > bestCost:
                 self.t_expl['t_ous'].append(time.time() - tstart)
                 return None, costHS, self.t_expl
 
@@ -881,7 +944,7 @@ def print_expl(matching_table, Ibest):
         else:
             print("Fact:", i)
 
-
+@profile(output_file=f'profiles/explain_greedy_{datetime.now().strftime("%Y%m%d%H%M%S")}.prof', lines_to_print=20, strip_dirs=True)
 def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, matching_table=None):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
@@ -1183,10 +1246,15 @@ if __name__ == "__main__":
 
     params.pre_seeding = True
     params.polarity = True
+    params.reuse_SSes = True
+    params.reuse_costs = True
 
     params.grow = True
-    params.grow_subset_maximal = True
+    # params.grow_subset_maximal = True
+    params.grow_maxsat = True
+    params.grow_maxsat_actual_unif = True
 
     # INSTANCES
     # simpleGreedy(params)
-    frietkotGreedy(params)
+    # frietkotGreedy(params)
+    puzzleGreedy(params)

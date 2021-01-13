@@ -215,7 +215,7 @@ def genPBSjobExperiment4(puzzle_funs, taskspernode):
 
 #PBS -N {jobName}_{puzzleName}
 #PBS -l nodes=1:ppn={taskspernode}:skylake
-#PBS -l walltime=04:00:00
+#PBS -l walltime=24:00:00
 #PBS -M emilio.gamba@vub.be
 #PBS -m abe
 

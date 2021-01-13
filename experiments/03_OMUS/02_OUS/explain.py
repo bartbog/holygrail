@@ -207,6 +207,8 @@ class COusParams(object):
             "grow_sat": self.grow_sat,
             "grow_subset_maximal": self.grow_subset_maximal,
             "grow_maxsat": self.grow_maxsat,
+            # maxsat polarities
+            "maxsat_polarities":self.maxsat_polarities,
             # maxsat costs
             "grow_maxsat_full_pos": self.grow_maxsat_full_pos,
             "grow_maxsat_full_inv": self.grow_maxsat_full_inv,

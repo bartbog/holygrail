@@ -55,7 +55,7 @@ def Experiment1Params():
     for tf in [True, False]:
         for p in maxsatPerms:
             polmaxsatPerms.append([tf] + p)
-
+    print(polmaxsatPerms)
     # grow procedure grow/sat/subsetmax/maxsat
     perms = [[False] * 4] # no grow
 
@@ -117,6 +117,7 @@ def Experiment1Params():
         params.checkParams()
 
         all_exec_params.append(params)
+    print(str(all_exec_params))
     return all_exec_params
 
 
@@ -217,9 +218,10 @@ python3 experiment1.py {puzzleName} {taskspernode}
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 3:
-        problemname = sys.argv[1]
-        tasksParallel = int(sys.argv[2])
-        runPuzzle(problemname, tasksParallel)
-    else:
-        jobExperiment1()
+    print(Experiment1Params())
+    # if len(sys.argv) == 3:
+    #     problemname = sys.argv[1]
+    #     tasksParallel = int(sys.argv[2])
+    #     runPuzzle(problemname, tasksParallel)
+    # else:
+    #     jobExperiment1()

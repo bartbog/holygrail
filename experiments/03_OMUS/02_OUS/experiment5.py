@@ -142,9 +142,9 @@ python3 experiment5.py {taskspernode}
 
 if __name__ == "__main__":
     # print(len(Experiment4Params()))
-    if len(sys.argv) == 3:
-        problemname = sys.argv[1]
-        tasksParallel = int(sys.argv[2])
+    if len(sys.argv) == 2:
+        tasksParallel = int(sys.argv[1])
+        print(tasksParallel)
         runMUSPuzzle(tasksParallel)
     else:
         jobExperiment5()

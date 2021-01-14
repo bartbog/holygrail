@@ -18,7 +18,7 @@ from gurobipy import GRB
 
 # pysat imports
 from pysat.formula import CNF, WCNF
-from pysat.solvers import Minisat22
+from pysat.solvers import Solver
 from pysat.examples.musx import MUSX
 
 # datetime object containing current date and time
@@ -231,7 +231,7 @@ class MUSExplainer(object):
         wcnf.extend(self.cnf.clauses)
         wcnf.extend([[l] for l in C], [1]*len(C))
         with MUSX(wcnf) as musx:
-            mus = musx.compute()  
+            mus = musx.compute()
             # gives back positions of the clauses !!
             return set(C[i-1] for i in mus)
 
@@ -297,7 +297,7 @@ def explainMUS(C: CNF, U: set, f, I0: set):
     assert all(True if abs(lit) in U else False for lit in I0), f"Part of supplied literals not in U (user variables): {lits for lit in I if lit not in U}"
 
     # Initialise the sat solver with the cnf
-    sat = Minisat22(bootstrap_with=C.clauses)
+    sat = Solver(bootstrap_with=C.clauses)
     assert sat.solve(assumptions=I0), f"CNF is unsatisfiable with given assumptions {I}."
 
     # Explanation sequence
@@ -465,3 +465,4 @@ if __name__ == "__main__":
     # Translating the explanation sequence generated to website visualisation
     # Execution parameters
     simpleMUS(None)
+    frietkotMUS(None)

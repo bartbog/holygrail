@@ -178,7 +178,9 @@ def print_expl(matching_table, Ibest):
 def orderedSubsets(f, C):
     # https://stackoverflow.com/questions/1482308/how-to-get-all-subsets-of-a-set-powerset
     s = list(C)
+    # make subsets
     orderedChain = list(chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1)))
+    # sort by difficulty
     orderedChain.sort(key=lambda Subset: sum(f(l) for l in Subset))
     for i in orderedChain:
         yield(set(i))
@@ -188,14 +190,9 @@ class MUSExplainer(object):
     def __init__(self, f, cnf, sat, U, Iend, I):
         """
         MUS computer iteratively computes the next explanation
-        using mus extraction methods.
+        using mus extraction methods (MUSX):
 
-        Args:
-            f ([type]): [description]
-            cnf ([type]): [description]
-            sat ([type]): [description]
-            Iend ([type]): [description]
-            I ([type]): [description]
+            https://pysathq.github.io/docs/html/api/examples/musx.html
         """
         self.f = f
         self.sat = sat
@@ -237,6 +234,7 @@ class MUSExplainer(object):
 
     def candidate_explanations(self, I: set, C: set):
         candidates = []
+        # kinda hacking here my way through I and C
         J = optimalPropagate(U=self.U, I=I | C, sat=self.sat) - C
         for a in J - (I|C):
             unsat = list(set({-a}) | I | C)
@@ -303,7 +301,7 @@ def explainMUS(C: CNF, U: set, f, I0: set):
     # Explanation sequence
     E = []
 
-    # Most precise intersection of all models of C project on U
+    # Most precise intersection of all models of C project on U, not including the constraints.
     Iend = optimalPropagate(U=U, I=I0, sat=sat) - I0
 
     # print(Iend)

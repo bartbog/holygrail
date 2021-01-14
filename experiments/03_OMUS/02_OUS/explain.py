@@ -510,10 +510,11 @@ class BestStepCOUSComputer(object):
         else:
             raise MaxSatExtensionError()
 
-        with RC2(wcnf) as rc2:
-            if self.params.maxsat_polarities:
-                rc2.oracle.set_phases(literals=list(self.Iend))
-            t_model = rc2.compute()
+        with RC2(wcnf) as s:
+            # mistery error
+            if self.params.maxsat_polarities and hasattr(s, 'oracle'):
+                s.oracle.set_phases(literals=list(self.Iend))
+            t_model = s.compute()
 
             return set(t_model)
 

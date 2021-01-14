@@ -31,7 +31,7 @@ def Experiment3():
     else:
         resultsFolder = "results/"
 
-    outputFolder = resultsFolder + "experiment1/" + datetime.now().strftime("%Y%m%d%H") + "/"
+    outputFolder = resultsFolder + "experiment3/" + datetime.now().strftime("%Y%m%d%H") + "/"
     # maxsat Perms
     maxsatPerms = []
     for p in itertools.permutations([True] + [False] * 2):

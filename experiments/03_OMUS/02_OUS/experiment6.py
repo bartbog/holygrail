@@ -89,9 +89,9 @@ def jobExperiment56():
     genPBSjobExperiment4(puzzle_funs, taskspernode=40)
 
 
-def genPBSjobExperiment4(puzzle_funs, taskspernode):
+def genPBSjobExperiment5(puzzle_funs, taskspernode):
     hpcDir = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments"
-    jobName = "Experiment4"
+    jobName = "Experiment5"
 
     # creating the appropriate directories
     hpcPath = Path(hpcDir)
@@ -120,7 +120,7 @@ module load SciPy-bundle/2020.03-intel-2020a-Python-3.8.2
 
 # own code
 cd /user/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS
-python3 experiment4.py {puzzleName} {taskspernode}
+python3 experiment56.py {puzzleName} {} {taskspernode}
 """
         with fpath.open('w+') as f:
             f.write(baseScript)

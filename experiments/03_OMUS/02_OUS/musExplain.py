@@ -510,3 +510,4 @@ if __name__ == "__main__":
     params.output_folder = "results/"
     simpleMUS(params)
     frietkotMUS(params)
+    puzzleMUS(params)

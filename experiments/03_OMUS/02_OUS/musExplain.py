@@ -18,11 +18,10 @@ from gurobipy import GRB
 
 # pysat imports
 from pysat.formula import CNF, WCNF
-from pysat.solvers import Minisat22, Solver
-from pysat.examples.rc2 import RC2
+from pysat.solvers import Minisat22
+from pysat.examples.musx import MUSX
 
 # datetime object containing current date and time
-from datetime import datetime
 
 # Testing samples
 from frietkot import originProblem, originProblemReify, pastaPuzzle
@@ -182,7 +181,7 @@ def orderedSubsets(f, C):
     orderedChain = list(chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1)))
     orderedChain.sort(key=lambda Subset: sum(f(l) for l in Subset))
     for i in orderedChain:
-        yield(list(i))
+        yield(set(i))
 
 
 class MUSExplainer(object):
@@ -205,6 +204,21 @@ class MUSExplainer(object):
         self.I = set(I)
         self.U = set(U)
 
+    def shrinkMus(self, assump):
+        # https://pysathq.github.io/docs/html/api/examples/musx.html 
+        # oracle: SAT solver (initialized)
+        # assump: full set of assumptions
+        i = 0
+
+        while i < len(assump):
+            to_test = assump[:i] + assump[(i + 1):]
+            if self.sat.solve(assumptions=to_test):
+                i += 1
+            else:
+                assump = to_test
+
+        return assump
+
     def MUS(self, C):
         solved = self.sat.solve(assumptions=list(C))
         assert not solved, f"Satisfiable ! C={C}"
@@ -212,11 +226,22 @@ class MUSExplainer(object):
 
         return mus
 
+    def MUSExtraction(self, C):
+        wcnf = WCNF()
+        wcnf.extend(self.cnf.clauses)
+        wcnf.extend([[l] for l in C], [1]*len(C))
+        with MUSX(wcnf) as musx:
+            mus = musx.compute()  
+            # gives back positions of the clauses !!
+            return set(C[i-1] for i in mus)
+
     def candidate_explanations(self, I: set, C: set):
         candidates = []
-        J = optimalPropagate(U=self.U, I=I | C, sat=self.sat)
-        for a in J - I:
-            X = self.MUS(set({-a}) | I | C)
+        J = optimalPropagate(U=self.U, I=I | C, sat=self.sat) - C
+        for a in J - (I|C):
+            unsat = list(set({-a}) | I | C)
+            X = self.MUSExtraction(unsat)
+            # print(unsat, [unsat[l-1] for l in X])
             E = I.intersection(X)
             S = C.intersection(X)
             A = optimalPropagate(U=self.U, I=E | S, sat=self.sat)
@@ -225,14 +250,21 @@ class MUSExplainer(object):
 
     def min_explanation(self, I, C):
         Candidates = []
+        cost_min_candidate = sum(self.f(l) for l in C)
+
         for s in orderedSubsets(self.f, C):
-            if sum(f(l) for l in s) > min(Candidates, key=lambda cand: cand[0]):
+            cost_subset= sum(self.f(l) for l in s)
+
+            if len(Candidates) > 0 and cost_subset > cost_min_candidate:
                 break
             cands = self.candidate_explanations(I, s)
             for cand in cands:
                 E, S, _ = cand
-                cost_cand = sum(f(l) for l in E) + sum(f(l) for l in S)
+                cost_cand = sum(self.f(l) for l in E) + sum(self.f(l) for l in S)
                 Candidates.append((cost_cand, cand))
+
+                if cost_cand < cost_min_candidate:
+                    cost_min_candidate = cost_cand
 
         return min(Candidates, key=lambda cand: cand[0])
 
@@ -260,25 +292,6 @@ def explainMUS(C: CNF, U: set, f, I0: set):
     print("\tf:", f)
     print("\tI0:", len(I0))
 
-    # init experimental results
-    # init experimental results
-    results = {
-        "config": {},
-        "results": {
-            "HS": [],
-            "HS_greedy": [],
-            "HS_incr": [],
-            "HS-opt-time": [],
-            "HS-postpone-time": [],
-            "SAT-time": [],
-            "grow-time": [],
-            "#expl": 0,
-            "expl_seq": [],
-            "OUS-time": [],
-            "timeout": False
-        }
-    }
-
     t_expl_start = time.time()
     # check literals of I are all user vocabulary
     assert all(True if abs(lit) in U else False for lit in I0), f"Part of supplied literals not in U (user variables): {lits for lit in I if lit not in U}"
@@ -291,41 +304,37 @@ def explainMUS(C: CNF, U: set, f, I0: set):
     E = []
 
     # Most precise intersection of all models of C project on U
-    Iend = optimalPropagate(U=U, I=I0, sat=sat)
+    Iend = optimalPropagate(U=U, I=I0, sat=sat) - I0
 
     # print(Iend)
-    c = MUSExplainer(f=f, cnf=C, sat=sat, Iend=Iend, I=I0)
+    c = MUSExplainer(f=f, cnf=C, sat=sat, U=U, Iend=Iend, I=I0)
 
-    I = set(I0) # copy
+    I = set()
+    C = set(I0) # copy
+
+    print(Iend)
+
     while(len(Iend - I) > 0):
         # remaining_time = params.timeout - (time.time() - t_expl_start)
         # Compute optimal explanation explanation assignment to subset of U.
-        expl, t_exp = c.bestStep(f, Iend, I)
-
-        saveResults(results, t_exp)
-
-        if expl is None:
-            results["results"]['timeout'] = True
-            break
+        costExpl, (Ei, Ci, Ai) = c.min_explanation(I, C)
 
         # facts used
-
-        Ibest = I & expl
+        Ibest = I & Ei
+        Cbest = C & Ci
 
         # New information derived "focused" on
-        Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
+        Nbest = optimalPropagate(U=U, I=Ibest | Cbest, sat=sat) - (I|C)
         assert len(Nbest - Iend) == 0
 
         E.append({
-            "constraints": list(Ibest),
+            "constraints": list(Ibest|Cbest),
             "derived": list(Nbest)
         })
 
-        print(f"\nOptimal explanation \t\t {Ibest} => {Nbest}\n")
+        print(f"\nOptimal explanation \t\t {Ibest} /\ {Cbest} => {Nbest}\n")
 
         I |= Nbest
-
-        results["results"]["#expl"] += 1
 
     print(E)
     sat.delete()

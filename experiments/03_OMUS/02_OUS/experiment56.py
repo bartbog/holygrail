@@ -1,4 +1,5 @@
 # pysat imports
+from musExplain import explainMUS
 from greedy_explain import explainGreedy
 import itertools
 import multiprocessing
@@ -13,6 +14,7 @@ import frietkot
 
 # pysat imports
 from pysat.formula import CNF
+from pysat.examples.hitman import Hitman
 
 # explanations import
 from explain import COusParams, OUSTimeoutError, cost_puzzle, explain

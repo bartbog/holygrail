@@ -117,6 +117,7 @@ def genPBSjobExperiment5(taskspernode):
 #PBS -M emilio.gamba@vub.be
 #PBS -m abe
 
+module load Gurobi/9.0.1-GCCcore-9.3.0-Python-3.8.2
 module load PySAT/0.1.6.dev11-GCC-9.3.0-Python-3.8.2
 module load SciPy-bundle/2020.03-intel-2020a-Python-3.8.2
 

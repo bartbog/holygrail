@@ -1,20 +1,11 @@
-import cProfile
-from collections import Counter
-import pstats
 import time
 import json
 from pathlib import Path
 # import random
-from functools import wraps
-import copy
 from itertools import chain, combinations
 import signal
 
-from multiprocessing import Process, Pool
-
-# gurobi imports
-import gurobipy as gp
-from gurobipy import GRB
+from datetime import datetime
 
 # pysat imports
 from pysat.formula import CNF, WCNF
@@ -24,13 +15,7 @@ from pysat.examples.musx import MUSX
 # datetime object containing current date and time
 
 # Testing samples
-from frietkot import originProblem, originProblemReify, pastaPuzzle
-from frietkot import simpleProblemReify, simplestProblemReify
-from frietkot import simpleProblem
-from frietkot import frietKotProblem, frietKotProblemReify
-
-from itertools import chain, combinations
-
+from frietkot import originProblem, simpleProblem, frietKotProblem
 
 SECONDS = 1
 MINUTES = 60 * SECONDS
@@ -39,6 +24,25 @@ HOURS = 60 * MINUTES
 
 def timeoutHandler(signum, frame):
     raise OUSTimeoutError()
+
+class MUSParams(object):
+    """basic parameter backup for results interpretation
+    """
+    def __init__(self):
+        self.instance = ""
+
+        # timeout
+        self.timeout = 2 * HOURS
+
+        # output file
+        self.output_folder = "results/" + datetime.now().strftime("%Y%m%d/")
+        self.output_file = datetime.now().strftime("%Y%m%d%H%M%S%f.json")
+
+    def to_dict(self):
+        return {
+            "instance": self.instance,
+            "timeout": self.timeout,
+        }
 
 
 class OUSTimeoutError(Exception):
@@ -266,7 +270,7 @@ class MUSExplainer(object):
 
         return min(Candidates, key=lambda cand: cand[0])
 
-def explainMUS(C: CNF, U: set, f, I0: set):
+def explainMUS(C: CNF, U: set, f, I0: set, params: MUSParams):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
     variables with associated weights users_vars_cost based on the
@@ -290,7 +294,17 @@ def explainMUS(C: CNF, U: set, f, I0: set):
     print("\tf:", f)
     print("\tI0:", len(I0))
 
-    t_expl_start = time.time()
+    results = {
+        "config": params.to_dict(),
+        "results": {
+            "#expl": 0,
+            "expl_seq": [],
+            "MUS-time": [],
+            "timeout": False
+        }
+    }
+
+    tstartExplain = time.time()
     # check literals of I are all user vocabulary
     assert all(True if abs(lit) in U else False for lit in I0), f"Part of supplied literals not in U (user variables): {lits for lit in I if lit not in U}"
 
@@ -310,12 +324,31 @@ def explainMUS(C: CNF, U: set, f, I0: set):
     I = set()
     C = set(I0) # copy
 
-    print(Iend)
+    remaining_time = round(params.timeout - (time.time() - tstartExplain))
+    _ = signal.signal(signal.SIGALRM, timeoutHandler)
+
+    # ensure max-time is not exceeded!
+    signal.alarm(remaining_time)
 
     while(len(Iend - I) > 0):
-        # remaining_time = params.timeout - (time.time() - t_expl_start)
+        timedout = False
+        remaining_time = params.timeout - (time.time() - tstartExplain)
+        tstartMinExplain = time.time()
         # Compute optimal explanation explanation assignment to subset of U.
-        costExpl, (Ei, Ci, Ai) = c.min_explanation(I, C)
+        try:
+            costExpl, (Ei, Ci, Ai) = c.min_explanation(I, C)
+        # only handling timeout error!
+        except OUSTimeoutError:
+            timedout = True
+            results['timeout'] = True
+        finally:
+            tendMinExplain = time.time() - tstartMinExplain
+            # ensure we don't get a timeout outside
+            signal.alarm(0)
+            results['results']['MUS-time'].append(tendMinExplain)
+
+        if timedout:
+            break
 
         # facts used
         Ibest = I & Ei
@@ -326,7 +359,7 @@ def explainMUS(C: CNF, U: set, f, I0: set):
         assert len(Nbest - Iend) == 0
 
         E.append({
-            "constraints": list(Ibest|Cbest),
+            "constraints": list(Ibest | Cbest),
             "derived": list(Nbest)
         })
 
@@ -334,8 +367,15 @@ def explainMUS(C: CNF, U: set, f, I0: set):
 
         I |= Nbest
 
-    print(E)
+        results["results"]["#expl"] += 1
+
     sat.delete()
+    results["results"]["expl_seq"] = E
+
+    # saving the results
+    outputFile = params.instance + "_" + params.output_file
+    outputDir = params.output_folder
+    write_results(results, outputDir, outputFile)
 
     return E
 
@@ -427,6 +467,7 @@ def read_json(pathstr):
 
 
 def frietkotMUS(params):
+    params.instance = "frietkot-problem"
     f_cnf, f_user_vars = frietKotProblem()
     f_cnf_ass, assumptions = add_assumptions(f_cnf)
 
@@ -435,10 +476,11 @@ def frietkotMUS(params):
     U = f_user_vars | set(abs(l) for l in assumptions)
     I = set(assumptions)
     f = cost(U, I)
-    explainMUS(C=frietkot_cnf, U=U, f=f, I0=I)
+    explainMUS(C=frietkot_cnf, U=U, f=f, I0=I, params=params)
 
 
 def simpleMUS(params):
+    params.instance = "simple-problem"
     s_cnf = simpleProblem()
     s_cnf_ass, assumptions = add_assumptions(s_cnf)
     # transform list cnf into CNF object
@@ -446,21 +488,25 @@ def simpleMUS(params):
     U = get_user_vars(simple_cnf)
     I = set(assumptions)
     f = cost(U, I)
-    explainMUS(C=simple_cnf, U=U, f=f, I0=I)
+    explainMUS(C=simple_cnf, U=U, f=f, I0=I, params=params)
 
 
 def puzzleMUS(params):
     params.instance = "origin-problem"
-    o_clauses, o_assumptions, o_weights, o_user_vars, matching_table = originProblem()
+    o_clauses, o_assumptions, o_weights, o_user_vars, _ = originProblem()
 
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost_puzzle(U, I, o_weights)
-    explainMUS(C=o_cnf, U=U, f=f, I0=I,  matching_table=matching_table)
+    explainMUS(C=o_cnf, U=U, f=f, I0=I, params=params)
 
 if __name__ == "__main__":
     # Translating the explanation sequence generated to website visualisation
     # Execution parameters
-    simpleMUS(None)
-    frietkotMUS(None)
+    params = MUSParams()
+    params.timeout = 2*HOURS
+    params.output_file = "mus_explain"
+    params.output_folder = "results/"
+    simpleMUS(params)
+    frietkotMUS(params)

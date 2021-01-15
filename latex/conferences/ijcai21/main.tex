@@ -161,7 +161,7 @@
 
 % \title{Incremental and Constrained Optimal Unsatisfiable Subsets for Explaining CSPs}
 % \title{Constrained Optimal Unsatisfiable Subsets for Explaining CSPs}
-\title{Efficient Explanations of CSPs with Constrained Optimal Unsatisfiable Subsets}
+\title{Efficiently explaining CSPs with unsatisfiable subset optimization}
 
 % Single author syntax
 \author{Anonymous}
@@ -172,18 +172,15 @@
 
 \maketitle
 
-% -------- Deze zin is weird.
-% -------
 \begin{abstract}
-    Recently, a novel method for explaining solutions of constraint satisfaction problems was proposed, 
-    explaining the solution-finding process in a human-understandable way. 
-    The resulting explanation there is a 
-    sequence of `simple' inference steps, where the difficulty of an inference step depends on the number and types of constraints used.
-    While the algorithms developed there generate good explanations, they suffer from performance problems, and cannot guarantee that the result is optimal with respect to the defined difficulty. 
-    To overcome these limitations, we define the problem of \emph{constrained optimal unsatisfiable subset (cOUS) generation}. 
-    We develop a generic, incremental, algorithm for computing cOUSs, inspired by the well-known hitting set duality that lies at the basis of many \maxsat algorithms,    
-    as well as optimizations of the algorithm specifically for explanation generation.  
-    Our experimental results show that this results in qualitative improvements of the resulting explanation, as well as in an order of magnitude speed-up in the time needed to generate the explanation sequence. 
+  Recently, a novel method for explaining solutions of constraint satisfaction problems was proposed. 
+% 
+An explanation in that method is a \textit{sequence} of simple inference steps, where the simplicity of an inference step depends on the number and types of constraints used, eventually explaining all logical consequences of the problem. 
+% (I would even drop this: For CSPs that have a unique solution, this corresponds to explaining each decision variable's assignment in that full solution.)
+% what?
+The current paper tackles two questions left in builds on these formal foundations and tackles two trailing questions: namely how to generate explanations that are provably optimal (with respect to the given cost metric) and how to generate them efficiently. 
+% how? 
+To answer these questions, we develop 1) an implicit hitting set algorithm for finding \textit{optimal} unsatisfiable subsets; 2) a method to reduce multiple calls for (optimal) unsatisfiable subsets to a single call that takes \emph{constraints} on the subset into account, and 3) a method for re-using relevant information over multiple calls to these algorithms. 
     
 %     This raises the need for algorithms that can compute unsatisfiable subsets of a logical specification that are optimal with respect to a certain cost criterion.
 %     We tackle this challenge by developing an algorithm for computing cost-optimal unsatisfiable subsets inspired by minimal hitting set dualization approaches for finding cardinality-minimal unsatisfiable subsets and for solving partial weighted \maxsat.

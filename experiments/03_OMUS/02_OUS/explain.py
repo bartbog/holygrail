@@ -515,6 +515,8 @@ class BestStepCOUSComputer(object):
             if self.params.maxsat_polarities and hasattr(s, 'oracle'):
                 s.oracle.set_phases(literals=list(self.Iend))
             t_model = s.compute()
+            if t_model is None:
+                return HS
 
             return set(t_model)
 

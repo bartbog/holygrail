@@ -138,34 +138,6 @@ def optimalPropagate(sat, I=set(), U=None):
         model = model.intersection(new_model)
 
 
-def print_timings(t_exp, timedout=False):
-    if timedout:
-        return
-
-    print("texpl=", round(sum(t_exp['t_ous']), 3), "s\n")
-    print("\t#HS Opt:", t_exp['#H'], "\t Incr:", t_exp['#H_incr'], "\tGreedy:", t_exp['#H_greedy'], "\n")
-
-    if len(t_exp['t_mip']) > 1:
-        print("\tMIP=\t", round(sum(t_exp['t_mip']), 3), f"s [{round(100*sum(t_exp['t_mip'])/sum(t_exp['t_ous']))}%]\t", "t/call=", round(sum(t_exp['t_mip'])/len(t_exp['t_mip']), 3))
-    if len(t_exp['t_post']) > 1:
-        print("\tPOST=\t", round(sum(t_exp['t_post']), 3), f"s [{round(100*sum(t_exp['t_post'])/sum(t_exp['t_ous']))}%]\t", "t/call=", round(sum(t_exp['t_post'])/len(t_exp['t_post']), 3))
-    if len(t_exp['t_sat']) > 1:
-        print("\tSAT=\t", round(sum(t_exp['t_sat']), 3), f"s [{round(100*sum(t_exp['t_sat'])/sum(t_exp['t_ous']))}%]\t", "t/call=", round(sum(t_exp['t_sat'])/len(t_exp['t_sat']), 3))
-    if len(t_exp['t_grow']) > 1:
-        print("\tGROW=\t", round(sum(t_exp['t_grow']), 3), f"s [{round(100*sum(t_exp['t_grow'])/sum(t_exp['t_ous']))}%]\t", "t/call=", round(sum(t_exp['t_grow'])/len(t_exp['t_grow']), 3))
-
-
-def saveResults(results, t_exp):
-    results["results"]["HS"].append(t_exp["#H"])
-    results["results"]["HS_greedy"].append(t_exp["#H_greedy"])
-    results["results"]["HS_incr"].append(t_exp["#H_incr"])
-    results["results"]["HS-opt-time"].append(sum(t_exp["t_mip"]))
-    results["results"]["HS-postpone-time"].append(sum(t_exp["t_post"]))
-    results["results"]["OUS-time"].append(t_exp["t_ous"])
-    results["results"]["SAT-time"].append(sum(t_exp["t_sat"]))
-    results["results"]["grow-time"].append(sum(t_exp["t_grow"]))
-
-
 def print_expl(matching_table, Ibest):
     if matching_table is None:
         return
@@ -179,18 +151,6 @@ def print_expl(matching_table, Ibest):
             print("clues n°", matching_table['clues'][i])
         else:
             print("Fact:", i)
-
-
-def orderedSubsets(f, C):
-    # https://stackoverflow.com/questions/1482308/how-to-get-all-subsets-of-a-set-powerset
-    s = sorted(list(C), key=lambda l: f(l))
-    # make subsets
-
-    orderedChain = list(chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1)))
-    # sort by difficulty
-    orderedChain.sort(key=lambda Subset: sum(f(l) for l in Subset))
-    for i in orderedChain:
-        yield(set(i))
 
 
 def powerset(iterable):
@@ -241,14 +201,13 @@ class MUSExplainer(object):
         wcnf = WCNF()
         wcnf.extend(self.cnf.clauses)
         wcnf.extend([[l] for l in C], [1]*len(C))
-        with MUSX(wcnf) as musx:
+        with MUSX(wcnf, verbosity=0) as musx:
             mus = musx.compute()
             # gives back positions of the clauses !!
             return set(C[i-1] for i in mus)
 
     def candidate_explanations(self, I: set, C: set):
         candidates = []
-        print(type(I), type(C))
         # kinda hacking here my way through I and C
         J = optimalPropagate(U=self.U, I=I | C, sat=self.sat) - C
         for a in J - (I|C):
@@ -256,8 +215,7 @@ class MUSExplainer(object):
             X = self.MUSExtraction(unsat)
             E = I.intersection(X)
             S = C.intersection(X)
-            A = optimalPropagate(U=self.U, I=E | S, sat=self.sat)
-            candidates.append((E, S, A))
+            candidates.append((E, S))
         return candidates
 
     def naive_min_explanation(self, I, C):
@@ -265,7 +223,7 @@ class MUSExplainer(object):
         all_constraints = set(C)
         cands = self.candidate_explanations(I, all_constraints)
         for cand in cands:
-            E, S, _ = cand
+            E, S = cand
             cost_cand = sum(self.f(l) for l in E) + sum(self.f(l) for l in S)
             Candidates.append((cost_cand, cand))
 
@@ -281,6 +239,7 @@ class MUSExplainer(object):
 
             if len(Candidates) > 0 and cost_subset > cost_min_candidate:
                 break
+
             cands = self.candidate_explanations(I, s)
             for cand in cands:
                 E, S, _ = cand
@@ -357,10 +316,10 @@ def explainMUS(C: CNF, U: set, f, I0: set, params: MUSParams):
         timedout = False
         remaining_time = params.timeout - (time.time() - tstartExplain)
         tstartMinExplain = time.time()
+        costExpl = 0
         # Compute optimal explanation explanation assignment to subset of U.
         try:
-            # costExpl, (Ei, Ci, Ai) = c.min_explanation(I, C)
-            costExpl, (Ei, Ci, Ai) = c.naive_min_explanation(I, C)
+            costExpl, (Ei, Ci) = c.naive_min_explanation(I, C)
         # only handling timeout error!
         except OUSTimeoutError:
             timedout = True
@@ -384,7 +343,8 @@ def explainMUS(C: CNF, U: set, f, I0: set, params: MUSParams):
 
         E.append({
             "constraints": list(Ibest | Cbest),
-            "derived": list(Nbest)
+            "derived": list(Nbest),
+            "cost": costExpl
         })
 
         print(f"\nOptimal explanation \t\t {Ibest} /\ {Cbest} => {Nbest}\n")

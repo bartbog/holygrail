@@ -244,7 +244,7 @@ python3 experiment4.py {puzzleName} {taskspernode}
 
 
 if __name__ == "__main__":
-    # print(len(Experiment4Params()))
+    print(len(Experiment4Params()))
     if len(sys.argv) == 3:
         problemname = sys.argv[1]
         tasksParallel = int(sys.argv[2])

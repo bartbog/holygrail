@@ -1,5 +1,5 @@
 # pysat imports
-from greedy_explain import explainGreedy
+from greedy_explain import OusParams, explainGreedy
 import itertools
 import multiprocessing
 from pathlib import Path
@@ -47,6 +47,9 @@ def Experiment6GreedyParams():
 
     outputFolder = resultsFolder + "experiment6_greedy/" + datetime.now().strftime("%Y%m%d%H") + "/"
 
+    reuse_SSes = [True, False]
+    sort_literals = [True, False]
+
     pre_seeding_perms = [False, True]
 
     postponeOpt_perms = [
@@ -80,72 +83,55 @@ def Experiment6GreedyParams():
                 "maxsat": [False] * 9
             })
 
-    satpolperms = [
-        [False, False],
-        [True, False],
-        [False, True],
-    ]
-    print(len(pre_seeding_perms))
-    print(len(postponeOpt_perms))
-    print(len(satpolperms))
-    print(len(growPerms))
-    for pre_seeding in pre_seeding_perms:
-        for postopt, postoptincr, postoptgreed in postponeOpt_perms:
-            for satpol_full, satpolinitial in satpolperms:
-                for growPerm in growPerms:
+    for reuse_ss in reuse_SSes:
+        for sort_lits in sort_literals:
+            for pre_seeding in pre_seeding_perms:
+                for postopt, postoptincr, postoptgreed in postponeOpt_perms:
+                    for growPerm in growPerms:
+                        params = OusParams()
 
-                    params = COusParams()
+                        # intialisation: pre-seeding
+                        params.reuse_SSes = reuse_ss
+                        params.sort_literals = sort_lits
 
-                    params.disableConstrained = True
+                        params.pre_seeding = pre_seeding
 
-                    # intialisation: pre-seeding
-                    params.pre_seeding = pre_seeding
+                        # hitting set computation
+                        params.postpone_opt = postopt
+                        params.postpone_opt_incr = postoptincr
+                        params.postpone_opt_greedy = postoptgreed
 
-                    # hitting set computation
-                    params.postpone_opt = postopt
-                    params.postpone_opt_incr = postoptincr
-                    params.postpone_opt_greedy = postoptgreed
+                        # MAXSAT growing
+                        params.maxsat_polarities = True
+                        g_subsetmax, g_maxsat = growPerm["grow"]
+                        m_full_pos, m_full_inv, m_full_unif, m_initial_pos, m_initial_inv, m_initial_unif, m_actual_pos, m_actual_unif, m_actual_inv = growPerm["maxsat"]
 
-                    # polarity of sat solver
-                    params.polarity = satpol_full
-                    params.polarity_initial = satpolinitial
+                        # sat - grow
+                        params.grow = True
+                        params.grow_subset_maximal = g_subsetmax
+                        params.grow_maxsat = g_maxsat
 
-                    g_subsetmax, g_maxsat = growPerm["grow"]
-                    m_full_pos, m_full_inv, m_full_unif, m_initial_pos, m_initial_inv, m_initial_unif, m_actual_pos, m_actual_unif, m_actual_inv = growPerm["maxsat"]
+                        # MAXSAT growing
+                        params.grow_maxsat_full_pos = m_full_pos
+                        params.grow_maxsat_full_inv = m_full_inv
+                        params.grow_maxsat_full_unif = m_full_unif
+                        params.grow_maxsat_initial_pos = m_initial_pos
+                        params.grow_maxsat_initial_inv = m_initial_inv
+                        params.grow_maxsat_initial_unif = m_initial_unif
+                        params.grow_maxsat_actual_pos = m_actual_pos
+                        params.grow_maxsat_actual_unif = m_actual_unif
+                        params.grow_maxsat_actual_inv = m_actual_inv
+                        # timeout
+                        params.timeout = timeout
 
-                    # poarlarity can be used
-                    params.polarity = True
+                        # output
+                        params.output_folder = outputFolder
 
-                    # grow strategies
-                    params.grow = True
-                    params.grow_subset_maximal = g_subsetmax
-                    params.grow_maxsat = g_maxsat
+                        # instance
+                        params.instance = "unnamed"
+                        params.checkParams()
 
-                    # we know it works!
-                    params.maxsat_polarities = True
-
-                    # all maxsat configs
-                    params.grow_maxsat_full_inv = m_full_pos
-                    params.grow_maxsat_full_pos = m_full_inv
-                    params.grow_maxsat_full_unif = m_full_unif
-                    params.grow_maxsat_initial_pos = m_initial_pos
-                    params.grow_maxsat_initial_inv = m_initial_inv
-                    params.grow_maxsat_initial_unif = m_initial_unif
-                    params.grow_maxsat_actual_pos = m_actual_pos
-                    params.grow_maxsat_actual_unif = m_actual_unif
-                    params.grow_maxsat_actual_inv = m_actual_inv
-
-                    # timeout
-                    params.timeout = timeout
-
-                    # output
-                    params.output_folder = outputFolder
-
-                    # instance
-                    params.instance = "unnamed"
-                    params.checkParams()
-
-                    all_exec_params.append(params)
+                        all_exec_params.append(params)
     return all_exec_params
 
 
@@ -159,7 +145,8 @@ def runPuzzle(problemName, taskspernode):
         "p18": frietkot.p18,
         "p25": frietkot.p25,
         "p20": frietkot.p20,
-        "p93": frietkot.p93
+        "p93": frietkot.p93,
+        "p19": frietkot.p19
     }
 
     puzzleFunc = puzzle_funs[problemName]

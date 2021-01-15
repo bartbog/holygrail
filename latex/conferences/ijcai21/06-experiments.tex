@@ -1,4 +1,26 @@
 % !TeX root = ./main.tex
+
+\begin{table*}
+    \centering
+    \caption{Execution time generic grow version}
+    \begin{tabular}{|r||c|c|c|c|c|}
+    \hline
+      p &             sat &          subset &      maxsat\_pos &     maxsat\_inv &    maxsat\_unif \\
+    \hline
+     6 &  15.25 - [18]  &  17.46 - [33]  &  48.41 - [9]  &  14.24 - [9]  &  14.71 - [16]  \\
+     8 &  38.95 - [6]  &  21.31 - [10]  &  1558.78 - [6]  &  14.26 - [6]  &  26.47 - [6]  \\
+     p &  14.09 - [9]  &  19.96 - [10]  &  646.94 - [9]  &  6.66 - [1]  &  9.84 - [4]  \\
+     2 &  18.6 - [9]  &  10.12 - [15]  &  171.94 - [9]  &  14.62 - [7]  &  16.54 - [7]  \\
+     7 &  10.24 - [7]  &  17.52 - [8]  &  1542.48 - [1]  &  13.03 - [1]  &  12.31 - [4]  \\
+     1 &  26.25 - [13]  &  20.52 - [13]  &  333.4 - [13]  &  13.28 - [12]  &  16.49 - [13]  \\
+     4 &  40.52 - [101]  &  22.86 - [108]  &  360.07 - [16]  &  14.18 - [11]  &  16.59 - [20]  \\
+     10 &  13.75 - [8]  &  26.72 - [8]  &  487.54 - [2]  &  17.88 - [4]  &  13.89 - [4]  \\
+     3 &  22.58 - [21]  &  19.57 - [10]  &  319.77 - [10]  &  13.49 - [9]  &  14.92 - [9]  \\
+    \hline
+    \end{tabular}
+\end{table*}
+
+
 We now experimentally validate the the performance of the different versions of our algorithms for explaining satisfiable constraint satisfaction problems.
 
 We consider the following benchmarks: CNF instances from the SATLIB problems Benchmark \cite{hoos2000satlib} and a CNF encoding of the logic grid puzzle ``Origin'' of \cite{ecai/BogaertsGCG20}. All code was implemented in Python on top of %CPpy~\footnote{} and
@@ -21,21 +43,21 @@ We compare the following enhancements options to the basic \omus algorithm: post
 
 % \rule{\textwidth}{10pt}
 
-\begin{table*}[t!]
-    \centering
-    \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
-        \hline
-        % p    & nv& nc&           \omus &      {\omus}+Incr &      {\omus}+Post &  {\omus}+Incr+Warm &   {\omus}+Incr+Post & {\omus}+Incr+Post+Warm \\
-        p    & nv& nc&           \omus &      {\omus}+I &      {\omus}+P &  {\omus}+IW &   {\omus}+IP & {\omus}+IPW \\
-        \hline
-        aim-50-1\_6-yes1-4 & 50& 80&   0.88 s  &   0.38 s  &   0.37 s  &   0.81 s  &    0.65 s  &      \textbf{0.33} s  \\
-        par8-2 & 350 & 1157 &   122.42 s  &  94.07 s  &  96.84 s  &  120.55 s  &  126.15 s  &     \textbf{87.31} s  \\
-        zebra\_v155\_c1135 & 155& 1135&   130.38 s  &  87.97 s  &  84.75 s  &  104.7 s  &  124.48 s  &     \textbf{80.92 s}  \\
-        \hline
-        \end{tabular}
-        \caption{Execution time of the \omus variants for deriving 10 literals evaluated on CNF instances.}
-        \label{table:experiment1}
-\end{table*}
+% \begin{table*}[t!]
+%     \centering
+%     \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+%         \hline
+%         % p    & nv& nc&           \omus &      {\omus}+Incr &      {\omus}+Post &  {\omus}+Incr+Warm &   {\omus}+Incr+Post & {\omus}+Incr+Post+Warm \\
+%         p    & nv& nc&           \omus &      {\omus}+I &      {\omus}+P &  {\omus}+IW &   {\omus}+IP & {\omus}+IPW \\
+%         \hline
+%         aim-50-1\_6-yes1-4 & 50& 80&   0.88 s  &   0.38 s  &   0.37 s  &   0.81 s  &    0.65 s  &      \textbf{0.33} s  \\
+%         par8-2 & 350 & 1157 &   122.42 s  &  94.07 s  &  96.84 s  &  120.55 s  &  126.15 s  &     \textbf{87.31} s  \\
+%         zebra\_v155\_c1135 & 155& 1135&   130.38 s  &  87.97 s  &  84.75 s  &  104.7 s  &  124.48 s  &     \textbf{80.92 s}  \\
+%         \hline
+%         \end{tabular}
+%         \caption{Execution time of the \omus variants for deriving 10 literals evaluated on CNF instances.}
+%         \label{table:experiment1}
+% \end{table*}
 
 % \begin{table*}[t!]
 %     \centering
@@ -137,12 +159,12 @@ The second research question is: how do the different variants perform when expl
 In this comparison, we expect that constrained versions of our algorithm perform best as they will allow performing an entire step of the explanations in a single call.
 For this reason, we only include different variations on the constrained configuration and the single best variant of non-constrained algorithms found in the previous experiment. 
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/omusConstrCumulative.png}
-    \caption{Experiment 2}
-    \label{fig:exp2}
-\end{figure}
+% \begin{figure}[t]
+%     \centering
+%     \includegraphics[width=\columnwidth]{figures/omusConstrCumulative.png}
+%     \caption{Experiment 2}
+%     \label{fig:exp2}
+% \end{figure}
 
 We generate the explanation sequence as far as possible within a time limit of one hour. 
 The results for the  ``origin'' puzzle is shown in Figure~\ref{fig:exp2}.

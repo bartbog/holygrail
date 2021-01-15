@@ -1,3 +1,4 @@
+import itertools
 import time
 import json
 from pathlib import Path
@@ -24,6 +25,7 @@ HOURS = 60 * MINUTES
 
 def timeoutHandler(signum, frame):
     raise OUSTimeoutError()
+
 
 class MUSParams(object):
     """basic parameter backup for results interpretation
@@ -181,13 +183,20 @@ def print_expl(matching_table, Ibest):
 
 def orderedSubsets(f, C):
     # https://stackoverflow.com/questions/1482308/how-to-get-all-subsets-of-a-set-powerset
-    s = list(C)
+    s = sorted(list(C), key=lambda l: f(l))
     # make subsets
+
     orderedChain = list(chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1)))
     # sort by difficulty
     orderedChain.sort(key=lambda Subset: sum(f(l) for l in Subset))
     for i in orderedChain:
         yield(set(i))
+
+
+def powerset(iterable):
+    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1))
 
 
 class MUSExplainer(object):
@@ -223,9 +232,10 @@ class MUSExplainer(object):
     def MUS(self, C):
         solved = self.sat.solve(assumptions=list(C))
         assert not solved, f"Satisfiable ! C={C}"
-        mus = set(self.sat.get_core())
+        mus = self.sat.get_core()
+        mus = self.shrinkMus(mus)
 
-        return mus
+        return set(mus)
 
     def MUSExtraction(self, C):
         wcnf = WCNF()
@@ -238,23 +248,35 @@ class MUSExplainer(object):
 
     def candidate_explanations(self, I: set, C: set):
         candidates = []
+        print(type(I), type(C))
         # kinda hacking here my way through I and C
         J = optimalPropagate(U=self.U, I=I | C, sat=self.sat) - C
         for a in J - (I|C):
             unsat = list(set({-a}) | I | C)
             X = self.MUSExtraction(unsat)
-            # print(unsat, [unsat[l-1] for l in X])
             E = I.intersection(X)
             S = C.intersection(X)
             A = optimalPropagate(U=self.U, I=E | S, sat=self.sat)
             candidates.append((E, S, A))
         return candidates
 
+    def naive_min_explanation(self, I, C):
+        Candidates = []
+        all_constraints = set(C)
+        cands = self.candidate_explanations(I, all_constraints)
+        for cand in cands:
+            E, S, _ = cand
+            cost_cand = sum(self.f(l) for l in E) + sum(self.f(l) for l in S)
+            Candidates.append((cost_cand, cand))
+
+        return min(Candidates, key=lambda cand: cand[0])
+
     def min_explanation(self, I, C):
         Candidates = []
         cost_min_candidate = sum(self.f(l) for l in C)
-
-        for s in orderedSubsets(self.f, C):
+        s = sorted(list(C), key=lambda l: self.f(l))
+        for sub in powerset(s):
+            s = set(s)
             cost_subset= sum(self.f(l) for l in s)
 
             if len(Candidates) > 0 and cost_subset > cost_min_candidate:
@@ -269,6 +291,7 @@ class MUSExplainer(object):
                     cost_min_candidate = cost_cand
 
         return min(Candidates, key=lambda cand: cand[0])
+
 
 def explainMUS(C: CNF, U: set, f, I0: set, params: MUSParams):
     """
@@ -336,7 +359,8 @@ def explainMUS(C: CNF, U: set, f, I0: set, params: MUSParams):
         tstartMinExplain = time.time()
         # Compute optimal explanation explanation assignment to subset of U.
         try:
-            costExpl, (Ei, Ci, Ai) = c.min_explanation(I, C)
+            # costExpl, (Ei, Ci, Ai) = c.min_explanation(I, C)
+            costExpl, (Ei, Ci, Ai) = c.naive_min_explanation(I, C)
         # only handling timeout error!
         except OUSTimeoutError:
             timedout = True

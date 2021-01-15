@@ -1,6 +1,6 @@
 # pysat imports
 from musExplain import MUSParams, explainMUS
-from greedy_explain import explainGreedy
+from greedy_explain import OusParams, explainGreedy
 import itertools
 import multiprocessing
 from pathlib import Path
@@ -42,6 +42,7 @@ def puzzleOptExplain(args):
 
 
 def Experiment5Params():
+    all_exec_params = []
     timeout = 2 * HOURS
     usr = getpass.getuser()
 
@@ -50,9 +51,89 @@ def Experiment5Params():
         resultsFolder = "/data/brussel/101/vsc10143/OUSResults/"
     else:
         resultsFolder = "results/"
-    musParam = MUSParams()
-    musParam.output_folder = resultsFolder + "experiment5/" + datetime.now().strftime("%Y%m%d%H") + "/"
-    return musParam
+
+    outputFolder = resultsFolder + "experiment5/" + datetime.now().strftime("%Y%m%d%H") + "/"
+    # Greedy Params!
+    pre_seeding_perms = [
+
+    ]
+    postpone_opt_perms = [
+
+    ]
+
+    # maxsat Perms
+    maxsatPerms = []
+    for p in itertools.permutations([True] + [False] * 8):
+        if list(p) not in maxsatPerms:
+            maxsatPerms.append(list(p))
+
+    # at least one subsetmax/maxsat
+    perms = [list(l) for l in itertools.permutations([True] + [False])]
+
+    growPerms = []
+    for perm in perms:
+        # if maxsat we add all different permutations possible
+        if perm[-1]:
+            for m in maxsatPerms:
+                growPerms.append({
+                    "grow": list(perm),
+                    "maxsat": m
+                })
+        else:
+            growPerms.append({
+                "grow": perm,
+                "maxsat": [False] * 9
+            })
+
+    params = OusParams()
+    for pre_seeding in pre_seeding_perms:
+        for p_opt, p_opt_incr, p_opt_greedy in postpone_opt_perms:
+            for m_polarity in growPerms:
+
+
+    params.pre_seeding = False
+
+    # hitting set computation
+    params.postpone_opt = False
+    params.postpone_opt_incr = False
+    params.postpone_opt_greedy = False
+
+    # polarity of sat solver
+    params.polarity = False
+    params.polarity_initial = False
+
+    # MAXSAT growing
+    params.maxsat_polarities = False
+
+    # sat - grow
+    params.grow = False
+    params.grow_sat = False
+    params.grow_subset_maximal = False
+    params.subset_maximal_I0 = False
+    params.grow_maxsat = False
+
+    # MAXSAT growing
+    params.grow_maxsat_full_pos = False
+    params.grow_maxsat_full_inv = False
+    params.grow_maxsat_full_unif = False
+    params.grow_maxsat_initial_pos = False
+    params.grow_maxsat_initial_inv = False
+    params.grow_maxsat_initial_unif = False
+    params.grow_maxsat_actual_pos = False
+    params.grow_maxsat_actual_unif = False
+    params.grow_maxsat_actual_inv = False
+
+    # timeout
+    params.timeout = 2 * HOURS
+
+    # output file
+    params.output_folder = "results/" + datetime.now().strftime("%Y%m%d/")
+    params.output_file = datetime.now().strftime("%Y%m%d%H%M%S%f.json")
+
+    # instance
+    params.instance = ""
+
+    return all_exec_params
 
 def runMUSPuzzle(taskspernode):
     puzzle_funs = {

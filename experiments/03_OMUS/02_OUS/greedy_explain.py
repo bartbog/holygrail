@@ -100,8 +100,6 @@ def profile(output_file=None, sort_by='cumulative', lines_to_print=None, strip_d
     return inner
 
 
-
-
 def timeoutHandler(signum, frame):
     raise OUSTimeoutError()
 

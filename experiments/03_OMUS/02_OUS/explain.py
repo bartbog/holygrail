@@ -1426,6 +1426,7 @@ def test_puzzle(params):
 def test_p19Puzzle(params):
     params.instance = "p19"
     o_clauses, o_assumptions, o_weights, o_user_vars, matching_table = p19()
+
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
@@ -1439,7 +1440,6 @@ def test_p19Puzzle(params):
             if not prev is None:
                 print("diff", sorted(set(prev) - set(m), key=lambda l: abs(l)))
             prev = m
-    return
     explain(C=o_cnf, U=U, f=f, I0=I, params=params, matching_table=matching_table, verbose=True)
 
 
@@ -1636,13 +1636,13 @@ if __name__ == "__main__":
     # test_frietkot(params)
     # test_puzzle(params)
     # test_puzzle(optimalParams)
-    test_PastaPuzzle(optimalParams)
+    # test_PastaPuzzle(optimalParams)
     # test_PastaPuzzle(optimalParams)
     # test_p12Puzzle(optimalParams)
     # test_p13Puzzle(optimalParams)
     # test_p16Puzzle(optimalParams)
     # test_p18Puzzle(optimalParams)
-    # test_p19Puzzle(optimalParams)
+    test_p19Puzzle(optimalParams)
     # test_p25(optimalParams)
     # test_p20(optimalParams)
     # test_p93(optimalParams)

@@ -74,6 +74,26 @@ def buildBijectivity(rels):
         bv_bij.append(bv4)
     return bij, bv_bij
 
+# untested
+# returns: list of indicators, list of hard constraints
+def make_trans(type1, type2, rel12,  type3, rel13, rel23):
+    trans = []
+    for x in type1:
+        for y in type2:
+            for z in type3:
+                    b0 = BoolVar()
+                    t0 = to_cnf(implies(rel13[x, z] & rel23[y, z], rel12[x, y]))
+                    [trans.append(implies(b0, clause)) for clause in t0]
+
+                    b1 = BoolVar()
+                    t1 = to_cnf(implies(~rel13[x, z] & rel23[y, z], ~rel12[x, y]))
+                    [trans.append(implies(b1, clause)) for clause in t1]
+
+                    b2 = BoolVar()
+                    t2 = to_cnf(implies(rel13[x, z] & ~rel23[y, z], ~rel12[x, y]))
+                    [trans.append(implies(b2, clause)) for clause in t2]
+    return [b0,b1,b2], trans
+
 
 def p93():
     linkedin_connection = ["57", "59", "64", "68", "78"]
@@ -554,8 +574,8 @@ def p20():
 
 
 def p19():
-    year = ["21", "30", "42", "47", "58"]
     orbital_period = ["orbital_period_1", "orbital_period_2", "orbital_period_3", "orbital_period_4", "orbital_period_5"]
+    year = ["21", "30", "42", "47", "58"]
     comet = ["the_other_comet", "gostroma", "trosny", "casputi", "sporrin"]
     type1 = ["the_other_type1", "whitaker", "tillman", "underwood", "parks"]
     cycle = ["2008", "2009", "2010", "2011", "2012"]
@@ -606,7 +626,20 @@ def p19():
 
     # Transitivity
     trans = []
-    bv_trans =  [BoolVar() for i in range(27)]
+    bv_trans =  [BoolVar() for i in range(30)]
+
+    # deze was missing, 'has' is wel omgedraaid...
+    for x in orbital_period:
+        for y in year:
+            for z in comet:
+                t27 = to_cnf(implies(has[z, x] & is_linked_with_1[y, z], of[x, y]))
+                [trans.append(implies(bv_trans[27], clause)) for clause in t27]
+
+                t28 = to_cnf(implies(~has[z, x] & is_linked_with_1[y, z], ~of[x, y]))
+                [trans.append(implies(bv_trans[28], clause)) for clause in t28]
+
+                t29 = to_cnf(implies(has[z, x] & ~is_linked_with_1[y, z], ~of[x, y]))
+                [trans.append(implies(bv_trans[29], clause)) for clause in t29]
 
     for x in orbital_period:
         for y in year:
@@ -720,15 +753,27 @@ def p19():
     clues = []
     bv_clues = [BoolVar() for i in range(11)]
 
+    # fix orbital_period/year coupling
+    for i in range(5):
+        clues += [ of[orbital_period[i], year[i]] ]
+
     # 0. The comet discovered by Whitaker doesn't have an orbital period of 30 years
     # assumption_satisfied( 0  ) => ?a [comet]: discovered_by(a,whitaker) & ~ (?b [orbital_period]: of(b,30) & has(a,b)).
     c0a = []
+    #for a in comet:
+    #    subformula0 = any(
+    #        of[b,"30"] & has[a,b]
+    #        for b in orbital_period
+    #    )
+    #    c0a.append(discovered_by[a,"whitaker"] & ~ subformula0)
+    # manual ALT
     for a in comet:
         subformula0 = any(
             of[b,"30"] & has[a,b]
             for b in orbital_period
         )
-        c0a.append(discovered_by[a,"whitaker"] & ~ subformula0)
+        #c0a.append(discovered_by[a,"whitaker"] & ~ subformula0)
+        c0a.append(discovered_by[a,"whitaker"] & all(~of[b,"30"] | ~has[a,b] for b in orbital_period))
 
     for cl in to_cnf(any(c0a)):
         clues.append(implies(bv_clues[0], cl))
@@ -752,9 +797,11 @@ def p19():
         for g in comet:
             for h in orbital_period:
                 if not (f == g):
-                    c2a.append(
-                        discovered_by[f,"underwood"] & of[h,"42"] & has[g,h] & ((discovered_in[f,"2009"] & ("trosny" == g)) | (discovered_in[g,"2009"] & ("trosny" == f)))
-                    )
+                    #discovered_by[f,"underwood"] & of[h,"42"] & has[g,h] & ((discovered_in[f,"2009"] & ("trosny" == g)) | (discovered_in[g,"2009"] & ("trosny" == f)))
+                    if f == "trosny":
+                        c2a.append( discovered_by[f,"underwood"] & of[h,"42"] & has[g,h] & discovered_in[g,"2009"] )
+                    elif g == "trosny":
+                        c2a.append( discovered_by[f,"underwood"] & of[h,"42"] & has[g,h] & discovered_in[f,"2009"] )
 
     for cl in to_cnf(any(c2a)):
         clues.append(implies(bv_clues[2], cl))
@@ -764,13 +811,15 @@ def p19():
     c3a = []
     for i in comet:
         for j in orbital_period:
-            subformula3a = any(
-                discovered_by[k,"whitaker"]
-                for k in comet if k == i
-            )
-            c3a.append(
-                of[j,"21"] & has[i,j] & ( subformula3a | ("casputi" == i))
-            )
+            #subformula3a = any(
+            #    discovered_by[k,"whitaker"]
+            #    for k in comet if k == i
+            #)
+            #of[j,"21"] & has[i,j] & ( discovered_by[i,"whitaker"] | ("casputi" == i))
+            if i == "casputi":
+                c3a.append( of[j,"21"] & has[i,j] )
+            else:
+                c3a.append( of[j,"21"] & has[i,j] & discovered_by[i,"whitaker"] )
 
     for cl in to_cnf(any(c3a)):
         clues.append(implies(bv_clues[3], cl))
@@ -801,7 +850,10 @@ def p19():
 
     # 6. Sporrin wasn't found in 2010
     # assumption_satisfied( 0  ) => ~ discovered_in(sporrin,2010).
-    clues.append(implies(bv_clues[6], ~ discovered_in["sporrin","2010"]))
+    c6a = [~discovered_in["sporrin","2010"]]
+    
+    for cl in to_cnf(any(c6a)):
+        clues.append(implies(bv_clues[6], cl))
 
     # 7. Whitaker's comet was discovered in 2010
     # assumption_satisfied( 0  ) => ?p [comet]: discovered_in(p,2010) & discovered_by(p,whitaker).
@@ -811,6 +863,7 @@ def p19():
 
     for cl in to_cnf(any(c7a)):
         clues.append(implies(bv_clues[7], cl))
+
     # 8. The comet discovered by Parks was discovered 1 cycle before Whitaker's comet
     # assumption_satisfied( 0  ) => ?q [comet] r [cycle] s [comet] t [cycle]: discovered_by(q,parks) & discovered_in(s,r) & discovered_by(s,whitaker) & t = r-1 & discovered_in(q,t).
     c8a = []

@@ -390,7 +390,7 @@ class BestStepCOUSComputer(object):
             while len(seedable) > 0:
                 l = next(iter(seedable))
 
-                print(f"Seeding {l} [{len(seedable)} remaining]")
+                # print(f"Seeding {l} [{len(seedable)} remaining]")
 
                 HS = set({l})
                 _, Ap = self.checkSat(Ap=HS, phases=Iend)
@@ -400,7 +400,7 @@ class BestStepCOUSComputer(object):
                 else:
                     SS = Ap
                 tendseed = time.time() - tsartseed
-                print("Time grow {l}:", round(tendseed), "s")
+                # print("Time grow {l}:", round(tendseed), "s")
                 tottime += tendseed
                 C = frozenset(F - SS)
 
@@ -409,7 +409,7 @@ class BestStepCOUSComputer(object):
                 other_seeds = seedable & frozenset(SS)
                 # no need to 'grow' a literal that already has an MSS
                 seedable -= other_seeds
-            print("Finished pre-seeding, tottime =", round(tottime), "s")
+            # print("Finished pre-seeding, tottime =", round(tottime), "s")
 
     def bestStep(self, f, U: set, Iend: set, I: set):
         """

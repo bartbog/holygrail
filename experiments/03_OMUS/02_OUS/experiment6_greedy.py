@@ -1,5 +1,4 @@
 # pysat imports
-from musExplain import explainMUS
 from greedy_explain import explainGreedy
 import itertools
 import multiprocessing
@@ -14,7 +13,6 @@ import frietkot
 
 # pysat imports
 from pysat.formula import CNF
-from pysat.examples.hitman import Hitman
 
 # explanations import
 from explain import COusParams, OUSTimeoutError, cost_puzzle, explain
@@ -25,23 +23,133 @@ HOURS = 60 * MINUTES
 TIMEOUT_EXP1 = 1 * HOURS
 
 
-def puzzleOptExplain(args):
-    params, puzzleFun, mode, puzzleName = args
+def puzzleToExplain(args):
+    params, puzzleFun, puzzleName = args
     params.instance = puzzleName
     o_clauses, o_assumptions, o_weights, o_user_vars, _ = puzzleFun()
     o_cnf = CNF(from_clauses=o_clauses)
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost_puzzle(U, I, o_weights)
-    if mode == 'greedy':
-        explainGreedy(C=o_cnf, U=U, f=f, I0=I, params=params)
-    elif mode == 'opt':
-        explain(C=o_cnf, U=U, f=f, I0=I, params=params)
-    elif mode == 'mus':
-        explainMUS(C=o_cnf, U=U, f=f, I0=I, params=params)
+    explainGreedy(C=o_cnf, U=U, f=f, I0=I, params=params)
 
 
-def runOptPuzzle(problemName, taskspernode):
+def Experiment6GreedyParams():
+    all_exec_params = []
+    timeout = 2 * HOURS
+    usr = getpass.getuser()
+
+    # ensure we can write results on HPC
+    if usr == "vsc10143":
+        resultsFolder = "/data/brussel/101/vsc10143/OUSResults/"
+    else:
+        resultsFolder = "results/"
+
+    outputFolder = resultsFolder + "experiment6_greedy/" + datetime.now().strftime("%Y%m%d%H") + "/"
+
+    pre_seeding_perms = [False, True]
+
+    postponeOpt_perms = [
+        [False, False, False],
+        [True, False, True],
+        [True, True, False],
+        [True, True, True]
+    ]
+
+    # maxsat Perms
+    maxsatPerms = []
+    for p in itertools.permutations([True] + [False] * 8):
+        if list(p) not in maxsatPerms:
+            maxsatPerms.append(list(p))
+
+    # at least one subsetmax/maxsat
+    perms = [list(l) for l in itertools.permutations([True] + [False])]
+
+    growPerms = []
+    for perm in perms:
+        # if maxsat we add all different permutations possible
+        if perm[-1]:
+            for m in maxsatPerms:
+                growPerms.append({
+                    "grow": list(perm),
+                    "maxsat": m
+                })
+        else:
+            growPerms.append({
+                "grow": perm,
+                "maxsat": [False] * 9
+            })
+
+    satpolperms = [
+        [False, False],
+        [True, False],
+        [False, True],
+    ]
+    print(len(pre_seeding_perms))
+    print(len(postponeOpt_perms))
+    print(len(satpolperms))
+    print(len(growPerms))
+    for pre_seeding in pre_seeding_perms:
+        for postopt, postoptincr, postoptgreed in postponeOpt_perms:
+            for satpol_full, satpolinitial in satpolperms:
+                for growPerm in growPerms:
+
+                    params = COusParams()
+
+                    params.disableConstrained = True
+
+                    # intialisation: pre-seeding
+                    params.pre_seeding = pre_seeding
+
+                    # hitting set computation
+                    params.postpone_opt = postopt
+                    params.postpone_opt_incr = postoptincr
+                    params.postpone_opt_greedy = postoptgreed
+
+                    # polarity of sat solver
+                    params.polarity = satpol_full
+                    params.polarity_initial = satpolinitial
+
+                    g_subsetmax, g_maxsat = growPerm["grow"]
+                    m_full_pos, m_full_inv, m_full_unif, m_initial_pos, m_initial_inv, m_initial_unif, m_actual_pos, m_actual_unif, m_actual_inv = growPerm["maxsat"]
+
+                    # poarlarity can be used
+                    params.polarity = True
+
+                    # grow strategies
+                    params.grow = True
+                    params.grow_subset_maximal = g_subsetmax
+                    params.grow_maxsat = g_maxsat
+
+                    # we know it works!
+                    params.maxsat_polarities = True
+
+                    # all maxsat configs
+                    params.grow_maxsat_full_inv = m_full_pos
+                    params.grow_maxsat_full_pos = m_full_inv
+                    params.grow_maxsat_full_unif = m_full_unif
+                    params.grow_maxsat_initial_pos = m_initial_pos
+                    params.grow_maxsat_initial_inv = m_initial_inv
+                    params.grow_maxsat_initial_unif = m_initial_unif
+                    params.grow_maxsat_actual_pos = m_actual_pos
+                    params.grow_maxsat_actual_unif = m_actual_unif
+                    params.grow_maxsat_actual_inv = m_actual_inv
+
+                    # timeout
+                    params.timeout = timeout
+
+                    # output
+                    params.output_folder = outputFolder
+
+                    # instance
+                    params.instance = "unnamed"
+                    params.checkParams()
+
+                    all_exec_params.append(params)
+    return all_exec_params
+
+
+def runPuzzle(problemName, taskspernode):
     puzzle_funs = {
         "origin-problem": frietkot.originProblem,
         "pastaPuzzle": frietkot.pastaPuzzle,
@@ -55,12 +163,12 @@ def runOptPuzzle(problemName, taskspernode):
     }
 
     puzzleFunc = puzzle_funs[problemName]
-    params = [(p, puzzleFunc, problemName) for p in Experiment4Params()]
+    params = [(p, puzzleFunc, problemName) for p in Experiment6GreedyParams()]
     p = multiprocessing.Pool(taskspernode)
-    p.map(puzzleOptExplain, params)
+    p.map(puzzleToExplain, params)
 
 
-def jobExperiment56():
+def jobExperiment6greedy():
     """
         \paragraph{RQ3}
         Comparing the efficiency of explanation specific grows!
@@ -86,12 +194,12 @@ def jobExperiment56():
         "p20": frietkot.p20,
         "p93": frietkot.p93
     }
-    genPBSjobExperiment4(puzzle_funs, taskspernode=40)
+    genPBSjobExperiment6greedy(puzzle_funs, taskspernode=40)
 
 
-def genPBSjobExperiment5(puzzle_funs, taskspernode):
+def genPBSjobExperiment6greedy(puzzle_funs, taskspernode):
     hpcDir = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments"
-    jobName = "Experiment5"
+    jobName = "experiment6_greedy"
 
     # creating the appropriate directories
     hpcPath = Path(hpcDir)
@@ -120,7 +228,7 @@ module load SciPy-bundle/2020.03-intel-2020a-Python-3.8.2
 
 # own code
 cd /user/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS
-python3 experiment56.py {puzzleName} {} {taskspernode}
+python3 experiment6_greedy.py {puzzleName} {taskspernode}
 """
         with fpath.open('w+') as f:
             f.write(baseScript)
@@ -139,11 +247,10 @@ python3 experiment56.py {puzzleName} {} {taskspernode}
 
 
 if __name__ == "__main__":
-    # print(len(Experiment4Params()))
+    print(len(Experiment6GreedyParams()))
     if len(sys.argv) == 3:
         problemname = sys.argv[1]
         tasksParallel = int(sys.argv[2])
         runPuzzle(problemname, tasksParallel)
     else:
-        jobExperiment6_cOUSnonIncr()
-        jobExperiment6_greedy()
+        jobExperiment6greedy()

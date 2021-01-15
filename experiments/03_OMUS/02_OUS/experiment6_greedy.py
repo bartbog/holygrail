@@ -145,4 +145,5 @@ if __name__ == "__main__":
         tasksParallel = int(sys.argv[2])
         runPuzzle(problemname, tasksParallel)
     else:
-        jobExperiment4()
+        jobExperiment6_cOUSnonIncr()
+        jobExperiment6_greedy()

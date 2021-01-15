@@ -252,7 +252,7 @@ class MUSExplainer(object):
         return min(Candidates, key=lambda cand: cand[0])
 
 
-def explainMUS(C: CNF, U: set, f, I0: set, params: MUSParams):
+def explainMUS(C: CNF, U: set, f, I0: set, params: MUSParams, ExplSeq=None):
     """
     ExplainCSP uses hard clauses supplied in CNF format to explain user
     variables with associated weights users_vars_cost based on the
@@ -311,6 +311,7 @@ def explainMUS(C: CNF, U: set, f, I0: set, params: MUSParams):
 
     # ensure max-time is not exceeded!
     signal.alarm(remaining_time)
+    step = 0
 
     while(len(Iend - I) > 0):
         timedout = False
@@ -349,9 +350,13 @@ def explainMUS(C: CNF, U: set, f, I0: set, params: MUSParams):
 
         print(f"\nOptimal explanation \t\t {Ibest} /\ {Cbest} => {Nbest}\n")
 
-        I |= Nbest
+        if ExplSeq is None:
+            I |= Nbest
+        else:
+            I |= set(E[step]["derived"])
 
         results["results"]["#expl"] += 1
+        step += 1
 
     sat.delete()
     results["results"]["expl_seq"] = E

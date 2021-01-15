@@ -23,5 +23,3 @@ Greedy opt incr & non-incr : Implemented
 cOUS: Implemented
 greedy non-opt: Implemented
 
-1. Examen: TODO
-2. IJCAI Submission / paper structure ? (edited)

@@ -1200,7 +1200,11 @@ def explain(C: CNF, U: set, f, I0: set, params: COusParams, verbose=False, match
         Nbest = optimalPropagate(U=U, I=Ibest, sat=sat) - I
         assert len(Nbest - Iend) == 0
 
-        E.append({"constraints": list(Ibest), "derived": list(Nbest)})
+        E.append({
+            "constraints": list(Ibest),
+            "derived": list(Nbest),
+            "cost": sum(f(l) for l in Ibest)
+        })
 
         if verbose:
             print_expl(matching_table, Ibest)

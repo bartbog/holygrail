@@ -74,6 +74,7 @@ def MUSParamsPuzzle(puzzleName):
     param = MUSParams()
     param.output_folder = outputFolder
     param.timeout = timeout
+    param.instance = puzzleName
 
     return param
 

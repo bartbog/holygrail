@@ -353,7 +353,7 @@ def explainMUS(C: CNF, U: set, f, I0: set, params: MUSParams, ExplSeq=None):
         if ExplSeq is None:
             I |= Nbest
         else:
-            I |= set(E[step]["derived"])
+            I |= set(ExplSeq[step]["derived"])
 
         results["results"]["#expl"] += 1
         step += 1

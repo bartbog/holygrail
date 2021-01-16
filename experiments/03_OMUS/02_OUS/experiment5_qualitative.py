@@ -96,7 +96,6 @@ def runPuzzleMUSvsOUS(args):
 
     # computing the explanation sequence w/ optimal parameters for cOUS
     E_Opt = explain(C=o_cnf, U=U, f=f, I0=I, params=cOUSOptParams)
-    print(E_opt)
 
     explainMUS(C=o_cnf, U=U, f=f, I0=I, params=musParams, ExplSeq=E_Opt)
 

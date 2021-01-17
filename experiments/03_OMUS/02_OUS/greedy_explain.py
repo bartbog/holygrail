@@ -306,7 +306,7 @@ class OusParams(BestStepParams):
         super_dict = super().to_dict()
         super_dict.update({
             "reuse_SSes": self.reuse_SSes,
-            "reuse_costs": self.reuse_costs
+            "sort_literals": self.sort_literals
         })
         return super_dict
 

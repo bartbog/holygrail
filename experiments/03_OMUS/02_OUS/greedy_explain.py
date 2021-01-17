@@ -1004,18 +1004,47 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
     Iend = optimalPropagate(U=U, I=I0, sat=sat)
 
     # print(Iend)
-    c = BestStepOUSComputer(f=f, cnf=C, sat=sat, Iend=Iend, I=I0, params=params)
+    remaining_time = round(params.timeout - (time.time() - t_expl_start))
+    _ = signal.signal(signal.SIGALRM, timeoutHandler)
+
+    # ensure max-time is not exceeded!
+    signal.alarm(remaining_time)
+    try:
+        c = BestStepOUSComputer(f=f, cnf=C, sat=sat, Iend=Iend, I=I0, params=params)
+    # only handling timeout error!
+    except OUSTimeoutError:
+        print("Pre-seeding timeout !")
+        write_results(results, params.output_folder, params.instance + "_" + params.output_file)
+        return E
+
+    signal.alarm(0)
 
     I = set(I0) # copy
     while(len(Iend - I) > 0):
-        # remaining_time = params.timeout - (time.time() - t_expl_start)
-        # Compute optimal explanation explanation assignment to subset of U.
-        expl, t_exp = c.bestStep(f, Iend, I)
-        # print(expl)
-        # print(t_exp)
-        saveResults(results, t_exp)
+        t_exp = None
+        remaining_time = round(params.timeout - (time.time() - t_expl_start))
+        if remaining_time <= 0:
+            results["results"]['timeout'] = True
+            break
 
-        if expl is None:
+        signal.alarm(remaining_time)
+
+        # Compute optimal explanation explanation assignment to subset of U.
+        expl_found = True
+        try:
+            expl, t_exp = c.bestStep(f, Iend, I)
+        # only handling timeout error!
+        except OUSTimeoutError:
+            expl_found = False
+        finally:
+            # ensure we don't get a timeout outside
+            signal.alarm(0)
+
+            # keeping track of the timings
+            if t_exp:
+                saveResults(results, t_exp)
+
+        if not expl_found:
             results["results"]['timeout'] = True
             break
 
@@ -1240,12 +1269,15 @@ def puzzleGreedy(params):
 if __name__ == "__main__":
     # Translating the explanation sequence generated to website visualisation
     # Execution parameters
-    params = OusParams()
 
+    params = OusParams()
+    params.instance = "origin-Problem"
+    params.output_folder = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/02_OUS"
+    params.timeout = 2 * MINUTES
     params.pre_seeding = True
     params.polarity = True
     params.reuse_SSes = True
-    params.reuse_costs = True
+    params.sort_literals = True
 
     params.grow = True
     # params.grow_subset_maximal = True

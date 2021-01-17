@@ -7,6 +7,7 @@ import pandas as pd
 sys.path.append('/home/emilio/Documents/cppy_src/')
 sys.path.append('/home/emilio/documents/cppy_mysrc/')
 sys.path.append('/user/brussel/101/vsc10143/cppy_src/')
+sys.path.append('/data/brussel/101/vsc10143/cppy_src/')
 
 from cppy import cnf_to_pysat
 

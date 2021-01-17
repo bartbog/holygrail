@@ -128,7 +128,8 @@ def runQualitative(taskspernode):
         "p18": frietkot.p18,
         "p25": frietkot.p25,
         "p20": frietkot.p20,
-        "p93": frietkot.p93
+        "p93": frietkot.p93,
+        "p19": frietkot.p19,
     }
     params = []
     for puzzleName, puzzleFunc in puzzle_funs.items():

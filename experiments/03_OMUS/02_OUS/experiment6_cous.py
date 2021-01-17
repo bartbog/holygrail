@@ -158,7 +158,8 @@ def runPuzzle(problemName, taskspernode):
         "p18": frietkot.p18,
         "p25": frietkot.p25,
         "p20": frietkot.p20,
-        "p93": frietkot.p93
+        "p93": frietkot.p93,
+        "p19": frietkot.p19,
     }
 
     puzzleFunc = puzzle_funs[problemName]
@@ -191,7 +192,8 @@ def jobExperiment6cOUS():
         "p18": frietkot.p18,
         "p25": frietkot.p25,
         "p20": frietkot.p20,
-        "p93": frietkot.p93
+        "p93": frietkot.p93,
+        "p19": frietkot.p19
     }
     genPBSjobExperiment6cOUS(puzzle_funs, taskspernode=40)
 

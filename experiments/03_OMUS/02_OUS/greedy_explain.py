@@ -1,4 +1,5 @@
-import cProfile
+/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS
+origin-problem_20210117103151471177.jsonimport cProfile
 from collections import Counter
 import pstats
 import time
@@ -1007,6 +1008,7 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
     remaining_time = round(params.timeout - (time.time() - t_expl_start))
     _ = signal.signal(signal.SIGALRM, timeoutHandler)
 
+
     # ensure max-time is not exceeded!
     signal.alarm(remaining_time)
     try:
@@ -1072,7 +1074,7 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
 
     if verbose:
         print(E)
-
+    results['results']['totTime'] = time.time() - t_expl_start if not results["results"]['timeout'] else params.timeout
     results["results"]["expl_seq"] = E
     write_results(results, params.output_folder, params.instance + "_" + params.output_file)
     return E

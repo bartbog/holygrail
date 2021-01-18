@@ -88,7 +88,6 @@ def Experiment6cOUSParams():
     print(len(postponeOpt_perms))
     print(len(satpolperms))
     print(len(growPerms))
-    # for incr in [True, False]:
     for pre_seeding in pre_seeding_perms:
         for satpol_full, satpolinitial in satpolperms:
             for growPerm in growPerms:
@@ -98,7 +97,7 @@ def Experiment6cOUSParams():
                     continue
                 params = COusParams()
 
-                params.disableConstrained = False
+                params.disableConstrained = True
 
                 # intialisation: pre-seeding
                 params.pre_seeding = pre_seeding
@@ -201,7 +200,7 @@ def jobExperiment6cOUS():
 
 def genPBSjobExperiment6cOUS(puzzle_funs, taskspernode):
     hpcDir = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments"
-    jobName = "experiment6_cous"
+    jobName = "experiment6_cous_incr"
 
     # creating the appropriate directories
     hpcPath = Path(hpcDir)
@@ -232,7 +231,7 @@ module load SciPy-bundle/2020.03-intel-2020a-Python-3.8.2
 
 # own code
 cd /data/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS
-python3 experiment6_cous.py {puzzleName} {taskspernode}
+python3 experiment6_cous_incr.py {puzzleName} {taskspernode}
 """
         with fpath.open('w+') as f:
             f.write(baseScript)

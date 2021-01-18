@@ -86,54 +86,53 @@ def Experiment6GreedyParams():
     for reuse_ss in reuse_SSes:
         for sort_lits in sort_literals:
             for pre_seeding in pre_seeding_perms:
-                for postopt, postoptincr, postoptgreed in postponeOpt_perms:
-                    for growPerm in growPerms:
-                        g_subsetmax, g_maxsat = growPerm["grow"]
-                        m_full_pos, m_full_inv, m_full_unif, m_initial_pos, m_initial_inv, m_initial_unif, m_actual_pos, m_actual_unif, m_actual_inv = growPerm["maxsat"]
-                        if any([m_full_pos, m_full_inv, m_full_unif]):
-                            continue
-                        params = OusParams()
+                for growPerm in growPerms:
+                    g_subsetmax, g_maxsat = growPerm["grow"]
+                    m_full_pos, m_full_inv, m_full_unif, m_initial_pos, m_initial_inv, m_initial_unif, m_actual_pos, m_actual_unif, m_actual_inv = growPerm["maxsat"]
+                    if any([m_full_pos, m_full_inv, m_full_unif]):
+                        continue
+                    params = OusParams()
 
-                        # intialisation: pre-seeding
-                        params.reuse_SSes = reuse_ss
-                        params.sort_literals = sort_lits
+                    # intialisation: pre-seeding
+                    params.reuse_SSes = reuse_ss
+                    params.sort_literals = sort_lits
 
-                        params.pre_seeding = pre_seeding
+                    params.pre_seeding = pre_seeding
 
-                        # hitting set computation
-                        params.postpone_opt = postopt
-                        params.postpone_opt_incr = postoptincr
-                        params.postpone_opt_greedy = postoptgreed
+                    # hitting set computation
+                    params.postpone_opt = False
+                    params.postpone_opt_incr = False
+                    params.postpone_opt_greedy = False
 
-                        # MAXSAT growing
-                        params.maxsat_polarities = True
+                    # MAXSAT growing
+                    params.maxsat_polarities = True
 
-                        # sat - grow
-                        params.grow = True
-                        params.grow_subset_maximal = g_subsetmax
-                        params.grow_maxsat = g_maxsat
+                    # sat - grow
+                    params.grow = True
+                    params.grow_subset_maximal = g_subsetmax
+                    params.grow_maxsat = g_maxsat
 
-                        # MAXSAT growing
-                        params.grow_maxsat_full_pos = m_full_pos
-                        params.grow_maxsat_full_inv = m_full_inv
-                        params.grow_maxsat_full_unif = m_full_unif
-                        params.grow_maxsat_initial_pos = m_initial_pos
-                        params.grow_maxsat_initial_inv = m_initial_inv
-                        params.grow_maxsat_initial_unif = m_initial_unif
-                        params.grow_maxsat_actual_pos = m_actual_pos
-                        params.grow_maxsat_actual_unif = m_actual_unif
-                        params.grow_maxsat_actual_inv = m_actual_inv
-                        # timeout
-                        params.timeout = timeout
+                    # MAXSAT growing
+                    params.grow_maxsat_full_pos = m_full_pos
+                    params.grow_maxsat_full_inv = m_full_inv
+                    params.grow_maxsat_full_unif = m_full_unif
+                    params.grow_maxsat_initial_pos = m_initial_pos
+                    params.grow_maxsat_initial_inv = m_initial_inv
+                    params.grow_maxsat_initial_unif = m_initial_unif
+                    params.grow_maxsat_actual_pos = m_actual_pos
+                    params.grow_maxsat_actual_unif = m_actual_unif
+                    params.grow_maxsat_actual_inv = m_actual_inv
+                    # timeout
+                    params.timeout = timeout
 
-                        # output
-                        params.output_folder = outputFolder
+                    # output
+                    params.output_folder = outputFolder
 
-                        # instance
-                        params.instance = "unnamed"
-                        params.checkParams()
+                    # instance
+                    params.instance = "unnamed"
+                    params.checkParams()
 
-                        all_exec_params.append(params)
+                    all_exec_params.append(params)
     return all_exec_params
 
 
@@ -208,7 +207,7 @@ def genPBSjobExperiment6greedy(puzzle_funs, taskspernode):
 
 #PBS -N job_results/{jobName}_{puzzleName}
 #PBS -l nodes=1:ppn={taskspernode}:skylake
-#PBS -l walltime=24:00:00
+#PBS -l walltime=08:00:00
 #PBS -M emilio.gamba@vub.be
 #PBS -m abe
 

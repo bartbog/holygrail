@@ -51,10 +51,10 @@ def Experiment1Params():
         if list(p) not in maxsatPerms:
             maxsatPerms.append(list(p))
 
-    polmaxsatPerms = []
-    for tf in [True, False]:
-        for p in maxsatPerms:
-            polmaxsatPerms.append([tf] + p)
+    polmaxsatPerms = maxsatPerms
+    # for tf in [False]:
+    #     for p in maxsatPerms:
+    #         polmaxsatPerms.append([tf] + p)
     print(polmaxsatPerms)
     # grow procedure grow/sat/subsetmax/maxsat
     perms = [[False] * 4] # no grow
@@ -77,7 +77,7 @@ def Experiment1Params():
         else:
             growPerms.append({
                 "grow": perm,
-                "maxsat": [False] * 4
+                "maxsat": [False] * 3
             })
     for p in growPerms:
         print(p)
@@ -89,7 +89,7 @@ def Experiment1Params():
 
         params = COusParams()
         g_grow, g_sat, g_subsetmax, g_maxsat = growPerm["grow"]
-        maxsatPolarities, m_full_pos, m_full_inv, m_full_unif = growPerm["maxsat"]
+        m_full_pos, m_full_inv, m_full_unif = growPerm["maxsat"]
 
         # poarlarity can be used
         params.polarity = True
@@ -99,8 +99,6 @@ def Experiment1Params():
         params.grow_sat = g_sat
         params.grow_subset_maximal = g_subsetmax
         params.grow_maxsat = g_maxsat
-
-        params.maxsat_polarities = maxsatPolarities
 
         params.grow_maxsat_full_inv = m_full_pos
         params.grow_maxsat_full_pos = m_full_inv
@@ -164,7 +162,8 @@ def jobExperiment1():
         "p18": frietkot.p18,
         "p25": frietkot.p25,
         "p20": frietkot.p20,
-        "p93": frietkot.p93
+        "p93": frietkot.p93,
+        "p19": frietkot.p19,
     }
     genPBSjobExperiment1(puzzle_funs, taskspernode=10)
 
@@ -185,6 +184,8 @@ def genPBSjobExperiment1(puzzle_funs, taskspernode):
 
     # generating the jobs
     for puzzleName, _ in puzzle_funs.items():
+        if puzzleName != "p19":
+            continue
         fpath = todaysJobPath / f"{jobName}_{puzzleName}.pbs"
         baseScript = f"""#!/usr/bin/env bash
 
@@ -206,7 +207,7 @@ python3 experiment1.py {puzzleName} {taskspernode}
             f.write(baseScript)
 
     # script for submission of the jobs
-    allFpaths = [todaysJobPath / f"{jobName}_{puzzleName}.pbs" for puzzleName, _ in puzzle_funs.items()]
+    allFpaths = [todaysJobPath / f"{jobName}_{puzzleName}.pbs" for puzzleName, _ in puzzle_funs.items() if puzzleName == "p19"]
 
     allStrPaths = ['#!/usr/bin/env bash', '']
     allStrPaths += ["qsub "+ str(p).replace('/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments/', '') for p in allFpaths]

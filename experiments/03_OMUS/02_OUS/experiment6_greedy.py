@@ -88,6 +88,10 @@ def Experiment6GreedyParams():
             for pre_seeding in pre_seeding_perms:
                 for postopt, postoptincr, postoptgreed in postponeOpt_perms:
                     for growPerm in growPerms:
+                        g_subsetmax, g_maxsat = growPerm["grow"]
+                        m_full_pos, m_full_inv, m_full_unif, m_initial_pos, m_initial_inv, m_initial_unif, m_actual_pos, m_actual_unif, m_actual_inv = growPerm["maxsat"]
+                        if any([m_full_pos, m_full_inv, m_full_unif]):
+                            continue
                         params = OusParams()
 
                         # intialisation: pre-seeding
@@ -103,8 +107,6 @@ def Experiment6GreedyParams():
 
                         # MAXSAT growing
                         params.maxsat_polarities = True
-                        g_subsetmax, g_maxsat = growPerm["grow"]
-                        m_full_pos, m_full_inv, m_full_unif, m_initial_pos, m_initial_inv, m_initial_unif, m_actual_pos, m_actual_unif, m_actual_inv = growPerm["maxsat"]
 
                         # sat - grow
                         params.grow = True

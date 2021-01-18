@@ -1037,6 +1037,12 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
         # only handling timeout error!
         except OUSTimeoutError:
             expl_found = False
+            try: 
+                c.optHSComputer.dispose()
+            except:
+                print("disposing not working")
+            finally:
+                print("dumping !")
         finally:
             # ensure we don't get a timeout outside
             signal.alarm(0)
@@ -1071,6 +1077,14 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
 
         results["results"]["#expl"] += 1
 
+    try: 
+        c.optHSComputer.dispose()
+    except:
+        print("disposing not working")
+    finally:
+        print("dumping !")
+
+    sat.delete()
     if verbose:
         print(E)
     results['results']['totTime'] = time.time() - t_expl_start if not results["results"]['timeout'] else params.timeout
@@ -1274,7 +1288,7 @@ if __name__ == "__main__":
     params = OusParams()
     params.instance = "origin-Problem"
     params.output_folder = "/home/crunchmonster/Documents/VUB/01_SharedProjects/03_holygrail/experiments/03_OMUS/02_OUS"
-    params.timeout = 2 * MINUTES
+    params.timeout = 30* SECONDS
     params.pre_seeding = True
     params.polarity = True
     params.reuse_SSes = True

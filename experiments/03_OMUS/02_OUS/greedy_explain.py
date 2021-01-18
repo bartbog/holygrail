@@ -1079,6 +1079,7 @@ def explainGreedy(C: CNF, U: set, f, I0: set, params: OusParams, verbose=False, 
 
     try: 
         c.optHSComputer.dispose()
+        c.__del__()
     except:
         print("disposing not working")
     finally:

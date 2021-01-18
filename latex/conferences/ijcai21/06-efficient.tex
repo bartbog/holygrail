@@ -3,36 +3,49 @@ While our optimizations are inspired by the explanation generation problem, and 
 
 
 \paragraph{Incremental cOUS computation}
-\todo{copy paste some old text about reuse of MSSs}
+While searching for unsatisfiable subsets satisfying structural constraints already greatly reduces the number of calls to the unsatisfiable subset oracle, inherently, the entire explanation loop still requires as many OCUS calls as there are facts to explain. 
+Indeed, the high-level algorithm, not explicitly portrayed in the current paper, calls \onestep iteratively with a  growing  interpretation $I$ until $I=\Iend$.
+Now of course, all of these calls to \onestep and hence all OCUS calls are done with very similar input (the set of clues does not change, and the $I$ only marginally changes between two calls). For this reason, it makes sense that information computed during one of the earlier stages can be useful in later stages as well. 
+
+So, the general question to be tackled here is, suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$ how can we make use as much as possible of the data computations of the first call to speed-up the second call. The answer is surprisingly simple. The most important data \comus keeps track of  is the set \setstohit of sets to hit.  This set in itself is not useful for transfer between two calls, since -- unless we assume that $\formula_2$ is a subset of $\formula_1$, there is no reason to assume that a set in $\setstohit_1$ should also be hit in the second call. 
+However, each set $H$ in $\setstohit$ is the complement (with respect to the formula at hand) of a \emph{satisfiable subsets} and satisfiability of a set of formulas is constant of course. 
+Thus, instead of storing $\setstohit$, we can, over all calls keep track of a set \satsets of \emph{satisfiable subsets} (the sets $\formula''$ in the \comus algorithm). 
+When a second call to \comus is performed, we can then initialize $\setstohit$ as the complement of each of these satisfiable subsets with respect to $\formula_2$, i.e., $\setstohit\gets \{\formula_2\setminus S\mid S\in \satsets\}$. 
+
+Our actual implementation goes a bit further than the idea described above: in our setting we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup I_0\cup \overline{\Iend\setminus I_0}$. Since our implementation uses a MIP solver for computing hitting sets, and we have this upper bound on the set of formulas to be used we can keep a single solver warm in between two \comus calls. 
+
+% \paragraph{Using Initialization to Add Domain Knowledge} ? 
+% \todo{TO BE DETERMIEND IF WE WANT TO SAY SOMETHING AOBUT PRESEEDING.}\bart{ I still dont believe it makes a difference. TO be tested first!} {\color{red}The current experiments confirm (finally) that this is useless. So let us just drop it.  Honestly, this gives me more trust in the experiments :-)   }
 
 
-\paragraph{Using Initialization to Add Domain Knowledge}
-\todo{TO BE DETERMIEND IF WE WANT TO SAY SOMETHING AOBUT PRESEEDING.}\bart{ I still dont believe it makes a difference. TO be tested first!} 
+
+\paragraph{Domain-Specific Implementations of \grow} 
+In the previous section, we followed \citet{smus} and opted for implementing \emph{no grow}. 
+However, in the context of explanations we are in, we have a way of generating large satisfiable subsets quite easily and hence we conjecture that implementing a domain-specific \grow will be more efficient. 
+\todo{Bart from here}
 
 
-
-\paragraph{Domain-Specific Implementations of \grow}
 \todo{``old maxsat'' comes here}
 
 
 \paragraph{Using Constraints to Encode Domain Knowledge}
 
-{\color{OliveGreen} OLD TEXT TO BE REWRITTEN
-The constraints on OUSs can not only be used to restrict the set of solutions, but also to improve the solver performance by encoding domain knowledge.
-Indeed, if we know that all ``good'' OUSs will satisfy certain constraints, or if we know that it suffices to search for OUSs satisfying certain constraints (because each OUS can easily be extended to one such OUS),  we can also encode that knowledge in $p$, thereby restricting the possible options of the hitting set solver, aiming to improve overall performance of the algorithm. 
+% {\color{OliveGreen} OLD TEXT TO BE REWRITTEN
+The constraints on OCUSs can not only be used to restrict the set of solutions, but also to improve the solver performance by encoding domain knowledge.
+Indeed, if we know that all ``good'' OCUSs will satisfy certain constraints, or if we know that it suffices to search for OCUSs satisfying certain constraints (because each OCUS can easily be extended to one such OCUS),  we can also encode that knowledge in $p$, thereby restricting the possible options of the hitting set solver, aiming to improve overall performance of the algorithm. 
 
 In the explanation application, we encountered this phenomenon as follows. 
 The clues to be used in explanations were high-level (first-order) constraints. They were translated into clauses, using among other, a Tseitin transformation.
 Hence, in the end the transformation of a single high-level clue consists of several clauses, of which some are definitions of newly introduced variables. 
-Now, the associated cost function was only concerned with the issue ``\emph{was a certain clue used or not?}'', which translates at the lower level to ``\emph{does the OUS contain at least one clause from the translation of the clue?}''.
-Using such a cost function means that to compute the cost of an OUS, it does not matter if a single, or if all clauses corresponding to a given clue are used. As such, we might as well include all of them, which can be encoded in $p$ as well. 
+Now, the associated cost function was only concerned with the issue ``\emph{was a certain clue used or not?}'', which translates at the lower level to ``\emph{does the OCUS contain at least one clause from the translation of the clue?}''.
+Using such a cost function means that to compute the cost of an OCUS, it does not matter if a single, or if all clauses corresponding to a given clue are used. As such, we might as well include all of them, which can be encoded in $p$ as well. 
 
 An alternative view on the same property is that we can \emph{reify} the high level constraint by considering an indicator variable defining satisfaction of the entire constraint. 
-We can then add the property to $p$ that all reified constraints are \emph{hard constraints}, in the sense that they have to be included in each OUS (and thus each hitting set). With that, only the truth/falsity of the single indicator variable is considered to be a clause of $\formulac$ that can be enabled/disabled by the hitting set algorithm. 
+We can then add the property to $p$ that all reified constraints are \emph{hard constraints}, in the sense that they have to be included in each OCUS (and thus each hitting set). With that, only the truth/falsity of the single indicator variable is considered to be a clause of $\formulac$ that can be enabled/disabled by the hitting set algorithm. 
 % This variable then represent whether or not the high level constraint is active.
-It is easy to see that there is a one to one correspondence between the OUSs produced by the two approaches. In our implementation, we opted for the latter because of its simplicity. 
+It is easy to see that there is a one to one correspondence between the OCUSs produced by the two approaches. In our implementation, we opted for the latter because of its simplicity. 
 %\tias{is this really to $p$? higher up we argued that we push $p$ into the MIP, but all hard clauses are kept outside of the MIP... I guess saying that har dlcauses are 'always included' is somehow doing that? it also means they are 'constant' in the MIP objective and hence can be removed from it, that is perhaps a more pragmatic view on it...}
 %\emilio{phrases are loooong.}
 
 
-}
+

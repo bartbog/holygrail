@@ -53,7 +53,7 @@ Our generic algorithm for computing $(p,f)$-OUSs is depicted in \cref{alg:comus}
 
 Similar to algorithms for maximum satisfiability \cite{} and smallest MUS computation \cite{}, our algorithm builds on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
 Taking abstraction of \cref{line:grow} for a moment, 
-the algorithm alternate calls to a hitting set solver with calls to a \sat oracle on a subset $\formula'$ of $\formula$. 
+the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\formula'$ of $\formula$. 
 In case the \sat oracle returns true, i.e., the subset $\formula'$ is satisfiable, the complement of $\formula'$ is a correction subset and is added to \setstohit. 
 Instead of directly adding the complement of $\formula'$, similar to \cite{}, our proposed algorithm includes a call to \grow, which extends $\formula'$ into a larger subset of $\formula$ that is still satisfiable (if possible).
 We discuss the different possible implementaions of \grow later and evaluate their performance in \cref{sec:experiments}. 
@@ -82,6 +82,7 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 
 \paragraph{Generic Implementations of \grow}
 \todo{TO BE WRITTEN DOWN} 
+\bart{PROBABLY, we can just say ``we implement \textbf{no grow} following SMUS''.}
 
 
 % Now, since the search for optimal hitting sets is --- in implicit hitting set algorithms --- usually done with a MIP solver, it suffices to express the predicate $p$ as constraints on the MIP. Since the variables of the MIP encoding represent inclusion of certain constraints in the unsatisfiable subset, this is simple for  the 3 constraints that we need to obtain meaningful explanations. %needed to have meaningful in practice only predicates $p$ that can easily be encoded in MIP are useful. In such cases, we can directly use the MIP solver to implement \cohs as well. 

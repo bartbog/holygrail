@@ -84,9 +84,6 @@ def Experiment1Params():
 
     for growPerm in growPerms:
 
-        assert len(growPerm["grow"]) == 4, f"Grow parameter: got {len(growPerm['grow'])} expected 4"
-        assert len(growPerm["maxsat"]) == 4, f"maxsat parameter: got {len(growPerm['maxsat'])} expected 4"
-
         params = COusParams()
         g_grow, g_sat, g_subsetmax, g_maxsat = growPerm["grow"]
         m_full_pos, m_full_inv, m_full_unif = growPerm["maxsat"]
@@ -165,7 +162,7 @@ def jobExperiment1():
         "p93": frietkot.p93,
         "p19": frietkot.p19,
     }
-    genPBSjobExperiment1(puzzle_funs, taskspernode=10)
+    genPBSjobExperiment1(puzzle_funs, taskspernode=40)
 
 
 def genPBSjobExperiment1(puzzle_funs, taskspernode):

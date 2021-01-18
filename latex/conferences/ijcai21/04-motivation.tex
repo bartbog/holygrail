@@ -46,9 +46,17 @@ The first two points lead to the following definition.
     \item all other unsatisfiable $U'\subseteq \formulag$ with $p(U')=\ltrue$ satisfy $f(U')\geq f(U)$.                                                                                                                                                                                                                         \end{compactitem}
 \end{definition}
 
-Rephrased in this terms, the task of the procedure \onestep is to compute a $(p,f)$-OUS of the formula $\formulag := \formulac\land I\land \overline{\Iend\setminus I}$ where $p$ is the predicate that holds exactly for those subsets of $\formulag$ that contain exactly one literal of $\overline{\Iend}$. 
+Rephrased in this terms, the task of the procedure \onestep is to compute a $(p,f)$-OUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ where $p$ is the predicate that holds exactly for those subsets of $\formulag$ that contain exactly one literal of $\overline{\Iend}$, see Algorithm~\eqref{alg:oneStepOCUS}. 
 In the rest of this paper, we study (incremental) algorithms for computing such $(p,f)$-OUSs. 
 
+\begin{algorithm}[t]
+  \DontPrintSemicolon
+  
+  \caption{$\onestep(\formulac,f,I,\Iend)$}
+  \label{alg:oneStepOCUS}
+  $p \leftarrow$ at most one of $\overline{\Iend\setminus I}$\;
+  \Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$} 
+\end{algorithm}
 
 
 

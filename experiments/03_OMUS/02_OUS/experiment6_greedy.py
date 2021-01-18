@@ -183,7 +183,7 @@ def jobExperiment6greedy():
         "p93": frietkot.p93,
         "p19": frietkot.p19,
     }
-    genPBSjobExperiment6greedy(puzzle_funs, taskspernode=40)
+    genPBSjobExperiment6greedy(puzzle_funs, taskspernode=10)
 
 
 def genPBSjobExperiment6greedy(puzzle_funs, taskspernode):
@@ -207,7 +207,7 @@ def genPBSjobExperiment6greedy(puzzle_funs, taskspernode):
 
 #PBS -N job_results/{jobName}_{puzzleName}
 #PBS -l nodes=1:ppn={taskspernode}:skylake
-#PBS -l walltime=08:00:00
+#PBS -l walltime=16:00:00
 #PBS -M emilio.gamba@vub.be
 #PBS -m abe
 

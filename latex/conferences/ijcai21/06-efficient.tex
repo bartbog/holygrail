@@ -22,10 +22,23 @@ Our actual implementation goes a bit further than the idea described above: in o
 \paragraph{Domain-Specific Implementations of \grow} 
 In the previous section, we followed \citet{smus} and opted for implementing \emph{no grow}. 
 However, in the context of explanations we are in, we have a way of generating large satisfiable subsets quite easily and hence we conjecture that implementing a domain-specific \grow will be more efficient. 
-\todo{Bart from here}
+
+The goal of this \grow procedure is to turn $\formula'$ into a larger subformula $\formula''$ of $\formula$. The effect of this is that its complement will be smaller, and hence, a stronger restriction for the hitting set solver is found.  
+Implementing an effective \grow procedure requires finding a difficult balance: on the one hand, we want our results to be as large as possible, to derive the most precise information we can get, but on the other hand we also want the procedure to be very efficient. 
+Indeed, if the cost of the \grow were not important, we could use a MaxSAT call to obtain a subset-maximal subset of $\formula$, however, by doing that we expect the \grow costs to be too high. 
+
+However, for the case of explanations we are in, we make the following observations: 
+\begin{compactitem}
+ \item Our formula at hand (using the notation from the \onestep algorithm) consists of three types of clauses: 1) (translations of) the puzzle constraints (this is \formulac) 2) literals representing the assignment found this far (this is $I$) and 3) the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). 
+ \item $\formulac$ and $I$ together are satisfiable and \emph{mutually supportive}, by this we mean that making more constraints in \formulac true, more literals in $I$ will automatically become true and vice versa. 
+ \item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
+\end{compactitem}
+Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\formula'$ should be satisfied, using a call to a  (partial) MaxSAT solver Especially in case we initialize this call with  polarities for all variables set to the value they take in $\Iend$, we expect it to be fairly easy to obtain a large satisfiable subset and hence a good correction set. 
+
+% \todo{Bart from here}
 
 
-\todo{``old maxsat'' comes here}
+% \todo{``old maxsat'' comes here}
 
 
 \paragraph{Using Constraints to Encode Domain Knowledge}
@@ -38,7 +51,7 @@ In the explanation application, we encountered this phenomenon as follows.
 The clues to be used in explanations were high-level (first-order) constraints. They were translated into clauses, using among other, a Tseitin transformation.
 Hence, in the end the transformation of a single high-level clue consists of several clauses, of which some are definitions of newly introduced variables. 
 Now, the associated cost function was only concerned with the issue ``\emph{was a certain clue used or not?}'', which translates at the lower level to ``\emph{does the OCUS contain at least one clause from the translation of the clue?}''.
-Using such a cost function means that to compute the cost of an OCUS, it does not matter if a single, or if all clauses corresponding to a given clue are used. As such, we might as well include all of them, which can be encoded in $p$ as well. 
+Using such a cost function means that to compute the cost of an OCUS, it does not matter if a single, or if all clauses corresponding to a given clue are used. As such, we might as well include all of them, which can be encoded in $p$ as well.  
 
 An alternative view on the same property is that we can \emph{reify} the high level constraint by considering an indicator variable defining satisfaction of the entire constraint. 
 We can then add the property to $p$ that all reified constraints are \emph{hard constraints}, in the sense that they have to be included in each OCUS (and thus each hitting set). With that, only the truth/falsity of the single indicator variable is considered to be a clause of $\formulac$ that can be enabled/disabled by the hitting set algorithm. 

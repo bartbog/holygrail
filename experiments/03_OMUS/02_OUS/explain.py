@@ -194,6 +194,7 @@ class COusParams(object):
     def to_dict(self):
         return {
             # preseeding
+            "disableConstrained": self.disableConstrained,
             "preseeding": self.pre_seeding,
             # sat polarities
             "sat-polarity": self.polarity,

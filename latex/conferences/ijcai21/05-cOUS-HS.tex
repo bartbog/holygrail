@@ -1,7 +1,7 @@
 In order to compute a $(p,f)$-OUS of a given formula, we propose to build on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
 For this, we will assume to have access to a solver \cohs that can compute hitting sets of a given collection of sets that are \emph{optimal} (w.r.t.\ a given cost function $f$) among all hitting sets \emph{satisfying a condition $p$}. 
-In our practical implementation we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, and use the MIP solver \todo{WHICH ONE?} to compute such hitting sets. 
-The choice of the underlying hitting set solver will thus determine which types of cost function and constraints are possible. 
+In our practical implementation we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, thus allowing the use of highly optimized mixed integer programming solvers.
+The choice of the underlying hitting set solver will thus determine which types of cost functions and constraints are possible. 
 Our generic algorithm for computing $(p,f)$-OUSs is depicted in \cref{alg:comus}.  
 \begin{algorithm}[t]
   \DontPrintSemicolon
@@ -22,6 +22,8 @@ Our generic algorithm for computing $(p,f)$-OUSs is depicted in \cref{alg:comus}
   \caption{$\comus(\formula,f,p)$ }
   \label{alg:comus}
 \end{algorithm}
+
+
 %\tias{I would not show the above one as it is rather vague \bart{I would disagree with the vagueness. It makes abstraction of several things (what is $p$? what is $f$? How is Grow and CondOptHS implemented? But in my opinion that is good, since it shows close relation to the basic OUS algo as well as illustrating what is really going on and modularity.}, but immediately rewrite it as Alg2 the singleStepExplain:}
 %\bart{I would avoid that :-) That way we mix up ``how to compute constrained OUSs?'' with ``how to compute explanations using constrained OUSs?''. These are two different concerns. We should show that we also tackle the first .  That way, our new ``singlestepexplain2'' will also look a lot simpler than singleStepExplain1 (if we use one oracle call to cOUS}
 
@@ -51,11 +53,11 @@ Our generic algorithm for computing $(p,f)$-OUSs is depicted in \cref{alg:comus}
 %\Return{E}\;
 %\end{algorithm}
 
-Similar to algorithms for maximum satisfiability \cite{} and smallest MUS computation \cite{}, our algorithm builds on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
+Similar to algorithms for maximum satisfiability \cite{davies} and smallest MUS computation \cite{ignatiev2015smallest}, our algorithm builds on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
 Taking abstraction of \cref{line:grow} for a moment, 
 the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\formula'$ of $\formula$. 
 In case the \sat oracle returns true, i.e., the subset $\formula'$ is satisfiable, the complement of $\formula'$ is a correction subset and is added to \setstohit. 
-Instead of directly adding the complement of $\formula'$, similar to \cite{}, our proposed algorithm includes a call to \grow, which extends $\formula'$ into a larger subset of $\formula$ that is still satisfiable (if possible).
+Instead of directly adding the complement of $\formula'$, similar to \cite{}\tias{which one? I think they all do a grow/shrink...}, our proposed algorithm includes a call to \grow, which extends $\formula'$ into a larger subset of $\formula$ that is still satisfiable (if possible).
 We discuss the different possible implementaions of \grow later and evaluate their performance in \cref{sec:experiments}. 
 
 Soundness and completeness of the proposal follow from the fact that all sets added to \setstohit are correction subsets, and \cref{prop:K2}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 

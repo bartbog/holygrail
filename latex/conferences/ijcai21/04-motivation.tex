@@ -1,13 +1,13 @@
 Our work is motivated by the  explanation algorithms of \citet{ecai/BogaertsGCG20}. 
-In that work, the goal was to --- starting from a constraint satisfaction problem and a partial interpretation $I$ --- explain the cautious consequence (the set of all literals that hold in all models) through a sequence of simple steps. 
+In that work, the goal was to --- starting from a constraint satisfaction problem and a partial interpretation $I$ --- explain the cautious consequence (the set $\Iend$ of all literals that hold in all models) through a sequence of simple steps. 
 %In our formulation (following \citet{ecai/BogaertsGCG20}), we assume that the formulation is done in propositional logic, but the ideas carry on to richer representation formalisms as well. 
 We will use \formulac to denote the constraint satisfaction problem (a CNF formula in this case). %, to avoid confusion with the formula \formula used in \omus calls.
 
 The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by a cost function $f$. 
-An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals from the cautious consequence that is not yet explained.
+An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals from the cautious consequence that is not yet explained\tias{insufficient, must actually be implied by I' and C'?}.
 To obtain a sequence of such steps, they iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$.
-The algorithm used by \citeauthor{ecai/BogaertsGCG20} to find the next explanation step is shown in \cref{alg:oneStep}. 
-It takes as input the formula \formulac, a cost function $f$ quantifying quality of explanations, an interpretation $I$ containing all already derived literals and a second interpretation $\Iend$. 
+\cref{alg:oneStep} shows the gist of the algorithm used to find the best next step in the sequence \cite{ecai/BogaertsGCG20}.
+It takes as input the formula \formulac, a cost function $f$ quantifying quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
 To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequenty selects the best of the found such MUSs.  
 The reason this works is because they showed that there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of $\formulac$ and $I$. 
 
@@ -27,12 +27,12 @@ $X_{best} \gets \mathit{nil}$\;
 \Return{$X_{best}$} 
 \end{algorithm}
 
-The experiments of \citet{ecai/BogaertsGCG20} show that even for simple puzzles, generating a full explanation sequence already takes several hours, and hence that algorithmic improvements are needed. 
-We see three main points of improvement, all of which will be tackled by our generic cOUS algorithms presented in the next section. 
+The experiments of \citet{ecai/BogaertsGCG20} show that generating a full explanation sequence can easily take hours\tias{in the exps, MUS-based does not, also because we don't do the constraint trick. What to do?}, and hence that algorithmic improvements are needed to make it more practical. 
+We see three main points of improvement, all of which will be tackled by our generic OCUS algorithms presented in the next section. 
 \begin{inparaenum}
  \item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the final explanation is indeed the best (with respect to the given cost function) possible. 
  Most likely, the reason for choosing \call{MUS} is that currently, \textbf{there are no algorithms for unsatisfiable subset optimization}. 
- \item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all of these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{\Iend})$. This begs the questions whether it is possible \textbf{to compute (optimal) unsatisfiable subsets subject to constraints} (in our case, the constraint is on the number of literals from $\overline{\Iend}$ to include. 
+ \item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all of these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{\Iend})$. This begs the questions whether it is possible \textbf{to compute (optimal) unsatisfiable subsets subject to constraints}, where in our case, the constraint is on the number of literals from $\overline{\Iend}$ to include. 
  \item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many very similar problems. This raises the issue of \textbf{incrementality}: can we re-use data structures to achieve speed-ups in later calls? 
 \end{inparaenum}
 
@@ -40,16 +40,23 @@ The first two points lead to the following definition.
 
 
 \begin{definition}
-\bart{I propsoe to say. We call U an OCUS of G (w.r.t.\ $f$ and $p$)}
-    If $\formulag$ is a formula, $f:2^{\formulag} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formulag}\to \{\ltrue,\lfalse\}$, then we call a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) if \begin{compactitem}                                                                                                                                                                                                                         
+    If $\formulag$ is a formula, $f:2^{\formulag} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formulag}\to \{\ltrue,\lfalse\}$, then we call a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call U an OCUS of G (w.r.t.\ $f$ and $p$)} if \begin{compactitem}                                                                                                                                                                                                                         
     \item $U$ is unsatisfiable,
     \item $p(U)$ is true
     \item all other unsatisfiable $U'\subseteq \formulag$ with $p(U')=\ltrue$ satisfy $f(U')\geq f(U)$.                                                                                                                                                                                                                         \end{compactitem}
 \end{definition}
 
-Rephrased in this terms, the task of the procedure \onestep is to compute a $(p,f)$-OUS of the formula $\formulag := \formulac\land I\land \overline{\Iend\setminus I}$ where $p$ is the predicate that holds exactly for those subsets of $\formulag$ that contain exactly one literal of $\overline{\Iend}$. 
+Rephrased in this terms, the task of the procedure \onestep is to compute a $(p,f)$-OUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ where $p$ is the predicate that holds exactly for those subsets of $\formulag$ that contain exactly one literal of $\overline{\Iend}$, see Algorithm~\eqref{alg:oneStepOCUS}. 
 In the rest of this paper, we study (incremental) algorithms for computing such $(p,f)$-OUSs. 
 
+\begin{algorithm}[t]
+  \DontPrintSemicolon
+  
+  \caption{$\onestep(\formulac,f,I,\Iend)$}
+  \label{alg:oneStepOCUS}
+  $p \leftarrow$ at most one of $\overline{\Iend\setminus I}$\;
+  \Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$} 
+\end{algorithm}
 
 
 

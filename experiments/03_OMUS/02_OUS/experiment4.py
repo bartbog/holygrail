@@ -84,10 +84,6 @@ def Experiment4Params():
         [True, False],
         [False, True],
     ]
-    print(len(pre_seeding_perms))
-    print(len(postponeOpt_perms))
-    print(len(satpolperms))
-    print(len(growPerms))
     for pre_seeding in pre_seeding_perms:
         for postopt, postoptincr, postoptgreed in postponeOpt_perms:
             for satpol_full, satpolinitial in satpolperms:
@@ -212,6 +208,8 @@ def genPBSjobExperiment4(puzzle_funs, taskspernode):
 
     # generating the jobs
     for puzzleName, _ in puzzle_funs.items():
+        if puzzleName != "p19":
+            continue
         fpath = todaysJobPath / f"{jobName}_{puzzleName}.pbs"
         baseScript = f"""#!/usr/bin/env bash
 
@@ -233,7 +231,7 @@ python3 experiment4.py {puzzleName} {taskspernode}
             f.write(baseScript)
 
     # script for submission of the jobs
-    allFpaths = [todaysJobPath / f"{jobName}_{puzzleName}.pbs" for puzzleName, _ in puzzle_funs.items()]
+    allFpaths = [todaysJobPath / f"{jobName}_{puzzleName}.pbs" for puzzleName, _ in puzzle_funs.items() if puzzleName == "p19"]
 
     allStrPaths = ['#!/usr/bin/env bash', '']
     allStrPaths += ["qsub "+ str(p).replace('/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments/', '') for p in allFpaths]

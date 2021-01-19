@@ -88,63 +88,64 @@ def Experiment6cOUSParams():
     print(len(postponeOpt_perms))
     print(len(satpolperms))
     print(len(growPerms))
+    # for incr in [True, False]:
     for pre_seeding in pre_seeding_perms:
-        for postopt, postoptincr, postoptgreed in postponeOpt_perms:
-            for satpol_full, satpolinitial in satpolperms:
-                for growPerm in growPerms:
+        for satpol_full, satpolinitial in satpolperms:
+            for growPerm in growPerms:
+                g_subsetmax, g_maxsat = growPerm["grow"]
+                m_full_pos, m_full_inv, m_full_unif, m_initial_pos, m_initial_inv, m_initial_unif, m_actual_pos, m_actual_unif, m_actual_inv = growPerm["maxsat"]
+                if any([m_full_pos, m_full_inv, m_full_unif]):
+                    continue
+                params = COusParams()
 
-                    params = COusParams()
+                params.disableConstrained = False
 
-                    params.disableConstrained = True
+                # intialisation: pre-seeding
+                params.pre_seeding = pre_seeding
 
-                    # intialisation: pre-seeding
-                    params.pre_seeding = pre_seeding
+                # hitting set computation
+                params.postpone_opt = False
+                params.postpone_opt_incr = False
+                params.postpone_opt_greedy = False
 
-                    # hitting set computation
-                    params.postpone_opt = postopt
-                    params.postpone_opt_incr = postoptincr
-                    params.postpone_opt_greedy = postoptgreed
+                # polarity of sat solver
+                params.polarity = satpol_full
+                params.polarity_initial = satpolinitial
 
-                    # polarity of sat solver
-                    params.polarity = satpol_full
-                    params.polarity_initial = satpolinitial
 
-                    g_subsetmax, g_maxsat = growPerm["grow"]
-                    m_full_pos, m_full_inv, m_full_unif, m_initial_pos, m_initial_inv, m_initial_unif, m_actual_pos, m_actual_unif, m_actual_inv = growPerm["maxsat"]
+                # poarlarity can be used
+                params.polarity = True
 
-                    # poarlarity can be used
-                    params.polarity = True
+                # grow strategies
+                params.grow = True
+                params.grow_subset_maximal = g_subsetmax
+                params.grow_maxsat = g_maxsat
 
-                    # grow strategies
-                    params.grow = True
-                    params.grow_subset_maximal = g_subsetmax
-                    params.grow_maxsat = g_maxsat
+                # we know it works!
+                params.maxsat_polarities = True
 
-                    # we know it works!
-                    params.maxsat_polarities = True
+                # all maxsat configs
+                params.grow_maxsat_full_inv = m_full_pos
+                params.grow_maxsat_full_pos = m_full_inv
+                params.grow_maxsat_full_unif = m_full_unif
+                params.grow_maxsat_initial_pos = m_initial_pos
+                params.grow_maxsat_initial_inv = m_initial_inv
+                params.grow_maxsat_initial_unif = m_initial_unif
+                params.grow_maxsat_actual_pos = m_actual_pos
+                params.grow_maxsat_actual_unif = m_actual_unif
+                params.grow_maxsat_actual_inv = m_actual_inv
 
-                    # all maxsat configs
-                    params.grow_maxsat_full_inv = m_full_pos
-                    params.grow_maxsat_full_pos = m_full_inv
-                    params.grow_maxsat_full_unif = m_full_unif
-                    params.grow_maxsat_initial_pos = m_initial_pos
-                    params.grow_maxsat_initial_inv = m_initial_inv
-                    params.grow_maxsat_initial_unif = m_initial_unif
-                    params.grow_maxsat_actual_pos = m_actual_pos
-                    params.grow_maxsat_actual_unif = m_actual_unif
-                    params.grow_maxsat_actual_inv = m_actual_inv
+                # timeout
+                params.timeout = timeout
 
-                    # timeout
-                    params.timeout = timeout
+                # output
+                params.output_folder = outputFolder
 
-                    # output
-                    params.output_folder = outputFolder
+                # instance
+                params.instance = "unnamed"
+                params.checkParams()
 
-                    # instance
-                    params.instance = "unnamed"
-                    params.checkParams()
-
-                    all_exec_params.append(params)
+                all_exec_params.append(params)
     return all_exec_params
 
 
@@ -195,7 +196,7 @@ def jobExperiment6cOUS():
         "p93": frietkot.p93,
         "p19": frietkot.p19
     }
-    genPBSjobExperiment6cOUS(puzzle_funs, taskspernode=40)
+    genPBSjobExperiment6cOUS(puzzle_funs, taskspernode=10)
 
 
 def genPBSjobExperiment6cOUS(puzzle_funs, taskspernode):
@@ -214,12 +215,14 @@ def genPBSjobExperiment6cOUS(puzzle_funs, taskspernode):
 
     # generating the jobs
     for puzzleName, _ in puzzle_funs.items():
+        if puzzleName != "p19":
+            continue
         fpath = todaysJobPath / f"{jobName}_{puzzleName}.pbs"
         baseScript = f"""#!/usr/bin/env bash
 
 #PBS -N {jobName}_{puzzleName}
 #PBS -l nodes=1:ppn={taskspernode}:skylake
-#PBS -l walltime=24:00:00
+#PBS -l walltime=12:00:00
 #PBS -M emilio.gamba@vub.be
 #PBS -m abe
 
@@ -235,10 +238,10 @@ python3 experiment6_cous.py {puzzleName} {taskspernode}
             f.write(baseScript)
 
     # script for submission of the jobs
-    allFpaths = [todaysJobPath / f"{jobName}_{puzzleName}.pbs" for puzzleName, _ in puzzle_funs.items()]
+    allFpaths = [todaysJobPath / f"{jobName}_{puzzleName}.pbs" for puzzleName, _ in puzzle_funs.items() if puzzleName == "p19"]
 
     allStrPaths = ['#!/usr/bin/env bash', '']
-    allStrPaths += ["qsub "+ str(p).replace('/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments/', '') for p in allFpaths]
+    allStrPaths += ["qsub "+ str(p).replace('/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments/', '') for p in allFpaths ]
     allStrPaths += ['']
 
     scriptPath = hpcPath / f"job{jobName}.sh"

@@ -44,7 +44,7 @@ def Experiment6cOUSParams():
     else:
         resultsFolder = "results/"
 
-    outputFolder = resultsFolder + "experiment6_cous/" + datetime.now().strftime("%Y%m%d%H") + "/"
+    outputFolder = resultsFolder + "experiment6_cous_incr/" + datetime.now().strftime("%Y%m%d%H") + "/"
 
     pre_seeding_perms = [False, True]
 

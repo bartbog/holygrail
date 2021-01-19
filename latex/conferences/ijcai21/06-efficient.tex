@@ -22,10 +22,23 @@ Our actual implementation goes a bit further than the idea described above: in o
 \paragraph{Domain-Specific Implementations of \grow} 
 In the previous section, we followed \citet{smus} and opted for implementing \emph{no grow}. 
 However, in the context of explanations we are in, we have a way of generating large satisfiable subsets quite easily and hence we conjecture that implementing a domain-specific \grow will be more efficient. 
-\todo{Bart from here}
+
+The goal of this \grow procedure is to turn $\formula'$ into a larger subformula $\formula''$ of $\formula$. The effect of this is that its complement will be smaller, and hence, a stronger restriction for the hitting set solver is found.  
+Implementing an effective \grow procedure requires finding a difficult balance: on the one hand, we want our results to be as large as possible, to derive the most precise information we can get, but on the other hand we also want the procedure to be very efficient. 
+Indeed, if the cost of the \grow were not important, we could use a MaxSAT call to obtain a subset-maximal subset of $\formula$, however, by doing that we expect the \grow costs to be too high. 
+
+However, for the case of explanations we are in, we make the following observations: 
+\begin{compactitem}
+ \item Our formula at hand (using the notation from the \onestep algorithm) consists of three types of clauses: 1) (translations of) the puzzle constraints (this is \formulac) 2) literals representing the assignment found this far (this is $I$) and 3) the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). 
+ \item $\formulac$ and $I$ together are satisfiable and \emph{mutually supportive}, by this we mean that making more constraints in \formulac true, more literals in $I$ will automatically become true and vice versa. 
+ \item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
+\end{compactitem}
+Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\formula'$ should be satisfied, using a call to a  (partial) MaxSAT solver Especially in case we initialize this call with  polarities for all variables set to the value they take in $\Iend$, we expect it to be fairly easy to obtain a large satisfiable subset and hence a good correction set. 
+
+% \todo{Bart from here}
 
 
-\todo{``old maxsat'' comes here}
+% \todo{``old maxsat'' comes here}
 
 
 \paragraph{Using Constraints to Encode Domain Knowledge}

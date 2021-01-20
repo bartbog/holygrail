@@ -4,10 +4,10 @@ The first two considerations from the previous section lead to the following def
 
 \begin{definition}
    Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula}\to \{\ltrue,\lfalse\}$. We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
-    $X \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if \begin{compactitem}                                      
-      \item $X$ is unsatisfiable,
-      \item $p(X)$ is true
-      \item all other unsatisfiable $X'\subseteq \formula$ with $p(X')=\ltrue$ satisfy $f(X')\geq f(X)$.
+    $\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if \begin{compactitem}                                      
+      \item $\m{S}$ is unsatisfiable,
+      \item $p(\m{S})$ is true
+      \item all other unsatisfiable $\m{U}'\subseteq \formula$ with $p(\m{U}')=\ltrue$ satisfy $f(\m{U}')\geq f(\m{S})$.
     \end{compactitem}
 \end{definition}
 
@@ -44,17 +44,17 @@ where $X$ is a set of MIP decision variables, one for every literal that appears
   \DontPrintSemicolon
 %  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   \While{true}{
-    $X \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    $\m{S} \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
 % f{optimal} solution}
     % \tcp{\small set with all unique clauses from hitting set}
 %     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
     % \tcp{IF UNSAT, $hs$ is the OUS }
-    \If{ $\lnot \sat(X)$}{
-      \Return{$X$} \;
+    \If{ $\lnot \sat(\m{S})$}{
+      \Return{$\m{S}$} \;
     }
-    $\F' \gets  \grow(X,\F) $ \label{line:grow}\; \bart{decide on naming, but {\bf not} \formula' and X for the same kind of thing. Also for simplicity the thing that is now called X can be overwritten.}
-    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F'\}$ \;
+    $\m{S} \gets  \grow(\m{S},\F) $ \label{line:grow}\;
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \;
   }
   \caption{$\comus(\formula,f,p)$ }
   \label{alg:comus}
@@ -80,10 +80,10 @@ where $X$ is a set of MIP decision variables, one for every literal that appears
 %
 %\While{$I \neq I_{end}$}{
 %	update $p$ such that none of $\{I_{end} \setminus I\}$ and none of $\bar{I}$ can be in the hitting set\;
-%    $X \gets \comus(\formulag,f,p,\setstohit)$\;
-%	$I_{\mathit{best}} \gets I\cap X$\;
-%    ${\cal C}_{\mathit{best}}\gets{\cal C}\cap X$\;
-%	$N_{\mathit{best}} \gets \{I_{end} \setminus I\} \cap optimalPropagate(X) $\;
+%    $\m{S} \gets \comus(\formulag,f,p,\setstohit)$\;
+%	$I_{\mathit{best}} \gets I\cap \m{S}$\;
+%    ${\cal C}_{\mathit{best}}\gets{\cal C}\cap \m{S}$\;
+%	$N_{\mathit{best}} \gets \{I_{end} \setminus I\} \cap optimalPropagate(\m{S}) $\;
 %	add $\{I_{\mathit{best}} \wedge {\cal C}_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
 %	$I \gets I \cup N_{\mathit{best}}$\; 
 %  }
@@ -93,10 +93,10 @@ Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}.
 Similar to algorithms for maximum satisfiability \cite{davies} and smallest MUS computation \cite{ignatiev2015smallest}, our algorithm builds on the hitting set duality of \cref{prop:MCS-MUS-hittingset}.
 
 Taking abstraction of \cref{line:grow} for a moment, 
-the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $X$ of $\formula$. 
-In case the \sat oracle returns true, i.e., the subset $X$ is satisfiable, the complement of $X$ is a correction subset and is added to \setstohit. In this way, the hitting set size always grow and a hitting set $X$ will always be a subset of $\formula$.
+the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
+In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, the complement of $\m{S}$ is a correction subset and is added to \setstohit. In this way, the hitting set size always grow and a hitting set $\m{S}$ will always be a subset of $\formula$.
 
-Instead of directly adding the complement of $X$, similar to \cite{ignatiev2015smallest}, our proposed algorithm includes a call to \grow, which extends $X$ into a larger subset of $\formula$ that is still satisfiable (if possible).
+Instead of directly adding the complement of $\m{S}$, similar to \cite{ignatiev2015smallest}, our proposed algorithm includes a call to \grow, which extends $\m{S}$ into a larger subset of $\formula$ that is still satisfiable (if possible).
 \tias{here base grow impls?} \bart{Your next sentence is enough for me here. Alternatively we can in one stentence say that we consider a greedy and a maxsat-based implementation? }
 We discuss the different possible implementations of \grow later and evaluate their performance in \cref{sec:experiments}. 
 
@@ -104,14 +104,14 @@ Soundness and completeness of the proposal follow from the fact that all sets ad
  
 \begin{theorem}\label{thm:soundcomplete}
   Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 
-  If $\m{U}$ is a hitting set of \m{H} that is $f$-optimal among the hitting sets of \m{H} satisfying a predicate $p$, and  $\m{U}$ is unsatisfiable, then $\m{U}$ is an OCUS of \formula. 
+  If $\m{S}$ is a hitting set of \m{H} that is $f$-optimal among the hitting sets of \m{H} satisfying a predicate $p$, and  $\m{S}$ is unsatisfiable, then $\m{S}$ is an OCUS of \formula. 
   
   If  $\m{H}$ has no hitting sets satisfying $p$, then $\formula$ has no OCUSs.
 \end{theorem}
 \begin{proof}
-For the first claim, it is clear that $\m{U}$ is unsatisfiable and satisfies $p$. Hence all we need to show is $f$-optimality of $\m{U}$.
-  If some other unsatisfiable subset $\m{U}'$ that satisfies $p$ would exists with $f(\m{U}')\leq f(\m{U})$, we know that $\m{U}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction set is the superset of a minimal correction set).
-  Since $\m{U}$ is $f$-optimal among hitting sets of $\m{H}$ satisfying $p$ and $\m{U}'$ also hits $\m{H}$ and satisfies $p$, it must thus be that $f(\m{U})=f(\m{U'})$. 
+For the first claim, it is clear that $\m{S}$ is unsatisfiable and satisfies $p$. Hence all we need to show is $f$-optimality of $\m{S}$.
+  If some other unsatisfiable subset $\m{U}'$ that satisfies $p$ would exists with $f(\m{U}')\leq f(\m{S})$, we know that $\m{U}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction set is the superset of a minimal correction set).
+  Since $\m{S}$ is $f$-optimal among hitting sets of $\m{H}$ satisfying $p$ and $\m{U}'$ also hits $\m{H}$ and satisfies $p$, it must thus be that $f(\m{S})=f(\m{U}')$. 
 %  
 
 The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the fact that an OCUS is an unsatisfiable subset of $\formula$. 

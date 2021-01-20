@@ -15,6 +15,38 @@ The reason this works is because they showed that there is a one-to-one correspo
 \newcommand\onestep{\ensuremath{\call{explain-One-Step}}\xspace}
 
 \begin{algorithm}[t]
+    %\Input{${\cal C}$,  \textit{a CNF ${\cal C}$ over a vocabulary $V$} }
+    %\Input{$U$, \textit{a user vocabulary $U \subseteq V$} }
+    %\Input{$f$, \textit{a cost function $f : 2^{lits({U})} \rightarrow  \mathbb{N} $.}}
+    %\Input{$I$, \textit{a partial interpretation over $U$}}
+    %\Output{$E$, \textit{a sequence of explanation steps as implications $I_{expl} \implies N_{expl}$}}
+    % \vspace*{0.01cm}
+    \DontPrintSemicolon
+    \caption{$\call{ExplainCSP}(\formulac, f, I, U)$ \tias{OPTIONAL}}
+    \label{alg:explainCSP}
+    %$\sat \gets \initsat({\cal C}$) \;
+        % \tcp{Hyp: f}
+    $I_{end} \gets \optprop(\formulac \wedge I) \cap U$ \;
+    $E \gets \langle \rangle$\;
+    %$U \gets U \cap I_{end}$ \;
+    %$I_{expl} = \{i \in I_{end} | f(i) < inf \wedge f(-i) < inf\}$ \;
+    % \algemilio{bart: What's a better way to get the initial interpr.?}
+    % $I \gets \{l \in I_{end} | f(\lnot l) = inf\}$ \;
+    \While{$(I \cap U) \neq I_{end}$}{
+        %$E \gets \call{bestStep}({\cal C},U, f,\Iend, I)$\;
+        $X \gets \onestep({\cal C},f,I,\Iend)$\;
+        %$I_{\mathit{best}} \gets I \cap X$\;
+        %$\formulac_{\mathit{best}}\gets \formulac\cap X$\;
+        $N \gets \optprop(X \cap I) \cap (\Iend \setminus I)$\;
+        %add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+        add $\{(X \cap I) \implies N\}$ to $E$\;
+        $I \gets I \cup N$\;
+    }
+    \Return{E}\;
+\end{algorithm}
+
+
+\begin{algorithm}[t]
   \caption{$\onestep(\formulac,f,I,\Iend)$}
   \label{alg:oneStep}
 $X_{best} \gets \mathit{nil}$\;

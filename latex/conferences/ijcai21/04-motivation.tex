@@ -97,21 +97,6 @@ We see three main points of improvement, all of which will be tackled by our gen
  \item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many very similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use data structures to achieve speed-ups in later calls}? 
 \end{inparaenum}
 
-The first two points lead to the following definition. 
-
-
-\begin{definition}
-    If $\formula$ is a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula}\to \{\ltrue,\lfalse\}$, then we call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
-    $X \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if \begin{compactitem}                                      
-      \item $X$ is unsatisfiable,
-      \item $p(X)$ is true
-      \item all other unsatisfiable $X'\subseteq \formula$ with $p(X')=\ltrue$ satisfy $f(X')\geq f(X)$.
-    \end{compactitem}
-\end{definition}
-
-Rephrased in this terms, the task of the procedure \onestep is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds when $\formulag$ that contain exactly one literal of $\overline{\Iend}$, see Algorithm~\eqref{alg:oneStepOCUS}. 
-In the rest of this paper, we study (incremental) algorithms for computing an OCUS. 
-
 
 
 

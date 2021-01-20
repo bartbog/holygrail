@@ -1,12 +1,12 @@
 % !TeX root = ./main.tex
 
 We now experimentally validate the the performance of the different versions of our algorithms.
-Our benchmarks were ran on the VUB Hydra cluster. Each solver call was assigned a single core on a 10-core INTEL E5-2680v2 (IvyBridge) processor \todo{Emilio,right?}, a timelimit of \todo{XX} minutes and a memory-limit of \todo{YY}GB.
+Our benchmarks were ran on the VUB Hydra cluster. Each solver call was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor, a timelimit of 120 minutes and a memory-limit of 4GB.
  All code was implemented in Python on top of %CPpy~\footnote{} and
-PySAT.\footnote{\url{https://pysathq.github.io}} The MIP solver used is Gurobi 9.0 and when a (Max)SAT solver is used it is RC2 as bundled with PySAT. 
+PySAT.\footnote{\url{https://pysathq.github.io}} The MIP solver used is Gurobi 9.0 and when a (Max)SAT solver is used it is RC2 as bundled with PySAT.
 
 
-All of our experiments were ran on a direct translation to CPPY of the the \todo{ten?} puzzles of \citet{ecai/BogaertsGCG20}. 
+All of our experiments were ran on a direct translation to CPPY of the 10 puzzles of \citet{ecai/BogaertsGCG20}. 
 Our experiments were designed to answer the following research questions: 
 \begin{compactdesc}
  \item[Q1] What is the effect of requiring optimality of the generated MUSs on the \textbf{quality} of the generated explanations and on the \textbf{time} required to compute them. 
@@ -14,59 +14,82 @@ Our experiments were designed to answer the following research questions:
  \item[Q3] Does \textbf{re-use} of computed satisfiable subsets improve efficiency?
  \item[Q4] Which \textbf{domain-specific \grow methods} perform best?
 \end{compactdesc}
+In the experiments, more specifically when generating explanation sequence of puzzles, the constraint(s) in the unsatisfiable represent using either \textit{bijectivity}, \textit{transitivity} or \textit{clues} or any combination thereof.
 
-
-
-
-\begin{table*}[]
-    \centering
-    \caption{Execution time generic grow version}
-    \begin{tabular}{|r||c|c|c|c|c|}
-    \hline
-      p &             sat &          subset &      maxsat\_pos &     maxsat\_inv &    maxsat\_unif \\
-    \hline
-     6 &  15.25 - [18]  &  17.46 - [33]  &  48.41 - [9]  &  14.24 - [9]  &  14.71 - [16]  \\
-     8 &  38.95 - [6]  &  21.31 - [10]  &  1558.78 - [6]  &  14.26 - [6]  &  26.47 - [6]  \\
-     p &  14.09 - [9]  &  19.96 - [10]  &  646.94 - [9]  &  6.66 - [1]  &  9.84 - [4]  \\
-     2 &  18.6 - [9]  &  10.12 - [15]  &  171.94 - [9]  &  14.62 - [7]  &  16.54 - [7]  \\
-     7 &  10.24 - [7]  &  17.52 - [8]  &  1542.48 - [1]  &  13.03 - [1]  &  12.31 - [4]  \\
-     1 &  26.25 - [13]  &  20.52 - [13]  &  333.4 - [13]  &  13.28 - [12]  &  16.49 - [13]  \\
-     4 &  40.52 - [101]  &  22.86 - [108]  &  360.07 - [16]  &  14.18 - [11]  &  16.59 - [20]  \\
-     10 &  13.75 - [8]  &  26.72 - [8]  &  487.54 - [2]  &  17.88 - [4]  &  13.89 - [4]  \\
-     3 &  22.58 - [21]  &  19.57 - [10]  &  319.77 - [10]  &  13.49 - [9]  &  14.92 - [9]  \\
-    \hline
-    \end{tabular}
-\end{table*}
-
-\begin{table*}
+\begin{figure}[ht]
   \centering
-  \caption{Execution time compared between executions}
-  \begin{tabular}{|r||c|c|c|c|c|c|}
-  \hline
-    p & MUS-based & OUS non-incr & OUS incr & cOUS non-incr & cOUS + incr \\
-  \hline
-    1 &       569 &         4114 &     4727 &           779 &         299 \\
-    2 &       438 &         3834 &     3972 &           565 &         238 \\
-    3 &       477 &         4220 &     4938 &           874 &         607 \\
-    4 &       624 &         3508 &     4820 &           314 &          97 \\
-    5 &      3382 &         T.O. &     T.O. &          1977 &        1537 \\
-    6 &       568 &         3849 &     3854 &           371 &         146 \\
-    7 &       372 &         4682 &     4380 &           645 &         414 \\
-    8 &       474 &         4679 &     5552 &           644 &         448 \\
-    10 &       766 &         T.O. &     T.O. &          2308 &        1135 \\
-    p &       224 &         2601 &     2528 &           618 &         528 \\
-  \hline
-  \end{tabular}
-  \end{table*}
-
-\begin{figure*}[]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/experiemnt5_qualitative.jpg}
-    \caption{Experiment 2}
-    \label{fig:exp2}
-\end{figure*}
+  \includegraphics[width=\columnwidth]{figures/rq1.pdf}
+  \caption{Q1 - Optimal vs Greedy explanation generation quality}
+  \label{fig:rq1}
+\end{figure}
 
 
+\paragraph{Explanation quality} 
+Similar to \citet{ecai/BogaertsGCG20}, a weight assigned to each type of constraint used. The weighted sum of the constraints present in the 
+(\textit{minimum} / \textit{optimal}) 
+% minimal/optimal
+unsatisfiable subset become a proxy to how difficult the generated explanation really is.
+% commaring the explanation quality of mus and ous
+To answer \textbf{Q1}, we start by generating a sequence of explanations using the \comus from an initial assignment $I_0$.. Then, using this sequence as a starting point, we look for a MUS-based explanation given the partial assignments $I_i$ at step i.
+Figure \ref{fig:rq1} depicts how the quality of the MUS-based explanations compare to the OUS approach for all puzzles. Every dott represents a pair of OUS and MUS costs, where the size of the dott relates to the occurence of that pair in the generated sequences.
+Note that, the distribution of the dotts show the quality of the OUS explanation is either similar, when along the same-cost diagonal or better in the upper part of the graph. The dotts' sizes demonstrates that the optimal approach will find many easy explanations contrary to the MUS. This confirms the need for \comus approach, which repeatedly looks for the next best explanation given an interpretation.
+
+
+\paragraph{Computation Time} 
+
+\paragraph{Constrainedness}
+
+\paragraph{Domain-specific \grow}
+
+% \begin{table*}[]
+%     \centering
+%     \caption{Execution time generic grow version}
+%     \begin{tabular}{|r||c|c|c|c|c|}
+%     \hline
+%       p &             sat &          subset &      maxsat\_pos &     maxsat\_inv &    maxsat\_unif \\
+%     \hline
+%      6 &  15.25 - [18]  &  17.46 - [33]  &  48.41 - [9]  &  14.24 - [9]  &  14.71 - [16]  \\
+%      8 &  38.95 - [6]  &  21.31 - [10]  &  1558.78 - [6]  &  14.26 - [6]  &  26.47 - [6]  \\
+%      p &  14.09 - [9]  &  19.96 - [10]  &  646.94 - [9]  &  6.66 - [1]  &  9.84 - [4]  \\
+%      2 &  18.6 - [9]  &  10.12 - [15]  &  171.94 - [9]  &  14.62 - [7]  &  16.54 - [7]  \\
+%      7 &  10.24 - [7]  &  17.52 - [8]  &  1542.48 - [1]  &  13.03 - [1]  &  12.31 - [4]  \\
+%      1 &  26.25 - [13]  &  20.52 - [13]  &  333.4 - [13]  &  13.28 - [12]  &  16.49 - [13]  \\
+%      4 &  40.52 - [101]  &  22.86 - [108]  &  360.07 - [16]  &  14.18 - [11]  &  16.59 - [20]  \\
+%      10 &  13.75 - [8]  &  26.72 - [8]  &  487.54 - [2]  &  17.88 - [4]  &  13.89 - [4]  \\
+%      3 &  22.58 - [21]  &  19.57 - [10]  &  319.77 - [10]  &  13.49 - [9]  &  14.92 - [9]  \\
+%     \hline
+%     \end{tabular}
+% \end{table*}
+
+\begin{table}
+  \centering
+  \begin{tabular}{r||c|c|c|c|c}
+    % \begin{tabular}{|r||c|c|c|c|c|c|}
+      % \hline
+      \textbf{p} & \textbf{MUS} & \textbf{OUS}  & \textbf{OUS+I} & \textbf{cOUS} & \textbf{cOUS+I} \\
+      \hline
+      1 &       569 &         4114 &     4727 &           803 &         \textbf{299} \\
+      2 &       438 &         3834 &     3972 &           607 &         \textbf{238} \\
+      3 &       477 &         4220 &     4938 &           932 &         \textbf{607} \\
+      4 &       624 &         3508 &     4820 &           388 &          \textbf{97} \\
+      5 &      3382 &         Timeout &     Timeout &          3556 &        \textbf{1537} \\
+      6 &       568 &         3849 &     3854 &           498 &         \textbf{155} \\
+      7 &       372 &         4411 &     4380 &           685 &         \textbf{414} \\
+      8 &       474 &         4679 &     5552 &           669 &         \textbf{448} \\
+      9 &       766 &         Timeout &     Timeout &          2383 &        \textbf{1135} \\
+      p &       224 &         2601 &     2528 &           651 &         \textbf{537} \\
+      % \hline
+    \end{tabular}
+    \caption{Computation time (s) compared between executions}
+  \end{table}
+
+
+\begin{figure}[]
+  \centering
+  \includegraphics[width=\columnwidth]{figures/rq4.pdf}
+  \caption{Q4 - Grow strategies until timeout or full explanation sequence generation}
+  \label{fig:rq4}
+\end{figure}
 
 \ignore{
 We now experimentally validate the the performance of the different versions of our algorithms for explaining satisfiable constraint satisfaction problems.

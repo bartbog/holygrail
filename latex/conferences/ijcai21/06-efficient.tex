@@ -1,20 +1,20 @@
-\todo{make naming consistent: OCUS instead of cOUS}
-In this section, we discuss optimizations to the basic algorithm to compute $(p,f)$-OUSs. 
+% \todo{make naming consistent: OCUS instead of OCUS}
+In this section, we discuss optimizations to the basic algorithm to compute OCUSs. 
 While our optimizations are inspired by the explanation generation problem, and tailored to solving this as efficiently as possible, the ideas presented here can also be used when other forms of domain knowledge are present.  
 
 
-\paragraph{Incremental cOUS computation}
+\paragraph{Incremental OCUS computation}
 While searching for unsatisfiable subsets satisfying structural constraints already greatly reduces the number of calls to the unsatisfiable subset oracle, inherently, the entire explanation loop still requires as many OCUS calls as there are facts to explain. 
-Indeed, the high-level algorithm, not explicitly portrayed in the current paper, calls \onestep iteratively with a  growing  interpretation $I$ until $I=\Iend$.
-Now of course, all of these calls to \onestep and hence all OCUS calls are done with very similar input (the set of clues does not change, and the $I$ only marginally changes between two calls). For this reason, it makes sense that information computed during one of the earlier stages can be useful in later stages as well. 
+Indeed, the high-level algorithm, not explicitly portrayed in the current paper, calls \onestepo iteratively with a  growing  interpretation $I$ until $I=\Iend$.
+Now of course, all of these calls to \onestepo and hence all OCUS calls are done with very similar input (the set of clues does not change, and the $I$ only marginally changes between two calls). For this reason, it makes sense that information computed during one of the earlier stages can be useful in later stages as well. 
 
 So, the general question to be tackled here is, suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$ how can we make use as much as possible of the data computations of the first call to speed-up the second call. The answer is surprisingly simple. The most important data \comus keeps track of  is the set \setstohit of sets to hit.  This set in itself is not useful for transfer between two calls, since -- unless we assume that $\formula_2$ is a subset of $\formula_1$, there is no reason to assume that a set in $\setstohit_1$ should also be hit in the second call. 
 However, each set $H$ in $\setstohit$ is the complement (with respect to the formula at hand) of a \emph{satisfiable subsets} and satisfiability of a set of formulas is constant of course. 
-Thus, instead of storing $\setstohit$, we can, over all calls keep track of a set \satsets of \emph{satisfiable subsets} (the sets $\formula''$ in the \comus algorithm). 
-When a second call to \comus is performed, we can then initialize $\setstohit$ as the complement of each of these satisfiable subsets with respect to $\formula_2$, i.e., $\setstohit\gets \{\formula_2\setminus S\mid S\in \satsets\}$. 
+Thus, instead of storing $\setstohit$, we can, over all calls keep track of a set \satsets of \emph{satisfiable subsets} (the sets $\formula''$\todo{Name?} in the \comus algorithm). 
+When a second call to \comus is performed, we can then initialize $\setstohit$ as the complement of each of these satisfiable subsets with respect to $\formula_2$, i.e., \[\setstohit\gets \{\formula_2\setminus S\mid S\in \satsets\}.\]
 
-Our actual implementation goes a bit further than the idea described above: in our setting we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup I_0\cup \overline{\Iend\setminus I_0}$. Since our implementation uses a MIP solver for computing hitting sets, and we have this upper bound on the set of formulas to be used we can keep a single solver warm in between two \comus calls. 
-\emilio{need to re-read reviews, reviewers asked (?) for simple MIP model of the problem}
+Our actual implementation goes a bit further than the idea described above: in our setting we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets, and we have this upper bound on the set of formulas to be used we can keep a single solver warm in between two \comus calls. 
+% \emilio{need to re-read reviews, reviewers asked (?) for simple MIP model of the problem}
 
 % \paragraph{Using Initialization to Add Domain Knowledge} ? 
 % \todo{TO BE DETERMIEND IF WE WANT TO SAY SOMETHING AOBUT PRESEEDING.}\bart{ I still dont believe it makes a difference. TO be tested first!} {\color{red}The current experiments confirm (finally) that this is useless. So let us just drop it.  Honestly, this gives me more trust in the experiments :-)   }
@@ -22,16 +22,16 @@ Our actual implementation goes a bit further than the idea described above: in o
 
 
 \paragraph{Domain-Specific Implementations of \grow} 
-In the previous section, we followed \citet{smus} and opted for implementing \emph{no grow}. 
-However, in the context of explanations we are in, we have a way of generating large satisfiable subsets quite easily and hence we conjecture that implementing a domain-specific \grow will be more efficient. 
+In the context of explanations we are in, we have a way of generating large satisfiable subsets quite easily and hence we conjecture that implementing a domain-specific \grow will be more efficient than generic version of the \grow algorithm. 
 
+\bart{TODO: naming of the F' etc!}
 The goal of this \grow procedure is to turn $\formula'$ into a larger subformula $\formula''$ of $\formula$. The effect of this is that its complement will be smaller, and hence, a stronger restriction for the hitting set solver is found.  
 Implementing an effective \grow procedure requires finding a difficult balance: on the one hand, we want our results to be as large as possible, to derive the most precise information we can get, but on the other hand we also want the procedure to be very efficient. 
 Indeed, if the cost of the \grow were not important, we could use a MaxSAT call to obtain a subset-maximal subset of $\formula$, however, by doing that we expect the \grow costs to be too high. 
 
 However, for the case of explanations we are in, we make the following observations: 
 \begin{compactitem}
- \item Our formula at hand (using the notation from the \onestep algorithm) consists of three types of clauses: 1) (translations of) the puzzle constraints (this is \formulac) 2) literals representing the assignment found this far (this is $I$) and 3) the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). 
+ \item Our formula at hand (using the notation from the \onestepo algorithm) consists of three types of clauses: 1) (translations of) the puzzle constraints (this is \formulac) 2) literals representing the assignment found this far (this is $I$) and 3) the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). 
  \item $\formulac$ and $I$ together are satisfiable and \emph{mutually supportive}, by this we mean that making more constraints in \formulac true, more literals in $I$ will automatically become true and vice versa. 
  \item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
 \end{compactitem}

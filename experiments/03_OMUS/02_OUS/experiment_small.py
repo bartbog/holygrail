@@ -31,7 +31,7 @@ def puzzleToExplain(args):
     U = o_user_vars | set(x for lst in o_assumptions for x in lst)
     I = set(x for lst in o_assumptions for x in lst)
     f = cost_puzzle(U, I, o_weights)
-    explainGreedy(C=o_cnf, U=U, f=f, I0=I, params=params)
+    explain(C=o_cnf, U=U, f=f, I0=I, params=params)
 
 
 def ExperimentReRunParams():

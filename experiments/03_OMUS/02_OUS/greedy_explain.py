@@ -143,7 +143,8 @@ class BestStepParams(object):
         self.grow_subset_maximal = False
         self.subset_maximal_I0 = False
         self.grow_maxsat = False
-
+        self.grow_subset_maximal_actual = False
+        
         # MAXSAT growing
         self.grow_maxsat_full_pos = False
         self.grow_maxsat_full_inv = False
@@ -172,6 +173,7 @@ class BestStepParams(object):
         if self.grow:
             assert self.grow_sat ^ \
                    self.grow_subset_maximal ^ \
+                   self.grow_subset_maximal_actual ^ \
                    self.grow_maxsat, \
                    "Exactly 1 grow mechanism"
 
@@ -202,6 +204,7 @@ class BestStepParams(object):
             "grow": self.grow,
             "grow_sat": self.grow_sat,
             "grow_subset_maximal": self.grow_subset_maximal,
+            "grow_subset_maximal_actual": self.grow_subset_maximal_actual,
             "grow_maxsat": self.grow_maxsat,
             # maxsat polarities
             "maxsat_polarities": self.maxsat_polarities,
@@ -378,6 +381,15 @@ class BestStepComputer(object):
             '#H_incr': 0,
         }
 
+    def grow_subset_maximal_actual(self,  HS, Ap):
+        _, App = self.checkSat(HS | (self.I & Ap), phases=self.I)
+        # repeat until subset maximal wrt A
+        while (Ap != App):
+            Ap = set(App)
+            sat, App = self.checkSat(HS | (self.I & Ap), phases=self.I)
+        # print("\tgot sat", sat, len(App))
+        return App
+
     def grow(self, f, F, A, HS, HS_model):
         # no actual grow needed if 'HS_model' contains all user vars
         t_grow = time.time()
@@ -386,6 +398,8 @@ class BestStepComputer(object):
             SS = set(HS)
         elif self.params.grow_sat:
             SS = set(HS_model)
+        elif self.params.grow_subset_maximal_actual:
+            SS = set(self.grow_subset_maximal_actual(HS=HS, Ap=HS_model))
         elif self.params.grow_subset_maximal or self.params.subset_maximal_I0:
             SS = set(self.grow_subset_maximal(A=A, HS=HS, Ap=HS_model))
         elif self.params.grow_maxsat:
@@ -487,7 +501,9 @@ class BestStepComputer(object):
         """
         tstart = time.time()
         if self.params.polarity:
-            self.sat_solver.set_phases(literals=list(phases - Ap))
+            self.sat_solver.set_phases(literals=list(self.Iend - Ap))
+        elif self.params.polarity_initial:
+            self.sat_solver.set_phases(literals=list(self.I0 - Ap))
 
         solved = self.sat_solver.solve(assumptions=list(Ap))
 

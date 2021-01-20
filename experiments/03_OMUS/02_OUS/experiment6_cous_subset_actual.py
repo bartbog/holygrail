@@ -176,7 +176,6 @@ python3 experiment6_cous_subset_actual.py {taskspernode}
 
 
 if __name__ == "__main__":
-    print(len(Experiment6cOUSParams()))
     if len(sys.argv) == 2:
         tasksParallel = int(sys.argv[1])
         runPuzzle(tasksParallel)

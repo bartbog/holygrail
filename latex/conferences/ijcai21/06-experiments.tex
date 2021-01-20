@@ -64,14 +64,30 @@ We compare the following enhancements options to the basic \emph{OUS} algorithm:
 
 \paragraph{Computation Time} The naïve \omus approach requires significantly more time to find an optimal MUS. This observation demonstrates that the problem complexity increases when a optimality criterion kicks in. We observe that reusing information throughout the calls to the OUS solver burdens the \onestep algorithm with extra processing in order to keep track of all generated satisfiable subsets.
 
-However, the constrainedness enhancement as shown in Table \ref{table:computationTime} proves the importance of our approach. 
-The explanation generation times for a whole sequence are closer and sometimes even better than the MUS approach. 
 
 \paragraph{Constrainedness}
-In fact, constrainedness has two major implications. First, by guiding the search towards the next cheapest optimal explanation using algorithm \ref{alg:oneStepOCUS}, we effectively reduce the amount of calls to the \omus solver.
+Adding constraindness has two major implications.
+First, by guiding the search towards the next cheapest optimal explanation using algorithm \ref{alg:oneStepOCUS}, we effectively reduce the amount of calls to the \omus solver.
+The constrainedness enhancement as shown in Table \ref{table:computationTime} proves the importance of our approach.
+The explanation generation times for a whole sequence are closer and sometimes even better than the MUS approach even though the problem of finding a OUS is more difficult than finding a MUS.
+
+Second, in practice constrainedness is easily combined with incrementality.
+The MIP solver is instantiated only once and is reused across the different \onestep calls of algorithm \ref{alg:oneStepOCUS}.
+By keeping the MIP solver warm, we take advantage of its efficiency to handle the many satisfiable subsets which are represented under the form of constraints on the variables of the problem specification.
+Table \ref{table:computationTime} demonstrates that contrary to to \emph{OUS+I}, incrementality in \textbf{\comus+I} significantly decreases the overall computation time.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\columnwidth]{figures/rq4.pdf}
+  \caption{Q4 - Grow strategies until timeout or full explanation sequence generation}
+  \label{fig:rq4}
+\end{figure}
 
 
-\paragraph{Domain-specific \grow}
+\paragraph{Domain-specific \grow} Finally, the core computation of explanations not only lies in the calls to the optimal hitting set solver, but more importantly in computing \emph{high quality} satisfiable subsets.
+
+The latter is reflected in Figure \ref{fig:rq4}.
+There are \emilio{some more here!}
 
 % \begin{table*}[]
 %     \centering
@@ -96,12 +112,6 @@ In fact, constrainedness has two major implications. First, by guiding the searc
 
 
 
-\begin{figure}[]
-  \centering
-  \includegraphics[width=\columnwidth]{figures/rq4.pdf}
-  \caption{Q4 - Grow strategies until timeout or full explanation sequence generation}
-  \label{fig:rq4}
-\end{figure}
 
 \ignore{
 We now experimentally validate the the performance of the different versions of our algorithms for explaining satisfiable constraint satisfaction problems.

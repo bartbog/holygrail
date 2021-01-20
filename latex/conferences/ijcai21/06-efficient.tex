@@ -13,6 +13,7 @@ Thus, instead of storing $\setstohit$, we can, over all calls keep track of a se
 When a second call to \comus is performed, we can then initialize $\setstohit$ as the complement of each of these satisfiable subsets with respect to $\formula_2$, i.e., $\setstohit\gets \{\formula_2\setminus S\mid S\in \satsets\}$. 
 
 Our actual implementation goes a bit further than the idea described above: in our setting we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup I_0\cup \overline{\Iend\setminus I_0}$. Since our implementation uses a MIP solver for computing hitting sets, and we have this upper bound on the set of formulas to be used we can keep a single solver warm in between two \comus calls. 
+\emilio{need to re-read reviews, reviewers asked (?) for simple MIP model of the problem}
 
 % \paragraph{Using Initialization to Add Domain Knowledge} ? 
 % \todo{TO BE DETERMIEND IF WE WANT TO SAY SOMETHING AOBUT PRESEEDING.}\bart{ I still dont believe it makes a difference. TO be tested first!} {\color{red}The current experiments confirm (finally) that this is useless. So let us just drop it.  Honestly, this gives me more trust in the experiments :-)   }

@@ -51,6 +51,8 @@ def ExperimentReRunParams():
     # intialisation: pre-seeding
     params.pre_seeding = False
 
+    params.disableConstrained = True
+
     # hitting set computation
     params.postpone_opt = False
     params.postpone_opt_incr = False

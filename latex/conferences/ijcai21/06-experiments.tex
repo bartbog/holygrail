@@ -7,6 +7,8 @@ PySAT.\footnote{\url{https://pysathq.github.io}} The MIP solver used is Gurobi 9
 
 
 All of our experiments were ran on a direct translation to CPPY of the \todo{10} puzzles of \citet{ecai/BogaertsGCG20}.\footnote{In one of the puzzles, an error in the automatic translation of the natural language constraints was found and fixed. Because if this error, it was missing in experimental results of the previous work.} 
+In all puzzles, we used a cost of 50--70 for using constraints (50 for builtins; 70 for clues) and 1 for previously derived facts. \todo{correct?}
+
 Our experiments were designed to answer the following research questions: 
 \begin{compactdesc}
  \item[Q1] What is the effect of requiring optimality of the generated MUSs on the \textbf{quality} of the generated explanations?
@@ -24,15 +26,28 @@ In the experiments, more specifically when generating explanation sequence of pu
 \end{figure}
 
 
+\bart{ik schrijf stukje over MUS ECAI}
+
+
 \paragraph{Explanation quality} 
-Similar to \citet{ecai/BogaertsGCG20}, a weight assigned to each type of constraint used. The weighted sum of the constraints present in the 
-(\textit{minimum} / \textit{optimal}) 
+\bart{Zou een heat map niet beter zijn dan van die dots met size die dan overlappen en het verhaal onduidelijk maken??? } 
+To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on \cref{alg:oneStep}. 
+Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since they --- in order to avoid the quality problems we will illustrate below --- implemented an extra inner loop with \emph{even more} calls to \call{MUS} for a selected set fo subsets of \formulac of increasing size (this is their Algorithm~3). 
+While this yields better explanations, it comes at the expense of computation time, there leading to several hours to generate the explanation of a single puzzle. 
+We will see in our later experiments is that we can \emph{outperform}, in terms of computational cost, a this simple \call{MUS} based implementation while still guaranteeing optimality. \bart{make pareto improvement explict?}
+
+To answer \textbf{Q1}, we ran this \call{MUS}-based as described in \cref{alg:oneStep} and compared at every step the cost of the produced explanation with the cost of the optimal explanation. 
+% 
+% Similar to \citet{ecai/BogaertsGCG20}, a weight assigned to each type of constraint used. The weighted sum of the constraints present in the 
+% (\textit{minimum} / \textit{optimal}) 
 % minimal/optimal
-unsatisfiable subset become a proxy to how difficult the generated explanation really is.
+% unsatisfiable subset become a proxy to how difficult the generated explanation really is.
 % commaring the explanation quality of mus and ous
-To answer \textbf{Q1}, we start by generating a sequence of explanations using the \comus from an initial assignment $I_0$.. Then, using this sequence as a starting point, we look for a MUS-based explanation given the partial assignments $I_i$ at step i.
-Figure \ref{fig:rq1} depicts how the quality of the MUS-based explanations compare to the OUS approach for all puzzles. Every dott represents a pair of OUS and MUS costs, where the size of the dott relates to the occurence of that pair in the generated sequences.
-Note that, the distribution of the dotts show the quality of the OUS explanation is either similar, when along the same-cost diagonal or better in the upper part of the graph. The dotts' sizes demonstrates that the optimal approach will find many easy explanations contrary to the MUS. This confirms the need for \comus approach, which repeatedly looks for the next best explanation given an interpretation.
+% To answer \textbf{Q1}, we start by generating a sequence of explanations using the \comus from an initial assignment $I_0$.. Then, using this sequence as a starting point, we look for a MUS-based explanation given the partial assignments $I_i$ at step i.
+These costs are plotted in Figure \ref{fig:rq1}, the size of the dot represents the number of occurrences of the combination at hand. 
+% Note that, the distribution of the dotts show the quality of the OUS explanation is either similar, when along the same-cost diagonal or better in the upper part of the graph. The dotts' sizes demonstrates 
+We see that the difference in quality is striking in many cases, with the MUS-based solution often missing extremely simple explanations (as seen by the large vertical line around cost 50), thereby confirming  
+the need for \omus/\comus approach.
 \begin{table}[ht]
   \centering
   \begin{tabular}{r||c|c|c|c|c}

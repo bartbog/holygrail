@@ -140,6 +140,7 @@ class COusParams(object):
         # sat - grow
         self.grow = False
         self.grow_sat = False
+        self.grow_subset_maximal_actual = False
         self.grow_subset_maximal = False
         self.subset_maximal_I0 = False
         self.grow_maxsat = False
@@ -176,6 +177,7 @@ class COusParams(object):
             assert self.grow_sat ^ \
                    self.grow_subset_maximal ^ \
                    self.subset_maximal_I0 ^ \
+                   self.grow_subset_maximal_actual ^ \
                    self.grow_maxsat, \
                    "Exactly 1 grow mechanism"
 
@@ -207,6 +209,7 @@ class COusParams(object):
             "grow": self.grow,
             "grow_sat": self.grow_sat,
             "grow_subset_maximal": self.grow_subset_maximal,
+            "grow_subset_maximal_actual": self.grow_subset_maximal_actual,
             "grow_maxsat": self.grow_maxsat,
             # maxsat polarities
             "maxsat_polarities":self.maxsat_polarities,
@@ -443,6 +446,8 @@ class BestStepCOUSComputer(object):
             SS = set(HS)
         elif self.params.grow_sat:
             SS = set(HS_model)
+        elif self.params.grow_subset_maximal_actual:
+            SS = set(self.grow_subset_maximal_actual(HS=HS, Ap=HS_model))
         elif self.params.grow_subset_maximal or self.params.subset_maximal_I0:
             SS = set(self.grow_subset_maximal(A=A, HS=HS, Ap=HS_model))
         elif self.params.grow_maxsat:
@@ -521,6 +526,15 @@ class BestStepCOUSComputer(object):
 
             return set(t_model)
 
+    def grow_subset_maximal_actual(self,  HS, Ap):
+        _, App = self.checkSat(HS | (self.I & Ap), phases=self.I)
+        # repeat until subset maximal wrt A
+        while (Ap != App):
+            Ap = set(App)
+            sat, App = self.checkSat(HS | (self.I & Ap), phases=self.I)
+        # print("\tgot sat", sat, len(App))
+        return App
+
     def grow_subset_maximal(self, A, HS, Ap):
         _, App = self.checkSat(HS | (self.I0 & Ap), phases=self.I0)
         if self.params.subset_maximal_I0:
@@ -552,7 +566,6 @@ class BestStepCOUSComputer(object):
             (bool, set): sat value, model assignment
         """
         t_sat = time.time()
-
         if self.params.polarity_initial:
             self.sat_solver.set_phases(literals=list(self.I0 - Ap))
         elif self.params.polarity:
@@ -1589,21 +1602,22 @@ if __name__ == "__main__":
     # runParallel(fns, all_params)
     optimalParams = COusParams()
     # preseeding
-    optimalParams.pre_seeding = True
+    optimalParams.pre_seeding = False
     # params.pre_seeding_subset_minimal = True
 
     # polarity of sat solver
     # params.polarity = True
-    optimalParams.polarity_initial = True
+    optimalParams.polarity = True
 
     # sat - grow
     optimalParams.grow = True
-    optimalParams.grow_maxsat = True
-    optimalParams.grow_maxsat_initial_pos = True
+    optimalParams.grow_subset_maximal_actual = True
+    # optimalParams.grow_maxsat = True
+    # optimalParams.grow_maxsat_initial_pos = True
     # optimalParams.grow_maxsat_actual_pos = True
 
     # timeout
-    optimalParams.timeout = 1 * MINUTES
+    # optimalParams.timeout = 1 * MINUTES
 
     params = COusParams()
     # preseeding
@@ -1622,7 +1636,7 @@ if __name__ == "__main__":
     # max cost neg => fast pre-seeding! (0s)
     # params.grow_maxsat_max_cost_neg = True
     # unit => SLOW pre-seeding! (325s)
-    params.grow_maxsat_unit = True
+    # params.grow_maxsat_unit = True
     # pos cost => FAST pre-seeding! (6s)
     # params.grow_maxsat_pos_cost = True
     # neg cost => very fast pre-seeding! (0s)
@@ -1649,7 +1663,7 @@ if __name__ == "__main__":
     # test_p13Puzzle(optimalParams)
     # test_p16Puzzle(optimalParams)
     # test_p18Puzzle(optimalParams)
-    test_p19Puzzle(optimalParams)
+    test_puzzle(optimalParams)
     # test_p25(optimalParams)
     # test_p20(optimalParams)
     # test_p93(optimalParams)

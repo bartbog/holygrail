@@ -316,20 +316,20 @@ def genPBSjobExperiment6cOUS(puzzle_funs, taskspernode):
         fpath = todaysJobPath / f"{jobName}_{i}.pbs"
         baseScript = f"""#!/usr/bin/env bash
 
-    #PBS -N {jobName}
-    #PBS -l nodes=1:ppn={taskspernode}:skylake
-    #PBS -l walltime=04:00:00
-    #PBS -M emilio.gamba@vub.be
-    #PBS -m abe
+#PBS -N {jobName}
+#PBS -l nodes=1:ppn={taskspernode}:skylake
+#PBS -l walltime=04:00:00
+#PBS -M emilio.gamba@vub.be
+#PBS -m abe
 
-    module load Gurobi/9.0.1-GCCcore-9.3.0-Python-3.8.2
-    module load PySAT/0.1.6.dev11-GCC-9.3.0-Python-3.8.2
-    module load SciPy-bundle/2020.03-intel-2020a-Python-3.8.2
+module load Gurobi/9.0.1-GCCcore-9.3.0-Python-3.8.2
+module load PySAT/0.1.6.dev11-GCC-9.3.0-Python-3.8.2
+module load SciPy-bundle/2020.03-intel-2020a-Python-3.8.2
 
-    # own code
-    cd /data/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS
-    python3 experiment6_cous_subset_actual.py {taskspernode} 
-    """
+# own code
+cd /data/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS
+python3 experiment6_cous_subset_actual.py {taskspernode} 
+"""
         with fpath.open('w+') as f:
             f.write(baseScript)
 

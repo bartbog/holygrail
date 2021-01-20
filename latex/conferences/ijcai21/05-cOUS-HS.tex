@@ -3,21 +3,33 @@ For this, we will assume to have access to a solver \cohs that can compute hitti
 In our practical implementation we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, thus allowing the use of highly optimized mixed integer programming solvers.
 The choice of the underlying hitting set solver will thus determine which types of cost functions and constraints are possible. 
 Our generic algorithm for computing $(p,f)$-OUSs is depicted in \cref{alg:comus}.  
+
+
+\newcommand\onestepo{\ensuremath{\call{explain-One-Step-OCUS}}\xspace}
 \begin{algorithm}[t]
+  \DontPrintSemicolon
+  
+  \caption{$\onestepo(\formulac,f,I,\Iend)$}
+  \label{alg:oneStepOCUS}
+  $p \leftarrow$ exactly one of $\overline{\Iend\setminus I}$\;
+  \Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$} 
+\end{algorithm}
+\begin{algorithm}[t]
+\tias{Something very weird here... needs hard constraints??}
   \DontPrintSemicolon
 %  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   \While{true}{
-    $\F' \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    $X \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
 % f{optimal} solution}
     % \tcp{\small set with all unique clauses from hitting set}
 %     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
     % \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
     % \tcp{IF UNSAT, $hs$ is the OUS }
-    \If{ $\lnot \sat(\F')$}{
-      \Return{$\F'$} \;
+    \If{ $\lnot \sat(X)$}{
+      \Return{$X$} \;
     }
-    $\F'' \gets  \grow(\F',\F) $ \label{line:grow}\;
-    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+    $\F' \gets  \grow(X,\F) $ \label{line:grow}\;
+    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F'\}$ \;
   }
   \caption{$\comus(\formula,f,p)$ }
   \label{alg:comus}

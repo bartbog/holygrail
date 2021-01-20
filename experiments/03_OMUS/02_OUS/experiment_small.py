@@ -136,19 +136,19 @@ python3 experiment_small.py
 
 
 if __name__ == "__main__":
-    genPBSjobexperiment_ReRun()
-    # puzzle_funs = {
-    #     "origin-problem": frietkot.originProblem,
-    #     "pastaPuzzle": frietkot.pastaPuzzle,
-    #     "p12": frietkot.p12,
-    #     "p13": frietkot.p13,
-    #     "p16": frietkot.p16,
-    #     "p18": frietkot.p18,
-    #     "p25": frietkot.p25,
-    #     "p20": frietkot.p20,
-    #     "p93": frietkot.p93,
-    #     "p19": frietkot.p19,
-    # }
-    # params = ExperimentReRunParams()
-    # args = (params, frietkot.pastaPuzzle, 'pastaPuzzle')
-    # puzzleToExplain(args)
+    # genPBSjobexperiment_ReRun()
+    puzzle_funs = {
+        "origin-problem": frietkot.originProblem,
+        "pastaPuzzle": frietkot.pastaPuzzle,
+        "p12": frietkot.p12,
+        "p13": frietkot.p13,
+        "p16": frietkot.p16,
+        "p18": frietkot.p18,
+        "p25": frietkot.p25,
+        "p20": frietkot.p20,
+        "p93": frietkot.p93,
+        "p19": frietkot.p19,
+    }
+    params = ExperimentReRunParams()
+    args = (params, frietkot.pastaPuzzle, 'pastaPuzzle')
+    puzzleToExplain(args)

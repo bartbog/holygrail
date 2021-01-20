@@ -33,10 +33,40 @@ unsatisfiable subset become a proxy to how difficult the generated explanation r
 To answer \textbf{Q1}, we start by generating a sequence of explanations using the \comus from an initial assignment $I_0$.. Then, using this sequence as a starting point, we look for a MUS-based explanation given the partial assignments $I_i$ at step i.
 Figure \ref{fig:rq1} depicts how the quality of the MUS-based explanations compare to the OUS approach for all puzzles. Every dott represents a pair of OUS and MUS costs, where the size of the dott relates to the occurence of that pair in the generated sequences.
 Note that, the distribution of the dotts show the quality of the OUS explanation is either similar, when along the same-cost diagonal or better in the upper part of the graph. The dotts' sizes demonstrates that the optimal approach will find many easy explanations contrary to the MUS. This confirms the need for \comus approach, which repeatedly looks for the next best explanation given an interpretation.
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{r||c|c|c|c|c}
+    % \begin{tabular}{|r||c|c|c|c|c|c|}
+      % \hline
+      \textbf{p} & \textbf{MUS} & \textbf{OUS}  & \textbf{OUS+I} & \textbf{\comus} & \textbf{\comus+I} \\
+      \hline
+      1 &       569 &         4114 &     4727 &           803 &         \textbf{299} \\
+      2 &       438 &         3834 &     3972 &           607 &         \textbf{238} \\
+      3 &       477 &         4220 &     4938 &           932 &         \textbf{607} \\
+      4 &       624 &         3508 &     4820 &           388 &          \textbf{97} \\
+      5 &      3382 &         Timeout &     Timeout &          3556 &        \textbf{1537} \\
+      6 &       568 &         3849 &     3854 &           498 &         \textbf{155} \\
+      7 &       372 &         4411 &     4380 &           685 &         \textbf{414} \\
+      8 &       474 &         4679 &     5552 &           669 &         \textbf{448} \\
+      9 &       766 &         Timeout &     Timeout &          2383 &        \textbf{1135} \\
+      p &       224 &         2601 &     2528 &           651 &         \textbf{537} \\
+      % \hline
+    \end{tabular}
+    \caption{Computation time (s) compared between executions}
+    \label{table:computationTime}
+  \end{table}
 
-\paragraph{Computation Time} The results for 
+To answer \textbf{Q2} and \textbf{Q3}, we depict the total runtime of different configurations in Table \ref{table:computationTime}: p is the puzzle name\footnote{following the naming of the puzzles introduced in \citet{ecai/BogaertsGCG20}}, 
+\emilio{MUS : something ?},
+\emph{OUS} the greedy explanation algorithm from \citet{ecai/BogaertsGCG20} where the MUS call is replaced by an \emph{OUS}.
+We compare the following enhancements options to the basic \emph{OUS} algorithm: incrementality by reusing satisfiable subsets between \omus calls (+I), constrainedness in the search for explanations (C).
 
-\paragraph{Constrainedness}
+
+The results can be seen in Table \ref{table:experiment1} and can be summarized as follows:
+\paragraph{Computation Time} 
+
+
+\paragraph{Constrainedness} Taking advantage of constraintedness  
 
 \paragraph{Domain-specific \grow}
 
@@ -60,27 +90,7 @@ Note that, the distribution of the dotts show the quality of the OUS explanation
 %     \end{tabular}
 % \end{table*}
 
-\begin{table}
-  \centering
-  \begin{tabular}{r||c|c|c|c|c}
-    % \begin{tabular}{|r||c|c|c|c|c|c|}
-      % \hline
-      \textbf{p} & \textbf{MUS} & \textbf{OUS}  & \textbf{OUS+I} & \textbf{cOUS} & \textbf{cOUS+I} \\
-      \hline
-      1 &       569 &         4114 &     4727 &           803 &         \textbf{299} \\
-      2 &       438 &         3834 &     3972 &           607 &         \textbf{238} \\
-      3 &       477 &         4220 &     4938 &           932 &         \textbf{607} \\
-      4 &       624 &         3508 &     4820 &           388 &          \textbf{97} \\
-      5 &      3382 &         Timeout &     Timeout &          3556 &        \textbf{1537} \\
-      6 &       568 &         3849 &     3854 &           498 &         \textbf{155} \\
-      7 &       372 &         4411 &     4380 &           685 &         \textbf{414} \\
-      8 &       474 &         4679 &     5552 &           669 &         \textbf{448} \\
-      9 &       766 &         Timeout &     Timeout &          2383 &        \textbf{1135} \\
-      p &       224 &         2601 &     2528 &           651 &         \textbf{537} \\
-      % \hline
-    \end{tabular}
-    \caption{Computation time (s) compared between executions}
-  \end{table}
+
 
 
 \begin{figure}[]

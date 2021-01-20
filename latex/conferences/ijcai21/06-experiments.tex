@@ -34,7 +34,7 @@ In the experiments, more specifically when generating explanation sequence of pu
 \end{figure}
 
 
-\paragraph{Explanation quality} 
+\paragraph{Explanation quality}\label{paragraph:explanationquality}
 To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on \cref{alg:oneStep}. 
 Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since they --- in order to avoid the quality problems we will illustrate below --- implemented an extra inner loop with \emph{even more} calls to \call{MUS} for a selected set fo subsets of \formulac of increasing size (this is their Algorithm~3). 
 While this yields better explanations, it comes at the expense of computation time, there leading to several hours to generate the explanation of a single puzzle. 
@@ -72,29 +72,29 @@ Next, we compare the following enhancements options to the basic \emph{OUS} algo
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=\columnwidth]{figures/rq4.pdf}
+  \includegraphics[width=\columnwidth]{figures/rq4_b.pdf}
   \caption{Q3 - Cumulative runtime evolution enhancements on incrementality and constraidness}
   \label{fig:incrementality_constraindness}
 \end{figure}
 
-We choose to answers \textbf{Q2} and \textbf{Q3} using the cactus plot of Figure \ref{fig:incrementality_constraindness} with the same logarithmic scale for consistency. Furthermore, both incrementality and constraindness go hand in hand.
-A first analysis of the runtimes has shown that the results of \textbf{Q2} apply as well to all configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
+We choose to answers \textbf{Q3} and \textbf{Q4} using the cactus plot of Figure \ref{fig:incrementality_constraindness} with the same logarithmic scale for consistency. Furthermore, both incrementality and constraindness go hand in hand.
+A first analysis of the runtimes has shown that the results of \textbf{Q2} apply as well to all \mm{\call{O(C)US(+I)}} configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
 
 \paragraph{Incrementality}
 
-The naïve \omus approach requires significantly more time to find an optimal MUS than the MUS algorithm. This observation demonstrates that the problem complexity increases when a optimality criterion kicks in. We observe that reusing information throughout the calls to the OUS solver burdens the \onestep algorithm with extra processing in order to keep track of all generated satisfiable subsets.
-
+The naïve, but optimal approach of OUS requires significantly more time to find an (optimal) unsatisfiable subset than the MUS-based algorithm. This observation demonstrates that the problem complexity increases when a optimality criterion kicks in. We observe that reusing information throughout the calls to the OUS solver burdens the \onestep algorithm with extra processing in order to keep track of all generated satisfiable subsets.
 
 \paragraph{Constrainedness}
 Adding constraindness has two major implications.
 First, by guiding the search towards the next cheapest optimal explanation using algorithm \ref{alg:oneStepOCUS}, we effectively reduce the amount of calls to the \omus solver.
 The constrainedness enhancement as shown in Table \ref{fig:incrementality_constraindness} proves the importance of our approach.
 The explanation generation times for a whole sequence are closer and sometimes even better than the MUS approach even though the problem of finding a OUS is more difficult than finding a MUS.
+Note that, for the same given puzzles, the number of explanations for MUS is lower COMUS, which supports the claim that the usnat subsets are of high cost as presented in \hyperref[paragraph:explanationquality]{explanation quality}.
 
-Second, in practice constrainedness is easily combined with incrementality.
+Second, in practice, constrainedness is easily combined with incrementality.
 The MIP solver is instantiated only once and is reused across the different \onestep calls of algorithm \ref{alg:oneStepOCUS}.
 By keeping the MIP solver warm, we take advantage of its efficiency to handle the many satisfiable subsets which are represented under the form of constraints on the variables of the problem specification.
-Table \ref{table:computationTime} demonstrates that contrary to to \emph{OUS+I}, incrementality in \textbf{\comus+I} significantly decreases the overall computation time.
+Figure \ref{fig:incrementality_constraindness} demonstrates that contrary to to \emph{OUS+I}, incrementality in \textbf{\comus+I} significantly decreases the overall computation time.
 
 % \begin{figure}[ht]
 %   \centering
@@ -102,11 +102,6 @@ Table \ref{table:computationTime} demonstrates that contrary to to \emph{OUS+I},
 %   \caption{Q4 - Grow strategies until timeout or full explanation sequence generation}
 %   \label{fig:rq4}
 % \end{figure}
-
-
-
-
-
 
 
 % \begin{table*}[]

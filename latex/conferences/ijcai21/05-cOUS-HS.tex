@@ -10,14 +10,21 @@ The first two points above lead to the following definition.
 \end{definition}
 
 Rephrased in this terms, the task of the procedure \onestep is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds when $\formulag$ that contain exactly one literal of $\overline{\Iend}$, see Algorithm~\eqref{alg:oneStepOCUS}. 
-In the rest of this paper, we study (incremental) algorithms for computing an OCUS. 
+%In the rest of this paper, we study (incremental) algorithms for computing an OCUS. 
 
 
-In order to compute a $(p,f)$-OUS of a given formula, we propose to build on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
+In order to compute a $(p,f)$-OCUS of a given formula, we propose to build on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
 For this, we will assume to have access to a solver \cohs that can compute hitting sets of a given collection of sets that are \emph{optimal} (w.r.t.\ a given cost function $f$) among all hitting sets \emph{satisfying a condition $p$}. 
-In our practical implementation we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, thus allowing the use of highly optimized mixed integer programming solvers.
 The choice of the underlying hitting set solver will thus determine which types of cost functions and constraints are possible. 
-Our generic algorithm for computing $(p,f)$-OUSs is depicted in \cref{alg:comus}.  
+In our implementation we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, thus allowing the use of highly optimized mixed integer programming solvers. The \cohs formulation is as follows:
+\begin{align*}
+  maximize_X \quad & f(X)\\
+  s.t. \quad & p(X) \\
+       & sum(H) \geq 1, \quad &\forall H \in \setstohit \\
+       & x \in \{0,1\}, \quad &\forall x \in X
+\end{align*}
+where $X$ is a set of MIP decision variables, one for every literal that appears in $f$, $p$ or \setstohit. In our case, $f$ is a weighted sum over the literals and $p$ is expressed as $\sum_{x \in \overline{\Iend\setminus I}} x == 1$.
+
 
 
 \newcommand\onestepo{\ensuremath{\call{explain-One-Step-OCUS}}\xspace}
@@ -30,7 +37,6 @@ Our generic algorithm for computing $(p,f)$-OUSs is depicted in \cref{alg:comus}
   \Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$} 
 \end{algorithm}
 \begin{algorithm}[t]
-\tias{Something very weird here... needs hard constraints??}
   \DontPrintSemicolon
 %  $\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
   \While{true}{
@@ -79,12 +85,15 @@ Our generic algorithm for computing $(p,f)$-OUSs is depicted in \cref{alg:comus}
 %  }
 %\Return{E}\;
 %\end{algorithm}
+Our generic algorithm for computing $(p,f)$-OUSs is depicted in \cref{alg:comus}.  
+Similar to algorithms for maximum satisfiability \cite{davies} and smallest MUS computation \cite{ignatiev2015smallest}, our algorithm builds on the hitting set duality of \cref{prop:MCS-MUS-hittingset}.
 
-Similar to algorithms for maximum satisfiability \cite{davies} and smallest MUS computation \cite{ignatiev2015smallest}, our algorithm builds on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
 Taking abstraction of \cref{line:grow} for a moment, 
-the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\formula'$ of $\formula$. 
-In case the \sat oracle returns true, i.e., the subset $\formula'$ is satisfiable, the complement of $\formula'$ is a correction subset and is added to \setstohit. 
-Instead of directly adding the complement of $\formula'$, similar to \cite{}\tias{which one? I think they all do a grow/shrink...} \bart{To be decided how we phrase this. Emilio told me that in SMUS they do no grow. In that case ``no grow'' could be the baseline.}, our proposed algorithm includes a call to \grow, which extends $\formula'$ into a larger subset of $\formula$ that is still satisfiable (if possible).
+the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $X$ of $\formula$. 
+In case the \sat oracle returns true, i.e., the subset $X$ is satisfiable, the complement of $X$ is a correction subset and is added to \setstohit. In this way, the hitting set size always grow and a hitting set $X$ will always be a subset of $\formula$.
+
+Instead of directly adding the complement of $X$, similar to \cite{ignatiev2015smallest}, our proposed algorithm includes a call to \grow, which extends $X$ into a larger subset of $\formula$ that is still satisfiable (if possible).
+\tias{here base grow impls?}
 We discuss the different possible implementations of \grow later and evaluate their performance in \cref{sec:experiments}. 
 
 Soundness and completeness of the proposal follow from the fact that all sets added to \setstohit are correction subsets, and \cref{prop:K2}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
@@ -106,12 +115,6 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 
 
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver. 
-
-
-
-\paragraph{Generic Implementations of \grow}
-\todo{TO BE WRITTEN DOWN} 
-\bart{PROBABLY, we can just say ``we implement \textbf{no grow} following SMUS''.}
 
 
 % Now, since the search for optimal hitting sets is --- in implicit hitting set algorithms --- usually done with a MIP solver, it suffices to express the predicate $p$ as constraints on the MIP. Since the variables of the MIP encoding represent inclusion of certain constraints in the unsatisfiable subset, this is simple for  the 3 constraints that we need to obtain meaningful explanations. %needed to have meaningful in practice only predicates $p$ that can easily be encoded in MIP are useful. In such cases, we can directly use the MIP solver to implement \cohs as well. 

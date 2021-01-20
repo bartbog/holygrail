@@ -70,7 +70,7 @@ def Experiment6cOUSParams():
     params.postpone_opt_greedy = False
 
     # polarity of sat solver
-    params.polarity = True
+    params.polarity = False
 
 
     # grow strategies
@@ -115,7 +115,7 @@ def Experiment6cOUSnonIncrParams():
     params.postpone_opt_greedy = False
 
     # polarity of sat solver
-    params.polarity = True
+    params.polarity = False
 
 
     # grow strategies
@@ -160,7 +160,7 @@ def Experiment6GreedyNotIncrParams():
     # sat - grow
     params.grow = True
     params.grow_subset_maximal_actual = True
-    params.polarity = True
+    params.polarity = False
 
     # MAXSAT growing
     # timeout
@@ -199,7 +199,7 @@ def Experiment6GreedyParams():
     # sat - grow
     params.grow = True
     params.grow_subset_maximal_actual = True
-    params.polarity = True
+    params.polarity = False
 
     # MAXSAT growing
     # timeout
@@ -312,7 +312,7 @@ def genPBSjobExperiment6cOUS(puzzle_funs, taskspernode):
         todaysJobPath.mkdir()
 
     # generating the jobs
-    for i in range(1, 4):
+    for i in range(4):
         fpath = todaysJobPath / f"{jobName}_{i}.pbs"
         baseScript = f"""#!/usr/bin/env bash
 
@@ -334,7 +334,7 @@ python3 experiment6_cous_subset_actual.py {taskspernode} {i}
             f.write(baseScript)
 
     # script for submission of the jobs
-    allFpaths = [todaysJobPath / f"{jobName}_{i}.pbs" for i in range(1, 4)]
+    allFpaths = [todaysJobPath / f"{jobName}_{i}.pbs" for i in range(4)]
 
     allStrPaths = ['#!/usr/bin/env bash', '']
     allStrPaths += ["qsub "+ str(p).replace('/home/crunchmonster/Documents/VUB/01_SharedProjects/03_hpc_experiments/', '') for p in allFpaths ]

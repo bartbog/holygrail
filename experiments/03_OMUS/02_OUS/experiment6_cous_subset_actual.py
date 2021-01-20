@@ -45,7 +45,6 @@ def Experiment6cOUSParams():
 
     outputFolder = resultsFolder + "experiment6_subset_actual/" + datetime.now().strftime("%Y%m%d%H") + "/"
 
-    
     params = COusParams()
 
     params.disableConstrained = False
@@ -59,31 +58,12 @@ def Experiment6cOUSParams():
     params.postpone_opt_greedy = False
 
     # polarity of sat solver
-    params.polarity = satpol_full
-    params.polarity_initial = satpolinitial
-
-
-    # poarlarity can be used
     params.polarity = True
+
 
     # grow strategies
     params.grow = True
-    params.grow_subset_maximal = g_subsetmax
-    params.grow_maxsat = g_maxsat
-
-    # we know it works!
-    params.maxsat_polarities = True
-
-    # all maxsat configs
-    params.grow_maxsat_full_inv = m_full_pos
-    params.grow_maxsat_full_pos = m_full_inv
-    params.grow_maxsat_full_unif = m_full_unif
-    params.grow_maxsat_initial_pos = m_initial_pos
-    params.grow_maxsat_initial_inv = m_initial_inv
-    params.grow_maxsat_initial_unif = m_initial_unif
-    params.grow_maxsat_actual_pos = m_actual_pos
-    params.grow_maxsat_actual_unif = m_actual_unif
-    params.grow_maxsat_actual_inv = m_actual_inv
+    params.grow_subset_maximal_actual = True
 
     # timeout
     params.timeout = timeout
@@ -95,11 +75,10 @@ def Experiment6cOUSParams():
     params.instance = "unnamed"
     params.checkParams()
 
-    all_exec_params.append(params)
-    return all_exec_params
+    return params
 
 
-def runPuzzle(problemName, taskspernode):
+def runPuzzle(taskspernode):
     puzzle_funs = {
         "origin-problem": frietkot.originProblem,
         "pastaPuzzle": frietkot.pastaPuzzle,
@@ -113,8 +92,7 @@ def runPuzzle(problemName, taskspernode):
         "p19": frietkot.p19,
     }
 
-    puzzleFunc = puzzle_funs[problemName]
-    params = [(p, puzzleFunc, problemName) for p in Experiment6cOUSParams()]
+    params = [(Experiment6cOUSParams(), puzzleFunc, problemName) for problemName, puzzleFunc in puzzle_funs.items()]
     p = multiprocessing.Pool(taskspernode)
     p.map(puzzleToExplain, params)
 
@@ -199,9 +177,8 @@ python3 experiment6_cous_subset_actual.py {taskspernode}
 
 if __name__ == "__main__":
     print(len(Experiment6cOUSParams()))
-    if len(sys.argv) == 3:
-        problemname = sys.argv[1]
-        tasksParallel = int(sys.argv[2])
-        runPuzzle(problemname, tasksParallel)
+    if len(sys.argv) == 2:
+        tasksParallel = int(sys.argv[1])
+        runPuzzle(tasksParallel)
     else:
         jobExperiment6cOUS()

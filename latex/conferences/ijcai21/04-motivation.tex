@@ -1,18 +1,66 @@
-Our work is motivated by the  explanation algorithms of \citet{ecai/BogaertsGCG20}. 
-In that work, the goal was to --- starting from a constraint satisfaction problem and a partial interpretation $I$ --- explain the cautious consequence (the set $\Iend$ of all literals that hold in all models) through a sequence of simple steps. 
-%In our formulation (following \citet{ecai/BogaertsGCG20}), we assume that the formulation is done in propositional logic, but the ideas carry on to richer representation formalisms as well. 
-We will use \formulac to denote the constraint satisfaction problem (a CNF formula in this case). %, to avoid confusion with the formula \formula used in \omus calls.
+Our work is motivated by the problem of explaining satisfaction problems through a sequence of simple explanation steps~\citet{ecai/BogaertsGCG20}. This can be used to teach people problem-solving skills, to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed), and in human-computer solving assistants.
 
-The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by a cost function $f$. 
-An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals entailed by $I'$ and $\formulac'$ that is not yet explained.
-To obtain a sequence of such steps, they iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$.
-\cref{alg:oneStep} shows the gist of the algorithm used to find the best next step in the sequence \cite{ecai/BogaertsGCG20}.
-It takes as input the formula \formulac, a cost function $f$ quantifying quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
-To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequenty selects the best of the found such MUSs.  
-The reason this works is because they showed that there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of $\formulac$ and $I$. 
+\ignore{
+
+\paragraph{Using Constraints to Encode Domain Knowledge}
+
+% {\color{OliveGreen} OLD TEXT TO BE REWRITTEN
+\bart{Not efficient -> Begin paper zeggen. }
+The constraints on OCUSs can not only be used to restrict the set of solutions, but also to improve the solver performance by encoding domain knowledge.
+Indeed, if we know that all ``good'' OCUSs will satisfy certain constraints, or if we know that it suffices to search for OCUSs satisfying certain constraints (because each OCUS can easily be extended to one such OCUS),  we can also encode that knowledge in $p$, thereby restricting the possible options of the hitting set solver, aiming to improve overall performance of the algorithm. 
+
+In the explanation application, we encountered this phenomenon as follows. 
+The clues to be used in explanations were high-level (first-order) constraints. They were translated into clauses, using among other, a Tseitin transformation.
+Hence, in the end the transformation of a single high-level clue consists of several clauses, of which some are definitions of newly introduced variables. 
+Now, the associated cost function was only concerned with the issue ``\emph{was a certain clue used or not?}'', which translates at the lower level to ``\emph{does the OCUS contain at least one clause from the translation of the clue?}''.
+Using such a cost function means that to compute the cost of an OCUS, it does not matter if a single, or if all clauses corresponding to a given clue are used. As such, we might as well include all of them, which can be encoded in $p$ as well.  
+
+An alternative view on the same property is that we can \emph{reify} the high level constraint by considering an indicator variable defining satisfaction of the entire constraint. 
+We can then add the property to $p$ that all reified constraints are \emph{hard constraints}, in the sense that they have to be included in each OCUS (and thus each hitting set). With that, only the truth/falsity of the single indicator variable is considered to be a clause of $\formulac$ that can be enabled/disabled by the hitting set algorithm. 
+% This variable then represent whether or not the high level constraint is active.
+It is easy to see that there is a one to one correspondence between the OCUSs produced by the two approaches. In our implementation, we opted for the latter because of its simplicity. 
+%\tias{is this really to $p$? higher up we argued that we push $p$ into the MIP, but all hard clauses are kept outside of the MIP... I guess saying that har dlcauses are 'always included' is somehow doing that? it also means they are 'constant' in the MIP objective and hence can be removed from it, that is perhaps a more pragmatic view on it...}
+%\emilio{phrases are loooong.}
+}
+
+Assumed given is a constraint satisfaction problem $\formulac$, a partial interpretation $I$ and a set of atoms (variables) $U$ whose literals need explaining; more specifically the cautious consequence of $\formulac \wedge I$ projected onto $U$. %A single explanation step is an inference step $I' \implies N$ where $I' \subseteq I$ and $atoms(I') \subseteq U$.
+\tias{Optional, alg can move to Apdx:} Alg.~\ref{alg:explainCSP2} shows the basic explanation sequence generation algorithm of~\cite{bogaerts2020framework}.
+
 
 
 \newcommand\onestep{\ensuremath{\call{explain-One-Step}}\xspace}
+
+\begin{algorithm}[t]
+    %\Input{${\cal C}$,  \textit{a CNF ${\cal C}$ over a vocabulary $V$} }
+    %\Input{$U$, \textit{a user vocabulary $U \subseteq V$} }
+    %\Input{$f$, \textit{a cost function $f : 2^{lits({U})} \rightarrow  \mathbb{N} $.}}
+    %\Input{$I$, \textit{a partial interpretation over $U$}}
+    %\Output{$E$, \textit{a sequence of explanation steps as implications $I_{expl} \implies N_{expl}$}}
+    % \vspace*{0.01cm}
+    \DontPrintSemicolon
+    \caption{$\call{ExplainCSP}(\formulac, f, I, U)$}
+    \label{alg:explainCSP}
+    %$\sat \gets \initsat({\cal C}$) \;
+        % \tcp{Hyp: f}
+    $I_{end} \gets U \cap \optprop(\formulac \wedge I)$ \;
+    $E \gets \langle \rangle$\;
+    %$U \gets U \cap I_{end}$ \;
+    %$I_{expl} = \{i \in I_{end} | f(i) < inf \wedge f(-i) < inf\}$ \;
+    % \algemilio{bart: What's a better way to get the initial interpr.?}
+    % $I \gets \{l \in I_{end} | f(\lnot l) = inf\}$ \;
+    \While{$(I \cap U) \neq I_{end}$}{
+        %$E \gets \call{bestStep}({\cal C},U, f,\Iend, I)$\;
+        $X \gets \onestep({\cal C},f,I,\Iend)$\;
+        %$I_{\mathit{best}} \gets I \cap X$\;
+        %$\formulac_{\mathit{best}}\gets \formulac\cap X$\;
+        $N \gets  (\Iend \setminus I) \cap \optprop(X \cap I)$\;
+        %add $\{I_{\mathit{best}} \wedge \formulac_{\mathit{best}} \implies N_{\mathit{best}}\}$ to $E$\;
+        add $\{(X \cap I) \implies N\}$ to $E$\;
+        $I \gets I \cup N$\;
+    }
+    \Return{E}\;
+\end{algorithm}
+
 
 \begin{algorithm}[t]
   \caption{$\onestep(\formulac,f,I,\Iend)$}
@@ -27,39 +75,28 @@ $X_{best} \gets \mathit{nil}$\;
 \Return{$X_{best}$} 
 \end{algorithm}
 
-The experiments of \citet{ecai/BogaertsGCG20} show that generating a full explanation sequence can easily take hours, and hence that algorithmic improvements are needed to make it more practical. 
+
+The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by a cost function $f$. 
+An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals entailed by $I'$ and $\formulac'$ that is not yet explained.
+To obtain a sequence of such steps, they iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$.
+When aiming to explain satisfaction problems in terms of the subset of constraints and literals needed to derive a new literal, the initial interpretation $I$ should consist of indicators literals for each (group of) constraint(s) as well as already known true literals.
+
+The key part is finding the best next step. \cref{alg:oneStep} shows the gist of the algorithm used in \cite{ecai/BogaertsGCG20}.
+It takes as input the formula \formulac, a cost function $f$ quantifying quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
+To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequenty selects the best of the found such MUSs.  
+The reason this works is because there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}. 
+
+Experiments have shown that such a MUS-based approach can easily take hours, and hence that algorithmic improvements are needed to make it more practical. 
 We see three main points of improvement, all of which will be tackled by our generic OCUS algorithms presented in the next section. 
 % \tias{in the exps, MUS-based does not, also because we don't do the constraint trick. What to do?} \bart{Maybe the experiment section is a good place to discuss this in detail. That we there clearly state: in Bogaerts et al: the MUS based thing from algorithm \onestep is found not sufficient. To get better MUSs they implement this trick that walks a different balance between ``doing it for too many subsets and exploding there'' and ``getting terrible explanations''. What we show is that with our constrained stuff, you can get the best of both worlds: we get optimal explanatiosn (better than the subset stuff) plus we are as efficient as the no-subset approach). 
 %  But... in the main text I would not go into detail because it would distract from our main message. }
 \begin{inparaenum}
- \item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the final explanation is indeed the best (with respect to the given cost function) possible. 
- Most likely, the reason for choosing \call{MUS} is that currently, \textbf{there are no algorithms for unsatisfiable subset optimization}. 
- \item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all of these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{\Iend})$. This begs the questions whether it is possible \textbf{to compute (optimal) unsatisfiable subsets subject to constraints}, where in our case, the constraint is on the number of literals from $\overline{\Iend}$ to include. 
- \item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many very similar problems. This raises the issue of \textbf{incrementality}: can we re-use data structures to achieve speed-ups in later calls? 
+ \item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the explanation found is indeed the best (with respect to the given cost function) possible. 
+ Most likely, the reason for choosing \call{MUS}es is that currently, \textit{there are no algorithms for unsatisfiable subset \textbf{optimization}}. 
+ \item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all of these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$. This begs the questions whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is on the number of literals from $\overline{(\Iend\setminus I)}$ to include. 
+ \item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many very similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use data structures to achieve speed-ups in later calls}? 
 \end{inparaenum}
 
-The first two points lead to the following definition. 
-
-
-\begin{definition}
-    If $\formulag$ is a formula, $f:2^{\formulag} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formulag}\to \{\ltrue,\lfalse\}$, then we call a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call U an OCUS of G (w.r.t.\ $f$ and $p$)} if \begin{compactitem}                                                                                                                                                                                                                         
-    \item $U$ is unsatisfiable,
-    \item $p(U)$ is true
-    \item all other unsatisfiable $U'\subseteq \formulag$ with $p(U')=\ltrue$ satisfy $f(U')\geq f(U)$.                                                                                                                                                                                                                         \end{compactitem}
-\end{definition}
-
-Rephrased in this terms, the task of the procedure \onestep is to compute a $(p,f)$-OUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ where $p$ is the predicate that holds exactly for those subsets of $\formulag$ that contain exactly one literal of $\overline{\Iend}$, see Algorithm~\eqref{alg:oneStepOCUS}. 
-In the rest of this paper, we study (incremental) algorithms for computing such $(p,f)$-OUSs. 
-
-\newcommand\onestepo{\ensuremath{\call{explain-One-Step-OCUS}}\xspace}
-\begin{algorithm}[t]
-  \DontPrintSemicolon
-  
-  \caption{$\onestepo(\formulac,f,I,\Iend)$}
-  \label{alg:oneStepOCUS}
-  $p \leftarrow$ exactly one of $\overline{\Iend\setminus I}$\;
-  \Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$} 
-\end{algorithm}
 
 
 

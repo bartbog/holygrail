@@ -1,5 +1,5 @@
 # pysat imports
-from greedy_explain import OusParams
+from greedy_explain import OusParams, explainGreedy
 import itertools
 import multiprocessing
 from pathlib import Path
@@ -328,7 +328,7 @@ module load SciPy-bundle/2020.03-intel-2020a-Python-3.8.2
 
 # own code
 cd /data/brussel/101/vsc10143/holygrail/experiments/03_OMUS/02_OUS
-python3 experiment6_cous_subset_actual.py {taskspernode} 
+python3 experiment6_cous_subset_actual.py {taskspernode} {i}
 """
         with fpath.open('w+') as f:
             f.write(baseScript)

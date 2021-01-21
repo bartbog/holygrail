@@ -5,7 +5,7 @@ The first two considerations from the previous section lead to the following def
     $\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if \begin{compactitem}                                      
       \item $\m{S}$ is unsatisfiable,
       \item $p(\m{S})$ is true
-      \item all other unsatisfiable $\m{U}'\subseteq \formula$ with $p(\m{U}')=\ltrue$ satisfy $f(\m{U}')\geq f(\m{S})$.
+      \item all other unsatisfiable $\m{S}'\subseteq \formula$ with $p(\m{S}')=\ltrue$ satisfy $f(\m{S}')\geq f(\m{S})$.
     \end{compactitem}
 \end{definition}
 
@@ -19,14 +19,17 @@ The choice of the underlying hitting set solver will thus determine which types 
 In our implementation we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, thus allowing the use of highly optimized mixed integer programming solvers. The \cohs formulation is as follows:
 {\small
 \begin{align*}
-  maximize_X \quad & f(X)\\
+  maximize_X \quad & f(X) \bart{should be minimize or -f}\\ 
   s.t. \quad & p(X) \\
        & sum(H) \geq 1, \quad &\forall H \in \setstohit \\
        & x \in \{0,1\}, \quad &\forall x \in X
 \end{align*}}
 %\bart{This is not what the reviewers asked for! They asked for MIP models of our ``arbitrary objective functions''. A mip encoding of a generic hitting set problem with only some ``at least one'' constraints is not going to help us, I think. }
 % well, its not arbitrary but linear, and it is a weighted sum; will have to do
-where $X$ is a set of MIP decision variables, one for every literal that appears in $f$, $p$ or \setstohit. In our case, $p$ is expressed as $\sum_{x \in \overline{\Iend\setminus I}} x = 1$ and $f$ is a weighted sum over the literals. For example, literals of known facts can be given small weights and literals that are indicator variables for constraints large weights, such that explanations are penalized for including many constraints when relevant facts are directly available.
+\bart{indeed, it is not arbitrary! But that's exactly the point: if we say ``we only support linear objective functions'', then that reviewers concern ``how will you encode this as MIP?'' is resolved. We simply did not say that in the prior work. In any case, the model also doesn't hurt and breaks text a bit... } 
+where $X$ is a set of MIP decision variables, \bart{was:\sout{one for every literal that appears in $f$, $p$ or \setstohit} if im not mistaken should be:}one for every clause in $\formula$. In our case, $p$ is expressed as $\sum_{x \in \overline{\Iend\setminus I}} x = 1$. \bart{Added:}
+On top of that, the $p$ can be used to make a distinction between hard constraints (those that \emph{must} be included in the OCUS), which can be useful in case constraints are reified using assumption literals, or to \emph{group} constraints that should be enabled/disabled simultaneously. \bart{Previous sentence instead of earlier ``indicator'' sentence?}
+In our application, $f$ is a weighted sum over the variables in $X$. For example, (unit) clauses representing previously derived facts can be given small weights and literals that are indicator variables for constraints large weights, such that explanations are penalized for including many constraints when relevant facts are directly available.
 
 
 
@@ -94,7 +97,7 @@ Taking abstraction of \cref{line:grow} for a moment,
 the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
 In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, the complement of $\m{S}$ is a correction subset and is added to \setstohit. In this way, the hitting set size always grow and a hitting set $\m{S}$ will always be a subset of $\formula$.
 
-Instead of directly adding the complement of $\m{S}$ to \setstohit as done in \cite{ignatiev2015smallest}, our algorithm includes a call to \grow, which extends $\m{S}$ into a larger subset of $\formula$ that is still satisfiable (if possible).
+Instead of directly adding the complement of $\m{S}$ to \setstohit as done by \citet{ignatiev2015smallest}, our algorithm includes a call to \grow, which extends $\m{S}$ into a larger subset of $\formula$ that is still satisfiable (if possible).
 %\tias{here base grow impls?} \bart{Your next sentence is enough for me here. Alternatively we can in one stentence say that we consider a greedy and a maxsat-based implementation? }
 We discuss the different possible implementations of \grow later and evaluate their performance in \cref{sec:experiments}. 
 
@@ -108,14 +111,14 @@ Soundness and completeness of the proposal follow from the fact that all sets ad
 \end{theorem}
 \begin{proof}
 For the first claim, it is clear that $\m{S}$ is unsatisfiable and satisfies $p$. Hence all we need to show is $f$-optimality of $\m{S}$.
-  If some other unsatisfiable subset $\m{U}'$ that satisfies $p$ would exists with $f(\m{U}')\leq f(\m{S})$, we know that $\m{U}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction set is the superset of a minimal correction set).
-  Since $\m{S}$ is $f$-optimal among hitting sets of $\m{H}$ satisfying $p$ and $\m{U}'$ also hits $\m{H}$ and satisfies $p$, it must thus be that $f(\m{S})=f(\m{U}')$. 
+  If some other unsatisfiable subset $\m{S}'$ that satisfies $p$ would exists with $f(\m{S}')\leq f(\m{S})$, we know that $\m{S}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction set is the superset of a minimal correction set).
+  Since $\m{S}$ is $f$-optimal among hitting sets of $\m{H}$ satisfying $p$ and $\m{S}'$ also hits $\m{H}$ and satisfies $p$, it must thus be that $f(\m{S})=f(\m{S}')$. 
 %  
 
 The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the fact that an OCUS is an unsatisfiable subset of $\formula$. 
 \end{proof}
-
-
+% 
+% 
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver. 
 
 

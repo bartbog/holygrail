@@ -8,8 +8,8 @@
 Building on old ideas to explain domain-specific propagations performed by constraint solvers  \cite{sqalli1996inference,freuder2001explanation}, \citet{ecai/BogaertsGCG20} recently introduced a 
 method that takes as input a satisfiable constraint program and explains the solution-finding process in a human-understandable way. 
 Explanations in that work are sequences of simple inference steps, involving as few constraints and facts as possible. 
-In order to generate these sequences, they rely heavily on calls for  \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{MUS} of a derived program, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs.
-The explanation steps are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g. taking the number of constraints and facts into account, as well as a valuation of their complexity (or priority). 
+In order to generate these sequences, they rely heavily on calls for  \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived program, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs.
+The explanation steps in \citet{ecai/BogaertsGCG20} are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g. taking the number of constraints and facts into account, as well as a valuation of their complexity (or priority). 
 
 The algorithm developed in that work has two main weaknesses: first, it provides no guarantees on the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
 Secondly, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate implied fact. %replacing a potential single call for a cost-optimal unsatisfiable subset by multiple calls, 

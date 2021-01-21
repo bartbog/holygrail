@@ -1,4 +1,4 @@
-Our work is motivated by the problem of explaining satisfaction problems through a sequence of simple explanation steps~\cite{ecai/BogaertsGCG20}. This can be used to teach people problem-solving skills, to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed), and in human-computer solving assistants.
+Our work is motivated by the problem of explaining satisfaction problems through a sequence of simple explanation steps. This can be used to teach people problem-solving skills, to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed), and in human-computer solving assistants.
 
 \ignore{
 
@@ -22,9 +22,10 @@ It is easy to see that there is a one to one correspondence between the OCUSs pr
 %\tias{is this really to $p$? higher up we argued that we push $p$ into the MIP, but all hard clauses are kept outside of the MIP... I guess saying that har dlcauses are 'always included' is somehow doing that? it also means they are 'constant' in the MIP objective and hence can be removed from it, that is perhaps a more pragmatic view on it...}
 %\emilio{phrases are loooong.}
 }
-\emilio{ a  bit of a weird transition}
-This algorithm starts from a formula $\formulac$ (in the application coming from a high level CSP), a cost function $f$ quantifying the difficulty of an explanation step, a partial interpretation $I$ and a set $U$ of atoms whose literals need explaining (e.g., not containing auxiliary variables). 
+
+The recent algorithm of ~\citet{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), a partial interpretation $I$ and a cost function $f$ quantifying the difficulty of an explanation step, by means of a weight for every clause and literal in \formula. % and a set $U$ of atoms whose literals need explaining (e.g., not containing auxiliary variables). 
 % \emilio{not sure why we talk about U and not later in the text. U is especially useful with the call to the optimal propagate}
+% U not needed, auxiliaries get zero weight then done...
 
 %; more specifically the cautious consequence of $\formulac \wedge I$ projected onto $U$.
  % Not part of input. It is what the algorithm 
@@ -91,19 +92,20 @@ $X_{best} \gets \mathit{nil}$\;
 \end{algorithm}
 
 
-The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by a cost function $f$. 
-An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals entailed by $I'$ and $\formulac'$ that is not yet explained.
-To obtain a sequence of such steps, they iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$.
-\bart{In retrospect, I propose to move this back to the constrainedness part. Reason: at this point (and also in prior work) we did not have ``hard constraints'' yet. So even if we would allow indicators, you can still turn their definitions on and off, which does not make sense at this point in the text.}
-\emilio{
-    changed to comment : 
-When aiming to explain satisfaction problems in terms of the subset of constraints and literals needed to derive a new literal, the initial interpretation $I$ should consist of indicators literals for each (group of) constraint(s) as well as already known true literals. }
+The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by the total cost of the elements used in the explanation.
+An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals entailed by $I'$ and $\formulac'$ which are not yet explained.
 
+To obtain a sequence of such steps, ~\citet{ecai/BogaertsGCG20} iteratively search for the best (least costly) explanation step and add i ts consequence to the partial interpretation $I$.
+%\bart{In retrospect, I propose to move this back to the constrainedness part. Reason: at this point (and also in prior work) we did not have ``hard constraints'' yet. So even if we would allow indicators, you can still turn their definitions on and off, which does not make sense at this point in the text.}
+%\emilio{
+%    changed to comment : 
+%When aiming to explain satisfaction problems in terms of the subset of constraints and literals needed to derive a new literal, the initial interpretation $I$ should consist of indicators literals for each (group of) constraint(s) as well as already known true literals. }
+%
 The key part of the algorithm is the search for the next best explanation, given an interpretation $I$ derived so far. 
 \cref{alg:oneStep} shows the gist of how this was done.
 It takes as input the formula \formulac, a cost function $f$ quantifying quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
 To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequenty selects the best of the found such MUSs.  
-The reason this works is because there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}. 
+The reason this works is because there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of $\formulac$ and $I$. %~\cite{ecai/BogaertsGCG20}. 
 
 Experiments have shown that such a MUS-based approach can easily take hours, and hence that algorithmic improvements are needed to make it more practical. 
 We see three main points of improvement, all of which will be tackled by our generic OCUS algorithms presented in the next section. 

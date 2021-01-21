@@ -23,7 +23,8 @@ It is easy to see that there is a one to one correspondence between the OCUSs pr
 %\emilio{phrases are loooong.}
 }
 \emilio{ a  bit of a weird transition}
-This algorithm algorithm starts from a formula $\formulac$ (in the application coming from a high level CSP), a cost function $f$ quantifying the difficulty of an explanation step, a partial interpretation $I$ and a set $U$ of atoms whose literals need explaining (e.g., not containing auxiliary variables). \emilio{not sure why we talk about U and not later in the text. U is especially useful with the call to the optimal propagate}
+This algorithm starts from a formula $\formulac$ (in the application coming from a high level CSP), a cost function $f$ quantifying the difficulty of an explanation step, a partial interpretation $I$ and a set $U$ of atoms whose literals need explaining (e.g., not containing auxiliary variables). 
+% \emilio{not sure why we talk about U and not later in the text. U is especially useful with the call to the optimal propagate}
 
 %; more specifically the cautious consequence of $\formulac \wedge I$ projected onto $U$.
  % Not part of input. It is what the algorithm 
@@ -94,7 +95,8 @@ The goal is to find a sequence of \textit{simple} explanation steps, where the s
 An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals entailed by $I'$ and $\formulac'$ that is not yet explained.
 To obtain a sequence of such steps, they iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$.
 \bart{In retrospect, I propose to move this back to the constrainedness part. Reason: at this point (and also in prior work) we did not have ``hard constraints'' yet. So even if we would allow indicators, you can still turn their definitions on and off, which does not make sense at this point in the text.}
-\sout{
+\emilio{
+    changed to comment : 
 When aiming to explain satisfaction problems in terms of the subset of constraints and literals needed to derive a new literal, the initial interpretation $I$ should consist of indicators literals for each (group of) constraint(s) as well as already known true literals. }
 
 The key part of the algorithm is the search for the next best explanation, given an interpretation $I$ derived so far. 
@@ -112,7 +114,7 @@ We see three main points of improvement, all of which will be tackled by our gen
  (with respect to the given cost function). 
  Most likely, the reason for choosing MUSes is that currently, \textit{there are no algorithms for unsatisfiable subset \textbf{optimization}}. 
  \item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all of these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$. This begs the questions whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is on the number of literals from $\overline{(\Iend\setminus I)}$ to include. 
- \item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many very similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use data structures to achieve speed-ups in later calls}? \emilio{can we re-use computed knowledge to achieve speed-ups in later calls?}
+ \item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many very similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}? 
 \end{inparaenum}
 
 

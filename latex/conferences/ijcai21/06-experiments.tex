@@ -37,7 +37,7 @@ Our experiments are designed to answer the following research questions:
 
 \paragraph{Explanation quality}\label{paragraph:explanationquality}
 To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on \cref{alg:oneStep}. 
-Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since they --- in order to avoid the quality problems we will illustrate below --- implemented an extra inner loop with \emph{even more} calls to \call{MUS} for a selected set fo subsets of \formulac of increasing size (this is their Algorithm~3). 
+Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since they --- in order to avoid the quality problems we will illustrate below --- implemented an extra inner loop with \emph{even more} calls to \call{MUS} for a selected set of subsets of \formulac of increasing size (this is their Algorithm~3). 
 While this yields better explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle. 
 We will see in our later experiments is that we can both \emph{outperform}, in terms of computational cost, this simple \call{MUS} based implementation while also guaranteeing cost-optimality, as such achieving a Pareto improvement.
 
@@ -58,16 +58,16 @@ the need for a cost-based \omus/\comus approach.
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=\columnwidth]{figures/loggrowWithSubsetmax.pdf}
+  \includegraphics[width=0.8\columnwidth]{figures/loggrowWithSubsetmax.pdf}
   \caption{Q2 - Explanation specific \grow strategies}
   \label{fig:grow_strategies}
 \end{figure}
 
 Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the cumulative time of different grow strategies to generate the explanation sequence of all puzzles combined. The configurations are the following:  \emph{Full} refer to using the full unsatisfiable formula $\mathcal{F}$ given with every call of \comus while \emph{Actual} refers to using only the constraints that hold in the actual interpretation (Section~\ref{sec:ocusEx}); \emph{Greedy} to growing using a sat-based refinement heuristic; the weighing scheme is either with uniform weights (\emph{unif}), with the original weights (\emph{pos}) or with the inverse of the original costs (\emph{inv}) when using the MaxSAT solver (\emph{Max}).
 
-\bart{Does it not suffice to say that ``As conjectured in \cref{sec:ocusEx} The MaxSAT-\grow on the actual interpretation indeed performs best. When repeating this experiment on other variants of the implementation (e.g., disabling constrainedness) the pattern was observed. '' instead of paragraph that follows. }
-Notice in Figure~\ref{fig:grow_strategies} that only the MaxSAT solver on actual variables and with uniform weights is able to complete the generation of a sequence for all puzzles. Furthermore, giving the MaxSAT constraints on $\mathcal{F}$ drastically increases the execution time and, even within the best weighing scheme (\emph{unif}), it takes less than 10 steps\tias{how do you conclude this? non-obvious...} on average for every puzzle to time out.
-The greedy strategy provides improvement on the cumulative runtime, with only marginal gains when the actual interpretation is used.
+As conjectured in \cref{sec:ocusEx} The MaxSAT-\grow on the actual interpretation indeed performs best. When repeating this experiment on other variants of the implementation (e.g., disabling constrainedness) the pattern was observed.
+% Notice in Figure~\ref{fig:grow_strategies} that only the MaxSAT solver on actual variables and with uniform weights is able to complete the generation of a sequence for all puzzles. Furthermore, giving the MaxSAT constraints on $\mathcal{F}$ drastically increases the execution time and, even within the best weighing scheme (\emph{unif}), it takes less than 10 steps\tias{how do you conclude this? non-obvious...} on average for every puzzle to time out.
+The greedy strategy provides some improvement on the cumulative runtime, with only marginal gains when the actual interpretation is used.
 
 We also observed (see \cref{tab:percentage_exec}) that in each of our configurations, the majority of the time is spent on computing hitting sets. As such, it makes sense to optimize the \grow procedure to provide results that are as good as possible and limit the choices of the hitting set solver as much as possible. 
 Slightly surprising, performing a MaxSAT-\grow with the full interpretation takes \emph{less} time than on the actual interpretation. The gains of using the actual interpretation seems to come most from the fact that it generates better  sets to hit. 

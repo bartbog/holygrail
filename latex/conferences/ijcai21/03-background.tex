@@ -18,7 +18,7 @@ Let \voc be a set of propositional symbols, also called \emph{atoms}; this set i
 %\tias{clause constraint}
 %\tias{Can we keep it at general 'constraint' here? the only requirement is that we can check satisfiability of a set of constraints (SAT(F')) and that we can grow the set to a larger set (Grow(F',F)), so nothing clause-specific. The literal is then an assignment or its negation...} \bart{Yes, we can! But it's always a struggle. WE need to be very precise (Ive had reviewers complain the past because of not being explicit about what a formula is or is not allowed to be etc.) Also: we use MAX-sat calls in our algorithm; some care needed there}.
 A clause is a disjunction of literals. A formula $\formula$ is a conjunction of clauses. 
-Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses.
+Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. We use the term clause and constraint interchangeably.
 % \todo{weight function comes later}
 % A \emph{weight function} $w$ on $\formula$ assigns to each clause in $\formula$ either a positive integer, or $\infty$. 
 A (partial) interpretation is a consistent (not containing both $p$ and $\lnot p$) set of literals. 
@@ -55,8 +55,7 @@ It is well-known that each  MCS of \formula is the complement of an MSS of \form
 % \tias{some well-known citation? or Ignatiev}.  -> COmes a bit lower for SMUS. The proof of this property is two lines. 
 
 \begin{definition}\label{def:minimal-hs}
-    Given a collection of sets $\m{H}$, a hitting set of $\m{H}$ is a set $h$ such that  $h \cap C \neq \emptyset$ for every $C \in \m{H}$. A hitting set is \emph{minimal} if no strict subset of it is also a hitting set. 
-    \emilio{modified K to H for consistency with algorithm}
+    Given a collection of sets $\m{H}$, a hitting set of $\m{H}$ is a set $h$ such that  $h \cap C \neq \emptyset$ for every $C \in \m{H}$. A hitting set is \emph{minimal} if no strict subset of it is also a hitting set.
 \end{definition}
 
 % \noindent In fact, for a collection of sets $\m{K}$ there exist multiple possible minimal hitting sets on $\m{K}$. Consequently, we define the \textbf{minimum} hitting set as:
@@ -71,10 +70,10 @@ The next proposition is the well-known hitting set duality \cite{DBLP:journals/j
 \begin{proposition}\label{prop:MCS-MUS-hittingset}
 %     Given an $ \formula$, let MUSes($\formula$), be the Minimal Unsatisfiable Subsets of F and MCSes($\formula$), be the Minimal Correction Subsets of F:
 %     
-    A set  $\m{S} \subseteq \formula$ is an MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{F}.
+    A set  $\m{S} \subseteq \formula$ is an MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.
 % 
 %     \noindent
-    A set  $\m{S} \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{F}.
+    A set  $\m{S} \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
 \end{proposition}
  
 % The duality of \cref{prop:MCS-MUS-hittingset} lies at the basis of various algorithms to compute MSSs, e.g., by \citet{DBLP:conf/sat/DaviesB13}. 

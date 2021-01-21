@@ -12,14 +12,15 @@ The first two considerations from the previous section lead to the following def
 Rephrased in these terms, the task of the procedure \onestep is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets  that contain exactly one literal of $\overline{\Iend}$, see \cref{alg:oneStepOCUS}. 
 %In the rest of this paper, we study (incremental) algorithms for computing an OCUS. 
 
-
+\emilio{why is the text formatting weird ? Due to the algorithm names ? }
 In order to compute an OCUS of a given formula, we propose to build on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
 For this, we will assume to have access to a solver \cohs that can compute hitting sets of a given collection of sets that are \emph{optimal} (w.r.t.\ a given cost function $f$) among all hitting sets \emph{satisfying a condition $p$}. 
 The choice of the underlying hitting set solver will thus determine which types of cost functions and constraints are possible. 
-In our implementation we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, thus allowing the use of highly optimized mixed integer programming solvers. The \cohs formulation is as follows:
+In our implementation we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, thus allowing the use of highly optimized mixed integer programming (MIP) solvers. The \cohs formulation is as follows:
+\bart{should be minimize or -f}\emilio{adapted}
 {\small
 \begin{align*}
-  maximize_X \quad & f(X) \bart{should be minimize or -f}\\ 
+  minimize_X \quad & f(X) \\ 
   s.t. \quad & p(X) \\
        & sum(H) \geq 1, \quad &\forall H \in \setstohit \\
        & x \in \{0,1\}, \quad &\forall x \in X
@@ -27,8 +28,13 @@ In our implementation we use a cost function $f$ as well as a condition $p$ that
 %\bart{This is not what the reviewers asked for! They asked for MIP models of our ``arbitrary objective functions''. A mip encoding of a generic hitting set problem with only some ``at least one'' constraints is not going to help us, I think. }
 % well, its not arbitrary but linear, and it is a weighted sum; will have to do
 \bart{indeed, it is not arbitrary! But that's exactly the point: if we say ``we only support linear objective functions'', then that reviewers concern ``how will you encode this as MIP?'' is resolved. We simply did not say that in the prior work. In any case, the model also doesn't hurt and breaks text a bit... } 
-where $X$ is a set of MIP decision variables, \bart{was:\sout{one for every literal that appears in $f$, $p$ or \setstohit} if im not mistaken should be:}one for every clause in $\formula$. In our case, $p$ is expressed as $\sum_{x \in \overline{\Iend\setminus I}} x = 1$. \bart{Added:}
-On top of that, the $p$ can be used to make a distinction between hard constraints (those that \emph{must} be included in the OCUS), which can be useful in case constraints are reified using assumption literals, or to \emph{group} constraints that should be enabled/disabled simultaneously. \bart{Previous sentence instead of earlier ``indicator'' sentence?}
+where $X$ is a set of MIP decision variables, \bart{was:\sout{one for every literal that appears in $f$, $p$ or \setstohit} if im not mistaken should be:}one for every clause in $\formula$. In our case, $p$ is expressed as $\sum_{x \in \overline{\Iend\setminus I}} x = 1$. 
+On top of that, the $p$ can be used to make a distinction between hard constraints (those that \emph{must} be included in the OCUS), which can be useful in case constraints are reified using assumption literals, or to \emph{group} constraints that should be enabled/disabled simultaneously. 
+\emilio{not trivial at all!!! If I understand correctly C = Hard + indicator variables where p imposes constraints on not using the Hard, but only the indicator variables}
+\emilio{Added an example:}
+For example, when explaining logic grid puzzles, the cnf-translated hard constraints ($\mathcal{C}_{hard}$) are reified using assumption literals i.e weighted soft constraints ($\mathcal{C}_{soft}$). In that case, $\mathcal{C} = \mathcal{C}_{hard} \ \cup \ \mathcal{C}_{soft}$.
+% When aiming to explain satisfaction problems in terms of the subset of constraints and literals needed to derive a new literal, the initial interpretation $I$ should consist of indicators literals for each (group of) constraint(s) as well as already known true literals. }
+\bart{Previous sentence instead of earlier ``indicator'' sentence?}
 In our application, $f$ is a weighted sum over the variables in $X$. For example, (unit) clauses representing previously derived facts can be given small weights and literals that are indicator variables for constraints large weights, such that explanations are penalized for including many constraints when relevant facts are directly available.
 
 

@@ -64,8 +64,28 @@ the need for a cost-based \omus/\comus approach.
 
 Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the cumulative time of different grow strategies to generate the explanation sequence of all puzzles combined. The configurations are the following:  \emph{Full} refer to using the full unsatisfiable formula $\mathcal{F}$ given with every call of \comus while \emph{Actual} refers to the actual interpretation (Section~\ref{sec:ocusEx}); \emph{Greedy} to growing using a sat-based refinement heuristic; the weighing scheme is either with uniform weights (\emph{unif}), with the original weights (\emph{pos}) or with the inverse of the original costs (\emph{inv}) when using the MaxSAT solver (\emph{Max}).
 
-\paragraph{Computation Time} Notice in Figure~\ref{fig:grow_strategies} that only the MaxSAT solver on actual variables and with uniform weights is able to complete the generation of a sequence for all puzzles. Furthermore, giving the MaxSAT constraints on $\mathcal{F}$ drastically increases the execution time and, even within the best weighing scheme (\emph{unif}), it takes less than 10 steps\tias{how do you conclude this? non-obvious...} on average for every puzzle to time out.
+Notice in Figure~\ref{fig:grow_strategies} that only the MaxSAT solver on actual variables and with uniform weights is able to complete the generation of a sequence for all puzzles. Furthermore, giving the MaxSAT constraints on $\mathcal{F}$ drastically increases the execution time and, even within the best weighing scheme (\emph{unif}), it takes less than 10 steps\tias{how do you conclude this? non-obvious...} on average for every puzzle to time out.
 The greedy strategy provides improvement on the cumulative runtime, with only marginal gains when the actual interpretation is used.
+
+
+\tias{TODO: explain table or cut}
+\begin{table}[htbp]
+  \centering
+  \resizebox{0.82\textwidth}{!}{\begin{minipage}{\textwidth}
+    \begin{tabular}{|r|c|c|c|c|c|}
+      \hline
+      config &    $\#$HS &   $\%$HS &  $\%$SAT &  $\%$Grow &  OCUS [s] \\
+      \hline
+      Greedy-SAT-Actual &   8679 &  89.0 &   0.0 &    9.0 &      66782 \\
+      Greedy-SAT-Full &   8787 &  88.0 &   0.0 &    10.0 &      66297 \\
+      Max-Actual-Unif &   6831 &  81.0 &   0.0 &   19.0 &       5449 \\
+      Max-Full-Unif &  17280 &  85.0 &   0.0 &   15.0 &      72000 \\
+      \hline
+    \end{tabular}
+  \end{minipage}}
+  \caption{Time spent in core parts of \comus algorithm}
+  \label{tab:percentage_exec}
+\end{table}
 
 \begin{figure}[ht]
   \centering
@@ -74,7 +94,7 @@ The greedy strategy provides improvement on the cumulative runtime, with only ma
   \label{fig:incrementality_constraindness}
 \end{figure}
 
-
+\paragraph{Constrainedness and re-use}
 Next, we answer \textbf{Q3} and \textbf{Q4} by compare the effect of constrainedness in the search for explanations (C), and incrementality by reusing satisfiable subsets between \omus calls (+I).
 
 Figure \ref{fig:incrementality_constraindness} shows the results of the different variants, including a MUS-based algorithm.
@@ -96,24 +116,6 @@ The MIP solver is instantiated only once and is reused across the different \one
 By keeping the MIP solver warm, we take advantage of its efficiency to handle the many satisfiable subsets which are represented under the form of constraints on the variables of the problem specification.
 Figure \ref{fig:incrementality_constraindness} demonstrates that contrary to to \emph{OUS+I}, incrementality in \textbf{\comus+I} significantly decreases the overall computation time.
 
-\tias{TODO: explain table or cut}
-\begin{table}[htbp]
-  \centering
-  \resizebox{0.82\textwidth}{!}{\begin{minipage}{\textwidth}
-    \begin{tabular}{|r|c|c|c|c|c|}
-      \hline
-      config &    $\#$HS &   $\%$HS &  $\%$SAT &  $\%$Grow &  OCUS [s] \\
-      \hline
-      Greedy-SAT-Actual &   8679 &  89.0 &   0.0 &    9.0 &      66782 \\
-      Greedy-SAT-Full &   8787 &  88.0 &   0.0 &    10.0 &      66297 \\
-      Max-Actual-Unif &   6831 &  81.0 &   0.0 &   19.0 &       5449 \\
-      Max-Full-Unif &  17280 &  85.0 &   0.0 &   15.0 &      72000 \\
-      \hline
-    \end{tabular}
-  \end{minipage}}
-  \caption{Time spent in core parts of \comus algorithm}
-  \label{tab:percentage_exec}
-\end{table}
 
 % \resizebox{3cm}{!}{
 %   \begin{minipage}

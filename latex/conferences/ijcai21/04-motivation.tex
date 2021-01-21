@@ -27,6 +27,7 @@ This algorithm starts from a formula $\formulac$ (in the application coming from
 %; more specifically the cautious consequence of $\formulac \wedge I$ projected onto $U$.
  % Not part of input. It is what the algorithm 
 %A single explanation step is an inference step $I' \implies N$ where $I' \subseteq I$ and $atoms(I') \subseteq U$.
+\ignore{
 \tias{Optional, alg can move to Apdx:} \cref{alg:explainCSPReal} shows the basic explanation sequence generation algorithm of~\cite{ecai/BogaertsGCG20}. 
 \bart{If it stays, it needs a lot more explaining. For instance the magic going on in lines such as 
 \[       N \gets  (\Iend \setminus I) \cap \optprop(X \cap I).\] 
@@ -38,8 +39,6 @@ So, if it stays, needs to be cleaned-up and made consistent throughtout hte pape
 
 
 
-
-\newcommand\onestep{\ensuremath{\call{explain-One-Step}}\xspace}
 
 \begin{algorithm}[t]
     %\Input{${\cal C}$,  \textit{a CNF ${\cal C}$ over a vocabulary $V$} }
@@ -71,7 +70,10 @@ So, if it stays, needs to be cleaned-up and made consistent throughtout hte pape
     }
     \Return{E}\;
 \end{algorithm}
+}
 
+
+\newcommand\onestep{\ensuremath{\call{explain-One-Step}}\xspace}
 
 \begin{algorithm}[t]
   \caption{$\onestep(\formulac,f,I,\Iend)$}
@@ -93,12 +95,12 @@ To obtain a sequence of such steps, they iteratively search for the best (least 
 When aiming to explain satisfaction problems in terms of the subset of constraints and literals needed to derive a new literal, the initial interpretation $I$ should consist of indicators literals for each (group of) constraint(s) as well as already known true literals. \bart{quite brief. I might expand but I first continue.}
 
 The key part of the algorithm is the search for the next best explanation, given an interpretation $I$ derived so far. 
-\cref{alg:oneStep} shows the gist of this was done.
+\cref{alg:oneStep} shows the gist of how this was done.
 It takes as input the formula \formulac, a cost function $f$ quantifying quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
 To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequenty selects the best of the found such MUSs.  
 The reason this works is because there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}. 
 
-Experiments have shown that such a MUS-based approach can easily take hours, even on simple puzzles, and hence that algorithmic improvements are needed to make it more practical. 
+Experiments have shown that such a MUS-based approach can easily take hours, and hence that algorithmic improvements are needed to make it more practical. 
 We see three main points of improvement, all of which will be tackled by our generic OCUS algorithms presented in the next section. 
 % \tias{in the exps, MUS-based does not, also because we don't do the constraint trick. What to do?} \bart{Maybe the experiment section is a good place to discuss this in detail. That we there clearly state: in Bogaerts et al: the MUS based thing from algorithm \onestep is found not sufficient. To get better MUSs they implement this trick that walks a different balance between ``doing it for too many subsets and exploding there'' and ``getting terrible explanations''. What we show is that with our constrained stuff, you can get the best of both worlds: we get optimal explanatiosn (better than the subset stuff) plus we are as efficient as the no-subset approach). 
 %  But... in the main text I would not go into detail because it would distract from our main message. }

@@ -1,22 +1,22 @@
 % !TeX root = ./main.tex
 
-We now experimentally validate the the performance of the different versions of our algorithms.
-Our benchmarks were ran on the VUB Hydra cluster. Each solver call was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor, a timelimit of 120 minutes and a memory-limit of 4GB.
+We now experimentally validate the performance of the different versions of our algorithm.
+Our benchmarks were ran on a compute cluster, where each explanation sequence generation was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor, a timelimit of 120 minutes and a memory-limit of 4GB.
  All code was implemented in Python on top of %CPpy~\footnote{} and
-PySAT.\footnote{\url{https://pysathq.github.io}} The MIP solver used is Gurobi 9.0 and when a (Max)SAT solver is used it is RC2 as bundled with PySAT. Within PySAT, the deletion-based MUS extractor MUSX is used as a baseline for comparison.
+PySAT.\footnote{\url{https://pysathq.github.io}} The MIP solver used is Gurobi 9.0 and when a (Max)SAT solver is used it is RC2 as bundled with PySAT. In the MUS-based approach we used the deletion-based MUS extractor MUSX.
 
+All of our experiments were ran on a direct translation to PySAT of the 10 puzzles of \citet{ecai/BogaertsGCG20}.\footnote{In one of the puzzles, an error in the automatic translation of the natural language constraints was found and fixed.} %Because of this error, it was missing in the experimental results of the previous work.} 
+In all puzzles, we used a cost of 60 for puzzle-agnostic constraints; 100 for puzzle-specific constraints; and cost 1 for facts.
+When generating an explanation sequence for such puzzles, the clauses of the unsatisfiable subset represent using 1 or more constraints combined with previously known or derived facts.
 
-All of our experiments were ran on a direct translation to CPPY of the 10 puzzles of \citet{ecai/BogaertsGCG20}.\footnote{In one of the puzzles, an error in the automatic translation of the natural language constraints was found and fixed. Because of this error, it was missing in the experimental results of the previous work.} 
-In all puzzles, we used a cost of 60--100 for using constraints (60 for builtins; 100 for clues) and 1 for previously derived facts.
-
-Our experiments were designed to answer the following research questions: 
+Our experiments are designed to answer the following research questions: 
 \begin{compactdesc}
  \item[Q1] What is the effect of requiring optimality of the generated MUSs on the \textbf{quality} of the generated explanations?
  \item[Q2] Which \textbf{domain-specific \grow methods} perform best?
  \item[Q3] What is the effect of the use of \textbf{contrainedness} on the time required to compute an explanation sequence?
  \item[Q4] Does \textbf{re-use} of computed satisfiable subsets improve efficiency?
 \end{compactdesc}
-In the experiments, more specifically when generating explanation sequence of puzzles, the clauses of the unsatisfiable subset represent using 1 or more constraints combined the known information of the actual interpretation. 
+
 % \bart{too much detail... -> Requries explaingin what ``transtiivity'' etc mean in this setting) }\emilio{ok modified}
 
 % \begin{figure}[ht]
@@ -28,7 +28,7 @@ In the experiments, more specifically when generating explanation sequence of pu
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=0.7\columnwidth]{figures/rq1_heatmap.pdf}
+  \includegraphics[width=0.5\columnwidth]{figures/rq1_heatmap.pdf}
   \caption{Q4 - Grow strategies until timeout or full explanation sequence generation}
   \label{fig:rq1_heatmap}
 \end{figure}
@@ -37,10 +37,10 @@ In the experiments, more specifically when generating explanation sequence of pu
 \paragraph{Explanation quality}\label{paragraph:explanationquality}
 To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on \cref{alg:oneStep}. 
 Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since they --- in order to avoid the quality problems we will illustrate below --- implemented an extra inner loop with \emph{even more} calls to \call{MUS} for a selected set fo subsets of \formulac of increasing size (this is their Algorithm~3). 
-While this yields better explanations, it comes at the expense of computation time, there leading to several hours to generate the explanation of a single puzzle. 
-We will see in our later experiments is that we can \emph{outperform}, in terms of computational cost, a this simple \call{MUS} based implementation while still guaranteeing optimality. \bart{make pareto improvement explict?}
+While this yields better explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle. 
+We will see in our later experiments is that we can both \emph{outperform}, in terms of computational cost, this simple \call{MUS} based implementation while also guaranteeing cost-optimality. \bart{make pareto improvement explict?}
 
-To answer \textbf{Q1}, we ran this \call{MUS}-based as described in \cref{alg:oneStep} and compared at every step the cost of the produced explanation with the cost of the optimal explanation. 
+To answer \textbf{Q1}, we ran the \call{MUS}-based algorithm as described in \cref{alg:oneStep} and compared at every step the cost of the produced explanation with the cost of the optimal explanation. 
 % 
 % Similar to \citet{ecai/BogaertsGCG20}, a weight assigned to each type of constraint used. The weighted sum of the constraints present in the 
 % (\textit{minimum} / \textit{optimal}) 
@@ -50,8 +50,8 @@ To answer \textbf{Q1}, we ran this \call{MUS}-based as described in \cref{alg:on
 % To answer \textbf{Q1}, we start by generating a sequence of explanations using the \comus from an initial assignment $I_0$.. Then, using this sequence as a starting point, we look for a MUS-based explanation given the partial assignments $I_i$ at step i.
 These costs are plotted on a heatmap in Figure \ref{fig:rq1_heatmap}, where the darkness represents the number of occurrences of the combination at hand. 
 % Note that, the distribution of the dotts show the quality of the OUS explanation is either similar, when along the same-cost diagonal or better in the upper part of the graph. The dotts' sizes demonstrates 
-We see that the difference in quality is striking in many cases, with the MUS-based solution often missing extremely simple explanations (as seen by the large dark vertical column around cost 60), thereby confirming  
-the need for \omus/\comus approach.
+We see that the difference in quality is striking in many cases, with the MUS-based solution often missing very cheap explanations (as seen by the large dark vertical column around cost 60), thereby confirming  
+the need for a cost-based \omus/\comus approach.
 
 \paragraph{Domain-specific \grow} The core computation complexity for generating explanations not only lies in the calls to the optimal hitting set solver, but more importantly in computing \emph{high quality} satisfiable subsets. This requires a trade-off between efficiency of the grow strategy and quality of the produced satisfiable subset.
 
@@ -62,13 +62,10 @@ the need for \omus/\comus approach.
   \label{fig:grow_strategies}
 \end{figure}
 
-Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the cumulative time of different grow strategies to generate the explanation sequence of all puzzles combined. The configurations are the following:  \emph{Full} refer to using the full unsatisfiable formula $\mathcal{F}$ given with every call of \comus while \emph{Actual} refers to the actual interpretation; \emph{Greedy} to growing using a sat-based heuristic; the weighing scheme is either with uniform weights (\emph{unif}), with the original weights (\emph{pos}) or with the inverse of the original costs (\emph{inv}) when using the MaxSAT solver (\emph{Max}).
+Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the cumulative time of different grow strategies to generate the explanation sequence of all puzzles combined. The configurations are the following:  \emph{Full} refer to using the full unsatisfiable formula $\mathcal{F}$ given with every call of \comus while \emph{Actual} refers to the actual interpretation (Section~\ref{sec:ocusEx}); \emph{Greedy} to growing using a sat-based refinement heuristic; the weighing scheme is either with uniform weights (\emph{unif}), with the original weights (\emph{pos}) or with the inverse of the original costs (\emph{inv}) when using the MaxSAT solver (\emph{Max}).
 
-\paragraph{Computation Time} Notice that only the MaxSAT solver with uniform weights is able to complete the generation of a sequence for all puzzles. Furthermore, giving the MaxSAT constraints on $\mathcal{F}$ drastically increases the execution time and, even within the best weighing scheme (\emph{unif}), it takes less than 10 steps on average for every puzzle to time out.
+\paragraph{Computation Time} Notice in Figure~\ref{fig:grow_strategies} that only the MaxSAT solver on actual variables and with uniform weights is able to complete the generation of a sequence for all puzzles. Furthermore, giving the MaxSAT constraints on $\mathcal{F}$ drastically increases the execution time and, even within the best weighing scheme (\emph{unif}), it takes less than 10 steps\tias{how do you conclude this? non-obvious...} on average for every puzzle to time out.
 The greedy strategy provides improvement on the cumulative runtime, with only marginal gains when the actual interpretation is used.
-
-
-Next, we compare the following enhancements options to the basic \emph{OUS} algorithm: incrementality by reusing satisfiable subsets between \omus calls (+I), constrainedness in the search for explanations (C).
 
 \begin{figure}[ht]
   \centering
@@ -77,19 +74,22 @@ Next, we compare the following enhancements options to the basic \emph{OUS} algo
   \label{fig:incrementality_constraindness}
 \end{figure}
 
-We choose to answers \textbf{Q3} and \textbf{Q4} using the cactus plot of Figure \ref{fig:incrementality_constraindness} with the same logarithmic scale for consistency. Furthermore, both incrementality and constraindness go hand in hand.
-A first analysis of the runtimes has shown that the results of \textbf{Q2} apply as well to all \mm{\call{O(C)US(+I)}} configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
+
+Next, we answer \textbf{Q3} and \textbf{Q4} by compare the effect of constrainedness in the search for explanations (C), and incrementality by reusing satisfiable subsets between \omus calls (+I).
+
+Figure \ref{fig:incrementality_constraindness} shows the results of the different variants, including a MUS-based algorithm.
+%We choose to answers \textbf{Q3} and \textbf{Q4} using the cactus plot of Figure \ref{fig:incrementality_constraindness} with the same logarithmic scale for consistency. Furthermore, both incrementality and constraindness go hand in hand.
+All OUS variants use Max-Actual-Unif as grow strategy, after we experimentally verified that this result of \textbf{Q2} also applied to the other OUS variants. %apply as well to all \mm{\call{O(C)US(+I)}} configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
 
 \paragraph{Incrementality}
-
-The naïve, but optimal approach of OUS requires significantly more time to find an (optimal) unsatisfiable subset than the MUS-based algorithm. This observation demonstrates that the problem complexity increases when a optimality criterion kicks in. We observe that reusing information throughout the calls to the OUS solver burdens the \onestep algorithm with extra processing in order to keep track of all generated satisfiable subsets.
+The naïve, but optimal approach of pure 'OUS' requires notably more time than the non-optimal MUS-based algorithm. This observation demonstrates that the problem complexity increases when using an optimality criterion. We observe with 'OUS+I' that reusing information throughout the calls to the OUS solver burdens the \onestep algorithm with extra processing in order to keep track of all generated satisfiable subsets.
 
 \paragraph{Constrainedness}
-Adding constraindness has two major implications.
+Adding constraindness (OCUS and OCUS+I) has two major implications.
 First, by guiding the search towards the next cheapest optimal explanation using algorithm \ref{alg:oneStepOCUS}, we effectively reduce the amount of calls to the \omus solver.
-The constrainedness enhancement as shown in Table \ref{fig:incrementality_constraindness} proves the importance of our approach.
+The constrainedness enhancement as shown in Figure \ref{fig:incrementality_constraindness} proves the importance of our approach.
 The explanation generation times for a whole sequence are closer and sometimes even better than the MUS approach even though the problem of finding a OUS is more difficult than finding a MUS.
-Note that, for the same given puzzles, the number of explanations for MUS is lower COMUS, which supports the claim that the usnat subsets are of high cost as presented in \hyperref[paragraph:explanationquality]{explanation quality}.
+Note that, for the same given puzzles, the number of explanations for MUS is lower COMUS, which supports the claim that the unsat subsets are of high cost as presented in \hyperref[paragraph:explanationquality]{explanation quality}.
 
 Second, in practice, constrainedness is easily combined with incrementality.
 The MIP solver is instantiated only once and is reused across the different \onestep calls of algorithm \ref{alg:oneStepOCUS}.

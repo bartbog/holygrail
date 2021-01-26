@@ -1,0 +1,181 @@
+\documentclass{article}
+%\usepackage{fullpage}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=10mm,
+ top=10mm,
+ }
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{float}
+\usepackage{amsthm}
+\usepackage{xspace}
+\usepackage{thmtools} 
+\usepackage[parfill]{parskip}
+\usepackage[normalem]{ulem}
+
+\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+\newcommand\m[1]{\mathcal{#1}}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{lem}{Lemma}
+\newtheorem{lemma}[lem]{Lemma}
+\newtheorem{propo}{Proposition}
+\newtheorem{proposition}[propo]{Proposition}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+
+\bibliographystyle{apalike}
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}#1}}}
+\newcommand{\bart}[1]{{\comment{\color{green}#1}}}
+\newcommand{\todo}[1]{{\comment{\color{blue}#1}}}
+
+\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\F{\ensuremath{\m{F} }\xspace}
+% \newcommand\ohs{\ensuremath{\m{OHS} }\xspace}
+\newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+\newcommand\Iend{\ensuremath{I_\mathit{end} }\xspace}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulac{\ensuremath{\m{C} }\xspace}
+\newcommand\formulag{\ensuremath{\m{G} }\xspace}
+\newcommand\mm[1]{\ensuremath{#1}\xspace}
+\newcommand\nat{\mm{\mathbb{N}}}
+\newcommand\ltrue{\mm{\textbf{t}}}
+\newcommand\lfalse{\mm{\textbf{f}}}
+\newcommand\uservars{\ensuremath{\m{U} }\xspace}
+
+\newcommand\call[1]{\mm{\textsc{#1}}}
+\newcommand\geths{\mm{\call{GetHittingSet}}}
+\newcommand\ohs{\mm{\call{OptHittingSet}}}
+\newcommand\ghs{\mm{\call{GreedyHittingSet}}}
+\newcommand\ihs{\mm{\call{IncrementalHittingSet}}}
+\newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+\newcommand\chs{\mm{\call{CondHittingSet}}}
+\newcommand\sat{\texttt{{SAT}}}
+\newcommand\grow{\mm{\call{Grow}}}
+\newcommand\omus{\mm{\call{OUS}}}
+\newcommand\comus{\mm{\call{c-OUS}}}
+\newcommand\omusinc{\mm{\call{OUS-Inc}}}
+\newcommand\store{\mm{\call{Store}}}
+\newcommand\optprop{\mm{\call{OptimalPropagate}}}
+\newcommand\initsat{\mm{\call{InitSat}}}
+\newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+\newcommand\satsets{\mm{\mathbf{SSs}}}
+\newcommand\fall{\mm{\formula_{\mathit{all}}}}
+\newcommand\algemilio[1]{\emilio{#1}\;}
+\begin{document}
+
+\SetKwInOut{Input}{Input}
+\SetKwInOut{OptInput}{Optional}
+\SetKwInOut{Output}{Output}
+\SetKwInOut{State}{State}
+\SetKwInOut{Ext.}{Ext}
+\SetKwComment{command}{/*}{*/}
+
+\section{Prioirity TaskList}
+\subsection{short-term goals + High priority}
+\begin{itemize}
+  \item \todo{Re-read OCUS paper review-style}
+  \item \todo{Document what has been done + what not + choices}
+  \item \todo{Re-read SMUS paper and see whath we missed and what choices we made in the OCUS (pocus-pas) paper.} 
+  \item \todo{Re-read postponing optimisation paper and see whath we missed and what choices we made in the OCUS (pocus-pas) paper.}
+  \item \todo{Keeping track of the subsets in the same way as we do for OCUS incr}
+  \item \todo{Ability to zoom-in on explanations generated i.e \textit{using nested explanations ?}}
+  \item \todo{Generate the explanation sequence with OCUS with the same cost function as in ECAI}
+\end{itemize}
+\subsection{Long-term goals (low priority)}
+\begin{itemize}
+  \item \todo{Trasnlate the weighted cosntriants from OUS into an SMUS cnf specification}
+  \item \todo{setup experiment for quantifying difference in computation of this approach}
+  \item \todo{Look for a better cost-function defined on the constraints.}
+  \item \todo{Look for meta-constraints added to the specification}
+  \item \todo{Define how the nested explanations are constructed: which constriants are activable in the nested explanation reasoning and which can't or are prohibited.}
+  \item \todo{Present the user with alternative explanations (of the same cost or similar costs)}
+\end{itemize}
+
+
+\section{IJCAI}
+\subsection{SMUS}
+From early experiments we see that SMUS outperforms OUS on CNF instances when they both solve the same problem, i.e. OUS with unit weights on cosntraints.
+
+\begin{enumerate}
+  \item OUS als SMUS
+  \begin{description}
+    \item[Experiments] \todo{Test on a large scale how both systems perform on CNF isntances}
+    \item[Theory] \todo{Re-read SMUS paper and see whath we missed and what choices we made in the OCUS (pocus-pas) paper.} 
+    % \item \todo{}
+  \end{description}
+  \item SMUS als OUS
+  \begin{description}
+    \item[Implementation] \todo{Trasnlate the weighted cosntriants from OUS into an SMUS cnf specification}
+    \begin{itemize}
+      \item Ex: Constriants weighted 10, is implemneted as 10 literals wich together have to be satisfied in order to use the constraint.
+    \end{itemize}
+    \item[Experiment] \todo{setup experiment for quantifying difference in computation of this approach}
+    % \item \todo{}
+  \end{description}
+\end{enumerate}
+
+\subsection{Postponing optimisation}
+Experiments from $\m{OCUS}$ show that postponing optimisation doesn't improve the computation time for building the whole explanation sequencE.
+\begin{description}
+  \item[Theory] \todo{Re-read postponing optimisation paper and see whath we missed and what choices we made in the OCUS (pocus-pas) paper.}
+  \item[Implementation] \todo{Keeping track of the subsets in the same way as we do for OCUS incr}
+\end{description}
+
+\subsection{SUDOKU}\label{sudoku}
+Sudoku encoding in python notebook in "experiments/03\_OMUS/02\_OUS/explain\_sudoku.ipynb". 
+\begin{description}
+  \item[Efficiency] Explanation generation is slow!
+  \item[Explanation Quality] The cost function defined for explaining generates explanations that can be better. For example, for a given square, the explanation algo, needs to derive a lot of negative literals (i.e. 8) which is cheaper than deriving the positive knowing together with the constraints of the 8 negatives.
+  \begin{description}
+    \item[Theory] \todo{Look for meta-constraints added to the specification}
+    \item[Theory] \todo{Look for a better cost-function defined on the constraints.}
+    \item[Future work] \todo{Defining a way to learn cost function strucutures based on the feedback of users?}
+    % \item \todo{Idea for a Application paper with explaining sudoku}
+    \item[Implementation] \todo{Ability to zoom-in on explanations generated i.e \textit{using nested explanations ?}}
+  \end{description}
+  % \item \todo{}
+\end{description}
+
+\subsection{Visualisation}
+Code for generating the visualisation in python is ready. 
+\begin{description}
+  \item[Implementation] \todo{Generate the explanation sequence with OCUS with the same cost function as in ECAI}
+\end{description}
+
+\subsection{Explanations}
+Ideas for improving the current OCUS explanations.
+\subsubsection{Nested explanations}
+When deriving a fact, try to generate explanation with counterfactual reasoning.
+\begin{description}
+  \item[Implementation] \todo{Generate nested explanations with OCUS}
+  \item[Theory] \todo{Define how the nested explanations are constructed. Which constriants are activable in the nested explanation reasoning and which can't or are prohibited.}
+  \begin{itemize}
+    \item Example: For a given square in the grid. Certain explanations in the puzzles are using 2 bijectives in order to be able to use the information for a third bijectivity. THe problem is that the third bijectivity could have been used in the first place, but \textbf{wasn't} because the explanation algorithm prohibited from using these cosntraints.
+  \end{itemize}
+\end{description}
+
+\subsubsection{Alternative explanations - User experiments}
+See future work of \ref{sudoku}. 
+\begin{description}
+  \item[Theory] \todo{Present the user with alternative explanations (of the same cost or similar costs)}
+\end{description}
+
+
+\section{FWO}
+Content to be discussed at the kick-off meeting.
+
+
+\end{document}

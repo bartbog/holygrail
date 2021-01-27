@@ -20,9 +20,6 @@ The ```explain.py``` file contains 2 examples of generating the explanations of 
 - ```test_frietkot```  contains test cases for explaining the frietkot problem, defined by [frietkot-problem](http://homepages.vub.ac.be/~tiasguns/frietkot/). The frietkot problem is defined as the set of possible french fries sauce choices for every person. However, 1 sauce can only be attributed to 1 specific person. The purpose to find a satisfying assignment.
 - ```explain_origin``` contains a test case for explaining how to solve the origin puzzle defined in [originPuzle](https://bartbog.github.io/zebra/origin/)
 
-## Experiments
-
-All results are available inside the ```results``` folder.
 
 ## Implementation details
 

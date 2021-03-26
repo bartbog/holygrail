@@ -1,0 +1,118 @@
+% IJCAI-21 Author's response
+
+% Template file with author's reponse
+
+\documentclass{article}
+\pdfpagewidth=8.5in
+\pdfpageheight=11in
+\usepackage{ijcai21-authors-response}
+
+
+\usepackage{times}
+\usepackage{soul}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[small]{caption}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{listings}
+\usepackage{algorithmic}
+\urlstyle{same}
+\usepackage{xcolor}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{example}{Example}
+
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\todo}[1]{{\comment{{\color{blue} #1}}}}
+\begin{document}
+We thank the reviewers for their time, insightful comments and ideas on related and future work. We will incorporate the suggestions made.
+
+\paragraph{R5+R90: computational complexity}
+
+Considering the problem of checking if a set C of clauses has a Smallest MUS of weight k is $\sum_{P}^{2}$-hard. [Learning Abstractions for Model Checking, Anubhav Gupta]
+
+\begin{theorem}
+	\textbf{[OUS to SMUS]}
+	Let clause $c_i$ of CNF $\mathcal{F}$ with weight $w_i \in \mathbb{N}$, we introduce auxiliary variables $y_i$  $\in \{1..n-1\}$. The weighted clause $c_i$ is reduced to an unweighted clause $u_i$ using $((y_1 \wedge .. \wedge y_n) \leftrightarrow c_i )$. This can be done polynomial-time.
+\end{theorem}
+\begin{example}
+	Let $c_1 = \{ \lnot Q\}$ with $w_1$ = 3, \[u_1 \leftrightarrow ((y_1 \wedge y_2) \leftrightarrow (\lnot Q))\]  is equivalent to unit-weighted clauses \[(Q \vee y2) \wedge (Q \vee y1) \wedge (\lnot y2 \vee \lnot y1 \vee \lnot Q) \]
+\end{example}
+
+
+\begin{theorem}
+	The complexity of deciding if there exists an OCUS is ${\Pi}^P_2$-hard. 
+\end{theorem}
+
+\textit{proof.} Let p be a constraint on the variables of C.
+
+\paragraph{R5: OCUS to OUS} The OUS algorithm is indeed a reduction of OCUS with an empty set of constraints or a constraint that always evaluates to True. We will clarify this in the paper.
+
+\paragraph{R85: OCUS vs SMUS} While OCUS is based on the SMUS algorithm: 
+\begin{itemize}
+	\item OCUS uses a cost function guaranteeing incremental computations.
+	\item Meta-level constraints are taken into account.
+	\item OCUS - uniquely and efficiently - combines the use of meta-level constraints and the incremental computation of explanations. 
+\end{itemize}
+These are non-trivial extensions at the conceptual level, essentially resulting in problems that have never been considered before. 
+
+
+\paragraph{R85 - explanations} To the best of our knowledge, this kind of explanations are still very recent work and require further investigation into what constitutes a good explanation. Note that, this is also mentioned in future work: "..explanations of satisfaction problems and we are keen to explore other applications too. ".
+
+\paragraph{R85 - Q1: SMUS Grow} Similar to SMUS algorithm, the OCUS algorithm uses a grow. However in practice since any correction subset C', s.t $C \subseteq C'$ can be added, the grow procedure of SMUS is skipped. However, OCUS requires to account for the costs and we have experimentally validated that using better grow heuristics significantly reduces the time to find an OCUS.
+
+\paragraph{R85 - benchmark selection}  Regarding the benchmark selction, we have selected to compute explanation sequences on instances similar to Bogaerts et al. [2020] for an objective comparison with previous work. 
+ 
+\paragraph{R85 - Q2: Performance} With respect to performance, in the case of an Intelligent Tutoring System, the goal is not so much in computing the sequence, but in providing rapidly an optimal explanation. There still is some work to be done. For this, we will study approximate algorithms.
+
+
+
+%
+%\[ F = \forall X_0.\exists X1 \phi(X_0, X_1)\]
+%
+% [\url{https://www.comp.nus.edu.sg/~meel/Papers/ijcai15.pdf}].
+%
+%https://www.comp.nus.edu.sg/~meel/Papers/ijcai15.pdf
+%
+%ref: [Learning Abstractions for Model Checking Anubhav Gupta]
+%ref: Smallest MUS [ignatiev]
+%
+%Given that the complexity of extracting a Smallest MUS is \texttt{FP}$^{\sum_{P}^{2}}$ [Ignatiev et al., 2015], 
+%
+%\todo{Sriram, S., et al. "Symbolic verification of boolean constraints over partially specified functions." ISCAS 2001. The 2001 IEEE International Symposium on Circuits and Systems (Cat. No. 01CH37196). Vol. 5. IEEE, 2001.\\
+%	
+%	\url{https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=921998&casa_token=bPhCC4NxiCAAAAAA:jvIiaLZf762kfi8X7zEjbBWFX1jKqxokjP0Cypcus-C2EeA3-YGtKznNOTygUIowodP49wQfjqdVbA&tag=1}}\\
+%
+%\todo{Schaefer, Marcus, and Christopher Umans. "Completeness in the polynomial-time hierarchy: A compendium." SIGACT news 33.3 (2002): 32-49.
+%	
+%	 \url{https://www.hni.uni-paderborn.de/fileadmin/Fachgruppen/Algorithmen/Lehre/Vorlesungsarchiv/WS_2011_12/Komplexitaetstheorie/phcom.pdf}}
+
+\paragraph{R89} For clarity, we will refer to a clause as a disjunction of literals and I as a set of unit clauses. Regarding the introduction of the OUS-concept, we will introduce and clarify the difference between OUS and OCUS in the introduction. With respect to \texttt{one-step-explanation}, the algorithm replaces the many calls to MUS by 1 call to OUS (minimal to optimal) where the computation of OUS is indeed a special case of OCUS i.e p always returning true.
+
+\paragraph{R90: Solution uniqueness} In case the puzzle doesn't have a unique solution, we can compute explanations for all new information that can be propagated.
+
+\paragraph{R90: OCUS definition}  We will add a discussion on monotonicity and link it with MUS in the paper. 
+Related to the upperbound, based on the restricted assumptions on p and f (a linear function), it would be possible to compute an upper bound.
+
+\paragraph{R90: Code} The code base was originally written using the cppy package which has changed since the IJCAI paper submission. For testing the supplementary material, we refer to the \texttt{tseitin} branch of the \texttt{cppy} package. To make the code functional either switch to a different branch in the cloned cppy github repository by opening a terminal inside the directory and running the following command:
+
+\texttt{\$ cd /path/to/cppy}
+
+\texttt{\$ git checkout tseitin}
+
+or re-download the latest version of the tseitin branch using:
+
+\texttt{\$ git clone -b tseitin \url{https://github.com/tias/cppy.git}}
+
+
+
+
+\end{document}
+

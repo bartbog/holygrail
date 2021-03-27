@@ -7,7 +7,6 @@
 \pdfpageheight=11in
 \usepackage{ijcai21-authors-response}
 
-
 \usepackage{times}
 \usepackage{soul}
 \usepackage{url}
@@ -22,6 +21,7 @@
 \usepackage{algorithm}
 \usepackage{listings}
 \usepackage{algorithmic}
+
 \urlstyle{same}
 \usepackage{xcolor}
 
@@ -30,49 +30,99 @@
 
 \newcommand\comment[1]{\marginpar{\tiny #1}}
 \renewcommand\comment[1]{#1}
-\newcommand{\todo}[1]{{\comment{{\color{blue} #1}}}}
+\newcommand{\todo}[1]{{\comment{{\color{red} #1}}}}
+\newcommand{\emilio}[1]{{\comment{{\color{blue} #1}}}}
 \begin{document}
-We thank the reviewers for their time, insightful comments and ideas on related and future work. We will incorporate the suggestions made.
+We thank the reviewers for their time, insightful comments and highlighted typos. We first address the major remarks and questions of the reviewers. 
 
-\paragraph{R5+R90: computational complexity}
+\paragraph{Reviewer \# 90 remark} `A major issue is I wasn't able to run the code provided in the supplementary material and thus verify the experiments. The failing line is'
+\begin{center}
+{\footnotesize from cppy import $cnf\_to\_pysat$ }
+\end{center}
 
-Considering the problem of checking if a set C of clauses has a Smallest MUS of weight k is $\sum_{P}^{2}$-hard. [Learning Abstractions for Model Checking, Anubhav Gupta]
+\paragraph{Code execution} Our description of the dependencies is too general, we need a specific version (branch+commit) of cppy. 
+To make the code functional:
+\begin{enumerate}
+	\item Clone the cppy to the repository, and switch to the right commit:
+\end{enumerate}
+{\footnotesize git clone -b tseitin \url{https://github.com/tias/cppy.git}}\\
+{\footnotesize cd cppy} \\
+{\footnotesize {git checkout 676c29048bbf9f486b89aa4fb8e04ac5a472f9eb}} 
+\begin{enumerate}
+	\setcounter{enumi}{1}
+	\item Extract the .zip archive containing the supplementary code.
+	\item Open the \texttt{frietkot.py} file and add the following line on \textbf{line 3} right after \emph{import sys} making sure to replace the path to cppy with your own:
+	\begin{center}
+	{ sys.path.append(\textquotesingle/home/path/to/cppy/\textquotesingle)}	
+	\end{center}
 
-\begin{theorem}
-	\textbf{[OUS to SMUS]}
-	Let clause $c_i$ of CNF $\mathcal{F}$ with weight $w_i \in \mathbb{N}$, we introduce auxiliary variables $y_i$  $\in \{1..n-1\}$. The weighted clause $c_i$ is reduced to an unweighted clause $u_i$ using $((y_1 \wedge .. \wedge y_n) \leftrightarrow c_i )$. This can be done polynomial-time.
-\end{theorem}
-\begin{example}
-	Let $c_1 = \{ \lnot Q\}$ with $w_1$ = 3, \[u_1 \leftrightarrow ((y_1 \wedge y_2) \leftrightarrow (\lnot Q))\]  is equivalent to unit-weighted clauses \[(Q \vee y2) \wedge (Q \vee y1) \wedge (\lnot y2 \vee \lnot y1 \vee \lnot Q) \]
-\end{example}
+\end{enumerate}
 
+\paragraph{Reviewer \# 85 question}\emph{It seems to me that the cited paper is also containing a call to grow, what is the difference to the grow method proposed in this paper?}
 
-\begin{theorem}
-	The complexity of deciding if there exists an OCUS is ${\Pi}^P_2$-hard. 
-\end{theorem}
-
-\textit{proof.} Let p be a constraint on the variables of C.
-
-\paragraph{R5: OCUS to OUS} The OUS algorithm is indeed a reduction of OCUS with an empty set of constraints or a constraint that always evaluates to True. We will clarify this in the paper.
-
-\paragraph{R85: OCUS vs SMUS} While OCUS is based on the SMUS algorithm: 
+While OCUS is based on the SMUS algorithm: 
 \begin{itemize}
 	\item OCUS uses a cost function guaranteeing incremental computations.
 	\item Meta-level constraints are taken into account.
 	\item OCUS - uniquely and efficiently - combines the use of meta-level constraints and the incremental computation of explanations. 
 \end{itemize}
-These are non-trivial extensions at the conceptual level, essentially resulting in problems that have never been considered before. 
+
+These are non-trivial extensions at the conceptual level, essentially resulting in problems that have never been considered before.
+
+The SMUS algorithm also contains a grow and the following description in the text: \emph{``one can avoid the computation of MCS $\mathcal{C}$ and use any correction subset $\mathcal{C}'$ s.t. $\mathcal{C} \subseteq \mathcal{C}'$ .. the grow procedure can be skipped''}. However, OCUS requires to account for the costs and we have experimentally validated that using better grow heuristics significantly reduces the time to find an OCUS.
+
+%Similar to SMUS algorithm, the OCUS algorithm uses a grow. However in practice since any correction subset C', s.t $C \subseteq C'$ can be added, the grow procedure of SMUS is skipped. However, OCUS requires to account for the costs and we have experimentally validated that using better grow heuristics significantly reduces the time to find an OCUS.
+
+\paragraph{Reviewer \# 85 question}\emph{What is the performance goal for this line of research, i..e, can explanation finding be considered a solved problem now or was this only a small step in improving performance (and also quality of the explanation)?}
+
+With respect to \textit{performance}, our contribution both provides \textit{optimal} and \textit{efficient} explanation sequences. In the case of an Intelligent Tutoring System (ITS), the goal is not so much in computing the sequence, but in providing rapidly an optimal explanation. % which our algorithm can actually do
+There still is some work to be done. For this, we will study approximate algorithms.
+
+Regarding the \textit{explanation quality}, there are still some questions of what constitutes a good explanation. This requires further investigation into alternative metrics of explanation difficulty with - for example - human-in-the-loop experiments.% which our algorithm can do
+
+We take note of the remaining comments and will incorporate the pointers towards readability, and suggestions on related and future work. We clarify some of the comments in the following. 
+
+%It is unclear what is computed as a one-step-explanation in case of OUS.
+%Perhaps, the result is the set of literals that can be simultaneously (or in parallel) deduced in the current step.
+%This should be carefully stated because this is the most essential point that differs from the method of Bogaerts et al.
+
+Reviewer \# 5 and Reviewer \# 89 have highlighted that OUS is a special case of OCUS. In this context, \texttt{one-step-explanation} will replace the many calls to MUS by 1 call to OUS (minimal to optimal) providing an optimal explanation instead of iteratively searching for the best one it can find. 
+The information returned by \texttt{one-step-explanation} is in fact a conjunction of clauses that taken together are unsatisfiable. More precisely, given that C and I both represent conjunctions of clauses, the resulting explanation is a subset of (unit-)clauses and the unit-clause with negated literal $\{\lnot l \}$.
+
+Referring to Reviewer \# 90's observation on solution uniqueness, OCUS is able to explain puzzles with both unique solution and multiple solutions. In the case of multiple solutions, OCUS will generate an explanation sequence on all new information that can be propagated using given CNF formula $\mathcal{C}$ and initial interpretation $\mathcal{I}$.
 
 
-\paragraph{R85 - explanations} To the best of our knowledge, this kind of explanations are still very recent work and require further investigation into what constitutes a good explanation. Note that, this is also mentioned in future work: "..explanations of satisfaction problems and we are keen to explore other applications too. ".
 
-\paragraph{R85 - Q1: SMUS Grow} Similar to SMUS algorithm, the OCUS algorithm uses a grow. However in practice since any correction subset C', s.t $C \subseteq C'$ can be added, the grow procedure of SMUS is skipped. However, OCUS requires to account for the costs and we have experimentally validated that using better grow heuristics significantly reduces the time to find an OCUS.
+%
+%\paragraph{R5+R90: computational complexity}
+%
+%Considering the problem of checking if a set C of clauses has a Smallest MUS of weight k is $\sum_{P}^{2}$-hard. [Learning Abstractions for Model Checking, Anubhav Gupta]
+%
+%\begin{theorem}
+%	\textbf{[OUS to SMUS]}
+%	Let clause $c_i$ of CNF $\mathcal{F}$ with weight $w_i \in \mathbb{N}$, we introduce auxiliary variables $y_i$  $\in \{1..n-1\}$. The weighted clause $c_i$ is reduced to an unweighted clause $u_i$ using $((y_1 \wedge .. \wedge y_n) \leftrightarrow c_i )$. This reduction is polynomial-time and preserves the normal form.
+%\end{theorem}
+%\begin{example}
+%	Let $c_1 = \{ \lnot Q\}$ with $w_1$ = 3, \[u_1 \leftrightarrow ((y_1 \wedge y_2) \leftrightarrow (\lnot Q))\]  is equivalent to unit-weighted clauses \[(Q \vee y2) \wedge (Q \vee y1) \wedge (\lnot y2 \vee \lnot y1 \vee \lnot Q) \]
+%\end{example}
+%
+%\begin{theorem}
+%	The complexity of deciding if there exists an OCUS is ${\Pi}^P_2$-hard. 
+%\end{theorem}
+%
+%\textit{proof.} Let p be a constraint on the variables of C. For every truth-assignment to x, is there a truth assignment to 
+%\[ (\forall S) (\exists y) p(SMUS())\]
+%
+%\paragraph{R85: OCUS vs SMUS} While OCUS is based on the SMUS algorithm: 
+%\begin{itemize}
+%	\item OCUS uses a cost function guaranteeing incremental computations.
+%	\item Meta-level constraints are taken into account.
+%	\item OCUS - uniquely and efficiently - combines the use of meta-level constraints and the incremental computation of explanations. 
+%\end{itemize}
+%These are non-trivial extensions at the conceptual level, essentially resulting in problems that have never been considered before. 
 
-\paragraph{R85 - benchmark selection}  Regarding the benchmark selction, we have selected to compute explanation sequences on instances similar to Bogaerts et al. [2020] for an objective comparison with previous work. 
- 
-\paragraph{R85 - Q2: Performance} With respect to performance, in the case of an Intelligent Tutoring System, the goal is not so much in computing the sequence, but in providing rapidly an optimal explanation. There still is some work to be done. For this, we will study approximate algorithms.
 
-
+%\paragraph{R85 - explanations} To the best of our knowledge, this kind of explanations are still very recent work and require further investigation into what constitutes a good explanation. Note that, this is also mentioned in future work: "..explanations of satisfaction problems and we are keen to explore other applications too. ".
 
 %
 %\[ F = \forall X_0.\exists X1 \phi(X_0, X_1)\]
@@ -94,25 +144,12 @@ These are non-trivial extensions at the conceptual level, essentially resulting 
 %	
 %	 \url{https://www.hni.uni-paderborn.de/fileadmin/Fachgruppen/Algorithmen/Lehre/Vorlesungsarchiv/WS_2011_12/Komplexitaetstheorie/phcom.pdf}}
 
-\paragraph{R89} For clarity, we will refer to a clause as a disjunction of literals and I as a set of unit clauses. Regarding the introduction of the OUS-concept, we will introduce and clarify the difference between OUS and OCUS in the introduction. With respect to \texttt{one-step-explanation}, the algorithm replaces the many calls to MUS by 1 call to OUS (minimal to optimal) where the computation of OUS is indeed a special case of OCUS i.e p always returning true.
-
-\paragraph{R90: Solution uniqueness} In case the puzzle doesn't have a unique solution, we can compute explanations for all new information that can be propagated.
-
-\paragraph{R90: OCUS definition}  We will add a discussion on monotonicity and link it with MUS in the paper. 
-Related to the upperbound, based on the restricted assumptions on p and f (a linear function), it would be possible to compute an upper bound.
-
-\paragraph{R90: Code} The code base was originally written using the cppy package which has changed since the IJCAI paper submission. For testing the supplementary material, we refer to the \texttt{tseitin} branch of the \texttt{cppy} package. To make the code functional either switch to a different branch in the cloned cppy github repository by opening a terminal inside the directory and running the following command:
-
-\texttt{\$ cd /path/to/cppy}
-
-\texttt{\$ git checkout tseitin}
-
-or re-download the latest version of the tseitin branch using:
-
-\texttt{\$ git clone -b tseitin \url{https://github.com/tias/cppy.git}}
-
-
-
+%\paragraph{R89} For clarity, we will refer to a clause as a disjunction of literals and I as a set of unit clauses. Regarding the introduction of the OUS-concept, we will introduce and clarify the difference between OUS and OCUS in the introduction. With respect to \texttt{one-step-explanation}, the algorithm replaces the many calls to MUS by 1 call to OUS (minimal to optimal) where the computation of OUS is indeed a special case of OCUS i.e p always returning true.
+%
+%\paragraph{R90: Solution uniqueness} In case the puzzle doesn't have a unique solution, we can compute explanations for all new information that can be propagated.
+%
+%\paragraph{R90: OCUS definition}  We will add a discussion on monotonicity and link it with MUS in the paper. 
+%Related to the upperbound, based on the restricted assumptions on p and f (a linear function), it would be possible to compute an upper bound.
 
 \end{document}
 

@@ -24,6 +24,7 @@
 
 \urlstyle{same}
 \usepackage{xcolor}
+\usepackage{textcomp} % \textquotesingle
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{example}{Example}
@@ -33,17 +34,13 @@
 \newcommand{\todo}[1]{{\comment{{\color{red} #1}}}}
 \newcommand{\emilio}[1]{{\comment{{\color{blue} #1}}}}
 \begin{document}
-We thank the reviewers for their time, insightful comments and highlighted typos. We first address the major remarks and questions of the reviewers. 
+We thank the reviewers for their time and insightful comments. We first address the major remarks and questions of the reviewers. 
 
-\paragraph{Reviewer \# 90 remark} `A major issue is I wasn't able to run the code provided in the supplementary material and thus verify the experiments. The failing line is'
-\begin{center}
-{\footnotesize from cppy import $cnf\_to\_pysat$ }
-\end{center}
+\paragraph{Reviewer \# 90:} ``\textit{A major issue is I wasn't able to run the code provided in the supplementary material and thus verify the experiments. The failing line is} \texttt{from cppy import $cnf\_to\_pysat$}''
 
-\paragraph{Code execution} Our description of the dependencies is too general, we need a specific version (branch+commit) of cppy. 
-To make the code functional:
+The code requires the 'tseitin' branch of the cppy package, which we apparently and unfortunately did not document properly in the dependencies. To reproduce the experiments:
 \begin{enumerate}
-	\item Clone the cppy to the repository, and switch to the right commit:
+	\item Clone the 'tseitin' branch of cppy, to be exact commit '676c2904':
 \end{enumerate}
 {\footnotesize git clone -b tseitin \url{https://github.com/tias/cppy.git}}\\
 {\footnotesize cd cppy} \\
@@ -55,12 +52,17 @@ To make the code functional:
 	\begin{center}
 	{ sys.path.append(\textquotesingle/home/path/to/cppy/\textquotesingle)}	
 	\end{center}
-
 \end{enumerate}
+We appreciate the reviewers effort to reproduce the experiments and we regret that the installation instructions were incomplete.
 
-\paragraph{Reviewer \# 85 question}\emph{It seems to me that the cited paper is also containing a call to grow, what is the difference to the grow method proposed in this paper?}
 
-While OCUS is based on the SMUS algorithm: 
+\paragraph{Reviewer \# 85:} ``\textit{It seems to me that the cited [SMUS, Ignatiev et al] paper is also containing a call to grow, what is the difference to the grow method proposed in this paper?}''
+
+The SMUS pseudo-code contains a grow(), but also the following description in the text: ``\emph{one can avoid the computation of MCS $\mathcal{C}$ and use any correction subset $\mathcal{C}'$ s.t. $\mathcal{C} \subseteq \mathcal{C}'$ ... the grow procedure can be skipped}''.
+
+In our case, OCUS requires to account for the costs and we have experimentally validated that using cost-based grow heuristics significantly reduces the time to find an OCUS.
+
+To summarize, OCUS is based on implicit hitting set enumeration, like the SMUS algorithm, with as key differences: 
 \begin{itemize}
 	\item OCUS uses a cost function guaranteeing incremental computations.
 	\item Meta-level constraints are taken into account.
@@ -69,27 +71,29 @@ While OCUS is based on the SMUS algorithm:
 
 These are non-trivial extensions at the conceptual level, essentially resulting in problems that have never been considered before.
 
-The SMUS algorithm also contains a grow and the following description in the text: \emph{``one can avoid the computation of MCS $\mathcal{C}$ and use any correction subset $\mathcal{C}'$ s.t. $\mathcal{C} \subseteq \mathcal{C}'$ .. the grow procedure can be skipped''}. However, OCUS requires to account for the costs and we have experimentally validated that using better grow heuristics significantly reduces the time to find an OCUS.
 
 %Similar to SMUS algorithm, the OCUS algorithm uses a grow. However in practice since any correction subset C', s.t $C \subseteq C'$ can be added, the grow procedure of SMUS is skipped. However, OCUS requires to account for the costs and we have experimentally validated that using better grow heuristics significantly reduces the time to find an OCUS.
 
-\paragraph{Reviewer \# 85 question}\emph{What is the performance goal for this line of research, i..e, can explanation finding be considered a solved problem now or was this only a small step in improving performance (and also quality of the explanation)?}
+\paragraph{Reviewer \# 85:}``\textit{What is the performance goal for this line of research, i..e, can explanation finding be considered a solved problem now or was this only a small step in improving performance (and also quality of the explanation)?}''
 
-With respect to \textit{performance}, our contribution both provides \textit{optimal} and \textit{efficient} explanation sequences. In the case of an Intelligent Tutoring System (ITS), the goal is not so much in computing the sequence, but in providing rapidly an optimal explanation. % which our algorithm can actually do
-There still is some work to be done. For this, we will study approximate algorithms.
+With respect to \textit{performance}, our contribution both provides \textit{optimal} (higher quality) and more \textit{efficient} (lower runtime) explanation sequences.
+
+For the more specific use the case of an Intelligent Tutoring System (ITS), the goal is not so much in computing the entire sequence of explanations, but rather in interactively providing one optimal explanation. % which our algorithm can actually do
+This would require second-like runtimes which we do not achieve, and for which approximate algorithms should be investigated.
 
 Regarding the \textit{explanation quality}, there are still some questions of what constitutes a good explanation. This requires further investigation into alternative metrics of explanation difficulty with - for example - human-in-the-loop experiments.% which our algorithm can do
 
-We take note of the remaining comments and will incorporate the pointers towards readability, and suggestions on related and future work. We clarify some of the comments in the following. 
+\vspace{2em}
+\noindent We take note of the remaining comments and will incorporate the pointers towards readability, and suggestions on related and future work. We clarify some of the comments in the following. 
 
 %It is unclear what is computed as a one-step-explanation in case of OUS.
 %Perhaps, the result is the set of literals that can be simultaneously (or in parallel) deduced in the current step.
 %This should be carefully stated because this is the most essential point that differs from the method of Bogaerts et al.
 
-Reviewer \# 5 and Reviewer \# 89 have highlighted that OUS is a special case of OCUS. In this context, \texttt{one-step-explanation} will replace the many calls to MUS by 1 call to OUS (minimal to optimal) providing an optimal explanation instead of iteratively searching for the best one it can find. 
-The information returned by \texttt{one-step-explanation} is in fact a conjunction of clauses that taken together are unsatisfiable. More precisely, given that C and I both represent conjunctions of clauses, the resulting explanation is a subset of (unit-)clauses and the unit-clause with negated literal $\{\lnot l \}$.
+\paragraph{Reviewer \# 5 and Reviewer \# 89} have highlighted that OUS is a special case of OCUS. In this context, \texttt{one-step-explanation} will replace the many calls to MUS by 1 call to OUS (minimal to optimal) providing an optimal explanation instead of iteratively searching for the best one it can find. 
+The information returned by \texttt{one-step-explanation} is in fact a conjunction of clauses that taken together are unsatisfiable. More precisely, given that $C$ and $I$ both represent conjunctions of clauses, the resulting explanation is a subset of (unit-)clauses and the unit-clause with negated literal $\{\lnot l \}$.
 
-Referring to Reviewer \# 90's observation on solution uniqueness, OCUS is able to explain puzzles with both unique solution and multiple solutions. In the case of multiple solutions, OCUS will generate an explanation sequence on all new information that can be propagated using given CNF formula $\mathcal{C}$ and initial interpretation $\mathcal{I}$.
+\paragraph{Referring to Reviewer \# 90}'s observation on solution uniqueness, OCUS is able to explain puzzles with both unique solution and multiple solutions. In the case of multiple solutions, OCUS will generate an explanation sequence on all new information that can be propagated (e.g. is shared among all solutions) using given CNF formula $\mathcal{C}$ and initial interpretation $\mathcal{I}$.
 
 
 

@@ -34,13 +34,13 @@
 \newcommand{\todo}[1]{{\comment{{\color{red} #1}}}}
 \newcommand{\emilio}[1]{{\comment{{\color{blue} #1}}}}
 \begin{document}
-We thank the reviewers for their time and insightful comments. We first address the major remarks and questions of the reviewers.  w
+We thank the reviewers for their time and insightful comments. We first address the major remarks and questions of the reviewers.
 
 \paragraph{Reviewer \# 90:} ``\textit{A major issue is I wasn't able to run the code provided in the supplementary material and thus verify the experiments. The failing line is} \texttt{from cppy import $cnf\_to\_pysat$}''
 
-The code requires the 'tseitin' branch of the cppy package, which we apparently and unfortunately did not document properly in the dependencies. To reproduce the experiments:
+The code requires the `tseitin' branch of the cppy package, which we apparently and unfortunately did not document properly in the dependencies. To reproduce the experiments:
 \begin{enumerate}
-	\item Clone the 'tseitin' branch of cppy, to be exact commit '676c2904':
+	\item Clone the `tseitin' branch of cppy, to be exact commit `676c2904':
 \end{enumerate}
 {\footnotesize git clone -b tseitin \url{https://github.com/tias/cppy.git}}\\
 {\footnotesize cd cppy} \\
@@ -52,34 +52,26 @@ The code requires the 'tseitin' branch of the cppy package, which we apparently 
 	\begin{center}
 	{ sys.path.append(\textquotesingle/home/path/to/cppy/\textquotesingle)}	
 	\end{center}
+	\item Run \texttt{explain.py} to generate explanations for 2 sample instances (\texttt{test\_explain, text\_frietkot}). The explained puzzle instances are available using the \texttt{test\_puzzle} function.
 \end{enumerate}
 We appreciate the reviewers effort to reproduce the experiments and we regret that the installation instructions were incomplete.
 
 
-\paragraph{Reviewer \# 85:} ``\textit{It seems to me that the cited [SMUS, Ignatiev et al] paper is also containing a call to grow, what is the difference to the grow method proposed in this paper?}''
+\paragraph{Reviewer \# 85:}``\textit{It seems to me that the cited [SMUS, Ignatiev et al] paper is also containing a call to grow, what is the difference to the grow method proposed in this paper?}''
 
 The SMUS pseudo-code contains a grow(), but also the following description in the text: ``\emph{one can avoid the computation of MCS $\mathcal{C}$ and use any correction subset $\mathcal{C}'$ s.t. $\mathcal{C} \subseteq \mathcal{C}'$ ... the grow procedure can be skipped}''.
 
 In our case, OCUS requires to account for the cost, as well as the meta-level constraints. One of the contributions of this work is experimentally validating that using cost-based grow heuristics significantly reduces the time to find an OCUS.
 
-To summarize, OCUS is based on implicit hitting set enumeration, like the SMUS algorithm, with as key differences: 
-\begin{itemize}
-	\item OCUS uses a cost function guaranteeing incremental computations. {\color{red}BART: I don't understand this. What is the link between cost function and incremental? } 
-	\item Meta-level constraints are taken into account. 
-	\item OCUS - uniquely and efficiently - combines the use of meta-level constraints and the incremental computation of explanations.  {\color{red}BART: I also don't understand this... OCUS does not *combine* anything related to explanations. OCUS \textbf{is used} to compute explanations. OCUS itself is unrelated to explanations.}
-\end{itemize}
-
-These are non-trivial extensions at the conceptual level, essentially resulting in problems that have never been considered before.
-
-
-{\color{red}BART:  I would propose to replace everything starting from ``To summarize'' by a more accurate (and to the point) description... 
-
-``To summarize, OCUS is based on implicit hitting set enumeration, like the SMUS algorithm. The key differences with respect to SMUS are the use of a cost function and meta-constraints. These extensions resulting in novel problems and hence in this extended setting we had to reconsider the question ``what constitutes a good grow?''}
-
-
-
-
-
+To summarize, OCUS is based on implicit hitting set enumeration, like the SMUS algorithm. The key differences with respect to SMUS are the use of a cost function and meta-constraints. These extensions resulting in novel problems and hence in this extended setting we had to reconsider the question ``what constitutes a good grow?''
+%To summarize, OCUS is based on implicit hitting set enumeration, like the SMUS algorithm, with as key differences: 
+%\begin{itemize}
+%	\item OCUS uses a cost function guaranteeing incremental computations. {\color{red}BART: I don't understand this. What is the link between cost function and incremental? } 
+%	\item Meta-level constraints are taken into account. 
+%	\item OCUS - uniquely and efficiently - combines the use of meta-level constraints and the incremental computation of explanations.  {\color{red}BART: I also don't understand this... OCUS does not *combine* anything related to explanations. OCUS \textbf{is used} to compute explanations. OCUS itself is unrelated to explanations.}
+%\end{itemize}
+%These are non-trivial extensions at the conceptual level, essentially resulting in problems that have never been considered before.
+%{\color{red}BART:  I would propose to replace everything starting from ``To summarize'' by a more accurate (and to the point) description... }
 %Similar to SMUS algorithm, the OCUS algorithm uses a grow. However in practice since any correction subset C', s.t $C \subseteq C'$ can be added, the grow procedure of SMUS is skipped. However, OCUS requires to account for the costs and we have experimentally validated that using better grow heuristics significantly reduces the time to find an OCUS.
 
 \paragraph{Reviewer \# 85:}``\textit{What is the performance goal for this line of research, i..e, can explanation finding be considered a solved problem now or was this only a small step in improving performance (and also quality of the explanation)?}''

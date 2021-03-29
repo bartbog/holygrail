@@ -34,7 +34,7 @@
 \newcommand{\todo}[1]{{\comment{{\color{red} #1}}}}
 \newcommand{\emilio}[1]{{\comment{{\color{blue} #1}}}}
 \begin{document}
-We thank the reviewers for their time and insightful comments. We first address the major remarks and questions of the reviewers. 
+We thank the reviewers for their time and insightful comments. We first address the major remarks and questions of the reviewers.  w
 
 \paragraph{Reviewer \# 90:} ``\textit{A major issue is I wasn't able to run the code provided in the supplementary material and thus verify the experiments. The failing line is} \texttt{from cppy import $cnf\_to\_pysat$}''
 
@@ -60,14 +60,16 @@ We appreciate the reviewers effort to reproduce the experiments and we regret th
 
 The SMUS pseudo-code contains a grow(), but also the following description in the text: ``\emph{one can avoid the computation of MCS $\mathcal{C}$ and use any correction subset $\mathcal{C}'$ s.t. $\mathcal{C} \subseteq \mathcal{C}'$ ... the grow procedure can be skipped}''.
 
-In our case, OCUS requires to account for the costs and we have experimentally validated that using cost-based grow heuristics significantly reduces the time to find an OCUS.
+In our case, OCUS requires to account for the cost, as well as the meta-level constraints. One of the contributions of this work is experimentally validating that using cost-based grow heuristics significantly reduces the time to find an OCUS.
 
 To summarize, OCUS is based on implicit hitting set enumeration, like the SMUS algorithm, with as key differences: 
 \begin{itemize}
-	\item OCUS uses a cost function guaranteeing incremental computations.
-	\item Meta-level constraints are taken into account.
-	\item OCUS - uniquely and efficiently - combines the use of meta-level constraints and the incremental computation of explanations. 
+	\item OCUS uses a cost function guaranteeing incremental computations. {\color{red}BART: I don't understand this. What is the link between cost function and incremental? } 
+	\item Meta-level constraints are taken into account. 
+	\item OCUS - uniquely and efficiently - combines the use of meta-level constraints and the incremental computation of explanations.  {\color{red}BART: I also don't understand this... OCUS does not *combine* anything related to explanations. OCUS \textbf{is used} to compute explanations. OCUS itself is unrelated to explanations.}
 \end{itemize}
+
+
 
 These are non-trivial extensions at the conceptual level, essentially resulting in problems that have never been considered before.
 

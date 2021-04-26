@@ -30,7 +30,7 @@ For a set of constraints $\allconstraints$, we can first use propagation to get 
 %\emilio{why a ? and not n ? Vor visibility ?} -> you are right, 'n' is more consistent. Changing...
 For each new fact $n$ not in $I$, we wish to find a non-redundant explanation $(E \subseteq I, S \subseteq \allconstraints,\{n\})$ that explains $n$ (and possibly explains more). 
 Recall from Definition~\ref{def:nonred} that this means that whenever one of the facts in $E$ or constraints in $\allconstraints$ is removed, the result is no longer an explanation.
-We now show that this task is equivalent to finding a Minimal Unsat Core (or Minimal Unsat Subset, MUS) of a derived this.
+We now show that this task is equivalent to finding a Minimal Unsat Core (or Minimal Unsat Subset, MUS).
 To see this, consider the theory
 \[ I\wedge \allconstraints \wedge \lnot n.\]
 This theory surely is unsatisfiable since $n$ is a consequence of $I$ and $\allconstraints$.
@@ -91,10 +91,14 @@ We can then search for the smallest explanation among the candidates found, by s
 
   \Input{A partial interpretation $I$ and a set of constraints $\allconstraints$}
   $\mathit{best}\gets none$\;
+  \emilio{$\mathit{best}\gets f(I,T)$\;}
   \For{$S \subseteq \allconstraints$ ordered ascending by $g(S)$}{ \label{alg:min:for}
+  	\emilio{    \If{$g(S) > f(\mathit{best})$ }{
+  			\Break\;}}
     \If{$best\neq none$ {\bf and} $g(S) > f(\mathit{best})$ }{
       \Break\;}
     cand $\gets$ best explanation from candidate-explanations$(I, S)$\;
+      	\emilio{\If{$f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\;}}
         \If{$\mathit{best} = none$ {\bf or} $f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\; \label{alg:min:gets}}
   }
    \Return{$\mathit{best}$}
@@ -166,7 +170,7 @@ While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation 
     \While{consistent($I'$)}{
       $(E', S', N') \gets $min-explanation$(I', S)$\;
       \If{$f(E', S', N') \geq f(E,S,N)$ \label{ifcheck}}{
-        $store \gets false$; \Break\;}
+        $store \gets false$\; \Break\;}
               
       append $(E', S', N')$ to $nested\_seq$\;
       $I' \gets I' \cup N'$\;

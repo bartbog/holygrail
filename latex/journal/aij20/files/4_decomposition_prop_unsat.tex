@@ -90,16 +90,14 @@ We can then search for the smallest explanation among the candidates found, by s
 
 
   \Input{A partial interpretation $I$ and a set of constraints $\allconstraints$}
-  $\mathit{best}\gets none$\;
-  \emilio{$\mathit{best}\gets f(I,T)$\;}
+  \todelete{$\mathit{best}\gets none$\;}
+  \emilio{$N \gets$ propagate$(I \wedge \allconstraints)$\;}
+  \emilio{$\mathit{best}\gets (I, \allconstraints, N)$\;}
   \For{$S \subseteq \allconstraints$ ordered ascending by $g(S)$}{ \label{alg:min:for}
-  	\emilio{    \If{$g(S) > f(\mathit{best})$ }{
-  			\Break\;}}
-    \If{$best\neq none$ {\bf and} $g(S) > f(\mathit{best})$ }{
+    \If{\todelete{$best\neq none$ {\bf and} }$g(S) > f(\mathit{best})$ }{
       \Break\;}
     cand $\gets$ best explanation from candidate-explanations$(I, S)$\;
-      	\emilio{\If{$f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\;}}
-        \If{$\mathit{best} = none$ {\bf or} $f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\; \label{alg:min:gets}}
+        \If{\todelete{$\mathit{best} = none$ {\bf or}} $f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\; \label{alg:min:gets}}
   }
    \Return{$\mathit{best}$}
   \caption{min-explanation$(I,\allconstraints)$}

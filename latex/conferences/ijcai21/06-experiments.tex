@@ -59,7 +59,7 @@ the need for a cost-based \omus/\comus approach.
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\columnwidth]{figures_post_paper/cumulative_lits_grow.pdf}
-  \caption{Q2 - Explanation specific \grow strategies}
+  \caption{Q2 - Explanation specific \grow strategies.}
   \label{fig:grow_strategies}
 \end{figure}
 
@@ -94,7 +94,7 @@ Slightly surprising, performing a \maxsat-\grow with the full interpretation tak
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.9\columnwidth]{figures_post_paper/cumulative_lits_derived_time.pdf}
-  \caption{Q3 - Cumulative runtime evolution enhancements on incrementality and constrainedness}
+  \caption{Q3 - Cumulative runtime evolution enhancements on incrementality and constrainedness.}
   \label{fig:incrementality_constraindness}
 \end{figure}
 
@@ -117,11 +117,12 @@ The explanation generation times for a whole sequence are on close to and someti
 
 \paragraph{Incrementality}
 % The naive, but optimal approach of pure 'OUS' requires notably more time than the non-optimal MUS-based algorithm. This observation demonstrates that the problem complexity increases when using an optimality criterion. We observe with 'OUS+I' that reusing information throughout the calls to the OUS solver burdens the \onestep algorithm with extra processing in order to keep track of all generated satisfiable subsets.
-To our surprise, we noticed that in the non-constrained OUS setting, incrementality had no noticeable effect. 
+To our surprise, we noticed that \emilio{both in the constrained and non-constrained OUS setting, incrementality had no noticeable effect. Even more so, the naive restart of the search towards an optimal (constrained) explanation provides improvements on the more difficult puzzles. One potential explanation is that when keeping the MIP solver warm, similar branch-and-bound based solver will start in a search space close to the previous solution . However there is no immediate guarantee that the new best explanation is closely related to the previous one.}
+
 % 
-When combining constrainedness with incrementality, on the other hand, we see that this incrementality yields important improvements. One potential explanation for this behaviour is the fact that, as discussed above, in the OCUS+I implementation, we only initialize a MIP and reuse it  across the different \onestep calls of algorithm \ref{alg:oneStepOCUS}.
+\deleted{When combining constrainedness with incrementality, on the other hand, we see that this incrementality yields important improvements. One potential explanation for this behaviour is the fact that, as discussed above, in the OCUS+I implementation, we only initialize a MIP and reuse it  across the different \onestep calls of algorithm \ref{alg:oneStepOCUS}.
 By keeping the MIP solver warm, we take advantage of its efficiency to handle the many satisfiable subsets which are represented under the form of constraints on the variables of the problem specification.
-Figure \ref{fig:incrementality_constraindness} demonstrates that contrary to \emph{OUS+I}, incrementality in \textbf{\comus+I} significantly decreases the overall computation time. 
+Figure \ref{fig:incrementality_constraindness} demonstrates that contrary to \emph{OUS+I}, incrementality in \textbf{\comus+I} significantly decreases the overall computation time. }
 
 \begin{table}[t]
 	\centering
@@ -140,6 +141,15 @@ Max-Full-Unif &  32604 &  57.3 &   0.0 &   42.3 &    69900 \\
 	\caption{Number of hitting sets and total time (in seconds) spent in core parts of \emilio{not incremental} \comus algorithm across all puzzles.}
 	\label{tab:percentage_exec}
 \end{table}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\columnwidth]{figures_post_paper/explanation_times.pdf}
+	\caption{Distribution of the explanation generation time in the generated sequence.}
+	\label{fig:explanation_time}
+\end{figure}
+
+\paragraph{Interactivity} \emilio{To analyze how the explanations compare in an interactive context, we represent a distribution of explanation generation times in figure \ref{fig:explanation_time}. We see that a major part of the explanations take less than 2 to 5 seconds to be generated. Even though, the difficult explanation steps can take more time ranging from 5 to 100+ seconds to be generated, it is only a small fraction of all generated explanations.}
+
 
 \todo{Add Discussion on the time to find optimal explanations}
 % \resizebox{3cm}{!}{

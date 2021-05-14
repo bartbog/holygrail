@@ -23,7 +23,7 @@ It is easy to see that there is a one to one correspondence between the OCUSs pr
 %\emilio{phrases are loooong.}
 }
 
-The recent algorithm of ~\citet{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), a partial interpretation $I$ and a cost function $f$ quantifying the difficulty of an explanation step, by means of a weight for every clause and literal in \formula. % and a set $U$ of atoms whose literals need explaining (e.g., not containing auxiliary variables). 
+The recent algorithm of ~\citet{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), a partial interpretation $I$ \emilio{(a conjunction of literals)} and a cost function $f$ quantifying the difficulty of an explanation step, by means of a weight for every clause and literal in \formula. % and a set $U$ of atoms whose literals need explaining (e.g., not containing auxiliary variables). 
 % \emilio{not sure why we talk about U and not later in the text. U is especially useful with the call to the optimal propagate}
 % U not needed, auxiliaries get zero weight then done...
 
@@ -104,7 +104,7 @@ To obtain a sequence of such steps, ~\citet{ecai/BogaertsGCG20} iteratively sear
 The key part of the algorithm is the search for the next best explanation, given an interpretation $I$ derived so far. 
 \cref{alg:oneStep} shows the gist of how this was done.
 It takes as input the formula \formulac, a cost function $f$ quantifying the quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
-To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequently selects \emilio{the lowest cost one from found MUSes}\deleted{the best of the found such MUSs}.  
+To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequently selects \emilio{the lowest cost one from found MUSs}\deleted{the best of the found such MUSs}.  
 The reason this works is because there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of $\formulac$ and $I$. %~\cite{ecai/BogaertsGCG20}. 
 
 Experiments have shown that such a MUS-based approach can easily take hours, and hence that algorithmic improvements are needed to make it more practical. 
@@ -114,7 +114,7 @@ We see three main points of improvement, all of which will be tackled by our gen
 \begin{inparaenum}
  \item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the explanation found is indeed optimal %don't use ``the best'' -> non-unique 
  (with respect to the given cost function). 
- Most likely, the reason for choosing MUSes is that currently, \textit{there are no algorithms for unsatisfiable subset \textbf{optimization}}. 
+ Most likely, the reason for choosing MUSs is that currently, \textit{there are no algorithms for unsatisfiable subset \textbf{optimization}}. 
  \item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all \deleted{of }these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$. This begs the questions whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is on the number of literals from $\overline{(\Iend\setminus I)}$ to include. 
  \item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many very similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}
 \end{inparaenum}

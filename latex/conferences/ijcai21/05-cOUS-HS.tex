@@ -99,7 +99,7 @@ $f$ is a weighted sum over the variables in $S$. For example, (unit) clauses rep
 %  }
 %\Return{E}\;
 %\end{algorithm}
-Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}. It combines the hitting set-based approach for MUSes of \cite{ignatiev2015smallest} with the use of a MIP solver for (weighted) hitting sets as proposed for maximum satisfiability \cite{DBLP:conf/sat/DaviesB13}. The key novelty is the ability to add structural constraints to the hitting set solver, without impacting the duality principles of \cref{prop:MCS-MUS-hittingset} as we will show.
+Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}. It combines the hitting set-based approach for MUSs of \cite{ignatiev2015smallest} with the use of a MIP solver for (weighted) hitting sets as proposed for maximum satisfiability \cite{DBLP:conf/sat/DaviesB13}. The key novelty is the ability to add structural constraints to the hitting set solver, without impacting the duality principles of \cref{prop:MCS-MUS-hittingset} as we will show.
 
 Ignoring \cref{line:grow} for a moment, 
 the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
@@ -108,6 +108,37 @@ In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, t
 Instead of directly adding the complement of $\m{S}$ to \setstohit as done by \citet{ignatiev2015smallest}, our algorithm includes a call to \grow, which extends $\m{S}$ into a larger subset of $\formula$ that is still satisfiable (if possible).
 %\tias{here base grow impls?} \bart{Your next sentence is enough for me here. Alternatively we can in one stentence say that we consider a greedy and a maxsat-based implementation? }
 We discuss the different possible implementations of \grow later and evaluate their performance in \cref{sec:experiments}. 
+\emilio{Similar to \citet{ignatiev2015smallest}, the result of algorithm \ref{alg:comus} represents a subset of the clauses of F if applied on a toy example with imaginary weights.}
+\todo{Add an example similar to SMUS ?}
+\emilio{Consider the cnf $\formula$ formula over variables $x_1, x_2, x_3$ with final interpretation $\{x_1, \lnot x_2, x_3 \}$, $p\triangleq$ \textit{exactlyoneof($c_6$, $c_7$)} and $f = \sum w_i$ the sum over clause weights $w_1 = 20, w_2=20, w_3=20, w_4=20, w_5=1, w_6=1, w_7=1$:
+	\[ c_1 = x_1 \text{\hspace*{20pt}} c_2 = \lnot x_1 \vee \lnot x_2 \vee x_3\] \[ c_3 = \lnot x_1 \vee \lnot x_2 \vee x_3 \text{\hspace*{20pt}} c_4 = \lnot x_3 \vee \lnot x_2 \]
+	 If we already know $I= \{x_1\}$, then remaining literals to explain are defined as $\overline{\Iend\setminus I} = c_6 \wedge c_7$:
+\[c_5 = x_1 \text{\hspace*{20pt}} c_6 = x_2 \text{\hspace*{20pt}} c_7 = \lnot x_3 \]
+Let $\setstohit =\{ \{ c_6, c_7\} \}$ be collection of hitting sets bootstrapped with the at least one constraint.
+}
+
+\begin{table}[!h]
+	
+	\begin{adjustbox}{max width=\columnwidth}
+		\emilio{
+	\begin{tabular}{|c|c|c|r|}
+		\hline
+		\rule{0pt}{2ex}$\m{S}$ & $\sat(\m{S})$ & Grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
+\hline
+		\hline
+		\rule{0pt}{2ex} $\{ c_6 \}$ & True & $\{ c_6,  c_1, c_5, c_2, c_3\}$    & $\{ \{ c_6, c_7\}, \{c_7, c_4\}\}$\rule{0pt}{2ex}   \\
+		\hline		
+		 \rule{0pt}{2ex}\multirow{2}*{ $\{ c_6, c_4 \}$}  & \multirow{2}*{True} & \multirow{2}*{$\{ c_6,  c_4, c_2, c_3\}$}   & $\{ \{ c_6, c_7\}, \{c_7, c_4\}$  \\  
+		   &  &    & $\{c_7, c_1, c_5\}\}$\rule{0pt}{2ex} \\\hline
+				 \rule{0pt}{2ex} \multirow{2}*{$\{ c_6, c_4, c_5 \}$}  & \multirow{2}*{True} &  \multirow{2}*{$\{ c_6,c_1, c_4, c_5, c_7 \}$}  & $\{ \{ c_6, c_7\}, \{c_7, c_4\}$  \\  
+				    &  &    & $\{c_7, c_1, c_5\}, \{c_2, c_3\}\}$\rule{0pt}{2ex} \\\hline
+		\rule{0pt}{2ex} $\{ c_6, c_4,c_5, c_2 \}$ & False & \multicolumn{2}{|c|}{$\{ c_6, c_4,c_5, c_2 \}$ is an OCUS of $\formula$.} \\
+		\hline
+	\end{tabular}
+}
+\end{adjustbox}
+\end{table}
+
 
 Soundness and completeness of the proposal follow from the fact that all sets added to \setstohit are correction subsets, and \cref{thm:soundcomplete}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
  
@@ -129,7 +160,23 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 % 
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver. 
 
+\begin{proposition}
+	\emilio{
+	The complexity of extracting the \mm{\call{O(C)US}} is of the second level of polynomial hierarchy FP$^{\sum^{P}_2}$. 
+}
+\end{proposition}
+\begin{proof}
+	\emilio{
+	The extraction of a cardinality-minimal MUS (SMUS) for an unsatisfiable cnf $\formula$ is of the second level of polynomial hierarchy FP$^{\sum^{P}_2}$ \cite{ignatiev2015smallest}. In the case of $f$ being a weighted sum, the \omus extraction is reducible to an SMUS-extraction on a relaxed formula $\formula^{R}$ in polynomial time. 
 
+		\noindent\textit{Reduction.} Associate for each clause $c_i \in \formula$ of weight $w_i=n \in \mathbb{N}^+$, the relaxation variables $r_{i,j}$ where $j \in 1..n-1$:
+		\[ \formula^{R}  \triangleq \bigcup_{c_i \in \formula}(c_i \leftrightarrow (r_{i, 1} \wedge ..  r_{i, n-1})) \]
+
+%	$F^{R} \triangleq \cup \$
+%	, by adding $w_i - 1$ relaxation variables $(r_{i,1} \wedge .. \wedge r_{i,n-1}) \leftrightarrow c_i$, the problem of OUS is reduced to the problem of SMUS.
+	}
+	\noindent\textit{Constrainedness.} \todo{Add proof for Constrainedness}
+\end{proof}
 % Now, since the search for optimal hitting sets is --- in implicit hitting set algorithms --- usually done with a MIP solver, it suffices to express the predicate $p$ as constraints on the MIP. Since the variables of the MIP encoding represent inclusion of certain constraints in the unsatisfiable subset, this is simple for  the 3 constraints that we need to obtain meaningful explanations. %needed to have meaningful in practice only predicates $p$ that can easily be encoded in MIP are useful. In such cases, we can directly use the MIP solver to implement \cohs as well. 
 
 % \paragraph{Application to Explanations}

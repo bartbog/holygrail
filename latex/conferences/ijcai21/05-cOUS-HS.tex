@@ -107,10 +107,9 @@ In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, t
 
 Instead of directly adding the complement of $\m{S}$ to \setstohit as done by \citet{ignatiev2015smallest}, our algorithm includes a call to \grow, which extends $\m{S}$ into a larger subset of $\formula$ that is still satisfiable (if possible).
 %\tias{here base grow impls?} \bart{Your next sentence is enough for me here. Alternatively we can in one stentence say that we consider a greedy and a maxsat-based implementation? }
-We discuss the different possible implementations of \grow later and evaluate their performance in \cref{sec:experiments}. 
-\emilio{Similar to \citet{ignatiev2015smallest}, the result of algorithm \ref{alg:comus} represents a subset of the clauses of F if applied on a toy example with imaginary weights.}
-\todo{Add an example similar to SMUS ?}
-\emilio{Consider the cnf $\formula$ formula over variables $x_1, x_2, x_3$ with final interpretation $\{x_1, \lnot x_2, x_3 \}$, $p\triangleq$ \textit{exactlyoneof($c_6$, $c_7$)} and $f = \sum w_i$ the sum over clause weights $w_1 = 20, w_2=20, w_3=20, w_4=20, w_5=1, w_6=1, w_7=1$:
+We discuss the different possible implementations of \grow later and evaluate their performance in \cref{sec:experiments}.
+
+\emilio{The result of algorithm \ref{alg:comus} represents a subset of the clauses of F if applied on a toy example with imaginary weights. Consider the following, cnf $\formula$ formula over variables $x_1, x_2, x_3$ with model $\{x_1, \lnot x_2, x_3 \}$, $p\triangleq$ \textit{exactlyoneof($c_6$, $c_7$)} and $f = \sum w_i$ the sum over clause weights $w_1 = 20, w_2=20, w_3=20, w_4=20, w_5=1, w_6=1, w_7=1$:
 	\[ c_1 = x_1 \text{\hspace*{20pt}} c_2 = \lnot x_1 \vee \lnot x_2 \vee x_3\] \[ c_3 = \lnot x_1 \vee \lnot x_2 \vee x_3 \text{\hspace*{20pt}} c_4 = \lnot x_3 \vee \lnot x_2 \]
 	 If we already know $I= \{x_1\}$, then remaining literals to explain are defined as $\overline{\Iend\setminus I} = c_6 \wedge c_7$:
 \[c_5 = x_1 \text{\hspace*{20pt}} c_6 = x_2 \text{\hspace*{20pt}} c_7 = \lnot x_3 \]
@@ -143,14 +142,14 @@ Let $\setstohit =\{ \{ c_6, c_7\} \}$ be collection of hitting sets bootstrapped
 Soundness and completeness of the proposal follow from the fact that all sets added to \setstohit are correction subsets, and \cref{thm:soundcomplete}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
  
 \begin{theorem}\label{thm:soundcomplete}
-  Let $\m{H}$ be a set of correction subsets of \mcses{\formula}. 
+  Let $\m{H}$ be the the set of correction sets of \formula. 
   If $\m{S}$ is a hitting set of \m{H} that is $f$-optimal among the hitting sets of \m{H} satisfying a predicate $p$, and  $\m{S}$ is unsatisfiable, then $\m{S}$ is an OCUS of \formula. 
   
   If  $\m{H}$ has no hitting sets satisfying $p$, then $\formula$ has no OCUSs.
 \end{theorem}
 \begin{proof}
 For the first claim, it is clear that $\m{S}$ is unsatisfiable and satisfies $p$. Hence all we need to show is $f$-optimality of $\m{S}$.
-  If some other unsatisfiable subset $\m{S}'$ that satisfies $p$ would exists with $f(\m{S}')\leq f(\m{S})$, we know that $\m{S}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction set is the superset of a minimal correction set).
+  If there were some other unsatisfiable subset $\m{S}'$ that satisfies $p$ with $f(\m{S}')\leq f(\m{S})$, we know that $\m{S}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction set is the superset of a minimal correction set).
   Since $\m{S}$ is $f$-optimal among hitting sets of $\m{H}$ satisfying $p$ and $\m{S}'$ also hits $\m{H}$ and satisfies $p$, it must thus be that $f(\m{S})=f(\m{S}')$. 
 %  
 
@@ -158,7 +157,10 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 \end{proof}
 % 
 % 
+
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver. 
+
+\emilio{Extending theorem \ref{thm:soundcomplete}, if $f$ is defined as a stricly increasing monotone function and p also satisfying monotonicity property then \comus is guaranteed to be a \emph{minimal} unsatisfiable subset.}
 
 \begin{proposition}
 	\emilio{
@@ -175,7 +177,7 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 %	$F^{R} \triangleq \cup \$
 %	, by adding $w_i - 1$ relaxation variables $(r_{i,1} \wedge .. \wedge r_{i,n-1}) \leftrightarrow c_i$, the problem of OUS is reduced to the problem of SMUS.
 	}
-	\noindent\textit{Constrainedness.} \todo{Add proof for Constrainedness}
+	\paragraph{Constrainedness.} \todo{Add proof for Constrainedness}
 \end{proof}
 % Now, since the search for optimal hitting sets is --- in implicit hitting set algorithms --- usually done with a MIP solver, it suffices to express the predicate $p$ as constraints on the MIP. Since the variables of the MIP encoding represent inclusion of certain constraints in the unsatisfiable subset, this is simple for  the 3 constraints that we need to obtain meaningful explanations. %needed to have meaningful in practice only predicates $p$ that can easily be encoded in MIP are useful. In such cases, we can directly use the MIP solver to implement \cohs as well. 
 

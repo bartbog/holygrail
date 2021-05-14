@@ -1,6 +1,5 @@
 % \todo{make naming consistent: OCUS instead of OCUS}
-While our OCUS algorithm in~\ref{alg:comus} is generic and can also be used to find OUSs, its constrainedness property is key to decreasing the complexity of explanation sequence generation.
-\emilio{Note that, OUS are found by removing predicate $p$. In algorithm \ref{alg:comus}, this boils down to replacing line 2 with $\cohs(\setstohit,f,True)$ }
+While our OCUS algorithm in~\ref{alg:comus} is generic and can also be used to find OUSs, \emilio{i.e by removing predicate $p$. In algorithm \ref{alg:comus}, this boils down to replacing line 2 with $\cohs(\setstohit,f,True)$}. However, its constrainedness property is key to decreasing the complexity of explanation sequence generation.
  We now discuss the optimizations to the OCUS algorithm that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 %In this section, we discuss optimizations to the basic algorithm to compute OCUSs. 
 %While our optimizations are inspired by the explanation generation problem, and tailored to solving this as efficiently as possible, the ideas presented here can also 
@@ -36,7 +35,9 @@ The goal of the \grow procedure is to turn $\m{S}$ into a larger subformula of $
 
 Choosing an effective \grow procedure requires finding a difficult balance: on the one hand, we want our subformula to be as large as possible, %to derive the most precise information we can get, 
 but on the other hand we also want the procedure to be very efficient. 
-Indeed, if the computation cost of the \grow were not important, we could use a MaxSAT call to obtain a subset-maximal subset of $\formula$, however, by doing that we expect the \grow costs to be too high to make the overall OCUS algorithm faster. 
+\deleted{Indeed, if the computation cost of the \grow were not important, we could use a \maxsat call to obtain a subset-maximal subset of $\formula$, however, by doing that we expect the \grow costs to be too high to make the overall OCUS algorithm faster.}
+\emilio{Indeed, if the computation cost of the \grow were not important, we could use a \maxsat call to obtain a subset-maximal subset of $\formula$. However, as it will become clear from the experiments, we expect the \grow costs to be too high to make the overall OCUS algorithm faster. }
+
 
 However, for the case of explanations we are in, we make the following observations: 
 \begin{compactitem}
@@ -44,7 +45,7 @@ However, for the case of explanations we are in, we make the following observati
  \item $\formulac$ and $I$ together are satisfiable and \emph{mutually supportive}, by this we mean that making more constraints in \formulac true, more literals in $I$ will automatically become true and vice versa. 
  \item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
 \end{compactitem}
-Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) MaxSAT solver. Furthermore, we can initialize this call as well as any call to a SAT solver with the polarities for all variables set to the value they take in $\Iend$. This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 
+Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 
 
 % \todo{Bart from here}
 

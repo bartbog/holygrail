@@ -30,7 +30,7 @@ Our experiments are designed to answer the following research questions:
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.5\columnwidth]{figures/rq1_heatmap.pdf}
-  \caption{Q4 - \emilio{Explanation quality comparison of optimal vs. minimal explanations in the generated puzzle explanation sequences.}}
+  \caption{Q1 - \emilio{Explanation quality comparison of optimal vs. minimal explanations in the generated puzzle explanation sequences.}}
   \label{fig:rq1_heatmap}
 \end{figure}
 
@@ -54,7 +54,7 @@ These costs are plotted on a heatmap in Figure \ref{fig:rq1_heatmap}, where the 
 We see that the difference in quality is striking in many cases, with the MUS-based solution often missing very cheap explanations (as seen by the large dark vertical column around cost 60), thereby confirming  
 the need for a cost-based \omus/\comus approach.
 
-\paragraph{Domain-specific \grow} The core computation complexity for generating explanations not only lies in the calls to the optimal hitting set solver, but more importantly in computing \emph{high quality} satisfiable subsets. This requires a trade-off between efficiency of the grow strategy and quality of the produced satisfiable subset.
+\paragraph{Domain-specific \grow} The core computation complexity for generating explanations not only lies in the calls to the optimal hitting set solver, but more importantly in computing \emph{high quality} satisfiable subsets. This requires a trade-off between efficiency of the \grow strategy and quality of the produced satisfiable subset.
 
 \begin{figure}[ht]
   \centering
@@ -63,14 +63,14 @@ the need for a cost-based \omus/\comus approach.
   \label{fig:grow_strategies}
 \end{figure}
 
-Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the cumulative time of different grow strategies to generate the explanation sequence of all puzzles combined. The configurations are the following:  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$ given with every call of \comus while \emph{Actual} refers to using only the constraints that hold in the actual interpretation (Section~\ref{sec:ocusEx}); \emph{Greedy} to growing using a sat-based refinement heuristic; the weighing scheme is either with uniform weights (\emph{unif}), with the original weights (\emph{pos}) or with the inverse of the original costs (\emph{inv}) when using the MaxSAT solver (\emph{Max}).
+Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the cumulative time of different \grow strategies to generate the explanation sequence of all puzzles combined. The configurations are the following:  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$ given with every call of \comus while \emph{Actual} refers to using only the constraints that hold in the actual interpretation (Section~\ref{sec:ocusEx}); \emph{Greedy} to growing using a sat-based refinement heuristic; the weighing scheme is either with uniform weights (\emph{unif}), with the original weights (\emph{pos}) or with the inverse of the original costs (\emph{inv}) when using the \maxsat solver (\emph{Max}).
 
-As conjectured in \cref{sec:ocusEx} The MaxSAT-\grow on the actual interpretation indeed performs best. When repeating this experiment on other variants of the implementation (e.g., disabling constrainedness) the pattern was observed.
-% Notice in Figure~\ref{fig:grow_strategies} that only the MaxSAT solver on actual variables and with uniform weights is able to complete the generation of a sequence for all puzzles. Furthermore, giving the MaxSAT constraints on $\mathcal{F}$ drastically increases the execution time and, even within the best weighing scheme (\emph{unif}), it takes less than 10 steps\tias{how do you conclude this? non-obvious...} on average for every puzzle to time out.
+As conjectured in \cref{sec:ocusEx} The \maxsat-\grow on the actual interpretation indeed performs best. When repeating this experiment on other variants of the implementation (e.g., disabling constrainedness) the pattern was observed.
+% Notice in Figure~\ref{fig:grow_strategies} that only the \maxsat solver on actual variables and with uniform weights is able to complete the generation of a sequence for all puzzles. Furthermore, giving the \maxsat constraints on $\mathcal{F}$ drastically increases the execution time and, even within the best weighing scheme (\emph{unif}), it takes less than 10 steps\tias{how do you conclude this? non-obvious...} on average for every puzzle to time out.
 The greedy strategy provides some improvement on the cumulative runtime, with only marginal gains when the actual interpretation is used.
 
 We also observed (see \cref{tab:percentage_exec}) that in each of our configurations, the majority of the time is spent on computing hitting sets. As such, it makes sense to optimize the \grow procedure to provide results that are as good as possible and limit the choices of the hitting set solver as much as possible. 
-Slightly surprising, performing a MaxSAT-\grow with the full interpretation takes \emph{less} time than on the actual interpretation. The gains of using the actual interpretation seems to come most from the fact that it generates better  sets to hit. 
+Slightly surprising, performing a \maxsat-\grow with the full interpretation takes \emph{less} time than on the actual interpretation. The gains of using the actual interpretation seems to come most from the fact that it generates better  sets to hit. 
 
 % \tias{TODO: explain table or cut}
 \begin{table}[t]
@@ -78,7 +78,7 @@ Slightly surprising, performing a MaxSAT-\grow with the full interpretation take
   \resizebox{0.82\textwidth}{!}{\begin{minipage}{\textwidth}
     \begin{tabular}{r|c|c|c|c|c}
       %\hline
-      config &    $\#$HS &   $\%$HS &  $\%$SAT &  $\%$Grow & Time [s] \\
+      config &    $\#$HS &   $\%$HS &  $\%$SAT &  $\%$\grow & Time [s] \\
       \hline
       Greedy-SAT-Actual &   8679 &  89.0 &   0.0 &    9.0 &      66782 \\
       Greedy-SAT-Full &   8787 &  88.0 &   0.0 &    10.0 &      66297 \\
@@ -104,7 +104,7 @@ To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness 
 Figure \ref{fig:incrementality_constraindness} shows the results of the different variants, including the MUS-based variant discussed above. 
 In this figure, the total number of explanation steps is not equal for all configurations, the reason for this is that the two OUS implementations timed-out before completing two of the puzzles (hence explaining their lower number) and the quality of the MUS-based explanations is worse, as observed in \textbf{Q1}. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower. 
 %We choose to answers \textbf{Q3} and \textbf{Q4} using the cactus plot of Figure \ref{fig:incrementality_constraindness} with the same logarithmic scale for consistency. Furthermore, both incrementality and constraindness go hand in hand.
-All O(C)US variants use Max-Actual-Unif as grow strategy, after we experimentally verified that this result of \textbf{Q2} also applied to the other OUS variants. %apply as well to all \mm{\call{O(C)US(+I)}} configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
+All O(C)US variants use Max-Actual-Unif as \grow strategy, after we experimentally verified that this result of \textbf{Q2} also applied to the other OUS variants. %apply as well to all \mm{\call{O(C)US(+I)}} configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
 
 \paragraph{Constrainedness}
 When comparing all five configurations, we see that the non-constrained optimal implementations cannot keep up with the plain MUS based implementation, as is to be expected since a harder problem is tackled. 
@@ -283,8 +283,8 @@ For these instances, the overall winner is \emph{{\omus}+IPW}.
 All variants time out on the larger instances (par8-5, par16-1, par16-2, par16-3, par16-4-c, par16-4, hanoi4) before finding the OUSs for all 10 decision variables. For instance par8-5, all variants are able to find 6 out of the 10 variables. On all instances that timed-out, \emph{{\omus}+IPW} remains the fastest. Similar results are observed for the remaining instances for all variants par16-* and hanoi4 with the \omus found for only 1 variable.
 
 
-A further analysis of the overall execution times highlights that much time is spent in the grow procedure, for which we start from the partial assignment found by the SAT check and use the RC2 MaxSAT solver to complete it. 
-We reran the same experiments with a greedy grow algorithm instead and observed that \omus is not even able to finish for zebra\_v155\_c1135 and all runtimes increase considerably.
+A further analysis of the overall execution times highlights that much time is spent in the \grow procedure, for which we start from the partial assignment found by the SAT check and use the RC2 MaxSAT solver to complete it. 
+We reran the same experiments with a greedy \grow algorithm instead and observed that \omus is not even able to finish for zebra\_v155\_c1135 and all runtimes increase considerably.
 Furthermore, we see that in this case postponing the MIP call effectively redistributes 50\% of the computational load to growing \satsets and the remaining 50 \% are evenly distributed between (i) the SAT solver, (ii) the MIP solver, and (iii) the the greedy and incremental hitting set heuristics. Hence, while the portion of time spent growing satisfiable subsets is reduced, much more iterations are needed to find the optimal OUSs. %runtime of grow is decreased, the number of 
 % A further analysis of the overall execution times highlights that the main bottleneck of the algorithm is the time spent WE NEED TEXT HERE AFTER TEH RUNS ARE READY\todo{emilio}
 

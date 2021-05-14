@@ -10,7 +10,6 @@ method that takes as input a satisfiable constraint program and explains the sol
 Explanations in that work are sequences of simple inference steps, involving as few constraints and facts as possible. 
 In order to generate these sequences, they rely heavily on calls for  \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived program, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs.
 The explanation steps in \citet{ecai/BogaertsGCG20} are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g. taking the number of constraints and facts into account, as well as a valuation of their complexity (or priority). 
-\todo{Add if explanations are used in practice or if they are only a recently introdyuced concept that still needs further development.}
 The algorithm developed in that work has two main weaknesses: first, it provides no guarantees on the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
 Secondly, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate implied fact. %replacing a potential single call for a cost-optimal unsatisfiable subset by multiple calls, 
 However, this high number of MUS calls causes severe efficiency problems, with the explanation generation process taking several hours.
@@ -66,9 +65,8 @@ Motivated by these observations, we develop algorithms for explaining CSPs that 
 %   \item We generalize the OUS problem to a constrained OUS problem by allowing meta-level constraints on the unsatisfiable subsets; % and show how our algorithm generalizes to take those constraints into account;
 %   \item We experimentally validate our algorithms in the context of explanation generation for CSPs. %, thereby showing improvements both in terms of the time required to find explanation sequences and the quality thereof. %of the developed explanation.
 % \end{compactitem}
-
-
-
+\todo{Add if explanations are used in practice or if they are only a recently introdyuced concept that still needs further development.}
+\emilio{Ultimately computing an \mm{\call{OCUS}} also benefits a number of applications relying on finding inconsistencies as explanations to solve the problem by being able to formulate explanation-preferences as constraints and using the optimality criterion.}
 
 
 \ignore{

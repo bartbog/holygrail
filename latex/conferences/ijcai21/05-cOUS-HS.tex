@@ -105,50 +105,13 @@ Ignoring \cref{line:grow} for a moment,
 the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
 In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, the complement of $\m{S}$ is a correction subset and is added to \setstohit. In this way, the hitting set size always grows and a hitting set $\m{S}$ will always be a subset of $\formula$.
 
-\begin{table}[!h]
-	
-	\begin{adjustbox}{max width=\columnwidth}
-		\emilio{
-			\begin{tabular}{|c|c|c|r|}
-				\hline
-				\rule{0pt}{2ex}$\m{S}$ & $\sat(\m{S})$ & Grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
-				\hline
-				\hline
-				\rule{0pt}{2ex} $\{ c_6 \}$ & True & $\{ c_6,  c_1, c_5, c_2, c_3\}$    & $\{ \{ c_6, c_7\}, \{c_7, c_4\}\}$\rule{0pt}{2ex}   \\
-				\hline		
-				\rule{0pt}{2ex}\multirow{2}*{ $\{ c_6, c_4 \}$}  & \multirow{2}*{True} & \multirow{2}*{$\{ c_6,  c_4, c_2, c_3\}$}   & $\{ \{ c_6, c_7\}, \{c_7, c_4\}$  \\  
-				&  &    & $\{c_7, c_1, c_5\}\}$\rule{0pt}{2ex} \\\hline
-				\rule{0pt}{2ex} \multirow{2}*{$\{ c_6, c_4, c_5 \}$}  & \multirow{2}*{True} &  \multirow{2}*{$\{ c_6,c_1, c_4, c_5, c_7 \}$}  & $\{ \{ c_6, c_7\}, \{c_7, c_4\}$  \\  
-				&  &    & $\{c_7, c_1, c_5\}, \{c_2, c_3\}\}$\rule{0pt}{2ex} \\\hline
-				\rule{0pt}{2ex} $\{ c_6, c_4,c_5, c_2 \}$ & False & \multicolumn{2}{|c|}{$\{ c_6, c_4,c_5, c_2 \}$ is an OCUS of $\formula$.} \\
-				\hline
-			\end{tabular}
-		}
-	\end{adjustbox}
-	\caption{Example of an OCUS-explanation computation.}
-	\label{tab:explanation-steps-expanded}
-\end{table}
-
-
-\egcomment{Since this was a remark of one of the reviewers I thought it would be nice to have an example of how an explanation is computed in practice}
-
-\emilio{The result of algorithm \ref{alg:comus} represents a subset of the clauses of F. Consider the following cnf $\formula$ formula over variables $x_1, x_2, x_3$ with model $\{x_1, \lnot x_2, x_3 \}$.:
-	\[ c_1 = x_1 \text{\hspace*{20pt}} c_2 = \lnot x_1 \vee \lnot x_2 \vee x_3\] \[ c_3 = \lnot x_1 \vee \lnot x_2 \vee x_3 \text{\hspace*{20pt}} c_4 = \lnot x_3 \vee \lnot x_2 \]
-	If we already know $I= \{x_1\}$, then remaining literals to explain are defined as $\overline{\Iend\setminus I} = c_6 \wedge c_7$:
-	\[c_5 = x_1 \text{\hspace*{20pt}} c_6 = x_2 \text{\hspace*{20pt}} c_7 = \lnot x_3 \]
-	We define $p\triangleq$ \textit{exactlyone($c_6$, $c_7$)} and $f = \sum w_i$ the weighted sum over the following clause weights $w_1 = 20, w_2=20, w_3=20, w_4=20, w_5=1, w_6=1, w_7=1$.
-	
-	Let $\setstohit =\{ \{ c_6, c_7\} \}$ be the collection of hitting sets bootstrapped with the `\textit{exactlyone}' constraint. Table \ref{tab:explanation-steps-expanded} sketches the steps required to find an explanation for \formula.
-}
-
-
 Instead of directly adding the complement of $\m{S}$ to \setstohit as done by \citet{ignatiev2015smallest}, our algorithm includes a call to \grow, which extends $\m{S}$ into a larger subset of $\formula$ that is still satisfiable (if possible).
 %\tias{here base grow impls?} \bart{Your next sentence is enough for me here. Alternatively we can in one stentence say that we consider a greedy and a maxsat-based implementation? }
 We discuss the different possible implementations of \grow later and evaluate their performance in \cref{sec:experiments}.
 
-
-
 Soundness and completeness of the proposal follow from the fact that all sets added to \setstohit are correction subsets, and \cref{thm:soundcomplete}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
+ 
+ 
  
 \begin{theorem}\label{thm:soundcomplete}
   Let $\m{H}$ be the the set of correction sets of \formula. 
@@ -167,28 +130,66 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 % 
 % 
 
-Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver. 
+Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver.
 
-\emilio{Extending theorem \ref{thm:soundcomplete}, if $f$ is defined as a stricly increasing monotone function and p also satisfying the monotonicity property then \comus is guaranteed to be a \emph{minimal} unsatisfiable subset.
-}
-\todo{Add proof ?}
+\emilio{The result of algorithm \ref{alg:comus} represents a subset of the clauses of F.}
+\begin{example}
+	\emilio{ Consider the following cnf $\formula$ formula over variables $x_1, x_2, x_3$ with model $\{x_1, \lnot x_2, x_3 \}$:
+	\[ c_1 = x_1 \text{\hspace*{20pt}} c_2 = \lnot x_1 \vee \lnot x_2 \vee x_3\] \[ c_3 = \lnot x_1 \vee \lnot x_2 \vee x_3 \text{\hspace*{20pt}} c_4 = \lnot x_3 \vee \lnot x_2 \]
+	If we already know $I= \{x_1\}$, then remaining literals to explain are defined as $\overline{\Iend\setminus I} = c_6 \wedge c_7$:
+	\[c_5 = x_1 \text{\hspace*{20pt}} c_6 = x_2 \text{\hspace*{20pt}} c_7 = \lnot x_3 \]
+	We define $p\triangleq$ \textit{exactlyone($c_6$, $c_7$)} and $f = \sum w_i$ the weighted sum over the following clause weights $w_1 = 20, w_2=20, w_3=20, w_4=20, w_5=1, w_6=1, w_7=1$.
+	
+	Let $\setstohit$ be the collection of hitting sets. We can help the hitting set solver by bootstrapping it with $\setstohit  =\{ \{ c_6, c_7\} \}$, to ensure at least one of the two is taken. We also add the `\textit{exactlyone}' constraint. Table \ref{tab:explanation-steps-expanded} sketches the steps required to find an explanation for \formula.}
+\end{example}
+
+\begin{table}[!h]
+	\centering
+	\begin{adjustbox}{max width=\columnwidth}
+		
+		\emilio{
+			\begin{tabular}{|r|c|c|c|c|}
+				\hline
+				\rule{0pt}{2ex}&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
+				\hline
+				\rule{0pt}{2ex} 0 &$\{ \emptyset \}$ & True & $\{ \emptyset \}$    & $\{ \{ c_6, c_7 \}\}$\rule{0pt}{2ex}   \\
+				\hline
+				1 &\rule{0pt}{2ex} $\{ c_6 \}$ & True & $\{ c_6,  c_1, c_5, c_2, c_3\}$    & $\{ \{ c_6, c_7\}, \{c_7, c_4\}\}$\rule{0pt}{2ex}   \\
+				\hline		
+				\multirow{2}*{2} &\rule{0pt}{2ex}\multirow{2}*{ $\{ c_6, c_4 \}$}  & \multirow{2}*{True} & \multirow{2}*{$\{ c_6,  c_4, c_2, c_3\}$}   & $\{ \{ c_6, c_7\}, \{c_7, c_4\}$  \\  
+				& &  &    & $\{c_7, c_1, c_5\}\}$\rule{0pt}{2ex} \\\hline
+				\multirow{2}*{3}&\rule{0pt}{2ex} \multirow{2}*{$\{ c_6, c_4, c_5 \}$}  & \multirow{2}*{True} &  \multirow{2}*{$\{ c_6,c_1, c_4, c_5, c_7 \}$}  & $\{ \{ c_6, c_7\}, \{c_7, c_4\}$  \\  
+				&&  &    & $\{c_7, c_1, c_5\}, \{c_2, c_3\}\}$\rule{0pt}{2ex} \\\hline
+				4& \rule{0pt}{2ex} $\{ c_6, c_4,c_5, c_2 \}$ & False & \multicolumn{2}{|c|}{$\{ c_6, c_4,c_5, c_2 \}$ is an OCUS of $\formula$.} \\
+				\hline
+			\end{tabular}
+		}
+	\end{adjustbox}
+	\caption{Example of an OCUS-explanation computation.}
+	\label{tab:explanation-steps-expanded}
+\end{table}
+
+\emilio{Line 0 in table \ref{tab:explanation-steps-expanded} represents the initialization phase. The next lines represent the successive hitting sets $\m{S}$ computed by the hitting set solver. The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$. We further detail in section~\ref{sec:experiments} which \grow-configuration works best. Finally, note how at line 2, the hitting set computed is not $\{ c_6, c_7 \}$ of cost due to the `\textit{exactlyone}'-constraint.}
+
+%\egcomment{Since this was a remark of one of the reviewers I thought it would be nice to have an example of how an explanation is computed in practice}
+
+%\egcomment{Something to add here @Bart ?}
+%\emilio{Extending theorem \ref{thm:soundcomplete}, if $f$ is defined as a stricly increasing monotone function and p also satisfying the monotonicity property then \comus is guaranteed to be a \emph{minimal} unsatisfiable subset.
+% \todo{Add proof ?}
 
 \begin{proposition}
-	\emilio{
-	The complexity of extracting the \mm{\call{O(C)US}} is of the second level of polynomial hierarchy FP$^{\sum^{P}_2}$. 
-}
+	\emilio{The complexity of extracting an \mm{\call{O(C)US}} is at least of the second level of polynomial hierarchy FP$^{\sum^{P}_2}$. }
 \end{proposition}
+%
 \begin{proof}
 	\emilio{
-	The extraction of a cardinality-minimal MUS (SMUS) for an unsatisfiable cnf $\formula$ is of the second level of polynomial hierarchy FP$^{\sum^{P}_2}$ \cite{ignatiev2015smallest}. In the case of $f$ being a weighted sum, the \omus extraction is reducible to an SMUS-extraction on a relaxed formula $\formula^{R}$ in polynomial time. 
-
-		\noindent\textit{Reduction.} Associate for each clause $c_i \in \formula$ of weight $w_i=n \in \mathbb{N}^+$, the relaxation variables $r_{i,j}$ where $j \in 1..n-1$:
-		\[ \formula^{R}  \triangleq \bigcup_{c_i \in \formula}(c_i \leftrightarrow (r_{i, 1} \wedge ..  r_{i, n-1})) \]
-
+	The complexity of extracting a cardinality-minimal MUS (SMUS) for an unsatisfiable cnf $\formula$ is of the second level of polynomial hierarchy FP$^{\sum^{P}_2}$ \cite{ignatiev2015smallest}. If uniform weights are applied to \comus then it is reduced to computing an SMUS.}
+	%the \omus extraction is reducible to an SMUS-extraction on a relaxed formula $\formula^{R}$ in polynomial time. 
+%
+%		\noindent\textit{Reduction.} Associate for each clause $c_i \in \formula$ of weight $w_i=n \in \mathbb{N}^+$, the relaxation variables $r_{i,j}$ where $j \in 1..n-1$:
+%		\[ \formula^{R}  \triangleq \bigcup_{c_i \in \formula}(c_i \leftrightarrow (r_{i, 1} \wedge ..  r_{i, n-1})) \]
 %	$F^{R} \triangleq \cup \$
 %	, by adding $w_i - 1$ relaxation variables $(r_{i,1} \wedge .. \wedge r_{i,n-1}) \leftrightarrow c_i$, the problem of OUS is reduced to the problem of SMUS.
-	}
-	\paragraph{Constrainedness.} \todo{Add proof for Constrainedness}
 \end{proof}
 
 

@@ -23,7 +23,7 @@ It is easy to see that there is a one to one correspondence between the OCUSs pr
 %\emilio{phrases are loooong.}
 }
 
-The recent algorithm of ~\citet{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), a partial interpretation $I$ and a cost function $f$ quantifying the difficulty of an explanation step, by means of a weight for every clause and literal in \formula. % and a set $U$ of atoms whose literals need explaining (e.g., not containing auxiliary variables). 
+The recent algorithm of ~\citet{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), a partial interpretation $I$ \emilio{(a conjunction of literals)} and a cost function $f$ quantifying the difficulty of an explanation step, by means of a weight for every clause and literal in \formula. % and a set $U$ of atoms whose literals need explaining (e.g., not containing auxiliary variables). 
 % \emilio{not sure why we talk about U and not later in the text. U is especially useful with the call to the optimal propagate}
 % U not needed, auxiliaries get zero weight then done...
 
@@ -95,7 +95,7 @@ $X_{best} \gets \mathit{nil}$\;
 The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by the total cost of the elements used in the explanation.
 An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a set of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals entailed by $I'$ and $\formulac'$ which are not yet explained.
 
-To obtain a sequence of such steps, ~\citet{ecai/BogaertsGCG20} iteratively search for the best (least costly) explanation step and add i ts consequence to the partial interpretation $I$.
+To obtain a sequence of such steps, ~\citet{ecai/BogaertsGCG20} iteratively search for the best (least costly) explanation step and add its consequence to the partial interpretation $I$.
 %\bart{In retrospect, I propose to move this back to the constrainedness part. Reason: at this point (and also in prior work) we did not have ``hard constraints'' yet. So even if we would allow indicators, you can still turn their definitions on and off, which does not make sense at this point in the text.}
 %\emilio{
 %    changed to comment : 
@@ -103,20 +103,21 @@ To obtain a sequence of such steps, ~\citet{ecai/BogaertsGCG20} iteratively sear
 %
 The key part of the algorithm is the search for the next best explanation, given an interpretation $I$ derived so far. 
 \cref{alg:oneStep} shows the gist of how this was done.
-It takes as input the formula \formulac, a cost function $f$ quantifying quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
-To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequenty selects the best of the found such MUSs.  
-The reason this works is because there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of $\formulac$ and $I$. %~\cite{ecai/BogaertsGCG20}. 
+It takes as input the formula \formulac, a cost function $f$ quantifying the quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
+To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequently selects \emilio{the lowest cost one from found MUSs}\deleted{the best of the found such MUSs}.  
+The reason this works is because there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of (subsets of) $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}. 
 
-Experiments have shown that such a MUS-based approach can easily take hours, and hence that algorithmic improvements are needed to make it more practical. 
+Experiments have shown that such a MUS-based approach can easily take hours, especially when multiple MUS calls are performed to increase the change of finding a good MUS, and hence that algorithmic improvements are needed to make it more practical. 
 We see three main points of improvement, all of which will be tackled by our generic OCUS algorithms presented in the next section. 
 % \tias{in the exps, MUS-based does not, also because we don't do the constraint trick. What to do?} \bart{Maybe the experiment section is a good place to discuss this in detail. That we there clearly state: in Bogaerts et al: the MUS based thing from algorithm \onestep is found not sufficient. To get better MUSs they implement this trick that walks a different balance between ``doing it for too many subsets and exploding there'' and ``getting terrible explanations''. What we show is that with our constrained stuff, you can get the best of both worlds: we get optimal explanatiosn (better than the subset stuff) plus we are as efficient as the no-subset approach). 
 %  But... in the main text I would not go into detail because it would distract from our main message. }
 \begin{inparaenum}
  \item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the explanation found is indeed optimal %don't use ``the best'' -> non-unique 
  (with respect to the given cost function). 
- Most likely, the reason for choosing MUSes is that currently, \textit{there are no algorithms for unsatisfiable subset \textbf{optimization}}. 
- \item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all of these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$. This begs the questions whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is on the number of literals from $\overline{(\Iend\setminus I)}$ to include. 
- \item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many very similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}? 
+ Performing multiple MUS calls is only a heuristic due to the fact that \textit{there are no algorithms for cost-based unsatisfiable subset \textbf{optimization}}. 
+ 
+ \item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all \deleted{of }these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$. This begs the questions whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
+ \item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}
 \end{inparaenum}
 
 

@@ -44,11 +44,11 @@
 % uncomment this for disabling all comments
 % \renewcommand\comment[1]{}
 \newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
-\newcommand{\emilio}[1]{{\comment{\color{orange}#1}}}
+\newcommand{\emilio}[1]{{\comment{#1}}}
 \newcommand{\egcomment}[1]{{\comment{\color{purple}\textsc{EG:}#1}}}
 \newcommand{\bart}[1]{{\comment{\color{OliveGreen}\textsc{BB:}#1}}}
 \newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1} }}
-\newcommand{\deleted}[1]{{\sout{#1}}}
+\newcommand{\deleted}[1]{} %{\sout{#1}}}
 
 % uncomment this for showing all text without removed text
 % \renewcommand\emilio[1]{#1}
@@ -140,7 +140,7 @@
 	Tias Guns$^{1,2}$
 	\affiliations
 	$^1$Vrije Universiteit Brussel, Belgium\\
-	$^2$KULeuven, Belgium\\
+	$^2$KU Leuven, Belgium\\
 	\emails
 	emilio.gamba@vub.be, bart.bogaerts@vub.be,
 	tias.guns@kuleuven.be
@@ -154,12 +154,12 @@
 
 \begin{abstract}
 Recently, a novel method for explaining solutions of constraint satisfaction problems was proposed. 
-An explanation here is a \textit{sequence} of simple inference steps, where the simplicity of an inference step depends on the number and types of constraints used, eventually explaining all logical consequences of the problem. 
+An explanation here is a \textit{sequence} of simple inference steps, where the simplicity of an inference step is measured by the number and types of constraints and facts used, and where the sequence explains all logical consequences of the problem. 
 % (I would even drop this: For CSPs that have a unique solution, this corresponds to explaining each decision variable's assignment in that full solution.)
 % what?
-The current paper %tackles two questions left in 
-builds on these formal foundations and tackles two emerging questions: namely how to generate explanations that are provably optimal (with respect to the given cost metric) and how to generate them efficiently. 
-% how? 
+We %tackles two questions left in 
+build on these formal foundations and tackle two emerging questions: namely how to generate explanations that are provably optimal (with respect to the given cost metric) and how to generate them efficiently. 
+% how?
 To answer these questions, we develop 1) an implicit hitting set algorithm for finding \textit{optimal} unsatisfiable subsets; 2) a method to reduce multiple calls for (optimal) unsatisfiable subsets to a single call that takes \emph{constraints} on the subset into account, and 3) a method for re-using relevant information over multiple calls to these algorithms. 
 %     This raises the need for algorithms that can compute unsatisfiable subsets of a logical specification that are optimal with respect to a certain cost criterion.
 %     We tackle this challenge by developing an algorithm for computing cost-optimal unsatisfiable subsets inspired by minimal hitting set dualization approaches for finding cardinality-minimal unsatisfiable subsets and for solving partial weighted \maxsat.
@@ -168,7 +168,8 @@ To answer these questions, we develop 1) an implicit hitting set algorithm for f
 %     We generalize our approach to a setting that allows for imposing constraints on the structure of the unsatisfiable subsets of interest.
 %     We evaluate all our algorithms in the explanation-generation context.
 %     % in terms of the runtime and computational feasibility, as well as the quality of the obtained explanation sequence.
-We show that this approach can be used to effectively find sequences of \textit{optimal} explanations for constrained satisfaction problems like logic grid puzzles. \emilio{The code and data is available at \url{https://github.com/sourdough-bread/ocus-xplain}.}
+The method is applicable to other problems that require finding cost-optimal unsatiable subsets.
+We specifically show that this approach can be used to effectively find sequences of \textit{optimal} explanations for constrained satisfaction problems like logic grid puzzles. \emilio{The code and data is available at \url{https://github.com/sourdough-bread/ocus-xplain}.} \tias{die sourdough-bread leest wel heel vreemd... we hebben https://github.com/ML-KULeuven dat liever... zal ik daar forken?}
 \end{abstract}
 
 \section{Introduction}

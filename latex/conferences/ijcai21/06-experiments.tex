@@ -51,7 +51,7 @@ To answer \textbf{Q1}, we ran the \call{MUS}-based algorithm as described in \cr
 These costs are plotted on a heatmap in Figure \ref{fig:rq1_heatmap}, where the darkness represents the number of occurrences of the combination at hand. 
 % Note that, the distribution of the dotts show the quality of the OUS explanation is either similar, when along the same-cost diagonal or better in the upper part of the graph. The dotts' sizes demonstrates 
 We see that the difference in quality is striking in many cases, with the MUS-based solution often missing very cheap explanations (as seen by the large dark vertical column around cost 60), thereby confirming the need for a cost-based \omus/\comus approach.
-\begin{figure}[ht]
+\begin{table}[ht]
 		\centering
 	\begin{adjustbox}{max width=\columnwidth}
 \begin{tabular}{|c|c|c|c|c|}
@@ -64,7 +64,8 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
 	\end{adjustbox}
 \caption{Average number of explanation steps per config}
 \label{tab:config-number-explanation-steps}
-	\end{figure}
+	\end{table}
+\tias{Please add avg (and maximum?) MUS size to show that 'smaller is not better' more explicitly}
 
 \emilio{Table \ref{tab:config-number-explanation-steps} provides additional information on the average number of explanation steps generated for each configuration. The average is not equal for all configurations, the reason for this is that one of the two OUS implementations timed-out before completing the most difficult puzzle (hence explaining their lower number) and the quality of the MUS-based explanations is worse. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower.}
 
@@ -76,7 +77,7 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
   \caption{Q2 - Explanation specific \grow strategies.}
   \label{fig:grow_strategies}
 \end{figure}
-
+\tias{make 'Timeout' top entry of legend, sort legend according to ordering in graph}
 
 
 \deleted{Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the cumulative time of different \grow strategies to generate the explanation sequence of all puzzles combined.}\emilio{Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the average cumulative time of different \grow strategies to derive n-literals for all puzzles combined.} The configurations are the following: \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$ given with every call of \comus while \emph{Actual} refers to using only the constraints that hold in the actual interpretation (Section~\ref{sec:ocusEx}); \emph{Greedy} to growing using a sat-based refinement heuristic; the weighing scheme is either with uniform weights (\emph{unif}), with the original weights (\emph{pos}) or with the inverse of the original costs (\emph{inv}) when using the \maxsat solver (\emph{Max}).
@@ -114,6 +115,7 @@ Slightly surprising, performing a \maxsat-\grow with the full interpretation tak
   \caption{Q3 - Cumulative runtime evolution enhancements on incrementality and constrainedness.}
   \label{fig:incrementality_constraindness}
 \end{figure}
+\tias{make 'Timeout' top entry of legend}
 
 \paragraph{Constrainedness and incrementality}
 To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C), and incrementality, \emilio{i.e., reusing satisfiable subsets between \omus calls (+SS caching) and keeping the hitting set solver warm for \comus (+Incr.HS).}
@@ -170,6 +172,7 @@ Max-Full-Unif &  32604 &  57.3 &   0.0 &   42.3 &    69900 \\
 	\caption{Distribution of the explanation generation time in the generated sequence.}
 	\label{fig:explanation_time}
 \end{figure}
+\tias{Try Fig 5 with log-y axis?}
 \paragraph{Interactivity} \emilio{To analyze how the explanations compare in an interactive context, we represent a distribution of explanation generation times in figure \ref{fig:explanation_time}. We see that a major part of the explanations take less than 2 to 5 seconds to be generated. Even though, the difficult explanation steps can take more time ranging from 5 to 100+ seconds to be generated, it is only a small fraction of all generated explanations.}
 
 

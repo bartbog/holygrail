@@ -11,7 +11,7 @@ The selected clauses in an explanation for such a puzzle consist of one or more 
 %
 Our experiments are designed to answer the following research questions: 
 \begin{compactdesc}
- \item[Q1] What is the effect of requiring optimality of the generated MUSs on the \textbf{quality} of the generated explanations?
+ \item[Q1] What is the effect of requiring optimality of the generated MUSs on the \textbf{quality} of the generated explanations and \emilio{the generated explanation sequence} ?
  \item[Q2] Which \textbf{domain-specific \grow methods} perform best?
  \item[Q3] What is the effect of the use of \textbf{constrainedness} on the time required to compute an explanation sequence?
  \item[Q4] Does \textbf{re-use} of computed satisfiable subsets improve efficiency?
@@ -51,23 +51,92 @@ To answer \textbf{Q1}, we ran the \call{MUS}-based algorithm as described in \cr
 These costs are plotted on a heatmap in Figure \ref{fig:rq1_heatmap}, where the darkness represents the number of occurrences of the combination at hand. 
 % Note that, the distribution of the dotts show the quality of the OUS explanation is either similar, when along the same-cost diagonal or better in the upper part of the graph. The dotts' sizes demonstrates 
 We see that the difference in quality is striking in many cases, with the MUS-based solution often missing very cheap explanations (as seen by the large dark vertical column around cost 60), thereby confirming the need for a cost-based \omus/\comus approach.
-\begin{table}[ht]
-		\centering
-	\begin{adjustbox}{max width=\columnwidth}
-\begin{tabular}{|c|c|c|c|c|}
-	\hline
-       \rule{0pt}{2ex} \textbf{MUS}& \textbf{OUS} &  \textbf{OUS+SS.Caching} &\textbf{OCUS} &  \textbf{OCUS+Incr.HS}\\
-        	\hline
-	   \rule{0pt}{2ex}$90\pm23$ & $117\pm26$ & $113\pm15$   &  $119\pm22$ & $121\pm24$    \\
-	   	\hline
-\end{tabular}
-	\end{adjustbox}
-\caption{Average number of explanation steps per config}
-\label{tab:config-number-explanation-steps}
-	\end{table}
-\tias{Please add avg (and maximum?) MUS size to show that 'smaller is not better' more explicitly}
+%\begin{table}[ht]
+%		\centering
+%	\begin{adjustbox}{max width=\columnwidth}
+%\begin{tabular}{|c|c|c|c|c|}
+%       \rule{0pt}{2ex} \textbf{MUS}& \textbf{OUS} &  \textbf{OUS+SS.Caching} &\textbf{OCUS} &  \textbf{OCUS+Incr.HS}\\
+%        	\midrule
+%	   \rule{0pt}{2ex}$90\pm23$ & $117\pm26$ & $113\pm15$   &  $119\pm22$ & $121\pm24$    \\
+%	   	\bottomrule
+%\end{tabular}
+%	\end{adjustbox}
+%\caption{Average number of explanation steps per config}
+%\label{tab:config-number-explanation-steps}
+%	\end{table}
+% \tias{Please add avg (and maximum?) MUS size to show that 'smaller is not better' more explicitly}
+\paragraph{Notation} In the following, \emph{+SS. caching} corresponds to caching satisfiable subsets in order to re-use subsets between \omus calls, while \emph{+Incr.HS} corresponds to keeping the hitting set solver warm throughout the different calls to \onestepo.
 
-\emilio{Table \ref{tab:config-number-explanation-steps} provides additional information on the average number of explanation steps generated for each configuration. The average is not equal for all configurations, the reason for this is that one of the two OUS implementations timed-out before completing the most difficult puzzle (hence explaining their lower number) and the quality of the MUS-based explanations is worse. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower.}
+\begin{table}[!h]
+	\centering
+			\begin{adjustbox}{max width=\columnwidth}
+	\begin{tabular}{rrrrrr}
+%		 \cline{2-6}
+	& \multirow{2}{*}{\textbf{MUS}} & \multirow{2}{*}{\textbf{OUS}} &\textbf{OUS}  & \multirow{2}{*}{\textbf{OCUS}} &\textbf{OCUS}\\
+		\rule{0pt}{2ex}&  & & \textbf{+SS.Caching} &  & \textbf{+Incr.HS}  \\
+		\midrule
+\multicolumn{1}{r|}{\textbf{\textit{avg. $\#$ expl.}}} &  \textbf{90} &  117 &  113 &  119 &  121 \\
+%\multicolumn{1}{r|}{\rule{0pt}{3ex}\textbf{\textit{ $\overbar{\text{\# expl.}}$ }}} &  $90\pm23$ &  $117\pm26$ &  $113\pm15$ &  $119\pm22$ &  $121\pm24$ \\
+%\multicolumn{1}{|r|}{\rule{0pt}{2ex}\textbf{\textit{std. \# expl.}}} &  $23$ &   &  15 &  $22$ &  $24$ \\
+%		\hline
+\multicolumn{1}{r|}{\textbf{\rule{0pt}{2ex}\textit{max. expl. size}}} &  \textbf{14}&  13 & 13 &  13 &  13 \\
+\multicolumn{1}{r|}{\rule{0pt}{2ex}\textbf{\textit{avg. expl. size}}} &   \textbf{5.02} &   4.07 &   4.08 &  4.05 &   $4.07$ \\
+%\multicolumn{1}{|r|}{\rule{0pt}{2ex}\textbf{\textit{std-size}}} &   $2.08$ &   $1.47$ &   $1.47$ &   $1.42$ &   $1.41$ \\
+%\hline
+\multicolumn{1}{r|}{\rule{0pt}{2ex}\textbf{\textit{avg. $\#$ lits deriv.}}}&   \textbf{1.72} &   1.32 &   1.33 &   1.30 &   1.28 \\
+%\multicolumn{1}{|r|}{\rule{0pt}{2ex}\textbf{\textit{std lits deriv.}}} &   1.24 &   0.95 &   0.97 &   0.94 &   $0.91$ \\
+%\hline
+\bottomrule
+	\end{tabular}
+		\end{adjustbox}
+	\caption{\emilio{Statistics on the composition of the explanation sequences}}
+	\label{tab:config-number-explanation-steps-avg-max}
+\end{table}
+
+%\begin{table}[ht]
+%	\centering
+%%		\begin{adjustbox}{max width=\columnwidth}
+%\begin{tabular}{lrrrrr}
+%	\cline{2-6}
+%	&     \multicolumn{5}{c}{\textit{config}} \\
+%	\cline{2-6}
+%	\rule{0pt}{2ex} &     OCUS+I &       OCUS &      OUS+I &        OUS &        MUS \\
+%	\midrule
+%	max-size &  13 &  13 &  13 &  13 &  14 \\
+%	avg-size &   4.07 &   4.05 &   4.08 &   4.07 &   5.02 \\
+%	std-size &   1.41 &   1.41 &   1.47 &   1.47 &   2.08 \\
+%	\bottomrule
+%\end{tabular}
+%%	\end{adjustbox}
+%\caption{Average number of explanation steps per config}
+%\label{tab:config-number-explanation-steps-avg-max}
+%\end{table}
+
+%\begin{table}[ht]
+%	\centering
+%			\begin{adjustbox}{max width=\columnwidth}
+%	\begin{tabular}{cr|r|r|r|r|r|}
+%		\cline{3-7}
+%		&&     \multicolumn{5}{c|}{\textit{config}} \\
+%		\cline{3-7}
+%		\rule{0pt}{2ex}&  &     OCUS+I &       OCUS &      OUS+I &        OUS &        MUS \\
+%		\hline
+%	 \multicolumn{1}{|c|}{\multirow{3}{*}{\rotatebox[origin=c]{90}{\parbox[c]{1cm}{\centering MUS-size}}}}	& max &  13 &  13 &  13 &  13 &  14 \\
+%	\multicolumn{1}{|c|}{}	& avg &   4.07 &   4.05 &   4.08 &   4.07 &   5.02 \\
+%	\multicolumn{1}{|c|}{}	& std &   1.41 &   1.41 &   1.47 &   1.47 &   2.08 \\
+%		\hline
+%	\end{tabular}
+%		\end{adjustbox}
+%	\caption{Average number of explanation steps per config}
+%	\label{tab:config-number-explanation-steps-avg-max}
+%\end{table}
+
+
+
+\emilio{\paragraph{Explanation Sequence} To identify the effect on the quality of the generated explanation sequences, we report statistics on the generated sequences in Table \ref{tab:config-number-explanation-steps-avg-max} for each configuration. The notation used in the table, is defined as follows: `avg. $\#$ expl.' is the average number of explanations in the explanation sequence; `max. expl. size' and `avg. expl. size' are respectively the maximum and average size of an explanation; avg. $\#$ lits derived is the average number of literals derived in an explanation. 
+	
+	The average number of explanations is not equal for all configurations, the reason for this is that %one of the two OUS implementations timed-out before completing the most difficult puzzle (hence explaining their lower number) and
+	the quality of the MUS-based explanations is worse. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower. The last 2 lines of table \ref{tab:config-number-explanation-steps-avg-max} support the validity of this statement. }
 
 \paragraph{Domain-specific \grow} The core computation\emilio{al} complexity for generating explanations not only lies in the calls to the optimal hitting set solver, but more importantly in computing \emph{high quality} satisfiable subsets. This requires a trade-off between \emph{efficiency} of the \grow strategy and \emph{quality} of the produced satisfiable subset.
 
@@ -77,7 +146,7 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
   \caption{Q2 - Explanation specific \grow strategies.}
   \label{fig:grow_strategies}
 \end{figure}
-\tias{make 'Timeout' top entry of legend, sort legend according to ordering in graph}
+% \tias{make 'Timeout' top entry of legend, sort legend according to ordering in graph}
 
 
 \deleted{Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the cumulative time of different \grow strategies to generate the explanation sequence of all puzzles combined.}\emilio{Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the average cumulative time of different \grow strategies to derive n-literals for all puzzles combined.} The configurations are the following: \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$ given with every call of \comus while \emph{Actual} refers to using only the constraints that hold in the actual interpretation (Section~\ref{sec:ocusEx}); \emph{Greedy} to growing using a sat-based refinement heuristic; the weighing scheme is either with uniform weights (\emph{unif}), with the original weights (\emph{pos}) or with the inverse of the original costs (\emph{inv}) when using the \maxsat solver (\emph{Max}).
@@ -111,11 +180,11 @@ Slightly surprising, performing a \maxsat-\grow with the full interpretation tak
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=0.9\columnwidth]{figures_post_paper/cumul_incr_avg_time_lits_derived.pdf}
+  \includegraphics[width=\columnwidth]{figures_post_paper/cumul_incr_avg_time_lits_derived.pdf}
   \caption{Q3 - Cumulative runtime evolution enhancements on incrementality and constrainedness.}
   \label{fig:incrementality_constraindness}
 \end{figure}
-\tias{make 'Timeout' top entry of legend}
+% \tias{make 'Timeout' top entry of legend}
 
 \paragraph{Constrainedness and incrementality}
 To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C), and incrementality, \emilio{i.e., reusing satisfiable subsets between \omus calls (+SS caching) and keeping the hitting set solver warm for \comus (+Incr.HS).}
@@ -165,15 +234,28 @@ Max-Full-Unif &  32604 &  57.3 &   0.0 &   42.3 &    69900 \\
 	\label{tab:percentage_exec}
 \end{table}
 }
-
-\begin{figure}[ht]
+\begin{table}[!h]
 	\centering
-	\includegraphics[width=\columnwidth]{figures_post_paper/explanation_times.pdf}
-	\caption{Distribution of the explanation generation time in the generated sequence.}
-	\label{fig:explanation_time}
-\end{figure}
-\tias{Try Fig 5 with log-y axis?}
-\paragraph{Interactivity} \emilio{To analyze how the explanations compare in an interactive context, we represent a distribution of explanation generation times in figure \ref{fig:explanation_time}. We see that a major part of the explanations take less than 2 to 5 seconds to be generated. Even though, the difficult explanation steps can take more time ranging from 5 to 100+ seconds to be generated, it is only a small fraction of all generated explanations.}
+	\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{c|c|c|c|c|c|c|c|c}
+	Time [s] &\textbf{0-1} & \textbf{1-2} & \textbf{2-5} & \textbf{5-10} & \textbf{10-20} & \textbf{20-50} & \textbf{50-100} & \textbf{100+}\\
+	\hline
+	\rule{0pt}{2ex} $\# expl$ &565 & 287 & 193 & 61 & 46 & 19 & 10 & 10\\
+
+\end{tabular}
+\end{adjustbox}
+	\caption{Frequency of explanation-generation-time in the explanation sequence.}
+	\label{tab:explanation-time}
+\end{table}
+%\begin{figure}[ht]
+%	\centering
+%	\includegraphics[width=\columnwidth]{figures_post_paper/explanation_times.pdf}
+%	\caption{Distribution of the explanation generation time in the generated sequence.}
+%	\label{fig:explanation_time}
+%\end{figure}
+
+%\tias{Try Fig 5 with log-y axis?}
+\paragraph{Interactivity} \emilio{To analyze how the explanations perform in an interactive context, we represent the frequency of the explanation-generation times in table \ref{tab:explanation-time}. We see that a major part of the explanations take less than 2 to 5 seconds to be generated. Even though, the difficult explanation steps can take more time ranging from 5 to 100+ seconds to be generated, it is only a small fraction of all generated explanations.}
 
 
 

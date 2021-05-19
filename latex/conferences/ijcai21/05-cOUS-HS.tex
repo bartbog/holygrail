@@ -2,11 +2,11 @@ The first two considerations from the previous section lead to the following def
 
 \begin{definition}
    Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula}\to \{true,false\}$. We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
-    $\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if \begin{compactitem}                                      
+    $\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if \begin{itemize}                                      
       \item $\m{S}$ is unsatisfiable,
       \item $p(\m{S})$ is true
       \item all other unsatisfiable $\m{S}'\subseteq \formula$ for which $p(\m{S}')$ is true also satisfy $f(\m{S}')\geq f(\m{S})$.
-    \end{compactitem}
+    \end{itemize}
 \end{definition}
 
 Rephrased in these terms, the task of the procedure \onestep is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets  that contain exactly one literal of $\overline{\Iend\setminus I}$, see \cref{alg:oneStepOCUS}. 
@@ -22,8 +22,8 @@ In our implementation we use a cost function $f$ as well as a condition $p$ that
 \small
   minimize_S \quad & f(S) \\ 
   s.t. \quad & p(S) \\
-       & sum(H) \geq 1, \quad &\forall H \in \setstohit \\
-       & s \in \{0,1\}, \quad &\forall s \in S
+       & sum(H) \geq 1, \quad &&\forall H \in \setstohit \\
+       & s \in \{0,1\}, \quad &&\forall s \in S
 \end{align*}
 %\bart{This is not what the reviewers asked for! They asked for MIP models of our ``arbitrary objective functions''. A mip encoding of a generic hitting set problem with only some ``at least one'' constraints is not going to help us, I think. }
 % well, its not arbitrary but linear, and it is a weighted sum; will have to do
@@ -37,7 +37,7 @@ where $S$ is a set of MIP decision variables, one for every clause in $\formula$
 %\bart{Previous sentence instead of earlier ``indicator'' sentence?}
 %
 %In our application, 
-$f$ is a weighted sum over the variables in $S$. For example, (unit) clauses representing previously derived facts can be given small weights and regular constraints can be given large weights, such that explanations are penalized for including many constraints when previously derived facts can be used instead. %relevant facts are directly available.
+$f$ is a weighted sum over the variables in $S$. For example, (unit) clauses representing previously derived facts can be given small weights and regular constraints can be given large weights, such that explanations are penalized for including constraints when previously derived facts can be used instead. %relevant facts are directly available.
 
 
 
@@ -69,7 +69,7 @@ $f$ is a weighted sum over the variables in $S$. For example, (unit) clauses rep
   \caption{$\comus(\formula,f,p)$ }
   \label{alg:comus}
 \end{algorithm}
-
+\tias{H should be initialised in algo 3}
 
 %\tias{I would not show the above one as it is rather vague \bart{I would disagree with the vagueness. It makes abstraction of several things (what is $p$? what is $f$? How is Grow and CondOptHS implemented? But in my opinion that is good, since it shows close relation to the basic OUS algo as well as illustrating what is really going on and modularity.}, but immediately rewrite it as Alg2 the singleStepExplain:}
 %\bart{I would avoid that :-) That way we mix up ``how to compute constrained OUSs?'' with ``how to compute explanations using constrained OUSs?''. These are two different concerns. We should show that we also tackle the first .  That way, our new ``singlestepexplain2'' will also look a lot simpler than singleStepExplain1 (if we use one oracle call to cOUS}
@@ -121,7 +121,7 @@ Soundness and completeness of the proposal follow from the fact that all sets ad
 \end{theorem}
 \begin{proof}
 For the first claim, it is clear that $\m{S}$ is unsatisfiable and satisfies $p$. Hence all we need to show is $f$-optimality of $\m{S}$.
-  If there were some other unsatisfiable subset $\m{S}'$ that satisfies $p$ with $f(\m{S}')\leq f(\m{S})$, we know that $\m{S}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction set is the superset of a minimal correction set).
+  If there would exist some other unsatisfiable subset $\m{S}'$ that satisfies $p$ with $f(\m{S}')\leq f(\m{S})$, we know that $\m{S}'$ would hit every minimal correction set of \m{F}, and hence also every set in \m{H} (since every correction set is the superset of a minimal correction set).
   Since $\m{S}$ is $f$-optimal among hitting sets of $\m{H}$ satisfying $p$ and $\m{S}'$ also hits $\m{H}$ and satisfies $p$, it must thus be that $f(\m{S})=f(\m{S}')$. 
 %  
 
@@ -168,7 +168,7 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 \end{table}
 \end{example}
 
-\emilio{Line 0 in table \ref{tab:explanation-steps-expanded} represents the initialization phase. The next lines represent the successive hitting sets $\m{S}$ computed by the hitting set solver. The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$. We further detail in section~\ref{sec:experiments} which \grow-configuration works best. Finally, note how at line 2, the hitting set computed is not $\{ c_6, c_7 \}$ of cost due to the `\textit{exactlyone}'-constraint.}
+\emilio{Line 0 in table \ref{tab:explanation-steps-expanded} represents the initialization phase. The next lines represent the successive hitting sets $\m{S}$ computed by the hitting set solver. The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$. We further detail in section~\ref{sec:experiments} which \grow-configuration works best. Finally, note how at line 2, the hitting set computed is not $\{ c_6, c_7 \}$ of cost due to the `\textit{exactlyone}'-constraint.}\tias{last sentence broken, what cost?}
 
 %\egcomment{Since this was a remark of one of the reviewers I thought it would be nice to have an example of how an explanation is computed in practice}
 

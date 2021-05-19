@@ -164,12 +164,12 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
 
 %<<<<<<< HEAD
 
-\paragraph{Explanation Sequence} The effect of optimality is also noticeable on the quality of explanation sequence. The average number of explanations for MUS is 90, while \omus is at 117. 
-%To identify the effect on the quality of the generated explanation sequences, we report statistics on the generated sequences in Table \ref{tab:config-number-explanation-steps-avg-max} for MUS and OUS. 
+\paragraph{Explanation Sequence} \added{The effect of optimality is also noticeable on the quality of explanation sequence. The average number of explanations for MUS is 90, while \omus is at 117. 
+	The reason for this is that	the quality of the MUS-based explanations is worse compared to \omus. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower. 
+	In fact, on average a MUS-based explanation is composed of 5.02 constraints contrary to an \omus-based explanation with an average of 4.07 constraints.}
+	 %one of the two OUS implementations timed-out before completing the most difficult puzzle (hence explaining their lower number) and
+	%To identify the effect on the quality of the generated explanation sequences, we report statistics on the generated sequences in Table \ref{tab:config-number-explanation-steps-avg-max} for MUS and OUS. 
 	%The notation used in the table, is defined as follows: `avg. $\#$ expl.' is the average number of explanations in the explanation sequence; `max. expl. size' and `avg. expl. size' are respectively the maximum and average size of an explanation; avg. $\#$ lits derived is the average number of literals derived in an explanation. 
-	The reason for this is that %one of the two OUS implementations timed-out before completing the most difficult puzzle (hence explaining their lower number) and
-	the quality of the MUS-based explanations is worse. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower. 
-	In fact, on average a MUS-based explanation is composed of 5.02 constraints contrary to an \omus-based explanation with an average of 4.07 constraints.
 	%The average explanation size and literals derived in  \ref{tab:config-number-explanation-steps-avg-max} support the validity of this statement. 
 %=======
 %\emilio{Table \ref{tab:config-number-explanation-steps} provides additional information on the average number of explanation steps generated for each configuration. The average is not equal for all configurations, the reason for this is that one of the two OUS implementations timed-out before completing the most difficult puzzle (hence explaining their lower number) and the quality of the MUS-based explanations is worse. 
@@ -200,12 +200,10 @@ the \maxsat solver (\emph{Max}) is combined with different weighing schemes, suc
 
 
 %\tias{Use the names used in the figure, 'Max-Full variants'?}
-As expected, %conjectured in \cref{sec:ocusEx}, 
-the \maxsat-\grow on the actual interpretation \emph{Max-Actual} indeed performs best, though only \emph{Max-Actual-Unif} is able to finish all explanations.
-When repeating this experiment for \omus the same pattern was observed.
+\added{As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} indeed performs best, though only \emph{Max-Actual-Unif} is able to finish all explanations. When repeating this experiment for \omus the same pattern was observed.
+The \emph{Greedy}-strategy provides some improvement on the cumulative runtime with respect to \emph{Max-Full}, but neither can generate explanations for all puzzle instances.}
 %  \tias{broken sentence: what do you want to say? 'constrainedness' is not an option? or do you mean that similar results for OUS? be explicit, and if it does not contribute to the RQ then don't write it}.
 % Notice in Figure~\ref{fig:grow_strategies} that only the \maxsat solver on actual variables and with uniform weights is able to complete the generation of a sequence for all puzzles. Furthermore, giving the \maxsat constraints on $\mathcal{F}$ drastically increases the execution time and, even within the best weighing scheme (\emph{unif}), it takes less than 10 steps\tias{how do you conclude this? non-obvious...} on average for every puzzle to time out.
-The \emph{Greedy}-strategy provides some improvement on the cumulative runtime with respect to \emph{Max-Full}, but neither can generate explanations for all puzzle instances. 
 %\tias{Should this not be: max-actual returns best results, through only max-actual-unif is able to finish all explanations. Greedy does better than max-full, but neither can solve all explanations)?}
 
 %\deleted{

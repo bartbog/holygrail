@@ -36,16 +36,16 @@ The goal of the \grow procedure is to turn $\m{S}$ into a larger subformula of $
 
 Choosing an effective \grow procedure requires finding a difficult balance: on the one hand, we want our subformula to be as large as possible, %to derive the most precise information we can get, 
 but on the other hand we also want the procedure to be very efficient. 
-\deleted{Indeed, if the computation cost of the \grow were not important, we could use a \maxsat call to obtain a subset-maximal subset of $\formula$, however, by doing that we expect the \grow costs to be too high to make the overall OCUS algorithm faster.}
+%\deleted{Indeed, if the computation cost of the \grow were not important, we could use a \maxsat call to obtain a subset-maximal subset of $\formula$, however, by doing that we expect the \grow costs to be too high to make the overall OCUS algorithm faster.}
 Indeed, if the computation cost of the \grow were not important, we could use a \maxsat call to obtain a subset-maximal subset of $\formula$. However, as will become clear from the experiments, the cost of such a \grow is too high to make the overall OCUS algorithm faster. 
 
 
 However, for the case of explanations we are in, we make the following observations: 
-\begin{compactitem}
+\begin{itemize}
  \item Our formula at hand (using the notation from the \onestepo algorithm) consists of three types of clauses: 1) (translations of) the problem constraints (this is \formulac) 2) literals representing the assignment found thus far (this is $I$) and 3) the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). 
  \item $\formulac$ and $I$ together are satisfiable and \emph{mutually supportive}, by this we mean that making more constraints in \formulac true, more literals in $I$ will automatically become true and vice versa. 
  \item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
-\end{compactitem}
+\end{itemize}
 Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 
 
 % \todo{Bart from here}

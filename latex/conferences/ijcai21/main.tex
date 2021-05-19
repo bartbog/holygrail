@@ -21,9 +21,6 @@
 \usepackage{booktabs}
 \usepackage{adjustbox}
 \usepackage{multirow,array}
-% \usepackage{natbib}
-% \usepackage{algorithm}
-% \usepackage{algorithmic}
 \urlstyle{same}
 \newcommand\citet[1]{\citeauthor{#1}~[\citeyear{#1}]}
 
@@ -44,8 +41,9 @@
 % uncomment this for disabling all comments
 % \renewcommand\comment[1]{}
 \newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
-\newcommand{\emilio}[1]{{\color{orange}\comment{#1}}}
-\newcommand{\egcomment}[1]{{\comment{\color{purple}\textsc{EG:}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{purple}\textsc{EG:}#1}}}
+\newcommand{\added}[1]{{\comment{\color{orange}#1}}}
+%\newcommand{\egcomment}[1]{{\comment{\color{purple}\textsc{EG:}#1}}}
 \newcommand{\bart}[1]{{\comment{\color{OliveGreen}\textsc{BB:}#1}}}
 \newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1} }}
 \newcommand{\deleted}[1]{} %{\sout{#1}}}
@@ -69,7 +67,7 @@
 \newcommand\muses[1]{\ensuremath{\mathit{MUSs}(#1)}\xspace}
 \newcommand\mcses[1]{\ensuremath{\mathit{MCSs}(#1)}\xspace}
 
-\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\setstohit{\ensuremath{\m{H}}\xspace}
 \newcommand\F{\ensuremath{\m{F} }\xspace}
 % \newcommand\ohs{\ensuremath{\m{OHS} }\xspace}
 \newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
@@ -102,12 +100,6 @@
 \newcommand\optprop{\mm{\call{MaxConsequence}}}
 \newcommand\initsat{\mm{\call{InitSat}}}
 \newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
-\newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu}
-%REDUCE BIB SIZE                                                                                                                                                        
-\let\OLDthebibliography\thebibliography
-\renewcommand\thebibliography[1]{
-\OLDthebibliography{#1}
-\setlength{\parskip}{0pt}                                                                                                                                                \setlength{\itemsep}{0pt}                                                                                                                                              }                                                                                                                                                                             
 
 \SetKwInOut{Input}{Input}
 \SetKwInOut{OptInput}{Optional}
@@ -123,8 +115,8 @@
 
 %PDF Info Is REQUIRED.
 \pdfinfo{
-/Title (Incremental and Constrained Optimal Unsatisfiable Subsets for Explaining CSPs)
-/Author (Anyonymous)
+/Title (Efficiently Explaining CSPs with Unsatisfiable Subset Optimization)
+/Author (Emilio Gamba, Bart Bogaerts and Tias Guns)
 /TemplateVersion (IJCAI.2021.0)
 }
 
@@ -157,8 +149,7 @@ Recently, we proposed a novel method for explaining solutions of constraint sati
 An explanation here is a \textit{sequence} of simple inference steps, where the simplicity of an inference step is measured by the number and types of constraints and facts used, and where the sequence explains all logical consequences of the problem. 
 % (I would even drop this: For CSPs that have a unique solution, this corresponds to explaining each decision variable's assignment in that full solution.)
 % what?
-We %tackles two questions left in 
-build on these formal foundations and tackle two emerging questions, namely how to generate explanations that are provably optimal (with respect to the given cost metric) and how to generate them efficiently. 
+We build on these formal foundations and tackle two emerging questions, namely how to generate explanations that are provably optimal (with respect to the given cost metric) and how to generate them efficiently. 
 % how?
 To answer these questions, we develop 1) an implicit hitting set algorithm for finding \textit{optimal} unsatisfiable subsets; 2) a method to reduce multiple calls for (optimal) unsatisfiable subsets to a single call that takes \emph{constraints} on the subset into account, and 3) a method for re-using relevant information over multiple calls to these algorithms. 
 %     This raises the need for algorithms that can compute unsatisfiable subsets of a logical specification that are optimal with respect to a certain cost criterion.
@@ -199,13 +190,16 @@ We specifically show that this approach can be used to effectively find sequence
 
 
 %\clearpage
-{
+% {
     % \fontsize{8}{6}
 %% The file named.bst is a bibliography style file for BibTeX 0.99c
 \bibliographystyle{named}
 \bibliography{krrlib,mybibfile,ref} 
-}
+% }
 % \bibliographystyle{ijcai21}
+
+\bart{Before submitting: remove all the delete... commands. They sometimes cause extra spacing if not used carefully}
+\emilio{done}
 
 
 \end{document}

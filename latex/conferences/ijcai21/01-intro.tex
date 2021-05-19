@@ -12,15 +12,15 @@ In order to generate these sequences, they rely heavily on calls for  \emph{Mini
 The explanation steps in \citet{ecai/BogaertsGCG20} are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g. taking the number of constraints and facts into account, as well as a valuation of their complexity (or priority). 
 The algorithm developed in that work has two main weaknesses: first, it provides no guarantees on the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
 Secondly, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate implied fact. %replacing a potential single call for a cost-optimal unsatisfiable subset by multiple calls, 
-However, this high number of MUS calls causes severe efficiency problems, with the explanation generation process taking several hours.
+However, using multiple MUS calls per literal in each iterations quickly causes efficiency problems, with that explanation generation process taking several hours.
 
 
-Motivated by these observations, we develop algorithms for explaining CSPs that improve the state-of-the-art in the following ways: 
+Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
 \begin{compactitem}
- \item We develop algorithms that compute \textbf{\emilio{(cost-)}Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for generating cardinality-minimal MUSs \cite{ignatiev2015smallest}.
-\item We observe that many of the calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. In other words, we introduce the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem and we show how $O(n^2)$ calls to MUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
+ \item We develop algorithms that compute \textbf{\emilio{(cost-)}Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest}.
+\item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. In other words, we introduce the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem and we show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
 % \item Finally, building on 
-\item Finally, we develop techniques for \textbf{optimizing} the OCUS algorithms further, exploiting domain-specific information coming from the fact that we are in the  \emph{explanation-generation context}. One such optimization is the development of methods for \textbf{information re-use} between consecutive OCUS calls.
+\item Finally, we develop techniques for \textbf{optimizing} the OCUS algorithms further, exploiting domain-specific information coming from the fact that we are in the  \emph{explanation-generation context}. %One such optimization is the development of methods for \textbf{information re-use} between consecutive OCUS calls.
 % 
 % 
 % \tias{This one no longer separate point?}
@@ -71,7 +71,7 @@ Motivated by these observations, we develop algorithms for explaining CSPs that 
 \emilio{Recently, MUSs have been used to formally define abduction-based explanations for machine learning classifiers \cite{ignatiev2019abduction}.
 In that work, from a given classifier, and a concrete classified instance, a propositional theory explains which set of feature values of the instance are responsible for the predicted class.
 We see opportunities to also use OCUS in this setting.
-For instance, OCUS allows the formulation of structural constraints on the explanations, and (ii) the quantification of explanation difficulty using the optimality criterion.}
+For instance, OCUS allows the formulation of structural constraints on the explanations, and (ii) the quantification of explanation difficulty using the optimality criterion.} \tias{This paragraph not appropriate in an introduction because we don't actually do it. Move to discussion/future work or discuss on Teams}.
 
 \ignore{
 % the very many MUS calls have as a consequence that 

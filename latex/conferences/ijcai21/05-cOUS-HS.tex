@@ -5,9 +5,12 @@ The first two considerations from the previous section lead to the following def
     $\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if \begin{itemize}                                      
       \item $\m{S}$ is unsatisfiable,
       \item $p(\m{S})$ is true
-      \item all other unsatisfiable $\m{S}'\subseteq \formula$ for which $p(\m{S}')$ is true also satisfy $f(\m{S}')\geq f(\m{S})$.
+      \item all other unsatisfiable $\m{S}'\subseteq \formula$ for which $p(\m{S}')$ is true satisfy $f(\m{S}')\geq f(\m{S})$.
     \end{itemize}
 \end{definition}
+
+
+If we assume that the predicate $p$ is specified itself as a CNF over (meta)-variables indicating inclusion of clauses of $\m{F}$, and $f$ is obtained by assigning a weight to each such meta-variable, then the complexity of the problem of finding an OCUS is the same as that of the SMUS (cardinality-minimal MUS) problem  \cite{ignatiev2015smallest}: the associated decision problem is $\Sigma^P_2$-complete. Hardness follows from the fact that SMUS is a special case of OCUS, containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
 
 Rephrased in these terms, the task of the procedure \onestep is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets  that contain exactly one literal of $\overline{\Iend\setminus I}$, see \cref{alg:oneStepOCUS}. 
 %In the rest of this paper, we study (incremental) algorithms for computing an OCUS. 
@@ -99,13 +102,14 @@ $f$ is a weighted sum over the variables in $S$. For example, (unit) clauses rep
 %  }
 %\Return{E}\;
 %\end{algorithm}
-Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}. It combines the hitting set-based approach for MUSs of \cite{ignatiev2015smallest} with the use of a MIP solver for (weighted) hitting sets as proposed for maximum satisfiability \cite{DBLP:conf/sat/DaviesB13}. The key novelty is the ability to add structural constraints to the hitting set solver, without impacting the duality principles of \cref{prop:MCS-MUS-hittingset} as we will show.
+Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}. It combines the hitting set-based approach for MUSs of \cite{ignatiev2015smallest} with the use of a MIP solver for (weighted) hitting sets as proposed for maximum satisfiability \cite{DBLP:conf/sat/DaviesB13}. The key novelty is the ability to add structural constraints to the hitting set solver, without impacting the duality principles of \cref{prop:MCS-MUS-hittingset}, as we will show.
 
 Ignoring \cref{line:grow} for a moment, 
 the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
-In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, the complement of $\m{S}$ is a correction subset and is added to \setstohit. In this way, the hitting set size always grows and a hitting set $\m{S}$ will always be a subset of $\formula$.
+In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, the complement of $\m{S}$ is a correction subset of $\m{F}$ and is added to \setstohit. %In this way, the hitting set size always grows   THIS IS PLAINLY UNTRUE. PLEASE DONT PUT THIS BAKC. and a hitting set $\m{S}$ will always be a subset of $\formula$.
 
-Instead of directly adding the complement of $\m{S}$ to \setstohit as done by \citet{ignatiev2015smallest}, our algorithm includes a call to \grow, which extends $\m{S}$ into a larger subset of $\formula$ that is still satisfiable (if possible).
+Instead of directly adding the complement of $\m{S}$ to \setstohit as done by \citet{ignatiev2015smallest}, our algorithm includes a call to \grow, which extends $\m{S}$ into a larger subset of $\formula$ that is still satisfiable (if possible). \bart{AGAIN: DOES IGNATIEV NOT HAVE A GROW? A reviewer also asked this. We anwsered the reviewer that he was right: ignatiev has a grow. 
+Emilio, please check the reviews, and definitely our response that no such things remain! We cannot claim that ignatiev does not grow, simply because they say it is optional. We discussed this many times already}
 %\tias{here base grow impls?} \bart{Your next sentence is enough for me here. Alternatively we can in one stentence say that we consider a greedy and a maxsat-based implementation? }
 We discuss the different possible implementations of \grow later and evaluate their performance in \cref{sec:experiments}.
 
@@ -132,10 +136,13 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver.
 
-\emilio{The result of algorithm \ref{alg:comus} represents a subset of the clauses of F.}
+\emilio{The result of algorithm \ref{alg:comus} represents a subset of the clauses of $\m{F}$.} \bart{This sentence is a bit lost here. I would remove it. I think it is quite clear. 
+Also: ``represents'' should be ``is''.}
 \begin{example}
+\bart{Let me know if this example was updated. I will read it again tomorrow.}
 	\emilio{ Consider the following CNF formula $\formula$ over variables $x_1, x_2, x_3$ with interpretation $\{x_1, \lnot x_2, x_3 \}$:
 	\[ c_1 = x_1 \text{\hspace*{20pt}} c_2 = \lnot x_1 \vee \lnot x_2 \vee x_3\] \[ c_3 = \lnot x_1 \vee \lnot x_2 \vee x_3 \text{\hspace*{20pt}} c_4 = \lnot x_3 \vee \lnot x_2 \]
+	\bart{``we already know $I=\{...\}$ says that ''I know that I equals something``. What you want to say is: I is the interpretation so far. I know that everything in I istrue, right?}
 	If we already know $I= \{x_1\}$ represented by $c_5$, then $\overline{\Iend\setminus I} = \{ x_2, \lnot x_3\}$ is defined by the clauses $c_6 \wedge c_7$:
 	\[c_5 = x_1 \text{\hspace*{20pt}} c_6 = x_2 \text{\hspace*{20pt}} c_7 = \lnot x_3 \]
 	We define $p\triangleq$ \textit{exactlyone($c_6$, $c_7$)} and $f = \sum w_i$ the weighted sum over the following clause weights $w_1 = 20, w_2=20, w_3=20, w_4=20, w_5=1, w_6=1, w_7=1$.
@@ -168,29 +175,30 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 \end{table}
 \end{example}
 
-\emilio{Line 0 in table \ref{tab:explanation-steps-expanded} represents the initialization phase. The next lines represent the successive hitting sets $\m{S}$ computed by the hitting set solver. The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$. We further detail in section~\ref{sec:experiments} which \grow-configuration works best. Finally, note how at line 2, the hitting set computed is not $\{ c_6, c_7 \}$ of cost due to the `\textit{exactlyone}'-constraint.}\tias{last sentence broken, what cost?}
+\emilio{Line 0 in Table \ref{tab:explanation-steps-expanded} represents the initialization phase. The next lines represent the successive hitting sets $\m{S}$ computed by the hitting set solver. The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$. We further detail in section~\ref{sec:experiments} which \grow-configuration works best. Finally, note how at line 2, the hitting set computed is not $\{ c_6, c_7 \}$ of cost due to the `\textit{exactlyone}'-constraint.}\tias{last sentence broken, what cost?}
 
 %\egcomment{Since this was a remark of one of the reviewers I thought it would be nice to have an example of how an explanation is computed in practice}
 
 %\egcomment{Something to add here @Bart ?}
 %\emilio{Extending theorem \ref{thm:soundcomplete}, if $f$ is defined as a stricly increasing monotone function and p also satisfying the monotonicity property then \comus is guaranteed to be a \emph{minimal} unsatisfiable subset.
 % \todo{Add proof ?}
-
-\begin{proposition}
-	\emilio{The complexity of extracting an \mm{\call{O(C)US}} is at least of the second level of polynomial hierarchy FP$^{\sum^{P}_2}$. }
-\end{proposition}
-%
-\begin{proof}
-	\emilio{
-	The complexity of extracting a cardinality-minimal MUS (SMUS) for an unsatisfiable CNF $\formula$ is of the second level of polynomial hierarchy FP$^{\sum^{P}_2}$ \cite{ignatiev2015smallest}. If uniform weights are applied to \comus then it is reduced to extracting an SMUS.}
-	%the \omus extraction is reducible to an SMUS-extraction on a relaxed formula $\formula^{R}$ in polynomial time. 
-%
-%		\noindent\textit{Reduction.} Associate for each clause $c_i \in \formula$ of weight $w_i=n \in \mathbb{N}^+$, the relaxation variables $r_{i,j}$ where $j \in 1..n-1$:
-%		\[ \formula^{R}  \triangleq \bigcup_{c_i \in \formula}(c_i \leftrightarrow (r_{i, 1} \wedge ..  r_{i, n-1})) \]
-%	$F^{R} \triangleq \cup \$
-%	, by adding $w_i - 1$ relaxation variables $(r_{i,1} \wedge .. \wedge r_{i,n-1}) \leftrightarrow c_i$, the problem of OUS is reduced to the problem of SMUS.
-\end{proof}
-
+% 
+% \begin{proposition}
+% The problem of deciding whetehr 
+% 	\emilio{The complexity of extracting an \mm{\call{O(C)US}} is at least of the second level of polynomial hierarchy FP$^{\sum^{P}_2}$. }
+% \end{proposition}
+% %
+% \begin{proof}
+% 	\emilio{
+% 	The complexity of extracting a cardinality-minimal MUS (SMUS) for an unsatisfiable CNF $\formula$ is of the second level of polynomial hierarchy FP$^{\sum^{P}_2}$ \cite{ignatiev2015smallest}. If uniform weights are applied to \comus then it is reduced to extracting an SMUS.}
+% 	%the \omus extraction is reducible to an SMUS-extraction on a relaxed formula $\formula^{R}$ in polynomial time. 
+% %
+% %		\noindent\textit{Reduction.} Associate for each clause $c_i \in \formula$ of weight $w_i=n \in \mathbb{N}^+$, the relaxation variables $r_{i,j}$ where $j \in 1..n-1$:
+% %		\[ \formula^{R}  \triangleq \bigcup_{c_i \in \formula}(c_i \leftrightarrow (r_{i, 1} \wedge ..  r_{i, n-1})) \]
+% %	$F^{R} \triangleq \cup \$
+% %	, by adding $w_i - 1$ relaxation variables $(r_{i,1} \wedge .. \wedge r_{i,n-1}) \leftrightarrow c_i$, the problem of OUS is reduced to the problem of SMUS.
+% \end{proof}
+% 
 
 
 

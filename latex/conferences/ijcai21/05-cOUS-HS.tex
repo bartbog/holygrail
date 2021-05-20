@@ -150,7 +150,7 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver.
 
- We provide an example of an \comus-call: 
+ To illustrate algorithm \ref{alg:comus}, we provide an example of an \comus-call: 
 \begin{example}
 	Given the following CNF formula $\formulac$ over variables $x_1, x_2, x_3$:
 		\[ c_1 = \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 = \lnot x_1 \vee  x_2 \vee x_3\] \[   c_3 = \lnot x_3 \vee \lnot x_2 \]
@@ -163,26 +163,31 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 	 \[\formula= \formulac\land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\}\]	
 	 
 % 	Let $\setstohit$ be the collection of hitting sets. 
-	We can help the hitting set solver by bootstrapping it with $\setstohit  =\{ \{ c_5, c_6\} \}$, since we know at least one of the two clauses has to be taken.\bart{why would you do this if you ALSO add the exactly one constraint? This does not help you. Drop t his sentence?}
-	We also add the `\textit{exactlyone}' constraint to the hitting set solver. \bart{The hitting set solver is provided p. You already defined p. Replace by: ``\setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $c_5$ and $c_6$ (due to $p$)''.}
+%	We can help the hitting set solver by bootstrapping it with $\setstohit  =\{ \{ c_5, c_6\} \}$, since we know at least one of the two clauses has to be taken.\bart{why would you do this if you ALSO add the exactly one constraint? This does not help you. Drop t his sentence?}
+\setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $c_5$ and $c_6$ (due to $p$).
+%	We also add the `\textit{exactlyone}' constraint to the hitting set solver. \bart{The hitting set solver is provided p. You already defined p. Replace by: ``\setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $c_5$ and $c_6$ (due to $p$)''.}
 	Table \ref{tab:explanation-steps-expanded} sketches the steps required to find an OCUS for \formula given $f$ and $p$.\end{example}
 \begin{table}[!h]
 	\centering
 	\begin{adjustbox}{max width=\columnwidth}
-			\begin{tabular}{|r||c|c|c|c|}
-				\hline
-				\rule{0pt}{2ex}&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
-				\hline
-				\rule{0pt}{2ex} 0 & - &  -&-  & \rule{0pt}{2ex} $\{ \{ c_5, c_6\} \}$\bart{$\emptyset$}  \\
-				\hline
-				1 &\rule{0pt}{2ex} $\{ c_5 \}$ & True & $\{c_1, c_2, c_3, c_5, c_6\}$    & $\{ \{ c_5, c_6\}, \{c_4\}\}$\rule{0pt}{2ex}   \\
-				\hline		
-				\multirow{2}*{2} &\rule{0pt}{2ex}\multirow{2}*{ $\{ c_5, c_4\}$}  & \multirow{2}*{True} & \multirow{2}*{$\{ c_1, c_2, c_4, c_5\}$}   & $\{ \{ c_5, c_6\}, \{c_4\}$  \\  
-				& &  &    & $\{c_3, c_6\}\}$\rule{0pt}{2ex} \\\hline
-				\multirow{2}*{3}&\rule{0pt}{2ex} \multirow{2}*{$\{ c_5,c_4, c_3 \}$}  & \multirow{2}*{True} &  \multirow{2}*{$\{c_2, c_3, c_4, c_5,c_6 \}$}  & $\{ \{ c_5, c_6\}, \{c_4\}$  \\  
-				&&  &    & $\{c_3, c_6\}, \{c_1\}\}$\rule{0pt}{2ex} \\\hline
-				4& \rule{0pt}{2ex} $\{ c_1, c_3, c_4, c_5 \}$ & False & \multicolumn{2}{c|}{$\{ c_1, c_3, c_4, c_5 \}$ is an OCUS of $\formula$.} \\
-				\hline
+			\begin{tabular}{r||c|c|c|c}
+				\toprule
+				&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
+				\midrule
+				0 & - &  -&-  & \rule{0pt}{2ex} $\emptyset$  \\
+				\midrule
+				1 &$ \emptyset $ & $true$ & $\{c_1, c_2, c_3, c_5, c_6\}$    & $\{ \{c_4\}\}$   \\
+				\midrule	
+				2 &$\{ c_4\}$  & $true$ & $\{ c_1, c_2, c_4, c_5\}$   & $\{ \{c_4\}, \{c_3, c_6\}\}$  \\  
+%				& &  &    & $$\rule{0pt}{2ex} \\
+				\midrule
+				3& $\{ c_4,c_6 \}$  & $true$ & $\{c_2, c_3, c_4, c_5,c_6 \}$  & $\{ \{c_4\},\{c_3, c_6\}, \{c_1\}\}$  \\  
+				\midrule
+				\multirow{2}{*}{4}& \multirow{2}{*}{$\{ c_1, c_4,c_6 \}$}  & \multirow{2}{*}{$true$} & \multirow{2}{*}{$\{c_1, c_3, c_4,c_6 \}$}  & $\{ \{c_4\},\{c_3, c_6\}, \{c_1\}$  \\ 
+				& &  &  & $\{c_2, c_5\}\}$  \\   
+\midrule
+				5&  $\{ c_1, c_2, c_4, c_6 \}$ & $true$ & \multicolumn{2}{c}{$\{  c_1, c_2, c_4, c_6  \}$ is an OCUS of $\formula$.} \\
+				\bottomrule
 			\end{tabular}
 	\end{adjustbox}
 	\caption{Example of an OCUS-explanation computation.}
@@ -191,13 +196,10 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 
 
 %<<<<<<< HEA
-Line 0 in table \ref{tab:explanation-steps-expanded} is the initialization phase, i.e bootstrapping the \setstohit.
-\bart{drop}
-The next lines represent the successive hitting sets $\m{S}$ computed by the hitting set solver. The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$.\bart{I don't think that this can at the moment be followed. I would say ``In this example, the \grow we used is the one called ''... in \cref{ref}.  } 
-
-We further detail in section~\ref{sec:experiments} which \grow-configuration works best. Finally, note how at line 2, the hitting set computed is not $\{ c_5, c_6 \}$ of cost 2 due to the `\textit{exactlyone}'-constraint. \bart{Euh... and because there is a set to hiet containing only c4???? What is this?}
-
-
+The lines 1 to 4 represent the successive hitting sets $\m{S}$ computed by the hitting set solver. 
+In this example, the \grow we used is the one called \emph{Max-Actual-Unif} in \cref{sec:experiments}. 
+%The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$.\bart{I don't think that this can at the moment be followed. I would say ``In this example, the \grow we used is the one called ''... in \cref{ref}.  } 
+We further detail in section~\ref{sec:experiments} which \grow-configuration works best. 
 %\egcomment{Since this was a remark of one of the reviewers I thought it would be nice to have an example of how an explanation is computed in practice}
 
 %\egcomment{Something to add here @Bart ?}

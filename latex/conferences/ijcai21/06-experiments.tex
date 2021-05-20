@@ -3,7 +3,7 @@
 We now experimentally validate the performance of the different versions of our algorithm.
 Our benchmarks were run on a compute cluster, where each explanation sequence generation was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor, a timelimit of 120 minutes and a memory-limit of 4GB. 
 Everything was implemented in Python on top of PySAT\footnote{\url{https://pysathq.github.io}} and is available at \url{https://github.com/ML-KULeuven/ocus-explain}. 
-For MIP calls, we used Gurobi 9.0, for SAT call  minisat22\bart{??? Is this MiniSat 2.2?} and for MaxSAT calls RC2 \bart{no version number?} as bundled with PySAT. In the MUS-based approach we used PySAT's deletion-based MUS extractor MUSX~\cite{marques2010minimal}.
+For MIP calls, we used Gurobi 9.0, for SAT call MiniSat 2.2 and for MaxSAT calls RC2 as bundled with PySAT (version 0.1.6.dev11). In the MUS-based approach we used PySAT's deletion-based MUS extractor MUSX~\cite{marques2010minimal}.
 
 All of our experiments were run on a direct translation to PySAT of the 10 puzzles of \citet{ecai/BogaertsGCG20}\footnote{In one of the puzzles, an error in the automatic translation of the natural language constraints was found and fixed.}. %Because of this error, it was missing in the experimental results of the previous work.} 
 We used a cost of 60 for puzzle-agnostic constraints; 100 for puzzle-specific constraints; and cost 1 for facts.
@@ -11,7 +11,7 @@ When generating an explanation sequence for such puzzles, the unsatisfiable subs
 %
 Our experiments are designed to answer the following research questions: 
 \begin{description}
- \item[Q1] What is the effect of requiring optimality of the generated MUSs on the \textbf{quality} of the generated explanations and \added{the generated explanation sequence}?\bart{What does the sequence do here? We do not study it}
+ \item[Q1] What is the effect of requiring optimality of the generated MUSs on the \textbf{quality} of the generated explanations? 
  \item[Q2] Which \textbf{domain-specific \grow methods} perform best?
  \item[Q3] What is the effect of the use of \textbf{constrainedness} on the time required to compute an explanation sequence?
  \item[Q4] Does \textbf{re-use} of computed satisfiable subsets improve efficiency?
@@ -164,9 +164,9 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
 
 %<<<<<<< HEAD
 
-\paragraph{Explanation Sequence} \added{The effect of optimality is also noticeable on the quality of explanation sequence. The average number of explanations for MUS is 90, while \omus is at 117. 
-	The reason for this is that	the quality of the MUS-based explanations is worse compared to \omus. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower. 
-	In fact, on average a MUS-based explanation is composed of 5.02 constraints contrary to an \omus-based explanation with an average of 4.07 constraints.} \bart{Maar.... Dat zegt toch niets over de sequence...  Het enige dat hier staat is: doordat de individuele stappen minder goed zijn wordt de sequence korter. Dat zegt niets over of de sequence beter of slechter wordt. Welk punt wil je hier nog maken buiten ``de individuele stappen zijn slechter''? --> Ook: die averages: dat klopt ECHT niet met de heatmap. Een average OUS baserd ding kost onder de 150. Aangezien een constraint 60 of 100 kost, zou het average van OUS ongeveer 2.851215124 constraints moeten zijn. Geen 4. Waar komen die cijfers van? Zijn uw assen bij de figuur juist?}
+%\paragraph{Explanation Sequence} \added{The effect of optimality is also noticeable on the quality of explanation sequence. The average number of explanations for MUS is 90, while \omus is at 117. 
+%	The reason for this is that	the quality of the MUS-based explanations is worse compared to \omus. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower. 
+%	In fact, on average a MUS-based explanation is composed of 5.02 constraints contrary to an \omus-based explanation with an average of 4.07 constraints.} \bart{Maar.... Dat zegt toch niets over de sequence...  Het enige dat hier staat is: doordat de individuele stappen minder goed zijn wordt de sequence korter. Dat zegt niets over of de sequence beter of slechter wordt. Welk punt wil je hier nog maken buiten ``de individuele stappen zijn slechter''? --> Ook: die averages: dat klopt ECHT niet met de heatmap. Een average OUS baserd ding kost onder de 150. Aangezien een constraint 60 of 100 kost, zou het average van OUS ongeveer 2.851215124 constraints moeten zijn. Geen 4. Waar komen die cijfers van? Zijn uw assen bij de figuur juist?}
 	 %one of the two OUS implementations timed-out before completing the most difficult puzzle (hence explaining their lower number) and
 	%To identify the effect on the quality of the generated explanation sequences, we report statistics on the generated sequences in Table \ref{tab:config-number-explanation-steps-avg-max} for MUS and OUS. 
 	%The notation used in the table, is defined as follows: `avg. $\#$ expl.' is the average number of explanations in the explanation sequence; `max. expl. size' and `avg. expl. size' are respectively the maximum and average size of an explanation; avg. $\#$ lits derived is the average number of literals derived in an explanation. 
@@ -200,14 +200,16 @@ The configurations are as follows:
 \begin{itemize}
 \item \emph{Max} refers to growing with a MaxSAT solver and \emph{Greedy} to growing using a heuristic method implemented by repeated sat calls. 
 \item  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$  while \emph{Actual} refers to using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the MaxSAT based calls, using \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
-\item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), original weights, i.e., equal to the weights in the OCUS call (\emph{pos}) or the inverse of the original costs (\emph{inv}) \bart{DEFINE INVERSE! What did you implement. } 
+\item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), original weights $w_i$, i.e., equal to the weights in the OCUS call (\emph{pos}) or the inverse of the original costs (\emph{inv}) defined as $max(w_i) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
 \end{itemize}
 %\tias{switch explanation to follow names in figure: first explain Max vs greedy, then explain Actual vs Full, dan unif/inv/pos}.
 
 
 %\tias{Use the names used in the figure, 'Max-Full variants'?}
-\added{As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} indeed performs best, though only \emph{Max-Actual-Unif} is able to finish all explanations. When repeating this experiment for \omus the same pattern was observed. \bart{AND also for incremental and non-incremental, right? Are you actually sure of that. We noticed this in the IJCAI paper but as far as I know, all your expiermental data from that time was messed up... } 
-The \emph{Greedy}-strategy provides some improvement on the cumulative runtime with respect to \emph{Max-Full}, but neither can generate explanations for all puzzle instances. \bart{Drop this last sentence?  Why focus on this?}}
+As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} indeed performs best, though only \emph{Max-Actual-Unif} is able to finish all explanations. 
+%When repeating this experiment for \omus the same pattern was observed. 
+%\bart{AND also for incremental and non-incremental, right? Are you actually sure of that. We noticed this in the IJCAI paper but as far as I know, all your expiermental data from that time was messed up... } 
+%The \emph{Greedy}-strategy provides some improvement on the cumulative runtime with respect to \emph{Max-Full}, but neither can generate explanations for all puzzle instances. \bart{Drop this last sentence?  Why focus on this?}}
 %  \tias{broken sentence: what do you want to say? 'constrainedness' is not an option? or do you mean that similar results for OUS? be explicit, and if it does not contribute to the RQ then don't write it}.
 % Notice in Figure~\ref{fig:grow_strategies} that only the \maxsat solver on actual variables and with uniform weights is able to complete the generation of a sequence for all puzzles. Furthermore, giving the \maxsat constraints on $\mathcal{F}$ drastically increases the execution time and, even within the best weighing scheme (\emph{unif}), it takes less than 10 steps\tias{how do you conclude this? non-obvious...} on average for every puzzle to time out.
 %\tias{Should this not be: max-actual returns best results, through only max-actual-unif is able to finish all explanations. Greedy does better than max-full, but neither can solve all explanations)?}
@@ -325,15 +327,15 @@ Incrementality leads to small runtime improvements in the intial steps, which ar
 
 As a final experiment, we investigate what the typical runtime is to explain one individual explain step. 
 This is shown in table \ref{tab:explanation-time}, where we can see that the major part of the explanations takes less than 2 to 5 seconds to be generated. On the other hand, a handful of explanations require 20 to 100+ seconds to be generated and dominated to total runtime for explaining a sequence. %Indeed, puzzles often involve many 'easy' derivation steps that involve few facts and constraints, and a few 'hard' derivation steps. Whether difficulty for a person solving a puzzle and an algorithm finding TRICKY... not writing it.
-\emilio{Potential interpretation: For explanations requiring more time to be generated, i.e. more than 10 seconds, 80\% of the time is spent in proving optimality by the hitting set solver. We also notice that they are also associated a higher average cost. Whereas explanations with lower costs spend only 20\% of their time in the hitting set solver and close to 80\% of the time in \grow.}
-\tias{do they typically have higher cost, or is the time spent in proving optimality? if you don't know or not enough time to find out, we don't have to mention anything in that direction}
-\emilio{From what I see the explanations with higher times have higher costs and most of the time is spent in opt, while the others the time is mostly spent in grow.\\
-$t > 20$ Avg. Cost = 189... \\ 
-
-topt = 81.63 \% sat= 0.23\% grow= 12.42\\
-$t < 20$  Avg. Cost = 74... \\ 
-
-topt = 17.38 \% sat= 2.19\% grow= 79.34}
+%\emilio{Potential interpretation: For explanations requiring more time to be generated, i.e. more than 10 seconds, 80\% of the time is spent in proving optimality by the hitting set solver. We also notice that they are also associated a higher average cost. Whereas explanations with lower costs spend only 20\% of their time in the hitting set solver and close to 80\% of the time in \grow.}
+%\tias{do they typically have higher cost, or is the time spent in proving optimality? if you don't know or not enough time to find out, we don't have to mention anything in that direction}
+%\emilio{From what I see the explanations with higher times have higher costs and most of the time is spent in opt, while the others the time is mostly spent in grow.\\
+%$t > 20$ Avg. Cost = 189... \\ 
+%
+%topt = 81.63 \% sat= 0.23\% grow= 12.42\\
+%$t < 20$  Avg. Cost = 74... \\ 
+%
+%topt = 17.38 \% sat= 2.19\% grow= 79.34}
 %\paragraph{Interactivity} \emilio{To analyze how the explanations compare in an interactive context, we represent a distribution of explanation generation times in figure \ref{fig:explanation_time}. We see that a major part of the explanations take less than 2 to 5 seconds to be generated. Even though, the difficult explanation steps can take more time ranging from 5 to 100+ seconds to be generated, it is only a small fraction of all generated explanations.}
 %>>>>>>> e4d5df1776ed855c31dae20748d5f394d39a4d9e
 

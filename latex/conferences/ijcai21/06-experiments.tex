@@ -183,7 +183,7 @@ This induces a trade-off between \emph{efficiency} of the \grow strategy and \em
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=\columnwidth]{figures_post_paper/cumul_grow_avg_time_lits_derived.pdf}
+  \includegraphics[width=\columnwidth]{figures_post_paper/new_cumul_grow_avg_time_lits_derived.pdf}
   \caption{Q2 - Explanation specific \grow strategies for \comus.}
   \label{fig:grow_strategies}
 \end{figure}
@@ -241,13 +241,15 @@ As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} in
 % \tias{make 'Timeout' top entry of legend}
 
 \paragraph{Constrainedness and incrementality}
-To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C), and incrementality, i.e., initialising the set of hitting sets ${\cal H}$ in an \omus call with the set of satisfiable subsets previously computed (+SS caching), and with reusing a single share hitting solvers across all OCUS calls (+Incr.HS).
+To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C), and incrementality, i.e., initialising the set of hitting sets ${\cal H}$ in an \omus call with the set of satisfiable subsets previously computed (+SS caching), and with reusing a single share hitting solvers across all OCUS calls (+Incr.HS). \bart{I cannot read this sentence. Waay too long. Also: why is a different method for incrementality used for OUS than for OCUS.}
+\bart{IMPORTAZTNT: ARE THESE RESULTS IN THE FIGURE EVEN CORRECT? I THOUGHT THAT IN THE LAST MEETING WE ROUGHLY CONCLUDED THAT OUS PLUS THE RIGHT INCREMENTAL STRATEGY WAS AS GOOD AS OCUS. NOW IT SUDDENLY IS NO LONGER THE CASE;}
 % 
 Figure \ref{fig:incrementality_constraindness} shows the results of the different variants, including the MUS-based variant discussed above. 
 In this figure, the configurations are compared in a similar fashion to figure \ref{fig:grow_strategies}.
 %\deleted{In this figure, the total number of explanation steps is not equal for all configurations, the reason for this is that the two OUS implementations timed-out before completing two of the puzzles (hence explaining their lower number) and the quality of the MUS-based explanations is worse, as observed in \textbf{Q1}. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower.}
 %We choose to answers \textbf{Q3} and \textbf{Q4} using the cactus plot of Figure \ref{fig:incrementality_constraindness} with the same logarithmic scale for consistency. Furthermore, both incrementality and constraindness go hand in hand.
 All O(C)US variants use Max-Actual-Unif as \grow strategy following the results of the previous experiment.%, after we experimentally verified that this result of \textbf{Q2} also applied to the other OUS variants. %apply as well to all \mm{\call{O(C)US(+I)}} configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
+% \bart{This is confusing: the next paragraph contains 
 
 \begin{figure}[t]
 	\centering
@@ -256,22 +258,22 @@ All O(C)US variants use Max-Actual-Unif as \grow strategy following the results 
 	\label{fig:incrementality_constraindness}
 \end{figure}
 
-\paragraph{Constrainedness}
+% \paragraph{Constrainedness}
 When comparing all five configurations, we see that the OUS implementations cannot keep up with the plain MUS based implementation, as is to be expected since a harder problem is tackled.
-However, when using a single constrained OCUS call at every step we see a dramatic improvement in runtime. While slower than MUS, the runtime at most doubles, and, as investigated in \textbf{Q1} much better quality results are found. %. then multiple MUS calls,  ,  constrainedness, by switching to Algorithm \ref{alg:oneStepOCUS}, we effectively reduce the number of calls to the \omus solver.
+However, when using a single \textbf{constrained} (OCUS) call at every step we see a dramatic improvement in runtime. While slower than MUS, the runtime at most doubles, and, as investigated in \textbf{Q1} much better quality results are found. %. then multiple MUS calls,  ,  constrainedness, by switching to Algorithm \ref{alg:oneStepOCUS}, we effectively reduce the number of calls to the \omus solver.
 %The constrainedness enhancement as shown in Figure \ref{fig:incrementality_constraindness} proves the importance of our approach.
 %The explanation generation times for a whole sequence are on close to and sometimes even outperform  the MUS approach, while still solving the harder problem of unsatisfiable subset optimization. 
 
 % Note that, for the same given puzzles, the number of explanations for MUS is lower COMUS, which supports the claim that the unsat subsets are of high cost as presented in \hyperref[paragraph:explanationquality]{explanation quality}.
 
 
-\paragraph{Incrementality}
+% \paragraph{Incrementality}
 % The naive, but optimal approach of pure 'OUS' requires notably more time than the non-optimal MUS-based algorithm. This observation demonstrates that the problem complexity increases when using an optimality criterion. We observe with 'OUS+I' that reusing information throughout the calls to the OUS solver burdens the \onestep algorithm with extra processing in order to keep track of all generated satisfiable subsets.
 
 %%To our surprise, we noticed that \emilio{both in the constrained and non-constrained OUS setting, incrementality had no noticeable effect.
 %%Even more so, naively restarting \textit{OUS} and \textit{OCUS} at every explanation step, without tracking the satisfiable subsets, provides improvements on the more difficult puzzles.
 %%One potential explanation is when a branch-and-bound-based MIP solver such as Gurobi is kept warm, the solver will start in a search space close to the previous solution. However there is no immediate guarantee that the new best explanation is closely related to the previous one.}
-Incrementality leads to small runtime improvements in the intial steps, which are not visible on the figure. When manually storing and initialising the set of satisfiable subsets, we can see that this induces an increasing overhead for later steps in the generation process that becomes substantial. In case of OCUS, when using a single MIP solver and its built-in incrementality capabilities across all steps, we can see small runtime improvements for some individual steps but on average it is slower in computing all explanations.
+\textbf{Incrementality} leads to small runtime improvements in the intial steps \bart{In the initial steps??? That does not make sense. In the first step incremental or nonincremetnal should be the same}, which are not visible on the figure. When manually storing and initialising the set of satisfiable subsets, we can see that this induces an increasing overhead for later steps in the generation process that becomes substantial. In case of OCUS, when using a single MIP solver and its built-in incrementality capabilities across all steps, we can see small runtime improvements for some individual steps but on average it is slower in computing all explanations.
 
 % 
 %\deleted{When combining constrainedness with incrementality, on the other hand, we see that this incrementality yields important improvements. One potential explanation for this behaviour is the fact that, as discussed above, in the OCUS+I implementation, we only initialize a MIP and reuse it  across the different \onestep calls of algorithm \ref{alg:oneStepOCUS}.
@@ -300,10 +302,10 @@ Incrementality leads to small runtime improvements in the intial steps, which ar
 \begin{table}[!h]
 	\centering
 	\begin{adjustbox}{max width=\columnwidth}
-\begin{tabular}{c|c|c|c|c|c|c|c|c}
-	Time [s] &\textbf{0-1} & \textbf{1-2} & \textbf{2-5} & \textbf{5-10} & \textbf{10-20} & \textbf{20-50} & \textbf{50-100} & \textbf{100+}\\
+\begin{tabular}{c|c|c|c|c|c|c|c|c|c}
+	Time [s] &\textbf{0-1} & \textbf{1-2} & \textbf{2-5} & \textbf{5-10} & \textbf{10-20} & \textbf{20-50} & \textbf{50-100} & \textbf{100-200} & \textbf{200-500}\\
 	\midrule
-	\rule{0pt}{2ex} $\# expl$ &565 & 287 & 193 & 61 & 46 & 19 & 10 & 10\\
+	$\# expl$ &596 & 229 & 211 & 72 & 46 & 31 & 11 & 7 & 3\\
 \end{tabular}
 \end{adjustbox}
 	\caption{Frequency of explanation-generation-time in the explanation sequence.}
@@ -316,26 +318,11 @@ Incrementality leads to small runtime improvements in the intial steps, which ar
 %	\label{fig:explanation_time}
 %\end{figure}
 
-%\tias{Try Fig 5 with log-y axis?}
-%\paragraph{Interactivity} \emilio{To analyze how the explanations perform in an interactive context, we represent the frequency of the explanation-generation times in table \ref{tab:explanation-time}. We see that a major part of the explanations take less than 2 to 5 seconds to be generated. Even though, the difficult explanation steps can take more time ranging from 5 to 100+ seconds to be generated, it is only a small fraction of all generated explanations.}
-%=======
-%	\includegraphics[width=\columnwidth]{figures_post_paper/explanation_times.pdf}
-%	\caption{Distribution of the explanation generation time in the generated sequence.}
-%	\label{fig:explanation_time}
-%\end{figure}
-%\tias{Try Fig 5 with log-y axis?}
 
-As a final experiment, we investigate what the typical runtime is to explain one individual explain step. 
+%\bart{you have to say which conifguration this is done with}
+As a final experiment, we investigate what the typical runtime is to explain one individual explain step for \emph{OCUS+Incr. HS} with \emph{Max-Actual-Unif} grow. 
 This is shown in table \ref{tab:explanation-time}, where we can see that the major part of the explanations takes less than 2 to 5 seconds to be generated. On the other hand, a handful of explanations require 20 to 100+ seconds to be generated and dominated to total runtime for explaining a sequence. %Indeed, puzzles often involve many 'easy' derivation steps that involve few facts and constraints, and a few 'hard' derivation steps. Whether difficulty for a person solving a puzzle and an algorithm finding TRICKY... not writing it.
-%\emilio{Potential interpretation: For explanations requiring more time to be generated, i.e. more than 10 seconds, 80\% of the time is spent in proving optimality by the hitting set solver. We also notice that they are also associated a higher average cost. Whereas explanations with lower costs spend only 20\% of their time in the hitting set solver and close to 80\% of the time in \grow.}
-%\tias{do they typically have higher cost, or is the time spent in proving optimality? if you don't know or not enough time to find out, we don't have to mention anything in that direction}
-%\emilio{From what I see the explanations with higher times have higher costs and most of the time is spent in opt, while the others the time is mostly spent in grow.\\
-%$t > 20$ Avg. Cost = 189... \\ 
-%
-%topt = 81.63 \% sat= 0.23\% grow= 12.42\\
-%$t < 20$  Avg. Cost = 74... \\ 
-%
-%topt = 17.38 \% sat= 2.19\% grow= 79.34}
+
 %\paragraph{Interactivity} \emilio{To analyze how the explanations compare in an interactive context, we represent a distribution of explanation generation times in figure \ref{fig:explanation_time}. We see that a major part of the explanations take less than 2 to 5 seconds to be generated. Even though, the difficult explanation steps can take more time ranging from 5 to 100+ seconds to be generated, it is only a small fraction of all generated explanations.}
 %>>>>>>> e4d5df1776ed855c31dae20748d5f394d39a4d9e
 

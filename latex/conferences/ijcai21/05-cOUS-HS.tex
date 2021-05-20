@@ -12,7 +12,7 @@ The first two considerations from the previous section lead to the following def
 
 If we assume that the predicate $p$ is specified itself as a CNF over (meta)-variables indicating inclusion of clauses of $\m{F}$, and $f$ is obtained by assigning a weight to each such meta-variable, then the complexity of the problem of finding an OCUS is the same as that of the SMUS (cardinality-minimal MUS) problem  \cite{ignatiev2015smallest}: the associated decision problem is $\Sigma^P_2$-complete. Hardness follows from the fact that SMUS is a special case of OCUS, containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
 
-Rephrased in these terms, the task of the procedure \onestep is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets  that contain exactly one literal of $\overline{\Iend\setminus I}$, see \cref{alg:oneStepOCUS}. 
+Rephrased in terms of OCUS, the task of the procedure \onestep is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets  that contain exactly one literal of $\overline{\Iend\setminus I}$, see \cref{alg:oneStepOCUS}. 
 %In the rest of this paper, we study (incremental) algorithms for computing an OCUS. 
 
 %\emilio{why is the text formatting weird ? Due to the algorithm names ? }
@@ -108,10 +108,12 @@ Ignoring \cref{line:grow} for a moment,
 the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
 In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, the complement of $\m{S}$ is a correction subset of $\m{F}$ and is added to \setstohit. %In this way, the hitting set size always grows   THIS IS PLAINLY UNTRUE. PLEASE DONT PUT THIS BAKC. and a hitting set $\m{S}$ will always be a subset of $\formula$.
 
-Similar to OCUS the algorithm of \citet{ignatiev2015smallest} contains a \grow. However, the grow is optional: ``\emph{one can avoid the computation of MCS $\m{C}$ and use any correction subset $\m{C}'$ s.t. $\m{C} \subseteq \m{C}'$... Therefore, the grow procedure can be skipped}''.
-In our case, OCUS requires to account for the cost, as well as the meta-level constraints.
-These extensions resulting in novel problems, and hence in this extended setting, we had to reconsider the question `what constitutes a good grow?'.
-We discuss the different possible implementations of \grow later and evaluate their performance in \cref{sec:experiments}.
+Similar to OCUS the algorithm of \citet{ignatiev2015smallest}, our algorithm contains an (optional) call to \grow. 
+% However, the grow is optional: ``\emph{one can avoid the computation of MCS $\m{C}$ and use any correction subset $\m{C}'$ s.t. $\m{C} \subseteq \m{C}'$... Therefore, the grow procedure can be skipped}''.
+The purpose of the \grow is to expand a satisfiable subset of $\m{F}$ further, to find a smaller correction subset and as such find stronger constraints on the hitting sets. 
+In our case, the calls for hitting sets will also take into account the cost ($f$), as well as the meta-level constraints ($p$); as such, it is not clear a priori which properties a good \grow function should have here.
+% These extensions resulting in novel problems, and hence in this extended setting, we had to reconsider the question `what constitutes a good grow?'.
+We discuss the different possible implementations of \grow later and evaluate their performance in \cref{sec:experiments}. For correctness of the algorithm, all we need to know is that it returns a satisfiable subset $\m{S}'$ of $\m{F}$ with $\m{S}\subseteq\m{S}'$.
 %In our case, OCUS requires to account for the cost, as well as the meta-level constraints. One of the contributions of this work is experimentally validating that using cost-based grow heuristics significantly reduces the time to find an OCUS. To summarize, OCUS is based on implicit hitting set enu-meration, like the SMUS algorithm. The key differences with respect to SMUS are the use of a cost function and meta-
 %constraints. These extensions resulting in novel problems and hence in this extended setting we had to reconsider the question “what constitutes a good grow?”
 %
@@ -151,15 +153,19 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
  We provide an example of an \comus-call: 
 \begin{example}
 	Given the following CNF formula $\formulac$ over variables $x_1, x_2, x_3$:
-		\[ c_1 = \lnot x_1 \vee \lnot x_2 \vee x_3 \text{\hspace*{20pt}} c_2 = \lnot x_1 \vee  x_2 \vee x_3\] \[   c_3 = \lnot x_3 \vee \lnot x_2 \]
-	 If the current interpretation $I= \{ x_1\}$ and the final interpretation $\Iend = \{x_1, \lnot x_2,  x_3\}$, then $\overline{\Iend\setminus I} =  \{x_2, \lnot x_3\}$. We associate a clause for every literal $\m{I}$ and in  $\overline{\Iend\setminus I}$: 
-	 \[ c_4 = \{x_1\}\text{\hspace*{20pt}} c_5=\{x_2\} \text{\hspace*{20pt}}c_6 = \{\lnot x_3\}\]
-	 We define $p\triangleq$ \textit{exactlyone($c_5$, $c_6$)} and $f = \sum w_i$ the weighted sum over the assigned clause weights $w_1 = 20, w_2=20, w_3=20, w_4=1, w_5=1, w_6=1$.
+		\[ c_1 = \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 = \lnot x_1 \vee  x_2 \vee x_3\] \[   c_3 = \lnot x_3 \vee \lnot x_2 \]
+	 If the current interpretation ($I$) is  $\{ x_1\}$, then the final interpretation ($\Iend$) is $\{x_1, \lnot x_2,  x_3\}$. In this case $\overline{\Iend\setminus I} =  \{x_2, \lnot x_3\}$. To define the input for the OCUS call, we add new clauses representing the already known facts and the to-be-derived facts: 
+	 \[ c_4 = \{x_1\}\qquad  c_5=\{x_2\} \qquad  c_6 = \{\lnot x_3\}\]
+	 We define $p\triangleq$ \textit{exactlyone$(c_5, c_6)$} and $f = \sum w_ic_i$ the weighted sum using clause weights $w_1 = 20, w_2=20, w_3=20, w_4=1, w_5=1, w_6=1$.
 	 
-	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
-	 \[\formula= \formulac\land I \land \overline{(\Iend\setminus I)} = \{ c1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\}\]	
+	 The formula to be given to the is thus: 
+% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
+	 \[\formula= \formulac\land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\}\]	
 	 
-	Let $\setstohit$ be the collection of hitting sets. We can help the hitting set solver by bootstrapping it with $\setstohit  =\{ \{ c_5, c_6\} \}$, since we know at least one of the two clauses has to be taken. We also add the `\textit{exactlyone}' constraint to the hitting set solver. Table \ref{tab:explanation-steps-expanded} sketches the steps required to find an OCUS for \formula given $f$ and $p$.\end{example}
+% 	Let $\setstohit$ be the collection of hitting sets. 
+	We can help the hitting set solver by bootstrapping it with $\setstohit  =\{ \{ c_5, c_6\} \}$, since we know at least one of the two clauses has to be taken.\bart{why would you do this if you ALSO add the exactly one constraint? This does not help you. Drop t his sentence?}
+	We also add the `\textit{exactlyone}' constraint to the hitting set solver. \bart{The hitting set solver is provided p. You already defined p. Replace by: ``\setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $c_5$ and $c_6$ (due to $p$)''.}
+	Table \ref{tab:explanation-steps-expanded} sketches the steps required to find an OCUS for \formula given $f$ and $p$.\end{example}
 \begin{table}[!h]
 	\centering
 	\begin{adjustbox}{max width=\columnwidth}
@@ -167,7 +173,7 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 				\hline
 				\rule{0pt}{2ex}&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
 				\hline
-				\rule{0pt}{2ex} 0 & - &  -&-  & \rule{0pt}{2ex} $\{ \{ c_5, c_6\} \}$  \\
+				\rule{0pt}{2ex} 0 & - &  -&-  & \rule{0pt}{2ex} $\{ \{ c_5, c_6\} \}$\bart{$\emptyset$}  \\
 				\hline
 				1 &\rule{0pt}{2ex} $\{ c_5 \}$ & True & $\{c_1, c_2, c_3, c_5, c_6\}$    & $\{ \{ c_5, c_6\}, \{c_4\}\}$\rule{0pt}{2ex}   \\
 				\hline		
@@ -185,7 +191,11 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 
 
 %<<<<<<< HEA
-Line 0 in table \ref{tab:explanation-steps-expanded} is the initialization phase, i.e bootstrapping the \setstohit. The next lines represent the successive hitting sets $\m{S}$ computed by the hitting set solver. The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$. We further detail in section~\ref{sec:experiments} which \grow-configuration works best. Finally, note how at line 2, the hitting set computed is not $\{ c_5, c_6 \}$ of cost 2 due to the `\textit{exactlyone}'-constraint.
+Line 0 in table \ref{tab:explanation-steps-expanded} is the initialization phase, i.e bootstrapping the \setstohit.
+\bart{drop}
+The next lines represent the successive hitting sets $\m{S}$ computed by the hitting set solver. The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$.\bart{I don't think that this can at the moment be followed. I would say ``In this example, the \grow we used is the one called ''... in \cref{ref}.  } 
+
+We further detail in section~\ref{sec:experiments} which \grow-configuration works best. Finally, note how at line 2, the hitting set computed is not $\{ c_5, c_6 \}$ of cost 2 due to the `\textit{exactlyone}'-constraint. \bart{Euh... and because there is a set to hiet containing only c4???? What is this?}
 
 
 %\egcomment{Since this was a remark of one of the reviewers I thought it would be nice to have an example of how an explanation is computed in practice}

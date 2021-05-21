@@ -155,7 +155,7 @@ As an illustration, we now provide an example of one call to $\onestepo$ (Algori
 \begin{example}
 	Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
 		\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_3 \vee \lnot x_2 \]
-	 The (unique) final interpretation $\Iend$ is $\{x_1, \lnot x_2,  x_3\}$. Let the current interpretation $I$ be $\{ x_1\}$, then $\overline{\Iend\setminus I} =  \{x_2, \lnot x_3\}$.
+	 The final interpretation $\Iend$ is $\{x_1, \lnot x_2,  x_3\}$. Let the current interpretation $I$ be $\{ x_1\}$, then $\overline{\Iend\setminus I} =  \{x_2, \lnot x_3\}$.
 	 
 	 To define the input for the OCUS call, we add new clauses representing the already known facts $I$ and the to-be-derived facts $\overline{\Iend\setminus I}$: 
 	 \[ c_5 := \{x_1\}\qquad  c_6:=\{x_2\} \qquad  c_7 := \{\lnot x_3\}\]
@@ -170,7 +170,7 @@ As an illustration, we now provide an example of one call to $\onestepo$ (Algori
 %	We can help the hitting set solver by bootstrapping it with $\setstohit  =\{ \{ c_5, c_6\} \}$, since we know at least one of the two clauses has to be taken.\bart{why would you do this if you ALSO add the exactly one constraint? This does not help you. Drop t his sentence?}
 \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $c_5$ and $c_6$ (due to $p$).
 %	We also add the `\textit{exactlyone}' constraint to the hitting set solver. \bart{The hitting set solver is provided p. You already defined p. Replace by: ``\setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $c_5$ and $c_6$ (due to $p$)''.}
-	Table \ref{tab:explanation-steps-expanded} sketches the computed steps in the different iterations of Algorithm~\ref{alg:comus} given the above input.
+	Table \ref{tab:explanation-steps-expanded} shows the computed steps in the different iterations of Algorithm~\ref{alg:comus} given the above input.
 \begin{table}[!h]
 	\centering
 	\begin{adjustbox}{max width=\columnwidth}
@@ -200,7 +200,7 @@ As an illustration, we now provide an example of one call to $\onestepo$ (Algori
 The lines 1 to 4 represent the successive hitting sets $\m{S}$ computed by the hitting set solver. 
 In this example, the \grow we used is the one called \emph{Max-Actual-Unif} in \cref{sec:experiments}. 
 %The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$.\bart{I don't think that this can at the moment be followed. I would say ``In this example, the \grow we used is the one called ''... in \cref{ref}.  } 
-We further detail in section~\ref{sec:experiments} which \grow-configuration works best. 
+%We further detail in section~\ref{sec:experiments} which \grow-configuration works best. 
 %\egcomment{Since this was a remark of one of the reviewers I thought it would be nice to have an example of how an explanation is computed in practice}
 
 %\egcomment{Something to add here @Bart ?}

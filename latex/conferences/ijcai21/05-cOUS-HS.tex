@@ -163,7 +163,7 @@ As an illustration, we now provide an example of one call to $\onestepo$ (Algori
 	 % 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
 	 \[\formula= \formulac\land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\wedge c_7\}\]	
 	 	 
-	 We define $p\triangleq$ \textit{exactly-one$(c_6, c_7)$} and $f = \sum w_ic_i$ with clause weights $w_1 = 20, w_2=20, w_3=20, w_4=20, w_5=1, w_6=1, w_7=1$.
+	 We define $p\triangleq$ \textit{exactly-one$(c_6, c_7)$} and $f = \sum w_ic_i$ with clause weights $w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=1, w_6=1, w_7=1$.
 	 
 	 
 % 	Let $\setstohit$ be the collection of hitting sets. 
@@ -177,20 +177,19 @@ As an illustration, we now provide an example of one call to $\onestepo$ (Algori
 			\begin{tabular}{lcccc} 
 				&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
 				\toprule[2pt]
-				1 &$ \emptyset $ & $\mathit{true}$ & $\{c_1, c_2, c_3, c_4, c_5\}$    & $\{ \{c_6, c_7\}\}$   \\
+				1 &$ \emptyset $ & $\mathit{true}$ & $\{c_1, c_2, c_3, c_4, c_5\}$ & $\{ \{c_6, c_7\}\}$   \\
 				\midrule	
-				2 &$\{ c_7\}$  &$\mathit{true}$ & $\{ c_1 , c_3, c_4, c_5, c_7\}$   & $\{ \{c_6, c_7\}, \{c_2, c_6\}\}$  \\  
+				2 &$\{c_6\}$ & $\mathit{true}$ & $\{c_1, c_2, c_3, c_5, c_6\}$ & $\{ \{c_6, c_7\}, \{c_4, c_7\}\}$  \\  
 				\midrule
-				3 &$\{ c_2, c_7\}$  &$\mathit{true}$ & $\{ c_1, c_2, c_4,c_6, c_7\}$   & $\{\{c_6, c_7\}, \{c_2, c_6\}, \{c_3, c_5\}\}$  \\  
-%%				& &  &    & $$\rule{0pt}{2ex} \\
-%				
-%				3& $\{ c_5,c_7 \}$  & $\mathit{true}$ & $\{c_2, c_3, c_4,c_5, c_6, c_7 \}$  & $\{ \{c_7\},\{c_3, c_5\}, \{c_1\}\}$  \\  
+				3 &$\{c_7\}$ & $\mathit{true}$ & $\{c_1, c_3, c_4, c_5, c_7\}$ & $\{\{c_6, c_7\}, \{c_4, c_7\}, \{c_2, c_6\}\}$  \\
 				\midrule
-				\multirow{2}{*}{4}& \multirow{2}{*}{$\{ c_5, c_2, c_7 \}$}  & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{c_2, c_3, c_4,c_5, c_6, c_7 \}$ } & $\{\{c_6, c_7\}, \{c_2, c_6\}, $  \\ 
-				&   & &   & $ \{c_3, c_5\}, \{ c1\}\}$  \\ 
-%%				& &  &  & $\{c_2, c_6\}\}$  \\   
+				\multirow{2}{*}{4}& \multirow{2}{*}{$\{c_2, c_7\}$}  & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{c_2, c_3, c_4, c_5, c_6, c_7 \}$ } & $\{\{c_6, c_7\}, \{c_4, c_7\}, \{c_2, c_6\}, $  \\ 
+				&   & &   & $ \{c_1\}\}$  \\
 				\midrule
-				5&  $\{ c_1, c_2, c_5, c_7 \}$ & $\mathit{false}$ & & \\
+				\multirow{2}{*}{5}& \multirow{2}{*}{$\{c_1, c_2, c_7\}$}  & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{c_1, c_2, c_4, c_6, c_7 \}$ } & $\{\{c_6, c_7\}, \{c_4, c_7\}, \{c_2, c_6\}, $  \\ 
+				&   & &   & $ \{c_1\}, \{c_3, c_5\}\}$  \\
+				\midrule
+				6&  $\{ c_1, c_2, c_5, c_7 \}$ & $\mathit{false}$ & & \\
 				%\bottomrule
 			\end{tabular}
 	\end{adjustbox}

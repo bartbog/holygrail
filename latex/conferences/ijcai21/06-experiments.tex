@@ -258,7 +258,7 @@ To have a better view on how incrementality also affects \omus, we add increment
 %\bart{IMPORTAZTNT: ARE THESE RESULTS IN THE FIGURE EVEN CORRECT? I THOUGHT THAT IN THE LAST MEETING WE ROUGHLY CONCLUDED THAT OUS PLUS THE RIGHT INCREMENTAL STRATEGY WAS AS GOOD AS OCUS. NOW IT SUDDENLY IS NO LONGER THE CASE;}
 % 
 Figure \ref{fig:incrementality_constraindness} shows the results of the different variants, including the MUS-based variant discussed above. 
-In this figure, the configurations are compared in a similar fashion to figure \ref{fig:grow_strategies}.
+In this figure, the configurations are compared in a similar fashion to Figure \ref{fig:grow_strategies}.
 %\deleted{In this figure, the total number of explanation steps is not equal for all configurations, the reason for this is that the two OUS implementations timed-out before completing two of the puzzles (hence explaining their lower number) and the quality of the MUS-based explanations is worse, as observed in \textbf{Q1}. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower.}
 %We choose to answers \textbf{Q3} and \textbf{Q4} using the cactus plot of Figure \ref{fig:incrementality_constraindness} with the same logarithmic scale for consistency. Furthermore, both incrementality and constraindness go hand in hand.
 %All O(C)US variants use Max-Actual-Unif as \grow strategy following the results of the previous experiment.%, after we experimentally verified that this result of \textbf{Q2} also applied to the other OUS variants. %apply as well to all \mm{\call{O(C)US(+I)}} configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
@@ -272,12 +272,12 @@ In this figure, the configurations are compared in a similar fashion to figure \
 \end{figure}
 
 %\paragraph{Constrainedness}
-When comparing the configurations, we see that the plain \emph{MUS}-based implementation is faster than the \emph{O(C)US} implementations, as it solves a simpler problem. %cannot keep up with , as is to be expected since a harder problem is tackled.
+When comparing the configurations, we see that the plain \emph{MUS}-based implementation is faster than the \emph{O(C)US} implementations, as it solves a simpler problem (with worse quality results as shown in \textbf{Q1}). %cannot keep up with , as is to be expected since a harder problem is tackled.
 Replacing the MUS calls by plain OUS calls (orange line) leads to a much larger computation cost. The generic SS caching technique adds additional overhead. 
 
-The OCUS variants on the other hand significantly improve runtime compared to plain OUS, by reducing the number of OUS calls. For OCUS, using an incremental hitting set solver across all steps seems to incur a small overhead.
+The OCUS variants on the other hand significantly improve runtime compared to plain OUS, by reducing the number of OUS calls. For OCUS, using an incremental hitting set solver across all steps seems to be slightly faster for deriving literals earlier in the sequence, while inducing a small overhead for the literals at the end of the sequence.
 
-However, best results are obtained with OUS + Lit. Incr. HS, that is, using an incremental hitting set solver \textit{for every individual literal to explain} across the entire explanation sequence. This shows that reducing the number of OUS calls from $n$ to $1$ per explanation step improves runtime, but making each of the $n$ calls incremental across the entire explanation sequence generation process leads to an even faster process overall.
+When looking at the runtime to explain the entire sequence, best results are obtained with OUS + Lit. Incr. HS, that is, using an incremental hitting set solver \textit{for every individual literal to explain}. However, for the first literals, we can see that it takes much more computation time and that reducing number of OUS calls from $n$ to $1$ per explanation step improves runtime (OCUS), but making each of the $n$ calls incremental across the entire explanation sequence generation process leads to an even faster process overall (OUS+Lit Incr HS).
 
 %While slower than MUS, the runtime at most doubles, and, as investigated in \textbf{Q1} much better quality results are found.
 

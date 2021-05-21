@@ -86,7 +86,7 @@ Our original explanation generation algorithm \cite{ecai/BogaertsGCG20} starts f
   \label{alg:oneStep}
 $X_{best} \gets \mathit{nil}$\;
 \For{$l \in \{\Iend \setminus I\}$}{
-    $X \gets \call{MUS}{(\formulac \land I \land \neg l)}$ \emilio{Should we transform this into $\formulac \land I \land \{\neg l\}$}\;
+    $X \gets \call{MUS}{(\formulac \land I \land \neg l)}$
     \If{$f(X)<f(X_{best})$}{
         $X_{best} \gets X$\;
     }
@@ -110,7 +110,6 @@ It takes as input the formula \formulac, a cost function $f$ quantifying the qua
 To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequently selects the lowest cost one from found MUSs.
 %\deleted{the best of the found such MUSs}.  
 The reason this works is because there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of (subsets of) $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}. 
-\emilio{Should we transform this into $\formulac \land I \land \{\neg l\}$}
 
 Experiments have shown that such a MUS-based approach can easily take hours, especially when multiple MUS calls are performed to increase the chance of finding a good MUS, and hence that algorithmic improvements are needed to make it more practical. 
 We see three main points of improvement, all of which will be tackled by our generic OCUS algorithm presented in the next section. 

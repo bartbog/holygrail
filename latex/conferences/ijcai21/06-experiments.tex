@@ -199,6 +199,7 @@ Figure \ref{fig:grow_strategies} depicts the average (over all the puzzles) cumu
 The configurations are as follows:
 \begin{itemize}
 \item \emph{Max} refers to growing with a MaxSAT solver and \emph{Greedy} to growing using a heuristic method implemented by repeated sat calls. 
+\item \emph{Sat} refers to ignoring \grow and simply adding the complement of the model when algorithm \ref{alg:comus} queries for satisfiability of the hitting set.
 \item  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$  while \emph{Actual} refers to using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the MaxSAT based calls, using \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
 \item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), original weights $w_i$, i.e., equal to the weights in the OCUS call (\emph{pos}) or the inverse of the original costs (\emph{inv}) defined as $max(w_i) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
 \end{itemize}
@@ -241,14 +242,22 @@ As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} in
 % \tias{make 'Timeout' top entry of legend}
 
 \paragraph{Constrainedness and incrementality}
-To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C), and incrementality, i.e., initialising the set of hitting sets ${\cal H}$ in an \omus call with the set of satisfiable subsets previously computed (+SS caching), and with reusing a single share hitting solvers across all OCUS calls (+Incr.HS). \bart{I cannot read this sentence. Waay too long. Also: why is a different method for incrementality used for OUS than for OCUS.}
-\bart{IMPORTAZTNT: ARE THESE RESULTS IN THE FIGURE EVEN CORRECT? I THOUGHT THAT IN THE LAST MEETING WE ROUGHLY CONCLUDED THAT OUS PLUS THE RIGHT INCREMENTAL STRATEGY WAS AS GOOD AS OCUS. NOW IT SUDDENLY IS NO LONGER THE CASE;}
+To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C), and incrementality for the \emph{Max-Actual-Unif} grow.
+For \emph{OCUS}, incrementality (\emph{+Incr.~HS}) is achieved by keeping the hitting set solver warm throughout the explanation calls.  
+To have a better view on how incrementality also affects \omus, we add incrementality in the following ways:
+\begin{itemize}
+	\item \emph{SS.~caching} keeps track of the satisfiable subsets internally and initialize \setstohit as presented in \cref{sec:ocusEx}.
+	\item \emph{Lit.~Incr.~HS} keeps a hitting set solver warm for every literal to explain throughout the explanation calls. Once the literal is explained, the hitting set solver is discarded.
+\end{itemize}
+%To have a better view on how incrementality also affects \omus, we consider 3
+% i.e., initialising the set of hitting sets ${\cal H}$ in an \omus call with the set of satisfiable subsets previously computed (+SS caching), and with reusing a single share hitting solvers across all OCUS calls (+Incr.HS). \bart{I cannot read this sentence. Waay too long. Also: why is a different method for incrementality used for OUS than for OCUS.}
+%\bart{IMPORTAZTNT: ARE THESE RESULTS IN THE FIGURE EVEN CORRECT? I THOUGHT THAT IN THE LAST MEETING WE ROUGHLY CONCLUDED THAT OUS PLUS THE RIGHT INCREMENTAL STRATEGY WAS AS GOOD AS OCUS. NOW IT SUDDENLY IS NO LONGER THE CASE;}
 % 
 Figure \ref{fig:incrementality_constraindness} shows the results of the different variants, including the MUS-based variant discussed above. 
 In this figure, the configurations are compared in a similar fashion to figure \ref{fig:grow_strategies}.
 %\deleted{In this figure, the total number of explanation steps is not equal for all configurations, the reason for this is that the two OUS implementations timed-out before completing two of the puzzles (hence explaining their lower number) and the quality of the MUS-based explanations is worse, as observed in \textbf{Q1}. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower.}
 %We choose to answers \textbf{Q3} and \textbf{Q4} using the cactus plot of Figure \ref{fig:incrementality_constraindness} with the same logarithmic scale for consistency. Furthermore, both incrementality and constraindness go hand in hand.
-All O(C)US variants use Max-Actual-Unif as \grow strategy following the results of the previous experiment.%, after we experimentally verified that this result of \textbf{Q2} also applied to the other OUS variants. %apply as well to all \mm{\call{O(C)US(+I)}} configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
+%All O(C)US variants use Max-Actual-Unif as \grow strategy following the results of the previous experiment.%, after we experimentally verified that this result of \textbf{Q2} also applied to the other OUS variants. %apply as well to all \mm{\call{O(C)US(+I)}} configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
 % \bart{This is confusing: the next paragraph contains 
 
 \begin{figure}[t]
@@ -258,9 +267,11 @@ All O(C)US variants use Max-Actual-Unif as \grow strategy following the results 
 	\label{fig:incrementality_constraindness}
 \end{figure}
 
-% \paragraph{Constrainedness}
-When comparing all five configurations, we see that the OUS implementations cannot keep up with the plain MUS based implementation, as is to be expected since a harder problem is tackled.
-However, when using a single \textbf{constrained} (OCUS) call at every step we see a dramatic improvement in runtime. While slower than MUS, the runtime at most doubles, and, as investigated in \textbf{Q1} much better quality results are found. %. then multiple MUS calls,  ,  constrainedness, by switching to Algorithm \ref{alg:oneStepOCUS}, we effectively reduce the number of calls to the \omus solver.
+ \paragraph{Constrainedness}
+When comparing all six configurations, we see that the \emph{O(C)US} implementations cannot keep up with the plain \emph{MUS}-based implementation, as is to be expected since a harder problem is tackled.
+However, when using a single \textbf{constrained} (OCUS) call at every step we see a dramatic improvement in runtime. 
+While slower than MUS, the runtime at most doubles, and, as investigated in \textbf{Q1} much better quality results are found. 
+%. then multiple MUS calls,  ,  constrainedness, by switching to Algorithm \ref{alg:oneStepOCUS}, we effectively reduce the number of calls to the \omus solver.
 %The constrainedness enhancement as shown in Figure \ref{fig:incrementality_constraindness} proves the importance of our approach.
 %The explanation generation times for a whole sequence are on close to and sometimes even outperform  the MUS approach, while still solving the harder problem of unsatisfiable subset optimization. 
 
@@ -273,7 +284,12 @@ However, when using a single \textbf{constrained} (OCUS) call at every step we s
 %%To our surprise, we noticed that \emilio{both in the constrained and non-constrained OUS setting, incrementality had no noticeable effect.
 %%Even more so, naively restarting \textit{OUS} and \textit{OCUS} at every explanation step, without tracking the satisfiable subsets, provides improvements on the more difficult puzzles.
 %%One potential explanation is when a branch-and-bound-based MIP solver such as Gurobi is kept warm, the solver will start in a search space close to the previous solution. However there is no immediate guarantee that the new best explanation is closely related to the previous one.}
-\textbf{Incrementality} leads to small runtime improvements in the intial steps \bart{In the initial steps??? That does not make sense. In the first step incremental or nonincremetnal should be the same}, which are not visible on the figure. When manually storing and initialising the set of satisfiable subsets, we can see that this induces an increasing overhead for later steps in the generation process that becomes substantial. In case of OCUS, when using a single MIP solver and its built-in incrementality capabilities across all steps, we can see small runtime improvements for some individual steps but on average it is slower in computing all explanations.
+\textbf{Incrementality} In the case of \comus, when using a single MIP solver and its built-in incrementality capabilities across all step, we see only minor runtime improvements at the end of the sequence where the more difficult steps are. Surprisingly, for \emph{OUS+Lit.~Incr.~HS} incrementality dramatically reduces the runtime with a runtime very close to \comus. For the first few literals, \emph{OUS+Lit.~Incr.~HS} is almost on par with \emph{MUS}.
+
+%\bart
+
+
+%leads to small runtime improvements in the intial steps \bart{In the initial steps??? That does not make sense. In the first step incremental or nonincremetnal should be the same}, which are not visible on the figure. When manually storing and initialising the set of satisfiable subsets, we can see that this induces an increasing overhead for later steps in the generation process that becomes substantial. In case of OCUS, when using a single MIP solver and its built-in incrementality capabilities across all steps, we can see small runtime improvements for some individual steps but on average it is slower in computing all explanations.
 
 % 
 %\deleted{When combining constrainedness with incrementality, on the other hand, we see that this incrementality yields important improvements. One potential explanation for this behaviour is the fact that, as discussed above, in the OCUS+I implementation, we only initialize a MIP and reuse it  across the different \onestep calls of algorithm \ref{alg:oneStepOCUS}.

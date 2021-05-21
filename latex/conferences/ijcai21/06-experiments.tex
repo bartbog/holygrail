@@ -246,12 +246,12 @@ We can observe that not using a grow strategy performs badly, as do weighted Max
 % \tias{make 'Timeout' top entry of legend}
 
 \paragraph{Constrainedness and incrementality}
-To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C), and incrementality for the \emph{Max-Actual-Unif} grow.
-For \emph{OCUS}, incrementality (\emph{+Incr.~HS}) is achieved by keeping the hitting set solver warm throughout the explanation calls.  
-To have a better view on how incrementality also affects \omus, we add incrementality in the following ways:
+To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C) and incrementality. Based on the previous experiment, we always use (both for OUS and OCUS) \emph{Max-Actual-Unif} as grow strategy.
+For \emph{OCUS}, incrementality (\emph{+Incr.~HS}) is achieved by reusing the same incremental MIP hitting set solver throughout the explanation calls, as explained in Section~\ref{sec:ocusEx}.  
+To have a better view on how incrementality also affects \omus, we add incrementality to it in the following ways:
 \begin{itemize}
-	\item \emph{SS.~caching} keeps track of the satisfiable subsets internally and initialize \setstohit as presented in \cref{sec:ocusEx}.
-	\item \emph{Lit.~Incr.~HS} keeps a hitting set solver warm for every literal to explain throughout the explanation calls. Once the literal is explained, the hitting set solver is discarded.
+	\item \emph{SS.~caching} keeps track of the satisfiable subsets, which are used to initialize \setstohit for a fresh hitting set solver instance each time.
+	\item \emph{Lit.~Incr.~HS} uses a separate incremental hitting set solver for every literal to explain, throughout the explanation calls. Once the literal is explained, the hitting set solver is discarded.
 \end{itemize}
 %To have a better view on how incrementality also affects \omus, we consider 3
 % i.e., initialising the set of hitting sets ${\cal H}$ in an \omus call with the set of satisfiable subsets previously computed (+SS caching), and with reusing a single share hitting solvers across all OCUS calls (+Incr.HS). \bart{I cannot read this sentence. Waay too long. Also: why is a different method for incrementality used for OUS than for OCUS.}
@@ -271,10 +271,13 @@ In this figure, the configurations are compared in a similar fashion to figure \
 	\label{fig:incrementality_constraindness}
 \end{figure}
 
- \paragraph{Constrainedness}
-When comparing all six configurations, we see that the \emph{O(C)US} implementations cannot keep up with the plain \emph{MUS}-based implementation, as is to be expected since a harder problem is tackled.
-However, when using a single \textbf{constrained} (OCUS) call at every step we see a dramatic improvement in runtime. 
-While slower than MUS, the runtime at most doubles, and, as investigated in \textbf{Q1} much better quality results are found. 
+%\paragraph{Constrainedness}
+When comparing the configurations, we see that the plain \emph{MUS}-based implementation is faster than the \emph{O(C)US} implementations, as it solves a simpler problem. %cannot keep up with , as is to be expected since a harder problem is tackled.
+Replacing the MUS calls by plain OUS calls leads to a much larger computation cost. The generic SS caching technique adds additional overhead. 
+
+However, carefully taking the sequential nature of the explanation generation into account can reduce runtimes considerably: either by making the hitting set solver of each OUS call incremental across the entire sequence (OUS+Lit. Incr. HS), or by using a single \textbf{constrained} (OCUS) call at every step.
+While slower than MUS, the runtime at most doubles, and, as investigated in \textbf{Q1} much better quality results are found.
+
 %. then multiple MUS calls,  ,  constrainedness, by switching to Algorithm \ref{alg:oneStepOCUS}, we effectively reduce the number of calls to the \omus solver.
 %The constrainedness enhancement as shown in Figure \ref{fig:incrementality_constraindness} proves the importance of our approach.
 %The explanation generation times for a whole sequence are on close to and sometimes even outperform  the MUS approach, while still solving the harder problem of unsatisfiable subset optimization. 
@@ -288,7 +291,10 @@ While slower than MUS, the runtime at most doubles, and, as investigated in \tex
 %%To our surprise, we noticed that \emilio{both in the constrained and non-constrained OUS setting, incrementality had no noticeable effect.
 %%Even more so, naively restarting \textit{OUS} and \textit{OCUS} at every explanation step, without tracking the satisfiable subsets, provides improvements on the more difficult puzzles.
 %%One potential explanation is when a branch-and-bound-based MIP solver such as Gurobi is kept warm, the solver will start in a search space close to the previous solution. However there is no immediate guarantee that the new best explanation is closely related to the previous one.}
-\textbf{Incrementality} In the case of \comus, when using a single MIP solver and its built-in incrementality capabilities across all step, we see only minor runtime improvements at the end of the sequence where the more difficult steps are. Surprisingly, for \emph{OUS+Lit.~Incr.~HS} incrementality dramatically reduces the runtime with a runtime very close to \comus. For the first few literals, \emph{OUS+Lit.~Incr.~HS} is almost on par with \emph{MUS}.
+%\textbf{Incrementality} 
+In the case of \comus, using a single MIP solver and its built-in incrementality capabilities across all step does not lead to further improvements and even induces a bit of overhead, %. %, we see only minor runtime improvements at the end of the sequence where the more difficult steps are. Surprisingly, for
+while for \emph{OUS+Lit.~Incr.~HS} it dramatically reduced the runtime with a an average total runtime very close to \comus but slightly different behaviour in earlier steps.
+%For the first few literals, \emph{OUS+Lit.~Incr.~HS} is almost on par with \emph{MUS}.
 
 %\bart
 

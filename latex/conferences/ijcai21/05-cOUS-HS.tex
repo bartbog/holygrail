@@ -12,7 +12,7 @@ The first two considerations from the previous section lead to the following def
 
 If we assume that the predicate $p$ is specified itself as a CNF over (meta)-variables indicating inclusion of clauses of $\m{F}$, and $f$ is obtained by assigning a weight to each such meta-variable, then the complexity of the problem of finding an OCUS is the same as that of the SMUS (cardinality-minimal MUS) problem  \cite{ignatiev2015smallest}: the associated decision problem is $\Sigma^P_2$-complete. Hardness follows from the fact that SMUS is a special case of OCUS, containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
 
-Rephrased in terms of OCUS, the task of the procedure \onestep is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets  that contain exactly one literal of $\overline{\Iend\setminus I}$, see \cref{alg:oneStepOCUS}. 
+When considering the procedure \onestep from the perspective of OCUS defined above, the task of the procedure  is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets  that contain exactly one literal of $\overline{\Iend\setminus I}$, see \cref{alg:oneStepOCUS}. 
 %In the rest of this paper, we study (incremental) algorithms for computing an OCUS. 
 
 %\emilio{why is the text formatting weird ? Due to the algorithm names ? }
@@ -151,7 +151,7 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver.
 
 As an illustration, we now provide an example of one call to $\onestepo$ (Algorithm 
-\ref{alg:oneStepOCUS}) and the corresponding \comus-call (Algorithm \ref{alg:comus} in detail: 
+\ref{alg:oneStepOCUS}) and the corresponding \comus-call (Algorithm \ref{alg:comus}) in detail: 
 \begin{example}
 	Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
 		\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_3 \vee \lnot x_2 \]

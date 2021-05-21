@@ -150,17 +150,18 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver.
 
- To illustrate algorithm \ref{alg:comus}, we provide an example of an \comus-call: 
+As an illustration, we now provide an example of one call to $\onestepo$ (Algorithm 
+\ref{alg:oneStepOCUS}) and the corresponding \comus-call (Algorithm \ref{alg:comus} in detail: 
 \begin{example}
-	Given the following CNF formula $\formulac$ over variables $x_1, x_2, x_3$:
-		\[ c_1 = \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 = \lnot x_1 \vee  x_2 \vee x_3\] \[   c_3 = \lnot x_3 \vee \lnot x_2 \]
+	Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
+		\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_3 \vee \lnot x_2 \]
 	 If the current interpretation ($I$) is  $\{ x_1\}$, then the final interpretation ($\Iend$) is $\{x_1, \lnot x_2,  x_3\}$. In this case $\overline{\Iend\setminus I} =  \{x_2, \lnot x_3\}$. To define the input for the OCUS call, we add new clauses representing the already known facts and the to-be-derived facts: 
-	 \[ c_4 = \{x_1\}\qquad  c_5=\{x_2\} \qquad  c_6 = \{\lnot x_3\}\]
-	 We define $p\triangleq$ \textit{exactlyone$(c_5, c_6)$} and $f = \sum w_ic_i$ the weighted sum using clause weights $w_1 = 20, w_2=20, w_3=20, w_4=1, w_5=1, w_6=1$.
+	 \[ c_5 = \{x_1\}\qquad  c_6=\{x_2\} \qquad  c_7 = \{\lnot x_3\}\]
+	 We define $p\triangleq$ \textit{exactlyone$(c_6, c_7)$} and $f = \sum w_ic_i$ the weighted sum using clause weights $w_1 = 20, w_2=20, w_3=20, w_4=20, w_5=1, w_6=1, w_7=1$.
 	 
 	 The formula to be given to the is thus: 
 % 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
-	 \[\formula= \formulac\land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\}\]	
+	 \[\formula= \formulac\land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\wedge c_7\}\]	
 	 
 % 	Let $\setstohit$ be the collection of hitting sets. 
 %	We can help the hitting set solver by bootstrapping it with $\setstohit  =\{ \{ c_5, c_6\} \}$, since we know at least one of the two clauses has to be taken.\bart{why would you do this if you ALSO add the exactly one constraint? This does not help you. Drop t his sentence?}
@@ -176,17 +177,17 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 				\midrule
 				0 & - &  -&-  & \rule{0pt}{2ex} $\emptyset$  \\
 				%\midrule
-				1 &$ \emptyset $ & $true$ & $\{c_1, c_2, c_3, c_5, c_6\}$    & $\{ \{c_4\}\}$   \\
+				1 &$ \emptyset $ & $true$ & $\{c_1, c_2, c_4, c_6, c_7\}$    & $\{ \{c_5\}\}$   \\
 				%\midrule	
-				2 &$\{ c_4\}$  & $true$ & $\{ c_1, c_2, c_4, c_5\}$   & $\{ \{c_4\}, \{c_3, c_6\}\}$  \\  
+				2 &$\{ c_5\}$  & $true$ & $\{ c_1, c_2, c_5, c_6\}$   & $\{ \{c_5\}, \{c_4, c_7\}\}$  \\  
 %				& &  &    & $$\rule{0pt}{2ex} \\
 				%\midrule
-				3& $\{ c_4,c_6 \}$  & $true$ & $\{c_2, c_3, c_4, c_5,c_6 \}$  & $\{ \{c_4\},\{c_3, c_6\}, \{c_1\}\}$  \\  
+				3& $\{ c_5,c_7 \}$  & $true$ & $\{c_2, c_4, c_5, c_6,c_7 \}$  & $\{ \{c_5\},\{c_4, c_7\}, \{c_1\}\}$  \\  
 				%\midrule
-				\multirow{2}{*}{4}& \multirow{2}{*}{$\{ c_1, c_4,c_6 \}$}  & \multirow{2}{*}{$true$} & \multirow{2}{*}{$\{c_1, c_3, c_4,c_6 \}$}  & $\{ \{c_4\},\{c_3, c_6\}, \{c_1\}$  \\ 
-				& &  &  & $\{c_2, c_5\}\}$  \\   
+				\multirow{2}{*}{4}& \multirow{2}{*}{$\{ c_1, c_5,c_7 \}$}  & \multirow{2}{*}{$true$} & \multirow{2}{*}{$\{c_1, c_4, c_5,c_7 \}$}  & $\{ \{c_5\},\{c_4, c_7\}, \{c_1\}$  \\ 
+				& &  &  & $\{c_2, c_6\}\}$  \\   
 				%\midrule
-				5&  $\{ c_1, c_2, c_4, c_6 \}$ & $true$ & \multicolumn{2}{c}{$\{  c_1, c_2, c_4, c_6  \}$ is an OCUS of $\formula$.} \\
+				5&  $\{ c_1, c_2, c_5, c_7 \}$ & $false$ & & \\
 				%\bottomrule
 			\end{tabular}
 	\end{adjustbox}

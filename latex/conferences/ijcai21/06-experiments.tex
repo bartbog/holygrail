@@ -3,7 +3,7 @@
 We now experimentally validate the performance of the different versions of our algorithm.
 Our benchmarks were run on a compute cluster, where each explanation sequence generation was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor, a timelimit of 120 minutes and a memory-limit of 4GB. 
 Everything was implemented in Python on top of PySAT\footnote{\url{https://pysathq.github.io}} and is available at \url{https://github.com/ML-KULeuven/ocus-explain}. 
-For MIP calls, we used Gurobi 9.0, for SAT call MiniSat 2.2 and for MaxSAT calls RC2 as bundled with PySAT (version 0.1.6.dev11). In the MUS-based approach we used PySAT's deletion-based MUS extractor MUSX~\cite{marques2010minimal}.
+For MIP calls, we used Gurobi 9.0, for SAT calls MiniSat 2.2 and for MaxSAT calls RC2 as bundled with PySAT (version 0.1.6.dev11). In the MUS-based approach we used PySAT's deletion-based MUS extractor MUSX~\cite{marques2010minimal}.
 
 All of our experiments were run on a direct translation to PySAT of the 10 puzzles of \citet{ecai/BogaertsGCG20}\footnote{In one of the puzzles, an error in the automatic translation of the natural language constraints was found and fixed.}. %Because of this error, it was missing in the experimental results of the previous work.} 
 We used a cost of 60 for puzzle-agnostic constraints; 100 for puzzle-specific constraints; and cost 1 for facts.
@@ -36,7 +36,7 @@ Our experiments are designed to answer the following research questions:
 
 \paragraph{Explanation quality}\label{paragraph:explanationquality}
 To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on \cref{alg:oneStep}. 
-Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there --- in order to avoid the quality problems we will illustrate below --- implemented an extra inner loop with \emph{even more} calls to \call{MUS} for a selected set of subsets of \formulac of increasing size (this is their Algorithm~3). 
+Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there --- in order to avoid the quality problems we will illustrate below ---  an extra inner loop was used that employs \emph{even more} calls to \call{MUS} for a selected set of subsets of \formulac of increasing size (this is their Algorithm~3). 
 While this yields better explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle. 
 %We will see in our later experiments is that we can both \emph{outperform}, in terms of computational cost, this simple \call{MUS} based implementation while also guaranteeing cost-optimality, as such achieving a Pareto improvement.
 
@@ -50,7 +50,7 @@ To answer \textbf{Q1}, we ran the \call{MUS}-based algorithm as described in \cr
 % To answer \textbf{Q1}, we start by generating a sequence of explanations using the \comus from an initial assignment $I_0$.. Then, using this sequence as a starting point, we look for a MUS-based explanation given the partial assignments $I_i$ at step i.
 These costs are plotted on a heatmap in Figure \ref{fig:rq1_heatmap}, where the darkness represents the number of occurrences of the combination at hand. 
 % Note that, the distribution of the dotts show the quality of the OUS explanation is either similar, when along the same-cost diagonal or better in the upper part of the graph. The dotts' sizes demonstrates 
-We see that the difference in quality is striking in many cases, with the MUS-based solution often missing very cheap explanations (as seen by the large dark vertical column around cost 60), thereby confirming the need for a cost-based \omus/\comus approach.
+We see that the difference in quality is striking in many cases, with the MUS-based solution often missing very cheap explanations (as seen by the two dark squares in the column around cost 60), thereby confirming the need for a cost-based \omus/\comus approach.
 %\begin{table}[ht]
 %		\centering
 %	\begin{adjustbox}{max width=\columnwidth}
@@ -178,10 +178,10 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
 %>>>>>>> e4d5df1776ed855c31dae20748d5f394d39a4d9e
 
 \paragraph{Domain-specific \grow} 
-In our OCUS algorithm, we do not just aim to find any satisfiable subsets, but we prefer \emph{high quality} satisfiable subsets: subsets that will impose strong constraints on the assignments the optimal hitting set solver can find. 
+In our OCUS algorithm, we do not just aim to find any satisfiable subsets, but we prefer \emph{high quality} satisfiable subsets: subsets that impose strong constraints on the assignments the optimal hitting set solver can find. 
 This induces a trade-off between \emph{efficiency} of the \grow strategy and \emph{quality} of the produced satisfiable subset.
 
-\begin{figure}[ht]
+\begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{figures_post_paper/new_cumul_grow_avg_time_lits_derived.pdf}
   \caption{Q2 - Explanation specific \grow strategies for \comus.}
@@ -193,21 +193,25 @@ This induces a trade-off between \emph{efficiency} of the \grow strategy and \em
 %\deleted{Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the average of the cumulative explanation time of different \grow strategies to generate the explanation sequence of all puzzles combined
 %	\tias{Be more specific: this is the average of the cumulative expl time for each puzzle? [not cumulative avg I think? you avg the cumulatives??}.}
 Thus, to answer \textbf{Q2}, we compared variations of  \comus that only differ in which \grow strategy they use. 
-Figure \ref{fig:grow_strategies} depicts the average (over all the puzzles) cumulative explanation time to derive a number of literals.
+Figure \ref{fig:grow_strategies} depicts the average (over all the puzzles) cumulative explanation time to derive a number of literals. Note that most puzzles only contain 150 literals, and hence the 'jump' seen is due to averaging over fewer puzzles. When a method times out for a puzzle at one step, a runtime value of 7200 is used in computing the averages for all future steps.
+To compute the average, if a configuration time-outs on certain puzzle, we used the timeout time (7200s). 
+The jump around literal 150 can be explained by the fact that there is only one puzzle with 250 literals, all others have at most 150. When a puzzle is finished, its final runtime is not taken into account in computing the average for the rest of the sequence \todo{IS THAT SO? In the current plot, if an instance time-outs at literl 50, its timeout is taken into account up to literal 150, but not beyond that? Sounds strange!}
 % \bart{what are n-literals? Is this a typo? Or did you mean 
 %\tias{This is specific for OCUS right? Or also for OUS? previous exp uses OUS, so say explicitly that for OCUS if so} 
-The configurations are as follows:
+The configurations used are as follows:
 \begin{itemize}
 \item \emph{Max} refers to growing with a MaxSAT solver and \emph{Greedy} to growing using a heuristic method implemented by repeated sat calls. 
-\item \emph{no-grow} refers to ignoring \grow and simply adding the complement of the model found by algorithm \ref{alg:comus}, line \ref{alg:ocus-sat-check} when checking for satisfiability of the hitting set.
-\item  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$  while \emph{Actual} refers to using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the MaxSAT based calls, using \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
-\item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), original weights $w_i$, i.e., equal to the weights in the OCUS call (\emph{pos}) or the inverse of the original costs (\emph{inv}) defined as $max(w_i) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
+%\item 
+\emph{no-grow} on the other refers to skipping \grow step.
+\item  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$  while \emph{Actual} refers to using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the MaxSAT-based calls, using \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
+\item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights $w_i$, i.e., equal to the weights in $f$ (\emph{pos}) or the inverse of these costs (\emph{inv}) defined as $max_i(w_i) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
 \end{itemize}
 %\tias{switch explanation to follow names in figure: first explain Max vs greedy, then explain Actual vs Full, dan unif/inv/pos}.
 
 
 %\tias{Use the names used in the figure, 'Max-Full variants'?}
-As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} indeed performs best, though only \emph{Max-Actual-Unif} is able to finish all explanations. 
+%As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} indeed performs best, though only \emph{Max-Actual-Unif} is able to finish all explanations. 
+We can observe that not using a grow strategy performs badly, as do weighted MaxSAT grows with costs $w_i$ (-Pos). Greedy grow strategies improve on not using a grow strategy, but not substantially. The two approaches that work best use the domain-specific knowledge of doing a MaxSAT grow on $\formulac\cup I$, with the unweighted variant the only one that never times out.
 %When repeating this experiment for \omus the same pattern was observed. 
 %\bart{AND also for incremental and non-incremental, right? Are you actually sure of that. We noticed this in the IJCAI paper but as far as I know, all your expiermental data from that time was messed up... } 
 %The \emph{Greedy}-strategy provides some improvement on the cumulative runtime with respect to \emph{Max-Full}, but neither can generate explanations for all puzzle instances. \bart{Drop this last sentence?  Why focus on this?}}

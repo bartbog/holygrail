@@ -181,7 +181,7 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
 In our OCUS algorithm, we do not just aim to find any satisfiable subsets, but we prefer \emph{high quality} satisfiable subsets: subsets that impose strong constraints on the assignments the optimal hitting set solver can find. 
 This induces a trade-off between \emph{efficiency} of the \grow strategy and \emph{quality} of the produced satisfiable subset.
 
-\begin{figure}[ht]
+\begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{figures_post_paper/new_cumul_grow_avg_time_lits_derived.pdf}
   \caption{Q2 - Explanation specific \grow strategies for \comus.}
@@ -193,24 +193,25 @@ This induces a trade-off between \emph{efficiency} of the \grow strategy and \em
 %\deleted{Thus, to answer \textbf{Q2}, we depict in Figure \ref{fig:grow_strategies} the average of the cumulative explanation time of different \grow strategies to generate the explanation sequence of all puzzles combined
 %	\tias{Be more specific: this is the average of the cumulative expl time for each puzzle? [not cumulative avg I think? you avg the cumulatives??}.}
 Thus, to answer \textbf{Q2}, we compared variations of  \comus that only differ in which \grow strategy they use. 
-Figure \ref{fig:grow_strategies} depicts the average (over all the puzzles) cumulative explanation time to derive a number of literals.
+Figure \ref{fig:grow_strategies} depicts the average (over all the puzzles) cumulative explanation time to derive a number of literals. Note that most puzzles only contain 150 literals, and hence the 'jump' seen is due to averaging over fewer puzzles. When a method times out for a puzzle at one step, a runtime value of 7200 is used in computing the averages for all future steps.
 To compute the average, if a configuration time-outs on certain puzzle, we used the timeout time (7200s). 
 The jump around literal 150 can be explained by the fact that there is only one puzzle with 250 literals, all others have at most 150. When a puzzle is finished, its final runtime is not taken into account in computing the average for the rest of the sequence \todo{IS THAT SO? In the current plot, if an instance time-outs at literl 50, its timeout is taken into account up to literal 150, but not beyond that? Sounds strange!}
 % \bart{what are n-literals? Is this a typo? Or did you mean 
 %\tias{This is specific for OCUS right? Or also for OUS? previous exp uses OUS, so say explicitly that for OCUS if so} 
-The configurations are as follows:
+The configurations used are as follows:
 \begin{itemize}
 \item \emph{Max} refers to growing with a MaxSAT solver and \emph{Greedy} to growing using a heuristic method implemented by repeated sat calls. 
 %\item 
 \emph{no-grow} on the other refers to skipping \grow step.
 \item  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$  while \emph{Actual} refers to using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the MaxSAT-based calls, using \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
-\item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), original weights $w_i$, i.e., equal to the weights in the OCUS call (\emph{pos}) or the inverse of the original costs (\emph{inv}) defined as $\max_i(w_i) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
+\item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights $w_i$, i.e., equal to the weights in $f$ (\emph{pos}) or the inverse of these costs (\emph{inv}) defined as $max_i(w_i) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
 \end{itemize}
 %\tias{switch explanation to follow names in figure: first explain Max vs greedy, then explain Actual vs Full, dan unif/inv/pos}.
 
 
 %\tias{Use the names used in the figure, 'Max-Full variants'?}
-As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} indeed performs best, though only \emph{Max-Actual-Unif} is able to finish all explanations. 
+%As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} indeed performs best, though only \emph{Max-Actual-Unif} is able to finish all explanations. 
+We can observe that not using a grow strategy performs badly, as do weighted MaxSAT grows with costs $w_i$ (-Pos). Greedy grow strategies improve on not using a grow strategy, but not substantially. The two approaches that work best use the domain-specific knowledge of doing a MaxSAT grow on $\formulac\cup I$, with the unweighted variant the only one that never times out.
 %When repeating this experiment for \omus the same pattern was observed. 
 %\bart{AND also for incremental and non-incremental, right? Are you actually sure of that. We noticed this in the IJCAI paper but as far as I know, all your expiermental data from that time was messed up... } 
 %The \emph{Greedy}-strategy provides some improvement on the cumulative runtime with respect to \emph{Max-Full}, but neither can generate explanations for all puzzle instances. \bart{Drop this last sentence?  Why focus on this?}}

@@ -36,22 +36,6 @@
 \newcommand\m[1]{\ensuremath{\mathcal{#1}}}
 \newcommand\ignore[1]{}
 \usepackage[capitalise]{cleveref}
-\newcommand\comment[1]{\marginpar{\parbox{\marginparwidth}{\tiny #1}}}
-\renewcommand\comment[1]{#1}
-% uncomment this for disabling all comments
-% \renewcommand\comment[1]{}
-\newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
-\newcommand{\emilio}[1]{{\comment{\color{purple}\textsc{EG:}#1}}}
-\newcommand{\added}[1]{{\comment{\color{orange}NEW: #1}}}
-%\newcommand{\egcomment}[1]{{\comment{\color{purple}\textsc{EG:}#1}}}
-\newcommand{\bart}[1]{{\comment{\color{OliveGreen}\textsc{BB:}#1}}}
-\newcommand{\todo}[1]{{\comment{\color{red}\textsc{TODO:}#1} }}
-\newcommand{\deleted}[1]{} %{\sout{#1}}}
-
-% uncomment this for showing all text without removed text
-% \renewcommand\emilio[1]{#1}
-% \renewcommand\comment[1]{}
- \renewcommand\added[1]{#1}
 
 \newcommand\voc{\ensuremath{\Sigma}\xspace}
 \newtheorem{thm}{Theorem}
@@ -109,7 +93,6 @@
 \SetKwInOut{Ext.}{Ext}
 \SetKwComment{command}{/*}{*/}
 
-
 \newcommand\negset[1]{\mm{\overline{#1}}}
 \newcommand\maxsat{MaxSAT\xspace}
 
@@ -120,16 +103,11 @@
 /TemplateVersion (IJCAI.2021.0)
 }
 
-% \title{Incremental and Constrained Optimal Unsatisfiable Subsets for Explaining CSPs}
-% \title{Constrained Optimal Unsatisfiable Subsets for Explaining CSPs}
 \title{Efficiently Explaining CSPs with Unsatisfiable Subset Optimization}
 
 % Single author syntax
 \author{
-	Emilio Gamba$^1$
-	\and
-	Bart Bogaerts$^1$ \And
-	Tias Guns$^{1,2}$
+	Emilio Gamba$^1$ \and Bart Bogaerts$^1$ \And Tias Guns$^{1,2}$
 	\affiliations
 	$^1$Vrije Universiteit Brussel, Belgium\\
 	$^2$KU Leuven, Belgium\\
@@ -147,18 +125,8 @@
 \begin{abstract}
 We build on a recently proposed method for explaining solutions of constraint satisfaction problems.
 An explanation here is a \textit{sequence} of simple inference steps, where the simplicity of an inference step is measured by the number and types of constraints and facts used, and where the sequence explains all logical consequences of the problem. 
-% (I would even drop this: For CSPs that have a unique solution, this corresponds to explaining each decision variable's assignment in that full solution.)
-% what?
 We build on these formal foundations and tackle two emerging questions, namely how to generate explanations that are provably optimal (with respect to the given cost metric) and how to generate them efficiently. 
-% how?
 To answer these questions, we develop 1) an implicit hitting set algorithm for finding \textit{optimal} unsatisfiable subsets; 2) a method to reduce multiple calls for (optimal) unsatisfiable subsets to a single call that takes \emph{constraints} on the subset into account, and 3) a method for re-using relevant information over multiple calls to these algorithms. 
-%     This raises the need for algorithms that can compute unsatisfiable subsets of a logical specification that are optimal with respect to a certain cost criterion.
-%     We tackle this challenge by developing an algorithm for computing cost-optimal unsatisfiable subsets inspired by minimal hitting set dualization approaches for finding cardinality-minimal unsatisfiable subsets and for solving partial weighted \maxsat.
-%     For generating explanations, many subsequent calls for cost-optimal unsatisfiable subsets will be performed on closely related theories.
-%     Inspired by this, we show how the hitting set dualization approach allows us to reuse computation results when solving many variations of the same problems.
-%     We generalize our approach to a setting that allows for imposing constraints on the structure of the unsatisfiable subsets of interest.
-%     We evaluate all our algorithms in the explanation-generation context.
-%     % in terms of the runtime and computational feasibility, as well as the quality of the obtained explanation sequence.
 The method is also applicable to other problems that require finding cost-optimal unsatiable subsets.
 We specifically show that this approach can be used to effectively find sequences of \textit{optimal} explanation steps for constraint satisfaction problems like logic grid puzzles.
 \end{abstract}
@@ -187,21 +155,12 @@ We specifically show that this approach can be used to effectively find sequence
 \section{Conclusion, Challenges and Future work}\label{sec:conclusion}
 \input{08-conclusion.tex}
 
-
-
-% \clearpage
 {
 \footnotesize
-%     \fontsize{8}{6}
-% The file named.bst is a bibliography style file for BibTeX 0.99c
-\bibliographystyle{ijcai21}
+\bibliographystyle{named}
 \bibliography{krrlib,mybibfile,ref} 
 }
-%%REDUCE BIB SIZE
-%\let\OLDthebibliography\thebibliography
-%\renewcommand\thebibliography[1]{
-%\OLDthebibliography{#1}
-%\setlength{\parskip}{0pt}                                                                                                                                                \setlength{\itemsep}{0pt}           
+     
 
 
 \end{document}

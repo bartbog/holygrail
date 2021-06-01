@@ -1,0 +1,88 @@
+Reviewer #1: Part A
+
+------
+
+CONTENT
+
+Is the paper technically sound? yes
+Does it show sufficient applicability to AI? yes
+Does it place new results in appropriate context with earlier work? yes (can be improved)
+Is the paper sufficiently novel? yes
+Is the paper complete? yes
+Does anything need to be added or deleted? no
+Is the result important enough to warrant publication? yes
+ 
+
+FORM
+
+Does the abstract adequately reflect the contents? yes
+Are the summary and conclusions adequate? yes
+Does it contain adequate references to previous work? yes (can be improved)
+Does it explain clearly what was done that is new? yes
+Does it clearly indicate why this work is important? yes
+Is the English satisfactory? yes
+Is the presentation otherwise satisfactory? yes 
+Are there an appropriate number of figures? yes
+Do the figures help clarify the concepts in the paper? yes
+ 
+Part B: DETAILED COMMENTS
+
+-------------------------
+
+This paper proposes a solution not only to solve a combinatorial problem, but to explain to a human how to solve it. Therefore, the focus is not to solve the problem as fast as possible but rather to provide reasoning as simple as possible that leads to a solution. While the method seems sufficiently general to work with any problem in NP, the paper directs its efforts toward explaining how to solve grid puzzles.
+
+The paper is well written and easy to understand. I noted below a few typos that can quickly be fixed.
+
+The literature review could be augmented with the following paper that was published before people talk about explainable AI. But in some sense, it does XAI on a grid puzzle.
+
+Caine A., Cohen R. (2006) MITS: A Mixed-Initiative Intelligent Tutoring System for Sudoku. In: Lamontagne L., Marchand M. (eds) Advances in Artificial Intelligence. Canadian AI 2006. Lecture Notes in Computer Science, vol 4013. Springer, Berlin, Heidelberg. https://doi.org/10.1007/11766247_47
+
+The nested explanations can be seen as a solver branching on a variable that is forced to backtrack after detecting inconsistency. However, as solvers need to branch deep in the search tree, I could imagine having multiple levels of nested explanations. I would have liked to see how the authors manage the depth of these nested explanations. A human could easily lose track of the reasoning. How does the algorithm prevent this behavior?
+> we zitten met stappen die we niet verder kunnen opsplitsen, voor moeilijkere applicaties zal dat niet het geval zijn en dan moeten we een manier vinden om daar slim mee om te gaan.
+
+In the cost function, how did you obtain the magic number 5? How do 4 and 6 compare to 5? Some justification would be appreciated. I would replace 100 by M as it is done with linear programming. You can keep the definition: "The number M is taken here to be larger than any reasonable explanation size" and add "We use M=100 for our experiments".
+> pseudo-randomly, kosten mogelijke avenue for future work => hinten bij introduceren van de cost in de paper dat het voor future work is.
+
+The MUS solver tries to find a globally small set of constraints. Even if it does not succeed, a MUS solver aims for this goal. However, I do not think your greedy algorithm tries to achieve any globally optimal explanation. Could that greedy algorithm reconsiders some choices in order to make better choices in the future?
+> explanation sequence optimaliseren + hergebruiken van SSes.
+
+It is nice to see that everything was implemented in a system that reads the problem definition in natural language and outputs the explanations in natural language. However, the discussion about NLP does not bring much to the main contribution of the paper and triggers some questions. For instance, when you write: "Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are tagged as noun." How? Manually?
+
+It would have been interesting to try the system on harder problems (harder than grid puzzles) to test the limits of the system.  Grid puzzles seem easy problems since you mention "we never encountered an explanation step that combined multiple clues".  I can understand that you restrict yourself to grid puzzles to better process the natural language. However, it would be interesting to test on other problems without handling the natural language.
+
+Overall, this is a good paper that deserves to be published. 
+
+Typos
+
+Line 64: "does not have *the* all the"
+
+Definition 6: I think you mean I_{i-1}
+
+Section 6.2: "of a derived this."
+
+
+Reviewer #2
+--------------
+This paper presents a method for step-wise explanation of solutions to constraint satisfaction problems. The main idea is the use of a cost function that estimates the epistemic accessibilty of the 'next' explanation for an inference step. In this paper the authors use 'size' for cost as a simplification, noting that average/max can be used for sequences.  The method is agnostic to the particular solver techniques, but the authors also show how explanation for particular applications can be improved with new cost functions, providing a good case study in the form of logic grid puzzles. The paper is also accompanied by a demonstration website with two puzzles. This was very useful in grounding the main ideas of the paper.
+
+The interesting part of the paper is the use of a human-reasoning 'trick': reasoning by contradiction. This produces what the authors call 'nested explanations'. The paper motivates using logic grid puzzles. The nested explanation concept and the application are novel as far as I know. The paper appears to be sound. CSP is outside of my area, but the description in first-order logic is straightforward enough to understand as the paper is very nicely written. The results and experimentation are interesting. The key result (Figure 5) is that nested explanations are often much less costly than their 'parent', but sometimes they are also almost as costly -- and there are very few in between.
+
+Section 7: The observations in this section and how they tie to explainining logic grid puzzles is really nicely presented and very interesting. I imagine this would be required a bit of work and analysis. This section is really very nice.
+
+Nonetheless, I can offer a few ideas for improvement:
+
+- Section 5 is sorely missing an example of the more difficult explanation. THe explanation from the reasoning by contradiction is straightforward enough to understand for a lay reader, but there is no contraste to the more difficult case.
+
+- It is not clear to me what happens in Algorithm 5 when f(E', S', N') >= f(E, S, N). Does not explanation get stored at all for this step because it is too complicated? 
+
+- The demo website is great. Thanks for taking the time to put that together. My only feedback here is that when transitivity constraints, bijectivity, etc., are added, the explanation breaks down a bit. It could be simply that I didn't really  understand what the bijectivity constraint was applied to for this particular puzzle, so changing the text here would help I guess?
+
+- I very much encourage the authors to conduct some human-behavioural studies using this in future. I believe there is enough in this paper already that it is suitable, but the method (and in particular the inclusion of the observations in Section 7 for the cost function), while interesting, are not really evaluated from the perspective of whether they do what they aim to do: help people understand CSP solutions. As well as looking at some studies in this space, a good place to start is Hoffman et al.,: "Metrics for explainable AI: Challenges and prospects" https://arxiv.org/pdf/1812.04608 
+
+Very minor things:
+
+- Page 2: "have [the] all the knowledge" -- remove the first 'the'
+
+- Algorithm 5, line 9: has two statements on one line; maybe easier to read if broken into two lines
+
+- Figure 5: The x-axis has 1, then 9, then 2-8. Is this intentional? I don't see a reason why they would be out of order all of a sudden (not that the ordering matters, but it just seems strange)

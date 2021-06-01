@@ -5,13 +5,13 @@ In typical logic grid puzzles, the entity names are present in the grid that is 
 
 The complete specification undergoes the following steps, starting from the input:
 
-\begin{enumerate}
-	\item[\bf A]\label{pipeline:stepA:POS} \textbf{Part-Of-Speech tagging}: A Part-Of-Speech (POS) tag is associated with each word using an out-of-the-box POS tagger \cite{DBLP:journals/coling/MarcusSM94}.
-	\item[\bf B]\label{pipeline:stepB:chukingLexicon} \textbf{Chunking and lexicon building}: A problem-specific lexicon is constructed.
-	\item[\bf C]\label{pipeline:stepC:ChunkedToLogic} \textbf{From chunked sentences to logic}: Using a custom grammar and semantics a logical representation of the clues is constructed
-	\item[\bf D]\label{pipeline:stepD:logicToIDP} \textbf{From logic to a complete IDP specification}: The logical representation is translated into the IDP language and augmented with logic-grid-specific information.
-	\item[\bf E]\label{pipeline:stepE:explanationGeneration} \textbf{Explanation-producing search in \idp}: This is the main contribution of this paper, as explained in Section~\ref{sec:expl-gen-prod}.
-	\item[\bf F]\label{pipeline:stepF:visualisation} \textbf{Visualisation}: The step-by-step explanation is visualised. 
+\begin{enumerate}[label=\textbf{\Alph*},ref={Step~\Alph*}]
+	\item \label{pipeline:stepA:POS} \textbf{Part-Of-Speech tagging}: A Part-Of-Speech (POS) tag is associated with each word using an out-of-the-box POS tagger \cite{DBLP:journals/coling/MarcusSM94}.
+	\item \label{pipeline:stepB:chukingLexicon} \textbf{Chunking and lexicon building}: A problem-specific lexicon is constructed.
+	\item \label{pipeline:stepC:ChunkedToLogic} \textbf{From chunked sentences to logic}: Using a custom grammar and semantics a logical representation of the clues is constructed
+	\item \label{pipeline:stepD:logicToIDP} \textbf{From logic to a complete IDP specification}: The logical representation is translated into the IDP language and augmented with logic-grid-specific information.
+	\item \label{pipeline:stepE:explanationGeneration} \textbf{Explanation-producing search in \idp}: This is the main contribution of this paper, as explained in Section~\ref{sec:expl-gen-prod}.
+	\item \label{pipeline:stepF:visualisation} \textbf{Visualisation}: The step-by-step explanation is visualised. 
 \end{enumerate}
 
 The first three of these steps are related to Natural Language Processing (NLP) and are detailed in section \ref{sec:pipeline:nlp} hereafter. 
@@ -55,15 +55,15 @@ The implicit constraints are stemming from the translation of the clues : our tr
 For instance, if there are clues ``The person who ate taglioni paid more than Angie'' and ``The person who ordered farfalle chose the arrabiata sauce'', then the translation will create two relation \textit{ate} and \textit{ordered} between persons and pasta.
 However we know that there is only one relation between two types, hence we add a theory containing synonymy axioms; for this case concretely:
 \[ \forall \ x \in person \ \forall \ y \in pasta : ate(x, y) \leftrightarrow ordered(x, y) \]
-Similarly, if two relations have an inverse signature, they represent inversion functions, for instance \textit{isLikeBy} and \textit{ordered} in the clues ``Taglioni is liked by Elisa'' and ``Damon ordered capellini''. 
+Similarly, if two relations have an inverse signature, they represent inversion functions, for instance \textit{liked\_by} and \textit{ordered} in the clues ``Taglioni is liked by Elisa'' and ``Damon ordered capellini''. 
 In this case we add constraints of the form 
-\[ \forall \ x \in person \ \forall \ y \in pasta : liked(y, x) \leftrightarrow ordered(x, y)\]
+\[ \forall \ x \in person \ \forall \ y \in pasta : liked\_by(y, x) \leftrightarrow ordered(x, y)\]
 Next, we refer back to the end of section \ref{sec:prelims} for examples of the bijectivity and transitivity axioms that link the different relations.
 % This is then translated into the \idp language and the bijectivity and transitivity constraints are automatically added.
 
 % The logic is further transformed to a specification in the \idp language.
 The underlying solver, \idp\cite{IDP} uses this formal representation of the clues both to solve the puzzle and to explain the solution. 
-We chose the \idp system as an underlying solver since it natively offers different inference methods to be applied on logic theories, including model expansion (searching for solutions), different types of propagation (we used optimal-propagate here to find $max(I,\allconstraints)$), and unsat-core extraction and offers a lua interface to glue these inference steps together seamlessly \cite{IDP}.
+We chose the \idp system as an underlying solver since it natively offers different inference methods to be applied on logic theories, including model expansion (searching for solutions), different types of propagation (we used optimal-propagate here to find $max(I,\allconstraints)$), unsat-core extraction and offers a lua interface to glue these inference steps together seamlessly \cite{IDP}.
 
 % We explored two possibilities to present this explanations. 
 % The first was generating natural language sentences of the form ``From the clue(s) $\langle$clue$\rangle$ and the fact that $\langle$assumptions$\rangle$, it follows that $\langle$conclusions$\rangle$''.

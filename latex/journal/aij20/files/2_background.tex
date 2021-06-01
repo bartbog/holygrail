@@ -1,6 +1,6 @@
-While our proposed method is applicable to constraint satisfaction problems in general, we use \textit{logic grid puzzles} as example domain, as it requires no expert knowledge to understand.
+While our proposed method is applicable to constraint satisfaction problems in general, we use \textit{logic grid puzzles} as an example domain, as it requires no expert knowledge to understand.
 Our running example is a puzzle about people having dinner in a restaurant and ordering different types of pasta, which is the hardest logic grid puzzle we encountered; it was sent to us by someone who got stuck solving it and wondered whether it was correct in the first place.    
-The entire puzzle can be seen in Figure \ref{fig:zebrascreen}; the full explanation sequence generated for it can be found online at \url{http://bartbog.github.io/zebra/pasta}.
+The entire puzzle can be seen in Figure \ref{fig:zebrascreen}; the full explanation sequence generated for it can be explored online at \url{http://bartbog.github.io/zebra/pasta}.
 
 In this section, we first present logic grid puzzles as a use case, and afterwards introduce \emph{typed first-order logic}, which we use as the language to express our constraint programs in. Here, it is important to stress that our definitions and algorithms work for any language with model-theoretic semantics, including typical constraint programming languages~\cite{rossi2006handbook}.
 % introduce the necessary background used in section \ref{sec:problem-definition} formalizing the problem definition.
@@ -75,7 +75,7 @@ If $P$ is a logic grid puzzle, we will use $T_P$ to denote a first-order theory 
 For instance, for our running example, some sentences in $T_P$ are: 
 \begin{align*}
  &\lnot chose(claudia,puttanesca).\\
- & \forall s\in sauce : \exists p\in pasta : pairedwith(s,p)\\
+ & \forall s\in sauce : \exists p\in pasta : paired\_with(s,p)\\
  & \forall s\in sauce: \forall p1\in pasta, \forall p2\in pasta:  pairedwith(s,p1)\land pairedwith(s,p2)\limplies p1=p2. \\
  & \forall s\in sauce: \forall p\in person, \forall c\in price: chose(s,p)\land payed(p,c)\limplies priced(s,c).  % changed 'cost' to priced to differentiate from constraint cost...
 \end{align*}

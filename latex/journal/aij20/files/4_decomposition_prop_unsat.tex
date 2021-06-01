@@ -10,6 +10,9 @@ Instead of globally optimizing the aggregated sequence cost, we encode the knowl
 Algorithm \ref{alg:main} formalizes the greedy construction of the sequence, which determines $I_{end} = max(I_0,\allconstraints)$  through propagation and relies on a \textit{min-explanation$(I,\allconstraints)$} function to find the next cost-minimal explanation.
 
 \begin{algorithm}
+	\DontPrintSemicolon
+	  \Input{A initial interpretation $I_0$ and a set of constraints $\allconstraints$}
+	  \Output{An explanation sequence $Seq$}
   %  \begin{algorithmic}
   $I_{end} \gets$ propagate$(I_0\land \allconstraints)$\;
   Seq $\gets$ empty sequence\;
@@ -51,11 +54,12 @@ Note that the other implicants $N \setminus \{n\}$ may have simpler explanations
 
 \begin{algorithm}
   % 
-  \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
+  \DontPrintSemicolon
+  
   \SetKwComment{command}{/*}{*/}
 
   \Input{A partial interpretation $I$ and a set of constraints $\allconstraints$}
-
+\Output{A set of candidate explanations $Candidates$}
   Candidates $\gets \{\}$\;
   $J \gets$ propagate$(I \wedge \allconstraints)$\;
   \For{$n \in J \setminus I$\label{line:for}}{
@@ -75,7 +79,7 @@ Note that the other implicants $N \setminus \{n\}$ may have simpler explanations
 We assume the use of a standard MUS algorithm, e.g., one that searches for a satisfying solution and if a failure is encountered, the resulting Unsat Core is shrunk to a minimal one~\cite{marques2010minimal}. While computing a MUS may be computationally demanding, it is far less demanding than enumerating all MUS's (of arbitrary size) as candidates.
 
 \myparagraph{Cost functions and cost-minimal explanations}
-We use Algorithm~\ref{alg:cand} to generate candidate explanations, but in general our goal is to find cost-minimal explanations. In the following, we assume that have a cost function $f$ is fixed that returns a score for every possible explanation $(E, S, N)$.
+We use Algorithm~\ref{alg:cand} to generate candidate explanations, but in general our goal is to find cost-minimal explanations. In the following, we assume fixed a cost function $f$ that returns a score for every possible explanation $(E, S, N)$.
 
 To guide the search to cost-minimal MUS's, we use the observation that typically a small (1 to a few) number of constraints is sufficient to explain the reasoning. A small number of constraints is also preferred in terms of easy to understand explanations, and hence have a lower cost. For this reason, we will  not call \textit{candidate-explanations} with the full set of constraints \allconstraints, but we will iteratively grow the number of constraints used.
 
@@ -84,20 +88,18 @@ We make one further assumption to ensure that we do not have to search for candi
 We can then search for the smallest explanation among the candidates found, by searching among increasingly worse scoring $S$ as shown in Algorithm~\ref{alg:minexpl}. This is the algorithm called by the iterative sequence generation (Algorithm \ref{alg:main}).
 
 \begin{algorithm}
+	\DontPrintSemicolon
   \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
   \SetKwComment{command}{/*}{*/}
   \SetKw{Break}{break}
-
-
   \Input{A partial interpretation $I$ and a set of constraints $\allconstraints$}
-  \todelete{$\mathit{best}\gets none$\;}
-  \emilio{$N \gets$ propagate$(I \wedge \allconstraints)$\;}
-  \emilio{$\mathit{best}\gets (I, \allconstraints, N)$\;}
+  $N \gets$ propagate$(I \wedge \allconstraints)$\;
+  $\mathit{best}\gets (I, \allconstraints, N)$\;
   \For{$S \subseteq \allconstraints$ ordered ascending by $g(S)$}{ \label{alg:min:for}
-    \If{\todelete{$best\neq none$ {\bf and} }$g(S) > f(\mathit{best})$ }{
+    \If{$g(S) > f(\mathit{best})$ }{
       \Break\;}
     cand $\gets$ best explanation from candidate-explanations$(I, S)$\;
-        \If{\todelete{$\mathit{best} = none$ {\bf or}} $f(\mathit{best}) > f(cand)$}{$ \mathit{best}\gets cand$\; \label{alg:min:gets}}
+        \If{$f(\mathit{cand}) < f(best)$}{$ \mathit{best}\gets cand$\; \label{alg:min:gets}}
   }
    \Return{$\mathit{best}$}
   \caption{min-explanation$(I,\allconstraints)$}
@@ -124,10 +126,11 @@ The computation of a nested explanation as described in Algorithm~\ref{alg:neste
 Given an explanation step $(E, S, N)$ and a newly derived fact $n \in N$ for which we want a more detailed explanation, Algorithm~\ref{alg:nested-explanation} first constructs a partial interpretation $I'$ formed by the facts in $E$ and the negated new fact $n$. 
 Then, we gradually build the sequence by adding the newly found explanations $(E', S', N')$ as long as the interpretation is consistent and the explanation is easier than explanation step $(E, S, N)$ (this is in line with Definition~\ref{def:nested-problem} and serves to avoid that the nested explanation is simply a single-step explanation that is equally difficult as the original step.  
 
-While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line \ref{ifcheck}. This check is present to avoid that the nested explanation is as difficult as the high-level step it aims to clarify. This check can kick in for two different reasons. The first reason is that the explanation step at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure \ref{fig:zebrascreen} is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult as the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain those steps. 
+While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line \ref{ifcheck}. This check is present to avoid that the nested explanation is as difficult or harder than the high-level step it aims to clarify. This check can kick in for two different reasons. The first reason is that the explanation step at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure \ref{fig:zebrascreen} is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult or harder than the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain those steps. 
 % In the end, the algorithm inherently recognises the complex inference steps for which it builds nested explanation sequences.\bart{What do you mean by this??? } 
 
 \begin{algorithm}[ht]
+	\DontPrintSemicolon
   %  \begin{algorithmic}
   $I_{end} \gets$ propagate$(I_0\land \allconstraints)$\;
   $Seq \gets$ empty sequence\;
@@ -156,8 +159,7 @@ While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation 
   \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
   \SetKwComment{command}{/*}{*/}
   \SetKw{Break}{break}
-
-
+\DontPrintSemicolon
   %\Input{A partial interpretation $I$ and a set of constraints $C$} WRONG?
   %  \begin{algorithmic}
     $nested\_explanations \gets$ empty set\;

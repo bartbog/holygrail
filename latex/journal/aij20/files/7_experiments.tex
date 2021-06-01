@@ -71,7 +71,7 @@ Experiments were run on an Intel(R) Xeon(R) CPU E3-1225 with 4 cores and 32 Gb m
 We first investigate the properties of the puzzles and the composition of the resulting sequence explanations. The results are shown in Table~\ref{table:composition}. The first column is the puzzle identifier, where the puzzle identified as p is the pasta puzzle, our running example. 
 % The next column shows the configuration of the puzzle as a tuple of 3 numbers: the number of types (e.g. person, sauce); the number of entities of each type; and the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(\emptyset, \allconstraints)$.
 %\emilio{hard to fit everything inside ...}
-The next 3 columns show properties of the puzzle:
+The next 3 columns show the properties of each puzzle:
 $|type|$ is the number of types (e.g. person, sauce) while $|dom|$ is the number of entities of each type and $|grid|$ is the number of cells in the grid, i.e.\ the number of literals in the maximal consequence interpretation $I_n=max(\emptyset, \allconstraints)$.
 Coincidentally, almost all the puzzles have 4 types with domain size 5,  hence 150 cells, except for the pasta puzzle which has a domain size of 4, thus 96 cells.
 
@@ -137,7 +137,7 @@ Note that however, for puzzle 3, it is not possible to find new facts based on c
 
 
 \myparagraph{Sequence progression}
-The left side of Figure \ref{fig:steps} shows a visualisation of the type of explanation used in each of the explanation steps for the hardest puzzles 1,2 and p (puzzles with the highest average step cost). 
+The left side of Figure \ref{fig:steps} shows a visualization of the type of explanation used in each of the explanation steps for the hardest puzzles 1,2 and p (puzzles with the highest average step cost). 
 We can see that typically at the beginning of the sequence, individual clues (3rd line) and some individual bijectivity (1st line) and transitivity (2nd line) constraints are used, i.e., trivial ones.
 %\tias{Ideally, you would reuse the column names I've put in the above table now...; also can the background lines be less prominent? perhaps half-transparent or light gray or so. Also, I would do prefer that m-i is the top line because it is so 'special'...}
 This is then followed by a series of clues that also involve bijectivity/transitivity constraints, after which a large fraction of the table can be completed with bijectivity/transitivity, followed by a few last clue/implicit constraint combinations and another round of completion.
@@ -147,9 +147,9 @@ We can see that after around 20 steps where mostly clues have been used, twice a
 % % \ourfigure % \emilio{wat is ourfigure ? } \tias{a command of figures defined lower, outdated I assume}
 
 \myparagraph{Explanation size}
-Our cost-function is constructed to favour few (if any) clues and constraints in the explanations, and a small number of previously derived facts $|E|$.
+Our cost-function is constructed to favor few (if any) clues and constraints in the explanations, and a small number of previously derived facts $|E|$.
 Table~\ref{table:sequence_level}, first 5 columns, shows the average number of facts used per type of constraints used in the explanation.
-We can observe that the average number of facts used is indeed low, less than two (column 'all').
+We can observe that the average number of facts used is indeed low, less than two (column `all').
 The breakdown per type of constraint shows that bijectivity typically uses more facts: it either uses three `negative' facts in one row to infer a `positive' fact, as in Figure~\ref{fig:zebrascreen} or it uses one `positive' fact to infer three negative facts.
 Note that for such an intuitive constraint, the number of facts used does not matter much. 
 Transitivity, by nature, always uses two previously derived facts.
@@ -227,19 +227,18 @@ When looking at the number of steps in a nested sequence, we see that the nested
 %In the third part of the table, $\#$ \textit{n.-e. steps} represents the average length of an explanation sequence. Surprisingly, puzzles 4 and 7 have a very high number of (not always useful) explanations in the nested explanation sequences. We refer back to observation 4 in section \ref{sec:zebra} for complementary explanations. 
 The subsequent columns in the table show the composition of the nested explanations, in terms of the types of constraints used. 
 The majority of those are simple steps involving just a single constraint (a single bijectivity, transitivity or clue). 
-Interestingly, even in nested explanations which typically explain a '1 clue+i.' step, the nested explanation also has a step involving a clue and at least one other implicit constraint. 
+Interestingly, even in nested explanations which typically explain a `1 clue+i.' step, the nested explanation also has a step involving a clue and at least one other implicit constraint. 
 Detailed inspection showed this was typically the final step, which is a contradiction in the clue as in Figure~\ref{fig:pasta_diff}.
-\emilio{ 
+
 The composition of the nested sequence also shows that the nested explanations were so simple that they cannot be further decomposed into a second (deeper) level of nested explanations. This is due to the way our cost function is defined, i.e. promoting the use of \emph{simple} constraints and heavily penalizing combinations of clues and/or constraints.
-}
+
 %The last section of the table focuses on the composition of the nested explanations. 
 %There is still a high number of explanations that require the use clues combined with implicit constraints. 
 
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=.6\textwidth]{figures/violin_plot.pdf}
-	\caption{\emilio{Graph has been adapted with the puzzles in same ordering as the table.}
-		Distribution of the ratio of the cost of a nested explanation sequence step and the cost of original explanation step for all puzzles. 
+	\caption{Distribution of the ratio of the cost of a nested explanation sequence step and the cost of original explanation step for all puzzles. 
 	%\bart{is this correct? Goes all the way up to 100\% -- yes; it it looks close bu tis not 100\%, see updated text}
 	} 
 	% \todo{Y AXIS VALUES? WHERE IS ONE?}
@@ -255,7 +254,7 @@ Note that by Definition~\ref{def:nested-problem}, a step in a nested explanation
 %tnested step costs to its  its original explanation step cost. 
 %In other words, there are still explanations in the nested sequence that have a cost close to the original explanation step for which a further decomposition in nested sequences or another easier sequence could be generated. 
 The figure shows us that there are many steps with a cost of only a fraction of the parent step (near 0-10\% of the original cost), but also some steps closer but still a bit simpler than the parent step. 
-Due to the construction of the cost function in Section~\ref{sec:zebra} with each clue contributing a value of '100' and each fact only a value of '1', this means it typically involves fewer previously derived facts, which should make it easier to understand. 
+Due to the construction of the cost function in Section~\ref{sec:zebra} with each clue contributing a value of `100' and each fact only a value of `1', this means it typically involves fewer previously derived facts, which should make it easier to understand. 
 %The odd-one out is puzzle \textbf{the middle one}, which \tias{Needs explanation, Emilio?} \bart{Looks very strange to me. }.
 
 

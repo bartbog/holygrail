@@ -19,7 +19,7 @@ When considering the procedure \onestep from the perspective of OCUS defined abo
 In order to compute an OCUS of a given formula, we propose to build on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
 For this, we will assume to have access to a solver \cohs that can compute hitting sets of a given collection of sets that are \emph{optimal} (w.r.t.\ a given cost function $f$) among all hitting sets \emph{satisfying a condition $p$}. 
 The choice of the underlying hitting set solver will thus determine which types of cost functions and constraints are possible. 
-In our implementation we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, thus allowing the use of highly optimized mixed integer programming (MIP) solvers. The \cohs formulation is as follows:
+In our implementation, we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, thus allowing the use of highly optimized mixed integer programming (MIP) solvers. The \cohs formulation is as follows:
 %\bart{should be minimize or -f}\emilio{adapted}
 \begin{align*}
 \small
@@ -171,7 +171,8 @@ As an illustration, we now provide an example of one call to $\onestepo$ (Algori
 \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $c_6$ and $c_7$ (due to $p$).
 %	We also add the `\textit{exactlyone}' constraint to the hitting set solver. \bart{The hitting set solver is provided p. You already defined p. Replace by: ``\setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $c_5$ and $c_6$ (due to $p$)''.}
 	Table \ref{tab:explanation-steps-expanded} shows the computed steps in the different iterations of Algorithm~\ref{alg:comus} given the above input.
-\begin{table}[!h]
+	
+\begin{table}[!t]
 	\centering
 	\begin{adjustbox}{max width=\columnwidth}
 			\begin{tabular}{lcccc} 

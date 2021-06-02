@@ -89,10 +89,8 @@ We can then search for the smallest explanation among the candidates found, by s
 
 \begin{algorithm}
 	\DontPrintSemicolon
-  \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
-  \SetKwComment{command}{/*}{*/}
-  \SetKw{Break}{break}
   \Input{A partial interpretation $I$ and a set of constraints $\allconstraints$}
+  \Output{A non-redundant explanation $(E, S, N)$ with $E \subseteq I$, $S \subseteq T$, $E \cup S \entails N$}
   $N \gets$ propagate$(I \wedge \allconstraints)$\;
   $\mathit{best}\gets (I, \allconstraints, N)$\;
   \For{$S \subseteq \allconstraints$ ordered ascending by $g(S)$}{ \label{alg:min:for}
@@ -126,11 +124,13 @@ The computation of a nested explanation as described in Algorithm~\ref{alg:neste
 Given an explanation step $(E, S, N)$ and a newly derived fact $n \in N$ for which we want a more detailed explanation, Algorithm~\ref{alg:nested-explanation} first constructs a partial interpretation $I'$ formed by the facts in $E$ and the negated new fact $n$. 
 Then, we gradually build the sequence by adding the newly found explanations $(E', S', N')$ as long as the interpretation is consistent and the explanation is easier than explanation step $(E, S, N)$ (this is in line with Definition~\ref{def:nested-problem} and serves to avoid that the nested explanation is simply a single-step explanation that is equally difficult as the original step.  
 
-While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line \ref{ifcheck}. This check is present to avoid that the nested explanation is as difficult or harder than the high-level step it aims to clarify. This check can kick in for two different reasons. The first reason is that the explanation step at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure \ref{fig:zebrascreen} is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult or harder than the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain those steps. 
+\emilio{While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line \ref{ifcheck}. This check is present to avoid that the nested explanation is as difficult or harder than the high-level step it aims to clarify. This check can kick in for two different reasons. The first reason is that the explanation step at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure \ref{fig:zebrascreen} is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult or harder than the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain those steps.}
 % In the end, the algorithm inherently recognises the complex inference steps for which it builds nested explanation sequences.\bart{What do you mean by this??? } 
 
 \begin{algorithm}[ht]
 	\DontPrintSemicolon
+		  \Input{A initial interpretation $I_0$ and a set of constraints $\allconstraints$}
+	\Output{An explanation sequence $Seq$}
   %  \begin{algorithmic}
   $I_{end} \gets$ propagate$(I_0\land \allconstraints)$\;
   $Seq \gets$ empty sequence\;
@@ -156,10 +156,11 @@ While Algorithm \ref{alg:nested-explanation} tries to find a nested explanation 
 
 
 \begin{algorithm}[ht]
-  \SetKwInOut{Input}{input}\SetKwInOut{Output}{output}
   \SetKwComment{command}{/*}{*/}
   \SetKw{Break}{break}
 \DontPrintSemicolon
+	  \Input{Explanation facts $E$, constraints $S$ and newly derived facts $N$}
+\Output{A collection of nested explanation sequences \emph{nested\_explanations}}
   %\Input{A partial interpretation $I$ and a set of constraints $C$} WRONG?
   %  \begin{algorithmic}
     $nested\_explanations \gets$ empty set\;

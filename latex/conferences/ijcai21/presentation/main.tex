@@ -1,13 +1,20 @@
 % \documentclass[handout]{beamer}
 \documentclass{beamer}
 \usepackage[ruled,linesnumbered]{algorithm2e}
-
-\usepackage{natbib}
+\usepackage{calc}  
+%\usepackage{enumitem} 
 \definecolor{vuborange}{rgb}{1.0,0.40,0.0}
 \usetheme{Boadilla}
-\title{Step-wise Explanations of Constraint Satisfaction Problems}
-\author{ Bart Bogaerts\textsuperscript{2}  \hspace{0.5cm}\underline{Emilio Gamba}\textsuperscript{1} \hspace{0.5cm} Tias Guns\textsuperscript{1}}
-\date{}
+\title{Efficiently Explaining CSPs with Unsatisfiable Subset Optimization}
+
+\institute[shortinst]
+{\inst{1} Vrije Universiteit Brussel, Belgium \\ % Your institution for the title page
+\inst{2} KULeuven, Belgium \\ % Your institution for the title page
+\href{mailto:emilio.gamba@vub.be}{\underline{emilio.gamba@vub.be}}, \href{mailto:bart.bogaerts@vub.be}{bart.bogaerts@vub.be}, \href{mailto:tias.guns@kuleuven.be}{tias.guns@kuleuven.be} % Your email address
+}
+\date{IJCAI 2021}
+
+\author{\underline{Emilio Gamba}\inst{1} \and  Bart Bogaerts\inst{1} \and   Tias Guns\inst{1,2}}
 
 \newcommand\m[1]{\ensuremath{#1}\xspace}
 \newcommand\allconstraints{\m{T_P}}
@@ -22,74 +29,82 @@
 {
   \leavevmode%
   \hbox{%
-  \begin{beamercolorbox}[wd=.25\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
-    \usebeamerfont{author in head/foot}E. Gamba (VUB, Brussels)
+  \begin{beamercolorbox}[wd=.2\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+    \usebeamerfont{author in head/foot}Emilio Gamba (VUB)
   \end{beamercolorbox}%
-  \begin{beamercolorbox}[wd=.5\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
-    \usebeamerfont{title in head/foot}Step-wise Explanations of Constraint Satisfaction Problems
+  \begin{beamercolorbox}[wd=.6\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+    \usebeamerfont{title in head/foot}Efficiently Explaining CSPs with Unsatisfiable Subset Optimization
   \end{beamercolorbox}%
-  \begin{beamercolorbox}[wd=.25\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
-    \usebeamerfont{date in head/foot}September 2020 \hspace*{2em}
+  \begin{beamercolorbox}[wd=.2\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+    \usebeamerfont{date in head/foot}August 2021\hspace*{1em}
     \insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
   \end{beamercolorbox}}%
   \vskip0pt%
 }
 \makeatother
 
-
 \begin{document}
 
 \begin{frame}
     \maketitle
     \vspace{-2.5cm}
-    \begin{center}
-        {\small\textsuperscript{1}Data Analytics Laboratory, Vrije Universiteit Brussel, Belgium\\
-            \textsuperscript{2}Artificial Intelligence Lab, Vrije Universiteit Brussel, Belgium}
-    \end{center}
-
-    \begin{minipage}[t]{0.48\linewidth}
-        \centering
-        \vspace{0.1cm}
-        \begin{figure}[h]
-            \includegraphics[width=\textwidth]{VUB-AI_RGB-1-800x223.png}
-            \label{vub-logo}
-        \end{figure}
-    \end{minipage}\hfill
-    \begin{minipage}[t]{0.48\linewidth}
-        \centering
-        \begin{figure}[h]
-            \includegraphics[width=.68\textwidth]{figures/datalab}
-            \label{vub-logo}
-        \end{figure}
-
-    \end{minipage}
-
 \end{frame}
 
+
+\begin{frame}
+	\frametitle{Outline}
+	\begin{enumerate}
+		\item Motivation
+		\begin{itemize}
+			\item Explanations for CSPs
+			\item Generating an explanation sequence for CSPs
+		\end{itemize}
+		\item Contributions and Applicability
+		\begin{enumerate}
+			\item Optimality
+			\item Constrainedness
+			\item Incrementality
+		\end{enumerate}
+	\item Results
+	\item Conclusion
+	
+	\item Ideas for future work
+	\end{enumerate}
+\end{frame}
 
 \begin{frame}{Motivation}
-   
+	\framesubtitle{Explanations for CSPs}
+	
 \end{frame}
 
-\begin{frame}{Explanations for Constraint Satisfaction Problems}
-
+\begin{frame}{Motivation}
+	\framesubtitle{Generating an explanation sequence for CSPs}
+	
 \end{frame}
 
+\begin{frame}{Motivation}
+	\framesubtitle{Open Questions}
+
+   \begin{description}[font=\color{vuborange}\itshape]
+	\item[\hspace{0.9cm}Optimality] Explanations not optimal, heuristically found
+	\item[\hspace{1.05cm}Efficiency] Explanation generation takes a lot of time
+	\item[\hspace{0.3cm}Incrementality] Can we reuse information from an explanation call to another?
+	\item[Constrainedness] Can we avoid looping over the literals when searching for the next best explanation ?
+   \end{description}
+\end{frame}
 
 \begin{frame}{Outline}
 
 \end{frame}
 
-
 \begin{frame}{Contributions}
     \vfill
-    In this paper, we
+    In this paper, we 
     \vfill
     \begin{itemize}
-        \item ... 
-        \item ... 
-        \item ... 
-        \item ... 
+        \item ... introduce (cost-)\textbf{\underline{O}ptimal} \underline{U}nsatisfiable \underline{S}ubsets (OUS) using the minimal hitting set duality
+        \item ... analyze the structural constraints of the OUS explanations
+        \item ... improve the efficiency of explanation sequence generation
     \end{itemize}
     \vfill
 \end{frame}
@@ -107,10 +122,13 @@
 
 \end{frame}
 
-\begin{frame}{References}
-    % \frametitle
-    % \vspace{2em}
+\begin{frame}[allowframebreaks]
+	\frametitle{References}
+	\bibliographystyle{named}
+	\bibliography{references}
 \end{frame}
+
+
 
 \end{document}
 

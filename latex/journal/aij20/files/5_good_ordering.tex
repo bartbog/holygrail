@@ -13,7 +13,7 @@ This is not a property of the clues, but rather of the final obtained translatio
 ``The person who ordered capellini is either Damon or Claudia''. From this, a human reasoner might conclude that Angie did not order capellini. 
 % The use of the article ``the'' in the above sentence gives away that there is actually a unique person who ordered capellini. 
 However, the (automatically) obtained logical representation is 
-\[\exists p\in \mathit{person}: \mathit{ordered}(p, \mathit{capellini})\land (p =  \mathit{Damon}\lor p =  \mathit{Claudia}).\]
+\[\exists p\in \person: \ordered(p, \capellini)\land (p = \damon \lor p =  \claudia).\]
 This logic sentence only entails that Angie did not order capellini \emph{in conjunction with the bijectivity constraint on $ \mathit{ordered}$}.
 In the natural language sentence, this bijectivity is implicit by the use of the article ``The'' which entails that there is a unique person who ordered capellini. 
 
@@ -34,7 +34,9 @@ Our final observation that drove the design of the cost functions is that using 
 
 
 \paragraph{A cost function}
-\emilio{With these four observations in mind, we devised $f$ and $g$ as follows (where $nc(S)$ denotes the number of clues in constraint set $S$, $M$ and $N$ are explanation parameters): \label{sec:cost}
+\emilio{With these four observations in mind, we devised $f$ and $g$ as follows (where $nc(S)$ denotes the number of \emph{clues} (not: implicit constraints) in $S$, $M$ and $N$ are explanation parameters): \label{sec:cost}
+\bart{Consistency.... You literally use $N$ for something else on the next line. }
+\bart{Do not use text... in math mode. Why would you try to fool latex by pretending $M$ is not a mathematical symbol?}
 % \tias{should be $f(E,S,N)$?}
 \begin{align*}&f(E,S,N) = basecost(S) + |E| + \text{\color{red} {N}} \cdot|S|\\
 &g(S) = basecost(S) = \left\{\begin{array}{ll}

@@ -7,8 +7,9 @@ We first introduce the concept of an explanation of a single reasoning step, aft
 We assume that a theory $\allconstraints$ and an initial partial interpretation $I_0$ are given and fixed. 
 
 \begin{definition}
-We define the \textbf{maximal consequence} of a theory $\allconstraints$ and partial interpretation $I$ (denoted $max(I,T)$) as the precision-maximal partial interpretation $J$ such that  $I \wedge \allconstraints \entails J$. 
+We define the \textbf{maximal consequence} of a theory $\allconstraints$ and partial interpretation $I$ (denoted $max(I,T)$) as the most precise partial interpretation $J$ such that  $I \wedge \allconstraints \entails J$. 
 \end{definition}
+\bart{Throughout the entire paper: check EVERY definition, and put the defined concept in emph. Not in mathit, textbf, ...}
 
 Phrased differently, $max(I,T)$ is the intersection of all models of $T$ that are more precise than $I$; this is also known as the set of \emph{cautious consequences} of $T$ and $I$ and corresponds to ensuring \emph{global consistency} in constraint solving.
 %\emilio{why is it the intersection of all models of T more precise than I?} -> no, intersection of 'all models more precise'
@@ -16,7 +17,7 @@ Phrased differently, $max(I,T)$ is the intersection of all models of $T$ that ar
 % } 
 Algorithms for computing cautious consequences without explicitly enumerating all models exist, such as for instance the ones implemented in clasp \cite{DBLP:conf/lpnmr/GebserKS09} or \idp \cite{IDP} (in the latter system the task of computing all cautious consequences is called \emph{optimal-propagate} since it performs the strongest propagation possible).
 
-Weaker levels of propagation consistency can be used as well, leading to a potentially smaller maximal consequence interpretation $max_{other-consistency}(I,T)$. 
+Weaker levels of propagation consistency can be used as well, leading to a potentially smaller maximal consequence interpretation $max_{\mathit{otherConsistency}}(I,T)$. 
 The rest of this paper assumes we want to construct a sequence that starts at $I_0$ and ends at $max(I_0,\allconstraints)$ for some consistency algorithm, i.e., that can explain all computable consequences of $\allconstraints$ and $I_0$. 
 \begin{definition}
 A \textbf{sequence of incremental partial interpretations} of a theory $\allconstraints$ with initial partial interpretation $I_0$ is a sequence $\langle I_0, I_1, \ldots, I_n  = max(I_0,\allconstraints)\rangle$ where $\forall i>0, I_{i-1} \leqp I_{i}$ (i.e., the sequence is precision-increasing).
@@ -30,7 +31,7 @@ The goal of our work is not just to obtain a sequence of incremental partial int
 \begin{itemize}
     \item $N_i= I_i \setminus I_{i-1}$ (i.e., $N_i$ consists of all newly defined facts), 
 	\item $E_i\subseteq I_{i - 1}$ (i.e., the explaining facts are a subset of what was previously derived),
-	\item $S_i \subseteq \allconstraints$ (i.e., a subset of the constraints used), and 
+	\item $S_i \subseteq \allconstraints$ (i.e., a subset of the constraints is used), and 
 	\item $S_i \cup E_i \entails N_i$ (i.e., all newly derived information indeed follows from this explanation).
 \end{itemize}
 \end{definition}
@@ -51,13 +52,55 @@ such that $(I_i)_{i\leq n}$ is sequence of incremental partial interpretations a
 \end{definition} 
 
 \subsection{Interpretability of reasoning steps}
-While subset-minimality ensures that an explanation is non-redundant, it does not quantify how \textit{interpretable} a explanation is. 
-This quantification is problem-specific and is often designed in a subjective manner. 
-For this, we will assume the existence of a cost function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation. 
+While subset-minimality ensures that an explanation is non-redundant, it does not quantify how \textit{interpretable} an explanation is. 
+This quantification is problem-specific and is often subjective. 
+In this paper, we will assume the existence of a cost function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation. 
 
-In line with the goal of ``simple enough for a person to understand'' and Occam's Razor, we reason that smaller explanations are easier to interpret than explanations that use a larger number of facts or constraints.
-In Section~\ref{sec:cost} we provide a size-based cost function for use in our logic grid puzzle tool, though others can be used as well.
-Developing generic methods to find a \emph{good} cost function that correctly captures perceived complexity is an orthogonal research topic we are not concerned with in the current paper. 
+In line with the goal of ``simple enough for a person to understand'' and Occam's Raz
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \subsection{Interpretability of a sequence of reasoning steps}
 In its most general form, we would like to optimize the understandability of the entire sequence of explanations. 

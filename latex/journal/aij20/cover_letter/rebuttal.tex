@@ -36,7 +36,7 @@ focus is not to solve the problem as fast as possible but rather to
 provide reasoning as simple as possible that leads to a solution. While
 the method seems sufficiently general to work with any problem in NP,
 the paper directs its efforts toward explaining how to solve grid
-puzzles.
+puzzles.\tias{Should this paragraph not also be part of the quote?? not our writing}
 
 \begin{quoteit}
 The paper is well written and easy to understand. I noted below a few typos that can quickly be fixed.
@@ -50,7 +50,7 @@ The literature review could be augmented with the following paper that was publi
 Caine A., Cohen R. (2006) MITS: A Mixed-Initiative Intelligent Tutoring System for Sudoku. In: Lamontagne L., Marchand M. (eds) Advances in Artificial Intelligence. Canadian AI 2006. Lecture Notes in Computer Science, vol 4013. Springer, Berlin, Heidelberg. \url{https://doi.org/10.1007/11766247_47}
 \end{quoteit}
 
-\emilio{The proposed paper has been added to the related works section as it provides valuable insight into the modeling of the user being taught by an Intelligent Tutoring System (ITS) similar to XAI.}
+\emilio{The proposed paper has been added to the related works section as it provides valuable insight into the modeling of the user being taught by an Intelligent Tutoring System (ITS) similar to XAI.} \tias{This sentence is broken, split it up. A bit more on how yes/no relevant welcome, or just copy paste how described in the revision?}
 
 \begin{quoteit}
 The nested explanations can be seen as a solver branching on a variable that is forced to backtrack after detecting inconsistency. However, as solvers need to branch deep in the search tree, I could imagine having multiple levels of nested explanations. I would have liked to see how the authors manage the depth of these nested explanations. A human could easily lose track of the reasoning. How does the algorithm prevent this behavior?
@@ -58,6 +58,7 @@ The nested explanations can be seen as a solver branching on a variable that is 
 
 \emilio{In the case of tested logic grid puzzles, nested explanations cannot be further split into `base' explanations. For more difficult applications, this will probably not be the case. Hence, researching how to refine and abstract explanation sequences constitutes ideas for future work.} \bart{We clarified this in the paper?}
 % we zitten met stappen die we niet verder kunnen opsplitsen, voor moeilijkere applicaties zal dat niet het geval zijn en dan moeten we een manier vinden om daar slim mee om te gaan.
+\tias{our work is targetted to finding small explanations. This reduces the chance that there are many levels of nested explanations, but it does indeed not prevent it. On our data, we have not observed multiple levels of nested explanations. \textit{and then indeed something like} we added this discussion of the possibility of multiple levels, as well as that we haven't observed it, to the paper}
 
 \begin{quoteit}
 In the cost function, how did you obtain the magic number 5? How do 4 and 6 compare to 5? Some justification would be appreciated. 
@@ -66,7 +67,7 @@ I would replace 100 by M as it is done with linear programming. You can keep the
 
 \emilio{
 	The number 100 and 5 are indeed ``magic constants''. We have, following this suggestion, replaced them by constants M (for the large one) and N. The optimal value to assign to these constants is something we do not know yet and that requires additional research. We added a discussion in our future work section in the paragraph on \emph{`what constitutes a good explanation'}.
-}
+} \tias{Perhaps also something about the 5? e.g. a value N larger than typically expected number of literals or smth?}
 
 % > pseudo-randomly, kosten mogelijke avenue for future work => hinten bij introduceren van de cost in de paper dat het voor future work is.
 \begin{quoteit}
@@ -74,7 +75,7 @@ The MUS solver tries to find a globally small set of constraints. Even if it doe
 Could that greedy algorithm reconsiders some choices in order to make better choices in the future?
 \end{quoteit}
 
-\emilio{The current greedy algorithm looks for good candidate explanations by generating constraints of increasing costs for the current state of play. It does not reconsider previous choices for better future choices. This is partly discussed in future work: \emph{`to produce easier-to-understand explanations would be optimizing the entire sequence instead of step by step..'}.}\bart{I do not understand the sentence that ends on ``step by step''}
+\emilio{The current greedy algorithm looks for good candidate explanations by generating constraints of increasing costs for the current state of play. It does not reconsider previous choices for better future choices. This is partly discussed in future work: \emph{`to produce easier-to-understand explanations would be optimizing the entire sequence instead of step by step..'}.}\bart{I do not understand the sentence that ends on ``step by step''} \tias{Alt: something like 'one could consider a beam-search, but that is beyond the scope of this work and would further increase computational cost'}
 % > explanation sequence optimaliseren + hergebruiken van SSes.
 
 \begin{quoteit}
@@ -87,7 +88,7 @@ It is nice to see that everything was implemented in a system that reads the pro
 For instance, when you write: ``Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are tagged as noun.'' How? Manually?
 \end{quoteit}
 
-\emilio{The phrasing of the puzzles are sometimes ambiguous and can lead to mistakes during the process of POS-tagging. To deal with these situations, we post-process the POS-tagged words by applying a set of pre-defined rules to recognize ambiguous cases. We then manually verify and correct the assigned POS-tags.}
+\emilio{The phrasing of the puzzles are sometimes ambiguous and can lead to mistakes during the process of POS-tagging. To deal with these situations, we post-process the POS-tagged words by applying a set of pre-defined rules to recognize ambiguous cases. We then manually verify and correct the assigned POS-tags.} \tias{his remark is not just to know the answer, but also for you to make the paper better by specifying it. So ideally, you can add to this answer: 'we further clarified this in the paper'}
 % Yes... :(
 
 \begin{quoteit}
@@ -147,26 +148,27 @@ analysis. This section is really very nice.
 Section 5 is sorely missing an example of the more difficult explanation. THe explanation from the reasoning by contradiction is straightforward enough to understand for a lay reader, but there is no contraste to the more difficult case.
 \end{quoteit}
 
-\emilio{The clue used for the parent explanation has been highlighted. In fact, there are other nested sequences, but they tend to have a lot of nested explanations. While this case is relatively straightforward, it is a good example of how nested sequences can even improve the understanding of easier steps.}
+\emilio{The clue used for the parent explanation has been highlighted. In fact, there are other nested sequences, but they tend to have a lot of nested explanations \tias{A lot of nested explanations, or the nested explanation has a lot of steps itself}. While this case is relatively straightforward, it is a good example of how nested sequences can even improve the understanding of easier steps.}
 \bart{I thought we discussed this and planned to add another example. That never hurts. Is there any good reason \emph{not} to do it?}
+\tias{the current answer is not very satisfying in any case, it sidesteps the question}
 
 \begin{quoteit}
 It is not clear to me what happens in Algorithm 5 when f(E', S', N') $>=$ f(E, S, N). Does not explanation get stored at all for this step because it is too complicated? 
 \end{quoteit}
 
-\emilio{We have clarified this in \emph{6.4 Searching nested expanations} of the paper.}
+\emilio{We have clarified this in \emph{6.4 Searching nested expanations} of the paper.} \tias{It is good practice to copy/paste the relevant part here for convenience of the reviewer (then she/he doesn't have to scrutinize your paper again and perhaps find other things : D}
 
 \begin{quoteit}
 The demo website is great. Thanks for taking the time to put that together. My only feedback here is that when transitivity constraints, bijectivity, etc., are added, the explanation breaks down a bit. It could be simply that I didn't really  understand what the bijectivity constraint was applied to for this particular puzzle, so changing the text here would help I guess?
 \end{quoteit}
 
-\emilio{We thank the reviewer for their suggestion and will incorporate this into the next version of the demo on the website.}
+\emilio{We thank the reviewer for their suggestion and will incorporate this into the next version of the demo on the website.} \tias{Why not now? What if we forget?}
 
 \begin{quoteit}
 I very much encourage the authors to conduct some human-behavioural studies using this in future. I believe there is enough in this paper already that it is suitable, but the method (and in particular the inclusion of the observations in Section 7 for the cost function), while interesting, are not really evaluated from the perspective of whether they do what they aim to do: help people understand CSP solutions. 
 \end{quoteit}
 
-\emilio{We thank the reviewer for their suggestion and have included this idea as potential future work.}
+\emilio{We thank the reviewer for their suggestion and have included this idea as potential future work.} \tias{and will look into it? the idea is that we improve our work and understanding based on their constructive comments...}
 
 %\emilio{We will include this suggestion as potential follow-up work.}
 

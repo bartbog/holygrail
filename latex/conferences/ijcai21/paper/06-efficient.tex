@@ -58,11 +58,10 @@ We evaluate different grow strategies in the experiments section, including the 
 \paragraph{Example 1 (cont.)} Consider line 0 in table \ref{tab:explanation-steps-expanded}. During the \grow procedure, the \maxsat solver \emph{Max-Actual-Unif} with polarities set to \Iend branches when multiple assignment to a literal are possible. By hinting the polarities of the literals, we guide the solver and it assigns all values according to the end interpretation and neither $c_6$ nor $c_7$ is taken.
 
 % \todo{Bart from here}
-\paragraph{Optimising OUS computation} At every explanation step, whenever an \omus is found, it provides a upper bound on the cost of the current best explanation. Even though, the \omus is not the best one for this step, it still provides a bound for subsequent \omus calls. 
-Therefore, by keeping track of the best upper bound so far, we can interrupt the \omus computation if the cost of the computed hitting set exceeds the upper bound.
-
-Finally, we sort the remaining literals-to-explain based on their upper bound to potentially guide the search for the next explanation.
-
+\paragraph{Optimising OUS computation} \emilio{At every explanation step, whenever an \omus is found, it provides a tighter upper bound on the cost of the best candidate explanation. 
+In subsequent calls to \omus, we can interrupt the \omus computation if the cost of the computed hitting set exceeds the upper bound.
+More generally, we keep track of the upper bound for every remaining literal to explain.
+To potentially guide the search for the next best explanation, we sort the remaining literals-to-explain according to their best upper bound found so far.}
 
 % \todo{``old maxsat'' comes here}
 

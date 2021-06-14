@@ -5,7 +5,7 @@ We now discuss optimizations to the OCUS algorithm that are specific to explanat
 %In this section, we discuss optimizations to the basic algorithm to compute OCUSs. 
 %While our optimizations are inspired by the explanation generation problem, and tailored to solving this as efficiently as possible, the ideas presented here can also 
  
-\paragraph{Incremental OCUS computation}
+\paragraph{Incremental OCUS Computation}
 %While searching for unsatisfiable subsets satisfying structural constraints already greatly reduces the number of calls to the unsatisfiable subset oracle, i
 Inherently, generating a sequence of explanations still requires as many OCUS calls as there are literals to explain. 
 Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
@@ -44,7 +44,8 @@ When doing this, we know that every \comus of cost greater than or equal to $f(X
 As such, a next optimization is to, instead of searching for an OUS, perform a \emph{bounded OUS check}, which only computes an OUS in case one of cost smaller than a given bound $\mathit{ub}$ exists.  
 %Detail: how do we do it? 
 In our specific implementation, bounded \omus is performed by interrupting this \omus-call (after Line 3 Algorithm~\ref{alg:comus}) if $f(\m{S}) > \mathit{ub}$.
-Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop, we keep track of an upper bound of the cost of an OUS for each literal to explain. This is initialized to a value greater than any \omus, e.g., as $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$, and is updated every time an \omus explaining that literal is found; when going through the loop in Line 2 of Algorithm~\ref{alg:comus}, we then handle literals in order of increasing upper bounds.
+
+Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop across the different literals, we keep track of an upper bound of the cost of an OUS for each literal to explain. This is initialized to a value greater than any \omus, e.g., as $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$, and is updated every time an \omus explaining that literal is found; when going through the loop in Line 2 of Algorithm~\ref{alg:comus}, we then handle literals in order of increasing upper bounds.
 
 %\emilio{At every explanation step, whenever an \omus is found, it provides a tighter upper bound on the cost of the best candidate explanation. 
 %	In subsequent calls to \omus, we can interrupt the \omus computation if the cost of the computed hitting set exceeds the upper bound.

@@ -29,23 +29,22 @@ For hitting set solvers that natively implement incrementality, we can generaliz
 %1. Leg eerst uit he bounded OUS kan werken (gegeven een bound, stop als je HS hogere waarde heeft)
 %2. Leg dan uit hoe je bounded OUS kan gebruiken in de lus
 %3. Leg dan de optimalisatie met sorteren uit en waarom we dat doen (zie comments)
-\paragraph{Bounded OUS computation} The principle of reusing information from previous MUS/\omus calls can also be used when computing an \omus{} for every literal separately, more precisely in Algorithm~\ref{alg:oneStep} where MUS can be replaced by \omus. 
-\bart{What does replacing MUS by \omus have to do with reusing information? Nothing.}
-Furthermore \bart{This ``furthermore'' is the *only* ``reusing information'' we would do. Furthermore is not the right word for that}, we can push the check of line \ref{alg:oneStep:ifcheck} into the \omus call either by passing it directly to the hitting set solver if it accepts an upper bound $ub$ (like MIP solvers do); or by adding a condition on the found $\m{S}$ before the \sat call %at line \ref{alg:ocus-sat-check} of
-Algorithm~\ref{alg:comus} \bart{to explain how OCUS corresponds to OUS}, i.e interrupt this \omus-call if $f(\m{S}) > ub$.  \bart{This is very technical. This is \emph{how} we do something. What is missing is \emph{what} we want, namely a bounded OUS check.}
-Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop, we sort the literals based on their corresponding upper bound \bart{Which is? Where does it come from?} , initialized at $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$.
+%\paragraph{Bounded OUS computation} The principle of reusing information from previous MUS/\omus calls can also be used when computing an \omus{} for every literal separately, more precisely in Algorithm~\ref{alg:oneStep} where MUS can be replaced by \omus. 
+%\bart{What does replacing MUS by \omus have to do with reusing information? Nothing.}
+%Furthermore \bart{This ``furthermore'' is the *only* ``reusing information'' we would do. Furthermore is not the right word for that}, we can push the check of line \ref{alg:oneStep:ifcheck} into the \omus call either by passing it directly to the hitting set solver if it accepts an upper bound $ub$ (like MIP solvers do); or by adding a condition on the found $\m{S}$ before the \sat call %at line \ref{alg:ocus-sat-check} of
+%Algorithm~\ref{alg:comus} \bart{to explain how OCUS corresponds to OUS}, i.e interrupt this \omus-call if $f(\m{S}) > ub$.  \bart{This is very technical. This is \emph{how} we do something. What is missing is \emph{what} we want, namely a bounded OUS check.}
+%Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop, we sort the literals based on their corresponding upper bound \bart{Which is? Where does it come from?} , initialized at $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$.
 
 \paragraph{Explanations with Bounded OUS}
 %Context: how to do OUS 
-Instead of working OCUS-based, we can now also generate optimal explanations by replacing the MUS call by an OUS call  in Algorithm~\ref{alg:oneStep} (where OUS is computed as in Algorithm~\ref{alg:comus}, but with a trivially true $p$). 
+Instead of working \comus-based, we can now also generate optimal explanations by replacing the MUS call by an \omus call  in Algorithm~\ref{alg:oneStep} (where OUS is computed as in Algorithm~\ref{alg:comus}, but with a trivially true $p$). 
 %Observation: waste of time
-When doing this, we know that every OCUS of cost greater than or equal to $f(X_{\mathit{best}})$ will be discarded by the check on Line 4 of Algorithm~\ref{alg:oneStep}.
+When doing this, we know that every \comus of cost greater than or equal to $f(X_{\mathit{best}})$ will be discarded by the check on Line 4 of Algorithm~\ref{alg:oneStep}.
 %Optimizatino: what do we do? 
 As such, a next optimization is to, instead of searching for an OUS, perform a \emph{bounded OUS check}, which only computes an OUS in case one of cost smaller than a given bound $\mathit{ub}$ exists.  
 %Detail: how do we do it? 
-In our specific implementation, bounded OUS is performed by interrupt this \omus-call (after Line 3 Algorithm~\ref{alg:comus}) if $f(\m{S}) > \mathit{ub}$.
-Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop, we keep track of an upper bound of the cost of an OUS for each literal to explain. This is initialized as a value greater than any OUS, e.g., as $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$, and is updated every time an OUS explaining that literal is found; when going through the loop in Line 2 of Algorithm~\ref{alg:comus}, we then handle literals in order of increasing upper bounds.
-
+In our specific implementation, bounded \omus is performed by interrupting this \omus-call (after Line 3 Algorithm~\ref{alg:comus}) if $f(\m{S}) > \mathit{ub}$.
+Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop, we keep track of an upper bound of the cost of an OUS for each literal to explain. This is initialized to a value greater than any \omus, e.g., as $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$, and is updated every time an \omus explaining that literal is found; when going through the loop in Line 2 of Algorithm~\ref{alg:comus}, we then handle literals in order of increasing upper bounds.
 
 %\emilio{At every explanation step, whenever an \omus is found, it provides a tighter upper bound on the cost of the best candidate explanation. 
 %	In subsequent calls to \omus, we can interrupt the \omus computation if the cost of the computed hitting set exceeds the upper bound.

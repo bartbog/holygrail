@@ -195,8 +195,8 @@ The configurations used are as follows:
 \begin{itemize}
 \item \emph{Max} refers to growing with a MaxSAT solver and \emph{Greedy} to growing using a heuristic method implemented by repeated sat calls, while %\item 
 \emph{no-grow} refers to skipping the \grow step.
-\item  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$  while \emph{Actual} refers to using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the MaxSAT-based calls, using \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
-\item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights $w_i$, i.e., equal to the weights in $f$ (\emph{pos}) or the inverse of these costs (\emph{inv}) defined as $max_i(w_i) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
+\item  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$  while \emph{Actual} refers to using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the MaxSAT-based calls, \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
+\item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$),  or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
 \end{itemize}
 %\tias{switch explanation to follow names in figure: first explain Max vs greedy, then explain Actual vs Full, dan unif/inv/pos}.
 
@@ -272,7 +272,7 @@ the configurations are compared in a similar fashion to Figure \ref{fig:grow_str
 
 %\paragraph{Constrainedness}
 When comparing the configurations, we see that the plain \emph{MUS}-based implementation is faster than the \emph{O(C)US} implementations, as it solves a simpler problem (with worse quality results as shown in \textbf{Q1}). %cannot keep up with , as is to be expected since a harder problem is tackled.
-Replacing the MUS calls by bounded OUS calls (orange line) leads to a much larger computation cost. The generic SS caching technique adds additional overhead. 
+Replacing MUS by bounded OUS calls (orange line) leads to a much larger computation cost. The generic SS caching technique adds additional overhead. 
 
 The OCUS variants significantly improve runtime compared to those two bounded OUS approaches, by reducing the number of OUS calls. For OCUS, using an incremental hitting set solver across all steps seems to be slightly faster for deriving literals earlier in the sequence, while inducing a small overhead for the literals at the end of the sequence.
 

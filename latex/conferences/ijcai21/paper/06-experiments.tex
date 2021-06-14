@@ -14,7 +14,7 @@ Our experiments are designed to answer the following research questions:
  \item[Q1] What is the effect of requiring optimality of the generated MUSs on the \textbf{quality} of the generated explanations? 
  \item[Q2] Which \textbf{domain-specific \grow methods} perform best?
  \item[Q3] What is the effect of the use of \textbf{constrainedness} on the time required to compute an explanation sequence?
- \item[Q4] Does \textbf{re-use} of computed satisfiable subsets improve efficiency?
+ \item[Q4] Does \textbf{re-use} of information across the different iterations improve efficiency?
 \end{description}
 
 % \bart{too much detail... -> Requries explaingin what ``transtiivity'' etc mean in this setting) }\emilio{ok modified}
@@ -36,7 +36,7 @@ Our experiments are designed to answer the following research questions:
 
 \paragraph{Explanation quality}\label{paragraph:explanationquality}
 To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on \cref{alg:oneStep}. 
-Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there --- in order to avoid the quality problems we will illustrate below ---  an extra inner loop was used that employs \emph{even more} calls to \call{MUS} for a selected set of subsets of \formulac of increasing size (this is their Algorithm~3). 
+Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there --- in order to avoid the quality problems we will illustrate below ---  an extra inner loop was used that employs \emph{even more} calls to \call{MUS} for a selected set of subsets of \formulac of increasing size. % (this is their Algorithm~3). 
 While this yields better explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle. 
 %We will see in our later experiments is that we can both \emph{outperform}, in terms of computational cost, this simple \call{MUS} based implementation while also guaranteeing cost-optimality, as such achieving a Pareto improvement.
 
@@ -200,9 +200,8 @@ Figure \ref{fig:grow_strategies} depicts the average (over all the puzzles) cumu
 %\tias{This is specific for OCUS right? Or also for OUS? previous exp uses OUS, so say explicitly that for OCUS if so} 
 The configurations used are as follows:
 \begin{itemize}
-\item \emph{Max} refers to growing with a MaxSAT solver and \emph{Greedy} to growing using a heuristic method implemented by repeated sat calls. 
-%\item 
-\emph{no-grow} on the other refers to skipping \grow step.
+\item \emph{Max} refers to growing with a MaxSAT solver and \emph{Greedy} to growing using a heuristic method implemented by repeated sat calls, while %\item 
+\emph{no-grow} refers to skipping the \grow step.
 \item  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$  while \emph{Actual} refers to using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the MaxSAT-based calls, using \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
 \item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights $w_i$, i.e., equal to the weights in $f$ (\emph{pos}) or the inverse of these costs (\emph{inv}) defined as $max_i(w_i) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
 \end{itemize}
@@ -246,9 +245,9 @@ We can observe that not using a grow strategy performs badly, as do weighted Max
 % \tias{make 'Timeout' top entry of legend}
 
 \paragraph{Constrainedness and incrementality}
-To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C) and incrementality. Based on the previous experiment, we always use (both for OUS and OCUS) \emph{Max-Actual-Unif} as grow strategy.
+To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C) and incrementality. Next to OCUS, we also include the bounded OUS approach (OUSb), where we call the OUS algorithm for every literal in every step, but we reuse information by giving it the current best bound $f(X_{best})$ and iterating over the literals that performed best in the previous call first. Based on the previous experiment, we always use (both for OUSb and OCUS) \emph{Max-Actual-Unif} as grow strategy.
 For \emph{OCUS}, incrementality (\emph{+Incr.~HS}) is achieved by reusing the same incremental MIP hitting set solver throughout the explanation calls, as explained in Section~\ref{sec:ocusEx}.  
-To have a better view on how incrementality also affects \omus, we add incrementality to it in the following ways:
+To have a better view on how incrementality also affects OUSb, we add incrementality to it in the following ways:
 \begin{itemize}
 	\item \emph{SS.~caching} keeps track of the satisfiable subsets, which are used to initialize \setstohit for a fresh hitting set solver instance each time.
 	\item \emph{Lit.~Incr.~HS} uses a separate incremental hitting set solver for every literal to explain, throughout the explanation calls. Once the literal is explained, the hitting set solver is discarded.
@@ -257,8 +256,9 @@ To have a better view on how incrementality also affects \omus, we add increment
 % i.e., initialising the set of hitting sets ${\cal H}$ in an \omus call with the set of satisfiable subsets previously computed (+SS caching), and with reusing a single share hitting solvers across all OCUS calls (+Incr.HS). \bart{I cannot read this sentence. Waay too long. Also: why is a different method for incrementality used for OUS than for OCUS.}
 %\bart{IMPORTAZTNT: ARE THESE RESULTS IN THE FIGURE EVEN CORRECT? I THOUGHT THAT IN THE LAST MEETING WE ROUGHLY CONCLUDED THAT OUS PLUS THE RIGHT INCREMENTAL STRATEGY WAS AS GOOD AS OCUS. NOW IT SUDDENLY IS NO LONGER THE CASE;}
 % 
-Figure \ref{fig:incrementality_constraindness} shows the results of the different variants, including the MUS-based variant discussed above. 
-In this figure, the configurations are compared in a similar fashion to Figure \ref{fig:grow_strategies}.
+Figure \ref{fig:incrementality_constraindness} shows the results, where % of the different variants, including the MUS-based variant discussed above. 
+In this figure, 
+the configurations are compared in a similar fashion to Figure \ref{fig:grow_strategies}.
 %\deleted{In this figure, the total number of explanation steps is not equal for all configurations, the reason for this is that the two OUS implementations timed-out before completing two of the puzzles (hence explaining their lower number) and the quality of the MUS-based explanations is worse, as observed in \textbf{Q1}. Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower.}
 %We choose to answers \textbf{Q3} and \textbf{Q4} using the cactus plot of Figure \ref{fig:incrementality_constraindness} with the same logarithmic scale for consistency. Furthermore, both incrementality and constraindness go hand in hand.
 %All O(C)US variants use Max-Actual-Unif as \grow strategy following the results of the previous experiment.%, after we experimentally verified that this result of \textbf{Q2} also applied to the other OUS variants. %apply as well to all \mm{\call{O(C)US(+I)}} configurations illustrated on Figure \ref{fig:incrementality_constraindness}.
@@ -273,11 +273,11 @@ In this figure, the configurations are compared in a similar fashion to Figure \
 
 %\paragraph{Constrainedness}
 When comparing the configurations, we see that the plain \emph{MUS}-based implementation is faster than the \emph{O(C)US} implementations, as it solves a simpler problem (with worse quality results as shown in \textbf{Q1}). %cannot keep up with , as is to be expected since a harder problem is tackled.
-Replacing the MUS calls by plain OUS calls (orange line) leads to a much larger computation cost. The generic SS caching technique adds additional overhead. 
+Replacing the MUS calls by bounded OUS calls (orange line) leads to a much larger computation cost. The generic SS caching technique adds additional overhead. 
 
-The OCUS variants on the other hand significantly improve runtime compared to plain OUS, by reducing the number of OUS calls. For OCUS, using an incremental hitting set solver across all steps seems to be slightly faster for deriving literals earlier in the sequence, while inducing a small overhead for the literals at the end of the sequence.
+The OCUS variants significantly improve runtime compared to those two bounded OUS approaches, by reducing the number of OUS calls. For OCUS, using an incremental hitting set solver across all steps seems to be slightly faster for deriving literals earlier in the sequence, while inducing a small overhead for the literals at the end of the sequence.
 
-When looking at the runtime to explain the entire sequence, best results are obtained with OUS + Lit. Incr. HS, that is, using an incremental hitting set solver \textit{for every individual literal to explain}. However, for the first literals, we can see that it takes much more computation time and that reducing the number of OUS calls from $n$ to $1$ per explanation step improves runtime (OCUS), but making each of the $n$ calls incremental across the entire explanation sequence generation process leads to an even faster process overall (OUS+Lit. Incr. HS).
+When looking at the runtime to explain the entire sequence, best results are obtained with OUSb + Lit. Incr. HS, that is, using an incremental hitting set solver \textit{for every individual literal to explain}. However, for the first literals, we can see that it takes much more computation time and that reducing the number of OUS calls from $n$ to $1$ per explanation step improves runtime (OCUS). However, making each of the $n$ calls incremental and bounded across the entire explanation sequence generation process leads to an even faster process overall (OUSb+Lit. Incr. HS).
 
 %While slower than MUS, the runtime at most doubles, and, as investigated in \textbf{Q1} much better quality results are found.
 
@@ -314,7 +314,7 @@ When looking at the runtime to explain the entire sequence, best results are obt
 %Figure \ref{fig:incrementality_constraindness} demonstrates that contrary to \emph{OUS+I}, incrementality in \textbf{\comus+I} significantly decreases the overall computation time. }
 
 
-\emilio{As a final experiment, we investigate what the typical runtime is to explain one individual explain step for the top 3 configurations: \emph{\comus}, \emph{\comus+Incr.~HS} and \emph{OUSb+Lit.~Incr.~HS}. For both \emph{\comus} configurations, we see that $50\%$ of the explanations take less 1 second to be generated. After 5 seconds, approximately $87\%$ of the explanations have been generated. In contrast, for \emph{OUSb+Lit.~Incr.~HS} it takes less than 2 second to generate $87\%$ of the explanations except for 1 explanation step which takes more than 1000 seconds. This expensive explanation step explains the jump on Figure~\ref{fig:incrementality_constraindness} not only for \emph{OUSb+Lit.~Incr.~HS} but for all \emph{OUSb} configurations.}
+\emilio{As a final experiment, we investigate what the typical runtime is to explain one individual explain step for the top 3 configurations: \emph{\comus}, \emph{\comus+Incr.~HS} and \emph{OUSb+Lit.~Incr.~HS}. For both \emph{\comus} configurations, we see that $50\%$ of the explanations take less 1 second to be generated. Within 5 seconds, approximately $87\%$ of the explanations have been generated. In contrast, for \emph{OUSb+Lit.~Incr.~HS} it takes less than 2 second to generate $87\%$ of the explanations, with one explanation step which takes more than 1000 seconds. This expensive explanation step explains the jump on Figure~\ref{fig:incrementality_constraindness} not only for \emph{OUSb+Lit.~Incr.~HS} but for all \emph{OUSb} configurations.}
 %\bart{you have to say which conifguration this is done with}
 %As a final experiment, we investigate what the typical runtime is to explain one individual explain step for \emph{OCUS+Incr. HS} with \emph{Max-Actual-Unif} grow. 
 %This is shown in table \ref{tab:explanation-time}, where we can see that the major part of the explanations takes less than 2 to 5 seconds to be generated. On the other hand, a handful of explanations require 20 to 100+ seconds to be generated and dominated the total runtime for explaining a sequence. %Indeed, puzzles often involve many 'easy' derivation steps that involve few facts and constraints, and a few 'hard' derivation steps. Whether difficulty for a person solving a puzzle and an algorithm finding TRICKY... not writing it.

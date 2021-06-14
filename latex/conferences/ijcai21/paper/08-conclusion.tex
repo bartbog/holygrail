@@ -2,10 +2,10 @@
 We presented a \hitsetbased algorithm for finding \textit{optimal constrained} unsatisfiable subsets, with an application in generating explanation sequence for constraint satisfaction problems.
 We extended our methods with \emph{incrementality}, as well as with a \emph{domain-specific method for extending satisfiable subsets (\grow)}. 
 This domain-specific \grow method was key to generating explanation sequences in a reasonable amount of time.
-We noticed that, independently, incrementality and constrainedness have major benefits on explanation-generation time, while combining the two techniques is not helpful. In fact, the best method on the tested puzzles was the incremental non-constrained variant. 
+We noticed that, independently, incrementality and constrainedness have major benefits on explanation-generation time. The best method on the tested puzzles was the incremental, bounded but non-constrained variant. 
 It remains an open question how to make constrainedness and incrementality work together more effectively \emilio{and whether bounding the explanation cost, using for example disjoint MCS-enumeration \cite{marques2020reasoning}, could potentially benefit \comus-generation}.
 \bart{dit is te vaag en nietszeggend. Drop die disjoint MCS of ga er *veel* dieper op in. Bounded MCS gaat je NIET helpen om te bounden. Maar: een specifieke manier om disjoing MCSen te genereren zal je nadien niet enkel de MCSen geven maar ook nog meerm: een unsatisfiable subset. DIE kan je dan gebruiken om te bounden (dat is het analoog van hoe ze het bij maxsat doen. Maar zeggen dat disjoint mcs je helpt, klopt niet.}
-\bart{beter? as well as how to further optimize \comus-based explanations, for instance using disjoint MCS enumeration \cite{} or by keeping lower/upper bounds on the \comus cost. (maar ik zou die bounds hier gewoon weglaten)}
+\bart{beter? as well as how to further optimize O(C)US-based explanations, for instance using disjoint MCS enumeration \cite{} or by keeping lower/upper bounds on the \comus cost. (maar ik zou die bounds hier gewoon weglaten)}
 
 
 % Incrementality provides major benefits in the unconstrained setting, and only marginal improvements for the constrained. 
@@ -20,17 +20,17 @@ It remains an open question how to make constrainedness and incrementality work 
 With the observed impact of different `\grow' methods, an open question remains whether we can quantify precisely and in a generic way what a \textit{good} or even the best set-to-hit is in a hitting set approach. 
 %While we focused on generating entire sequences, another question could be what the best method is for finding a single explanation step, that is a single OCUS.   \bart{what does this last sentence mean? All our algorithms aim at finding a single OCUS. The only bit of sequence focus we have is on incrementality, but that is a minor part of the paper...}
 
-Our experimental results show that the majority of OCUS calls can be performed relatively fast, and hence are encouraging for (near) real-time settings such as interactive configuration applications~\cite{van2017kb}.
+Our experimental results show that the majority of O(C)US calls can be performed relatively fast, and hence are encouraging for (near) real-time settings such as interactive configuration applications~\cite{van2017kb}.
 % bounds for ocus 
-
+%
 %\deleted{This would be important for example in interactive configuration applications ; where incrementality can also play across different queries.}
-
+%
 The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question.
 
 %The goal of explaining satisfaction problems fits in wider goal of human-machine decision making, which is related to interactive constraint solving~\cite{putnam2019toward}. The use of MUSs in this context has been explored by . For interactivity, finding a single O(C)US fast would be the focus, where incrementality can play a big role.
 
-The concept of OUS, incremental OUS and OCUS are not limited to explanations of satisfaction problems and we are keen to explore other applications too.
-A general direction here are \textit{optimisation} problems and the role of the objective function in explanations.
+The concept of bounded (incremental) OUS and OCUS are not limited to explanations of satisfaction problems and we are keen to explore other applications too.
+A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
 %From the explanation point of view, a next challenge is how to compute explanations for optimisation problems, that is, where decisions are made based on search and not just propagation. We believe a constrained OUS algorithm can also play a key part in that. Finally, an open challenge is that of defining appropriate cost functions for generating explanations, including how to evaluate what a ``good'' explanation sequence is. While we currently find a sequence where each step is optimal with respect to the cost function, we have yet to consider whether it is possible to optimize a cost function over the entire sequence as well.
 %\deleted{Within satisfaction, both MUSs and \hitsetbased algorithms are also investigated in the context of explaining machine learning decisions~\cite{ignatiev2019abduction}. 
 %In this context, an open direction for future work is to examine the potential benefit of using optimal MUS search and whether constrainedness properties can further boost its possibilities.}

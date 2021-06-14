@@ -108,7 +108,8 @@ Ignoring \cref{line:grow} for a moment,
 the algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
 In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, the complement of $\m{S}$ is a correction subset of $\m{F}$ and is added to \setstohit. %In this way, the hitting set size always grows   THIS IS PLAINLY UNTRUE. PLEASE DONT PUT THIS BAKC. and a hitting set $\m{S}$ will always be a subset of $\formula$.
 
-Similar to OCUS the algorithm of \citet{ignatiev2015smallest}, our algorithm contains an (optional) call to \grow. 
+%Similar to %OCUS 
+As in the SMUS algorithm of \citet{ignatiev2015smallest}, our algorithm contains an (optional) call to \grow. 
 % However, the grow is optional: ``\emph{one can avoid the computation of MCS $\m{C}$ and use any correction subset $\m{C}'$ s.t. $\m{C} \subseteq \m{C}'$... Therefore, the grow procedure can be skipped}''.
 The purpose of the \grow is to expand a satisfiable subset of $\m{F}$ further, to find a smaller correction subset and as such find stronger constraints on the hitting sets. 
 In our case, the calls for hitting sets will also take into account the cost ($f$), as well as the meta-level constraints ($p$); as such, it is not clear a priori which properties a good \grow function should have here.
@@ -171,7 +172,7 @@ As an illustration, we now provide an example of one call to $\onestepo$ (Algori
 \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $c_6$ and $c_7$ (due to $p$).
 %	We also add the `\textit{exactlyone}' constraint to the hitting set solver. \bart{The hitting set solver is provided p. You already defined p. Replace by: ``\setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $c_5$ and $c_6$ (due to $p$)''.}
 	Table \ref{tab:explanation-steps-expanded} shows the computed steps in the different iterations of Algorithm~\ref{alg:comus} given the above input.
-	
+	%The lines 1 to 5 represent the successive hitting sets $\m{S}$ computed by the hitting set solver. 
 \begin{table}[!t]
 	\centering
 	\begin{adjustbox}{max width=\columnwidth}
@@ -200,7 +201,7 @@ As an illustration, we now provide an example of one call to $\onestepo$ (Algori
 \end{example}
 
 %<<<<<<< HEA
-The lines 1 to 4 represent the successive hitting sets $\m{S}$ computed by the hitting set solver. 
+
 In this example, the \grow we used is the one called \emph{Max-Actual-Unif} in \cref{sec:experiments}. 
 %The call to \grow exemplifies a call to \maxsat solver with hard clauses (or infinite weights) on the hitting set clauses and uniform weights on the remaining clauses of $\formula$.\bart{I don't think that this can at the moment be followed. I would say ``In this example, the \grow we used is the one called ''... in \cref{ref}.  } 
 %We further detail in section~\ref{sec:experiments} which \grow-configuration works best. 

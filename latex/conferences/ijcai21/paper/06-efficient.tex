@@ -1,5 +1,5 @@
 Algorithm~\ref{alg:comus} is generic and can also be used to find (unconstrained) OUSs, namely with a trivially true $p$.
-However, its constrainedness property allows to remove the need to compute a MUS/OUS for every literal, and hence decreasing the complexity of explanation sequence generation from $O(n^2)$ calls to MUS/\omus to $O(n)$, namely, once for every step in the sequence. 
+However, its constrainedness property allows to remove the need to compute a MUS/OUS for every literal. This decreasing the complexity of explanation sequence generation from $O(n^2)$ calls to MUS to $O(n)$ calls to OCUS, namely, once for every step in the sequence. 
 
 We now discuss optimizations to the OCUS algorithm that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 %In this section, we discuss optimizations to the basic algorithm to compute OCUSs. 
@@ -13,16 +13,34 @@ calls \onestepo iteratively with a growing interpretation $I$ until $I=\Iend$.
 
 All of these calls to \onestepo, and hence OCUS, are done with very similar input (the set of constraints does not change, and the $I$ slowly grows between two calls). For this reason, it makes sense that information computed during one of the earlier stages can be useful in later stages as well. 
 
-The main question is, suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$; how can we make use as much as possible of the data computations of the first call to speed-up the second call? The answer is surprisingly elegant. The most important data \comus keeps track of  is the collection \setstohit of sets-to-hit.
+The main question is, suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$; how can we make use as much as possible of the data computations of the first call to speed-up the second call? The answer is surprisingly elegant. The most important data \comus keeps track of  is the collection \setstohit of correction subsets that need to be hit.
 
 This collection in itself is not useful for transfer between two calls, since -- unless we assume that $\formula_2$ is a subset of $\formula_1$, there is no reason to assume that a set in $\setstohit_1$ should also be hit in the second call. 
 However, each set $H$ in $\setstohit$ is the complement (with respect to the formula at hand) of a \emph{satisfiable subset} of constraints, and this satisfiability remains true. 
 Thus, instead of storing $\setstohit$, we can keep track of a set \satsets of \emph{satisfiable subsets} (the sets $\m{S}$ in the \comus algorithm). 
 When a second call to \comus is performed, we can then initialize $\setstohit$ as the complement of each of these satisfiable subsets with respect to $\formula_2$, i.e., \[\setstohit\gets \{\formula_2\setminus \m{S}\mid \m{S}\in \satsets\}.\]
 
-The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:backgr}), and we have this upper bound on the set of formulas to be used, we can initialise all relevant decision variables once. To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ we need to ensure that the MIP solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$, for example by giving all other literals infinite weight in the cost function. In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
-% \emilio{need to re-read reviews, reviewers asked (?) for simple MIP model of the problem}
+The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$.
 
+For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:backgr}), and we have this upper bound on the set of formulas to be used, we can initialise all relevant decision variables once. To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ we need to ensure that the MIP solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$, for example by giving all other literals infinite weight in the cost function. In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
+% \emilio{need to re-read reviews, reviewers asked (?) for simple MIP model of the problem}
+%\emilio{Maybe an introductory text?}
+\paragraph{Bounded OUS computation for efficient explanation-generation} 
+
+
+
+\emilio{At every explanation step, whenever an \omus is found, it provides a tighter upper bound on the cost of the best candidate explanation. 
+	In subsequent calls to \omus, we can interrupt the \omus computation if the cost of the computed hitting set exceeds the upper bound.
+	More generally, we keep track of the upper bound for every remaining literal to explain. In order to potentially guide the search for the next best explanation, we sort the remaining literals-to-explain according to their best upper bound found so far.}
+% Macros kapot, files weer verplaatst. Ik ga het niet oplossen. Ge kunt mijn commetns lezen.
+\bart{This is NOT about OUS computation. This is about OUS-based explanations. }
+\bart{Clarify that the first part of the text is about within an entire n2 loop. That the ``subsequent calls to ous are in the same loop''. } 
+\bart{``The upper bound for every remain literal'' does not exist. Het kan zijn dat bepaalde literals nog geen upper bound gekregen hebben}
+\bart{In order to potentially guide -> Te vaag en vrijblijvend. Eerder iets als ``Since our optimization ... has the most effect if cheap OUSs are found early in the loop, we sort ....''  }
+\bart{Ook het woord  \emph{bounded} moet hierin komen. Paragraaf titel wordt iets als \emph{Bounded OUS computation for efficient explanation-generation} }
+
+
+\tias{Would put 'Bounded OUS computation for explanation-generation' paragraph here, e.g.: The principle of reusing information from previous MUS/OUS calls can also be used when computing an OUS for every literal separately. When considering Algo 1, we can replace MUS by OUS. Furthermore, we can push the check of line 4 into the OUS call if the hitting set solver accepts an upper bound like MIP solvers do. In this case... furthermore, sorting line 2...}
 % \paragraph{Using Initialization to Add Domain Knowledge} ? 
 % \todo{TO BE DETERMIEND IF WE WANT TO SAY SOMETHING AOBUT PRESEEDING.}\bart{ I still dont believe it makes a difference. TO be tested first!} {\color{red}The current experiments confirm (finally) that this is useless. So let us just drop it.  Honestly, this gives me more trust in the experiments :-)   }
 
@@ -56,16 +74,8 @@ We evaluate different grow strategies in the experiments section, including the 
 
 \paragraph{Example 1 (cont.)} Consider line 0 in table \ref{tab:explanation-steps-expanded}. During the \grow procedure, the \maxsat solver \emph{Max-Actual-Unif} with polarities set to \Iend branches when multiple assignment to a literal are possible. By hinting the polarities of the literals, we guide the solver and it assigns all values according to the end interpretation and neither $c_6$ nor $c_7$ is taken.
 
-%\emilio{Maybe an introductory text?}
-\paragraph{Bounded OUS computation for efficient explanation-generation} \emilio{At every explanation step, whenever an \omus is found, it provides a tighter upper bound on the cost of the best candidate explanation. 
-In subsequent calls to \omus, we can interrupt the \omus computation if the cost of the computed hitting set exceeds the upper bound.
-More generally, we keep track of the upper bound for every remaining literal to explain. In order to potentially guide the search for the next best explanation, we sort the remaining literals-to-explain according to their best upper bound found so far.}
-% Macros kapot, files weer verplaatst. Ik ga het niet oplossen. Ge kunt mijn commetns lezen.
-\bart{This is NOT about OUS computation. This is about OUS-based explanations. }
-\bart{Clarify that the first part of the text is about within an entire n2 loop. That the ``subsequent calls to ous are in the same loop''. } 
-\bart{``The upper bound for every remain literal'' does not exist. Het kan zijn dat bepaalde literals nog geen upper bound gekregen hebben}
-\bart{In order to potentially guide -> Te vaag en vrijblijvend. Eerder iets als ``Since our optimization ... has the most effect if cheap OUSs are found early in the loop, we sort ....''  }
-\bart{Ook het woord  \emph{bounded} moet hierin komen. Paragraaf titel wordt iets als \emph{Bounded OUS computation for efficient explanation-generation}} 
+
+
 
  
 % \todo{``old maxsat'' comes here}

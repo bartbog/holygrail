@@ -41,7 +41,7 @@ Instead of working OCUS-based, we can now also generate optimal explanations by 
 %Observation: waste of time
 When doing this, we know that every OCUS of cost greater than or equal to $f(X_{\mathit{best}})$ will be discarded by the check on Line 4 of Algorithm~\ref{alg:oneStep}.
 %Optimizatino: what do we do? 
-As such, a next optimization is to, instead of searching for an OUS, perform a \emph{bounded OUS check}, which only computes an OUS in case one of cost smaller than $\mathit{ub}$ exists.  
+As such, a next optimization is to, instead of searching for an OUS, perform a \emph{bounded OUS check}, which only computes an OUS in case one of cost smaller than a given bound $\mathit{ub}$ exists.  
 %Detail: how do we do it? 
 In our specific implementation, bounded OUS is performed by interrupt this \omus-call (after Line 3 Algorithm~\ref{alg:comus}) if $f(\m{S}) > \mathit{ub}$.
 Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop, we keep track of an upper bound of the cost of an OUS for each literal to explain. This is initialized as a value greater than any OUS, e.g., as $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$, and is updated every time an OUS explaining that literal is found.

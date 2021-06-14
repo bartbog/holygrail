@@ -1,5 +1,5 @@
-Algorithm~\ref{alg:comus} is generic and can also be used to find (unconstrained) OUSs, namely with a trivially true $p$.
-However, its constrainedness property allows to remove the need to compute a MUS/OUS for every literal. This decreasing the complexity of explanation sequence generation from $O(n^2)$ calls to MUS to $O(n)$ calls to OCUS, namely, once for every step in the sequence. 
+Algorithm~\ref{alg:comus} is generic and can also be used to find (unconstrained) \omus{}s, namely with a trivially true $p$.
+However, its constrainedness property allows to remove the need to compute a MUS/\omus for every literal. This decreasing the complexity of explanation sequence generation from $O(n^2)$ calls to MUS to $O(n)$ calls to OCUS, namely, once for every step in the sequence. 
 
 We now discuss optimizations to the OCUS algorithm that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 %In this section, we discuss optimizations to the basic algorithm to compute OCUSs. 
@@ -25,22 +25,26 @@ The effect of this is that we \textit{bootstrap} the hitting set solver with an 
 For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:backgr}), and we have this upper bound on the set of formulas to be used, we can initialise all relevant decision variables once. To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ we need to ensure that the MIP solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$, for example by giving all other literals infinite weight in the cost function. In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 % \emilio{need to re-read reviews, reviewers asked (?) for simple MIP model of the problem}
 %\emilio{Maybe an introductory text?}
-\paragraph{Bounded OUS computation for efficient explanation-generation} 
+%\paragraph{Bounded OUS computation for efficient explanation-generation}
+%1. Leg eerst uit he bounded OUS kan werken (gegeven een bound, stop als je HS hogere waarde heeft)
+%2. Leg dan uit hoe je bounded OUS kan gebruiken in de lus
+%3. Leg dan de optimalisatie met sorteren uit en waarom we dat doen (zie comments)
+\paragraph{Bounded OUS computation} The principle of reusing information from previous MUS/\omus calls can also be used when computing an \omus{} for every literal separately, more precisely in Algorithm~\ref{alg:oneStep} where MUS can be replaced by \omus. 
+Furthermore, we can push the check of line \ref{alg:oneStep:ifcheck} into the \omus call either by passing it directly to the hitting set solver if it accepts an upper bound $ub$ (like MIP solvers do), or by adding a condition on the found $\m{S}$ before the \sat call %at line \ref{alg:ocus-sat-check} of
+Algorithm~\ref{alg:comus}, i.e interrupt this \omus-call if $f(\m{S}) > ub$. 
+Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop, we sort the literals based on their corresponding upper bound, initialized at $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$.
+%\emilio{At every explanation step, whenever an \omus is found, it provides a tighter upper bound on the cost of the best candidate explanation. 
+%	In subsequent calls to \omus, we can interrupt the \omus computation if the cost of the computed hitting set exceeds the upper bound.
+%	More generally, we keep track of the upper bound for every remaining literal to explain. In order to potentially guide the search for the next best explanation, we sort the remaining literals-to-explain according to their best upper bound found so far.}
+%% Macros kapot, files weer verplaatst. Ik ga het niet oplossen. Ge kunt mijn commetns lezen.
+%\bart{This is NOT about OUS computation. This is about OUS-based explanations. }
+%\bart{Clarify that the first part of the text is about within an entire n2 loop. That the ``subsequent calls to ous are in the same loop''. } 
+%\bart{``The upper bound for every remain literal'' does not exist. Het kan zijn dat bepaalde literals nog geen upper bound gekregen hebben}
+%\bart{In order to potentially guide -> Te vaag en vrijblijvend. Eerder iets als ``Since our optimization ... has the most effect if cheap OUSs are found early in the loop, we sort ....''  }
+%\bart{Ook het woord  \emph{bounded} moet hierin komen. Paragraaf titel wordt iets als \emph{Bounded OUS computation for efficient explanation-generation} }
 
 
-
-\emilio{At every explanation step, whenever an \omus is found, it provides a tighter upper bound on the cost of the best candidate explanation. 
-	In subsequent calls to \omus, we can interrupt the \omus computation if the cost of the computed hitting set exceeds the upper bound.
-	More generally, we keep track of the upper bound for every remaining literal to explain. In order to potentially guide the search for the next best explanation, we sort the remaining literals-to-explain according to their best upper bound found so far.}
-% Macros kapot, files weer verplaatst. Ik ga het niet oplossen. Ge kunt mijn commetns lezen.
-\bart{This is NOT about OUS computation. This is about OUS-based explanations. }
-\bart{Clarify that the first part of the text is about within an entire n2 loop. That the ``subsequent calls to ous are in the same loop''. } 
-\bart{``The upper bound for every remain literal'' does not exist. Het kan zijn dat bepaalde literals nog geen upper bound gekregen hebben}
-\bart{In order to potentially guide -> Te vaag en vrijblijvend. Eerder iets als ``Since our optimization ... has the most effect if cheap OUSs are found early in the loop, we sort ....''  }
-\bart{Ook het woord  \emph{bounded} moet hierin komen. Paragraaf titel wordt iets als \emph{Bounded OUS computation for efficient explanation-generation} }
-
-
-\tias{Would put 'Bounded OUS computation for explanation-generation' paragraph here, e.g.: The principle of reusing information from previous MUS/OUS calls can also be used when computing an OUS for every literal separately. When considering Algo 1, we can replace MUS by OUS. Furthermore, we can push the check of line 4 into the OUS call if the hitting set solver accepts an upper bound like MIP solvers do. In this case... furthermore, sorting line 2...}
+%\tias{Would put 'Bounded OUS computation for explanation-generation' paragraph here, e.g.: The principle of reusing information from previous MUS/OUS calls can also be used when computing an OUS for every literal separately. When considering Algo 1, we can replace MUS by OUS. Furthermore, we can push the check of line 4 into the OUS call if the hitting set solver accepts an upper bound like MIP solvers do. In this case... furthermore, sorting line 2...}
 % \paragraph{Using Initialization to Add Domain Knowledge} ? 
 % \todo{TO BE DETERMIEND IF WE WANT TO SAY SOMETHING AOBUT PRESEEDING.}\bart{ I still dont believe it makes a difference. TO be tested first!} {\color{red}The current experiments confirm (finally) that this is useless. So let us just drop it.  Honestly, this gives me more trust in the experiments :-)   }
 

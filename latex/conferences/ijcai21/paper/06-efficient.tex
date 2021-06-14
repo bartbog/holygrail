@@ -1,5 +1,5 @@
 Algorithm~\ref{alg:comus} is generic and can also be used to find (unconstrained) OUSs, namely with a trivially true $p$.
-However, its constrainedness property allows to removing the need to compute a MUS/OUS for every literal, and hence decreasing the complexity of explanation sequence generation from $O(n^2)$ calls to MUS/\omus to $O(n)$, namely, once for every step in the sequence. 
+However, its constrainedness property allows to remove the need to compute a MUS/OUS for every literal, and hence decreasing the complexity of explanation sequence generation from $O(n^2)$ calls to MUS/\omus to $O(n)$, namely, once for every step in the sequence. 
 
 We now discuss optimizations to the OCUS algorithm that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 %In this section, we discuss optimizations to the basic algorithm to compute OCUSs. 
@@ -60,7 +60,14 @@ We evaluate different grow strategies in the experiments section, including the 
 \paragraph{Optimising OUS computation} \emilio{At every explanation step, whenever an \omus is found, it provides a tighter upper bound on the cost of the best candidate explanation. 
 In subsequent calls to \omus, we can interrupt the \omus computation if the cost of the computed hitting set exceeds the upper bound.
 More generally, we keep track of the upper bound for every remaining literal to explain. In order to potentially guide the search for the next best explanation, we sort the remaining literals-to-explain according to their best upper bound found so far.}
+% Macros kapot, files weer verplaatst. Ik ga het niet oplossen. Ge kunt mijn commetns lezen.
+\bart{This is NOT about OUS computation. This is about OUS-based explanations. }
+\bart{Clarify that the first part of the text is about within an entire n2 loop. That the ``subsequent calls to ous are in the same loop''. } 
+\bart{``The upper bound for every remain literal'' does not exist. Het kan zijn dat bepaalde literals nog geen upper bound gekregen hebben}
+\bart{In order to potentially guide -> Te vaag en vrijblijvend. Eerder iets als ``Since our optimization ... has the most effect if cheap OUSs are found early in the loop, we sort ....''  }
+\bart{Ook het woord  \emph{bounded} moet hierin komen. Paragraaf titel wordt iets als \emph{Bounded OUS computation for efficient explanation-generation} 
 
+ 
 % \todo{``old maxsat'' comes here}
 
 

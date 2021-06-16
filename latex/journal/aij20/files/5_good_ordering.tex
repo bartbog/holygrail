@@ -10,12 +10,12 @@ Hence, in our implementation, we ensure that they are always performed first. St
 \paragraph{Observation 2: Clues rarely propagate by themselves}\label{obs:2:cluespropagate}
 We observed that the automatically obtained logic representation of clues usually has quite weak (unit) propagation strength in isolation. 
 This is not a property of the clues, but rather of the final obtained translation. As an example, consider the following sentence: 
-``The person who ordered capellini is either Damon or Claudia''. From this, a human reasoner might conclude that Angie did not order capellini. 
+`The person who ordered capellini is either Damon or Claudia'. From this, a human reasoner might conclude that Angie did not order capellini. 
 % The use of the article ``the'' in the above sentence gives away that there is actually a unique person who ordered capellini. 
 However, the (automatically) obtained logical representation is 
 \[\exists p\in \person: \ordered(p, \capellini)\land (p = \damon \lor p =  \claudia).\]
 This logic sentence only entails that Angie did not order capellini \emph{in conjunction with the bijectivity constraint on $ \mathit{ordered}$}.
-In the natural language sentence, this bijectivity is implicit by the use of the article ``The'' which entails that there is a unique person who ordered capellini. 
+In the natural language sentence, this bijectivity is implicit by the use of the article `The' which entails that there is a unique person who ordered capellini. 
 
 We observed that there is rarely any propagation from sole clues, and that only few implicit constraints are active together with a clue at any time. 
 % Hence, when pairing clues to other constraints we always pair it with the set of all implicit (bijectivity, transitivity) constraints.
@@ -34,7 +34,7 @@ Our final observation that drove the design of the cost functions is that using 
 
 
 \paragraph{A cost function}
-\emilio{With these four observations in mind, we devised $f$ and $g$ as follows (where $nc(S)$ denotes the number of \emph{clues} (not: implicit constraints) in $S$, $M$ and $N$ are explanation parameters): \label{sec:cost}
+\revision{With these four observations in mind, we devised $f$ and $g$ as follows (where $nc(S)$ denotes the number of \emph{clues} (not: implicit constraints) in $S$, $M$ and $N$ are explanation parameters): \label{sec:cost}
 \begin{align*}&f(E,S,N) = basecost(S) + |E| + N \cdot|S|\\
 &g(S) = basecost(S) = \left\{\begin{array}{ll}
                                0 & \text{if $|S|=1$ and $nc(S) = 0$}\\

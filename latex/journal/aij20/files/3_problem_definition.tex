@@ -7,9 +7,9 @@ We first introduce the concept of an explanation of a single reasoning step, aft
 We assume that a theory $\allconstraints$ and an initial partial interpretation $I_0$ are given and fixed. 
 
 \begin{definition}
-We define the \textbf{maximal consequence} of a theory $\allconstraints$ and partial interpretation $I$ (denoted $max(I,T)$) as the most precise partial interpretation $J$ such that  $I \wedge \allconstraints \entails J$. 
+We define the \emph{maximal consequence} of a theory $\allconstraints$ and partial interpretation $I$ (denoted $max(I,T)$) as the most precise partial interpretation $J$ such that  $I \wedge \allconstraints \entails J$. 
 \end{definition}
-\bart{Throughout the entire paper: check EVERY definition, and put the defined concept in emph. Not in mathit, textbf, ...}
+%\bart{Throughout the entire paper: check EVERY definition, and put the defined concept in emph. Not in mathit, textbf, ...}
 
 Phrased differently, $max(I,T)$ is the intersection of all models of $T$ that are more precise than $I$; this is also known as the set of \emph{cautious consequences} of $T$ and $I$ and corresponds to ensuring \emph{global consistency} in constraint solving.
 %\emilio{why is it the intersection of all models of T more precise than I?} -> no, intersection of 'all models more precise'
@@ -20,7 +20,7 @@ Algorithms for computing cautious consequences without explicitly enumerating al
 Weaker levels of propagation consistency can be used as well, leading to a potentially smaller maximal consequence interpretation $max_{\mathit{otherConsistency}}(I,T)$. 
 The rest of this paper assumes we want to construct a sequence that starts at $I_0$ and ends at $max(I_0,\allconstraints)$ for some consistency algorithm, i.e., that can explain all computable consequences of $\allconstraints$ and $I_0$. 
 \begin{definition}
-A \textbf{sequence of incremental partial interpretations} of a theory $\allconstraints$ with initial partial interpretation $I_0$ is a sequence $\langle I_0, I_1, \ldots, I_n  = max(I_0,\allconstraints)\rangle$ where $\forall i>0, I_{i-1} \leqp I_{i}$ (i.e., the sequence is precision-increasing).
+A \emph{sequence of incremental partial interpretations} of a theory $\allconstraints$ with initial partial interpretation $I_0$ is a sequence $\langle I_0, I_1, \ldots, I_n  = max(I_0,\allconstraints)\rangle$ where $\forall i>0, I_{i-1} \leqp I_{i}$ (i.e., the sequence is precision-increasing).
 \end{definition} 
 
 The goal of our work is not just to obtain a sequence of incremental partial interpretations, but also for each incremental step $\langle I_{i-1}, I_i \rangle$ we want an explanation $(E_i,S_i)$ that justifies the newly derived information $N_i = I_i \setminus I_{i-1}$. When visualized, such as in Figure~\ref{fig:zebrascreen}, it will show the user precisely which information and constraints were used to derive a new piece of information.
@@ -45,8 +45,8 @@ That is, we want a non-redundant explanation $(E_i,S_i,N_i)$ where none of the f
 \end{definition}
 
 \begin{definition} \label{def:nonred}
-A \textbf{non-redundant explanation sequence} is a sequence 
-\[\langle(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n))\rangle\]
+A \emph{non-redundant explanation sequence} is a sequence 
+\[\langle(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_1)), \dots ,(I_n,(E_n,S_n,N_n))\rangle\]
 %\[(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_i)), \dots ,(I_n,(E_n,S_n,N_n))\]
 such that $(I_i)_{i\leq n}$ is sequence of incremental partial interpretations and each $(E_i,S_i,N_i)$ explains the derivation of $I_i$ from $I_{i-1}$.
 \end{definition} 
@@ -56,51 +56,7 @@ While subset-minimality ensures that an explanation is non-redundant, it does no
 This quantification is problem-specific and is often subjective. 
 In this paper, we will assume the existence of a cost function $f(E_i,S_i,N_i)$ that quantifies the interpretability of a single explanation. 
 
-In line with the goal of ``simple enough for a person to understand'' and Occam's Raz
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+In line with the goal of `simple enough for a person to understand' and Occam's Raz
 
 \subsection{Interpretability of a sequence of reasoning steps}
 In its most general form, we would like to optimize the understandability of the entire sequence of explanations. 
@@ -108,7 +64,7 @@ While quantifying the interpretability of a single step can be hard, doing so fo
 As a starting point, we here consider the total cost to be an aggregation of the costs of the individual explanations, e.g. the average or maximum cost.
 
 \begin{definition}
-Given a theory $\allconstraints$ and initial partial interpretation $I_0$, the \textbf{explanation-production problem} consist of finding a non-redundant explanation sequence
+Given a theory $\allconstraints$ and initial partial interpretation $I_0$, the \emph{explanation-production problem} consists of finding a non-redundant explanation sequence
 \[\langle(I_0,(\emptyset,\emptyset,\emptyset)), (I_1,(E_1,S_1,N_1)), \dots ,(I_n,(E_n,S_n,N_n))\rangle\]
 such that a predefined aggregate over the sequence $\left(f(E_i,S_i,N_i)\right)_{i\leq n}$ is minimised.
 \end{definition} 

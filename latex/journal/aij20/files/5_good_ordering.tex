@@ -35,17 +35,13 @@ Our final observation that drove the design of the cost functions is that using 
 
 \paragraph{A cost function}
 \emilio{With these four observations in mind, we devised $f$ and $g$ as follows (where $nc(S)$ denotes the number of \emph{clues} (not: implicit constraints) in $S$, $M$ and $N$ are explanation parameters): \label{sec:cost}
-\bart{Consistency.... You literally use $N$ for something else on the next line. }
-\bart{Do not use text... in math mode. Why would you try to fool latex by pretending $M$ is not a mathematical symbol?}
-% \tias{should be $f(E,S,N)$?}
-\begin{align*}&f(E,S,N) = basecost(S) + |E| + \text{\color{red} {N}} \cdot|S|\\
+\begin{align*}&f(E,S,N) = basecost(S) + |E| + N \cdot|S|\\
 &g(S) = basecost(S) = \left\{\begin{array}{ll}
                                0 & \text{if $|S|=1$ and $nc(S) = 0$}\\
-                               \text{\color{red} {M}} & \text{if $|S|>1$ and $nc(S)=0$}\\
-                               \text{\color{red} {M}}\cdot nc(S) & \text{otherwise}
+                               M & \text{if $|S|>1$ and $nc(S)=0$}\\
+                               M\cdot nc(S) & \text{otherwise}
                               \end{array}\right.
                               \end{align*}
-   
 The parameters $M$ is taken here to be larger than any reasonable explanation size and $N$ to be relatively small in comparison. In our experiments, we use the combination $M=100$ and $N=5$ which provided good explanation sequences for the tested puzzles.}
 %The value number $100$ is taken here to be larger than any reasonable explanation size, and \emilio{5 to be relatively small in comparison}.
 The effect of this, is that we can generate our subsets $S$ in Line \ref{alg:min:for}

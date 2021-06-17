@@ -61,7 +61,7 @@ Caine A., Cohen R. (2006) MITS: A Mixed-Initiative Intelligent Tutoring System f
 The nested explanations can be seen as a solver branching on a variable that is forced to backtrack after detecting inconsistency. However, as solvers need to branch deep in the search tree, I could imagine having multiple levels of nested explanations. I would have liked to see how the authors manage the depth of these nested explanations. A human could easily lose track of the reasoning. How does the algorithm prevent this behavior?
 \end{quoteit}
 
-\answer{Our work is targeted at finding small explanations. This reduces the chance that there are many levels of nested explanations, but it does indeed not prevent it. On our data, we have not observed multiple levels of nested explanations. In section 10 `Discussion, future work and conclusions', we added this discussion of the possibility of multiple levels, as well as that we haven't observed it, to the paper.} 
+\answer{Our work is targeted at finding small explanations. This reduces the chance that there are many levels of nested explanations, but it does indeed not prevent it. On our data, we have not observed multiple levels of nested explanations. In section 10 `Discussion, future work and conclusions', we added the discussion of the possibility of multiple levels, as well as that we haven't observed it, to the paper.} 
 %\bart{We clarified this in the paper?}
 % we zitten met stappen die we niet verder kunnen opsplitsen, voor moeilijkere applicaties zal dat niet het geval zijn en dan moeten we een manier vinden om daar slim mee om te gaan.
 %\tias{our work is targetted to finding small explanations. This reduces the chance that there are many levels of nested explanations, but it does indeed not prevent it. On our data, we have not observed multiple levels of nested explanations. \textit{and then indeed something like} we added this discussion of the possibility of multiple levels, as well as that we haven't observed it, to the paper}
@@ -72,8 +72,11 @@ I would replace 100 by M as it is done with linear programming. You can keep the
 \end{quoteit}
 
 \answer{
-	The number 100 and 5 are indeed ``magic constants''. We have, following this suggestion, replaced them by constants M (for the large one) and N. The parameters $M$ is taken here to be larger than any reasonable explanation size and $N$ to be relatively small in comparison. The optimal value to assign to these constants is something we do not know yet and that requires additional research. We added a discussion in our future work section in the paragraph on \emph{`what constitutes a good explanation'}.
+	The number 100 and 5 are indeed ``magic constants''. We have, following this suggestion, replaced them by constants M (for the large one) and N. The parameters $M$ is taken here to be larger than any reasonable explanation size and $N$ to be relatively small in comparison. The optimal value to assign to these constants is something we do not know yet and that requires additional research. We added a discussion in our future work section in the paragraph on \emph{`what constitutes a good explanation'}: 
+	
+		`These observations suggest that further research into the question \emph{what constitutes an understandable explanation for humans} is needed with respect to using appropriate interpretability metrics \cite{hoffman2018metrics,rosenfeld2021better}'.
 } 
+
 %\tias{Perhaps also something about the 5? e.g. a value N larger than typically expected number of literals or smth?}
 
 % > pseudo-randomly, kosten mogelijke avenue for future work => hinten bij introduceren van de cost in de paper dat het voor future work is.
@@ -96,7 +99,8 @@ It is nice to see that everything was implemented in a system that reads the pro
 For instance, when you write: ``Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are tagged as noun.'' How? Manually?
 \end{quoteit}
 
-\answer{The phrasing of the puzzles are sometimes ambiguous and can lead to mistakes during the process of POS-tagging. To deal with these situations, we post-process the POS-tagged words by applying a set of pre-defined rules to recognize ambiguous cases. We then manually verify and correct the assigned POS-tags. We further clarified this in the paper.} 
+\answer{The phrasing of the puzzles are sometimes ambiguous and can lead to mistakes during the process of POS-tagging. To deal with these situations, we post-process the POS-tagged words by applying a set of pre-defined rules to recognize ambiguous cases. We then manually verify and correct the assigned POS-tags.}
+\emilio{Todo add description post-tagging postprocessing} 
 %\tias{his remark is not just to know the answer, but also for you to make the paper better by specifying it. So ideally, you can add to this answer: 'we further clarified this in the paper'}
 % Yes... :(
 
@@ -170,7 +174,11 @@ Section 5 is sorely missing an example of the more difficult explanation. THe ex
 It is not clear to me what happens in Algorithm 5 when f(E', S', N') $>=$ f(E, S, N). Does not explanation get stored at all for this step because it is too complicated? 
 \end{quoteit}
 
-\answer{We have clarified this in \emph{6.4 Searching nested expanations} of the paper:``''}
+\answer{We have clarified this in \emph{6.4 Searching nested expanations} of the paper:
+	
+		``While Algorithm 5 tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line 8. 
+		This check is present to avoid that the nested explanation is as difficult or harder than the high-level step it aims to clarify (also see Definition 10, where the third bullet point explicitly forbids such nested justifications).  
+		This check can kick in for two different reasons. The first reason is that the explanation step at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure 1 is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult or harder than the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain it.''}
 
 \begin{quoteit}
 The demo website is great. Thanks for taking the time to put that together. My only feedback here is that when transitivity constraints, bijectivity, etc., are added, the explanation breaks down a bit. It could be simply that I didn't really  understand what the bijectivity constraint was applied to for this particular puzzle, so changing the text here would help I guess?

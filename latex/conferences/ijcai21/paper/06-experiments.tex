@@ -33,7 +33,7 @@ Our experiments are designed to answer the following research questions:
 	\label{fig:rq1_heatmap}
 \end{figure}
 
-\paragraph{Explanation quality}\label{paragraph:explanationquality}
+\paragraph{Explanation quality.}\label{paragraph:explanationquality}
 To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on \cref{alg:oneStep}. 
 Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there -- in order to avoid the quality problems we will illustrate below --  an extra inner loop was used that employs \emph{even more} calls to \call{MUS} for a selected set of subsets of \formulac of increasing size. % (this is their Algorithm~3). 
 While this yields better explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle. 
@@ -176,7 +176,7 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
 %	Worse explanations (that make more assumptions) often explain more literals at once and hence the total number of explanation steps is lower.
 %>>>>>>> e4d5df1776ed855c31dae20748d5f394d39a4d9e
 
-\paragraph{Domain-specific \grow} 
+\paragraph{Domain-specific \grow.} 
 In our OCUS algorithm, we do not just aim to find any satisfiable subsets, but we prefer \emph{high quality} satisfiable subsets: subsets that impose strong constraints on the assignments the optimal hitting set solver can find. 
 This induces a trade-off between \emph{efficiency} of the \grow strategy and \emph{quality} of the produced satisfiable subset.
 
@@ -243,7 +243,7 @@ We can observe that not using a grow strategy performs badly, as do weighted Max
 	\label{fig:grow_strategies}
 \end{figure}
 
-\paragraph{Constrainedness and incrementality}
+\paragraph{Constrainedness and incrementality.}
 To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C) and incrementality. Next to OCUS, we also include the bounded OUS approach (OUSb), where we call the OUS algorithm for every literal in every step, but we reuse information by giving it the current best bound $f(X_{best})$ and iterating over the literals that performed best in the previous call first. Based on the previous experiment, we always use (both for OUSb and OCUS) \emph{Max-Actual-Unif} as grow strategy.
 For \emph{OCUS}, incrementality (\emph{+Incr.~HS}) is achieved by reusing the same incremental MIP hitting set solver throughout the explanation calls, as explained in Section~\ref{sec:ocusEx}.  
 To have a better view on how incrementality also affects OUSb, we add incrementality to it in the following ways:
@@ -265,7 +265,7 @@ the configurations are compared in a similar fashion to Figure \ref{fig:grow_str
 
 \begin{figure}[t]
 	\centering
-	\includegraphics[width=0.85\columnwidth]{figures_post_paper/cumul_incr_avg_time_lits_derived_new.pdf}
+	\includegraphics[width=0.82\columnwidth]{figures_post_paper/cumul_incr_avg_time_lits_derived_new.pdf}
 	\caption{Q3 - Cumulative runtime evolution enhancements on incrementality and constrainedness.}
 	\label{fig:incrementality_constraindness}
 \end{figure}

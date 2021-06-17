@@ -5,7 +5,7 @@ We now discuss optimizations to the OCUS algorithm that are specific to explanat
 %In this section, we discuss optimizations to the basic algorithm to compute OCUSs. 
 %While our optimizations are inspired by the explanation generation problem, and tailored to solving this as efficiently as possible, the ideas presented here can also 
  
-\paragraph{Incremental OCUS Computation}
+\paragraph{Incremental OCUS Computation.}
 %While searching for unsatisfiable subsets satisfying structural constraints already greatly reduces the number of calls to the unsatisfiable subset oracle, i
 Inherently, generating a sequence of explanations still requires as many OCUS calls as there are literals to explain. 
 Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
@@ -35,7 +35,7 @@ For hitting set solvers that natively implement incrementality, we can generaliz
 %Algorithm~\ref{alg:comus} \bart{to explain how OCUS corresponds to OUS}, i.e interrupt this \omus-call if $f(\m{S}) > ub$.  \bart{This is very technical. This is \emph{how} we do something. What is missing is \emph{what} we want, namely a bounded OUS check.}
 %Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop, we sort the literals based on their corresponding upper bound \bart{Which is? Where does it come from?} , initialized at $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$.
 
-\paragraph{Explanations with Bounded OUS}
+\paragraph{Explanations with Bounded OUS.}
 %Context: how to do OUS 
 Instead of working \comus-based, we can now also generate optimal explanations by replacing the MUS call by an \omus call  in Algorithm~\ref{alg:oneStep} (where OUS is computed as in Algorithm~\ref{alg:comus}, but with a trivially true $p$). 
 %Observation: waste of time
@@ -64,7 +64,7 @@ Since the bounding on the \omus cost has the most effect if cheap \omus{}s are f
 
 
 
-\paragraph{Domain-Specific Implementations of \grow} \label{para:domainspecificgrow}
+\paragraph{Domain-Specific Implementations of \grow.} \label{para:domainspecificgrow}
 %In the context of explanations we are in, we have a way of generating large satisfiable subsets quite easily and hence we conjecture that implementing a domain-specific \grow will be more efficient than generic version of the \grow algorithm. 
 
 The goal of the \grow procedure is to turn $\m{S}$ into a larger subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence, a stronger restriction for the hitting set solver is found.  

@@ -20,6 +20,7 @@
 \newcommand{\emilio}[1]{{\comment{\color{red} \textsc{EG:}#1}}}
 \newcommand{\Revision}[1]{{\comment{Revision: #1}}}
 \newcommand{\answer}[1]{{\comment{\textbf{Answer:} #1}}}
+\newcommand{\clarification}[1]{{\comment{\textbf{In-text clarifications:} #1}}}
 \newcommand{\tempanswer}[1]{{\comment{\color{orange} \textbf{Temporary answer:} #1}}}
 \newcommand{\bart}[1]{{\comment{\color{green} \textsc{BB:}#1}}}
 \newcommand{\new}[1]{{\comment{{\color{blue} #1}}}}
@@ -52,7 +53,9 @@ The literature review could be augmented with the following paper that was publi
 Caine A., Cohen R. (2006) MITS: A Mixed-Initiative Intelligent Tutoring System for Sudoku. In: Lamontagne L., Marchand M. (eds) Advances in Artificial Intelligence. Canadian AI 2006. Lecture Notes in Computer Science, vol 4013. Springer, Berlin, Heidelberg. \url{https://doi.org/10.1007/11766247_47}
 \end{quoteit}
 
-\answer{The proposed paper has been added to the related works section: ``In the context of interactive explanations, Caine and Cohen~\cite{caine2006mits} introduce a \emph{mixed-initiative} Intelligent Tutoring System (MITS). 
+\answer{The proposed paper has been added to the related works section:}
+
+\clarification{``In the context of interactive explanations, Caine and Cohen~\cite{caine2006mits} introduce a \emph{mixed-initiative} Intelligent Tutoring System (MITS). 
 	In that framework, the system maintains a model of the knowledge of the user (who is solving a sudoku), estimating how well certain strategies are understood. 
 	The tutor, based on its model of the student, decides whether the benefits outweigh the costs of interaction with the student (i.e. proposing a move or explaining a step) when the student lacks knowledge. The student also has the ability to ask for further guidance; in other words, the two involved parties can take the initiative to engage in interaction. In comparison, in our approach, we do not aim to model the user, but rather assume a cost-function is specified that quantifies difficulties of derivations. At each point in time, we then suggest the simplest next derivation.''} 
 %\tias{This sentence is broken, split it up. A bit more on how yes/no relevant welcome, or just copy paste how described in the revision?}
@@ -72,8 +75,9 @@ I would replace 100 by M as it is done with linear programming. You can keep the
 \end{quoteit}
 
 \answer{
-	The number 100 and 5 are indeed ``magic constants''. We have, following this suggestion, replaced them by constants M (for the large one) and N. The parameters $M$ is taken here to be larger than any reasonable explanation size and $N$ to be relatively small in comparison. The optimal value to assign to these constants is something we do not know yet and that requires additional research. We added a discussion in our future work section in the paragraph on \emph{`what constitutes a good explanation'}: 
-	
+	The number 100 and 5 are indeed ``magic constants''. We have, following this suggestion, replaced them by constants M (for the large one) and N. The parameters $M$ is taken here to be larger than any reasonable explanation size and $N$ to be relatively small in comparison. The optimal value to assign to these constants is something we do not know yet and that requires additional research. We added a discussion in our future work section in the paragraph on \emph{`what constitutes a good explanation'}:}
+
+	\clarification{
 		`These observations suggest that further research into the question \emph{what constitutes an understandable explanation for humans} is needed with respect to using appropriate interpretability metrics \cite{hoffman2018metrics,rosenfeld2021better}'.
 } 
 
@@ -163,19 +167,24 @@ Section 6.2: "of a derived this."
 Section 5 is sorely missing an example of the more difficult explanation. THe explanation from the reasoning by contradiction is straightforward enough to understand for a lay reader, but there is no contraste to the more difficult case.
 \end{quoteit}
 
-\tempanswer{The clue used for the parent explanation has been highlighted. In fact, there are other nested sequences, but most sequences are composed of many nested explanations. While this case is relatively straightforward, it is a good example of how nested sequences can even improve the understanding of easier steps.}
+\answer{The manuscript initially hinted that our approach only works on the most difficult explanation step: `This novel approach allows us to provide a mechanism for \emph{zooming in} into the \emph{most} difficult explanation step of the explanation sequence'. However, the nested explanations allow to zoom in on `the \emph{more difficult explanations steps}'. Hence, one of these steps in the explanation sequence has been further explained using reasoning by contradiction in Section 5 (see figure 5). 
+	The parent explanation in that example alone is non-trivial to understand, but it is true that using reasoning by contradiction makes the explanation relatively straightforward enough for a lay reader to understand. This is a good example of how nested sequences can even improve the understanding of more difficult explanations.}
 
-\bart{I thought we discussed this and planned to add another example. That never hurts. Is there any good reason \emph{not} to do it?}
-\emilio{There is a whole image for it. Do you mean a textual description or working out the cost steps etc...?}
-\tias{the current answer is not very satisfying in any case, it sidesteps the question}
-\emilio{I think the explanation is not that obvious... to be discussed at next meeting}
+%\tempanswer{The clue used for the parent explanation has been highlighted. In fact, there are other nested sequences, but most sequences are composed of many nested explanations. While this case is relatively straightforward, it is a good example of how nested sequences can even improve the understanding of easier steps.}
+
+%\bart{I thought we discussed this and planned to add another example. That never hurts. Is there any good reason \emph{not} to do it?}
+%\emilio{There is a whole image for it. Do you mean a textual description or working out the cost steps etc...?}
+%\tias{the current answer is not very satisfying in any case, it sidesteps the question}
+%\emilio{I think the explanation is not that obvious... to be discussed at next meeting}
+%\emilio{Clarify paragraph of example of difficult expalnation step. Sub-Explantions look easy but parent are not that easy}
 
 \begin{quoteit}
 It is not clear to me what happens in Algorithm 5 when f(E', S', N') $>=$ f(E, S, N). Does not explanation get stored at all for this step because it is too complicated? 
 \end{quoteit}
 
-\answer{We have clarified this in \emph{6.4 Searching nested expanations} of the paper:
-	
+\answer{We have clarified this in \emph{6.4 Searching nested expanations} of the paper:}
+
+\clarification{
 		``While Algorithm 5 tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line 8. 
 		This check is present to avoid that the nested explanation is as difficult or harder than the high-level step it aims to clarify (also see Definition 10, where the third bullet point explicitly forbids such nested justifications).  
 		This check can kick in for two different reasons. The first reason is that the explanation step at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure 1 is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult or harder than the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain it.''}

@@ -30,7 +30,7 @@
 \date{}
 \begin{document}
 	\maketitle
-We thank the reviewers for their effort and constructive feedback. In the following, we answer the remarks of the reviewers and point out the changes we incorporated in this revision.
+We thank the reviewers for their effort and constructive feedback. In the following, we answer the remarks of the reviewers and point out the changes we incorporated in the revised version.
 
 \section*{Reviewer \#1 - DETAILED COMMENTS}
 
@@ -45,7 +45,7 @@ We thank the reviewers for their effort and constructive feedback. In the follow
 The paper is well written and easy to understand. I noted below a few typos that can quickly be fixed.
 \end{quoteit}
 
-\answer{We have addressed the typos in the revised version.}
+\answer{We have corrected the typos in the revised version, and double checked for other typos.}
 
 \begin{quoteit}
 The literature review could be augmented with the following paper that was published before people talk about explainable AI. But in some sense, it does XAI on a grid puzzle.
@@ -53,18 +53,18 @@ The literature review could be augmented with the following paper that was publi
 Caine A., Cohen R. (2006) MITS: A Mixed-Initiative Intelligent Tutoring System for Sudoku. In: Lamontagne L., Marchand M. (eds) Advances in Artificial Intelligence. Canadian AI 2006. Lecture Notes in Computer Science, vol 4013. Springer, Berlin, Heidelberg. \url{https://doi.org/10.1007/11766247_47}
 \end{quoteit}
 
-\answer{The proposed paper has been added to the related works section:}
+\answer{Indeed. The proposed paper has been added to the related work discussion as follows:}
 
 \clarification{``In the context of interactive explanations, Caine and Cohen~\cite{caine2006mits} introduce a \emph{mixed-initiative} Intelligent Tutoring System (MITS). 
 	In that framework, the system maintains a model of the knowledge of the user (who is solving a sudoku), estimating how well certain strategies are understood. 
-	The tutor, based on its model of the student, decides whether the benefits outweigh the costs of interaction with the student (i.e. proposing a move or explaining a step) when the student lacks knowledge. The student also has the ability to ask for further guidance; in other words, the two involved parties can take the initiative to engage in interaction. In comparison, in our approach, we do not aim to model the user, but rather assume a cost-function is specified that quantifies difficulties of derivations. At each point in time, we then suggest the simplest next derivation.''} 
+	The tutor, based on its model of the student, decides whether the benefits outweigh the costs of interaction with the student (i.e. proposing a move or explaining a step) when the student lacks knowledge. The student also has the ability to ask for further guidance; in other words, the two involved parties can take the initiative to engage in interaction. In comparison, in our approach, we do not aim to model the user, but rather assume a cost-function is specified that quantifies difficulties of derivations. At each point in time, we then suggest the simplest next derivation.''} \tias{"suggest the lowest-cost, e.g. the simplest, next derivation." ?}
 %\tias{This sentence is broken, split it up. A bit more on how yes/no relevant welcome, or just copy paste how described in the revision?}
 
 \begin{quoteit}
 The nested explanations can be seen as a solver branching on a variable that is forced to backtrack after detecting inconsistency. However, as solvers need to branch deep in the search tree, I could imagine having multiple levels of nested explanations. I would have liked to see how the authors manage the depth of these nested explanations. A human could easily lose track of the reasoning. How does the algorithm prevent this behavior?
 \end{quoteit}
 
-\answer{Our work is targeted at finding small explanations. This reduces the chance that there are many levels of nested explanations, but it does indeed not prevent it. On our data, we have not observed multiple levels of nested explanations. In section 10 `Discussion, future work and conclusions', we added the discussion of the possibility of multiple levels, as well as that we haven't observed it, to the paper.} 
+\answer{Our work is targeted at finding small explanations, both for the original explanations and for each sub-explanation in the nested explanation. This reduces the chance that there are multiple levels of nested explanations, but it does indeed not prevent it. On our data, we have not observed multiple levels of nested explanations. In section 10 `Discussion, future work and conclusions', we added the discussion of the possibility of multiple levels, as well as that we haven't observed it, to the paper.} 
 %\bart{We clarified this in the paper?}
 % we zitten met stappen die we niet verder kunnen opsplitsen, voor moeilijkere applicaties zal dat niet het geval zijn en dan moeten we een manier vinden om daar slim mee om te gaan.
 %\tias{our work is targetted to finding small explanations. This reduces the chance that there are many levels of nested explanations, but it does indeed not prevent it. On our data, we have not observed multiple levels of nested explanations. \textit{and then indeed something like} we added this discussion of the possibility of multiple levels, as well as that we haven't observed it, to the paper}
@@ -75,10 +75,10 @@ I would replace 100 by M as it is done with linear programming. You can keep the
 \end{quoteit}
 
 \answer{
-	The number 100 and 5 are indeed ``magic constants''. We have, following this suggestion, replaced them by constants M (for the large one) and N. The parameters $M$ is taken here to be larger than any reasonable explanation size and $N$ to be relatively small in comparison. The optimal value to assign to these constants is something we do not know yet and that requires additional research. We added a discussion in our future work section in the paragraph on \emph{`what constitutes a good explanation'}:}
+	The number 100 and 5 are indeed ``magic constants''. We have, following this suggestion, replaced them by constants M (for the large one) and N. The parameters $M$ is taken here to be larger than any reasonable explanation size \tias{what is explanation size? nr of constraints? literals?} and $N$ to be relatively small in comparison \tias{but why not 1? because a literal is 1? so more costly then a few literals, while M is more costly then multiple literals and easier constraints? If so, first explain $N$, then $M$?}. The optimal value to assign to these constants is something we do not know yet and that \tias{may differ from user to user, our main focus here is to show that it can work with such cost functions. or smth? then also 'We added...'} requires additional research. We added a discussion in our future work section in the paragraph on \emph{`what constitutes a good explanation'}:}
 
 	\clarification{
-		`These observations suggest that further research into the question \emph{what constitutes an understandable explanation for humans} is needed with respect to using appropriate interpretability metrics \cite{hoffman2018metrics,rosenfeld2021better}'.
+		`These observations suggest that further research into the question \emph{what constitutes an understandable explanation for humans} is needed with respect to using appropriate interpretability metrics \cite{hoffman2018metrics,rosenfeld2021better}'.\tias{maybe more explicit: to determine approriate cost functions? or what does 'appropriate interpretability metrics' mean? in our context it is the cost function right?}
 } 
 
 %\tias{Perhaps also something about the 5? e.g. a value N larger than typically expected number of literals or smth?}
@@ -89,7 +89,7 @@ The MUS solver tries to find a globally small set of constraints. Even if it doe
 Could that greedy algorithm reconsiders some choices in order to make better choices in the future?
 \end{quoteit}
 
-\answer{The current greedy algorithm looks for good candidate explanations by generating constraints of increasing costs for the current state of play. It does not reconsider previous choices for better future choices. This is partly discussed in future work: \emph{`Additional directions to produce easier-to-understand explanations would be \emph{(i)} to  optimize the sequence as a whole, rather than only individual steps,..'}. One could consider a beam-search, but that is beyond the scope of this work and would further increase computational cost.}
+\answer{The current greedy algorithm looks for good candidate explanations by generating constraints of increasing costs \tias{next part not clarifying... cut or reword}for the current state of play. \tias{Your sentence seems to be about finding a 'good' MUS, but his question (and your next sentence) is about finding a good sequence! Check which one he means, and only answer that one. The answer after this sentence looks satisfying} It does not reconsider previous choices for better future choices. This is partly discussed in future work: \emph{`Additional directions to produce easier-to-understand explanations would be \emph{(i)} to  optimize the sequence as a whole, rather than only individual steps,..'}. One could consider a beam-search, but that is beyond the scope of this work and would further increase computational cost considerably.}
 %\tias{Alt: something like 'one could consider a beam-search, but that is beyond the scope of this work and would further increase computational cost'}
 % > explanation sequence optimaliseren + hergebruiken van SSes.
 
@@ -103,7 +103,7 @@ It is nice to see that everything was implemented in a system that reads the pro
 For instance, when you write: ``Since any POS-tagger can make mistakes, we make sure that all of the puzzle's entities are tagged as noun.'' How? Manually?
 \end{quoteit}
 
-\answer{The phrasing of the puzzles is sometimes ambiguous and can lead to mistakes during the process of POS-tagging. To deal with these situations, we post-process the POS-tagged words by applying a set of pre-defined rules to recognize ambiguous cases. We then manually verify and correct the assigned POS-tags. We further clarified this in the paper.}
+\answer{The phrasing of the puzzles is sometimes ambiguous and can lead to mistakes during the process of POS-tagging. To deal with these situations, we post-process the POS-tagged words by applying a set of pre-defined rules to recognize ambiguous cases \tias{more specific: such as, ...}. We then manually verify and correct the assigned POS-tags. We further clarified this in the paper.} \tias{copy/paste the relevant part as you did higher 'in text clarif'?}
 %\emilio{Todo add description post-tagging postprocessing} 
 %\tias{his remark is not just to know the answer, but also for you to make the paper better by specifying it. So ideally, you can add to this answer: 'we further clarified this in the paper'}
 % Yes... :(
@@ -113,7 +113,7 @@ It would have been interesting to try the system on harder problems (harder than
 \end{quoteit}
 
 %\new{Hmmm... Not sure how to handle this one. }\\
-\answer{We agree on this with the reviewer. It is on our agenda for future work.}
+\answer{We first note that we do encounter explanations that combine a clue and bijectivity/transitivity constraints and that runtime is already high for these relatively 'easy' problems. But we do agree that the explanation techniques can and should be applied to other constraint satisfaction problems, as we intend to do in the future.}
 
 \begin{quoteit}
 Overall, this is a good paper that deserves to be published. 

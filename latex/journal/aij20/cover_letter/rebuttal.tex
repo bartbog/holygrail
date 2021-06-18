@@ -65,6 +65,10 @@ The nested explanations can be seen as a solver branching on a variable that is 
 \end{quoteit}
 
 \answer{Our work is targeted at finding small explanations, both for the original explanations and for each sub-explanation in the nested explanation. This reduces the chance that there are multiple levels of nested explanations, but it does indeed not prevent it. On our data, we have not observed multiple levels of nested explanations. In section 10 `Discussion, future work and conclusions', we added the discussion of the possibility of multiple levels, as well as that we haven't observed it, to the paper.} 
+
+\clarification{Additionally, on our puzzles,  the nested explanations were so simple that no further refinement was needed. 
+	For more difficult problems, this may no longer be the case; as such, a possible avenue for future work is a generic approach to multi-level nested explanations. 
+	Another interesting direction is to research whether nesting can be related to existing notions of abstraction and refinement \cite{leuschel2005automatic, saribatur2019abstraction, mitchell2008expressive}.}
 %\bart{We clarified this in the paper?}
 % we zitten met stappen die we niet verder kunnen opsplitsen, voor moeilijkere applicaties zal dat niet het geval zijn en dan moeten we een manier vinden om daar slim mee om te gaan.
 %\tias{our work is targetted to finding small explanations. This reduces the chance that there are many levels of nested explanations, but it does indeed not prevent it. On our data, we have not observed multiple levels of nested explanations. \textit{and then indeed something like} we added this discussion of the possibility of multiple levels, as well as that we haven't observed it, to the paper}
@@ -76,7 +80,7 @@ I would replace 100 by M as it is done with linear programming. You can keep the
 
 \answer{
 	The number 100 and 5 are indeed ``magic constants''. We have, following this suggestion, replaced them by constants M (for the large one) and N. 
-	The parameters $N$ (the cost of using a constraint) is taken to be relatively small, but more costly than a few facts $|E|$; $M$ is taken here to be larger than any reasonable explanation size  i.e. $|E| + N \cdot |S|$.
+	The parameters $N$ (the cost associated with using a constraint) is taken to be relatively small, but more costly than a few facts $|E|$; $M$ is taken here to be larger than any reasonable explanation size  i.e. $|E| + N \cdot |S|$.
 	The optimal value to assign to these constants is something we do not know yet and that may differ from user to user. Our main focus here is to show that it can work with such cost functions, but which cost function to use requires additional research. We added a discussion in our future work section in the paragraph on \emph{`what constitutes a good explanation'}:}
 	
 %	The parameters $M$ is taken here to be larger than any reasonable explanation size \tias{what is explanation size? nr of constraints? literals?} and $N$ to be relatively small in comparison \tias{but why not 1? because a literal is 1? so more costly then a few literals, while M is more costly then multiple literals and easier constraints? If so, first explain $N$, then $M$?}. 
@@ -96,7 +100,7 @@ Could that greedy algorithm reconsiders some choices in order to make better cho
 %\answer{The current greedy algorithm looks for good candidate explanations by generating constraints of increasing costs \tias{next part not clarifying... cut or reword}for the current state of play. 
 	\answer{
 %	\tias{Your sentence seems to be about finding a 'good' MUS, but his question (and your next sentence) is about finding a good sequence! Check which one he means, and only answer that one. The answer after this sentence looks satisfying}
-	The current greedy algorithm does not reconsider previous choices for better future choices. This is partly discussed in future work: \emph{`Additional directions to produce easier-to-understand explanations would be \emph{(i)} to  optimize the sequence as a whole, rather than only individual steps,..'}. One could consider a beam-search, but that is beyond the scope of this work and would further increase computational cost considerably.}
+	The current greedy algorithm does indeed not reconsider previous choices for better future choices. This is partly discussed in future work: \emph{`Additional directions to produce easier-to-understand explanations would be \emph{(i)} to  optimize the sequence as a whole, rather than only individual steps,..'}. One could consider a beam-search, but that is beyond the scope of this work and would further increase computational cost considerably.}
 %\tias{Alt: something like 'one could consider a beam-search, but that is beyond the scope of this work and would further increase computational cost'}
 % > explanation sequence optimaliseren + hergebruiken van SSes.
 
@@ -112,7 +116,7 @@ For instance, when you write: ``Since any POS-tagger can make mistakes, we make 
 
 \answer{Yes, we manually verify and correct the assigned POS-tags. We further clarified this in the paper:}
 
-\clarification{Since any POS-tagger can make mistakes, we manually verify and correct the assigned POS-tags to make sure that all of the puzzle’s entities are tagged as noun.}
+\clarification{`Since any POS-tagger can make mistakes, we manually verify and correct the assigned POS-tags to make sure that all of the puzzle’s entities are tagged as noun.'}
 
 %\emilio{Todo add description post-tagging postprocessing} 
 %\tias{his remark is not just to know the answer, but also for you to make the paper better by specifying it. So ideally, you can add to this answer: 'we further clarified this in the paper'}
@@ -123,7 +127,7 @@ It would have been interesting to try the system on harder problems (harder than
 \end{quoteit}
 
 %\new{Hmmm... Not sure how to handle this one. }\\
-\answer{We first note that we do encounter explanations that combine a clue and bijectivity/transitivity constraints and that runtime is already high for these relatively 'easy' problems. But we do agree that the explanation techniques can and should be applied to other constraint satisfaction problems, as we intend to do in the future.}
+\answer{We first note that we do encounter explanations that combine a clue and bijectivity/transitivity constraints and that runtime is already high for these relatively `easy' problems. But we do agree that the explanation techniques can and should be applied to other constraint satisfaction problems, as we intend to do in the future.}
 
 \begin{quoteit}
 Overall, this is a good paper that deserves to be published. 
@@ -177,10 +181,10 @@ Section 6.2: "of a derived this."
 Section 5 is sorely missing an example of the more difficult explanation. THe explanation from the reasoning by contradiction is straightforward enough to understand for a lay reader, but there is no contraste to the more difficult case.
 \end{quoteit}
 
-\answer{The manuscript initially hinted that our approach only works on \textit{the most} difficult explanation step. %: `This novel approach allows us to provide a mechanism for \emph{zooming in} into the \emph{most} difficult explanation step of the explanation sequence'. 
-However, the nested explanations allow to zoom in on `the \textit{more} difficult explanations step\textit{s}'. 
-That is, a nested explanation can be generated for any step, but we expect a user only needs a further clarification for difficult steps. We provide an example of such a difficult step in Section 5 (see figure 5).
-	The explanation in that example is non-trivial to understand. We then demonstrate the nested explanation of this explanation, which uses reasoning by contradiction, and the fact that it is straightforward enough to understand for the lay reader strengthens our point of the value of a nested explanation sequence here.}
+\answer{The manuscript initially hinted that our approach only works on \textit{the most} difficult explanation step: `This novel approach allows us to provide a mechanism for \emph{zooming in} into the \emph{most} difficult explanation step of the explanation sequence'. 
+However, the generation of nested explanation sequences allow us to zoom in on `the \textit{more} difficult explanations step\textit{s}'. 
+That is, a nested explanation can be generated for any step, but we expect a user only needs a further clarification for difficult steps. We provide an example of such a difficult step in Section 5 (see Figure 5).
+	The explanation in that example is non-trivial to understand. We further break up the parent explanation in simpler steps using reasoning by contradiction. The fact that it is straightforward enough to understand for the lay reader demonstrates the value of a nested explanation sequence here.}
 
 %\tempanswer{The clue used for the parent explanation has been highlighted. In fact, there are other nested sequences, but most sequences are composed of many nested explanations. While this case is relatively straightforward, it is a good example of how nested sequences can even improve the understanding of easier steps.}
 
@@ -197,9 +201,9 @@ It is not clear to me what happens in Algorithm 5 when f(E', S', N') $>=$ f(E, S
 \answer{We have clarified this in \emph{6.4 Searching nested expanations} of the paper:}
 
 \clarification{
-		``While Algorithm 5 tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line 8. 
+		`While Algorithm 5 tries to find a nested explanation sequence for each derived fact, it will not find one for each fact due to the if-check at Line 8. 
 		This check is present to avoid that the nested explanation is as difficult or harder than the high-level step it aims to clarify (also see Definition 10, where the third bullet point explicitly forbids such nested justifications).  
-		This check can kick in for two different reasons. The first reason is that the explanation step at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure 1 is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult or harder than the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain it.''}
+		This check can kick in for two different reasons. The first reason is that the explanation step at the main level is simply too simple to be further broken up in pieces. For instance the explanation of Figure 1 is of that kind: it uses a single bijectivity constraint with a single previously derived fact. Breaking this derivation up in strictly smaller parts would thus not be helpful. But this phenomenen can also occur for very difficult steps: sometimes the best nested explanation of a difficult explanation step contains a step that is as difficult or harder than the high-level step itself. In that case, this is a sign that reasoning by contradiction is not simplifying matters in this step and other methods should be explored to further explain it.'}
 
 \begin{quoteit}
 The demo website is great. Thanks for taking the time to put that together. My only feedback here is that when transitivity constraints, bijectivity, etc., are added, the explanation breaks down a bit. It could be simply that I didn't really  understand what the bijectivity constraint was applied to for this particular puzzle, so changing the text here would help I guess?
@@ -213,7 +217,9 @@ The demo website is great. Thanks for taking the time to put that together. My o
 I very much encourage the authors to conduct some human-behavioural studies using this in future. I believe there is enough in this paper already that it is suitable, but the method (and in particular the inclusion of the observations in Section 7 for the cost function), while interesting, are not really evaluated from the perspective of whether they do what they aim to do: help people understand CSP solutions. 
 \end{quoteit}
 
-\answer{We thank the reviewer for their suggestion. Indeed user studied to better understand the cost function would be highly valuable. We discuss so in the future work section and are considering viable ways to do this.} 
+\answer{We thank the reviewer for their suggestion. Indeed user studies to better understand the cost function would be highly valuable. We discuss so in the future work section and are considering viable ways to do this.} 
+
+\clarification{`These observations suggest that further research into the question \emph{what constitutes an understandable explanation for humans} is needed with respect to using appropriate interpretability metrics \cite{hoffman2018metrics,rosenfeld2021better}. Additional directions to produce easier-to-understand explanations would be \emph{(i)} to  optimize the sequence as a whole, rather than only individual steps, and \emph{(ii)} to learn the cost function based on user traces.'}
 %\tias{and will look into it? the idea is that we improve our work and understanding based on their constructive comments...}
 
 %\emilio{We will include this suggestion as potential follow-up work.}

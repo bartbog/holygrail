@@ -164,23 +164,43 @@
 		\begin{description}[font=\color{vuborange}\itshape]
 			\item[Optimality] Explanations not provably optimal, \emph{heuristically} found. \pause
 			\item[Efficiency] Explanation generation takes a lot of time. \pause
-			\item[Incrementality] Can we reuse information from an explanation call to another? \pause
 			\item[Constrainedness] Can we avoid looping over the literals when searching for the next best explanation ?
+			\item[Incrementality] Can we reuse information from an explanation call to another? \pause
 		\end{description}
 	\end{frame}
 
 	\begin{frame}{Optimality}
-	\framesubtitle{Explanation difficulty and cost function}
+	\framesubtitle{Integrating the cost function in explanation generation}
 	\begin{definition}
-		An \emph{\color{vuborange}optimal} non-redundant explanation corresponds to computing a \emph{weighted} Minimal Unsatisfiable Subset (\emph{MUS}) of $\m{C} \wedge \m{I} \wedge \lnot l$.
+		An \emph{\color{vuborange}optimal} explanation of $\m{F} := \m{C} \wedge \m{I} \wedge \lnot l$ corresponds to computing an Optimal (cost-minimal) Unsatisfiable Subset (\emph{\color{vuborange}OUS}) with respect to cost-function $f: 2^{\m{F}} \rightarrow N$.
 	\end{definition}
+	
+		\end{frame}
+
+	\begin{frame}{Constrainedness}
+	\framesubtitle{Avoid looping over the literals}
+
+	Q: Can we avoid looping over the literals when searching for the next best explanation?\pause  
+	Yes!\pause
+	
+	\begin{block}{Optimal \emph{Constrained} Unsatisfiable Subset}
+		Given formula $\m{F}$, a cost-function $f: 2^{\m{F}} \rightarrow N$, a predicate $p: 2^{\m{F}} \rightarrow \{True, False\}$, we call $\m{S} \subseteq \m{F}$, an \emph{\color{vuborange}Optimal Constrained US} of $\m{F}$, OCUS($\m{F}$) if 
+		\begin{itemize}
+			\item $\m{S}$ is unsatisfiable,
+			\item $p(\m{S})$ is true
+			\item all other unsatisfiable $\m{S}'\subseteq \m{F}$ for which $p(\m{S}')$ is true, satisfy $f(\m{S}') \geq f (\m{S})$.
+		\end{itemize}
+%		An \emph{\color{vuborange}optimal} constrained explanation of $\m{F} := \m{C} \wedge \m{I} \wedge \lnot l$ corresponds to computing an Optimal (cost-minimal)Constrained Unsatisfiable Subset (\emph{\color{vuborange}OUS}) with respect to cost-function $f: 2^{\m{F}} \rightarrow N$.
+	\end{block}
 	
 	\end{frame}
 
-	\begin{frame}{Constrainedness}
-	\framesubtitle{Explanation difficulty and cost function}
+	\begin{frame}{Optimal \emph{Constrained} Unsatisfiable Subset}
+	\framesubtitle{The actual computation}
 	
-	
+	\begin{figure}
+		\includegraphics[width=0.8\textwidth]{ihs_constrained_ping_pong.png}
+	\end{figure}
 	\end{frame}
 
 	\begin{frame}{Incrementality}

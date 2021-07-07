@@ -1,5 +1,5 @@
-\documentclass[handout]{beamer}
-%\documentclass{beamer}
+%\documentclass[handout]{beamer}
+\documentclass{beamer}
 \usepackage[ruled,linesnumbered]{algorithm2e}
 \usepackage{natbib}
 %\usepackage{enumitem}
@@ -19,13 +19,11 @@
 
 \newcommand\m[1]{\ensuremath{\mathcal{#1}}\xspace}
 \newcommand\allconstraints{\m{T_P}}
-\newcommand\theory{\ensuremath{\m{T} }\xspace}
 \newcommand\formula{\ensuremath{\m{F} }\xspace}
 \newcommand\formulac{\ensuremath{\m{C} }\xspace}
 \renewcommand\emph[1]{{\color{vuborange}#1}}
 \newcommand\Iend{\m{I_{\mathit{end}}}}
 \newcommand\Ipartial{\m{I}}
-\newcommand\LitsToExplain{LitsToExplain}
  
  \newcommand\nat{\m{\mathbb{N}}}
  \newcommand\subsetT{\m{\mathcal{S}}}
@@ -33,7 +31,6 @@
  \newcommand\lfalse{\m{\textbf{f}}}
  	\newcommand\call[1]{\m{\textsc{#1}}}
  \newcommand\onestep{\call{OneStep}}
-% \renewcommand{\labelitemi}{$\triangleright$}
  
 \makeatletter
 \setbeamertemplate{footline}
@@ -124,13 +121,11 @@
 	In \cite{bogaerts2020step}, we proposed:\pause
 
 		\begin{itemize}
-			\item[$\triangleright$] Step-wise explanation problem
-			\item[$\triangleright$] Algorithm 
-			\item[$\triangleright$] Heuristics for guiding the search for explanations
+			\item Step-wise explanation problem
+			\item Algorithm 
+			\item Heuristics for guiding the search for explanations
 		\end{itemize}
 		\end{frame}
-	
-
 
 %	\begin{frame}{Background}
 %	\framesubtitle{Notation for CSPs}
@@ -243,11 +238,11 @@
 		
 		
 			\begin{algorithm}[H]
-				\caption{$\onestep(\theory,f,\LitsToExplain)$}
+				\caption{$\onestep(\m{C},f,\m{I},\Iend)$}
 				\label{alg:oneStep}
 				$X_{best} \gets \mathit{nil}$\;
-				\For{$\ell \in \LitsToExplain$}{
-					$X \gets \emph{\call{MUS}{(\theory \land \neg \ell)}}$\;
+				\For{$\ell \in \{\Iend \setminus I\}$}{
+					$X \gets \emph{\call{MUS}{(\m{C} \land \m{I} \land \neg \ell)}}$\;
 					\If{$f(X)<f(X_{best})$}{
 						$X_{best} \gets X$\;
 					}
@@ -295,26 +290,18 @@
 		\framesubtitle{Challenges and open questions from \cite{bogaerts2020step}}
 
 		\begin{description}[font=\color{vuborange}\itshape]
-%			\small
+			\small
 			\item[Optimality] Explanations not provably optimal, \emph{heuristically} found.
 			\begin{itemize}
-				\item[$\triangleright$] MUS guarantees non-redundancy but ... not quality.
-%				\item MUS-based heuristic
-				\item[$\triangleright$] Alternative: SMUS $\#$-minimal (\cite{ignatiev2015smallest})
+				\item MUS guarantees non-redundancy but ... not quality.
+				\item MUS-based heuristic
+				\item SMUS: $\#$-minimal (\cite{ignatiev2015smallest})
 			\end{itemize} \pause
-			\item[Efficiency] Explanation generation takes a lot of time: \pause
+			\item[Efficiency] Explanation generation takes a lot of time. \pause
+			\item[Constrainedness] Can we avoid looping over the literals when searching for the next best explanation ?\pause
+			\item[Incrementality] Can we reuse information from an explanation call to another? 
 		\end{description}
-			\begin{itemize}
-				\item[Q1] Can we avoid looping over the literals when searching for the next best explanation ?\pause
-				\item[Q2] Can we reuse information from an explanation call to another? 
-			\end{itemize}
-%			\item[Constrainedness] \pause
-%			\item[Incrementality] 
-		
 	\end{frame}
-
-
-
 \section{The OCUS Problem (Hitting Set-based Algorithm)}
 
 
@@ -326,9 +313,9 @@
 			\small
 		Let $\m{F}$ be a formula, $f:2^{\m{F}} \to \nat$ a cost function. We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
 		$\mathcal{S} \subseteq \m{F}$ an \emph{OUS}$^*$ of $F$ (with respect to $f$) if \begin{itemize}                                      
-			\item[$\triangleright$] $\subsetT$ is unsatisfiable,
+			\item $\subsetT$ is unsatisfiable,
 			%       \item $p(\subsetT)$ is true
-			\item[$\triangleright$] all other unsatisfiable $\mathcal{S}'\subseteq \m{F}$ satisfy $f(\mathcal{S}')\geq f(\mathcal{S})$.
+			\item all other unsatisfiable $\mathcal{S}'\subseteq \m{F}$ satisfy $f(\mathcal{S}')\geq f(\mathcal{S})$.
 		\end{itemize}
 	\end{definition}
 	$^*$ = \emph{Optimal} Unsatisfiable Subset
@@ -338,49 +325,40 @@
 	
 	\begin{frame}{OUS-Based Explanation Generation}
 
-
+		\begin{center}
+			\Large
+			\textbf{Q}: How to compute OUSs?		
+		\end{center}\pause
 		%  TODO ALGORITHM FROM IJCAI MUS... 
 		
 		\begin{algorithm}[H]
-			\caption{$\onestep(\theory,f,\LitsToExplain)$}
+			\caption{$\onestep(\m{C},f,\m{I},\Iend)$}
 			\label{alg:oneStep}
-			
-			\color{gray} $X_{best} \gets \mathit{nil}$\;
-			\For{\color{gray}$\ell \in \LitsToExplain$}{
-				{\color{black}$X \gets \call{OUS}{(\theory \land \neg \ell, \emph{f})}$}\;
-				\If{\color{gray}$f(X)<f(X_{best})$}{
+			$X_{best} \gets \mathit{nil}$\;
+			\For{\color{black}$\ell \in \{\Iend \setminus \m{I}\}$}{
+				$X \gets \call{OUS}{(\m{C} \land \m{I} \land \neg \ell, \emph{f})}$\;
+				\If{\color{black}$f(X)<f(X_{best})$}{
 					$X_{best} \gets X$\;
 				}
 			}
-			\Return{\color{gray}$X_{best}$} 
+			\Return{$X_{best}$} 
 		\end{algorithm}
-	
-
 	\end{frame}
 
-\begin{frame}{\emph{Beyond} OUS-Based Explanation Generation}
-	\begin{center}
-		\Large
-		Can we \emph{avoid looping over the literals} when searching for the next best explanation ?		
-	\end{center}
-\end{frame}
-
 \subsection{Constrainedness}
-
-
 
 \begin{frame}{Constrainedness}
 	\framesubtitle{Beyond OUS-based explanations}
 	\begin{itemize}
-		\item[$\triangleright$] The different iterations (for loop:`for $\ell \in \LitsToExplain$') \dots very similar
-		\item[$\triangleright$] Can we exploit this? 
+		\item The different iterations (for loop line 2)... very similar
+		\item Can we exploit this? 
 		\pause
-		\item[$\triangleright$] Essentially, the task at hand is: find a single unsatisfiable subset of 
-		\[\theory \land \bigwedge_{\ell\in \LitsToExplain}\lnot \ell\]
+		\item Essentially, the task at hand is: find a single unsatisfiable subset of 
+		\[\m{C} \land \m{I} \land \bigvee_{\ell\in \Iend\setminus \m{I}}\lnot \ell\]
 		that:
 		\begin{itemize}
-			\item Contains \emph{exactly one} literal $\lnot \ell$ with $\ell \in \LitsToExplain $ (\emph{example!})
 			\item Is optimal w.r.t.\ $f$
+			\item Contains \emph{exactly one} literal $\lnot \ell$ with $\ell \in \Iend\setminus \m{I} $ (\emph{example!})
 		\end{itemize}
 		
 	\end{itemize}	
@@ -403,30 +381,35 @@
 
 \newcommand\onestepo{\ensuremath{\call{explain-One-Step-ocus}}\xspace}
 \begin{frame}{OCUS-Based explanation generation}
-	\vfill
 	\begin{algorithm}[H]
 		\DontPrintSemicolon
-		\caption{$\onestepo(\theory,f,\LitsToExplain)$}
+		\caption{$\onestepo(\m{C},f,\m{I},\Iend)$}
 		\label{alg:oneStepOCUS}
-		$p \leftarrow$ exactly one of $\{\lnot \ell| \ell \in \LitsToExplain\}$\;
-		\Return{$\call{OCUS}(\theory \wedge \bigwedge_{\ell\in \LitsToExplain}\lnot \ell, f, p)$} 
-	\end{algorithm}\pause
-\vfill
-	\begin{center}
-		\Large
-		\textbf{Q}: How to compute OCUSs?		
-	\end{center}\pause
-\vfill
-
+		$p \leftarrow$ exactly one of $\overline{\Iend\setminus \m{I}}$\;
+		\Return{$\call{OCUS}(\m{C}\land \m{I}\land \overline{\Iend\setminus \m{I}}, f, p)$} 
+	\end{algorithm}
 \end{frame}
 
 
 \newcommand\muses[1]{\textsc{mus}s(\m{#1})}
 \newcommand\mcses[1]{\textsc{mcs}s(\m{#1})}
-%\begin{frame}{How to find OCUSs?}
-%
-%	
-%\end{frame}
+\begin{frame}{How to find OCUSs?}
+	\begin{itemize}
+		\item Hitting set--based algorithms: used for MaxSAT and SMUS 
+		%   \item We extended this idea to OCUS
+		
+		\begin{theorem}\label{prop:MCS-MUS-hittingset}	\small
+			%     Given an $ \formula$, let MUSes($\formula$), be the Minimal Unsatisfiable Subsets of F and MCSes($\formula$), be the Minimal Correction Subsets of F:
+			%     
+			A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.\\
+			%     \noindent
+			A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
+		\end{theorem}
+		\pause
+		\item We extended this to OCUS: 
+	\end{itemize}
+	
+\end{frame}
 
 \newcommand\setstohit{\m{\mathcal{H}}}
 \newcommand\grow{\call{Grow}}
@@ -435,24 +418,18 @@
 \newcommand\cohs{\call{cost-optimal-hittingset}}
 
 \begin{frame}{Hitting set--based OCUS}
-	
-%	\begin{itemize}
-%		\item hitting set--based algorithm (\cite{ignatiev2015smallest})
-%		%   \item We extended this idea to OCUS
-%		\item We extended this to OCUS: 
-%	\end{itemize}
 	\begin{algorithm}[H]
 		\DontPrintSemicolon
 		$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
-		\While{\color{black} true}{
-			$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+		\While{true}{
+			$\subsetT \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
 			% f{optimal} solution}
 			% \tcp{\small set with all unique clauses from hitting set}
 			%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
 			% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
 			% \tcp{IF UNSAT, $hs$ is the OUS }
-			\If{\color{black} $\lnot \sat(\subsetT)$}{
-				\Return{\color{black}$\subsetT$} \;
+			\If{ $\lnot \sat(\subsetT)$}{
+				\Return{$\subsetT$} \;
 			}
 			$\subsetT \gets  \grow(\subsetT,\formula) $ \label{line:grow}\;
 			$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \subsetT\}$ \;
@@ -462,139 +439,117 @@
 	\end{algorithm}
 \end{frame}
 
-%\begin{frame}{Hitting set--based OCUS}
-%	\only<1>{
-%	\begin{figure}
-%		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong0.png}
-%	\end{figure}
-%}
-%	\only<2>{
-%		\begin{figure}
-%			\includegraphics[width=\textwidth]{figures/algo_with_ping_pong.png}
-%		\end{figure}
-%	}
-%\only<3>{
-%		\begin{figure}
-%		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong1.png}
-%	\end{figure}
-%}
-%\only<4>{
-%		\begin{figure}
-%		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2.png}
-%	\end{figure}
-%}
-%\only<5>{
-%		\begin{figure}
-%		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2a.png}
-%	\end{figure}
-%}
-%\only<6>{
-%		\begin{figure}
-%		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2b.png}
-%	\end{figure}
-%}
-%\only<7>{
-%		\begin{figure}
-%		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2c.png}
-%	\end{figure}
-%}
-%\only<8>{
-%		\begin{figure}
-%		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong.png}
-%	\end{figure}
-%}
-%\only<9>{
-%		\begin{figure}
-%		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong1.png}
-%	\end{figure}
-%}
-%
-%\only<10>{
-%	\begin{figure}
-%	\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2.png}
-%\end{figure}
-%}
-%\only<11>{
-%	\begin{figure}
-%	\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2d.png}
-%\end{figure}
-%}
-%\only<12>{
-%	\begin{figure}
-%	\includegraphics[width=\textwidth]{figures/algo_with_ping_pong3.png}
-%\end{figure}
-%}
-%\newcommand\hitset{\m{\mathcal{H}}}
-%
-%%\begin{frame}{Correctness}
-%%	\begin{theorem}\label{thm:soundcomplete}
-%%		Let $\hitset$ be a set of correction subsets of \formula. 
-%%		If $\subsetT$ is a hitting set of \hitset that is $f$-optimal among the hitting sets of \hitset satisfying a predicate $p$, and  $\subsetT$ is unsatisfiable, then $\subsetT$ is an OCUS of \formula. 
-%%		
-%%		If  $\hitset$ has no hitting sets satisfying $p$, then $\formula$ has no OCUSs.
-%%	\end{theorem}
-%\end{frame}
+\begin{frame}{Hitting set--based OCUS}
+	\only<1>{
+	\begin{figure}
+		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong0.png}
+	\end{figure}
+}
+	\only<2>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/algo_with_ping_pong.png}
+		\end{figure}
+	}
+\only<3>{
+		\begin{figure}
+		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong1.png}
+	\end{figure}
+}
+\only<4>{
+		\begin{figure}
+		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2.png}
+	\end{figure}
+}
+\only<5>{
+		\begin{figure}
+		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2a.png}
+	\end{figure}
+}
+\only<6>{
+		\begin{figure}
+		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2b.png}
+	\end{figure}
+}
+\only<7>{
+		\begin{figure}
+		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2c.png}
+	\end{figure}
+}
+\only<8>{
+		\begin{figure}
+		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong.png}
+	\end{figure}
+}
+\only<9>{
+		\begin{figure}
+		\includegraphics[width=\textwidth]{figures/algo_with_ping_pong1.png}
+	\end{figure}
+}
 
-\begin{frame}{Improving efficiency of explanation searching}
-	\begin{center}
-		\Large
-	Can we \emph{reuse information} from an explanation call to another? 	
-	\end{center}
+\only<10>{
+	\begin{figure}
+	\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2.png}
+\end{figure}
+}
+\only<11>{
+	\begin{figure}
+	\includegraphics[width=\textwidth]{figures/algo_with_ping_pong2d.png}
+\end{figure}
+}
+\only<12>{
+	\begin{figure}
+	\includegraphics[width=\textwidth]{figures/algo_with_ping_pong3.png}
+\end{figure}
+}
+\newcommand\hitset{\m{\mathcal{H}}}
+
+%\begin{frame}{Correctness}
+%	\begin{theorem}\label{thm:soundcomplete}
+%		Let $\hitset$ be a set of correction subsets of \formula. 
+%		If $\subsetT$ is a hitting set of \hitset that is $f$-optimal among the hitting sets of \hitset satisfying a predicate $p$, and  $\subsetT$ is unsatisfiable, then $\subsetT$ is an OCUS of \formula. 
+%		
+%		If  $\hitset$ has no hitting sets satisfying $p$, then $\formula$ has no OCUSs.
+%	\end{theorem}
 \end{frame}
+
 
 %\subsection{Incrementality}
 \subsection{Incrementality}
-%\begin{frame}{Incrementality}
-%\framesubtitle{Reusing grown satisfiable subsets}
-%
-%
-%		$-----(1)------------(2)----------->$\\
-%		\hspace{1.9cm} $|$ \hspace{4.9cm}$|$
-%		\[\m{F}_1 := \theory 	\wedge 	\bigwedge_{\ell\in \LitsToExplain_i}\lnot \ell	\hspace{1.8cm}
-%		 \m{F}_2 := \theory \wedge \emph{Facts} \wedge  \bigwedge_{\ell\in \LitsToExplain_{i+1}}\lnot \ell \]
-%
-%Suppose (1) $\m{F}_1, f_1$ and $ p_1$; and (2) $\m{F}_2, f_2$ and $ p_2$;
-%\begin{itemize}
-%	\item Keep track of collection of correction sets $\m{H}$ that need to be hit
-%	\item Each set H in \m{H} is the complement (with respect to the formula at hand) of a satisfiable subset \pause
-%	\item[$\rightarrow$] Keep track of \emph{set of Satisfiable Subsets \textbf{SSs}} \pause
-%	\item[$\rightarrow$] Bootstrap $\m{H} \gets \{\m{F}_2 \setminus \m{S} | \m{S}  \in  \mathbf{SSs} \}$ 
-%\end{itemize}
-%
-%\end{frame}
+\begin{frame}{Incrementality}
+\framesubtitle{Reusing grown satisfiable subsets}
+
+
+		$-----(1)------------------(2)------>$\\
+		\hspace{1.8cm} $|$ \hspace{6.9cm}$|$
+		\[\m{F}_1 := \m{C} \wedge \emph{\m{I}_i} 	\wedge 	\bigvee_{\ell\in \Iend\setminus \emph{\m{I}_i}}\lnot \ell	\hspace{2.8cm}
+		 \m{F}_2 :=\m{C} \wedge \emph{\m{I}_{i+1}} \wedge  \bigvee_{\ell\in \Iend\setminus \emph{\m{I}_{i+1}}}\lnot \ell \]
+
+Suppose (1) $\m{F}_1, f_1$ and $ p_1$; and (2) $\m{F}_2, f_2$ and $ p_2$;
+\begin{itemize}
+	\item Keep track of collection of correction sets $\m{H}$ that need to be hit
+	\item Each set H in H is the complement (with respect to the formula at hand) of a satisfiable subset \pause
+	\item[$\rightarrow$] Keep track of \emph{set of Satisfiable Subsets \textbf{SSs}} \pause
+	\item[$\rightarrow$] Bootstrap $\m{H} \gets \{\m{F}_2 \setminus \m{S} | \m{S}  \in  \mathbf{SSs} \}$ 
+\end{itemize}
+
+\end{frame}
 
 
 \begin{frame}{Incrementality}
-	
-	{\SetAlCapFnt{\footnotesize}
-		\footnotesize
 	\begin{algorithm}[H]
 		\DontPrintSemicolon
 		\emph{\bf  $\setstohit  \gets \dots$} \; %\label{omus-line1} 
-		\While{\color{gray} true}{
-			$\subsetT \gets \cohs(\emph{\setstohit},f,p) $  \;
-			\color{gray}
-			\If{\color{gray} $\lnot \sat(\subsetT)$}{
-				\Return{\color{gray}$\subsetT$} \;
+		\While{\color{black} true}{
+			$\subsetT \gets \cohs(\setstohit,f,p) $  \;
+			\If{\color{black} $\lnot \sat(\subsetT)$}{
+				\Return{\color{black}$\subsetT$} \;
 			}
 			$\subsetT \gets  \grow(\subsetT,\formula) $ \label{line:grow}\;
-			\emph{$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \subsetT\}$ }\;
+			$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \subsetT\}$ \;
 		}
 		\caption{$\comus(\formula,f,p)$ }
 		\label{alg:comus}
 	\end{algorithm}
-}
-\begin{itemize}
-	\item[$\triangleright$] Keep track of collection of correction sets $\m{H}$ that need to be hit
-	\item[$\triangleright$] Each set H in \m{H} is the complement (with respect to the formula at hand) of a satisfiable subset \pause
-	\begin{itemize}
-		\item[$\rightarrow$] Keep track of \emph{set of Satisfiable Subsets \textbf{SSs}} \pause
-		\item[$\rightarrow$] Bootstrap $\m{H} \gets \{\m{F}_2 \setminus \m{S} | \m{S}  \in  \mathbf{SSs} \}$ 
-	\end{itemize}
-	
-	
-\end{itemize}
-
 \end{frame}
 
 \subsection{Efficiency}
@@ -617,120 +572,69 @@
 %	\end{minipage}
 %		
 %\end{frame}
-\begin{frame}{Efficiency}
-	\framesubtitle{Explanation specific `Grow'}{}
-	
-	{\SetAlCapFnt{\footnotesize}
-		\footnotesize
-	\begin{algorithm}[H]
-		\DontPrintSemicolon
-		\color{gray}
-		\bf  $\setstohit  \gets \dots$ \; %\label{omus-line1} 
-		\While{\color{gray}true}{
-			$\subsetT \gets \cohs(\setstohit,f,p) $  \;
 
-			\If{\color{gray} $\lnot \sat(\subsetT)$}{
-				\Return{\color{gray}$\subsetT$} \;
-			}
-			\emph{$\subsetT \gets  \grow(\subsetT,\formula) $} \label{line:grow}\;
-			$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \subsetT\}$ \;
+\begin{frame}{Efficiency}
+	\framesubtitle{Explanation specific `Grow'}
+	\begin{minipage}{.55\textwidth}
+		
+		When calling OCUS, the theory consists of 
+		
+		\begin{enumerate}
+			\item[\emph{$\m{C}$}] The original theory (constraints)\hfill 
+			\item[\emph{$\Iend$}] The current interpretation\hfill 
+			\item[\emph{$\overline{\Iend}$}] The negation of literals in $\Iend$  \hfill 
+		\end{enumerate}
+		
+		\begin{itemize}
+			\item What to take into account for \emph{\call{grow}}?
+			\item What about the cost function?
+		\end{itemize}
+	\end{minipage}\hfill
+		\begin{minipage}{.4\textwidth}
+			{
+				\setlength{\algomargin}{0pt}
+			\begin{algorithm}[H]
+				
+				\DontPrintSemicolon
+				\bf  $\setstohit  \gets \dots$ \; %\label{omus-line1} 
+				\While{\color{black} true}{
+					....\;
+					$\subsetT \gets COHS(\setstohit,f,p) $  \;
+					\If{\color{black} $\lnot \sat(\subsetT)$}{
+						\Return{\color{black}$\subsetT$} \;
+					}
+					$\subsetT \gets  \emph{\grow(\subsetT,\formula)} $ \label{line:grow}\;
+					$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \subsetT\}$ \;
+				}
+				\caption{$\comus(\formula,f,p)$ }
+				\label{alg:comus}
+			\end{algorithm}
 		}
-		\caption{\scriptsize$\comus(\formula,f,p)$ }
-		\label{alg:comus}
-	\end{algorithm}
-	}
-	
-	When calling OCUS, the theory consists of 
-	
-	\begin{itemize}
-		\item[$\triangleright$] \emph{$\theory$} The original theory (constraints)\hfill 
-		\item[$\triangleright$] \emph{ $\{\lnot \ell| \ell \in \LitsToExplain\}$} The negation of \LitsToExplain \hfill 
-	\end{itemize}
-	
-	\begin{itemize}
-		\item[Q1:] What to take into account for \emph{\grow}?
-		\item[Q2:] What about the cost function?
-	\end{itemize}
-	%		\end{minipage}
-	
+		\end{minipage}
+		
 	
 \end{frame}
-
-%\begin{frame}{Efficiency}
-%	\framesubtitle{Explanation specific `Grow'}
-%
-%			\begin{minipage}{.29\textwidth}
-%				\hfill
-%			\end{minipage}
-%		\begin{minipage}{.4\textwidth}
-%		{
-%			\setlength{\algomargin}{15pt}
-%			\SetKwComment{Comment}{}{}
-%	\begin{algorithm}[H]
-%		\setcounter{AlgoLine}{6}
-%		\DontPrintSemicolon
-%		\Comment*[l]{...}
-%%				\bf  $\setstohit  \gets \dots$ \; %\label{omus-line1} 
-%%				\While{\color{black} true}{
-%%					....\;
-%%					$\subsetT \gets COHS(\setstohit,f,p) $  \;
-%%					\If{\color{black} $\lnot \sat(\subsetT)$}{
-%%						\Return{\color{black}$\subsetT$} \;
-%%					}
-%			$\subsetT \gets  \emph{\grow(\subsetT,\formula)} $ \label{line:grow}\;
-%			\Comment*[l]{...}
-%%					$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \subsetT\}$ \;
-%%				}
-%		\caption{$\comus(\formula,f,p)$ }
-%		\label{alg:comus}
-%		
-%	\end{algorithm}
-%		}
-%		\end{minipage}
-%		\begin{minipage}{.3\textwidth}
-%			\hfill
-%		\end{minipage}
-%	
-%	When calling OCUS, the theory consists of 
-%	
-%	\begin{itemize}
-%		\item \emph{$\theory$} The original theory (constraints)\hfill 
-%		\item \emph{ $\{\lnot \ell| \ell \in \LitsToExplain\}$} The negation of \LitsToExplain \hfill 
-%	\end{itemize}
-%	
-%	\begin{itemize}
-%		\item What to take into account for \emph{\call{grow}}?
-%		\item What about the cost function?
-%	\end{itemize}
-%%		\end{minipage}
-%		
-%	
-%\end{frame}
 
 \begin{frame}{Bounded OUSs}
 	\framesubtitle{Improving efficiency of OUS-based explanations}
 	
-	{\SetAlCapFnt{\footnotesize}
-		\footnotesize
 	\begin{algorithm}[H]
-		\caption{$\onestep(\theory,f,\LitsToExplain)$}
+		\caption{$\onestep(\m{C},f,\m{I},\Iend)$}
 		\label{alg:oneStep}
-		\color{gray}
-		$X_{best} \gets \theory \land \bigwedge_{\ell\in \LitsToExplain}\lnot \ell$\;
+		$X_{best} \gets \m{C} \land \m{I} \land \overline{\Iend\setminus \m{I}}$\;
 		
-		\For{\color{gray}$\ell \in \LitsToExplain$}{
-			{\color{black}$X \gets \call{OUS}{(\theory \land \neg \ell,f, \emph{f(X_{best})})}$}\;
-			\If{\color{gray}$X \neq null$ and $f(X)<f(X_{best})$}{
+		\For{\color{black}$\ell \in \{\Iend \setminus \m{I}\}$}{
+			$X \gets \call{OUS}{(\m{C} \land \m{I} \land \neg \ell,f, \emph{f(X_{best})})}$\;
+			\If{\color{black}$X \neq null$ and $f(X)<f(X_{best})$}{
 				$X_{best} \gets X$\;
 			}
 		}
-		\Return{\color{gray}$X_{best}$} 
-	\end{algorithm} 
-} \pause
+		\Return{\color{black}$X_{best}$} 
+	\end{algorithm}  \pause
 	
 	\begin{alertblock}{Bounded OUS computation}
 			\small
-		In the OUS algorithm, if $f(S) > f(X_{best})$, \textbf{STOP}!
+		In the O(C)US algorithm, if $f(S) > f(X_{best})$, \textbf{STOP}!
 		We can't find a better (cheaper) explanation.
 	\end{alertblock}
 	
@@ -740,23 +644,19 @@
 \begin{frame}{Bounded OUSs}
 	\framesubtitle{Improving execution time of OUS-based explanations}
 	
-	{\SetAlCapFnt{\footnotesize}
-	\footnotesize
-	\begin{algorithm}[H]
-		\caption{$\onestep(\theory,f,\LitsToExplain)$}
-		\label{alg:oneStep}
-		\color{gray}
-		$X_{best} \gets \theory \land \bigwedge_{\ell\in \LitsToExplain}\lnot \ell$\;
-		
-		\For{\color{gray}$\ell \in \LitsToExplain$}{
-			{\color{black}$X \gets \call{OUS}{(\theory \land \neg \ell,f, \emph{f(X_{best})})}$}\;
-			\If{\color{gray}$X \neq null$ and $f(X)<f(X_{best})$}{
-				$X_{best} \gets X$\;
+		\begin{algorithm}[H]
+			\caption{$\onestep(\m{C},f,I,\Iend)$}
+			\label{alg:oneStep}
+			$X_{best} \gets \m{C} \land \m{I} \land \overline{\Iend\setminus \m{I}} $\;
+			
+			\For{\color{black}$\ell \in \{\Iend \setminus \m{I}\}$}{
+				$X \gets \call{OUS}{(\m{C} \land \m{I} \land \neg \ell,f,\emph{ f(X_{best})})}$\;
+				\If{\color{black}$X \neq null$ and $f(X)<f(X_{best})$}{
+					$X_{best} \gets X$\;
+				}
 			}
-		}
-		\Return{\color{gray}$X_{best}$} 
-	\end{algorithm} 
-} 
+			\Return{\color{black}$X_{best}$} 
+		\end{algorithm}
 	
 	\begin{exampleblock}{}
 	\begin{enumerate}	\small
@@ -1083,7 +983,7 @@
 
 \section{Conclusion, Use Cases and Future work}
 \begin{frame}{Conclusion}
-	In this paper, we introduce (cost-)\emph{\underline{O}ptimal \underline{C}onstrained} \underline{U}nsatisfiable \underline{S}ubsets (OCUS) using the \emph{implicit hitting set duality}.
+	In this paper, we introduce (cost-)\textbf{\underline{O}ptimal} \underline{U}nsatisfiable \underline{S}ubsets (OUS) using the \emph{implicit hitting set duality}.
 	\begin{description}
 		\item[Optimality] Cost-function quantifies explanation difficulty. \pause
 		\item[Constrainedness] Analyze structural constraints on the form of the explanations.\pause
@@ -1098,17 +998,36 @@
 	\end{description}
 %	\vfill
 \end{frame}
+	\begin{frame}{Use Cases}
+%	\framesubtitle{}
+	\begin{minipage}{0.6\textwidth}
+		 \begin{itemize}
+			\item Teach humans how to solve a certain problem
+			\item Quantify problem difficulty
+			\item ``Help'' button
+			\item Interactive configuration/planning/scheduling
+		\end{itemize}
+		
+	\end{minipage}
+	\begin{minipage}{0.39\textwidth}
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/logic_puzzle.png}
+		\end{figure}
+	\end{minipage}
+
 	
+	
+\end{frame}
 
 	\begin{frame}{Future work}
 
 \begin{itemize}
 	%  \item Unsat-core optimization
-	\item[$\triangleright$] Learning the optimization function (from humans)
+	\item Learning the optimization function (from humans)
 	%  \item Nested explanation sequences
-	\item[$\triangleright$] Explaining optimization (different types of ``why'' queries); close relation to Explainable AI Planning \cite{fox2017explainable}
-	\item[$\triangleright$] Scaling up (approximate algorithms; decomposition of explanation search)
-	\item[$\triangleright$] Incremental algorithms over different ``why'' queries
+	\item Explaining optimization (different types of ``why'' queries); close relation to Explainable AI Planning \cite{fox2017explainable}
+	\item Scaling up (approximate algorithms; decomposition of explanation search)
+	\item Incremental algorithms over different ``why'' queries
 	% \item 
 \end{itemize}	
 	

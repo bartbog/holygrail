@@ -1,0 +1,407 @@
+\documentclass[twoside,11pt]{article}
+\usepackage{jair, theapa, rawfonts}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{thmtools} 
+\usepackage{booktabs}
+\usepackage{paralist}
+%\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+
+
+
+%%%%%%
+\newcommand\m[1]{\mathcal{#1}}
+
+%% Theorems/Theory
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{lem}{Lemma}
+\newtheorem{lemma}[lem]{Lemma}
+\newtheorem{propo}{Proposition}
+\newtheorem{proposition}[propo]{Proposition}
+\newtheorem{ex}{Example}
+\newtheorem{example}[ex]{Example}
+
+%% Comments
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}\textsc{TG:}#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}#1}}}
+\newcommand{\bart}[1]{{\comment{\color{green}#1}}}
+\newcommand{\new}[1]{{\comment{{\color{blue} #1}}}}
+
+%% Factoring
+\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\F{\ensuremath{\m{F} }\xspace}
+\newcommand\subsetT{\ensuremath{\m{S} }\xspace}
+\newcommand\bestsubsetT{\ensuremath{\m{S}_{best}}\xspace}
+\newcommand\corrsetT{\ensuremath{\m{K} }\xspace}
+\newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+\newcommand\Iend{\ensuremath{I_\mathit{end} }\xspace}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulac{\ensuremath{\m{C} }\xspace}
+\newcommand\formulag{\ensuremath{\m{G} }\xspace}
+\newcommand\mm[1]{\ensuremath{#1}\xspace}
+\newcommand\nat{\mm{\mathbb{N}}}
+\newcommand\ltrue{\mm{\textbf{t}}}
+\newcommand\lfalse{\mm{\textbf{f}}}
+\newcommand\uservars{\ensuremath{\m{U} }\xspace}
+\newcommand\call[1]{\mm{\textsc{#1}}}
+\newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+\newcommand\disjcorr{\mm{\call{DisjCorrSets}}}
+\newcommand\sat{\texttt{{SAT}}}
+\newcommand\grow{\mm{\call{Grow}}}
+\newcommand\omus{\mm{\call{OUS}}}
+\newcommand\comus{\mm{\call{OCUS}}}
+\newcommand\omusinc{\mm{\call{OUS-Inc}}}
+\newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+\newcommand\satsets{\mm{\mathbf{SSs}}}
+\newcommand\fall{\mm{\formula_{\mathit{all}}}}
+\newcommand\algemilio[1]{\emilio{#1}\;}
+\newcommand\UB{ub}
+\newcommand\LB{lb}
+\newcommand\maxsat{MaxSAT\xspace}
+
+\newcommand\onestep{\ensuremath{\call{explain-One-Step}}\xspace}
+\newcommand\parallelexplain{\ensuremath{\call{parallel-One-Step-explain}}\xspace}
+\newcommand\onestepo{\ensuremath{\call{explain-One-Step-ocus}}\xspace}
+
+
+%%%%%%
+
+
+\begin{document}
+	
+%%%%%%% ALGORITHM KEYWORDS
+\SetKwInOut{Input}{Input}
+\SetKwInOut{OptInput}{Optional}
+\SetKwInOut{Output}{Output}
+\SetKwInOut{State}{State}
+\SetKwInOut{Ext.}{Ext}
+\SetKwComment{command}{/*}{*/}
+\SetKw{Break}{break}
+%%%%%%%
+
+
+
+\title{Efficiently }
+
+\author{\name Emilio Gamba \email emilio.gamba@vub.be \\
+       \name Bart Bogaerts \email bart.bogaerts@vub.be \\
+       \addr Vrije Universiteit Brussel, Pleinlaan 5\\
+       1050 Elsene, Belgium
+       \AND
+       \name Tias Guns \email tias.guns@vub.be \\
+       \addr KULeuven, Oude Markt 13 - bus 5500,\\
+       3000 Leuven, Belgium
+   }
+
+% For research notes, remove the comment character in the line below.
+% \researchnote
+
+\maketitle
+
+
+\begin{abstract}
+
+\end{abstract}
+
+\section{Introduction}
+\label{sec:introduction}
+
+Summarized, our contributions are as follows:
+\begin{enumerate}
+	\item Take advantage of the bounding on the OUS cost to improve the efficiency of the base algorithm 
+	\item Adapt grow methods based on the algorithm selected
+	\item Propose a hybrid constrained/unconstrained version for speeding up the search for an OUS
+	\item Improve the benchmarking of the experimental results by testing our approach on a larger number of CSPs and Weighted Unsatisfiable Instances.
+\end{enumerate}
+
+
+\paragraph*{Publication history} This paper is an extension of a previous paper presented at the International Joint Conference on Artificial Intelligence 2021 \cite{ijcai2021}.
+
+\section{Related Works}
+\label{sec:related-works}
+
+% something about explanations and quality of the explanations 
+% something about reviewing explanations for csps presented at IJCAI
+% somthing about Unsatisfiable subsets
+% reviewing improvements that apply to unsatisfiable subsets
+% -- Abstract cores
+% -- Postponing optimisation
+% -- Disjoint MCS enumeration
+% -- something about incrementaltity (and more specifically) in maxsat solving
+
+
+\section{Background}\label{sec:background}
+
+\begin{example}
+	Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
+	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
+	
+	\begin{itemize}
+		\item $\Iend$, the final interpretation, is $\{x_1, \lnot x_2,  x_3\}$
+		\item $\m{I}$, the current interpretation, is $\{ \emptyset \}$
+		\item $\overline{\Iend\setminus I} =  \{\lnot x_1, x_2, \lnot x_3\}$.
+	\end{itemize}
+	
+	To define the input for the OCUS call, we add new clauses representing the already known facts $I$ and the to-be-derived facts $\overline{\Iend\setminus I}$: 
+	\[ c_5 := \{x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{x_3\}\]
+	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]	
+	
+\end{example}
+
+\section{Problem definition}\label{sec:problem-definition}
+
+
+
+
+Our original explanation generation algorithm \cite{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), a partial interpretation $I$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, by means of a weight for every clause and literal in \formula.
+
+We take advantage of the one-to-one correspondence between MUSs of $\formulac \land I \land \lnot \ell$ and so-called \emph{non-redundant explanation} of $\ell$ in terms of (subsets of) $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}.
+
+Let $\formulac$ be a CNF formula over variables $\m{U}$ the set of user variables (a.k.a the vocabulary) with partial interpretation $\m{I}$ (also viewed as a conjunction of literals), cost function $f:2^{\formula} \to \nat$ and predicate $p: 2^{\formula}\to \{true,false\}$.
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	
+	\caption{$\onestep(\formulac,f,I,\Iend)$}
+	\label{alg:oneStep}
+	$X_{best} \gets \mathit{nil}$\;
+	\For{$l \in \{\Iend \setminus I\}$}{
+		$X \gets \call{OUS}{(\formulac \land I \land \neg l, f)}$\;
+		\If{$f(X)<f(X_{best})$\label{alg:oneStep:ifcheck}}{
+			$X_{best} \gets X$\;
+		}
+	}
+	\Return{$X_{best}$} 
+\end{algorithm}
+
+The main problems of this algorithm are:
+\begin{enumerate}
+	\item It does not take advantage of the repeated calls on similar incremental formulas, where the problem constraints remain the same, but the partial interpretation $\m{I}$ increases in size.
+	\item The ordering of the explained literals highly impacts the total execution time.
+\end{enumerate}
+
+Therefore we introduce 3 notions: 
+\begin{description}
+	\item[Incrementality (incr)] Re-use of information between successive MUS-calls.
+	\item[Constrainedness (constr)] Instead of computing the explanation for every literal separately, we find a single unsatisfiable subset of $\formulac \wedge \Iend \wedge \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$.
+	\item[Iterative search] Stepwise and iterative search towards best explanation based on bounded cost.
+\end{description}
+
+The CNF formulas are the following:
+
+\begin{description}
+	\item[$\formula$ $\triangleq \formulac \wedge \m{I} \wedge \{\lnot \ell \}$] 
+	\item[$\formula_{constr}$ $\triangleq \formulac \wedge \m{I} \wedge \overline{(\Iend\setminus I)}$] \textit{Formula under partial interpretation $\m{I}$ over constrained subset of variables $\overline{(\Iend\setminus I)}$.}
+	\item[$\formula_{incr}$ $\triangleq \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$] \textit{Formula under incremental partial interpretation $\m{I}$}
+	\item[$\formula_{incr, constr}$ $\triangleq \formulac \wedge \Iend \wedge \overline{(\Iend\setminus I)}$] \textit{Formula under incremental partial interpretation $\m{I}$ over constrained subset of variables $\overline{(\Iend\setminus I)}$.}
+\end{description}
+
+\section{Optimizations}
+The basic greedy algorithm is improved by introducing
+\begin{inparaenum}[(i)]
+	\item Bounding on the cost of an optimal unsatisfiable subset
+	\item second task and
+	\item third task
+\end{inparaenum}
+
+
+
+\subsection{Bounding}
+The cost of an Optimal Unsatisfiable Subset for a literal in the unconstrained version is bounded by a lower bound and an upper bound. 
+\begin{description}
+	\item[Initialization] The lower bound is initialized at 0. 
+	\begin{itemize}
+		\item[$>$] The lower bound can be improved by computing an \emph{optimal} hitting set on the disjoint minimum correction subsets present of the current formula $\formula$ to explain.			
+	\end{itemize}
+	\item[Update] Updated at every iteration by the cost of a computed optimal \emph{Hitting set}.
+	\item[Use] 
+	\begin{itemize}
+		\item[$>$] If an Optimal Unsatisfiable Subset is found, then its cost can be used as an upper bound on the cost of a subsequent OUS.
+		\item[$>$] The \textbf{LB} helps in sorting the literals according to the current cost of the least-cost \emph{Hitting Set} computed so far.		
+	\end{itemize}
+\end{description}
+%	\item[UB] \emph{An upper bound} on the cost of the next cheapest/best \omus
+%	\begin{description}
+%		 \item[Initialization] The upper bound is initialized as cost of the formula $\formula$ to explain $f(\formula)$.
+%		 \item[Update] Improved whenever an \emph{OUS} for that given literal is found
+%		 \item[Use] The smallest \textbf{UB} among all remaining literals to explain bounds the cost of the next \omus and is thus used to interrupt the \omus computation if the cost of the current hitting set exceeds the smallest \textbf{UB}.
+%	\end{description}
+
+
+\subsection{Parallel searching for \omus}
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+	$step\_count \gets 0$\;
+	\While{true}{
+		\uIf{ $step\_count == nsteps$}{
+			\Return{$(\emptyset, f(\m{S}))$} \;
+		}
+		$\m{S} \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+		% f{optimal} solution}
+		% \tcp{\small set with all unique clauses from hitting set}
+		%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+		% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+		% \tcp{IF UNSAT, $hs$ is the OUS }
+		\If{ $\lnot \sat(\m{S})$}{\label{alg:ocus-sat-check}
+			\Return{$(\m{S}, f(\m{S}))$} \;
+		}
+		$\m{S} \gets  \grow(\m{S},\F) $ \label{line:grow}\;
+		$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \;
+		
+		$step\_count \gets step\_count + 1$
+	}
+	\caption{$\omus(\formula,f,p, nsteps=\infty)$ }
+	\label{alg:comus}
+\end{algorithm}
+
+\subsection{Bootstrapping with Disjoint MCS enumeration}
+
+\subsection{Growing with Disjoint MCS enumeration}
+
+
+
+Algorithm \ref{alg:comus} computes an \comus for a given $\formula$, cost function $f$, and predicate $p$. 
+
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+	\While{true}{
+		$\m{S} \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+		% f{optimal} solution}
+		% \tcp{\small set with all unique clauses from hitting set}
+		%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+		% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+		% \tcp{IF UNSAT, $hs$ is the OUS }
+		\If{ $\lnot \sat(\m{S})$}{\label{alg:ocus-sat-check}
+			\Return{$\m{S}$} \;
+		}
+		$\m{S} \gets  \grow(\m{S},\F) $ \label{line:grow}\;
+		$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \;
+	}
+	\caption{$\comus(\formula,f,p)$ }
+	\label{alg:comus}
+\end{algorithm}
+
+\subsection{Domain Specific Grow}
+The \maxsat solver (\emph{Max}) is initialized with uniform weights on the clauses on the actual partial interpretation $\m{I}$.
+
+
+
+\begin{example}
+	Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
+	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
+	
+	\begin{itemize}
+		\item $\Iend$, the final interpretation, is $\{x_1, \lnot x_2,  x_3\}$
+		\item $\m{I}$, the current interpretation, is $\{ \emptyset \}$
+		\item $\overline{\Iend\setminus I} =  \{\lnot x_1, x_2, \lnot x_3\}$.
+	\end{itemize}
+	
+	To define the input for the OCUS call, we add new clauses representing the already known facts $I$ and the to-be-derived facts $\overline{\Iend\setminus I}$: 
+	\[ c_5 := \{x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{x_3\}\]
+	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]	
+	
+	The formula \formula is thus: 
+	\begin{description}
+		\item[$\formula$] $\triangleq \formulac \wedge \m{I} \wedge \{\lnot \ell \}$ 
+		\begin{itemize}
+			\item $\formula(x_1) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge \{\lnot x_1\}\}$
+			\item $\formula(\lnot x_2) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge \{x_2\}\}$
+			\item $\formula(x_3) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge \{\lnot x_3\}\}$
+		\end{itemize}
+		\item[$\formula_{incr}$] $\triangleq \formulac \wedge {\color{OliveGreen} (\Iend \setminus \ell)} \wedge {\color{Maroon} \{\lnot \ell \} }$ 
+		\begin{itemize}
+			\item $\formula_{incr}(x_1) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge {\color{OliveGreen} \{\lnot x_2\}\wedge \{x_3\}} \wedge {\color{Maroon} \{\lnot x_1\} } \}$
+			\item $\formula_{incr}(\lnot x_2) \triangleq\{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge {\color{OliveGreen} \{ x_1 \} \wedge \{x_3\}} \wedge {\color{Maroon} \{x_2\} } \}$
+			\item $\formula_{incr}(x_3) \triangleq\{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge {\color{OliveGreen} \{ x_1 \}  \wedge \{\lnot x_2\}} \wedge {\color{Maroon} \{\lnot x_3\} }\}$
+		\end{itemize}
+		\item[$\formula_{incr, constr}$] $\triangleq \formulac \wedge {\color{OliveGreen} \Iend} \wedge {\color{Maroon} \overline{(\Iend\setminus I)}}$
+		\begin{itemize}
+			\item $\formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge {\color{OliveGreen} \{x_1\}\wedge\{\lnot x_2\} \wedge  \{x_3\} } \wedge {\color{Maroon}  \{\lnot x_1\} \wedge \{x_2\}\wedge \{\lnot x_3\} } \}$
+			\item 	We define $p\triangleq$ \textit{exactly-one$(\{\lnot x_1, x_2, \lnot x_3\})$} and $f = \sum w_i \cdot c_i$ with clause weights $w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=\infty, w_6=\infty, w_7=\infty, w_8=1, w_9=1, w_{10}=1$.
+		\end{itemize}
+		
+	\end{description}
+	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
+	
+	
+	\begin{table}[!h]
+		\centering
+		\begin{tabular}{lcccc} 
+			1&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\{  \formula \setminus \m{S}\}$\\ 
+			\toprule[2pt]
+			2& $\{\}$ & $True$ & $\{c_1 \wedge c_2 \wedge c_3 \wedge c_4 \wedge c_5 \wedge c_6 \wedge c_7\}$ & $\{c_8 \wedge c_9 \wedge c_{{10}}\}$ \\\midrule
+			3& $\{c_9\}$ & $True$ & $\{c_1 \wedge c_2 \wedge c_3 \wedge ~c_4 \wedge c_5 \wedge c_9 \wedge c_7\}$ & $\{c_4 \wedge c_8 \wedge c_6 \wedge c_{{10}}\}$ \\\midrule
+			4& $\{c_8\}$ & $True$ & $\{c_1 \wedge c_2 \wedge ~c_3 \wedge c_4 \wedge c_8 \wedge c_6 \wedge c_7\}$ & $\{c_3 \wedge c_5 \wedge c_9 \wedge c_{{10}}\}$ \\\midrule
+			5& $\{c_{{10}}\}$ & $True$ & $\{c_1 \wedge c_2 \wedge ~c_3 \wedge c_4 \wedge c_8 \wedge c_6 \wedge c_{{10}}\}$ & $\{c_3 \wedge c_5 \wedge c_9 \wedge c_7\}$ \\\midrule
+			6& $\{c_3 \wedge c_{{10}}\}$ & $True$ & $\{c_1 \wedge ~c_2 \wedge c_3 \wedge c_4 \wedge c_5 \wedge c_6 \wedge c_{{10}}\}$ & $\{c_2 \wedge c_8 \wedge c_9 \wedge c_7\}$ \\\midrule
+			7& $\{c_4 \wedge c_9\}$ & $True$ & $\{c_1 \wedge c_2 \wedge ~c_3 \wedge c_4 \wedge c_8 \wedge c_9 \wedge c_{{10}}\}$ & $\{c_3 \wedge c_5 \wedge c_6 \wedge c_7\}$ \\\midrule
+			8& $\{c_3 \wedge c_8\}$ & $False$ & $\{\}$ & $\{\}$ \\ \midrule
+			
+		\end{tabular}
+		\caption{Step 1}
+		\label{tab:explanation-steps-expanded}
+	\end{table}
+	%	\[\formula= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\wedge c_7  \text{ \color{red} \sout{$\wedge c_8$}} \wedge c_9\wedge c_{10}\}\]
+	
+	%
+	%$w_1 = 60, w_2=60, w_3=100, w_4=100, {\color{red}w_5=1}, w_6=\infty, w_7=\infty, {\color{red}w_8=\infty}, w_9=1, w_{10}=1$.
+	\begin{table}[!h]
+		\centering
+		\begin{tabular}{lcccc} 
+			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\{  \formula \setminus \m{S}\}$\\ 
+			\toprule[2pt]
+			8& $\{c_2 \wedge c_5 \wedge c_{{10}}\}$ & $True$ & $\{~c1 \wedge c_2 \wedge c_3 \wedge c_4 \wedge c_5 \wedge c_9 \wedge c_{{10}}\}$ & $\{c_1 \wedge c_6 \wedge c_7\}$ \\\midrule
+			9& $\{c_1 \wedge c_2 \wedge c_5 \wedge c_{{10}}\}$ & $False$ & $\{\}$ & $\{\}$ \\ \midrule
+			
+		\end{tabular}
+		\caption{Step 2}
+		\label{tab:explanation-steps-expanded}
+	\end{table}
+	%\[\formula= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\wedge c_7  \text{ \color{red} \sout{$\wedge c_8$}} \wedge c_9\wedge \text{ \color{red} \sout{$\wedge c_{10}$}}\}\]
+	%$w_1 = 60, w_2=60, w_3=100, w_4=100, {\color{green}w_5=1}, w_6=\infty, {\color{green}w_7=1}, {\color{red}w_8=\infty}, w_9=1, {\color{red}w_{10}=\infty}$.
+	\begin{table}[!h]
+		\centering
+		\begin{tabular}{lcccc} 
+			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\{  \formula \setminus \m{S}\}$\\ 
+			\toprule[2pt]
+			10& $\{c_4 \wedge c_9 \wedge c_7\}$ & $False$ & $\{\}$ & $\{\}$ \\ \midrule
+			
+		\end{tabular}
+		\caption{Step 3}
+		\label{tab:explanation-steps-expanded}
+	\end{table}
+	
+\end{example}
+
+
+\section{Experimental Results}\label{sec:experiments}
+
+\section{Discussion}
+
+
+\acks{Thanks!!}
+
+\appendix
+\section*{Appendix A.}
+
+\vskip 0.2in
+\bibliography{refs}
+\bibliographystyle{theapa}
+
+\end{document}
+
+
+
+
+
+

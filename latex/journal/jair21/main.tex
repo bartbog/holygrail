@@ -135,13 +135,16 @@
 	\item Related works
 	\item Background
 	\item Motivation
+	\item (OUS ?)
 	\item OCUS
 	\item Efficient OCUS computation for explanations
 	\item Experiments
 	\begin{itemize}
-		\item Grow on MUS instances and on puzzle explanations
-		\item Explanation sequence with OUS -> iterative + OCUS
-		\item Graph of individual explanation time
+		\item RQ1. Cost comparison between MUS and Constrained for Logic Grid Puzzles+ Extra Demystify puzzles?
+		\item RQ2. Domain-specific vs disj. mcs grow ?
+		\item RQ3. Effect of COnstrainedness on the time required to computed explanations?
+		\item RQ4. Does re-use of information across the different iterations improve efficiency?
+		\item RQ5. Does appropriate sorting of literals lead to faster generation of individual explanations and explanation sequences ?
 	\end{itemize}
 	\item Conclusion and future work
 	\item Acknowledgements
@@ -160,7 +163,7 @@ Motivated by these observations, we develop algorithms that aid explaining CSPs 
 	\item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
 	\item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. In other words, we introduce the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem and we show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
 	\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive OCUS calls;
-	\item We introduce an iterative algorithm that takes advantage of the cost to improve the efficiency of the OCUS algorithm.
+	\item We introduce an iterative algorithm that takes advantage of the cost of previously computed hitting sets and appropriate sorting on the literals-to-explain to reduce the time to generate an individual explanation as well as the whole explanation sequence.
 	\item We improve the benchmark dataset of the experimental results by testing our approach on a larger number of CSPs and Weighted Unsatisfiable Instances.
 \end{itemize}
 
@@ -353,6 +356,10 @@ We see three main points of improvement, all of which will be tackled by our gen
 	\item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$. This begs the questions whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
 	\item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}
 \end{itemize}
+
+\section{Optimal Unsatisfiable Subsets?}
+
+
 
 \section{Optimal Constraint Unsatisfiable Subsets}
 
@@ -574,6 +581,39 @@ Since the restriction on the third type of elements of $\formula$ are already st
 
 We evaluate different grow strategies in the experiments section, including the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
 
+\subsection{Disjoint Minimum Correction Subsets enumeration}
+
+\paragraph{Application to OCUS} Computing dijsoint mcses ensures diversification of sets-to-hit. It can be either applied as \begin{inparaenum}[(i)]
+	\item a bootstrapping method for \ref{alg:comus} on line \ref{alg:ocus-line1} or
+	\item a replacement for the \grow procedure on line \ref{alg:ocus:grow}. 
+\end{inparaenum}
+
+
+Inspired by \cite{marques2013computing}, 
+\begin{itemize}
+	\item Work similarly to \grow
+	\item Initialisation of a maxsat solver with constraints as hard clauses
+	\item Hitting set is also hard clause
+	\item Remaining soft clauses is the current interpretation - hs
+	\item Repeat: Compute maxsat solution, which is a satisfiable subset and its complement is added as a hard clause. If it's true in the satisfiable subset it's not going to be in its complement (the correction subset).
+	\item Stops when no solutions can be found anymore.
+\end{itemize}
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	\Output{$\m{K}$: Disjoint correction subsets}
+	$\m{K} \gets \emptyset$ \label{alg:disjmcs:init} \;
+	
+	\While{$\sat(S)$}{
+		$\m{S}' \gets  \grow(\m{S}, \formula)$\;
+		$ \m{K} \gets \m{K} \cup \{\formula \setminus \m{S}'\}$\;
+		$ \m{S} \gets \m{S}  \cup \m{S}'$\;	
+	}
+	\Return $\m{K}$
+	\caption{$\disjmcs(\formula,\subsetT)$ }
+	\label{alg:comus}
+\end{algorithm}
+
 The following example will be used as a running example to illustrate these and following concepts.
 
 \begin{example}
@@ -635,7 +675,7 @@ We define $p\triangleq$ \textit{exactly-one$(c_8, c_9, c_{10})$} and $f = \sum w
 			8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
 %			\bottomrule
 			\\
-			\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_1 \wedge c_2 \wedge x_1 \implies x_3$}\\
+			\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_4 \wedge x_3 \implies \lnot x_2$}\\
 			\toprule[2pt]
 			9 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
 			
@@ -750,38 +790,9 @@ Since the bounding on the \omus cost has the most effect if cheap \omus{}s are f
 \end{algorithm}
 
 
-\subsection{Disjoint Minimum Correction Subsets enumeration}
-
-Inspired by \cite{marques2013computing}, 
-\begin{itemize}
-	\item Work similarly to \grow
-	\item Initialisation of a maxsat solver with constraints as hard clauses
-	\item Hitting set is also hard clause
-	\item Remaining soft clauses is the current interpretation - hs
-	\item Repeat: Compute maxsat solution, which is a satisfiable subset and its complement is added as a hard clause. If it's true in the satisfiable subset it's not going to be in its complement (the correction subset).
-	\item Stops when no solutions can be found anymore.
-\end{itemize}
-
-\begin{algorithm}[!h]
-	\DontPrintSemicolon
-	\Output{$\m{K}$: Disjoint correction subsets}
-	$\m{K} \gets \emptyset$ \label{alg:disjmcs:init} \;
-	
-	\While{$\sat(S)$}{
-		$\m{S}' \gets  \grow(\m{S}, \formula)$\;
-		$ \m{K} \gets \m{K} \cup \{\formula \setminus \m{S}'\}$\;
-		$ \m{S} \gets \m{S}  \cup \m{S}'$\;	
-	}
-	\Return $\m{K}$
-	\caption{$\disjmcs(\formula,\subsetT)$ }
-	\label{alg:comus}
-\end{algorithm}
 
 
-\paragraph{Application to OCUS} Computing dijsoint mcses ensures diversification of sets-to-hit. It can be either applied as \begin{inparaenum}[(i)]
-	\item a bootstrapping method for \ref{alg:comus} on line \ref{alg:ocus-line1} or
-	\item a replacement for the \grow procedure on line \ref{alg:ocus:grow}. 
-\end{inparaenum}
+
 
 Algorithm \ref{alg:comus} computes an \comus for a given $\formula$, cost function $f$, and predicate $p$. 
 
@@ -827,22 +838,57 @@ The CNF formulas are the following:
 
 
 %\section{Additional optimizations}
-
+\newpage
 \section{Experimental Results}\label{sec:experiments}
 
-\subsection{Complete explanation sequence generation}
+\subsection{RQ1. Cost comparison between MUS and Constrained for Logic Grid Puzzles+ Extra Demystify puzzles}
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.5\columnwidth]{figures/heatmap_costs_mus_cous.pdf}
+	\caption{Q1 - Explanation quality comparison of optimal versus subset-minimal explanations in the generated puzzle explanation sequences.}
+	\label{fig:rq1_heatmap}
+\end{figure}
+
+\newpage
+\subsection{RQ2. Domain-specific vs disj. mcs grow}
+\newpage
+\subsection{RQ3. Effect of COnstrainedness on the time required to computed explanations}
+\newpage
+\subsection{RQ4. Does re-use of information across the different iterations improve efficiency?}
+
+\begin{figure}[!h]
+	\begin{subfigure}{0.47\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/ocus_disj_mcses.pdf}
+		\label{fig:rq1_heatmap}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.47\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/ocus_incr_disj_mcses.pdf}
+		\label{fig:rq1_heatmap}
+	\end{subfigure}
+\end{figure}
+\newpage
+\subsection{RQ5. Does appropriate sorting of literals lead to faster generation of individual explanations and explanation sequences ?}
+
+\begin{figure}[h]
+	\centering
+\includegraphics[width=\textwidth]{figures/ousb.pdf}
+\label{fig:rq1_heatmap}
+\end{figure}
+
+
 % Graph of most important configurations
 % 1) improvement with disjoint mcs enumeration
 % 2) Replacing the grow with other strategies: DIJS MCSes
 % 3) Replacing greedy loop with iterative search
 % 4) Constrained
 
-\subsection{Hitting set computation}
+%\subsection{Hitting set computation}
 % someway to present set coverage between hittingsets
 % \number of hitting sets computed for the most important configuration
 % 
-
-\subsection{Individual explanation time}
 
 \begin{figure}[!h]
 \begin{subfigure}{0.45\textwidth}

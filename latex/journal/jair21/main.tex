@@ -132,19 +132,52 @@
 
 \begin{enumerate}
 	\item Introduction
+	\begin{itemize}
+		\item Sequence of explanations for explaining the solutions of CSPs.
+		\item Something explainability in artificial intelligence: workshops and conferences..
+		\item unsatisfiability as a way to explain
+		\item Something as followup work on our cosntraint satisfaction problems
+	\end{itemize}
 	\item Related works
+	\begin{itemize}
+		\item something about explanations and quality of the explanations 
+		\item something about reviewing explanations for csps presented at IJCAI
+		\item  somthing about weighted Unsatisfiable subsets
+		\item  reviewing improvements that apply to unsatisfiable subsets
+		\begin{itemize}
+		\item  Abstract cores
+		\item  Postponing optimisation
+		\item  Disjoint MCS enumeration
+		\item  something about incrementaltity (and more specifically) in maxsat solving
+		\end{itemize}
+		\item Seartching for explainable solutions in Sudoku 
+	\end{itemize}
 	\item Background
+	\begin{itemize}
+		\item Introduce MUSes/MCSes/Implciit HS ...
+	\end{itemize}
 	\item Motivation
-	\item (OUS ?)
+	\begin{itemize}
+		\item time to generate explanations too slow
+		\item Require optimality
+		\item Calls to OCUS very similar 		
+	\end{itemize}
 	\item OCUS
 	\item Efficient OCUS computation for explanations
+	
 	\item Experiments
 	\begin{itemize}
 		\item RQ1. Cost comparison between MUS and Constrained for Logic Grid Puzzles+ Extra Demystify puzzles?
 		\item RQ2. Domain-specific vs disj. mcs grow ?
 		\item RQ3. Effect of COnstrainedness on the time required to computed explanations?
-		\item RQ4. Does re-use of information across the different iterations improve efficiency?
-		\item RQ5. Does appropriate sorting of literals lead to faster generation of individual explanations and explanation sequences ?
+		\item RQ4. Does re-use of information across the different iterations improve efficiency? 
+		\begin{itemize}
+			\item testing OUSb incremental/OCUS incremental vs OUSb/OUS/OCUS
+		\end{itemize}
+		\item RQ5. Does appropriate sorting of literals lead to faster generation of individual explanations and explanation sequences:
+		\begin{itemize}
+			\item Iterative OUS vs rest
+		\end{itemize} 
 	\end{itemize}
 	\item Conclusion and future work
 	\item Acknowledgements
@@ -153,10 +186,9 @@
 \section{Introduction}
 \label{sec:introduction}
 
-% Something explainability in artificial intelligence: workshops and conferences..
-% Something as followup work on our cosntraint satisfaction problems
-% unsatisfiability as a way to explain
-% 
+\subsection{Contributions}
+\label{sec:introduction}
+
 
 Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
 \begin{itemize}
@@ -172,15 +204,7 @@ Motivated by these observations, we develop algorithms that aid explaining CSPs 
 \section{Related Works}
 \label{sec:related-works}
 
-% something about explanations and quality of the explanations 
-% something about reviewing explanations for csps presented at IJCAI
-% somthing about Unsatisfiable subsets
-% reviewing improvements that apply to unsatisfiable subsets
-% -- Abstract cores
-% -- Postponing optimisation
-% -- Disjoint MCS enumeration
-% -- something about incrementaltity (and more specifically) in maxsat solving
-% Seartching for explainable solutions in Sudoku 
+
 \cite{bjornssonsearching} take a heuristic-search based approach to generate explanation sequences for Constraint Satisfaction problems with a use case on Sudoku puzzles. In that work, the quality of an explanation sequence is measured by a cost function associated with the strategy used, the number of times it is applied and the number of moves it derives.
 % Survey paper: Explnaation in Constraint Satisfaction : A survey
 In \cite{surveycsp2021}, \citeauthor{surveycsp2021} survey the important solver-agnostic \cite{junker2001quickxplain,ignatiev2015smallest,felfernig2012efficient} and solver-specific methods for generating explanations in Constraint Satisfaction in an effort to %(unify)
@@ -239,11 +263,6 @@ The next proposition is the well-known hitting set duality \cite{DBLP:journals/j
 	A set  $\m{S} \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
 \end{proposition}
 
-
-	To define the input for the OCUS call, we add new clauses representing the already known facts $I$ and the to-be-derived facts $\overline{\Iend\setminus I}$: 
-	\[ c_5 := \{x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{x_3\}\]
-	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]	
-	
 	%	The formula \formula is thus: 
 	%	\begin{description}
 	%		\item[$\formula$] $\triangleq \formulac \wedge \m{I} \wedge \{\lnot \ell \}$ 
@@ -625,9 +644,9 @@ The following example will be used as a running example to illustrate these and 
 		\item $\m{I}$, the current interpretation, is $\{ \emptyset \}$
 		\item $\overline{\Iend\setminus I} =  \{\lnot x_1, x_2, \lnot x_3\}$.
 	\end{itemize}
-	 To define the input for the OCUS call, we add new clauses representing the final interpretation $I$:
+	 To define the input for the OCUS call, we add new clauses representing the final interpretation $\Iend$:
 \[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
-and the to-be-derived facts $\overline{\Iend\setminus I}$: 
+and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
 \[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
 The formula \formula in the \comus-call is thus: 
 % 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
@@ -838,7 +857,7 @@ The CNF formulas are the following:
 
 
 %\section{Additional optimizations}
-\newpage
+\clearpage
 \section{Experimental Results}\label{sec:experiments}
 
 \subsection{RQ1. Cost comparison between MUS and Constrained for Logic Grid Puzzles+ Extra Demystify puzzles}
@@ -849,11 +868,11 @@ The CNF formulas are the following:
 	\label{fig:rq1_heatmap}
 \end{figure}
 
-\newpage
+
 \subsection{RQ2. Domain-specific vs disj. mcs grow}
-\newpage
+
 \subsection{RQ3. Effect of COnstrainedness on the time required to computed explanations}
-\newpage
+
 \subsection{RQ4. Does re-use of information across the different iterations improve efficiency?}
 
 \begin{figure}[!h]
@@ -869,10 +888,10 @@ The CNF formulas are the following:
 		\label{fig:rq1_heatmap}
 	\end{subfigure}
 \end{figure}
-\newpage
+
 \subsection{RQ5. Does appropriate sorting of literals lead to faster generation of individual explanations and explanation sequences ?}
 
-\begin{figure}[h]
+\begin{figure}[!h]
 	\centering
 \includegraphics[width=\textwidth]{figures/ousb.pdf}
 \label{fig:rq1_heatmap}

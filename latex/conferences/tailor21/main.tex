@@ -1,0 +1,133 @@
+\documentclass[handout]{beamer}
+%\documentclass{beamer}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{natbib}
+%\usepackage{enumitem}
+\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+\usetheme{Boadilla}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\title{Efficiently Explaining CSPs with Unsatisfiable Subset Optimization}
+\institute[shortinst]
+{\inst{1} Vrije Universiteit Brussel, Belgium \\ % Your institution for the title page
+	\inst{2} KULeuven, Belgium \\ % Your institution for the title page
+	\href{mailto:emilio.gamba@vub.be}{\underline{emilio.gamba@vub.be}}, \href{mailto:bart.bogaerts@vub.be}{bart.bogaerts@vub.be}, \href{mailto:tias.guns@kuleuven.be}{tias.guns@kuleuven.be} % Your email address
+}
+\date{TAILOR 2021}
+
+\author{\underline{Emilio Gamba}\inst{1} \and  Bart Bogaerts\inst{1} \and   Tias Guns\inst{1,2}}
+
+\newcommand\m[1]{\ensuremath{#1}\xspace}
+\newcommand\allconstraints{\m{T_P}}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulac{\ensuremath{\m{C} }\xspace}
+\newcommand\LitsToExplain{FactsToExplain}
+\newcommand\theory{\ensuremath{\m{F} }\xspace}
+
+\makeatletter
+\setbeamertemplate{footline}
+{
+	\leavevmode%
+	\hbox{%
+		\begin{beamercolorbox}[wd=.2\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+			\usebeamerfont{author in head/foot}Emilio Gamba (VUB)
+		\end{beamercolorbox}%
+		\begin{beamercolorbox}[wd=.6\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+			\usebeamerfont{title in head/foot}Efficiently Explaining CSPs with Unsatisfiable Subset Optimization
+		\end{beamercolorbox}%
+		\begin{beamercolorbox}[wd=.2\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+			\usebeamerfont{date in head/foot}August 2021\hspace*{1em}
+			\insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
+	\end{beamercolorbox}}%
+	\vskip0pt%
+}
+\makeatother
+
+\begin{document}
+%	We build on a recently proposed method for explaining solutions of constraint satisfaction problems.
+%	An explanation here is a \textit{sequence} of simple inference steps, where the simplicity of an inference step is measured by the number and types of constraints and facts used, and where the sequence explains all logical consequences of the problem. 
+%	We build on these formal foundations and tackle two emerging questions, namely how to generate explanations that are provably optimal (with respect to the given cost metric) and how to generate them efficiently. 
+%	To answer these questions, we develop 1) an implicit hitting set algorithm for finding \textit{optimal} unsatisfiable subsets; 2) a method to reduce multiple calls for (optimal) unsatisfiable subsets to a single call that takes \emph{constraints} on the subset into account, and 3) a method for re-using relevant information over multiple calls to these algorithms. 
+%	The method is also applicable to other problems that require finding cost-optimal unsatisfiable subsets.
+%	We specifically show that this approach can be used to effectively find sequences of \textit{optimal} explanation steps for constraint satisfaction problems like logic grid puzzles.
+	\begin{frame}
+		\maketitle
+	\end{frame}
+	
+	
+	\begin{frame}{Motivation}
+		\framesubtitle{Step-wise Explanations of CSPs}
+%		\cite{bogaerts2020step} proposed a method for explaining solutions of constraint satisfaction problems.\pause
+%		
+%		\begin{definition}
+%			An \emph{\color{vuborange}explanation} is defined as a \textit{sequence} of simple inference steps. 
+%		\end{definition}\pause
+%
+%		\begin{definition}
+%			\emph{\color{vuborange}Simplicity} of an explanation is measured by the number and types of constraints and facts used.
+%		\end{definition}
+	In \cite{bogaerts2020step}, we proposed:\pause
+
+\begin{itemize}
+	\item[$\checkmark$] Step-wise explanation problem \pause
+	\begin{description}
+		\item[\theory] A formula (representation of the problem constraints) \pause
+		\item[\LitsToExplain] Facts of the solution to explain \pause
+		\item[Goal] Generate an explanation sequence that explains step-by-step how to derive the facts of the solution.\pause
+		\item[$f$] A cost function quantifying explanation difficulty.
+	\end{description}
+
+
+	\item[x] Explanations \emph{not provably optimal} w.r.t cost function, \emph{heuristically} found.\pause
+	\item[x] Explanation generation takes a lot of time (minutes $\rightarrow $ hours).
+\end{itemize}
+
+\begin{center}
+	Can we guarantee \emph{\color{vuborange}Optimality} of the generated explanation, as well as,\\ improve the \emph{\color{vuborange}Efficiency} of explanation generation ?
+\end{center}
+
+
+
+	\end{frame}
+%\begin{frame}{Background}{Non-redundant explanations}
+%%	Computing non-redundant explanations of a single fact can be done using Minimal Unsat Core (MUS) extraction:
+%	\begin{theorem}
+%		There is a one-to-one correspondence between $\subseteq$-minimal unsatisfiable cores of MUS($\theory\land \lnot \ell$) and non-redundant explanations of $\theory\cup\{\ell\}$.
+%	\end{theorem}
+%	
+%\end{frame}
+%		
+%\begin{frame}{Motivation}
+%	\framesubtitle{Challenges and open questions from \cite{bogaerts2020step}}
+%	
+%	\begin{description}
+%		\item[Optimality] Explanations not provably optimal, \emph{heuristically} found.\pause
+%		\item[Efficiency] Explanation generation takes a lot of time.
+%	\end{description}\pause
+%\vspace{1cm}
+%\begin{center}
+%	Can we guarantee \emph{Optimality} of the generated explanation, as well as,\\ improve the \emph{Efficiency} of explanation generation ?
+%\end{center}
+	
+%\end{frame}
+	
+\begin{frame}{Contributions}
+	We introduce 
+	\begin{itemize}
+		\item 	\emph{\color{vuborange}Optimal Constrained} Unsatisfiable Subsets  (\emph{\color{vuborange}OCUS})
+		\item a hitting set-based algorithm based on the \emph{\color{vuborange} implicit hitting set duality} of (\cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87})
+	\end{itemize}\pause
+	\begin{description}[font=\color{vuborange}\itshape]
+		\item[Optimality] \emph{\color{vuborange} Cost function} is a proxy for explanation difficulty.\pause
+	\item[Constrainedness]  Analyze \emph{\color{purple}the structural constraints} on the  \emph{\color{vuborange}form of an explanation} .\pause
+	\item[Incrementality]  \emph{\color{vuborange} Information reuse} over similar explanation calls. 
+	\end{description}
+\end{frame}
+	
+	\begin{frame}[allowframebreaks]
+		\frametitle{References}
+		\bibliographystyle{named}
+		\bibliography{refs}
+	\end{frame}
+
+\end{document}

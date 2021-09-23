@@ -123,61 +123,67 @@
 % For research notes, remove the comment character in the line below.
 % \researchnote
 
-\maketitle
+%\maketitle
+\section*{Contributions}
+\label{sec:introduction}
 
-
-\begin{abstract}
-
-\end{abstract}
-
+%we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
+\begin{itemize}
+	\item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
+	\item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. In other words, we introduce the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem and we show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
+	\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive OCUS calls;
+	\item We introduce an iterative algorithm that takes advantage of the cost of previously computed hitting sets and appropriate sorting on the literals-to-explain to reduce the time to generate an individual explanation as well as the whole explanation sequence.
+	\item We improve the benchmark dataset of the experimental results by testing our approach on a larger number of CSPs and Weighted Unsatisfiable Instances.
+\end{itemize}
+\section*{Overview}
 \begin{enumerate}
 	\item Introduction
 	\begin{itemize}
-		\item Sequence of explanations for explaining the solutions of CSPs.
-		\item Something explainability in artificial intelligence: workshops and conferences..
+		\item Introduce the problem of generating a Sequence of explanations for explaining the solutions of CSPs.
+		\item Something about explainability in artificial intelligence: workshops and conferences..
 		\item unsatisfiability as a way to explain
-		\item Something as followup work on our cosntraint satisfaction problems
+		\item Something as followup work on our constraint satisfaction problems
 	\end{itemize}
 	\item Related works
 	\begin{itemize}
 		\item something about explanations and quality of the explanations 
 		\item something about reviewing explanations for csps presented at IJCAI
-		\item  somthing about weighted Unsatisfiable subsets
-		\item  reviewing improvements that apply to unsatisfiable subsets
+		\item something about weighted Unsatisfiable subsets
+		\item reviewing improvements that apply to unsatisfiable subsets
 		\begin{itemize}
-		\item  Abstract cores
-		\item  Postponing optimisation
+		\item  (?) Abstract cores
+%		\item  Postponing optimisation
 		\item  Disjoint MCS enumeration
-		\item  something about incrementaltity (and more specifically) in maxsat solving
+		\item  something about incrementaltity (and more specifically) in maxsat solving which could be applied to weighted MUSes
 		\end{itemize}
-		\item Seartching for explainable solutions in Sudoku 
+		\item Searching for explainable solutions in Sudoku 
 	\end{itemize}
 	\item Background
 	\begin{itemize}
-		\item Introduce MUSes/MCSes/Implciit HS ...
+		\item Introduce MUSes/MCSes/Implicit HS ...
 	\end{itemize}
 	\item Motivation
 	\begin{itemize}
 		\item time to generate explanations too slow
 		\item Require optimality
-		\item Calls to OCUS very similar 		
+		\item Calls to OCUS very similar (incrementality/better search)	
 	\end{itemize}
 	\item OCUS
 	\item Efficient OCUS computation for explanations
-	
 	\item Experiments
 	\begin{itemize}
 		\item RQ1. Cost comparison between MUS and Constrained for Logic Grid Puzzles+ Extra Demystify puzzles?
-		\item RQ2. Domain-specific vs disj. mcs grow ?
-		\item RQ3. Effect of COnstrainedness on the time required to computed explanations?
+		\item RQ2. Domain-specific grow: MaxSAT vs disj. mcs?
+		\item RQ3. Effect of Constrainedness on the time required to computed explanations?
 		\item RQ4. Does re-use of information across the different iterations improve efficiency? 
 		\begin{itemize}
 			\item testing OUSb incremental/OCUS incremental vs OUSb/OUS/OCUS
 		\end{itemize}
 		\item RQ5. Does appropriate sorting of literals lead to faster generation of individual explanations and explanation sequences:
 		\begin{itemize}
-			\item Iterative OUS vs rest
+			\item Iterative OUS vs Best configurations
 		\end{itemize} 
+		\item RQ6. 
 	\end{itemize}
 	\item Conclusion and future work
 	\item Acknowledgements

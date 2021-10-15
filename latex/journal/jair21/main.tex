@@ -90,7 +90,7 @@
 \newcommand\parallelexplain{\ensuremath{\call{Parallel-One-Step-explain}}\xspace}
 \newcommand\onestepo{\ensuremath{\call{Explain-One-Step-ocus}} \xspace}
 \newcommand\iterativeonestep{\ensuremath{\call{Explain-One-Step-Iterative}}\xspace}
-
+\newcommand\iterativeonestepDisj{\ensuremath{\call{Explain-One-Step-Iterative-DisjointMCSes}}\xspace}
 %%%%%%
 
 
@@ -106,9 +106,7 @@
 \SetKw{Break}{break}
 %%%%%%%
 
-
-
-\title{Efficiently }
+\title{Efficiently Explaining Constraint Satisfaction Problems with Optimal Unsatisfiable Subsets: Extended use-cases and improved algorithms}
 
 \author{\name Emilio Gamba \email emilio.gamba@vub.be \\
        \name Bart Bogaerts \email bart.bogaerts@vub.be \\
@@ -121,17 +119,19 @@
    }
 
 % For research notes, remove the comment character in the line below.
-% \researchnote
+ \researchnote
 
-%\maketitle
+\maketitle
 \section*{Contributions}
 \label{sec:introduction}
 
+\tableofcontents
 %we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
 \begin{itemize}
 	\item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
 	\item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. In other words, we introduce the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem and we show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
 	\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive OCUS calls;
+	\item We improve runtime zoals disjoint mcses as an extra step after the grow.
 	\item We introduce an iterative algorithm that takes advantage of the cost of previously computed hitting sets and appropriate sorting on the literals-to-explain to reduce the time to generate an individual explanation as well as the whole explanation sequence.
 	\item We improve the benchmark dataset of the experimental results by testing our approach on a larger number of CSPs and Weighted Unsatisfiable Instances.
 \end{itemize}
@@ -173,7 +173,7 @@
 	\item Experiments
 	\begin{itemize}
 		\item RQ1. Cost comparison between MUS and Constrained for Logic Grid Puzzles+ Extra Demystify puzzles?
-		\item RQ2. Domain-specific grow: MaxSAT vs disj. mcs?
+		\item RQ2. Which \textbf{domain-specific \grow methods} perform best: MaxSAT vs disj. mcs?
 		\item RQ3. Effect of Constrainedness on the time required to computed explanations?
 		\item RQ4. Does re-use of information across the different iterations improve efficiency? 
 		\begin{itemize}
@@ -183,7 +183,7 @@
 		\begin{itemize}
 			\item Iterative OUS vs Best configurations
 		\end{itemize} 
-		\item RQ6. Path towards interactive: Individual explanation time not incremental vs incremental
+		\item RQ6. Path towards interactive: Individual explanation time not incremental
 	\end{itemize}
 	\item Conclusion and future work
 	\item Acknowledgements
@@ -608,7 +608,7 @@ We evaluate different grow strategies in the experiments section, including the 
 
 \subsection{Disjoint Minimum Correction Subsets enumeration}
 
-\paragraph{Application to OCUS} Computing dijsoint mcses ensures diversification of sets-to-hit. It can be either applied as \begin{inparaenum}[(i)]
+\paragraph{Application to OCUS} Computing disjoint mcses ensures diversification of sets-to-hit. It can be either applied as \begin{inparaenum}[(i)]
 	\item a bootstrapping method for \ref{alg:comus} on line \ref{alg:ocus-line1} or
 	\item a replacement for the \grow procedure on line \ref{alg:ocus:grow}. 
 \end{inparaenum}
@@ -639,109 +639,6 @@ Inspired by \cite{marques2013computing},
 	\label{alg:comus}
 \end{algorithm}
 
-The following example will be used as a running example to illustrate these and following concepts.
-
-\begin{example}
-	Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
-	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
-	
-	\begin{itemize}
-		\item $\Iend$, the final interpretation, is $\{x_1, \lnot x_2,  x_3\}$
-		\item $\m{I}$, the current interpretation, is $\{ \emptyset \}$
-		\item $\overline{\Iend\setminus I} =  \{\lnot x_1, x_2, \lnot x_3\}$.
-	\end{itemize}
-	 To define the input for the OCUS call, we add new clauses representing the final interpretation $\Iend$:
-\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
-and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
-\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
-The formula \formula in the \comus-call is thus: 
-% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
-\[\formula_{incr, constr}= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge ... \wedge c_{10}\}\]	
-
-We define $p\triangleq$ \textit{exactly-one$(c_8, c_9, c_{10})$} and $f = \sum w_ic_i$ with clause weights \[w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=\infty, w_6=\infty, w_7=\infty, w_8=1, w_9=1, w_{10}=1\]
-
-\emph{In this example, the \grow we used is the one called \emph{Max-Actual-Unif} in \cref{sec:experiments}.}
-\end{example}
-
-\begin{table}[!h]
-	\centering
-%	\begin{adjustbox}{max width=\columnwidth}
-		\begin{tabular}{lcccc} 
-%			\bottomrule[2pt]
-			\multicolumn{5}{c}{Step 1. Explanation of $x_1$: $c_3 \implies x_1$}\\
-			\toprule[2pt]
-			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
-			\toprule[2pt]
-			1 & $\{ \lnot x_1\}$ & $\mathit{true}$ & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$ & $\{ \{c_3, x_1, x_2, \lnot x_3 \}\}$   \\
-			\midrule	
-			2 &$\{\lnot x_3\}$ & $\mathit{true}$ & $\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$ & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{c_3, x_1 , x_2 , x_3 \}\}$  \\  
-			\midrule
-			\multirow{2}{*}{3} &\multirow{2}{*}{$\{x_2\}$} & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{c_1 , c_2 , c_3, x_1 , x_2 , x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
-			& & & & $\{ c_4, \lnot x_1 , \lnot x_2 , \lnot x_3\} \}$ \\
-			\midrule
-			\multirow{2}{*}{4} &\multirow{2}{*}{$\{x_2, c_4\}$} & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
-			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}\}$ \\
-			\midrule
-			\multirow{3}{*}{5} &\multirow{3}{*}{$\{\lnot x_3, c_3\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_1  , c_3 , c_4, x_1, \lnot x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
-			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
-			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}\}$ \\
-			\midrule
-			6 &$\{\lnot x_1, c_3\}$ & $\mathit{false}$ & $\emptyset$ & / \\
-%			\bottomrule
-			\\
-			\multicolumn{5}{c}{Step 2. Explanation of $x_3$: $c_1 \wedge c_2 \wedge x_1 \implies x_3$}\\
-			\toprule[2pt]
-			\multirow{3}{*}{7} &\multirow{3}{*}{$\{x_1 , \lnot x_3 , c_2\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
-			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
-			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}, \{c_1, \lnot x_2 , x_3 \} \}$ \\
-			\midrule
-			%		
-			%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
-			8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
-%			\bottomrule
-			\\
-			\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_4 \wedge x_3 \implies \lnot x_2$}\\
-			\toprule[2pt]
-			9 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
-			
-		\end{tabular}
-%	\end{adjustbox}
-	\caption{Sequence of explanation generated with \onestepo}
-	\label{tab:explanation-steps-expanded:step1}
-\end{table}
-%
-%\begin{table}[!h]
-%	\centering
-%	%	\begin{adjustbox}{max width=\columnwidth}
-%	\begin{tabular}{lcccc} 
-%		&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
-%		\toprule[2pt]
-%		\multirow{3}{*}{7} &\multirow{3}{*}{$\{x_1 , \lnot x_3 , c_2\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
-%		& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
-%		& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}, \{c_1, \lnot x_2 , x_3 \} \}$ \\
-%			\midrule
-%%		
-%%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
-%		8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
-%		\bottomrule
-%	\end{tabular}
-%	%	\end{adjustbox}
-%	\caption{Step 2. \comus Incremental Explanation of $x_3$ ($c_1 \wedge c_2 \wedge x_1 \implies x_3$)}
-%	\label{tab:explanation-steps-expanded:step2}
-%\end{table}
-%
-%\begin{table}[!h]
-%	\centering
-%	%	\begin{adjustbox}{max width=\columnwidth}
-%	\begin{tabular}{lcccc} 
-%		&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
-%		\toprule[2pt]
-%		9 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
-%		\bottomrule
-%	\end{tabular}
-%	\caption{Step 3. \comus Incremental Explanation of $\lnot x_2$ ($c_4 \wedge x_3 \implies \lnot x_2 $)}
-%	\label{tab:explanation-steps-expanded:step1}
-%\end{table}
 
 
 
@@ -790,7 +687,8 @@ Since the bounding on the \omus cost has the most effect if cheap \omus{}s are f
 	$lb \gets$ \texttt{heap()}\;
 	\ForEach{$\ell \in  (\Iend \setminus I)$}{
 		$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
-		$ \setstohit_{\ell} \gets \emptyset $\; 
+		$ \m{S} \gets \grow(\emptyset, \ \formula_{\ell})$\; 
+		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \{  \formula_{\ell} \setminus \m{S}\}$ \;
 		\texttt{lb.push($\langle 0, \ell, \emptyset \rangle $)}\;
 	}
 	\tcp{\comus loop}
@@ -815,6 +713,33 @@ Since the bounding on the \omus cost has the most effect if cheap \omus{}s are f
 \end{algorithm}
 
 
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	\tcp{Initilisation of Heap with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
+	$lb \gets$ \texttt{heap()}\;
+	\ForEach{$\ell \in  (\Iend \setminus I)$}{
+		$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
+		$ \setstohit_{\ell} \gets \setstohit_{\ell}  \cup \disjcorr(\emptyset, 	\formula_{\ell}) $\;
+		\texttt{lb.push($\langle 0, \ell, \emptyset \rangle $)}\;
+	}
+	\tcp{\comus loop}
+	\While{$true$}{
+		
+		$(cost, \ell, \m{S}) \gets$\texttt{lb.pop()} \tcp*{Literal with lowest bound}
+		
+		\If{ $\lnot \sat(\m{S})$}{
+			\Return{$\m{S}$} \tcp*{\color{Green}OCUS found}
+		}
+		
+%		$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
+		
+		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \disjcorr(\m{S}, 	\formula_{\ell}) $\;
+		$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
+		\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
+	}
+	\caption{$\iterativeonestepDisj(\formulac,f,I, \Iend)$}
+	\label{alg:iterative_ocus}
+\end{algorithm}
 
 
 
@@ -861,6 +786,111 @@ The CNF formulas are the following:
 %		 \item[Use] The smallest \textbf{UB} among all remaining literals to explain bounds the cost of the next \omus and is thus used to interrupt the \omus computation if the cost of the current hitting set exceeds the smallest \textbf{UB}.
 %	\end{description}
 
+\newpage
+\section{Example}
+The following example will be used as a running example to illustrate these and following concepts.
+
+\begin{example}
+	Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
+	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
+	
+	\begin{itemize}
+		\item $\Iend$, the final interpretation, is $\{x_1, \lnot x_2,  x_3\}$
+		\item $\m{I}$, the current interpretation, is $\{ \emptyset \}$
+		\item $\overline{\Iend\setminus I} =  \{\lnot x_1, x_2, \lnot x_3\}$.
+	\end{itemize}
+	To define the input for the OCUS call, we add new clauses representing the final interpretation $\Iend$:
+	\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
+	and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
+	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
+	The formula \formula in the \comus-call is thus: 
+	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
+	\[\formula_{incr, constr}= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge ... \wedge c_{10}\}\]	
+	
+	We define $p\triangleq$ \textit{exactly-one$(c_8, c_9, c_{10})$} and $f = \sum w_ic_i$ with clause weights \[w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=\infty, w_6=\infty, w_7=\infty, w_8=1, w_9=1, w_{10}=1\]
+	
+	\emph{In this example, the \grow we used is the one called \emph{Max-Actual-Unif} in \cref{sec:experiments}.}
+\end{example}
+
+\begin{table}[!h]
+	\centering
+	%	\begin{adjustbox}{max width=\columnwidth}
+		\begin{tabular}{lcccc} 
+			%			\bottomrule[2pt]
+			\multicolumn{5}{c}{Step 1. Explanation of $x_1$: $c_3 \implies x_1$}\\
+			\toprule[2pt]
+			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
+			\toprule[2pt]
+			1 & $\{ \lnot x_1\}$ & $\mathit{true}$ & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$ & $\{ \{c_3, x_1, x_2, \lnot x_3 \}\}$   \\
+			\midrule	
+			2 &$\{\lnot x_3\}$ & $\mathit{true}$ & $\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$ & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{c_3, x_1 , x_2 , x_3 \}\}$  \\  
+			\midrule
+			\multirow{2}{*}{3} &\multirow{2}{*}{$\{x_2\}$} & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{c_1 , c_2 , c_3, x_1 , x_2 , x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
+			& & & & $\{ c_4, \lnot x_1 , \lnot x_2 , \lnot x_3\} \}$ \\
+			\midrule
+			\multirow{2}{*}{4} &\multirow{2}{*}{$\{x_2, c_4\}$} & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
+			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}\}$ \\
+			\midrule
+			\multirow{3}{*}{5} &\multirow{3}{*}{$\{\lnot x_3, c_3\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_1  , c_3 , c_4, x_1, \lnot x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
+			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
+			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}\}$ \\
+			\midrule
+			6 &$\{\lnot x_1, c_3\}$ & $\mathit{false}$ & $\emptyset$ & / \\
+			%			\bottomrule
+			\\
+			\multicolumn{5}{c}{Step 2. Explanation of $x_3$: $c_1 \wedge c_2 \wedge x_1 \implies x_3$}\\
+			\toprule[2pt]
+			\multirow{3}{*}{7} &\multirow{3}{*}{$\{x_1 , \lnot x_3 , c_2\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
+			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
+			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}, \{c_1, \lnot x_2 , x_3 \} \}$ \\
+			\midrule
+			%		
+			%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
+			8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
+			%			\bottomrule
+			\\
+			\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_4 \wedge x_3 \implies \lnot x_2$}\\
+			\toprule[2pt]
+			9 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
+			
+		\end{tabular}
+		%	\end{adjustbox}
+	\caption{Sequence of explanation generated with \onestepo}
+	\label{tab:explanation-steps-expanded:step1}
+\end{table}
+
+\begin{table}[!h]
+	\centering
+	%	\begin{adjustbox}{max width=\columnwidth}
+		\begin{tabular}{lcccc} 
+			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
+			\toprule[2pt]
+			\multirow{3}{*}{7} &\multirow{3}{*}{$\{x_1 , \lnot x_3 , c_2\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
+			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
+			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}, \{c_1, \lnot x_2 , x_3 \} \}$ \\
+			\midrule
+			%		
+			%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
+			8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
+			\bottomrule
+		\end{tabular}
+		%	\end{adjustbox}
+	\caption{Step 2. \comus Incremental Explanation of $x_3$ ($c_1 \wedge c_2 \wedge x_1 \implies x_3$)}
+	\label{tab:explanation-steps-expanded:step2}
+\end{table}
+
+\begin{table}[!h]
+	\centering
+	%	\begin{adjustbox}{max width=\columnwidth}
+		\begin{tabular}{lcccc} 
+			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
+			\toprule[2pt]
+			9 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
+			\bottomrule
+		\end{tabular}
+		\caption{Step 3. \comus Incremental Explanation of $\lnot x_2$ ($c_4 \wedge x_3 \implies \lnot x_2 $)}
+		\label{tab:explanation-steps-expanded:step1}
+	\end{table}
 
 %\section{Additional optimizations}
 \clearpage

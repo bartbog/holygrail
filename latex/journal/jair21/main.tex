@@ -10,8 +10,9 @@
 \usepackage{graphicx}
 \usepackage{adjustbox}
 \usepackage{multirow,array}
-
+\usepackage[normalem]{ulem}
 \usepackage[capitalise]{cleveref}
+\usepackage{cancel}
 %\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
 
 
@@ -34,6 +35,8 @@
 \newtheorem{proposition}[propo]{Proposition}
 \newtheorem{ex}{Example}
 \newtheorem{example}[ex]{Example}
+\newtheorem{obs}{Observation}
+\newtheorem{observation}[obs]{Observation}
 \newtheorem{theorem}[thm]{Theorem}
 
 
@@ -64,6 +67,7 @@
 \newcommand\call[1]{\mm{\textsc{#1}}}
 \newcommand\cohs{\mm{\call{CondOptHittingSet}}}
 \newcommand\disjcorr{\mm{\call{DisjCorrSets}}}
+\newcommand\disjcorrincr{\mm{\call{DisjCorrSetsIncremental}}}
 \newcommand\disjcorrconstrained{\mm{\call{DisjCorrSetsConstrained}}}
 \newcommand\sat{\texttt{{SAT}}\xspace}
 \newcommand\grow{\mm{\call{Grow}}}
@@ -640,35 +644,29 @@ The following example will be used as a running example to illustrate these and 
 			\toprule[2pt]
 			1 & $\{ \lnot x_1\}$ & $\mathit{true}$ & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$ & $\{ \{c_3, x_1, x_2, \lnot x_3 \}\}$   \\
 			\midrule	
-			2 &$\{\lnot x_3\}$ & $\mathit{true}$ & $\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$ & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{c_3, x_1 , x_2 , x_3 \}\}$  \\  
+			2 &$\{\lnot x_3\}$ & $\mathit{true}$ & $\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$ & $\{ ..., \{c_3, x_1 , x_2 , x_3 \}\}$  \\  
 			\midrule
-			\multirow{2}{*}{3} &\multirow{2}{*}{$\{x_2\}$} & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{c_1 , c_2 , c_3, x_1 , x_2 , x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
-			& & & & $\{ c_4, \lnot x_1 , \lnot x_2 , \lnot x_3\} \}$ \\
+			3 &$\{x_2\}$ & $\mathit{true}$ & $\{c_1 , c_2 , c_3, x_1 , x_2 , x_3 \}$ & $\{ ..., \{c_4, \lnot x_1 , \lnot x_2 , \lnot x_3\} \}$ \\
 			\midrule
-			\multirow{2}{*}{4} &\multirow{2}{*}{$\{x_2, c_4\}$} & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
-			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}\}$ \\
+			4 &$\{x_2, c_4\}$ & $\mathit{true}$ & $\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$ & $\{ ..., \{x_1 , \lnot x_2 , x_3 , c_3 \}\}$ \\
 			\midrule
-			\multirow{3}{*}{5} &\multirow{3}{*}{$\{\lnot x_3, c_3\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_1  , c_3 , c_4, x_1, \lnot x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
-			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
-			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}\}$ \\
+			5 &$\{\lnot x_3, c_3\}$ & $\mathit{true}$ & $\{   c_1  , c_3 , c_4, x_1, \lnot x_2 , \lnot x_3 \}$ & $\{ ...,  \{ c_2, \lnot x_1 , x_2 , x_3\}\}$ \\
 			\midrule
-			6 &$\{\lnot x_1, c_3\}$ & $\mathit{false}$ & $\emptyset$ & / \\
+			6 &$\{\lnot x_1, c_3\}$ & $\mathit{false}$ & - & - \\
 			%			\bottomrule
 			\\
 			\multicolumn{5}{c}{Step 2. Explanation of $x_3$: $c_1 \wedge c_2 \wedge x_1 \implies x_3$}\\
 			\toprule[2pt]
-			\multirow{3}{*}{7} &\multirow{3}{*}{$\{x_1 , \lnot x_3 , c_2\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
-			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
-			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}, \{c_1, \lnot x_2 , x_3 \} \}$ \\
+			7 &$\{x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c_1, \lnot x_2 , x_3 \} \}$ \\
 			\midrule
 			%		
 			%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
-			8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
+			8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & - & - \\
 			%			\bottomrule
 			\\
 			\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_4 \wedge x_3 \implies \lnot x_2$}\\
 			\toprule[2pt]
-			9 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
+			9 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & -  & - \\
 			
 		\end{tabular}
 		%	\end{adjustbox}
@@ -676,28 +674,26 @@ The following example will be used as a running example to illustrate these and 
 	\label{tab:explanation-steps-expanded:step1}
 \end{table}
 
-\begin{table}[!h]
-	\centering
-	%	\begin{adjustbox}{max width=\columnwidth}
-		\begin{tabular}{lcccc} 
-			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
-			\toprule[2pt]
-			\multirow{3}{*}{7} &\multirow{3}{*}{$\{x_1 , \lnot x_3 , c_2\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
-			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
-			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}, \{c_1, \lnot x_2 , x_3 \} \}$ \\
-			\midrule
-			%		
-			%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
-			8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
-			\bottomrule
-		\end{tabular}
-		%	\end{adjustbox}
-	\caption{Step 2. \comus Incremental Explanation of $x_3$ ($c_1 \wedge c_2 \wedge x_1 \implies x_3$)}
-	\label{tab:explanation-steps-expanded:step2}
-\end{table}
 
 \section{Improving efficiency}
-
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	$\setstohit,\m{S} \gets \disjcorr(\formula, \emptyset)$ \; %\label{omus-line1} 
+	\While{true}{
+		$\m{S} \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+		% f{optimal} solution}
+		% \tcp{\small set with all unique clauses from hitting set}
+		%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+		% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+		% \tcp{IF UNSAT, $hs$ is the OUS }
+		\If{ $\lnot \sat(\m{S})$}{\label{alg:ocus-sat-check}
+			\Return{$\m{S}$} \;
+		}
+		$\setstohit, \m{S} \gets \disjcorr(\formula, \m{S})$\;
+	}
+	\caption{$\comus(\formula,f,p)$ }
+	\label{alg:comus}
+\end{algorithm}
 
 \subsection{Disjoint Minimum Correction Subsets enumeration}
 
@@ -713,37 +709,107 @@ until no more satisfiable subsets can be found.
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
 	\Output{$\m{K}$: Disjoint correction subsets}
-	$\m{K} \gets \emptyset$ \label{alg:disjmcs:init} \;
+	$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \label{alg:disjmcs:init} \;
 	
-	\While{$\sat(S)$}{
-		$\m{S}' \gets  \grow(\m{S}, \formula)$\;
-		$ \m{K} \gets \m{K} \cup \{\formula \setminus \m{S}'\}$\;
-		$ \m{S} \gets \m{S}  \cup \m{S}'$\;	
-	}
-	\Return $\m{K}$
+	\While{$\sat(\m{S}')$}{
+		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
+		$ \m{S}' \gets \m{S}'  \cup \m{C} $\;		
+		$ \m{K} \gets \m{K} \cup \m{C} $\;
+		}
+	\Return $\m{K}, \ \m{S}'$
 	\caption{$\disjcorr(\formula,\subsetT)$ }
 	\label{alg:disjmcs}
 \end{algorithm}
 
-\subsubsection{Incrementality, monotonicity and Constrainedness}
-
-\paragraph{Example 1 (cont.)} Initially, the current interpretation is $\m{I} = \m{I}_0 = \emptyset$. The formula to explain is $\formula \triangleq \formulac \wedge \Iend \wedge \overline{(\Iend\setminus I)}$, with \textit{exactly-one$(c_8, c_9, c_{10})$} constraint. 
-
+\begin{observation}\emph{Incrementality and monotonicity.} Applying algorithm \ref{alg:disjmcs} on the incremental formula $\formula \triangleq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, will provide the same result as a single call to \grow. More precisely, since 
+\end{observation}
 
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
 	\Output{$\m{K}$: Disjoint correction subsets}
-	$\m{K} \gets \emptyset$ \label{alg:disjmcs:init} \;
+	$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \label{alg:disjmcs:init} \;
 	
-	\While{$\sat(S)$}{
-		$\m{S}' \gets  \grow(\m{S}, \formula)$\;
-		$ \m{K} \gets \m{K} \cup \{\formula \setminus \m{S}'\}$\;
-		$ \m{S} \gets \m{S}  \cup \{ \m{S}' \cap \m{I} \}$\;	
-	}
-	\Return $\m{K}$
+	\While{$\sat(\m{S}')$}{
+		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
+		$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{A}\}$\;		
+		$ \m{K} \gets \m{K} \cup \m{C} $\;
+		}
+	\Return $\m{K}, \ \m{S}'$
+	\caption{$\disjcorrincr(\formula, \m{A}, \subsetT)$ }
+	\label{alg:disjmcs}
+\end{algorithm}
+
+\begin{observation}
+\emph{Constrainedness.} If we blindly compute disjoint correction subsets for a given constrained formula $\formulac\cup I\cup \overline{\Iend\setminus I}$, we are not taking fully advantage of the given constraint $p$. For example, in the case of \onestepo the \texttt{exactly-one}$(\overline{\Iend\setminus I})$ constraint is already satisfied by the hitting set solver. Therefore, we can ignore any other element of $p$ and focus on the elements of $\m{I}$, which is represented by line \ref{alg:constraineddisjmcs:line:projection} of algorithm \ref{alg:constraineddisjmcs}. 
+\end{observation}
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	\Output{$\m{K}$: Disjoint correction subsets}
+		$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \;
+	
+	\While{$\sat(\m{S}')$}{
+		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
+		$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{I}\}$ \label{alg:constraineddisjmcs:line:projection}\;		
+		$ \m{K} \gets \m{K} \cup  \m{C}  $\;
+		}
+	\Return $\m{K}, \ \m{S}'$
 	\caption{$\disjcorrconstrained(\formula,\subsetT)$ }
 	\label{alg:constraineddisjmcs}
 \end{algorithm}
+
+
+\paragraph{Example 1 (cont.)} Initially, the current interpretation is $\m{I} = \m{I}_0 = \emptyset$. The formula to explain is $\formula \triangleq \formulac \wedge \Iend \wedge \overline{(\Iend\setminus I)}$, with \textit{exactly-one$(c_8, c_9, c_{10})$} constraint. 
+
+
+\begin{table}[!h]
+	\centering
+	%	\begin{adjustbox}{max width=\columnwidth}
+		\begin{tabular}{lcccc} 
+			%			\bottomrule[2pt]
+			\multicolumn{5}{c}{Step 1. Explanation of $x_1$: $c_3 \implies x_1$}\\
+			\toprule
+			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
+			\toprule[2pt]
+			1 & $\{ \lnot x_1\}$ & $\mathit{true}$ & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$ & $\{ \{c_3, \cancel{x_1}, \cancel{x_2}, \lnot x_3 \}\}$   \\
+			\midrule[0.5pt]
+			1a & $\{ \lnot x_1, c_3 \}$ & $\mathit{false}$ & - & -  \\
+			\midrule[1pt]
+			2 &$\{\lnot x_3\}$ & $\mathit{true}$ & $\{c_2, c_3,c_4, x_1, x_2 , \lnot x_3 \}$ & $\{ ..., \{ c_1, \lnot x_1, \cancel{\lnot x_2}, \cancel{x_3} \}\}$  \\  
+						\midrule[0.5pt]
+			2a & $\{\lnot x_3, c_1\} $ & $\mathit{true}$& $\{c_1, c_3, c_4, x_1, \lnot x_2, \lnot x_3\}$ & $\{  ..., \{c_2, {\lnot x_1} , {x_2}, \cancel{x_3} \} \}$\\
+						\midrule[0.5pt]
+ 			2b & $\{\lnot x_3, c_1, c_2\} $ & $\mathit{true}$ & $\{ \lnot x1, \lnot x_2, \lnot x_3, c_1,  c_2 , c_4\}$ & $\{ ..., \{ c_3, \cancel{x_1}, {x_2}, \cancel{x_3}\} \}$\\
+						\midrule[0.5pt]
+			2c & $\{\lnot x_3, c_1, c_2, c_3\} $& $\mathit{false}$  & - & - \\ 
+						\midrule[1pt]
+			3 & $\{ c_1, x_2\}$ & $\mathit{true}$ & $\{ c_1 , c_2, c_4, \lnot x_1, x_2, \lnot x_3 \}$ & $\{  .., \{ c_3, \cancel{x_1}, \cancel{\lnot x_2}, \cancel{x_3  }\} \}$   \\
+			\midrule[0.5pt]
+			3a & $\{ c_1, x_2, c_3 \}$ & $\mathit{true}$ & $\{ c_1 , c_2, c_3,  x_1, x_2, x_3 \}$ & $\{  .., \{ c_4 , \lnot x_1, \cancel{\lnot x_2}, \lnot x_3 \},$ \\
+			\midrule[0.5pt]
+			3b & $\{ c_1, x_2, c_3, c_4 \}$ & $\mathit{false}$ & - & - \\
+			\midrule[1pt]
+			4 & $\{ c_3, \lnot x_1\}$ & $\mathit{false}$ & - & - \\		\\		
+%			\bottomrule
+			\multicolumn{5}{c}{Step 2. Explanation of $x_3$: $c_1 \wedge c_2 \wedge x_1 \implies x_3$}\\
+			\toprule[2pt]
+			%		
+			%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
+			5 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & - & - \\
+			%			\bottomrule
+			\\
+			\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_4 \wedge x_3 \implies \lnot x_2$}\\
+			\toprule[2pt]
+			6 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & - & - \\
+		\end{tabular}
+		%	\end{adjustbox}
+	\caption{Intermediate steps for generating a sequence of explanations with incremental \onestepo and \disjmcsconstrained grow}
+	\label{tab:explanation-steps-expanded:step1}
+\end{table}
+
+
+
+
 
 %It can be either applied as \begin{inparaenum}[(i)]
 %	\item a bootstrapping method for \ref{alg:comus} on line \ref{alg:ocus-line1} or
@@ -878,14 +944,14 @@ Algorithm \ref{alg:comus} computes an \comus for a given $\formula$, cost functi
 %\end{description}
 
 
-The CNF formulas are the following:
-
-\begin{description}
-	\item[$\formula$ $\triangleq \formulac \wedge \m{I} \wedge \{\lnot \ell \}$] 
-	\item[$\formula_{constr}$ $\triangleq \formulac \wedge \m{I} \wedge \overline{(\Iend\setminus I)}$] \textit{Formula under partial interpretation $\m{I}$ over constrained subset of variables $\overline{(\Iend\setminus I)}$.}
-	\item[$\formula_{incr}$ $\triangleq \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$] \textit{Formula under incremental partial interpretation $\m{I}$}
-	\item[$\formula_{incr, constr}$ $\triangleq \formulac \wedge \Iend \wedge \overline{(\Iend\setminus I)}$] \textit{Formula under incremental partial interpretation $\m{I}$ over constrained subset of variables $\overline{(\Iend\setminus I)}$.}
-\end{description}
+%The CNF formulas are the following:
+%
+%\begin{description}
+%	\item[$\formula$ $\triangleq \formulac \wedge \m{I} \wedge \{\lnot \ell \}$] 
+%	\item[$\formula_{constr}$ $\triangleq \formulac \wedge \m{I} \wedge \overline{(\Iend\setminus I)}$] \textit{Formula under partial interpretation $\m{I}$ over constrained subset of variables $\overline{(\Iend\setminus I)}$.}
+%	\item[$\formula_{incr}$ $\triangleq \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$] \textit{Formula under incremental partial interpretation $\m{I}$}
+%	\item[$\formula_{incr, constr}$ $\triangleq \formulac \wedge \Iend \wedge \overline{(\Iend\setminus I)}$] \textit{Formula under incremental partial interpretation $\m{I}$ over constrained subset of variables $\overline{(\Iend\setminus I)}$.}
+%\end{description}
 
 %	\item[UB] \emph{An upper bound} on the cost of the next cheapest/best \omus
 %	\begin{description}
@@ -893,21 +959,6 @@ The CNF formulas are the following:
 %		 \item[Update] Improved whenever an \emph{OUS} for that given literal is found
 %		 \item[Use] The smallest \textbf{UB} among all remaining literals to explain bounds the cost of the next \omus and is thus used to interrupt the \omus computation if the cost of the current hitting set exceeds the smallest \textbf{UB}.
 %	\end{description}
-
-\newpage
-
-\begin{table}[!h]
-	\centering
-	%	\begin{adjustbox}{max width=\columnwidth}
-		\begin{tabular}{lcccc} 
-			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
-			\toprule[2pt]
-			9 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
-			\bottomrule
-		\end{tabular}
-		\caption{Step 3. \comus Incremental Explanation of $\lnot x_2$ ($c_4 \wedge x_3 \implies \lnot x_2 $)}
-		\label{tab:explanation-steps-expanded:step1}
-	\end{table}
 
 %\section{Additional optimizations}
 \clearpage
@@ -1018,6 +1069,76 @@ The CNF formulas are the following:
 \end{document}
 
 
+
+
+
+%
+%\begin{table}[!h]
+%	\centering
+%	%	\begin{adjustbox}{max width=\columnwidth}
+%		\begin{tabular}{lcccc} 
+%			%			\bottomrule[2pt]
+%			\multicolumn{5}{c}{Step 1. Explanation of $x_1$: $c_3 \implies x_1$}\\
+%			\toprule[2pt]
+%			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
+%			\toprule[2pt]
+%			1 & $\{ \lnot x_1\}$ & $\mathit{true}$ & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$ & $\{ \{c_3, x_1, x_2, \lnot x_3 \}\}$   \\
+%			\midrule	
+%			2 &$\{\lnot x_3\}$ & $\mathit{true}$ & $\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$ & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{c_3, x_1 , x_2 , x_3 \}\}$  \\  
+%			\midrule
+%			\multirow{2}{*}{3} &\multirow{2}{*}{$\{x_2\}$} & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{c_1 , c_2 , c_3, x_1 , x_2 , x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
+%			& & & & $\{ c_4, \lnot x_1 , \lnot x_2 , \lnot x_3\} \}$ \\
+%			\midrule
+%			\multirow{2}{*}{4} &\multirow{2}{*}{$\{x_2, c_4\}$} & \multirow{2}{*}{$\mathit{true}$} & \multirow{2}{*}{$\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
+%			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}\}$ \\
+%			\midrule
+%			\multirow{3}{*}{5} &\multirow{3}{*}{$\{\lnot x_3, c_3\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_1  , c_3 , c_4, x_1, \lnot x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
+%			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
+%			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}\}$ \\
+%			\midrule
+%			6 &$\{\lnot x_1, c_3\}$ & $\mathit{false}$ & $\emptyset$ & / \\
+%			%			\bottomrule
+%			\\
+%			\multicolumn{5}{c}{Step 2. Explanation of $x_3$: $c_1 \wedge c_2 \wedge x_1 \implies x_3$}\\
+%			\toprule[2pt]
+%			\multirow{3}{*}{7} &\multirow{3}{*}{$\{x_1 , \lnot x_3 , c_2\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
+%			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
+%			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}, \{c_1, \lnot x_2 , x_3 \} \}$ \\
+%			\midrule
+%			%		
+%			%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
+%			8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
+%			%			\bottomrule
+%			\\
+%			\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_4 \wedge x_3 \implies \lnot x_2$}\\
+%			\toprule[2pt]
+%			9 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
+%			
+%		\end{tabular}
+%		%	\end{adjustbox}
+%	\caption{Sequence of explanation generated with \onestepo}
+%	\label{tab:explanation-steps-expanded:step1}
+%\end{table}
+%
+%\begin{table}[!h]
+%	\centering
+%	%	\begin{adjustbox}{max width=\columnwidth}
+%		\begin{tabular}{lcccc} 
+%			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
+%			\toprule[2pt]
+%			\multirow{3}{*}{7} &\multirow{3}{*}{$\{x_1 , \lnot x_3 , c_2\}$} & \multirow{3}{*}{$\mathit{true}$} & \multirow{3}{*}{$\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$} & $\{ \{c_3, x_1, x_2, \lnot x_3 \}, \{x_1 , x_2 , x_3 , c_3 \}$  \\
+%			& & & & $\{\lnot x_1 , \lnot x_2 , \lnot x_3, c_4\}, \{x_1 , \lnot x_2 , x_3 , c_3 \}$ \\
+%			& & & & $\{ c_2, \lnot x_1 , x_2 , x_3\}, \{c_1, \lnot x_2 , x_3 \} \}$ \\
+%			\midrule
+%			%		
+%			%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
+%			8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & $\emptyset$ & / \\
+%			\bottomrule
+%		\end{tabular}
+%		%	\end{adjustbox}
+%	\caption{Step 2. \comus Incremental Explanation of $x_3$ ($c_1 \wedge c_2 \wedge x_1 \implies x_3$)}
+%	\label{tab:explanation-steps-expanded:step2}
+%\end{table}
 
 
 

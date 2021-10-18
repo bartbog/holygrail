@@ -721,7 +721,7 @@ until no more satisfiable subsets can be found.
 	\label{alg:disjmcs}
 \end{algorithm}
 
-\begin{observation}\emph{Incrementality and monotonicity.} Applying algorithm \ref{alg:disjmcs} on the incremental formula $\formula \triangleq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, will provide the same result as a single call to \grow. More precisely, since 
+\begin{observation}\emph{Incrementality and monotonicity.} Applying algorithm \ref{alg:disjmcs} on the incremental formula $\formula \triangleq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ where both polarities of the literals are present, will provide the same result as a single call to \grow. To illustrate, the input hitting set $\m{S}$ contains $\{ \}$   
 \end{observation}
 
 \begin{algorithm}[!h]
@@ -741,6 +741,10 @@ until no more satisfiable subsets can be found.
 
 \begin{observation}
 \emph{Constrainedness.} If we blindly compute disjoint correction subsets for a given constrained formula $\formulac\cup I\cup \overline{\Iend\setminus I}$, we are not taking fully advantage of the given constraint $p$. For example, in the case of \onestepo the \texttt{exactly-one}$(\overline{\Iend\setminus I})$ constraint is already satisfied by the hitting set solver. Therefore, we can ignore any other element of $p$ and focus on the elements of $\m{I}$, which is represented by line \ref{alg:constraineddisjmcs:line:projection} of algorithm \ref{alg:constraineddisjmcs}. 
+\end{observation}
+
+\begin{observation}
+\emph{Constrainedness with Incrementality.}
 \end{observation}
 
 \begin{algorithm}[!h]

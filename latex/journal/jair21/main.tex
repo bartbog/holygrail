@@ -675,29 +675,65 @@ The following example will be used as a running example to illustrate these and 
 \end{table}
 
 
-\section{Improving efficiency}
+
+
+
+\section{Iterative searching for \omus}
+
+
+
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
-	$\setstohit,\m{S} \gets \disjcorr(\formula, \emptyset)$ \; %\label{omus-line1} 
-	\While{true}{
-		$\m{S} \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
-		% f{optimal} solution}
-		% \tcp{\small set with all unique clauses from hitting set}
-		%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
-		% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-		% \tcp{IF UNSAT, $hs$ is the OUS }
-		\If{ $\lnot \sat(\m{S})$}{\label{alg:ocus-sat-check}
-			\Return{$\m{S}$} \;
-		}
-		$\setstohit, \m{S} \gets \disjcorr(\formula, \m{S})$\;
+	\tcp{Initilisation of Heap with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
+	$lb \gets$ \texttt{heap()}\;
+	\ForEach{$\ell \in  (\Iend \setminus I)$}{
+		$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
+		$ \m{S} \gets \grow(\emptyset, \ \formula_{\ell})$\; 
+		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \{  \formula_{\ell} \setminus \m{S}\}$ \;
+		\texttt{lb.push($\langle 0, \ell, \emptyset \rangle $)}\;
 	}
-	\caption{$\comus(\formula,f,p)$ }
-	\label{alg:comus}
+	\tcp{\comus loop}
+	\While{$true$}{
+		
+		$(cost, \ell, \m{S}) \gets$\texttt{lb.pop()} \tcp*{Literal with lowest bound}
+		
+		\If{ $\lnot \sat(\m{S})$}{
+			\Return{$\m{S}$} \tcp*{\color{Green}OCUS found}
+		}
+		
+		$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
+		
+		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \{  \formula_{\ell} \setminus \m{S}\}$ \tcp*{Correction Subset added to sets-to-hit}
+		
+		$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
+		
+		\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
+	}
+	\caption{$\iterativeonestep(\formulac,f,I, \Iend)$}
+	\label{alg:iterative_ocus}
 \end{algorithm}
+
+\section{Improving efficiency}
 
 \subsection{Disjoint Minimum Correction Subsets enumeration}
 
 The hitting set solver will find a cost-minimal hitting set that hits all sets-to-hit and satisfies the given constraint. This last observation motivates finding sets-to-hit that do not intersect with each other. In that case, an element of set-to-hit will be selected. If we apply this reasoning to the implicit hitting set framework, computing disjoint minimum correction subsets helps in bounding the cost of finding an OCUS.
+
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	\Output{$\m{K}$: Disjoint correction subsets}
+	$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \label{alg:disjmcs:init} \;
+	
+	\While{$\sat(\m{S}')$}{
+		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
+$ \m{S}' \gets \m{S}'  \cup  \m{C} $\;
+		$ \m{K} \gets \m{K} \cup \m{C} $\;
+		}
+	\Return $\m{K}$
+	\caption{$\disjcorr(\formula, \subsetT)$ }
+	\label{alg:disjmcs}
+\end{algorithm}
 
 Inspired by \cite{marques2013computing}, the \disjmcs procedure, depicted in algorithm \ref{alg:disjmcs}, computes a collection of disjoint minimum correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). The \disjmcs procedure will repeatedly compute a satisfiable subset $\m{S} \subseteq \m{S}'$ and add its complement to 
 \begin{inparaenum}[(i)] 
@@ -708,59 +744,23 @@ until no more satisfiable subsets can be found.
 
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
-	\Output{$\m{K}$: Disjoint correction subsets}
-	$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \label{alg:disjmcs:init} \;
-	
-	\While{$\sat(\m{S}')$}{
-		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
-		$ \m{S}' \gets \m{S}'  \cup \m{C} $\;		
-		$ \m{K} \gets \m{K} \cup \m{C} $\;
+	$\setstohit \gets  \disjcorr(\formula, \emptyset)$ \; %\label{omus-line1} 
+	\While{true}{
+		$\m{S} \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+		% f{optimal} solution}
+		% \tcp{\small set with all unique clauses from hitting set}
+		%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+		% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+		% \tcp{IF UNSAT, $hs$ is the OUS }
+		\If{ $\lnot \sat(\m{S})$}{\label{alg:ocus-sat-check}
+			\Return{$\m{S}$} \;
 		}
-	\Return $\m{K}, \ \m{S}'$
-	\caption{$\disjcorr(\formula,\subsetT)$ }
-	\label{alg:disjmcs}
+		$\setstohit \gets \disjcorr(\formula, \m{S})$\;
+	}
+	\caption{$\comus(\formula, f,p)$}
+	\label{alg:comus}
 \end{algorithm}
 
-\begin{observation}\emph{Incrementality and monotonicity.} Applying algorithm \ref{alg:disjmcs} on the incremental formula $\formula \triangleq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ where both polarities of the literals are present, will provide the same result as a single call to \grow. To illustrate, the input hitting set $\m{S}$ contains $\{ \}$   
-\end{observation}
-
-\begin{algorithm}[!h]
-	\DontPrintSemicolon
-	\Output{$\m{K}$: Disjoint correction subsets}
-	$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \label{alg:disjmcs:init} \;
-	
-	\While{$\sat(\m{S}')$}{
-		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
-		$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{A}\}$\;		
-		$ \m{K} \gets \m{K} \cup \m{C} $\;
-		}
-	\Return $\m{K}, \ \m{S}'$
-	\caption{$\disjcorrincr(\formula, \m{A}, \subsetT)$ }
-	\label{alg:disjmcs}
-\end{algorithm}
-
-\begin{observation}
-\emph{Constrainedness.} If we blindly compute disjoint correction subsets for a given constrained formula $\formulac\cup I\cup \overline{\Iend\setminus I}$, we are not taking fully advantage of the given constraint $p$. For example, in the case of \onestepo the \texttt{exactly-one}$(\overline{\Iend\setminus I})$ constraint is already satisfied by the hitting set solver. Therefore, we can ignore any other element of $p$ and focus on the elements of $\m{I}$, which is represented by line \ref{alg:constraineddisjmcs:line:projection} of algorithm \ref{alg:constraineddisjmcs}. 
-\end{observation}
-
-\begin{observation}
-\emph{Constrainedness with Incrementality.}
-\end{observation}
-
-\begin{algorithm}[!h]
-	\DontPrintSemicolon
-	\Output{$\m{K}$: Disjoint correction subsets}
-		$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \;
-	
-	\While{$\sat(\m{S}')$}{
-		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
-		$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{I}\}$ \label{alg:constraineddisjmcs:line:projection}\;		
-		$ \m{K} \gets \m{K} \cup  \m{C}  $\;
-		}
-	\Return $\m{K}, \ \m{S}'$
-	\caption{$\disjcorrconstrained(\formula,\subsetT)$ }
-	\label{alg:constraineddisjmcs}
-\end{algorithm}
 
 
 \paragraph{Example 1 (cont.)} Initially, the current interpretation is $\m{I} = \m{I}_0 = \emptyset$. The formula to explain is $\formula \triangleq \formulac \wedge \Iend \wedge \overline{(\Iend\setminus I)}$, with \textit{exactly-one$(c_8, c_9, c_{10})$} constraint. 
@@ -815,6 +815,62 @@ until no more satisfiable subsets can be found.
 
 
 
+
+\begin{table}
+\centering
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{ccccccccc|c}
+%$\formula_0$ & $ =$  & $\m{C}$ & $  \wedge$ & $  \m{I}_0 $ &  $\wedge $ & $(\overline{\Iend\setminus \m{I}_0})$ &   $\wedge $ & $(\Iend\setminus \m{I}_0) $ & $\wedge $ & $(\overline{\m{I}_0})$ \\ 
+% &  &  &  & $ \{\}$ &  & $ \{  \lnot x_1, x_2, \lnot x_3\}$ &  & $ \{x_1,  \lnot x_2, x_3\}$ &  & $ \{ \}$ \\ \\
+$\formula_1 = \m{C}  $&$\wedge$ & $  I_1 $ &  $\wedge $ & $(\overline{\Iend\setminus I_1})$ &   $\wedge $ & $(\Iend\setminus I_1) $ & $\wedge $ & $(\overline{I_1})$ & $p$\\ 
+ &  &   $ \{ x_1\}$ &  & $ \{ x_2, \lnot x_3\}$ &  & $ \{ \lnot x_2, x_3\}$ &  & $ \{ \lnot x_1\}$ &  \texttt{exactly-one}$(\{ x_2, \lnot x_3\})$ \\ \\
+$\formula_2 = \m{C} $&$\wedge$ & $  I_2 $ &  $\wedge $ & $(\overline{\Iend\setminus I_2})$ &   $\wedge $ & $(\Iend\setminus I_2) $ & $\wedge $ & $(\overline{I_2})$ \\ 
+ &   &  $\{ x_1 ,x_3\}$ &  & $\{ x_2\}$ &  & $\{ \lnot x_2\}$ &  & $\{ \lnot x_1, \lnot x_3\}$ &  \texttt{exactly-one}$(\{ x_2\})$ \\ \\
+% $\formula_3$ & $ =$  & $\m{C}$ & $  \wedge$ & $  I_3 $ &  $\wedge $ & $(\overline{\Iend\setminus I_3})$ &   $\wedge $ & $(\Iend\setminus I_3) $ & $\wedge $ & $(\overline{I_3})$ \\ 
+% &  &  &  & $\{ x_1 ,\lnot x_2, x_3\}$ &  & $\{ \}$ &  & $\{ \}$ &  & $\{ \lnot x_1, x_2, \lnot x_3\}$ 
+\end{tabular} 
+\end{adjustbox}
+\caption{Example 1 (cont.): Incrementality, and constrainedness}
+\end{table}
+
+\begin{observation}
+\emph{Constrainedness.} If we blindly compute disjoint correction subsets for a given constrained formula $\formulac \cup I\cup \overline{\Iend\setminus I}$, we are not taking fully advantage of the given constraint \emph{$p$}. For example, in the case of \onestepo the \texttt{exactly-one}$(\overline{\Iend\setminus I})$ constraint is already satisfied by the hitting set solver. Therefore, we can ignore any other element of \emph{$p$} and focus on the elements of $\m{I}$, which is represented by line \ref{alg:constraineddisjmcs:line:projection} of algorithm \ref{alg:constraineddisjmcs}. 
+\end{observation}
+
+\begin{observation}\emph{Incrementality and monotonicity.}  Consider the case where \comus is called first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$. We 
+\end{observation}
+
+\begin{observation}
+\emph{Constrainedness with Incrementality.}  Applying algorithm \ref{alg:disjmcs} on the constrained incremental formula $\formula \triangleq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ where both polarities of the literals are present, will provide the same result as a single call to \grow. 
+\end{observation}
+
+{\LinesNumberedHidden
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+		\Input{$\m{A} \triangleq \m{I} \cup \{\lnot \ell\}$, the current interpretation and negated literal to explain.}
+		\setcounter{AlgoLine}{2}
+...\;
+	\ShowLn			$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{A}\}$ \label{alg:constraineddisjmcs:line:projection}\;		
+	...\;
+	\caption{$\disjcorrincr(\formula, \m{A},  \subsetT)$ }
+	\label{alg:disjmcsincr}
+\end{algorithm}}
+
+
+{\LinesNumberedHidden
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+\Input{$\m{I}$ the current interpretation}
+		\setcounter{AlgoLine}{2}
+...\;
+	\ShowLn			$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{I}\}$ \label{alg:constraineddisjmcs:line:projection}\;		
+	...\;
+	\caption{$\disjcorrconstrained(\formula, \m{I},  \subsetT)$ }
+	\label{alg:constraineddisjmcs}
+\end{algorithm}
+}
+
+
 %It can be either applied as \begin{inparaenum}[(i)]
 %	\item a bootstrapping method for \ref{alg:comus} on line \ref{alg:ocus-line1} or
 %	\item as a replacement for the computing a new correction subset: on lines \ref{alg:ocus:grow} and \ref{alg:ocus:complement}. 
@@ -855,8 +911,6 @@ In our specific implementation, bounded \omus is performed by interrupting this 
 
 Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop across the different literals, we keep track of an upper bound of the cost of an OUS for each literal to explain. This is initialized to a value greater than any \omus, e.g., as $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$, and is updated every time an \omus explaining that literal is found; when going through the loop in Line 2 of Algorithm~\ref{alg:comus}, we then handle literals in order of increasing upper bounds.
 
-\subsection{Iterative searching for \omus}
-
 
 
 \begin{algorithm}[!h]
@@ -865,40 +919,10 @@ Since the bounding on the \omus cost has the most effect if cheap \omus{}s are f
 	$lb \gets$ \texttt{heap()}\;
 	\ForEach{$\ell \in  (\Iend \setminus I)$}{
 		$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
-		$ \m{S} \gets \grow(\emptyset, \ \formula_{\ell})$\; 
-		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \{  \formula_{\ell} \setminus \m{S}\}$ \;
-		\texttt{lb.push($\langle 0, \ell, \emptyset \rangle $)}\;
-	}
-	\tcp{\comus loop}
-	\While{$true$}{
-		
-		$(cost, \ell, \m{S}) \gets$\texttt{lb.pop()} \tcp*{Literal with lowest bound}
-		
-		\If{ $\lnot \sat(\m{S})$}{
-			\Return{$\m{S}$} \tcp*{\color{Green}OCUS found}
-		}
-		
-		$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
-		
-		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \{  \formula_{\ell} \setminus \m{S}\}$ \tcp*{Correction Subset added to sets-to-hit}
-		
+		$ \setstohit_{\ell} \gets \setstohit_{\ell}  \cup \disjcorrincr(\formula_{\ell},  \{ I \wedge (\lnot \ell) \} , \emptyset) $\;
 		$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
-		
 		\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
-	}
-	\caption{$\iterativeonestep(\formulac,f,I, \Iend)$}
-	\label{alg:iterative_ocus}
-\end{algorithm}
-
-
-\begin{algorithm}[!h]
-	\DontPrintSemicolon
-	\tcp{Initilisation of Heap with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
-	$lb \gets$ \texttt{heap()}\;
-	\ForEach{$\ell \in  (\Iend \setminus I)$}{
-		$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
-		$ \setstohit_{\ell} \gets \setstohit_{\ell}  \cup \disjcorr(\emptyset, 	\formula_{\ell}) $\;
-		\texttt{lb.push($\langle 0, \ell, \emptyset \rangle $)}\;
+%		\texttt{lb.push($\langle 0, \ell, \emptyset \rangle $)}\;
 	}
 	\tcp{\comus loop}
 	\While{$true$}{
@@ -911,7 +935,7 @@ Since the bounding on the \omus cost has the most effect if cheap \omus{}s are f
 		
 %		$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
 		
-		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \disjcorr(\m{S}, 	\formula_{\ell}) $\;
+		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \disjcorrincr(\formula_{\ell},  \{ I \wedge (\lnot \ell) \} , \m{S}) $\;
 		$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
 		\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
 	}

@@ -73,6 +73,7 @@
 \newcommand\grow{\mm{\call{Grow}}}
 \newcommand\omus{\mm{\call{OUS}}}
 \newcommand\comus{\mm{\call{OCUS}}}
+\newcommand\comusdisj{\mm{\call{OCUSConstrainedDisjMCSes}}}
 \newcommand\disjmcs{\mm{\call{DisjointMCSes}\xspace}}
 \newcommand\disjmcsconstrained{\mm{\call{DisjointMCSesConstrained}\xspace}}
 \newcommand\omusinc{\mm{\call{OUS-Inc}}}
@@ -86,7 +87,7 @@
 \newcommand\voc{\ensuremath{\Sigma}\xspace}
 \newcommand\negset[1]{\mm{\overline{#1}}}
 
-
+\newcommand{\algorithmicbreak}{\textbf{break}}
 %%%%%
 \newcommand\muses[1]{\ensuremath{\mathit{MUSs}(#1)}\xspace}
 \newcommand\mcses[1]{\ensuremath{\mathit{MCSs}(#1)}\xspace}
@@ -115,17 +116,17 @@
 \title{Efficiently Explaining Constraint Satisfaction Problems with Optimal Unsatisfiable Subsets: Extended use-cases and improved algorithms}
 
 \author{\name Emilio Gamba \email emilio.gamba@vub.be \\
-       \name Bart Bogaerts \email bart.bogaerts@vub.be \\
-       \addr Vrije Universiteit Brussel, Pleinlaan 5\\
-       1050 Elsene, Belgium
-       \AND
-       \name Tias Guns \email tias.guns@vub.be \\
-       \addr KULeuven, Oude Markt 13 - bus 5500,\\
-       3000 Leuven, Belgium
-   }
+\name Bart Bogaerts \email bart.bogaerts@vub.be \\
+\addr Vrije Universiteit Brussel, Pleinlaan 5\\
+1050 Elsene, Belgium
+\AND
+\name Tias Guns \email tias.guns@vub.be \\
+\addr KULeuven, Oude Markt 13 - bus 5500,\\
+3000 Leuven, Belgium
+}
 
 % For research notes, remove the comment character in the line below.
- \researchnote
+\researchnote
 
 \maketitle
 \section*{Contributions}
@@ -134,65 +135,65 @@
 \tableofcontents
 %we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
 \begin{itemize}
-	\item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
-	\item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. In other words, we introduce the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem and we show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
-	\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive OCUS calls;
-	\item We improve runtime zoals disjoint mcses as an extra step after the grow.
-	\item We introduce an iterative algorithm that takes advantage of the cost of previously computed hitting sets and appropriate sorting on the literals-to-explain to reduce the time to generate an individual explanation as well as the whole explanation sequence.
-	\item We improve the benchmark dataset of the experimental results by testing our approach on a larger number of CSPs and Weighted Unsatisfiable Instances.
+\item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
+\item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. In other words, we introduce the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem and we show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
+\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive OCUS calls;
+\item We improve runtime zoals disjoint mcses as an extra step after the grow.
+\item We introduce an iterative algorithm that takes advantage of the cost of previously computed hitting sets and appropriate sorting on the literals-to-explain to reduce the time to generate an individual explanation as well as the whole explanation sequence.
+\item We improve the benchmark dataset of the experimental results by testing our approach on a larger number of CSPs and Weighted Unsatisfiable Instances.
 \end{itemize}
 \section*{Overview}
 \begin{enumerate}
-	\item Introduction
-	\begin{itemize}
-		\item Introduce the problem of generating a Sequence of explanations for explaining the solutions of CSPs.
-		\item Something about explainability in artificial intelligence: workshops and conferences..
-		\item unsatisfiability as a way to explain
-		\item Something as followup work on our constraint satisfaction problems
-	\end{itemize}
-	\item Related works
-	\begin{itemize}
-		\item something about explanations and quality of the explanations 
-		\item something about reviewing explanations for csps presented at IJCAI
-		\item something about weighted Unsatisfiable subsets
-		\item reviewing improvements that apply to unsatisfiable subsets
-		\begin{itemize}
-		\item  (?) Abstract cores
-%		\item  Postponing optimisation
-		\item  Disjoint MCS enumeration
-		\item  something about incrementaltity (and more specifically) in maxsat solving which could be applied to weighted MUSes
-		\end{itemize}
-		\item Searching for explainable solutions in Sudoku 
-	\end{itemize}
-	\item Background
-	\begin{itemize}
-		\item Introduce MUSes/MCSes/Implicit HS ...
-	\end{itemize}
-	\item Motivation
-	\begin{itemize}
-		\item time to generate explanations too slow
-		\item Require optimality
-		\item Calls to OCUS very similar (incrementality/better search)	
-	\end{itemize}
-	\item OCUS
-	\item Efficient OCUS computation for explanations
-	\item Experiments
-	\begin{itemize}
-		\item RQ1. Cost comparison between MUS and Constrained for Logic Grid Puzzles+ Extra Demystify puzzles?
-		\item RQ2. Which \textbf{domain-specific \grow methods} perform best: MaxSAT vs disj. mcs?
-		\item RQ3. Effect of Constrainedness on the time required to computed explanations?
-		\item RQ4. Does re-use of information across the different iterations improve efficiency? 
-		\begin{itemize}
-			\item testing OUSb incremental/OCUS incremental vs OUSb/OUS/OCUS
-		\end{itemize}
-		\item RQ5. Does appropriate sorting of literals lead to faster generation of individual explanations and explanation sequences:
-		\begin{itemize}
-			\item Iterative OUS vs Best configurations
-		\end{itemize} 
-		\item RQ6. Path towards interactive: Individual explanation time not incremental
-	\end{itemize}
-	\item Conclusion and future work
-	\item Acknowledgements
+\item Introduction
+	  \begin{itemize}
+		  \item Introduce the problem of generating a Sequence of explanations for explaining the solutions of CSPs.
+		  \item Something about explainability in artificial intelligence: workshops and conferences..
+		  \item unsatisfiability as a way to explain
+		  \item Something as followup work on our constraint satisfaction problems
+	  \end{itemize}
+\item Related works
+	  \begin{itemize}
+		  \item something about explanations and quality of the explanations 
+		  \item something about reviewing explanations for csps presented at IJCAI
+		  \item something about weighted Unsatisfiable subsets
+		  \item reviewing improvements that apply to unsatisfiable subsets
+				\begin{itemize}
+					\item  (?) Abstract cores
+						  %		\item  Postponing optimisation
+					\item  Disjoint MCS enumeration
+					\item  something about incrementaltity (and more specifically) in maxsat solving which could be applied to weighted MUSes
+				\end{itemize}
+		  \item Searching for explainable solutions in Sudoku 
+	  \end{itemize}
+\item Background
+	  \begin{itemize}
+		  \item Introduce MUSes/MCSes/Implicit HS ...
+	  \end{itemize}
+\item Motivation
+	  \begin{itemize}
+		  \item time to generate explanations too slow
+		  \item Require optimality
+		  \item Calls to OCUS very similar (incrementality/better search)	
+	  \end{itemize}
+\item OCUS
+\item Efficient OCUS computation for explanations
+\item Experiments
+	  \begin{itemize}
+		  \item RQ1. Cost comparison between MUS and Constrained for Logic Grid Puzzles+ Extra Demystify puzzles?
+		  \item RQ2. Which \textbf{domain-specific \grow methods} perform best: MaxSAT vs disj. mcs?
+		  \item RQ3. Effect of Constrainedness on the time required to computed explanations?
+		  \item RQ4. Does re-use of information across the different iterations improve efficiency? 
+				\begin{itemize}
+					\item testing OUSb incremental/OCUS incremental vs OUSb/OUS/OCUS
+				\end{itemize}
+		  \item RQ5. Does appropriate sorting of literals lead to faster generation of individual explanations and explanation sequences:
+				\begin{itemize}
+					\item Iterative OUS vs Best configurations
+				\end{itemize} 
+		  \item RQ6. Path towards interactive: Individual explanation time not incremental
+	  \end{itemize}
+\item Conclusion and future work
+\item Acknowledgements
 \end{enumerate}
 
 \section{Introduction}
@@ -204,11 +205,11 @@
 
 Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
 \begin{itemize}
-	\item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
-	\item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. In other words, we introduce the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem and we show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
-	\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive OCUS calls;
-	\item We introduce an iterative algorithm that takes advantage of the cost of previously computed hitting sets and appropriate sorting on the literals-to-explain to reduce the time to generate an individual explanation as well as the whole explanation sequence.
-	\item We improve the benchmark dataset of the experimental results by testing our approach on a larger number of CSPs and Weighted Unsatisfiable Instances.
+\item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
+\item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. In other words, we introduce the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem and we show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
+\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive OCUS calls;
+\item We introduce an iterative algorithm that takes advantage of the cost of previously computed hitting sets and appropriate sorting on the literals-to-explain to reduce the time to generate an individual explanation as well as the whole explanation sequence.
+\item We improve the benchmark dataset of the experimental results by testing our approach on a larger number of CSPs and Weighted Unsatisfiable Instances.
 \end{itemize}
 
 \paragraph*{Publication history} This article is an extension of a previous paper presented at the International Joint Conference on Artificial Intelligence 2021 \cite{ijcai2021}.
@@ -244,108 +245,108 @@ For example, if we define $I_0 = \emptyset$ as the initial interpretation, then 
 In the following, we introduce key properties on unsatisfiable subsets on which we build our algorithms.
 
 \begin{definition}
-	A \emph{Minimal Unsatisfiable Subset} (MUS) of 
-	\F is an unsatisfiable subset $\m{S}$ of $\F$ for which every strict subset of $\m{S} $ is satisfiable. 
-	\muses{\F} denotes the set of MUSs of \F. 
+A \emph{Minimal Unsatisfiable Subset} (MUS) of 
+\F is an unsatisfiable subset $\m{S}$ of $\F$ for which every strict subset of $\m{S} $ is satisfiable. 
+\muses{\F} denotes the set of MUSs of \F. 
 \end{definition}
 
 
 \begin{definition}
-	A set $\m{S} \subseteq \formula$ is a \emph{Maximal Satisfiable Subset} (MSS) of $ \formula$ if $\m{S}$ is satisfiable and for all $\m{S}'$ with $\m{S}  \subsetneq  \m{S}'\subseteq\formula $, $\m{S}'$ is unsatisfiable.
+A set $\m{S} \subseteq \formula$ is a \emph{Maximal Satisfiable Subset} (MSS) of $ \formula$ if $\m{S}$ is satisfiable and for all $\m{S}'$ with $\m{S}  \subsetneq  \m{S}'\subseteq\formula $, $\m{S}'$ is unsatisfiable.
 \end{definition}
 
 \begin{definition}
-	A set $\m{S} \subseteq \formula$ is a \emph{correction subset} of \formula if $\formula\setminus\m{S}$ is satisfiable. 
-	Such a $\m{S}$ is a \emph{minimal correction subset} (MCS)  of \formula if no strict subset of $\m{S}$ is also a correction subset. 
-	\mcses{\F} denotes the set of MCSs of \F. 
+A set $\m{S} \subseteq \formula$ is a \emph{correction subset} of \formula if $\formula\setminus\m{S}$ is satisfiable. 
+Such a $\m{S}$ is a \emph{minimal correction subset} (MCS)  of \formula if no strict subset of $\m{S}$ is also a correction subset. 
+\mcses{\F} denotes the set of MCSs of \F. 
 \end{definition}
 
 Each  MCS of \formula is the complement of an MSS of \formula and vice versa. 
 
 \begin{definition}\label{def:minimal-hs}
-	Given a collection of sets $\m{H}$, a hitting set of $\m{H}$ is a set $h$ such that  $h \cap C \neq \emptyset$ for every $C \in \m{H}$. A hitting set is \emph{minimal} if no strict subset of it is also a hitting set.
+Given a collection of sets $\m{H}$, a hitting set of $\m{H}$ is a set $h$ such that  $h \cap C \neq \emptyset$ for every $C \in \m{H}$. A hitting set is \emph{minimal} if no strict subset of it is also a hitting set.
 \end{definition}
 
 
 The next proposition is the well-known hitting set duality \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}  between MCSs and MUSs that forms the basis of our algorithms, as well as algorithms to compute MSSs \cite{DBLP:conf/sat/DaviesB13} and \emph{cardinality-minimal} MUSs \cite{ignatiev2015smallest}.
 
 \begin{proposition}\label{prop:MCS-MUS-hittingset}
-   
-	A set  $\m{S} \subseteq \formula$ is an MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.
-	A set  $\m{S} \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
+	   
+A set  $\m{S} \subseteq \formula$ is an MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.
+A set  $\m{S} \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
 \end{proposition}
 
-	%	The formula \formula is thus: 
-	%	\begin{description}
-	%		\item[$\formula$] $\triangleq \formulac \wedge \m{I} \wedge \{\lnot \ell \}$ 
-	%		\begin{itemize}
-	%			\item $\formula(x_1) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge \{\lnot x_1\}\}$
-	%			\item $\formula(\lnot x_2) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge \{x_2\}\}$
-	%			\item $\formula(x_3) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge \{\lnot x_3\}\}$
-	%		\end{itemize}
-	%		\item[$\formula_{incr}$] $\triangleq \formulac \wedge {\color{OliveGreen} (\Iend \setminus \ell)} \wedge {\color{Maroon} \{\lnot \ell \} }$ 
-	%		\begin{itemize}
-	%			\item $\formula_{incr}(x_1) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge {\color{OliveGreen} \{\lnot x_2\}\wedge \{x_3\}} \wedge {\color{Maroon} \{\lnot x_1\} } \}$
-	%			\item $\formula_{incr}(\lnot x_2) \triangleq\{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge {\color{OliveGreen} \{ x_1 \} \wedge \{x_3\}} \wedge {\color{Maroon} \{x_2\} } \}$
-	%			\item $\formula_{incr}(x_3) \triangleq\{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge {\color{OliveGreen} \{ x_1 \}  \wedge \{\lnot x_2\}} \wedge {\color{Maroon} \{\lnot x_3\} }\}$
-	%		\end{itemize}
-	%		\item[$\formula_{incr, constr}$] $\triangleq \formulac \wedge {\color{OliveGreen} \Iend} \wedge {\color{Maroon} \overline{(\Iend\setminus I)}}$
-	%		\begin{itemize}
-	%			\item $\formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge {\color{OliveGreen} \{x_1\}\wedge\{\lnot x_2\} \wedge  \{x_3\} } \wedge {\color{Maroon}  \{\lnot x_1\} \wedge \{x_2\}\wedge \{\lnot x_3\} } \}$
-	%			\item 	We define $p\triangleq$ \textit{exactly-one$(\{\lnot x_1, x_2, \lnot x_3\})$} and $f = \sum w_i \cdot c_i$ with clause weights $w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=\infty, w_6=\infty, w_7=\infty, w_8=1, w_9=1, w_{10}=1$.
-	%		\end{itemize}
-	%		
-	%	\end{description}
-	%	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
-	%	
-	%	
-	%	\begin{table}[!h]
-	%		\centering
-	%		\begin{tabular}{lcccc} 
-	%			1&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\{  \formula \setminus \m{S}\}$\\ 
-	%			\toprule[2pt]
-	%			2& $\{\}$ & $True$ & $\{c_1 \wedge c_2 \wedge c_3 \wedge c_4 \wedge c_5 \wedge c_6 \wedge c_7\}$ & $\{c_8 \wedge c_9 \wedge c_{{10}}\}$ \\\midrule
-	%			3& $\{c_9\}$ & $True$ & $\{c_1 \wedge c_2 \wedge c_3 \wedge ~c_4 \wedge c_5 \wedge c_9 \wedge c_7\}$ & $\{c_4 \wedge c_8 \wedge c_6 \wedge c_{{10}}\}$ \\\midrule
-	%			4& $\{c_8\}$ & $True$ & $\{c_1 \wedge c_2 \wedge ~c_3 \wedge c_4 \wedge c_8 \wedge c_6 \wedge c_7\}$ & $\{c_3 \wedge c_5 \wedge c_9 \wedge c_{{10}}\}$ \\\midrule
-	%			5& $\{c_{{10}}\}$ & $True$ & $\{c_1 \wedge c_2 \wedge ~c_3 \wedge c_4 \wedge c_8 \wedge c_6 \wedge c_{{10}}\}$ & $\{c_3 \wedge c_5 \wedge c_9 \wedge c_7\}$ \\\midrule
-	%			6& $\{c_3 \wedge c_{{10}}\}$ & $True$ & $\{c_1 \wedge ~c_2 \wedge c_3 \wedge c_4 \wedge c_5 \wedge c_6 \wedge c_{{10}}\}$ & $\{c_2 \wedge c_8 \wedge c_9 \wedge c_7\}$ \\\midrule
-	%			7& $\{c_4 \wedge c_9\}$ & $True$ & $\{c_1 \wedge c_2 \wedge ~c_3 \wedge c_4 \wedge c_8 \wedge c_9 \wedge c_{{10}}\}$ & $\{c_3 \wedge c_5 \wedge c_6 \wedge c_7\}$ \\\midrule
-	%			8& $\{c_3 \wedge c_8\}$ & $False$ & $\{\}$ & $\{\}$ \\ \midrule
-	%			
-	%		\end{tabular}
-	%		\caption{Step 1}
-	%		\label{tab:explanation-steps-expanded}
-	%	\end{table}
-	%	%	\[\formula= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\wedge c_7  \text{ \color{red} \sout{$\wedge c_8$}} \wedge c_9\wedge c_{10}\}\]
-	%	
-	%	%
-	%	%$w_1 = 60, w_2=60, w_3=100, w_4=100, {\color{red}w_5=1}, w_6=\infty, w_7=\infty, {\color{red}w_8=\infty}, w_9=1, w_{10}=1$.
-	%	\begin{table}[!h]
-	%		\centering
-	%		\begin{tabular}{lcccc} 
-	%			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\{  \formula \setminus \m{S}\}$\\ 
-	%			\toprule[2pt]
-	%			8& $\{c_2 \wedge c_5 \wedge c_{{10}}\}$ & $True$ & $\{~c1 \wedge c_2 \wedge c_3 \wedge c_4 \wedge c_5 \wedge c_9 \wedge c_{{10}}\}$ & $\{c_1 \wedge c_6 \wedge c_7\}$ \\\midrule
-	%			9& $\{c_1 \wedge c_2 \wedge c_5 \wedge c_{{10}}\}$ & $False$ & $\{\}$ & $\{\}$ \\ \midrule
-	%			
-	%		\end{tabular}
-	%		\caption{Step 2}
-	%		\label{tab:explanation-steps-expanded}
-	%	\end{table}
-	%	%\[\formula= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\wedge c_7  \text{ \color{red} \sout{$\wedge c_8$}} \wedge c_9\wedge \text{ \color{red} \sout{$\wedge c_{10}$}}\}\]
-	%	%$w_1 = 60, w_2=60, w_3=100, w_4=100, {\color{green}w_5=1}, w_6=\infty, {\color{green}w_7=1}, {\color{red}w_8=\infty}, w_9=1, {\color{red}w_{10}=\infty}$.
-	%	\begin{table}[!h]
-	%		\centering
-	%		\begin{tabular}{lcccc} 
-	%			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\{  \formula \setminus \m{S}\}$\\ 
-	%			\toprule[2pt]
-	%			10& $\{c_4 \wedge c_9 \wedge c_7\}$ & $False$ & $\{\}$ & $\{\}$ \\ \midrule
-	%			
-	%		\end{tabular}
-	%		\caption{Step 3}
-	%		\label{tab:explanation-steps-expanded}
-	%	\end{table}
-	%	
+%	The formula \formula is thus: 
+%	\begin{description}
+%		\item[$\formula$] $\triangleq \formulac \wedge \m{I} \wedge \{\lnot \ell \}$ 
+%		\begin{itemize}
+%			\item $\formula(x_1) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge \{\lnot x_1\}\}$
+%			\item $\formula(\lnot x_2) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge \{x_2\}\}$
+%			\item $\formula(x_3) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge \{\lnot x_3\}\}$
+%		\end{itemize}
+%		\item[$\formula_{incr}$] $\triangleq \formulac \wedge {\color{OliveGreen} (\Iend \setminus \ell)} \wedge {\color{Maroon} \{\lnot \ell \} }$ 
+%		\begin{itemize}
+%			\item $\formula_{incr}(x_1) \triangleq \{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge {\color{OliveGreen} \{\lnot x_2\}\wedge \{x_3\}} \wedge {\color{Maroon} \{\lnot x_1\} } \}$
+%			\item $\formula_{incr}(\lnot x_2) \triangleq\{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge {\color{OliveGreen} \{ x_1 \} \wedge \{x_3\}} \wedge {\color{Maroon} \{x_2\} } \}$
+%			\item $\formula_{incr}(x_3) \triangleq\{ c_1 \wedge c_2 \wedge c_3\wedge c_4 \wedge {\color{OliveGreen} \{ x_1 \}  \wedge \{\lnot x_2\}} \wedge {\color{Maroon} \{\lnot x_3\} }\}$
+%		\end{itemize}
+%		\item[$\formula_{incr, constr}$] $\triangleq \formulac \wedge {\color{OliveGreen} \Iend} \wedge {\color{Maroon} \overline{(\Iend\setminus I)}}$
+%		\begin{itemize}
+%			\item $\formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge {\color{OliveGreen} \{x_1\}\wedge\{\lnot x_2\} \wedge  \{x_3\} } \wedge {\color{Maroon}  \{\lnot x_1\} \wedge \{x_2\}\wedge \{\lnot x_3\} } \}$
+%			\item 	We define $p\triangleq$ \textit{exactly-one$(\{\lnot x_1, x_2, \lnot x_3\})$} and $f = \sum w_i \cdot c_i$ with clause weights $w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=\infty, w_6=\infty, w_7=\infty, w_8=1, w_9=1, w_{10}=1$.
+%		\end{itemize}
+%		
+%	\end{description}
+%	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
+%	
+%	
+%	\begin{table}[!h]
+%		\centering
+%		\begin{tabular}{lcccc} 
+%			1&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\{  \formula \setminus \m{S}\}$\\ 
+%			\toprule[2pt]
+%			2& $\{\}$ & $True$ & $\{c_1 \wedge c_2 \wedge c_3 \wedge c_4 \wedge c_5 \wedge c_6 \wedge c_7\}$ & $\{c_8 \wedge c_9 \wedge c_{{10}}\}$ \\\midrule
+%			3& $\{c_9\}$ & $True$ & $\{c_1 \wedge c_2 \wedge c_3 \wedge ~c_4 \wedge c_5 \wedge c_9 \wedge c_7\}$ & $\{c_4 \wedge c_8 \wedge c_6 \wedge c_{{10}}\}$ \\\midrule
+%			4& $\{c_8\}$ & $True$ & $\{c_1 \wedge c_2 \wedge ~c_3 \wedge c_4 \wedge c_8 \wedge c_6 \wedge c_7\}$ & $\{c_3 \wedge c_5 \wedge c_9 \wedge c_{{10}}\}$ \\\midrule
+%			5& $\{c_{{10}}\}$ & $True$ & $\{c_1 \wedge c_2 \wedge ~c_3 \wedge c_4 \wedge c_8 \wedge c_6 \wedge c_{{10}}\}$ & $\{c_3 \wedge c_5 \wedge c_9 \wedge c_7\}$ \\\midrule
+%			6& $\{c_3 \wedge c_{{10}}\}$ & $True$ & $\{c_1 \wedge ~c_2 \wedge c_3 \wedge c_4 \wedge c_5 \wedge c_6 \wedge c_{{10}}\}$ & $\{c_2 \wedge c_8 \wedge c_9 \wedge c_7\}$ \\\midrule
+%			7& $\{c_4 \wedge c_9\}$ & $True$ & $\{c_1 \wedge c_2 \wedge ~c_3 \wedge c_4 \wedge c_8 \wedge c_9 \wedge c_{{10}}\}$ & $\{c_3 \wedge c_5 \wedge c_6 \wedge c_7\}$ \\\midrule
+%			8& $\{c_3 \wedge c_8\}$ & $False$ & $\{\}$ & $\{\}$ \\ \midrule
+%			
+%		\end{tabular}
+%		\caption{Step 1}
+%		\label{tab:explanation-steps-expanded}
+%	\end{table}
+%	%	\[\formula= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\wedge c_7  \text{ \color{red} \sout{$\wedge c_8$}} \wedge c_9\wedge c_{10}\}\]
+%	
+%	%
+%	%$w_1 = 60, w_2=60, w_3=100, w_4=100, {\color{red}w_5=1}, w_6=\infty, w_7=\infty, {\color{red}w_8=\infty}, w_9=1, w_{10}=1$.
+%	\begin{table}[!h]
+%		\centering
+%		\begin{tabular}{lcccc} 
+%			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\{  \formula \setminus \m{S}\}$\\ 
+%			\toprule[2pt]
+%			8& $\{c_2 \wedge c_5 \wedge c_{{10}}\}$ & $True$ & $\{~c1 \wedge c_2 \wedge c_3 \wedge c_4 \wedge c_5 \wedge c_9 \wedge c_{{10}}\}$ & $\{c_1 \wedge c_6 \wedge c_7\}$ \\\midrule
+%			9& $\{c_1 \wedge c_2 \wedge c_5 \wedge c_{{10}}\}$ & $False$ & $\{\}$ & $\{\}$ \\ \midrule
+%			
+%		\end{tabular}
+%		\caption{Step 2}
+%		\label{tab:explanation-steps-expanded}
+%	\end{table}
+%	%\[\formula= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge c_2 \wedge c_3\wedge c_4\wedge c_5\wedge c_6\wedge c_7  \text{ \color{red} \sout{$\wedge c_8$}} \wedge c_9\wedge \text{ \color{red} \sout{$\wedge c_{10}$}}\}\]
+%	%$w_1 = 60, w_2=60, w_3=100, w_4=100, {\color{green}w_5=1}, w_6=\infty, {\color{green}w_7=1}, {\color{red}w_8=\infty}, w_9=1, {\color{red}w_{10}=\infty}$.
+%	\begin{table}[!h]
+%		\centering
+%		\begin{tabular}{lcccc} 
+%			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\{  \formula \setminus \m{S}\}$\\ 
+%			\toprule[2pt]
+%			10& $\{c_4 \wedge c_9 \wedge c_7\}$ & $False$ & $\{\}$ & $\{\}$ \\ \midrule
+%			
+%		\end{tabular}
+%		\caption{Step 3}
+%		\label{tab:explanation-steps-expanded}
+%	\end{table}
+%	
 
 
 \section{Motivation}
@@ -355,17 +356,17 @@ Our work is motivated by the problem of explaining satisfaction problems through
 Our original explanation generation algorithm \cite{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), a partial interpretation $I$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, by means of a weight for every clause and literal in \formula. 
 
 \begin{algorithm}[!h]
-	\DontPrintSemicolon
-	\caption{$\onestep(\formulac,f,I,\Iend)$}
-	\label{alg:oneStep}
-	$X_{best} \gets \mathit{nil}$\;
-	\For{$l \in \{\Iend \setminus I\}$}{
-		$X \gets \call{MUS}{(\formulac \land I \land \neg l)}$\;
-		\If{$f(X)<f(X_{best})$\label{alg:oneStep:ifcheck}}{
-			$X_{best} \gets X$\;
-		}
+\DontPrintSemicolon
+\caption{$\onestep(\formulac,f,I,\Iend)$}
+\label{alg:oneStep}
+$X_{best} \gets \mathit{nil}$\;
+\For{$l \in \{\Iend \setminus I\}$}{
+	$X \gets \call{MUS}{(\formulac \land I \land \neg l)}$\;
+	\If{$f(X)<f(X_{best})$\label{alg:oneStep:ifcheck}}{
+		$X_{best} \gets X$\;
 	}
-	\Return{$X_{best}$} 
+}
+\Return{$X_{best}$} 
 \end{algorithm}
 
 The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by the total cost of the elements used in the explanation.
@@ -381,11 +382,11 @@ Experiments have shown that such a MUS-based approach can easily take hours, esp
 We see three main points of improvement, all of which will be tackled by our generic OCUS algorithm presented in the next section. 
 
 \begin{itemize}
-	\item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the explanation found is indeed optimal %don't use ``the best'' -> non-unique 
-	(with respect to the given cost function). 
-	Performing multiple MUS calls is only a heuristic that is used to circumvent the restriction that \textit{there are no algorithms for cost-based unsatisfiable subset \textbf{optimization}}. 
-	\item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$. This begs the questions whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
-	\item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}
+\item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the explanation found is indeed optimal %don't use ``the best'' -> non-unique 
+	  (with respect to the given cost function). 
+	  Performing multiple MUS calls is only a heuristic that is used to circumvent the restriction that \textit{there are no algorithms for cost-based unsatisfiable subset \textbf{optimization}}. 
+\item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$. This begs the questions whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
+\item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}
 \end{itemize}
 
 \section{Optimal Constraint Unsatisfiable Subsets}
@@ -394,12 +395,12 @@ We see three main points of improvement, all of which will be tackled by our gen
 The first two considerations from the previous section lead to the following definition. 
 
 \begin{definition}
-	Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula}\to \{true,false\}$.  We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
-	$\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if \begin{itemize}                                      
-		\item $\m{S}$ is unsatisfiable,
-		\item $p(\m{S})$ is true
-		\item all other unsatisfiable $\m{S}'\subseteq \formula$ for which $p(\m{S}')$ is true satisfy $f(\m{S}')\geq f(\m{S})$.
-	\end{itemize}
+Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula}\to \{true,false\}$.  We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
+$\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if \begin{itemize}                                      
+\item $\m{S}$ is unsatisfiable,
+\item $p(\m{S})$ is true
+\item all other unsatisfiable $\m{S}'\subseteq \formula$ for which $p(\m{S}')$ is true satisfy $f(\m{S}')\geq f(\m{S})$.
+\end{itemize}
 \end{definition}
 
 
@@ -415,11 +416,11 @@ The choice of the underlying hitting set solver will thus determine which types 
 In our implementation, we use a cost function $f$ as well as a condition $p$ that can easily be encoded as linear constraints, thus allowing the use of highly optimized mixed integer programming (MIP) solvers. The \cohs formulation is as follows:
 %\bart{should be minimize or -f}\emilio{adapted}
 \begin{align*}
-	\small
-	minimize_S \quad & f(S) \\ 
-	s.t. \quad & p(S) \\
-	& sum(H) \geq 1, \quad &&\forall H \in \setstohit \\
-	& s \in \{0,1\}, \quad &&\forall s \in S
+\small
+minimize_S \quad & f(S) \\ 
+s.t. \quad & p(S) \\
+  & sum(H) \geq 1, \quad &   & \forall H \in \setstohit \\
+  & s \in \{0,1\}, \quad &   & \forall s \in S          
 \end{align*}
 %\bart{This is not what the reviewers asked for! They asked for MIP models of our ``arbitrary objective functions''. A mip encoding of a generic hitting set problem with only some ``at least one'' constraints is not going to help us, I think. }
 % well, its not arbitrary but linear, and it is a weighted sum; will have to do
@@ -436,31 +437,31 @@ where $S$ is a set of MIP decision variables, one for every clause in $\formula$
 $f$ is a weighted sum over the variables in $S$. For example, (unit) clauses representing previously derived facts can be given small weights and regular constraints can be given large weights, such that explanations are penalized for including constraints when previously derived facts can be used instead. %relevant facts are directly available.
 
 \begin{algorithm}[!h]
-	\DontPrintSemicolon
-	
-	\caption{$\onestepo(\formulac,f,I,\Iend)$}
-	\label{alg:oneStepOCUS}
-	$p \leftarrow$ exactly one of $\overline{\Iend\setminus I}$\;
-	\Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$} 
+\DontPrintSemicolon
+		
+\caption{$\onestepo(\formulac,f,I,\Iend)$}
+\label{alg:oneStepOCUS}
+$p \leftarrow$ exactly one of $\overline{\Iend\setminus I}$\;
+\Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$} 
 \end{algorithm}
 \begin{algorithm}[!h]
-	\DontPrintSemicolon
-	$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
-	\While{true}{
-		$\m{S} \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
-		% f{optimal} solution}
-		% \tcp{\small set with all unique clauses from hitting set}
-		%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
-		% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-		% \tcp{IF UNSAT, $hs$ is the OUS }
-		\If{ $\lnot \sat(\m{S})$}{\label{alg:ocus-sat-check}
-			\Return{$\m{S}$} \;
-		}
-		$\m{S} \gets  \grow(\m{S},\F) $ \label{alg:ocus:grow}\;
-		$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$  \label{alg:ocus:complement}\;
+\DontPrintSemicolon
+$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+\While{true}{
+	$\m{S} \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+	% f{optimal} solution}
+	% \tcp{\small set with all unique clauses from hitting set}
+	%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+	% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+	% \tcp{IF UNSAT, $hs$ is the OUS }
+	\If{ $\lnot \sat(\m{S})$}{\label{alg:ocus-sat-check}
+		\Return{$\m{S}$} \;
 	}
-	\caption{$\comus(\formula,f,p)$ }
-	\label{alg:comus}
+	$\m{S} \gets  \grow(\m{S},\F) $ \label{alg:ocus:grow}\;
+	$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$  \label{alg:ocus:complement}\;
+}
+\caption{$\comus(\formula,f,p)$ }
+\label{alg:comus}
 \end{algorithm}
 %\tias{H should be initialised in algo 3}
 
@@ -519,17 +520,17 @@ Soundness and completeness of the proposal follow from the fact that all sets ad
 
 
 \begin{theorem}\label{thm:soundcomplete}
-	Let $\m{H}$ be a set of correction subsets of \formula. 
-	If $\m{S}$ is a hitting set of $\m{H}$ that is $f$-optimal among the hitting sets of $\m{H}$ satisfying a predicate $p$, and  $\m{S}$ is unsatisfiable, then $\m{S}$ is an OCUS of $\formula$. 
-	If  $\m{H}$ has no hitting sets satisfying $p$, then $\formula$ has no OCUSs.
+Let $\m{H}$ be a set of correction subsets of \formula. 
+If $\m{S}$ is a hitting set of $\m{H}$ that is $f$-optimal among the hitting sets of $\m{H}$ satisfying a predicate $p$, and  $\m{S}$ is unsatisfiable, then $\m{S}$ is an OCUS of $\formula$. 
+If  $\m{H}$ has no hitting sets satisfying $p$, then $\formula$ has no OCUSs.
 \end{theorem}
 \begin{proof}
-	For the first claim, it is clear that $\m{S}$ is unsatisfiable and satisfies $p$. Hence all we need to show is $f$-optimality of $\m{S}$.
-	If there would exist some other unsatisfiable subset $\m{S}'$ that satisfies $p$ with $f(\m{S}')\leq f(\m{S})$, we know that $\m{S}'$ would hit every minimal correction set of $\m{F}$, and hence also every set in $\m{H}$ (since every correction set is the superset of a minimal correction set).
-	Since $\m{S}$ is $f$-optimal among hitting sets of $\m{H}$ satisfying $p$ and $\m{S}'$ also hits $\m{H}$ and satisfies $p$, it must thus be that $f(\m{S})=f(\m{S}')$. 
-	%  
-	
-	The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the fact that an OCUS is an unsatisfiable subset of $\formula$. 
+For the first claim, it is clear that $\m{S}$ is unsatisfiable and satisfies $p$. Hence all we need to show is $f$-optimality of $\m{S}$.
+If there would exist some other unsatisfiable subset $\m{S}'$ that satisfies $p$ with $f(\m{S}')\leq f(\m{S})$, we know that $\m{S}'$ would hit every minimal correction set of $\m{F}$, and hence also every set in $\m{H}$ (since every correction set is the superset of a minimal correction set).
+Since $\m{S}$ is $f$-optimal among hitting sets of $\m{H}$ satisfying $p$ and $\m{S}'$ also hits $\m{H}$ and satisfies $p$, it must thus be that $f(\m{S})=f(\m{S}')$. 
+%  
+		
+The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the fact that an OCUS is an unsatisfiable subset of $\formula$. 
 \end{proof}
 % 	We define $f = \sum w_i$ the weighted sum over the following clause weights $w_1 = 20, w_2=20, w_3=20, w_4=20, w_5=1, w_6=1, w_7=1$. with interpretation $\{x_1, \lnot x_2, x_3 \}$:
 %\[ c_1 = \lnot x_1 \vee \lnot x_2 \vee x_3\] \[ c_2 = \lnot x_1 \vee  x_2 \vee x_3 \text{\hspace*{20pt}} c_3 = \lnot x_3 \vee \lnot x_2 \]
@@ -600,9 +601,9 @@ but on the other hand we also want the procedure to be very efficient as it is c
 
 For the case of explanations we are in, we make the following observations: 
 \begin{itemize}
-	\item Our formula at hand (using the notation from the \onestepo algorithm) consists of three types of clauses: \begin{inparaenum}\item  (translations of) the problem constraints (this is \formulac) \item literals representing the assignment found thus far (this is $I$), and \item the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). \end{inparaenum}
-	\item $\formulac$ and $I$ together are satisfiable, with assignment $I_{end}$, and \emph{mutually supportive}, by this we mean that making more constraints in \formulac true, more literals in $I$ will automatically become true and vice versa. 
-	\item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
+\item Our formula at hand (using the notation from the \onestepo algorithm) consists of three types of clauses: \begin{inparaenum}\item  (translations of) the problem constraints (this is \formulac) \item literals representing the assignment found thus far (this is $I$), and \item the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). \end{inparaenum}
+\item $\formulac$ and $I$ together are satisfiable, with assignment $I_{end}$, and \emph{mutually supportive}, by this we mean that making more constraints in \formulac true, more literals in $I$ will automatically become true and vice versa. 
+\item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
 \end{itemize}
 Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow($\m{S}$,$\F$) procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. %This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 
 
@@ -612,66 +613,66 @@ We evaluate different grow strategies in the experiments section, including the 
 The following example will be used as a running example to illustrate these and following concepts.
 
 \begin{example}
-	Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
-	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
-	
-	\begin{itemize}
-		\item $\Iend$, the final interpretation, is $\{x_1, \lnot x_2,  x_3\}$
-		\item $\m{I}$, the current interpretation, is $\{ \emptyset \}$
-		\item $\overline{\Iend\setminus I} =  \{\lnot x_1, x_2, \lnot x_3\}$.
-	\end{itemize}
-	To define the input for the OCUS call, we add new clauses representing the final interpretation $\Iend$:
-	\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
-	and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
-	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
-	The formula \formula in the \comus-call is thus: 
-	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
-	\[\formula_{incr, constr}= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge ... \wedge c_{10}\}\]	
-	
-	We define $p\triangleq$ \textit{exactly-one$(c_8, c_9, c_{10})$} and $f = \sum w_ic_i$ with clause weights \[w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=\infty, w_6=\infty, w_7=\infty, w_8=1, w_9=1, w_{10}=1\]
-	
-	\emph{In this example, the \grow we used is the one called \emph{Max-Actual-Unif} in \cref{sec:experiments}.}
+Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
+\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
+		
+\begin{itemize}
+	\item $\Iend$, the final interpretation, is $\{x_1, \lnot x_2,  x_3\}$
+	\item $\m{I}$, the current interpretation, is $\{ \emptyset \}$
+	\item $\overline{\Iend\setminus I} =  \{\lnot x_1, x_2, \lnot x_3\}$.
+\end{itemize}
+To define the input for the OCUS call, we add new clauses representing the final interpretation $\Iend$:
+\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
+and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
+\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
+The formula \formula in the \comus-call is thus: 
+% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
+\[\formula_{incr, constr}= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge ... \wedge c_{10}\}\]	
+		
+We define $p\triangleq$ \textit{exactly-one$(c_8, c_9, c_{10})$} and $f = \sum w_ic_i$ with clause weights \[w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=\infty, w_6=\infty, w_7=\infty, w_8=1, w_9=1, w_{10}=1\]
+		
+\emph{In this example, the \grow we used is the one called \emph{Max-Actual-Unif} in \cref{sec:experiments}.}
 \end{example}
 
 \begin{table}[!h]
-	\centering
-	%	\begin{adjustbox}{max width=\columnwidth}
-		\begin{tabular}{lcccc} 
-			%			\bottomrule[2pt]
-			\multicolumn{5}{c}{Step 1. Explanation of $x_1$: $c_3 \implies x_1$}\\
-			\toprule[2pt]
-			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
-			\toprule[2pt]
-			1 & $\{ \lnot x_1\}$ & $\mathit{true}$ & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$ & $\{ \{c_3, x_1, x_2, \lnot x_3 \}\}$   \\
-			\midrule	
-			2 &$\{\lnot x_3\}$ & $\mathit{true}$ & $\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$ & $\{ ..., \{c_3, x_1 , x_2 , x_3 \}\}$  \\  
-			\midrule
-			3 &$\{x_2\}$ & $\mathit{true}$ & $\{c_1 , c_2 , c_3, x_1 , x_2 , x_3 \}$ & $\{ ..., \{c_4, \lnot x_1 , \lnot x_2 , \lnot x_3\} \}$ \\
-			\midrule
-			4 &$\{x_2, c_4\}$ & $\mathit{true}$ & $\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$ & $\{ ..., \{x_1 , \lnot x_2 , x_3 , c_3 \}\}$ \\
-			\midrule
-			5 &$\{\lnot x_3, c_3\}$ & $\mathit{true}$ & $\{   c_1  , c_3 , c_4, x_1, \lnot x_2 , \lnot x_3 \}$ & $\{ ...,  \{ c_2, \lnot x_1 , x_2 , x_3\}\}$ \\
-			\midrule
-			6 &$\{\lnot x_1, c_3\}$ & $\mathit{false}$ & - & - \\
-			%			\bottomrule
-			\\
-			\multicolumn{5}{c}{Step 2. Explanation of $x_3$: $c_1 \wedge c_2 \wedge x_1 \implies x_3$}\\
-			\toprule[2pt]
-			7 &$\{x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c_1, \lnot x_2 , x_3 \} \}$ \\
-			\midrule
-			%		
-			%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
-			8 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & - & - \\
-			%			\bottomrule
-			\\
-			\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_4 \wedge x_3 \implies \lnot x_2$}\\
-			\toprule[2pt]
-			9 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & -  & - \\
-			
-		\end{tabular}
-		%	\end{adjustbox}
-	\caption{Sequence of explanation generated with \onestepo}
-	\label{tab:explanation-steps-expanded:step1}
+\centering
+%	\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{lcccc} 
+	%			\bottomrule[2pt]
+	\multicolumn{5}{c}{Step 1. Explanation of $x_1$: $c_3 \implies x_1$}\\
+	\toprule[2pt]
+	  & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ 
+	\toprule[2pt]
+	1 & $\{ \lnot x_1\}$                    & $\mathit{true}$  & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$            & $\{ \{c_3, x_1, x_2, \lnot x_3 \}\}$                                \\
+	\midrule	
+	2 & $\{\lnot x_3\}$                     & $\mathit{true}$  & $\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$ & $\{ ..., \{c_3, x_1 , x_2 , x_3 \}\}$                               \\  
+	\midrule
+	3 & $\{x_2\}$                           & $\mathit{true}$  & $\{c_1 , c_2 , c_3, x_1 , x_2 , x_3 \}$                    & $\{ ..., \{c_4, \lnot x_1 , \lnot x_2 , \lnot x_3\} \}$             \\
+	\midrule
+	4 & $\{x_2, c_4\}$                      & $\mathit{true}$  & $\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$       & $\{ ..., \{x_1 , \lnot x_2 , x_3 , c_3 \}\}$                        \\
+	\midrule
+	5 & $\{\lnot x_3, c_3\}$                & $\mathit{true}$  & $\{   c_1  , c_3 , c_4, x_1, \lnot x_2 , \lnot x_3 \}$     & $\{ ...,  \{ c_2, \lnot x_1 , x_2 , x_3\}\}$                        \\
+	\midrule
+	6 & $\{\lnot x_1, c_3\}$                & $\mathit{false}$ & -                                                          & -                                                                   \\
+	%			\bottomrule
+	\\
+	\multicolumn{5}{c}{Step 2. Explanation of $x_3$: $c_1 \wedge c_2 \wedge x_1 \implies x_3$}\\
+	\toprule[2pt]
+	7 & $\{x_1 , \lnot x_3 , c_2\}$         & $\mathit{true}$  & $\{   c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$            & $\{ ..., \{c_1, \lnot x_2 , x_3 \} \}$                              \\
+	\midrule
+	%		
+	%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
+	8 & $\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & -                                                          & -                                                                   \\
+	%			\bottomrule
+	\\
+	\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_4 \wedge x_3 \implies \lnot x_2$}\\
+	\toprule[2pt]
+	9 & $\{ x_2 , x_3, c_4 \}$              & $\mathit{false}$ & -                                                          & -                                                                   \\
+					
+\end{tabular}
+%	\end{adjustbox}
+\caption{Sequence of explanation generated with \onestepo}
+\label{tab:explanation-steps-expanded:step1}
 \end{table}
 
 
@@ -683,34 +684,34 @@ The following example will be used as a running example to illustrate these and 
 
 
 \begin{algorithm}[!h]
-	\DontPrintSemicolon
-	\tcp{Initilisation of Heap with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
-	$lb \gets$ \texttt{heap()}\;
-	\ForEach{$\ell \in  (\Iend \setminus I)$}{
-		$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
-		$ \m{S} \gets \grow(\emptyset, \ \formula_{\ell})$\; 
-		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \{  \formula_{\ell} \setminus \m{S}\}$ \;
-		\texttt{lb.push($\langle 0, \ell, \emptyset \rangle $)}\;
+\DontPrintSemicolon
+\tcp{Initilisation of Heap with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
+$lb \gets$ \texttt{heap()}\;
+\ForEach{$\ell \in  (\Iend \setminus I)$}{
+	$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
+	$ \m{S} \gets \grow(\emptyset, \ \formula_{\ell})$\; 
+	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \{  \formula_{\ell} \setminus \m{S}\}$ \;
+	\texttt{lb.push($\langle 0, \ell, \emptyset \rangle $)}\;
+}
+\tcp{\comus loop}
+\While{$true$}{
+				
+	$(cost, \ell, \m{S}) \gets$\texttt{lb.pop()} \tcp*{Literal with lowest bound}
+				
+	\If{ $\lnot \sat(\m{S})$}{
+		\Return{$\m{S}$} \tcp*{\color{Green}OCUS found}
 	}
-	\tcp{\comus loop}
-	\While{$true$}{
-		
-		$(cost, \ell, \m{S}) \gets$\texttt{lb.pop()} \tcp*{Literal with lowest bound}
-		
-		\If{ $\lnot \sat(\m{S})$}{
-			\Return{$\m{S}$} \tcp*{\color{Green}OCUS found}
-		}
-		
-		$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
-		
-		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \{  \formula_{\ell} \setminus \m{S}\}$ \tcp*{Correction Subset added to sets-to-hit}
-		
-		$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
-		
-		\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
-	}
-	\caption{$\iterativeonestep(\formulac,f,I, \Iend)$}
-	\label{alg:iterative_ocus}
+				
+	$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
+				
+	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \{  \formula_{\ell} \setminus \m{S}\}$ \tcp*{Correction Subset added to sets-to-hit}
+				
+	$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
+				
+	\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
+}
+\caption{$\iterativeonestep(\formulac,f,I, \Iend)$}
+\label{alg:iterative_ocus}
 \end{algorithm}
 
 \section{Improving efficiency}
@@ -721,18 +722,18 @@ The hitting set solver will find a cost-minimal hitting set that hits all sets-t
 
 
 \begin{algorithm}[!h]
-	\DontPrintSemicolon
-	\Output{$\m{K}$: Disjoint correction subsets}
-	$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \label{alg:disjmcs:init} \;
-	
-	\While{$\sat(\m{S}')$}{
-		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
-$ \m{S}' \gets \m{S}'  \cup  \m{C} $\;
-		$ \m{K} \gets \m{K} \cup \m{C} $\;
-		}
-	\Return $\m{K}$
-	\caption{$\disjcorr(\formula, \subsetT)$ }
-	\label{alg:disjmcs}
+\DontPrintSemicolon
+\Output{$\m{K}$: Disjoint correction subsets}
+$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \label{alg:disjmcs:init} \;
+		
+\While{$\sat(\m{S}')$}{
+	$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
+	$ \m{S}' \gets \m{S}'  \cup  \m{C} $\;
+	$ \m{K} \gets \m{K} \cup \m{C} $\;
+}
+\Return $\m{K}$
+\caption{$\disjcorr(\formula, \subsetT)$ }
+\label{alg:disjmcs}
 \end{algorithm}
 
 Inspired by \cite{marques2013computing}, the \disjmcs procedure, depicted in algorithm \ref{alg:disjmcs}, computes a collection of disjoint minimum correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). The \disjmcs procedure will repeatedly compute a satisfiable subset $\m{S} \subseteq \m{S}'$ and add its complement to 
@@ -743,22 +744,34 @@ Inspired by \cite{marques2013computing}, the \disjmcs procedure, depicted in alg
 until no more satisfiable subsets can be found.
 
 \begin{algorithm}[!h]
-	\DontPrintSemicolon
-	$\setstohit \gets  \disjcorr(\formula, \emptyset)$ \; %\label{omus-line1} 
-	\While{true}{
-		$\m{S} \gets \cohs(\setstohit,f,p) $  \;%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
-		% f{optimal} solution}
-		% \tcp{\small set with all unique clauses from hitting set}
-		%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
-		% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-		% \tcp{IF UNSAT, $hs$ is the OUS }
-		\If{ $\lnot \sat(\m{S})$}{\label{alg:ocus-sat-check}
-			\Return{$\m{S}$} \;
-		}
-		$\setstohit \gets \disjcorr(\formula, \m{S})$\;
+\DontPrintSemicolon
+$\m{S}_{best} \gets \emptyset$\;
+$lb, \ ub \gets 0, \ \infty$\;
+\tcp{ensure exactly one constraint is validated by the first correction subset, when hitting set is computed}
+$\setstohit, \m{S} \gets  \disjcorr(\formula, \emptyset, p)$ \; %\label{omus-line1} 
+\uIf{$p(\m{S})$}{
+$ub \gets f(\m{S})$\;
+$\m{S}_{best} \gets \m{S}$\;
+}
+\While{$lb \neq ub$}{
+	$\m{S} \gets \cohs(\setstohit,f,p, ub) $\;
+	$lb \gets f(\m{S})$\;
+	\uIf{$\lnot SAT(\m{S})$}{\label{alg:ocus-sat-check}
+		\Return{$\m{S}$} \;
 	}
-	\caption{$\comus(\formula, f,p)$}
-	\label{alg:comus}
+	$\setstohit, \m{S} \gets \disjcorr(\formula, \m{S}, \overline{p})$\;
+	\uIf{$p(\m{S})$ and $f(\m{S}) < ub$}{
+		$ub \gets f(\m{S})$\;
+		$\m{S}_{best} \gets \m{S}$\;
+	}
+	\uIf{$ lb = ub$}{\label{alg:ocus-sat-check}
+		\Return{$\m{S}_{best}$} \;
+	}
+	\tcp{$\overline{p} \triangleq$ complement of $p$ ensuring disjoint correction subsets}
+}
+\Return{$\m{S}_{best}$}
+\caption{$\comusdisj(\formula, f,p)$}
+\label{alg:comusdisj}
 \end{algorithm}
 
 
@@ -767,48 +780,62 @@ until no more satisfiable subsets can be found.
 
 
 \begin{table}[!h]
-	\centering
-	%	\begin{adjustbox}{max width=\columnwidth}
-		\begin{tabular}{lcccc} 
-			%			\bottomrule[2pt]
-			\multicolumn{5}{c}{Step 1. Explanation of $x_1$: $c_3 \implies x_1$}\\
-			\toprule
-			&$\m{S}$ & $\sat(\m{S})$ & \grow($\m{S}$, $\formula$) & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$\\ 
-			\toprule[2pt]
-			1 & $\{ \lnot x_1\}$ & $\mathit{true}$ & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$ & $\{ \{c_3, \cancel{x_1}, \cancel{x_2}, \lnot x_3 \}\}$   \\
-			\midrule[0.5pt]
-			1a & $\{ \lnot x_1, c_3 \}$ & $\mathit{false}$ & - & -  \\
-			\midrule[1pt]
-			2 &$\{\lnot x_3\}$ & $\mathit{true}$ & $\{c_2, c_3,c_4, x_1, x_2 , \lnot x_3 \}$ & $\{ ..., \{ c_1, \lnot x_1, \cancel{\lnot x_2}, \cancel{x_3} \}\}$  \\  
-						\midrule[0.5pt]
-			2a & $\{\lnot x_3, c_1\} $ & $\mathit{true}$& $\{c_1, c_3, c_4, x_1, \lnot x_2, \lnot x_3\}$ & $\{  ..., \{c_2, {\lnot x_1} , {x_2}, \cancel{x_3} \} \}$\\
-						\midrule[0.5pt]
- 			2b & $\{\lnot x_3, c_1, c_2\} $ & $\mathit{true}$ & $\{ \lnot x1, \lnot x_2, \lnot x_3, c_1,  c_2 , c_4\}$ & $\{ ..., \{ c_3, \cancel{x_1}, {x_2}, \cancel{x_3}\} \}$\\
-						\midrule[0.5pt]
-			2c & $\{\lnot x_3, c_1, c_2, c_3\} $& $\mathit{false}$  & - & - \\ 
-						\midrule[1pt]
-			3 & $\{ c_1, x_2\}$ & $\mathit{true}$ & $\{ c_1 , c_2, c_4, \lnot x_1, x_2, \lnot x_3 \}$ & $\{  .., \{ c_3, \cancel{x_1}, \cancel{\lnot x_2}, \cancel{x_3  }\} \}$   \\
-			\midrule[0.5pt]
-			3a & $\{ c_1, x_2, c_3 \}$ & $\mathit{true}$ & $\{ c_1 , c_2, c_3,  x_1, x_2, x_3 \}$ & $\{  .., \{ c_4 , \lnot x_1, \cancel{\lnot x_2}, \lnot x_3 \},$ \\
-			\midrule[0.5pt]
-			3b & $\{ c_1, x_2, c_3, c_4 \}$ & $\mathit{false}$ & - & - \\
-			\midrule[1pt]
-			4 & $\{ c_3, \lnot x_1\}$ & $\mathit{false}$ & - & - \\		\\		
-%			\bottomrule
-			\multicolumn{5}{c}{Step 2. Explanation of $x_3$: $c_1 \wedge c_2 \wedge x_1 \implies x_3$}\\
-			\toprule[2pt]
-			%		
-			%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
-			5 &$\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ & - & - \\
-			%			\bottomrule
-			\\
-			\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_4 \wedge x_3 \implies \lnot x_2$}\\
-			\toprule[2pt]
-			6 &$\{ x_2 , x_3, c_4 \}$ & $\mathit{false}$ & - & - \\
-		\end{tabular}
-		%	\end{adjustbox}
-	\caption{Intermediate steps for generating a sequence of explanations with incremental \onestepo and \disjmcsconstrained grow}
-	\label{tab:explanation-steps-expanded:step1}
+\centering
+%	\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{lcccc} 
+	%			\bottomrule[2pt]
+	\multicolumn{5}{c}{Step 1. Explanation of $x_1$: $c_3 \implies x_1$}\\
+	\toprule
+						 & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                             & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$     \\ 
+	\toprule[2pt]
+	1                    & $\{ \lnot x_1\}$                    & $\mathit{true}$  & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$        & $\{ \{c_3, \cancel{x_1}, \cancel{x_2}, \lnot x_3 \}\}$                  \\
+	\midrule[0.5pt]
+	1a                   & $\{ \lnot x_1, c_3 \}$              & $\mathit{false}$ & -                                                      & -                                                                       \\
+	\midrule[1pt]
+	2                    & $\{\lnot x_3\}$                     & $\mathit{true}$  & $\{c_2, c_3,c_4, x_1, x_2 , \lnot x_3 \}$              & $\{ ..., \{ c_1, \lnot x_1, \cancel{\lnot x_2}, \cancel{x_3} \}\}$      \\  
+	\midrule[0.5pt]
+	2a                   & $\{\lnot x_3, c_1\} $               & $\mathit{true}$  & $\{c_1, c_3, c_4, x_1, \lnot x_2, \lnot x_3\}$         & $\{  ..., \{c_2, {\lnot x_1} , {x_2}, \cancel{x_3} \} \}$               \\
+	\midrule[0.5pt]
+	2b                   & $\{\lnot x_3, c_1, c_2\} $          & $\mathit{true}$  & $\{ \lnot x1, \lnot x_2, \lnot x_3, c_1,  c_2 , c_4\}$ & $\{ ..., \{ c_3, \cancel{x_1}, {x_2}, \cancel{x_3}\} \}$                \\
+	\midrule[0.5pt]
+	2c                   & $\{\lnot x_3, c_1, c_2, c_3\} $     & $\mathit{false}$ & -                                                      & -                                                                       \\ 
+	\midrule[1pt]
+	3                    & $\{ c_1, x_2\}$                     & $\mathit{true}$  & $\{ c_1 , c_2, c_4, \lnot x_1, x_2, \lnot x_3 \}$      & $\{  .., \{ c_3, \cancel{x_1}, \cancel{\lnot x_2}, \cancel{x_3  }\} \}$ \\
+	\midrule[0.5pt]
+	3a                   & $\{ c_1, x_2, c_3 \}$               & $\mathit{true}$  & $\{ c_1 , c_2, c_3,  x_1, x_2, x_3 \}$                 & $\{  .., \{ c_4 , \lnot x_1, \cancel{\lnot x_2}, \lnot x_3 \},$         \\
+	\midrule[0.5pt]
+	3b                   & $\{ c_1, x_2, c_3, c_4 \}$          & $\mathit{false}$ & -                                                      & -                                                                       \\
+	\midrule[1pt]
+	4                    & $\{ c_3, \lnot x_1\}$               & $\mathit{false}$ & -                                                      & -                                                                       \\		\\		
+	%			\bottomrule
+	\multicolumn{5}{c}{Step 2. Explanation of $x_3$: $c_1 \wedge c_2 \wedge x_1 \implies x_3$}\\
+	\toprule[2pt]
+	%		
+	%		7 & $\{ x_1 , \lnot x_3 , c_2\}$ & $\mathit{true}$ & $\{ c_2 , c_3 , c_4,x_1 , x_2 , \lnot x_3 \}$ & $\{ ..., \{c1, \lnot x2 , x3 \}\}$  \\ \midrule
+
+	  &  &  &   &   $\{ \{c_3, x_1, \cancel{x_2}, \lnot x_3 \}\}$                                                               \\
+						 &  &                                                     &  & $\{ ..., \{ c_1, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{x_3} \}\}$\\
+						 &  &                                                    &   &   $\{  ..., \{c_2, \cancel{\lnot x_1} , {x_2}, \cancel{x_3} \} \}$       \\
+						 &  &                                                    &   &  $\{ ..., \{ c_3, x_1, {x_2}, \cancel{x_3}\} \}$         \\
+						 &  &                                                    &   &  $\{  .., \{ c_3, x_1, \cancel{\lnot x_2}, \cancel{x_3  }\} \}$\\
+						 &  &                                                    &   & $\{  .., \{ c_4 , \cancel{\lnot x_1}, \cancel{\lnot x_2}, \lnot x_3 \},$\\
+	5  & $\{ x_1 , \lnot x_3 , c_1 , c_2 \}$ & $\mathit{false}$ &   & \\
+	%			\bottomrule
+	
+	\\
+	\multicolumn{5}{c}{Step 3. Explanation of $\lnot x_2$: $c_4 \wedge x_3 \implies \lnot x_2$}\\
+	\toprule[2pt]
+	  &  &  &   &   $\{ \{c_3, x_1, {x_2}, \cancel{\lnot x_3} \}\}$                                                               \\
+ &  & &  & $\{ ..., \{ c_1, \cancel{\lnot x_1}, \cancel{\lnot x_2}, x_3 \}\}$\\
+&  & &   &   $\{  ..., \{c_2, \cancel{\lnot x_1} , {x_2}, x_3 \} \}$       \\
+&  & &   &  $\{ ..., \{ c_3, x_1, {x_2}, x_3\} \}$         \\
+&  & &   &  $\{  .., \{ c_3, x_1, \cancel{\lnot x_2}, {x_3  }\} \}$\\
+&  & &   & $\{  .., \{ c_4 , \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\lnot x_3} \},$\\
+	6                    & $\{ x_2 , x_3, c_4 \}$              & $\mathit{false}$ & -                                                      & -                                                                       \\
+\end{tabular}
+%	\end{adjustbox}
+\caption{Intermediate steps for generating a sequence of explanations with incremental \onestepo and \disjmcsconstrained grow}
+\label{tab:explanation-steps-expanded:step1}
 \end{table}
 
 
@@ -819,16 +846,16 @@ until no more satisfiable subsets can be found.
 \begin{table}
 \centering
 \begin{adjustbox}{max width=\columnwidth}
-\begin{tabular}{ccccccccc|c}
-%$\formula_0$ & $ =$  & $\m{C}$ & $  \wedge$ & $  \m{I}_0 $ &  $\wedge $ & $(\overline{\Iend\setminus \m{I}_0})$ &   $\wedge $ & $(\Iend\setminus \m{I}_0) $ & $\wedge $ & $(\overline{\m{I}_0})$ \\ 
-% &  &  &  & $ \{\}$ &  & $ \{  \lnot x_1, x_2, \lnot x_3\}$ &  & $ \{x_1,  \lnot x_2, x_3\}$ &  & $ \{ \}$ \\ \\
-$\formula_1 = \m{C}  $&$\wedge$ & $  I_1 $ &  $\wedge $ & $(\overline{\Iend\setminus I_1})$ &   $\wedge $ & $(\Iend\setminus I_1) $ & $\wedge $ & $(\overline{I_1})$ & $p$\\ 
- &  &   $ \{ x_1\}$ &  & $ \{ x_2, \lnot x_3\}$ &  & $ \{ \lnot x_2, x_3\}$ &  & $ \{ \lnot x_1\}$ &  \texttt{exactly-one}$(\{ x_2, \lnot x_3\})$ \\ \\
-$\formula_2 = \m{C} $&$\wedge$ & $  I_2 $ &  $\wedge $ & $(\overline{\Iend\setminus I_2})$ &   $\wedge $ & $(\Iend\setminus I_2) $ & $\wedge $ & $(\overline{I_2})$ \\ 
- &   &  $\{ x_1 ,x_3\}$ &  & $\{ x_2\}$ &  & $\{ \lnot x_2\}$ &  & $\{ \lnot x_1, \lnot x_3\}$ &  \texttt{exactly-one}$(\{ x_2\})$ \\ \\
-% $\formula_3$ & $ =$  & $\m{C}$ & $  \wedge$ & $  I_3 $ &  $\wedge $ & $(\overline{\Iend\setminus I_3})$ &   $\wedge $ & $(\Iend\setminus I_3) $ & $\wedge $ & $(\overline{I_3})$ \\ 
-% &  &  &  & $\{ x_1 ,\lnot x_2, x_3\}$ &  & $\{ \}$ &  & $\{ \}$ &  & $\{ \lnot x_1, x_2, \lnot x_3\}$ 
-\end{tabular} 
+	\begin{tabular}{ccccccccc|c}
+		$\formula_0 = \m{C}$ & $  \wedge$ & $  \m{I}_0 $ &  $\wedge $ & $(\overline{\Iend\setminus \m{I}_0})$ &   $\wedge $ & $(\Iend\setminus \m{I}_0) $ & $\wedge $ & $(\overline{\m{I}_0})$ & p\\ 
+		 &  &  $ \{\}$ &  & $ \{  \lnot x_1, x_2, \lnot x_3\}$ &  & $ \{x_1,  \lnot x_2, x_3\}$ &  & $ \{ \}$ & \texttt{exactly-one}$(\{\lnot x_1, x_2, \lnot x_3\})$\\ \\
+		$\formula_1 = \m{C}  $ & $\wedge$ & $  I_1 $        & $\wedge $ & $(\overline{\Iend\setminus I_1})$ & $\wedge $ & $(\Iend\setminus I_1) $ & $\wedge $ & $(\overline{I_1})$          & $p$                                         \\ 
+							   &          & $ \{ x_1\}$     &           & $ \{ x_2, \lnot x_3\}$            &           & $ \{ \lnot x_2, x_3\}$  &           & $ \{ \lnot x_1\}$           & \texttt{exactly-one}$(\{ x_2, \lnot x_3\})$ \\ \\
+		$\formula_2 = \m{C} $&$\wedge$ & $  I_2 $ &  $\wedge $ & $(\overline{\Iend\setminus I_2})$ &   $\wedge $ & $(\Iend\setminus I_2) $ & $\wedge $ & $(\overline{I_2})$ \\ 
+							   &          & $\{ x_1 ,x_3\}$ &           & $\{ x_2\}$                        &           & $\{ \lnot x_2\}$        &           & $\{ \lnot x_1, \lnot x_3\}$ & \texttt{exactly-one}$(\{ x_2\})$            \\ \\
+		% $\formula_3$ & $ =$  & $\m{C}$ & $  \wedge$ & $  I_3 $ &  $\wedge $ & $(\overline{\Iend\setminus I_3})$ &   $\wedge $ & $(\Iend\setminus I_3) $ & $\wedge $ & $(\overline{I_3})$ \\ 
+		% &  &  &  & $\{ x_1 ,\lnot x_2, x_3\}$ &  & $\{ \}$ &  & $\{ \}$ &  & $\{ \lnot x_1, x_2, \lnot x_3\}$ 
+	\end{tabular} 
 \end{adjustbox}
 \caption{Example 1 (cont.): Incrementality, and constrainedness}
 \end{table}
@@ -844,31 +871,69 @@ $\formula_2 = \m{C} $&$\wedge$ & $  I_2 $ &  $\wedge $ & $(\overline{\Iend\setmi
 \emph{Constrainedness with Incrementality.}  Applying algorithm \ref{alg:disjmcs} on the constrained incremental formula $\formula \triangleq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ where both polarities of the literals are present, will provide the same result as a single call to \grow. 
 \end{observation}
 
-{\LinesNumberedHidden
 \begin{algorithm}[!h]
-	\DontPrintSemicolon
-		\Input{$\m{A} \triangleq \m{I} \cup \{\lnot \ell\}$, the current interpretation and negated literal to explain.}
-		\setcounter{AlgoLine}{2}
-...\;
-	\ShowLn			$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{A}\}$ \label{alg:constraineddisjmcs:line:projection}\;		
-	...\;
-	\caption{$\disjcorrincr(\formula, \m{A},  \subsetT)$ }
-	\label{alg:disjmcsincr}
-\end{algorithm}}
-
-
-{\LinesNumberedHidden
-\begin{algorithm}[!h]
-	\DontPrintSemicolon
-\Input{$\m{I}$ the current interpretation}
-		\setcounter{AlgoLine}{2}
-...\;
-	\ShowLn			$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{I}\}$ \label{alg:constraineddisjmcs:line:projection}\;		
-	...\;
-	\caption{$\disjcorrconstrained(\formula, \m{I},  \subsetT)$ }
-	\label{alg:constraineddisjmcs}
-\end{algorithm}
+\DontPrintSemicolon
+\Input{$p$: constraint(s) on the form of the correction subset}
+\Output{$\m{K}$: Disjoint correction subsets}
+\Output{$\m{S}'$: Unsatisfiable Subset of $\m{F}$ satisfying p}
+$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \label{alg:disjmcs:init} \;
+		
+\While{$\sat(\m{S}')$}{
+	$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
+	$ \m{K} \gets \m{K} \cup \m{C} $\;
+	\If{$\lnot p(\m{C})$ }{
+		$\m{C} \gets$ find $\m{C}' \subseteq \m{C}$ such that $ p(\m{C}')$ evaluates to $true$ \;
+	}
+	$\m{S}' \gets \m{S}' \cup \m{C}$\;
+	\tcp{we are in fact extending the optimal hitting since we are adding the elements of the complements to a hitting set}
+	\uIf{$f(\m{S}') > ub $}{\algorithmicbreak}
 }
+\Return $\m{K}, \m{S}'$
+\caption{$\disjcorrconstrained(\formula, f, p ,  \subsetT, ub=\infty)$ }
+\label{alg:disjmcs}
+\end{algorithm}
+
+%
+%{\LinesNumberedHidden
+%\begin{algorithm}[!h]
+%	\DontPrintSemicolon
+%	\Input{$\m{A} \triangleq \m{I} \cup \{\lnot \ell\}$, the current interpretation and negated literal to explain.}
+%	\setcounter{AlgoLine}{2}
+%	...\;
+%	\ShowLn			$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{A}\}$ \label{alg:constraineddisjmcs:line:projection}\;		
+%	...\;
+%	\caption{$\disjcorrincr(\formula, \m{A},  \subsetT)$ }
+%	\label{alg:disjmcsincr}
+%\end{algorithm}}
+%
+%\begin{algorithm}[!h]
+%\DontPrintSemicolon
+%\Input{$\m{I}$ the current interpretation}
+%\Output{$\m{K}$: Disjoint correction subsets}
+%$\m{K}, \ \m{S}' \gets \emptyset, \ \m{S}$ \label{alg:disjmcs:init} \;
+%		
+%\While{$\sat(\m{S}')$}{
+%	$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
+%	$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{I}\}$ \;
+%	$ \m{K} \gets \m{K} \cup \m{C} $\;
+%}
+%\Return $\m{K}$
+%\caption{$\disjcorrconstrained(\formula, \m{I},  \subsetT)$ }
+%\label{alg:disjmcs}
+%\end{algorithm}
+%
+%{\LinesNumberedHidden
+%\begin{algorithm}[!h]
+%	\DontPrintSemicolon
+%	\Input{$\m{I}$ the current interpretation}
+%	\setcounter{AlgoLine}{2}
+%	...\;
+%	\ShowLn			$ \m{S}' \gets \m{S}'  \cup \{ \m{C} \cap \m{I}\}$ \label{alg:constraineddisjmcs:line:projection}\;		
+%	...\;
+%	\caption{$\disjcorrconstrained(\formula, \m{I},  \subsetT)$ }
+%	\label{alg:constraineddisjmcs}
+%\end{algorithm}
+%}
 
 
 %It can be either applied as \begin{inparaenum}[(i)]
@@ -888,16 +953,16 @@ $\formula_2 = \m{C} $&$\wedge$ & $  I_2 $ &  $\wedge $ & $(\overline{\Iend\setmi
 
 The cost of an Optimal Unsatisfiable Subset for a literal in the unconstrained version is bounded by a lower bound and an upper bound. 
 \begin{description}
-	\item[Initialization] The lower bound is initialized at 0. 
-	\begin{itemize}
-		\item[$>$] The lower bound can be improved by computing an \emph{optimal} hitting set on the disjoint minimum correction subsets present of the current formula $\formula$ to explain.			
-	\end{itemize}
-	\item[Update] Updated at every iteration by the cost of a computed optimal \emph{Hitting set}.
-	\item[Use] 
-	\begin{itemize}
-		\item[$>$] If an Optimal Unsatisfiable Subset is found, then its cost can be used as an upper bound on the cost of a subsequent OUS.
-		\item[$>$] The \textbf{LB} helps in sorting the literals according to the current cost of the least-cost \emph{Hitting Set} computed so far.		
-	\end{itemize}
+\item[Initialization] The lower bound is initialized at 0. 
+\begin{itemize}
+	\item[$>$] The lower bound can be improved by computing an \emph{optimal} hitting set on the disjoint minimum correction subsets present of the current formula $\formula$ to explain.			
+\end{itemize}
+\item[Update] Updated at every iteration by the cost of a computed optimal \emph{Hitting set}.
+\item[Use] 
+\begin{itemize}
+	\item[$>$] If an Optimal Unsatisfiable Subset is found, then its cost can be used as an upper bound on the cost of a subsequent OUS.
+	\item[$>$] The \textbf{LB} helps in sorting the literals according to the current cost of the least-cost \emph{Hitting Set} computed so far.		
+\end{itemize}
 \end{description}
 
 
@@ -914,33 +979,33 @@ Since the bounding on the \omus cost has the most effect if cheap \omus{}s are f
 
 
 \begin{algorithm}[!h]
-	\DontPrintSemicolon
-	\tcp{Initilisation of Heap with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
-	$lb \gets$ \texttt{heap()}\;
-	\ForEach{$\ell \in  (\Iend \setminus I)$}{
-		$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
-		$ \setstohit_{\ell} \gets \setstohit_{\ell}  \cup \disjcorrincr(\formula_{\ell},  \{ I \wedge (\lnot \ell) \} , \emptyset) $\;
-		$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
-		\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
-%		\texttt{lb.push($\langle 0, \ell, \emptyset \rangle $)}\;
+\DontPrintSemicolon
+\tcp{Initilisation of Heap with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
+$lb \gets$ \texttt{heap()}\;
+\ForEach{$\ell \in  (\Iend \setminus I)$}{
+	$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
+	$ \setstohit_{\ell} \gets \setstohit_{\ell}  \cup \disjcorrincr(\formula_{\ell},  \{ I \wedge (\lnot \ell) \} , \emptyset) $\;
+	$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
+	\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
+	%		\texttt{lb.push($\langle 0, \ell, \emptyset \rangle $)}\;
+}
+\tcp{\comus loop}
+\While{$true$}{
+				
+	$(cost, \ell, \m{S}) \gets$\texttt{lb.pop()} \tcp*{Literal with lowest bound}
+				
+	\If{ $\lnot \sat(\m{S})$}{
+		\Return{$\m{S}$} \tcp*{\color{Green}OCUS found}
 	}
-	\tcp{\comus loop}
-	\While{$true$}{
-		
-		$(cost, \ell, \m{S}) \gets$\texttt{lb.pop()} \tcp*{Literal with lowest bound}
-		
-		\If{ $\lnot \sat(\m{S})$}{
-			\Return{$\m{S}$} \tcp*{\color{Green}OCUS found}
-		}
-		
-%		$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
-		
-		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \disjcorrincr(\formula_{\ell},  \{ I \wedge (\lnot \ell) \} , \m{S}) $\;
-		$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
-		\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
-	}
-	\caption{$\iterativeonestepDisj(\formulac,f,I, \Iend)$}
-	\label{alg:iterative_ocus}
+				
+	%		$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
+				
+	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \disjcorrincr(\formula_{\ell},  \{ I \wedge (\lnot \ell) \} , \m{S}) $\;
+	$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
+	\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
+}
+\caption{$\iterativeonestepDisj(\formulac,f,I, \Iend)$}
+\label{alg:iterative_ocus}
 \end{algorithm}
 
 
@@ -993,17 +1058,17 @@ Algorithm \ref{alg:comus} computes an \comus for a given $\formula$, cost functi
 \section{Experimental Results}\label{sec:experiments}
 \subsection{Datasets}
 \begin{itemize}
-	\item Logic Grid puzzles not enough
-	\item Sudoku puzzles of varying difficulty (`simple', `easy', `intermediate', `expert') generated using qqwing.
-	\item Instances from Demystify 
+\item Logic Grid puzzles not enough
+\item Sudoku puzzles of varying difficulty (`simple', `easy', `intermediate', `expert') generated using qqwing.
+\item Instances from Demystify 
 \end{itemize}
 
 \subsection{RQ1. Cost comparison between MUS and Constrained for Logic Grid Puzzles+ Extra Demystify puzzles}
 \begin{figure}[h]
-	\centering
-	\includegraphics[width=0.5\columnwidth]{figures/heatmap_costs_mus_cous.pdf}
-	\caption{Q1 - Explanation quality comparison of optimal versus subset-minimal explanations in the generated puzzle explanation sequences.}
-	\label{fig:rq1_heatmap}
+\centering
+\includegraphics[width=0.5\columnwidth]{figures/heatmap_costs_mus_cous.pdf}
+\caption{Q1 - Explanation quality comparison of optimal versus subset-minimal explanations in the generated puzzle explanation sequences.}
+\label{fig:rq1_heatmap}
 \end{figure}
 
 
@@ -1014,23 +1079,23 @@ Algorithm \ref{alg:comus} computes an \comus for a given $\formula$, cost functi
 \subsection{RQ4. Does re-use of information across the different iterations improve efficiency?}
 
 \begin{figure}[!h]
-	\begin{subfigure}{0.47\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{figures/ocus_disj_mcses.pdf}
-		\label{fig:rq1_heatmap}
-	\end{subfigure}
-	\hfill
-	\begin{subfigure}{0.47\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{figures/ocus_incr_disj_mcses.pdf}
-		\label{fig:rq1_heatmap}
-	\end{subfigure}
+\begin{subfigure}{0.47\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{figures/ocus_disj_mcses.pdf}
+	\label{fig:rq1_heatmap}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.47\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{figures/ocus_incr_disj_mcses.pdf}
+	\label{fig:rq1_heatmap}
+\end{subfigure}
 \end{figure}
 
 \subsection{RQ5. Does appropriate sorting of literals lead to faster generation of individual explanations and explanation sequences ?}
 
 \begin{figure}[!h]
-	\centering
+\centering
 \includegraphics[width=\textwidth]{figures/ousb.pdf}
 \label{fig:rq1_heatmap}
 \end{figure}
@@ -1056,30 +1121,30 @@ Algorithm \ref{alg:comus} computes an \comus for a given $\formula$, cost functi
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.45\textwidth}
-		\centering
+	\centering
 	\includegraphics[width=\textwidth]{figures/explanation_times_histogram1.pdf}
 	\caption{Incremental Constrained OUS with bootstrapping}
 	\label{fig:second}
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.45\textwidth}
-		\centering
+	\centering
 	\includegraphics[width=\textwidth]{figures/explanation_times_histogram2.pdf}
 	\caption{Incremental bounded OUS with disj. mcs enum. grow}
 	\label{fig:third}
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.45\textwidth}
-		\centering
+	\centering
 	\includegraphics[width=\textwidth]{figures/explanation_times_histogram3.pdf}
 	\caption{Iterative incremental bounded OUS with bootstrapping}
 	\label{fig:third}
 \end{subfigure}
-
-
+	
+	
 \caption{Distribution of explanation generation time}
 \label{fig:figures}
-
+	
 \end{figure}
 
 \section{Conclusion and Future work}

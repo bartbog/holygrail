@@ -592,7 +592,7 @@ demystify & kakurasu &            1 &      226 &                   16 \\
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.5\columnwidth]{figures/heatmap_costs_mus_cous.pdf}
+\includegraphics[width=0.4\columnwidth]{figures/heatmap_costs_mus_cous.pdf}
 \caption{Q1 - Explanation quality comparison of optimal versus subset-minimal explanations in the generated puzzle explanation sequences.}
 \label{fig:rq1_heatmap}
 \end{figure}
@@ -606,12 +606,44 @@ demystify & kakurasu &            1 &      226 &                   16 \\
 	\label{fig:rq2_grow}
 \end{figure}
 
+
+\begin{figure}[!h]
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/rq2_boxplot_opt_22_01_12.pdf}
+		\caption{Incremental Constrained OUS with bootstrapping}
+		\label{fig:first}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/rq2_boxplot_grow_22_01_12.pdf}
+		\caption{Incremental Constrained OUS with bootstrapping}
+		\label{fig:second}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/rq2_boxplot_sat_22_01_12.pdf}
+		\caption{Incremental bounded OUS with disj. mcs enum. grow}
+		\label{fig:third}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/rq2_boxplot_remaining_22_01_12.pdf}
+		\caption{Iterative incremental bounded OUS with bootstrapping}
+		\label{fig:third}
+	\end{subfigure}
+\end{figure}
+
+
+	\begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{lrrrrrrrrrlll}
 	\toprule
 		% &   &  \multicolumn{2}{c}{opt}&  \multicolumn{2}{c}{sat} &  \multicolumn{2}{c}{grow} &  \multicolumn{2}{c}{remaining}  & &  &  \\
 	\textbf{config} &  \textbf{time} &  $\mu_{opt}$ &   $\sigma_{opt}$ &  $\mu_{sat}$ &   $\sigma_{sat}$ &  $\mu_{grow}$ &   $\sigma_{grow}$ & $\mu_{rem}$ &   $\sigma_{rem}$ & $n_{opt}$ & $n_{sat}$ & $n_{grow}$ \\
 	\midrule
-  Greedy OUS+Incr. &      5174 &    29.38 &      9.7 &     1.08 &      0.9 &     55.31 &       9.8 &          14.23 &            3.9 &    690k &    368k &      62k \\
 Iter. OUS &     29033 &     9.87 &      9.8 &     0.86 &      0.3 &     86.68 &      10.4 &           2.59 &            0.7 &    959k &    652k &     648k \\
 Iter. OUS+Incr. &      3910 &    24.18 &      9.8 &     0.69 &      0.3 &     58.42 &       9.9 &          16.71 &            4.6 &    365k &     58k &      54k \\
 OCUS &     26992 &    30.52 &     15.2 &     0.64 &      0.2 &     66.94 &      14.8 &           1.90 &            0.6 &    474k &    474k &     470k \\
@@ -619,7 +651,20 @@ OCUS+Incr. &      9336 &    52.97 &     15.5 &     0.42 &      0.2 &     34.66 &
 
 	\bottomrule
 \end{tabular}
+\end{adjustbox}
 
+
+\begin{adjustbox}{max width=\textwidth}
+	\begin{tabular}{l|r|rrrr|lll}
+		\textbf{config} &  \textbf{Time} &  \multicolumn{1}{c}{\textbf{Opt}}  & \multicolumn{1}{c}{\textbf{Sat}}  &   \multicolumn{1}{c}{\textbf{Grow}} & \multicolumn{1}{c|}{\textbf{Remaining}}  & $n_{opt}$ & $n_{sat}$ & $n_{grow}$ \\
+		\midrule
+		Iter. OUS         &     29033 &    7.26\% [$\pm$ 1.1\%]  &  0.78\% [$\pm$ 0.2\%]  & 89.53\% [$\pm$ 1.3\%]  &   2.43\% [$\pm$ 0.4\%]  &    959k &    652k &     648k \\
+		Iter. OUS+Incr.   &      3910 &   21.81\% [$\pm$ 4.3\%]  &  0.61\% [$\pm$ 0.1\%]  & 60.02\% [$\pm$ 7.8\%]  &  17.56\% [$\pm$ 3.8\%]  &    365k &     58k &      54k \\
+		OCUS              &     26992 &   27.09\% [$\pm$ 7.0\%]  &  0.61\% [$\pm$ 0.1\%]  &  70.4\% [$\pm$ 6.6\%]  &    1.9\% [$\pm$ 0.4\%]  &    474k &    474k &     470k \\
+		OCUS+Incr.        &      9336 &  50.36\% [$\pm$ 12.8\%]  &   0.4\% [$\pm$ 0.1\%]  & 36.48\% [$\pm$ 9.2\%]  &  12.76\% [$\pm$ 3.6\%]  &     40k &     40k &      36k \\
+%		\bottomrule
+	\end{tabular}
+\end{adjustbox}
 
 
 
@@ -648,6 +693,8 @@ OCUS Incr(+B).+Corr. SS &          6777 &        1.56 &  0.12 &  0.15 &  0.48 & 
 \caption{Satistics on individual explanation times}
 \label{tab:individual_expl_times}
 \end{table}
+
+
 
 
 \begin{figure}[!h]

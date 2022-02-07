@@ -273,6 +273,7 @@ The next proposition is the well-known hitting set duality \cite{DBLP:journals/j
 A set  $\m{S} \subseteq \formula$ is an MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.
 A set  $\m{S} \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
 \end{proposition}
+
 \section{Motivation}
 
 Our work is motivated by the problem of explaining satisfaction problems through a sequence of simple explanation steps. This can be used to teach people problem-solving skills, to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed), and in human-computer solving assistants.
@@ -420,14 +421,14 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver.
 
-\section{Efficient OCUS computation for explanations}
+\subsection{Efficient OCUS computation for explanations}
 
 Algorithm~\ref{alg:comus} is generic and can also be used to find (unconstrained) \omus{}s, namely with a trivially true $p$.
 However, its constrainedness property allows to remove the need to compute a MUS/\omus for every literal. This decreases the complexity of explanation sequence generation from $O(n^2)$ calls to MUS to $O(n)$ calls to OCUS, namely, once for every step in the sequence. 
 
 We now discuss optimizations to the OCUS algorithm that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 
-\subsection{Incremental OCUS Computation.}
+\subsubsection{Incremental OCUS Computation.}
 Inherently, generating a sequence of explanations still requires as many OCUS calls as there are literals to explain. 
 Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
 calls \onestepo iteratively with a growing interpretation $I$ until $I=\Iend$.
@@ -445,7 +446,7 @@ The effect of this is that we \textit{bootstrap} the hitting set solver with an 
 
 For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:backgr}), and we have this upper bound on the set of formulas to be used, we can initialize all relevant decision variables once. To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ we need to ensure that the MIP solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$, for example by giving all other literals infinite weight in the cost function. In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 
-\subsection{Domain-Specific Implementations of \grow.} \label{para:domainspecificgrow}
+\subsubsection{Domain-Specific Implementations of \grow.} \label{para:domainspecificgrow}
 
 The goal of the \grow procedure is to turn $\m{S}$ into a larger subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence, a stronger restriction for the hitting set solver is found.  
 
@@ -539,31 +540,70 @@ Inspired by \cite{marques2013computing}, the \disjmcs procedure, depicted in alg
 \end{inparaenum}
 until no more satisfiable subsets can be found.
 
-%\section{Additional optimizations}
-\clearpage
-\section{Experimental Results}\label{sec:experiments}
-\subsection{Datasets}
+\subsection{Interactivity}
+\emilio{Add a note here}
 \begin{itemize}
-\item Logic Grid puzzles not enough
-\item Sudoku puzzles of varying difficulty (`simple', `easy', `intermediate', `expert') generated using qqwing.
-\item Instances from Demystify 
+	\item What is an “interactive context”? In text definition
+	\item Did we have to explain the previous steps as well?
 \end{itemize}
 
-%\begin{figure}[h]
-%\includegraphics[width=0.8\textwidth]{figures/puzzle_info.png}
-%\end{figure}
-
+%\section{Additional optimizations}
 \clearpage
-\subsection*{RQ1. What is the effect on the cost of an explanation when requiring optimal explanations instead of a naive MUS-approach on an extensive benchmark dataset?}
+\section{Experiments}\label{sec:experiments}
+\emilio{Needs to be rephrased, parts mostly taken from ijcai paper}
+In this section, we validate the performance improvement of the different versions of our algorithm.
+\subsection{Experimental Setup}
+ Our experiments were run on a compute cluster where each explanation sequence was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor, a time limit of 60 minutes and a memory-limit of 8GB. The core code is written on top of PySAT \emilio{version number}. For the MIP calls, we used Gurobi \emilio{gurobi version number}, for SAT calls MiniSat 2.2 and for MaxSAT calls RC2 as bundled with PySAT (\emilio{PySAT version number}). In the MUS-based approach we used PySAT’s deletion-based MUS extractor MUSX [Marques-Silva, 2010].
+
+Regarding the benchmark dataset, we rely on a set of generated sudoku puzzles of increasing difficulty (different amount of given numbers and grid size), the logic grid puzzles of \cite{bogaerts2021framework}, as well as a number of instances taken from \cite{Using small muses to explain logic puzzles}. The code for all experiments is made available at \emilio{ Add github URL}.
+
+Similar to \cite{ijcai2021}, for logic puzzles and sudoku puzzles, we assign a cost of 60 for puzzle-agnostic constraints; 100 for puzzle-specific constraints; and cost 1 for facts. This cost function yielded reasonable explanations such that the use of a puzzle-agnostic constraint (considered relatively easy) for all other puzzles we assign a cost of 20 when using a constraint and a cost 1 for facts. 
+
+When generating an explanation sequence for these puzzles, the unsatisfiable subset identifies which constraints and which previously derived facts should be combined to derive new information. Our experiments are designed to answer the following research questions:  
+
+\begin{enumerate}
+\item[RQ1]  What is the effect on the cost of an explanation when requiring optimal explanations instead of a naive MUS-approach? 
+\item[RQ2] Which domain specific grow improve the overall runtime? 
+\item[RQ3] How does extraction multiple correction subsets affect runtime
+(a) as a replacement for grow and its complement;
+(b) as an initial bootstrapping method?
+\item[RQ4] What is the efficiency of a single step O(C)US and is single step sufficiently efficient for an interactive context? 
+\begin{enumerate}
+	\item Is the most difficult explanation faster in one over the other?
+\end{enumerate}
+\end{enumerate}
+
+\subsection{Explanation quality}
+To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on Algorithm 1. Before presenting the results, we want to stress that this is not a fair comparison with the implementation of Bogaerts et al. [2020], since there – in order to avoid the quality problems we will illustrate below – an extra inner loop was used that employs even more calls to MUS for a selected set of subsets of C of increasing size. While this yields better
+explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle.
 
 \begin{figure}[!h]
-\centering
-\includegraphics[width=0.4\columnwidth]{figures/heatmap_costs_mus_cous.pdf}
-\caption{Q1 - Explanation quality comparison of optimal versus subset-minimal explanations in the generated puzzle explanation sequences.}
-\label{fig:rq1_heatmap}
+	\centering
+	\includegraphics[width=0.4\columnwidth]{figures/heatmap_costs_mus_cous.pdf}
+	\caption{Q1 - Explanation quality comparison of optimal versus subset-minimal explanations in the generated puzzle explanation sequences.}
+	\label{fig:rq1_heatmap}
 \end{figure}
-\clearpage
-\subsection*{RQ2. Which domain specific grow improve the overall runtime?}
+
+To answer Q1, we ran the MUS-based algorithm as described in Algorithm 1 and compared at every step the cost of the produced explanation with the cost of the optimal explanation. These costs are plotted on a heatmap in Figure 1, where the darkness represents the number of occurrences of the combination at hand. We see that the difference in quality is striking in many cases, with the MUS-based solution of-
+ten missing very cheap explanations (as seen by the two dark squares in the column around cost 60), thereby confirming the need for a cost-based OUS/OCUS approach. 
+
+\subsection{Domain specific grow}
+
+In our OCUS algorithm, we do not just aim to find any satisfiable subsets, but we prefer \emph{high quality} satisfiable subsets: subsets that impose strong constraints on the assignments the optimal hitting set solver can find. 
+This induces a trade-off between \emph{efficiency} of the \grow strategy and \emph{quality} of the produced satisfiable subset.
+
+Thus, to answer \textbf{Q2}, we compared variations of  \comus that only differ in which \grow strategy they use. 
+Figure \ref{fig:grow_strategies} depicts the average (over all the puzzles) cumulative explanation time to derive a number of literals. Note that most puzzles only contain 150 literals, except for 2, which contain 96 and 250 literals respectively. When a method times out for a puzzle at one step, a runtime value of 3600 is used in computing the averages for all future steps.
+	The configurations used are as follows:
+	\begin{itemize}
+		\item \emph{Max} refers to growing with a MaxSAT solver and \emph{Greedy} to growing using a heuristic method implemented by repeated sat calls, while %\item 
+		\emph{no-grow} refers to skipping the \grow step.
+		\item  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$  while \emph{Actual} refers to using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the MaxSAT-based calls, \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
+		\item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$),  or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
+	\end{itemize}
+	%\tias{Use the names used in the figure, 'Max-Full variants'?}
+	%As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} indeed performs best, though only \emph{Max-Actual-Unif} is able to finish all explanations. 
+	We can observe that not using a grow strategy performs badly, as do weighted MaxSAT grows with costs $w_i$ (-Pos). Greedy grow strategies improve on not using a grow strategy, but not substantially. The two approaches that work best use the domain-specific knowledge of doing a MaxSAT grow on $\formulac\cup I$, with the unweighted variant the only one that never times out.
 
 \begin{figure}[!h]
 	\centering
@@ -572,6 +612,65 @@ until no more satisfiable subsets can be found.
 	\label{fig:rq2_grow}
 \end{figure}
 
+\subsection{Improving Correction Subset extraction}
+
+Answer RQ3a. Correction Subset extraction as an initial bootstrapping method
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=\textwidth]{figures/rq3_grow_2022_01_13_corr_subset_grow.pdf}
+	\caption{text}
+	\label{key}
+\end{figure}
+
+\subsection{Speeding up the start}
+
+Answer RQ3b. Correction Subset extraction as an initial bootstrapping method
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=\textwidth]{figures/rq3_bootstrapping_2022_01_13_corr_subset_grow.pdf}
+	\caption{text}
+	\label{key}
+\end{figure}
+
+\begin{adjustbox}{max width=\textwidth}
+	\begin{tabular}{l|r|rrrr|lll}
+		\textbf{config} &  \textbf{Time} &  \multicolumn{1}{c}{\textbf{Opt}}  & \multicolumn{1}{c}{\textbf{Sat}}  &   \multicolumn{1}{c}{\textbf{Grow}} & \multicolumn{1}{c|}{\textbf{Remaining}}  & $n_{opt}$ & $n_{sat}$ & $n_{grow}$ \\
+		\midrule
+		Iter. OUS         &     29033 &    7.26\% [$\pm$ 1.1\%]  &  0.78\% [$\pm$ 0.2\%]  & 89.53\% [$\pm$ 1.3\%]  &   2.43\% [$\pm$ 0.4\%]  &    959k &    652k &     648k \\
+		Iter. OUS+Incr.   &      3910 &   21.81\% [$\pm$ 4.3\%]  &  0.61\% [$\pm$ 0.1\%]  & 60.02\% [$\pm$ 7.8\%]  &  17.56\% [$\pm$ 3.8\%]  &    365k &     58k &      54k \\
+		OCUS              &     26992 &   27.09\% [$\pm$ 7.0\%]  &  0.61\% [$\pm$ 0.1\%]  &  70.4\% [$\pm$ 6.6\%]  &    1.9\% [$\pm$ 0.4\%]  &    474k &    474k &     470k \\
+		OCUS+Incr.        &      9336 &  50.36\% [$\pm$ 12.8\%]  &   0.4\% [$\pm$ 0.1\%]  & 36.48\% [$\pm$ 9.2\%]  &  12.76\% [$\pm$ 3.6\%]  &     40k &     40k &      36k \\
+		%		\bottomrule
+	\end{tabular}
+\end{adjustbox}
+
+
+
+\subsection{Constrainedness and Incrementality}
+
+To answer \textbf{Q3} and \textbf{Q4}, we compare the effect of constrainedness in the search for explanations (C) and incrementality. Next to OCUS, we also include the bounded OUS approach (OUSb), where we call the OUS algorithm for every literal in every step, but we reuse information by giving it the current best bound $f(X_{best})$ and iterating over the literals that performed best in the previous call first. Based on the previous experiment, we always use (both for OUSb and OCUS) \emph{Max-Actual-Unif} as grow strategy.
+For \emph{OCUS}, incrementality (\emph{+Incr.~HS}) is achieved by reusing the same incremental MIP hitting set solver throughout the explanation calls, as explained in Section~\ref{sec:ocusEx}.  
+To have a better view on how incrementality also affects OUSb, we add incrementality to it in the following ways:
+\begin{itemize}
+	\item \emph{SS.~caching} keeps track of the satisfiable subsets, which are used to initialize \setstohit for a fresh hitting set solver instance each time.
+	\item \emph{Lit.~Incr.~HS} uses a separate incremental hitting set solver for every literal to explain, throughout the explanation calls. Once the literal is explained, the hitting set solver is discarded.
+\end{itemize}
+Figure \ref{fig:incrementality_constraindness} shows the results, where % of the different variants, including the MUS-based variant discussed above. 
+in this figure, 
+the configurations are compared in a similar fashion to Figure \ref{fig:grow_strategies}.
+
+	When comparing the configurations, we see that the plain \emph{MUS}-based implementation is faster than the \emph{O(C)US} implementations, as it solves a simpler problem (with worse quality results as shown in \textbf{Q1}). %cannot keep up with , as is to be expected since a harder problem is tackled.
+	Replacing MUS by bounded OUS calls (orange line) leads to a much larger computation cost. The generic SS caching technique adds additional overhead. 
+	
+	The OCUS variants significantly improve runtime compared to those two bounded OUS approaches, by reducing the number of OUS calls. For OCUS, using an incremental hitting set solver across all steps seems to be slightly faster for deriving literals earlier in the sequence, while inducing a small overhead for the literals at the end of the sequence.
+	
+	When looking at the runtime to explain the entire sequence, best results are obtained with OUSb + Lit. Incr. HS, that is, using an incremental hitting set solver \textit{for every individual literal to explain}. However, for the first literals, we can see that it takes much more computation time and that reducing the number of OUS calls from $n$ to $1$ per explanation step improves runtime (OCUS). However, making each of the $n$ calls incremental and bounded across the entire explanation sequence generation process leads to an even faster process overall (OUSb+Lit. Incr. HS).
+	
+	\paragraph{Interactivity} \emilio{To analyze how the explanations compare in an interactive context, we represent a distribution of explanation generation times in figure \ref{fig:explanation_time}. We see that a major part of the explanations take less than 2 to 5 seconds to be generated. Even though, the difficult explanation steps can take more time ranging from 5 to 100+ seconds to be generated, it is only a small fraction of all generated explanations.}
+	
+	
 \begin{figure}[!h]
 	\centering
 	\includegraphics[width=0.6\textwidth]{figures/rq2_all_configs_maxsat_grow__22_01_12.pdf}
@@ -612,63 +711,28 @@ until no more satisfiable subsets can be found.
 \end{figure}
 
 
-	\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{lrrrrrrrrrlll}
-	\toprule
-		% &   &  \multicolumn{2}{c}{opt}&  \multicolumn{2}{c}{sat} &  \multicolumn{2}{c}{grow} &  \multicolumn{2}{c}{remaining}  & &  &  \\
-	\textbf{config} &  \textbf{time} &  $\mu_{opt}$ &   $\sigma_{opt}$ &  $\mu_{sat}$ &   $\sigma_{sat}$ &  $\mu_{grow}$ &   $\sigma_{grow}$ & $\mu_{rem}$ &   $\sigma_{rem}$ & $n_{opt}$ & $n_{sat}$ & $n_{grow}$ \\
-	\midrule
-Iter. OUS &     29033 &     9.87 &      9.8 &     0.86 &      0.3 &     86.68 &      10.4 &           2.59 &            0.7 &    959k &    652k &     648k \\
-Iter. OUS+Incr. &      3910 &    24.18 &      9.8 &     0.69 &      0.3 &     58.42 &       9.9 &          16.71 &            4.6 &    365k &     58k &      54k \\
-OCUS &     26992 &    30.52 &     15.2 &     0.64 &      0.2 &     66.94 &      14.8 &           1.90 &            0.6 &    474k &    474k &     470k \\
-OCUS+Incr. &      9336 &    52.97 &     15.5 &     0.42 &      0.2 &     34.66 &      11.2 &          11.95 &            4.4 &     40k &     40k &      36k \\
+%	\begin{adjustbox}{max width=\textwidth}
+%\begin{tabular}{lrrrrrrrrrlll}
+%	\toprule
+%		% &   &  \multicolumn{2}{c}{opt}&  \multicolumn{2}{c}{sat} &  \multicolumn{2}{c}{grow} &  \multicolumn{2}{c}{remaining}  & &  &  \\
+%	\textbf{config} &  \textbf{time} &  $\mu_{opt}$ &   $\sigma_{opt}$ &  $\mu_{sat}$ &   $\sigma_{sat}$ &  $\mu_{grow}$ &   $\sigma_{grow}$ & $\mu_{rem}$ &   $\sigma_{rem}$ & $n_{opt}$ & $n_{sat}$ & $n_{grow}$ \\
+%	\midrule
+%Iter. OUS &     29033 &     9.87 &      9.8 &     0.86 &      0.3 &     86.68 &      10.4 &           2.59 &            0.7 &    959k &    652k &     648k \\
+%Iter. OUS+Incr. &      3910 &    24.18 &      9.8 &     0.69 &      0.3 &     58.42 &       9.9 &          16.71 &            4.6 &    365k &     58k &      54k \\
+%OCUS &     26992 &    30.52 &     15.2 &     0.64 &      0.2 &     66.94 &      14.8 &           1.90 &            0.6 &    474k &    474k &     470k \\
+%OCUS+Incr. &      9336 &    52.97 &     15.5 &     0.42 &      0.2 &     34.66 &      11.2 &          11.95 &            4.4 &     40k &     40k &      36k \\
+%
+%	\bottomrule
+%\end{tabular}
+%\end{adjustbox}
 
-	\bottomrule
-\end{tabular}
-\end{adjustbox}
 
 
-\begin{adjustbox}{max width=\textwidth}
-	\begin{tabular}{l|r|rrrr|lll}
-		\textbf{config} &  \textbf{Time} &  \multicolumn{1}{c}{\textbf{Opt}}  & \multicolumn{1}{c}{\textbf{Sat}}  &   \multicolumn{1}{c}{\textbf{Grow}} & \multicolumn{1}{c|}{\textbf{Remaining}}  & $n_{opt}$ & $n_{sat}$ & $n_{grow}$ \\
-		\midrule
-		Iter. OUS         &     29033 &    7.26\% [$\pm$ 1.1\%]  &  0.78\% [$\pm$ 0.2\%]  & 89.53\% [$\pm$ 1.3\%]  &   2.43\% [$\pm$ 0.4\%]  &    959k &    652k &     648k \\
-		Iter. OUS+Incr.   &      3910 &   21.81\% [$\pm$ 4.3\%]  &  0.61\% [$\pm$ 0.1\%]  & 60.02\% [$\pm$ 7.8\%]  &  17.56\% [$\pm$ 3.8\%]  &    365k &     58k &      54k \\
-		OCUS              &     26992 &   27.09\% [$\pm$ 7.0\%]  &  0.61\% [$\pm$ 0.1\%]  &  70.4\% [$\pm$ 6.6\%]  &    1.9\% [$\pm$ 0.4\%]  &    474k &    474k &     470k \\
-		OCUS+Incr.        &      9336 &  50.36\% [$\pm$ 12.8\%]  &   0.4\% [$\pm$ 0.1\%]  & 36.48\% [$\pm$ 9.2\%]  &  12.76\% [$\pm$ 3.6\%]  &     40k &     40k &      36k \\
-%		\bottomrule
-	\end{tabular}
-\end{adjustbox}
 
 
 
 \clearpage
-\subsection*{RQ3. How does extraction multiple correction subsets affect runtime?}
 
-\subsubsection*{RQ3a. Correction Subset extraction as a replacement for grow and its complement}
-
-\begin{figure}[!h]
-	\centering
-	\includegraphics[width=\textwidth]{figures/rq3_grow_2022_01_13_corr_subset_grow.pdf}
-	\caption{text}
-	\label{key}
-\end{figure}
-
-%\begin{figure}[!h]
-%	\centering
-%	\includegraphics[width=0.5\textwidth]{figures/rq3_bootstrapping_zoom_2022_01_13_corr_subset_grow.pdf}
-%	\caption{text}
-%	\label{key}
-%\end{figure}
-
-\subsubsection*{RQ3b. Correction Subset extraction as an initial bootstrapping method}
-
-\begin{figure}[!h]
-	\centering
-	\includegraphics[width=\textwidth]{figures/rq3_bootstrapping_2022_01_13_corr_subset_grow.pdf}
-	\caption{text}
-	\label{key}
-\end{figure}
 \clearpage
 \subsection*{RQ4. What is the efficiency of a single step O(C)US and how does it compare in an interactive context?}
 
@@ -680,18 +744,16 @@ OCUS+Incr. &      9336 &    52.97 &     15.5 &     0.42 &      0.2 &     34.66 &
 \textbf{config} & \textbf{Total Time} & $\mathbf{\mu_{texpl}}$ &           $\mathbf{q_{25}}$ &      $\mathbf{q_{50}}$ &      $\mathbf{q_{75}}$ &      $\mathbf{q_{95}}$ &       $\mathbf{q_{98}}$ &      $\mathbf{q_{100}}$ \\
 \midrule
   Iter. OUS+SAT Corr. SS &          2648 &        0.52 &  0.13 &  0.20 &  0.28 &  1.47 &  6.10 &  51.82 \\
- Iter. OUS(+B)+SAT Corr. SS &          2575 &        0.35 &  0.12 &  0.19 &  0.26 &  0.91 &  1.79 &  54.86 \\
+ Iter. OUS(+B)+SAT Corr. SS &        1431 &        0.35 &  0.12 &  0.19 &  0.26 &  0.91 &  1.79 &  54.86 \\
  \midrule
-OCUS Incr(+B).+Corr. SS &          6777 &        1.56 &  0.12 &  0.15 &  0.48 &  5.48 & 21.36 & 197.72 \\
-  OCUS Incr(+B).+MaxSAT &          8315 &        1.94 &  0.10 &  0.13 &  0.39 &  6.90 & 19.55 & 684.94 \\
+OCUS Incr(+B).+Corr. SS &              6240 &        1.56 &  0.12 &  0.15 &  0.48 &  5.48 & 21.36 & 197.72 \\
+  OCUS Incr(+B).+MaxSAT &       7817 &        1.94 &  0.10 &  0.13 &  0.39 &  6.90 & 19.55 & 684.94 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \caption{Satistics on individual explanation times}
 \label{tab:individual_expl_times}
 \end{table}
-
-
 
 
 \begin{figure}[!h]

@@ -279,7 +279,7 @@ A set  $\m{S} \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{min
 Our work is motivated by the problem of explaining satisfaction problems through a sequence of simple explanation steps. This can be used to teach people problem-solving skills, to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed), and in human-computer solving assistants.
 
 Our original explanation generation algorithm \cite{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), a partial interpretation $I$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, by means of a weight for every clause and literal in \formula. 
-\clearpage
+
 
 \begin{algorithm}[!h]
 \DontPrintSemicolon
@@ -315,9 +315,7 @@ We see three main points of improvement, all of which will be tackled by our gen
 \item Finally, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}
 \end{itemize}
 
-\clearpage
 \section{Optimal Constraint Unsatisfiable Subsets}
-
 
 The first two considerations from the previous section lead to the following definition. 
 
@@ -362,7 +360,7 @@ where $S$ is a set of MIP decision variables, one for every clause in $\formula$
 %
 %In our application, 
 $f$ is a weighted sum over the variables in $S$. For example, (unit) clauses representing previously derived facts can be given small weights and regular constraints can be given large weights, such that explanations are penalized for including constraints when previously derived facts can be used instead. %relevant facts are directly available.
-\clearpage
+
 
 \begin{algorithm}[!h]
 \DontPrintSemicolon
@@ -387,6 +385,16 @@ $\setstohit  \gets \emptyset$ \; %\label{omus-line1}
 \caption{$\comus(\formula,f,p)$ }
 \label{alg:comus}
 \end{algorithm}
+
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+
+	\Return{$\{\formula \setminus \grow(\formula, \subsetT)\}$}
+	\caption{$\corrsubsets(\formula,\subsetT)$ }
+	\label{alg:corr-subsets-grow}
+\end{algorithm}
+
 
 
 Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}. It combines the hitting set-based approach for MUSs of \cite{ignatiev2015smallest} with the use of a MIP solver for (weighted) hitting sets as proposed for maximum satisfiability \cite{DBLP:conf/sat/DaviesB13}. The key novelty is the ability to add structural constraints to the hitting set solver, without impacting the duality principles of \cref{prop:MCS-MUS-hittingset}, as we will show.
@@ -421,14 +429,75 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver.
 
-\subsection{Efficient OCUS computation for explanations}
+\section{Efficient OCUS computation for explanations}
 
 Algorithm~\ref{alg:comus} is generic and can also be used to find (unconstrained) \omus{}s, namely with a trivially true $p$.
 However, its constrainedness property allows to remove the need to compute a MUS/\omus for every literal. This decreases the complexity of explanation sequence generation from $O(n^2)$ calls to MUS to $O(n)$ calls to OCUS, namely, once for every step in the sequence. 
 
+The following example illustrates the optimizations to the OCUS algorithm presented in subsequent sections.  
+
+\begin{example}
+	Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
+	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
+	
+	\begin{itemize}
+		\item $\Iend$, the final interpretation, is $\{x_1, \lnot x_2,  x_3\}$
+		\item $\m{I}$, the current interpretation, is $\{ \emptyset \}$
+		\item $\overline{\Iend\setminus I} =  \{\lnot x_1, x_2, \lnot x_3\}$.
+
+	\end{itemize}
+	To define the input for the OCUS call, we add new clauses representing the final interpretation $\Iend$:
+	\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
+	and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
+	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
+	The formula \formula in the \comus-call is thus: 
+	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
+	\[\formula_{incr, constr}= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge ... \wedge c_{10}\}\]	
+	
+	We define $p\triangleq$ \textit{exactly-one$(c_8, c_9, c_{10})$} and $f = \sum w_ic_i$ with clause weights \[w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=\infty, w_6=\infty, w_7=\infty, w_8=1, w_9=1, w_{10}=1\]
+	
+%	\emph{In this example, the \grow we used is the one called \emph{Max-Actual-Unif} in \cref{sec:experiments}.}
+	Finally, for explaining one of the literals, we proceed to call \comus on formula $\formula_{incr, constr}$ with our given cost function $f$ and exactly-one constraint $p$:
+	\[\comus( \formulac\land \Iend \land \overline{(\Iend\setminus I)}, f, p)\]
+	
+
+
+\end{example}
+
+Table \ref{tab:example-explanation-generation} depicts the steps of algorithm \ref{alg:comus} for generating an OCUS of given $\formula$, $f$ and $p$. 
+In this example, the \grow we used is the one called \emph{Max-Actual-Unif} in \ref{sec:experiments:domain-specific-grow}. 
+
+\setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that furthermore contains exactly one of $\{\lnot x_1, x_2, \lnot x_3\}$ (due to $p$). Once an unsatisfiable subset is found, it's guaranteed to validate the given constraint and be optimal. In this example, step 6 of Table~\ref{tab:example-explanation-generation} signifies that using constraint $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
+
+\begin{table}[!h]
+\centering
+%	\begin{adjustbox}{max width=\columnwidth}
+	\begin{tabular}{lcccc} 
+		%			\bottomrule[2pt]
+%		\multicolumn{5}{c}{Step 1. Explanation of $x_1$: $c_3 \implies x_1$}\\
+%		\toprule[2pt]
+		& $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ 
+		\toprule[2pt]
+		1 & $\{ \lnot x_1\}$                    & $\mathit{true}$  & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$            & $\{ \{c_3, x_1, x_2, \lnot x_3 \}\}$                                \\
+		\midrule	
+		2 & $\{\lnot x_3\}$                     & $\mathit{true}$  & $\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$ & $\{ ..., \{c_3, x_1 , x_2 , x_3 \}\}$                               \\  
+		\midrule
+		3 & $\{x_2\}$                           & $\mathit{true}$  & $\{c_1 , c_2 , c_3, x_1 , x_2 , x_3 \}$                    & $\{ ..., \{c_4, \lnot x_1 , \lnot x_2 , \lnot x_3\} \}$             \\
+		\midrule
+		4 & $\{x_2, c_4\}$                      & $\mathit{true}$  & $\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$       & $\{ ..., \{x_1 , \lnot x_2 , x_3 , c_3 \}\}$                        \\
+		\midrule
+		5 & $\{\lnot x_3, c_3\}$                & $\mathit{true}$  & $\{   c_1  , c_3 , c_4, x_1, \lnot x_2 , \lnot x_3 \}$     & $\{ ...,  \{ c_2, \lnot x_1 , x_2 , x_3\}\}$                        \\
+		\midrule
+		6 & $\{\lnot x_1, c_3\}$  & $\mathit{false}$ & - & - \\
+	\end{tabular}
+
+\caption{Sequence of explanation generated with \onestepo}
+\label{tab:example-explanation-generation}
+\end{table}
+
 We now discuss optimizations to the OCUS algorithm that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 
-\subsubsection{Incremental OCUS Computation.}
+\subsection{Incremental OCUS Computation.}
 Inherently, generating a sequence of explanations still requires as many OCUS calls as there are literals to explain. 
 Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
 calls \onestepo iteratively with a growing interpretation $I$ until $I=\Iend$.
@@ -446,7 +515,7 @@ The effect of this is that we \textit{bootstrap} the hitting set solver with an 
 
 For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:backgr}), and we have this upper bound on the set of formulas to be used, we can initialize all relevant decision variables once. To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ we need to ensure that the MIP solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$, for example by giving all other literals infinite weight in the cost function. In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 
-\subsubsection{Domain-Specific Implementations of \grow.} \label{para:domainspecificgrow}
+\subsection{Domain-Specific Implementations of \grow.} \label{para:domainspecificgrow}
 
 The goal of the \grow procedure is to turn $\m{S}$ into a larger subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence, a stronger restriction for the hitting set solver is found.  
 
@@ -463,45 +532,45 @@ Since the restriction on the third type of elements of $\formula$ are already st
 
 We evaluate different grow strategies in the experiments section, including the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
 
-\section{Example}
-The following example will be used as a running example to illustrate these and following concepts.
+\subsection{Explanations with Iterated OUS} 
 
-\begin{example}
-Let $\formulac$ be a CNF formula over variables $x_1, x_2, x_3$ with the following four clauses:
-\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3\] \[  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
-		
-\begin{itemize}
-	\item $\Iend$, the final interpretation, is $\{x_1, \lnot x_2,  x_3\}$
-	\item $\m{I}$, the current interpretation, is $\{ \emptyset \}$
-	\item $\overline{\Iend\setminus I} =  \{\lnot x_1, x_2, \lnot x_3\}$.
-\end{itemize}
-To define the input for the OCUS call, we add new clauses representing the final interpretation $\Iend$:
-\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
-and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
-\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
-The formula \formula in the \comus-call is thus: 
-% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
-\[\formula_{incr, constr}= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge ... \wedge c_{10}\}\]	
-		
-We define $p\triangleq$ \textit{exactly-one$(c_8, c_9, c_{10})$} and $f = \sum w_ic_i$ with clause weights \[w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=\infty, w_6=\infty, w_7=\infty, w_8=1, w_9=1, w_{10}=1\]
-		
-\emph{In this example, the \grow we used is the one called \emph{Max-Actual-Unif} in \cref{sec:experiments}.}
-\end{example}
+Instead of working \comus-based, we can also generate optimal explanations by replacing the MUS call by an \omus call in Algorithm \ref{alg:oneStep} (where \omus is computed as in Algorithm \ref{alg:comus}, but with a trivially true $p$).
+%Observation: waste of time
+When doing this, we know that every \comus of cost greater than or equal to $f(X_{\mathit{best}})$ will be discarded by the check on Line 4 of Algorithm~\ref{alg:oneStep}.
+%Optimizatino: what do we do? 
+\paragraph{Bounded OUS} As such, a next optimization is to, instead of searching for an OUS, perform a \emph{bounded OUS check}, which only computes an OUS in case one of cost smaller than a given bound $\mathit{ub}$ exists.  
+%Detail: how do we do it? 
+In our specific implementation, bounded \omus is performed by interrupting this \omus-call (after Line 3 Algorithm~\ref{alg:comus}) if $f(\m{S}) > \mathit{ub}$.
 
-\clearpage
-\section{Iterative searching for \omus}
+\emilio{\textit{Rephrase and incorporate with previous:}
+Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop across the different literals, we keep track of an upper bound of the cost of an OUS for each literal to explain. This is initialized to a value greater than any \omus, e.g., as $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$, and is updated every time an \omus explaining that literal is found; when going through the loop in Line 2 of Algorithm~\ref{alg:comus}, we then handle literals in order of increasing upper bounds.}
+\paragraph{Iterated OUS} Explanations with bounded \omus{}s still computes extra hitting sets until the upper bound is reached or until a \omus is found. 
+%
+Therefore, instead of sorting the literals by the \omus{}s that are already found, we go one step further and keep track of the already found hitting sets as a lower bound on the cost of the \omus{}.
+%
+More precisely, Algorithm~\ref{alg:iterative_ocus} keeps track of a priority queue sorted by the cost of the last computed hitting set for every remaining literal to explain.
 
+First, line 3 through 8 initializes, for every remaining literal to explain $\ell \in (\Iend \setminus I)$, the priority queue with tuple $\langle f(\subsetT)$, $\ell$, $\subsetT \rangle$ where $\subsetT$ is the last computed hitting set for $\ell$ on the collection of sets-to-hit $\setstohit_{\ell}$; and  its correspond cost $f(\subsetT)$.
+
+Next, line 10 extracts the best candidate literal-to-explain out of the priority queue. Similar to Algorithm~\ref{alg:comus}, if corresponding hitting set is unsatisfiable, it is guaranteed to be an \comus, otherwise a number of correction subsets are extracted from $\subsetT$ and added to the collection of sets to hit $\setstohit_{\ell}$. Finally, a new hitting set is computed and the literal is pushed back in the priority queue. 
+
+\emilio{Idea: Generate a table with number of calls to optimal hitting set in order to compare the speedup of using iterated vs bounded optimized}
 
 
 \begin{algorithm}[!h]
 \DontPrintSemicolon
-\tcp{Initilisation of Heap with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
-$lb \gets$ \texttt{heap()}\;
+\tcp{Initilisation of priority Queue with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
+$lb \gets$ \texttt{PriorityQueue()}\;
+$p \gets$ \texttt{none-of}($\Iend \setminus I$) \;
+\tcp{\emilio{I'm not sure `$p \gets$ \texttt{none-of}' is the best way to say that we cannot take the not-yet-derived literals , or maybe adapt $\formula_{\ell} \gets  \formulac \wedge (I ) \wedge \{\lnot \ell \}$, but if I do that then we don't take incrementality into acount..}}
 \ForEach{$\ell \in  (\Iend \setminus I)$}{
 	$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
-	$ \m{K} \gets  \corrsubsets(\formula_{\ell}, \{\lnot \ell \} )$\; 
-	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \m{K} $\;
-	$\m{S} \gets \cohs(\setstohit_{\ell},f,true)$ \tcp*{Optimal hitting set}
+%	$ \setstohit_{\ell} \gets  \corrsubsets(\formula_{\ell}, \{\lnot \ell \} )$\; 
+%	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \m{K} $\;
+%	$ \m{K} \gets  \corrsubsets(\formula_{\ell}, \{\lnot \ell \} )$\; 
+%	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \m{K} $\;
+	$\setstohit_{\ell}  \gets \emptyset $\;
+	$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
 	\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
 }
 \tcp{\comus loop}
@@ -513,25 +582,30 @@ $lb \gets$ \texttt{heap()}\;
 		\Return{$\m{S}$} \tcp*{\color{Green}OCUS found}
 	}
 				
-	$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
+%	$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
 				
-	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \{  \formula_{\ell} \setminus \m{S}\}$ \tcp*{Correction Subset added to sets-to-hit}
+
+%	$\m{K} \gets \corrsubsets(\formula_{\ell}, \subsetT)$\;
+
+$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \corrsubsets(\formula_{\ell}, \subsetT) $ \;%\tcp*{Correction Subset added to sets-to-hit}
+
+%	$\m{K} \gets \corrsubsets(\formula_{\ell}, \subsetT)$\;
+%
+%	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \m{K} $ \tcp*{Correction Subset added to sets-to-hit}
 				
-	$\m{S} \gets \cohs(\setstohit_{\ell},f,true)$ \tcp*{Optimal hitting set}
+	$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \;%\tcp*{Optimal hitting set}
 				
 	\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
 }
 \caption{$\iterativeonestep(\formulac,f,I, \Iend)$}
 \label{alg:iterative_ocus}
 \end{algorithm}
-\clearpage
 
-\section{Improving efficiency}
+\iterativeonestep ensures that only the most promising candidate literals-to-explain are expanded at any given iteration to find the next best explanation.
 
 \subsection{Correction Subsets enumeration}
 
 The hitting set solver will find a cost-minimal hitting set that hits all sets-to-hit and satisfies the given constraint. This last observation motivates finding sets-to-hit that do not intersect with each other. In that case, an element of set-to-hit will be selected. If we apply this reasoning to the implicit hitting set framework, computing disjoint minimum correction subsets helps in bounding the cost of finding an OCUS.
-
 
 Inspired by \cite{marques2013computing}, the \disjmcs procedure, depicted in algorithm \ref{alg:disjmcs}, computes a collection of disjoint minimum correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). The \disjmcs procedure will repeatedly compute a satisfiable subset $\m{S} \subseteq \m{S}'$ and add its complement to 
 \begin{inparaenum}[(i)] 
@@ -539,6 +613,22 @@ Inspired by \cite{marques2013computing}, the \disjmcs procedure, depicted in alg
 \item $\m{S}$, ensuring that the constraints of the correction subset cannot be present in the next correction subset,
 \end{inparaenum}
 until no more satisfiable subsets can be found.
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	$\m{K}, \ \subsetT' \gets \emptyset, \ \subsetT$ \label{alg:disjmcs:init} \;
+	
+	\While{$\sat(\m{S}')$}{
+		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
+		$ \m{S}' \gets \m{S}'  \cup  \m{C} $\;
+		$ \m{K} \gets \m{K} \cup \{\m{C} \}$\;
+	}
+	\Return $\m{K}$
+	\caption{$\corrsubsets(\formula,\subsetT)$ }
+	\label{alg:corr-subsets-grow-with-sat}
+\end{algorithm}
+
+\subsection{Bootstrapping the collection of hitting sets}
 
 \subsection{Interactivity}
 \emilio{Add a note here}
@@ -587,7 +677,7 @@ explanations, it comes at the expense of computation time, thereby leading to se
 To answer Q1, we ran the MUS-based algorithm as described in Algorithm 1 and compared at every step the cost of the produced explanation with the cost of the optimal explanation. These costs are plotted on a heatmap in Figure 1, where the darkness represents the number of occurrences of the combination at hand. We see that the difference in quality is striking in many cases, with the MUS-based solution of-
 ten missing very cheap explanations (as seen by the two dark squares in the column around cost 60), thereby confirming the need for a cost-based OUS/OCUS approach. 
 
-\subsection{Domain specific grow}
+\subsection{Domain specific grow}\label{sec:experiments:domain-specific-grow}
 
 In our OCUS algorithm, we do not just aim to find any satisfiable subsets, but we prefer \emph{high quality} satisfiable subsets: subsets that impose strong constraints on the assignments the optimal hitting set solver can find. 
 This induces a trade-off between \emph{efficiency} of the \grow strategy and \emph{quality} of the produced satisfiable subset.

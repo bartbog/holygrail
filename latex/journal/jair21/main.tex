@@ -214,7 +214,19 @@ Motivated by these observations, we develop algorithms that aid explaining CSPs 
 
 \section{Related Works}
 \label{sec:related-works}
-
+\begin{itemize}
+	\item something about explanations and quality of the explanations 
+	\item something about reviewing explanations for csps presented at IJCAI
+	\item something about weighted Unsatisfiable subsets
+	\item reviewing improvements that apply to unsatisfiable subsets
+	\begin{itemize}
+		\item  (?) Abstract cores
+		%		\item  Postponing optimisation
+		\item  Disjoint MCS enumeration
+		\item  something about incrementaltity (and more specifically) in maxsat solving which could be applied to weighted MUSes
+	\end{itemize}
+	\item Searching for explainable solutions in Sudoku 
+\end{itemize}
 
 \cite{bjornssonsearching} take a heuristic-search based approach to generate explanation sequences for Constraint Satisfaction problems with a use case on Sudoku puzzles. In that work, the quality of an explanation sequence is measured by a cost function associated with the strategy used, the number of times it is applied and the number of moves it derives.
 % Survey paper: Explnaation in Constraint Satisfaction : A survey
@@ -285,14 +297,14 @@ Our original explanation generation algorithm \cite{ecai/BogaertsGCG20} starts f
 \DontPrintSemicolon
 \caption{$\onestep(\formulac,f,I,\Iend)$}
 \label{alg:oneStep}
-$X_{best} \gets \mathit{nil}$\;
+${\cal S}_{best} \gets \mathit{nil}$\;
 \For{$l \in \{\Iend \setminus I\}$}{
-	$X \gets \call{MUS}{(\formulac \land I \land \neg l)}$\;
-	\If{$f(X)<f(X_{best})$\label{alg:oneStep:ifcheck}}{
-		$X_{best} \gets X$\;
+	${\cal S} \gets \call{MUS}{(\formulac \land I \land \neg l)}$\;
+	\If{$f({\cal S})<f({\cal S}_{best})$\label{alg:oneStep:ifcheck}}{
+		${\cal S}_{best} \gets {\cal S}$\;
 	}
 }
-\Return{$X_{best}$} 
+\Return{${\cal S}_{best}$} 
 \end{algorithm}
 
 The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by the total cost of the elements used in the explanation.
@@ -532,77 +544,6 @@ Since the restriction on the third type of elements of $\formula$ are already st
 
 We evaluate different grow strategies in the experiments section, including the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
 
-\subsection{Explanations with Iterated OUS} 
-
-Instead of working \comus-based, we can also generate optimal explanations by replacing the MUS call by an \omus call in Algorithm \ref{alg:oneStep} (where \omus is computed as in Algorithm \ref{alg:comus}, but with a trivially true $p$).
-%Observation: waste of time
-When doing this, we know that every \comus of cost greater than or equal to $f(X_{\mathit{best}})$ will be discarded by the check on Line 4 of Algorithm~\ref{alg:oneStep}.
-%Optimizatino: what do we do? 
-\paragraph{Bounded OUS} As such, a next optimization is to, instead of searching for an OUS, perform a \emph{bounded OUS check}, which only computes an OUS in case one of cost smaller than a given bound $\mathit{ub}$ exists.  
-%Detail: how do we do it? 
-In our specific implementation, bounded \omus is performed by interrupting this \omus-call (after Line 3 Algorithm~\ref{alg:comus}) if $f(\m{S}) > \mathit{ub}$.
-
-\emilio{\textit{Rephrase and incorporate with previous:}
-Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop across the different literals, we keep track of an upper bound of the cost of an OUS for each literal to explain. This is initialized to a value greater than any \omus, e.g., as $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$, and is updated every time an \omus explaining that literal is found; when going through the loop in Line 2 of Algorithm~\ref{alg:comus}, we then handle literals in order of increasing upper bounds.}
-\paragraph{Iterated OUS} Explanations with bounded \omus{}s still computes extra hitting sets until the upper bound is reached or until a \omus is found. 
-%
-Therefore, instead of sorting the literals by the \omus{}s that are already found, we go one step further and keep track of the already found hitting sets as a lower bound on the cost of the \omus{}.
-%
-More precisely, Algorithm~\ref{alg:iterative_ocus} keeps track of a priority queue sorted by the cost of the last computed hitting set for every remaining literal to explain.
-
-First, line 3 through 8 initializes, for every remaining literal to explain $\ell \in (\Iend \setminus I)$, the priority queue with tuple $\langle f(\subsetT)$, $\ell$, $\subsetT \rangle$ where $\subsetT$ is the last computed hitting set for $\ell$ on the collection of sets-to-hit $\setstohit_{\ell}$; and  its correspond cost $f(\subsetT)$.
-
-Next, line 10 extracts the best candidate literal-to-explain out of the priority queue. Similar to Algorithm~\ref{alg:comus}, if corresponding hitting set is unsatisfiable, it is guaranteed to be an \comus, otherwise a number of correction subsets are extracted from $\subsetT$ and added to the collection of sets to hit $\setstohit_{\ell}$. Finally, a new hitting set is computed and the literal is pushed back in the priority queue. 
-
-\emilio{Idea: Generate a table with number of calls to optimal hitting set in order to compare the speedup of using iterated vs bounded optimized}
-
-
-\begin{algorithm}[!h]
-\DontPrintSemicolon
-\tcp{Initilisation of priority Queue with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
-$lb \gets$ \texttt{PriorityQueue()}\;
-$p \gets$ \texttt{none-of}($\Iend \setminus I$) \;
-\tcp{\emilio{I'm not sure `$p \gets$ \texttt{none-of}' is the best way to say that we cannot take the not-yet-derived literals , or maybe adapt $\formula_{\ell} \gets  \formulac \wedge (I ) \wedge \{\lnot \ell \}$, but if I do that then we don't take incrementality into acount..}}
-\ForEach{$\ell \in  (\Iend \setminus I)$}{
-	$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
-%	$ \setstohit_{\ell} \gets  \corrsubsets(\formula_{\ell}, \{\lnot \ell \} )$\; 
-%	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \m{K} $\;
-%	$ \m{K} \gets  \corrsubsets(\formula_{\ell}, \{\lnot \ell \} )$\; 
-%	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \m{K} $\;
-	$\setstohit_{\ell}  \gets \emptyset $\;
-	$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
-	\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
-}
-\tcp{\comus loop}
-\While{$true$}{
-				
-	$(cost, \ell, \m{S}) \gets$\texttt{lb.pop()} \tcp*{Literal with lowest bound}
-				
-	\If{ $\lnot \sat(\m{S})$}{
-		\Return{$\m{S}$} \tcp*{\color{Green}OCUS found}
-	}
-				
-%	$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
-				
-
-%	$\m{K} \gets \corrsubsets(\formula_{\ell}, \subsetT)$\;
-
-$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \corrsubsets(\formula_{\ell}, \subsetT) $ \;%\tcp*{Correction Subset added to sets-to-hit}
-
-%	$\m{K} \gets \corrsubsets(\formula_{\ell}, \subsetT)$\;
-%
-%	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \m{K} $ \tcp*{Correction Subset added to sets-to-hit}
-				
-	$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \;%\tcp*{Optimal hitting set}
-				
-	\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
-}
-\caption{$\iterativeonestep(\formulac,f,I, \Iend)$}
-\label{alg:iterative_ocus}
-\end{algorithm}
-
-\iterativeonestep ensures that only the most promising candidate literals-to-explain are expanded at any given iteration to find the next best explanation.
-
 \subsection{Correction Subsets enumeration}
 %Observation: A lot of time is spent in ... 
 Both the \comus and the \iterativeonestep algorithm rely on repeatedly computing hitting sets and subsequently correction subsets. 
@@ -632,12 +573,167 @@ until no more satisfiable subsets can be found.
 \end{algorithm}
 
 
-\subsection{Interactivity}
-\emilio{Add a note here}
-\begin{itemize}
-	\item What is an “interactive context”? In text definition
-	\item Did we have to explain the previous steps as well?
-\end{itemize}
+%\subsection{Interactivity}
+%\emilio{Add a note here}
+%\begin{itemize}
+%	\item What is an “interactive context”? In text definition%
+%	\item Did we have to explain the previous steps as well?
+%\end{itemize}
+
+
+\section{Explanations with Iterated OUS} 
+
+Instead of working \comus-based, we can also generate optimal explanations by replacing the MUS call by an \omus call in Algorithm \ref{alg:oneStep} (where \omus is computed as in Algorithm \ref{alg:comus}, but with a trivially true $p$).
+
+%Observation: waste of time
+When doing this, we know that every \comus of cost greater than or equal to $f(X_{\mathit{best}})$ will be discarded by the check on Line 4 of Algorithm~\ref{alg:oneStep}.
+
+%Optimizatino: what do we do? 
+\paragraph{Bounded OUS} As such, a next optimization is to, instead of searching for an OUS, perform a \emph{bounded OUS check}, which only computes an OUS in case one of cost smaller than a given bound $\mathit{ub}$ exists.  
+
+%Detail: how do we do it? 
+In our specific implementation, bounded \omus is performed by interrupting this \omus-call (after Line 3 Algorithm~\ref{alg:comus}) if $f(\m{S}) > \mathit{ub}$.
+
+Algo onestep bounded sketch:
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	\caption{$\onestep\_bounded(\formulac,f,I,\Iend)$}
+	\label{alg:oneStepBound}
+	$S_{best} \gets \mathit{nil}$; $v_{best} \gets \infty$\;
+	${\cal S}^l_{best} \gets \mathit{nil}$ for each $l$ // or from previous iteration \;
+	\For{$l \in \{\Iend \setminus I\}$ sorted by $f({\cal S}^l_{best})$}{
+		$({\cal S}^l_{best}, \mbox{isOpt}) \gets \call{OUS\_bounded}{( (\formulac \land I \land \neg l), f, v_{best} )}$\;
+		\If{isOpt and $f({\cal S}^l_{best})<v_{best}$\label{alg:oneStepBound:ifcheck}}{
+			$S_{best} \gets {\cal S}^l_{best}$\;
+			$v_{best} \gets f({\cal S}^l_{best})$\;
+		}
+	}
+	\Return{${\cal S}_{best}$} 
+\end{algorithm}
+
+Algo OUS bounded sketch:
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+	$\m{S} \gets \mathit{nil}$\;
+	\While{$f(\m{S}) \leq v$}{
+		$\m{S} \gets OptHittingSet(\setstohit,f) $  \;
+		\If{ $\lnot \sat(\m{S})$}{\label{alg:ousb-sat-check}
+			\Return{$(\m{S}, \mbox{true})$} \;
+		}
+		$\m{K} \gets \corrsubsets(\formula, \subsetT)$\;
+		$\setstohit  \gets \setstohit  \cup \m{K} $  \label{alg:ousb:complement}\;
+	}
+	\Return{$(\m{S}, \mbox{false})$} \;
+	\caption{$OUS\_bounded(\formula,f,v)$ }
+	\label{alg:ousb}
+\end{algorithm}
+
+OLDER:
+\emilio{\textit{Rephrase and incorporate with previous:}
+	Since the bounding on the \omus cost has the most effect if cheap \omus{}s are found early in the loop across the different literals, we keep track of an upper bound of the cost of an OUS for each literal to explain. This is initialized to a value greater than any \omus, e.g., as $f(\formulac \land I_0 \land \overline{\Iend \setminus I_0})$, and is updated every time an \omus explaining that literal is found; when going through the loop in Line 2 of Algorithm~\ref{alg:comus}, we then handle literals in order of increasing upper bounds.}
+
+
+\paragraph{Iterated OUS} Explanations with bounded \omus{}s still computes extra hitting sets until the upper bound is reached or until a \omus is found. (and is sensitive to initial ordering)
+%
+Therefore, instead of sorting the literals by the \omus{}s that are already found, we go one step further and keep track of the already found hitting sets as a lower bound on the cost of the \omus{}.
+
+
+Tias: for me, key idea is to not call until optimality, that is, do not loop in algo 7, but do one iteration at a time; each time continuing with the most promising literal. Also: late SAT check.
+
+
+Algo onestep iter sketch:
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	\caption{$\onestep\_iterated(\formulac,f,I,\Iend)$}
+	\label{alg:oneStepIter}
+	$queue \gets$ \texttt{InitializePriorityQueue()} // init with $(l, \emptyset): 0$ for each $l$, or from previous iteration \;
+	%$S_{best} \gets \mathit{nil}$; $v_{best} \gets \infty$\;
+	%${\cal S}^l_{best} \gets \mathit{nil}$ for each $l$ // or from previous iteration \;
+	\While{$(l, \m{S}) \gets queue.pop()$}{
+	%\For{$l \in \{\Iend \setminus I\}$ sorted by $f({\cal S}^l_{best})$}{
+		\If{ $\lnot \sat(\m{S})$}{\label{alg:onestepIter-sat-check}
+			\Return{$\m{S}$} \;
+		}
+		$\m{S} \gets \call{OUS\_oneIter}{( (\formulac \land I \land \neg l), f,\m{S})}$\;
+		\texttt{queue.push($(\ell, \m{S}): f(\m{S})$)}\;
+	}
+\end{algorithm}
+
+Algo OUS one iter sketch:
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	$\m{K} \gets \corrsubsets(\formula, \subsetT)$\;
+	$\setstohit  \gets \setstohit  \cup \m{K} $ // $\setstohit$ from previous iterations, initially empty \;
+	$\m{S} \gets OptHittingSet(\setstohit,f) $  \;
+	\Return{$\m{S}$} \;
+	\caption{$OUS\_oneIter(\formula,f,\m{S})$ }
+	\label{alg:ousIter}
+\end{algorithm}
+
+Note, we can initialize the $\setstohit$'s for each $l$ to something else than $\corrsubsets(\formula, \emptyset)$, for example $\corrsubsets(\formula, \ell)$. @emilio: this is perhaps what bootstrap does?
+
+\paragraph{}
+OLDER:
+%
+More precisely, Algorithm~\ref{alg:iterative_ocus} keeps track of a priority queue sorted by the cost of the last computed hitting set for every remaining literal to explain.
+
+First, line 3 through 8 initializes, for every remaining literal to explain $\ell \in (\Iend \setminus I)$, the priority queue with tuple $\langle f(\subsetT)$, $\ell$, $\subsetT \rangle$ where $\subsetT$ is the last computed hitting set for $\ell$ on the collection of sets-to-hit $\setstohit_{\ell}$; and  its correspond cost $f(\subsetT)$.
+
+Next, line 10 extracts the best candidate literal-to-explain out of the priority queue. Similar to Algorithm~\ref{alg:comus}, if corresponding hitting set is unsatisfiable, it is guaranteed to be an \comus, otherwise a number of correction subsets are extracted from $\subsetT$ and added to the collection of sets to hit $\setstohit_{\ell}$. Finally, a new hitting set is computed and the literal is pushed back in the priority queue. 
+
+\emilio{Idea: Generate a table with number of calls to optimal hitting set in order to compare the speedup of using iterated vs bounded optimized}
+
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	\tcp{Initilisation of priority Queue with tuples $\langle $cost$, $ literal$, $ hs$ \rangle$}
+	$lb \gets$ \texttt{PriorityQueue()}\;
+	$p \gets$ \texttt{none-of}($\Iend \setminus I$) \;
+	\tcp{\emilio{I'm not sure `$p \gets$ \texttt{none-of}' is the best way to say that we cannot take the not-yet-derived literals , or maybe adapt $\formula_{\ell} \gets  \formulac \wedge (I ) \wedge \{\lnot \ell \}$, but if I do that then we don't take incrementality into acount..}}
+	\ForEach{$\ell \in  (\Iend \setminus I)$}{
+		$	\formula_{\ell} \gets  \formulac \wedge (\Iend \setminus \ell) \wedge \{\lnot \ell \}$ \;
+		%	$ \setstohit_{\ell} \gets  \corrsubsets(\formula_{\ell}, \{\lnot \ell \} )$\; 
+		%	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \m{K} $\;
+		%	$ \m{K} \gets  \corrsubsets(\formula_{\ell}, \{\lnot \ell \} )$\; 
+		%	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \m{K} $\;
+		$\setstohit_{\ell}  \gets \emptyset $\;
+		$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \tcp*{Optimal hitting set}
+		\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
+	}
+	\tcp{\comus loop}
+	\While{$true$}{
+		
+		$(cost, \ell, \m{S}) \gets$\texttt{lb.pop()} \tcp*{Literal with lowest bound}
+		
+		\If{ $\lnot \sat(\m{S})$}{
+			\Return{$\m{S}$} \tcp*{\color{Green}OCUS found}
+		}
+		
+		%	$\m{S} \gets  \grow(\m{S}, 	\formula_{\ell})$ \tcp*{Hitting set grown to a Satisfiable Subset}
+		
+		
+		%	$\m{K} \gets \corrsubsets(\formula_{\ell}, \subsetT)$\;
+		
+		$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \corrsubsets(\formula_{\ell}, \subsetT) $ \;%\tcp*{Correction Subset added to sets-to-hit}
+		
+		%	$\m{K} \gets \corrsubsets(\formula_{\ell}, \subsetT)$\;
+		%
+		%	$\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \m{K} $ \tcp*{Correction Subset added to sets-to-hit}
+		
+		$\m{S} \gets \cohs(\setstohit_{\ell},f,p)$ \;%\tcp*{Optimal hitting set}
+		
+		\texttt{lb.push($\langle f(\m{S}), \ell, \m{S} \rangle$)}\;
+	}
+	\caption{$\iterativeonestep(\formulac,f,I, \Iend)$}
+	\label{alg:iterative_ocus}
+\end{algorithm}
+
+\iterativeonestep ensures that only the most promising candidate literals-to-explain are expanded at any given iteration to find the next best explanation.
+
+
+
+
 
 %\section{Additional optimizations}
 \clearpage
@@ -661,6 +757,22 @@ When generating an explanation sequence for these puzzles, the unsatisfiable sub
 (b) as an initial bootstrapping method?
 \item[RQ4] What is the efficiency of a single step O(C)US and is single step sufficiently efficient for an interactive context? 
 \end{enumerate}
+
+\textbf{Van intro:}
+\begin{itemize}
+	\item RQ1. Cost comparison between MUS and Constrained for Logic Grid Puzzles+ Extra Demystify puzzles?
+	\item RQ2. Which \textbf{domain-specific \grow methods} perform best: MaxSAT vs disj. mcs?
+	\item RQ3. Effect of Constrainedness on the time required to computed explanations?
+	\item RQ4. Does re-use of information across the different iterations improve efficiency? 
+	\begin{itemize}
+		\item testing OUSb incremental/OCUS incremental vs OUSb/OUS/OCUS
+	\end{itemize}
+	\item RQ5. Does appropriate sorting of literals lead to faster generation of individual explanations and explanation sequences:
+	\begin{itemize}
+		\item Iterative OUS vs Best configurations
+	\end{itemize} 
+	\item RQ6. Path towards interactive: Individual explanation time not incremental
+\end{itemize}
 
 \subsection{Explanation quality}
 To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on Algorithm 1. Before presenting the results, we want to stress that this is not a fair comparison with the implementation of Bogaerts et al. [2020], since there – in order to avoid the quality problems we will illustrate below – an extra inner loop was used that employs even more calls to MUS for a selected set of subsets of C of increasing size. While this yields better

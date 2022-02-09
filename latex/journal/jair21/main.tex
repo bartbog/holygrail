@@ -604,10 +604,13 @@ $\setstohit_{\ell}  \gets \setstohit_{\ell}  \cup \corrsubsets(\formula_{\ell}, 
 \iterativeonestep ensures that only the most promising candidate literals-to-explain are expanded at any given iteration to find the next best explanation.
 
 \subsection{Correction Subsets enumeration}
+%Observation: A lot of time is spent in ... 
+Both the \comus and the \iterativeonestep algorithm rely on repeatedly computing hitting sets and subsequently correction subsets. 
+The question is: can we find non-overlapping correction subsets to impose independent constraints on the sets-to-hit?
+%Optimizatino: what do we do? Can we improve it by imposing independent constraints on the sets to hit ?
 
-The hitting set solver will find a cost-minimal hitting set that hits all sets-to-hit and satisfies the given constraint. This last observation motivates finding sets-to-hit that do not intersect with each other. In that case, an element of set-to-hit will be selected. If we apply this reasoning to the implicit hitting set framework, computing disjoint minimum correction subsets helps in bounding the cost of finding an OCUS.
-
-Inspired by \cite{marques2013computing}, the \disjmcs procedure, depicted in algorithm \ref{alg:disjmcs}, computes a collection of disjoint minimum correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). The \disjmcs procedure will repeatedly compute a satisfiable subset $\m{S} \subseteq \m{S}'$ and add its complement to 
+%Detail: how do we do it? 
+Inspired by \cite{marques2013computing}, the \corrsubsets procedure, depicted in Algorithm \ref{alg:corr-subsets-grow-with-sat}, computes a collection of disjoint minimum correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). The \corrsubsets procedure will repeatedly compute a satisfiable subset $\m{S} \subseteq \m{S}'$ and add its complement to 
 \begin{inparaenum}[(i)] 
 \item the collection of disjoint MCSes and;
 \item $\m{S}$, ensuring that the constraints of the correction subset cannot be present in the next correction subset,
@@ -628,7 +631,6 @@ until no more satisfiable subsets can be found.
 	\label{alg:corr-subsets-grow-with-sat}
 \end{algorithm}
 
-\subsection{Bootstrapping the collection of hitting sets}
 
 \subsection{Interactivity}
 \emilio{Add a note here}

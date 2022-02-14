@@ -207,7 +207,7 @@ Motivated by these observations, we develop algorithms that aid explaining CSPs 
 \item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive OCUS calls;
 \item We improve runtime zoals disjoint mcses as an extra step after the grow.
 \item We introduce an iterative algorithm that takes advantage of the cost of previously computed hitting sets and appropriate sorting on the literals-to-explain to reduce the time to generate an individual explanation as well as the whole explanation sequence.
-\item We improve the benchmark dataset of the experimental results by testing our approach on a larger number of CSPs and Weighted Unsatisfiable Instances.
+\item We extensively evaluate on a larger number of CSPs and Weighted Unsatisfiable Instances.
 \end{itemize}
 
 \paragraph*{Publication history} This article is an extension of a previous paper presented at the International Joint Conference on Artificial Intelligence 2021 \cite{ijcai2021}.
@@ -572,6 +572,21 @@ until no more satisfiable subsets can be found.
 	\label{alg:corr-subsets-grow-with-sat}
 \end{algorithm}
 
+%\subsection{Speeding up the startup}
+%Why would bootstrap OUS before the calls work ?
+%\begin{itemize}
+%	\item If we do correction subset enumeration ? 
+%		\begin{itemize}
+%			\item It does the same job as expanding every literal to explain with iterated
+%			\item Improves the first step by having a better estimate on the cost of the hitting sets for all literals, only continues to expand the one that is the most promising ???
+%			\item looking at the curves they are mostly identical except for the first step...
+%		\end{itemize}
+%	\item If we do MaxSAT ?
+%		\begin{itemize}
+%			\item Pose independent constraints on the sets-to-hit quickly
+%			\item have better  hitting sets at the beginning and not look at all negation of literals as first set-to-hit like in OCUS? 
+%		\end{itemize}
+%\end{itemize}
 
 %\subsection{Interactivity}
 %\emilio{Add a note here}
@@ -931,18 +946,18 @@ the configurations are compared in a similar fashion to Figure \ref{fig:grow_str
 
 
 
-
-\clearpage
-
-\clearpage
+%
+%\clearpage
+%
+%\clearpage
 \subsection*{RQ4. What is the efficiency of a single step O(C)US and how does it compare in an interactive context?}
 
-\begin{figure}[!h]
-		\centering
-		\includegraphics[width=\textwidth]{figures/rq4.png}
-		\caption{}
-		\label{fig:individual_expl_times}
-	\end{figure}
+%\begin{figure}[!h]
+%		\centering
+%		\includegraphics[width=\textwidth]{figures/rq4.png}
+%		\caption{}
+%		\label{fig:individual_expl_times}
+%	\end{figure}
 
 
 \emilio{ replace the table with correct values from figure
@@ -966,38 +981,38 @@ the configurations are compared in a similar fashion to Figure \ref{fig:grow_str
 }
 %
 %
-\begin{figure}[!h]
-%\begin{subfigure}{0.45\textwidth}
-%	\centering
-%	\includegraphics[width=\textwidth]{figures/explanation_times_histogram0.pdf}
-%	\caption{Incremental Constrained OUS with bootstrapping}
-%	\label{fig:first}
-%\end{subfigure}
-%\hfill
-%\begin{subfigure}{0.45\textwidth}
-%	\centering
-%	\includegraphics[width=\textwidth]{figures/explanation_times_histogram1.pdf}
-%	\caption{Incremental Constrained OUS with bootstrapping}
-%	\label{fig:second}
-%\end{subfigure}
-%\hfill
-%\begin{subfigure}{0.45\textwidth}
-%	\centering
-%	\includegraphics[width=\textwidth]{figures/explanation_times_histogram2.pdf}
-%	\caption{Incremental bounded OUS with disj. mcs enum. grow}
-%	\label{fig:third}
-%\end{subfigure}
-%\hfill
-%\begin{subfigure}{0.45\textwidth}
-%	\centering
-%	\includegraphics[width=\textwidth]{figures/explanation_times_histogram3.pdf}
-%	\caption{Iterative incremental bounded OUS with bootstrapping}
-%	\label{fig:third}
-%\end{subfigure}
-		\includegraphics[width=\textwidth]{figures/rq3_histogram_2022_02_09.pdf}
-\caption{Distribution of explanation generation time}
-\label{fig:figures}
-\end{figure}
+%\begin{figure}[!h]
+%%\begin{subfigure}{0.45\textwidth}
+%%	\centering
+%%	\includegraphics[width=\textwidth]{figures/explanation_times_histogram0.pdf}
+%%	\caption{Incremental Constrained OUS with bootstrapping}
+%%	\label{fig:first}
+%%\end{subfigure}
+%%\hfill
+%%\begin{subfigure}{0.45\textwidth}
+%%	\centering
+%%	\includegraphics[width=\textwidth]{figures/explanation_times_histogram1.pdf}
+%%	\caption{Incremental Constrained OUS with bootstrapping}
+%%	\label{fig:second}
+%%\end{subfigure}
+%%\hfill
+%%\begin{subfigure}{0.45\textwidth}
+%%	\centering
+%%	\includegraphics[width=\textwidth]{figures/explanation_times_histogram2.pdf}
+%%	\caption{Incremental bounded OUS with disj. mcs enum. grow}
+%%	\label{fig:third}
+%%\end{subfigure}
+%%\hfill
+%%\begin{subfigure}{0.45\textwidth}
+%%	\centering
+%%	\includegraphics[width=\textwidth]{figures/explanation_times_histogram3.pdf}
+%%	\caption{Iterative incremental bounded OUS with bootstrapping}
+%%	\label{fig:third}
+%%\end{subfigure}
+%		\includegraphics[width=\textwidth]{figures/rq3_histogram_2022_02_09.pdf}
+%\caption{Distribution of explanation generation time}
+%\label{fig:figures}
+%\end{figure}
 \clearpage
 \section{Conclusion and Future work}
 

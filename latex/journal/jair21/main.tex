@@ -6,12 +6,14 @@
 \usepackage{thmtools} 
 \usepackage{booktabs}
 \usepackage{paralist}
+\usepackage{caption}
 \usepackage{subcaption}
 \usepackage{graphicx}
 \usepackage{adjustbox}
 \usepackage{multirow,array}
 \usepackage[normalem]{ulem}
 \usepackage{enumitem}
+%\usepackage{subfig}
 \usepackage[capitalise]{cleveref}
 \usepackage{cancel}
 %\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
@@ -207,7 +209,7 @@ Let \voc be a set of propositional symbols, also called \emph{atoms}; this set i
 A clause is a disjunction of literals, i.e $c_1 = x_1 \vee \lnot x_2 $. A formula $\formula$ in conjunctive normal form (CNF) is a conjunction of clauses. 
 Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. We use the term clause and constraint interchangeably.
 
-We consider these four clauses as our running example across the different sections to illustrate the concepts introduced:
+We consider the following four clauses as our running example across the different sections to illustrate the concepts introduced:
 \begin{example}\label{example:intro}
 	Let $\formulac$ be a CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
 \[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
@@ -463,7 +465,7 @@ For the case of explanations we are in, we make the following observations:
 \end{itemize}
 Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow($\m{S}$,$\F$) procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. %This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 
 
-We evaluate different grow strategies in the experiments section, including the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
+\emilio{Correct Maxsat strategies} We evaluate different grow strategies in the experiments section, including the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
 
 
 \begin{example}[\textit{continued}] Consider the 4 previously introduced clauses from our running example. To define the input for the OCUS call, we add new clauses representing the final interpretation $\Iend =  \{\lnot x_1, x_2, \lnot x_3\}$:
@@ -491,11 +493,7 @@ In this example, the \grow we used is the one called \emph{Max-Unif} in \cref{se
 
 \begin{table}[!h]
 	\centering
-	%	\begin{adjustbox}{max width=\columnwidth}
 		\begin{tabular}{lcccc} 
-			%			\bottomrule[2pt]
-			%		\multicolumn{5}{c}{Step 1. Explanation of $x_1$: $c_3 \implies x_1$}\\
-			%		\toprule[2pt]
 			& $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ 
 			\toprule[2pt]
 			  &        &    &      & $\emptyset$                                \\
@@ -513,9 +511,24 @@ In this example, the \grow we used is the one called \emph{Max-Unif} in \cref{se
 			6 & $\{\lnot x_1, c_3\}$  & $\mathit{false}$ & - & - \\
 		\end{tabular}
 		
-		\caption{Sequence of explanation generated with \onestepo}
+		\caption{Sequence of explanation generated with \emph{incremental} \onestepo}
 		\label{tab:example-explanation-generation}
 	\end{table}
+
+\begin{table}[!h]
+	\centering
+	\begin{tabular}{lcccc} 
+		& $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ 
+		\toprule[2pt]
+		&        &    &      & $\emptyset$                                \\
+		\midrule
+		
+	\end{tabular}
+	
+	\caption{Sequence of explanation generated with \emph{incremental} \onestepo}
+	\label{tab:example-explanation-generation}
+\end{table}
+
 What we see in the next steps, is the efficiency of satisfiable subset re-use. 
 
 \emilio{Write about the step 2 and step 3, where we re-use the computed correciton subsets}
@@ -803,26 +816,57 @@ Furthermore, we investigate whether extracting additional correction subsets can
 \subsubsection{Domain-specific Correction Subset}\label{sec:experiments:domain-specific-grow}
 
 Thus, to answer \textbf{Q2}, we compared variations of \comus that only differ in which \grow strategy they use. 
-Figure \ref{fig:grow_strategies} depicts the average (over all the puzzles) cumulative explanation time to derive a number of literals. Note that most puzzles only contain 150 literals, except for 2, which contain 96 and 250 literals respectively. When a method times out for a puzzle at one step, a runtime value of 3600 is used in computing the averages for all future steps.
+Figure \ref{fig:q2:grow_configurations} depicts the average (over all the puzzles) cumulative explanation time to derive a number of literals. Note that not all puzzles contain the same number of literals. When a method times out for a puzzle at one step, a runtime value of 3600 is used in computing the averages for all future steps. In case, the number of literals in a puzzle is less than the maximum number of literals to explain, then the cumulative time to derive the last literal is used for computing the average. 
 	The configurations used are as follows:
 	\begin{itemize}
-		\item \emph{Max} refers to growing with a MaxSAT solver and \emph{Greedy} to growing using a heuristic method implemented by repeated sat calls, while %\item 
-		\emph{no-grow} refers to skipping the \grow step.
-		\item  \emph{Full} refers to using the full unsatisfiable formula $\mathcal{F}$  while \emph{Actual} refers to using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the MaxSAT-based calls, \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
-		\item The \maxsat solver (\emph{Max}) is combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$),  or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$.% \bart{DEFINE INVERSE! What did you implement. } 
+		\item \emph{SAT} refers to using the model computed by \sat solver when checking for satisfiability.
+		\item \emph{Dom.-spec. \maxsat} refers to growing with a \maxsat solver using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). For instance, for the \maxsat-based calls, \emph{Actual} means that only the previously derived facts and the original constraints are taken into account when computing optimality. 
+		\item  \emph{MaxSAT Full} refers to growing with a \maxsat solver using the full unsatisfiable formula $\mathcal{F}$.
 	\end{itemize}
-	%\tias{Use the names used in the figure, 'Max-Full variants'?}
-	%As expected, the \maxsat-\grow on the actual interpretation \emph{Max-Actual} indeed performs best, though only \emph{Max-Actual-Unif} is able to finish all explanations. 
-	We can observe that not using a grow strategy performs badly, as do weighted MaxSAT grows with costs $w_i$ (-Pos). Greedy grow strategies improve on not using a grow strategy, but not substantially. The two approaches that work best use the domain-specific knowledge of doing a MaxSAT grow on $\formulac\cup I$, with the unweighted variant the only one that never times out.
+	\paragraph{MaxSAT weighing scheme}The \maxsat solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
 
-\subsubsection{Multiple Correction Subset extraction}
+	
+
+	We observed that not using a sat strategy performs badly, as do weighted MaxSAT grows with costs $w_i$ (-Pos). 
+	Greedy grow strategies improve on not using a grow strategy, but not substantially. The two approaches that work best use the domain-specific knowledge of doing a MaxSAT grow on $\formulac\cup I$, with the unweighted variant the only one that never times out.
 
 \begin{figure}[!h]
-	\centering
-	\includegraphics[width=\textwidth]{figures/rq2_grow_2022_01_12.pdf}
-	\caption{Q2 - Domain Specific grow.}
-	\label{fig:rq2_grow}
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/rq2_grow_OCUS_2022_02_16.pdf}
+		\caption{OCUS Incremental.}
+		\label{fig:rq3_grow:ocus}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/rq2_grow_OUS_INCREMENTAL_NAIVE_2022_02_16.pdf}
+		\caption{Bounded OUS Incremental.}
+		\label{fig:rq3_grow:ousb_incr}
+	\end{subfigure}\\
+
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.48\textwidth]{figures/rq2_grow_OUS_INCREMENTAL_NAIVE_PARALLEL_2022_02_16.pdf}
+		\caption{Iterated OUS Incremental.}
+		\label{fig:rq2_grow:iter_ous_incr}
+	\end{subfigure}
+	\caption{Q3 - Average cumulative explanation time of correction subset configuration}
+	\label{fig:q3:grow_configurations}
 \end{figure}
+
+
+
+%\begin{figure}[ht]%
+%	\centering
+%	\subfloat[]{\includegraphics[width=0.5\textwidth]{figures/rq2_grow_OCUS_2022_02_16.pdf}\label{fig:a}}%
+%	\subfloat[]{\includegraphics[width=0.5\textwidth]{figures/rq2_grow_OUS_INCREMENTAL_NAIVE_2022_02_16.pdf}\label{fig:b}}\\
+%	\subfloat[]{\includegraphics[width=0.5\textwidth]{figures/rq2_grow_OUS_INCREMENTAL_NAIVE_PARALLEL_2022_02_16.pdf}\label{fig:c}}%
+%	\caption{Some caption}%
+%	\label{some-label}%
+%\end{figure}
+
+
 
 \subsection{Improving Correction Subset extraction}
 

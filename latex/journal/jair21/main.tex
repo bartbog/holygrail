@@ -145,24 +145,36 @@
 
 \section{Introduction}
 \label{sec:introduction}
-\emilio{CONTEXT}
+%%% XAI context
+% Human-understandable, interpretability, explainable (High-level XAI to low level constraint solvers ?)
+% Up until recently, Artificial Intelligence (AI) systems were considered to be a black-box. In this context, eXplainable Artificial Intelligence (XAI), a sub-field of AI, tries to explain how, and why, certain decisions were made by the AI system especially in critical application such as medical diagnosis where decisions have possibly life-altering consequences.
+% XAI has therefore seen many efforts for trying to open the black such as conference workshops \cite{workshop on XAI}, as well as national \cite{DARPA} and international initiatives \cite{EU initiatives,CLAIRE,..}.
+%
+%A lot of the focus in XAI lies in providing insight on prediction tasks .. 
 
-\emilio{GOAL (high-level to low-level)}
+%%% 
 
-\emilio{ISSUES when achieving our GOAL}
+%A lot of research has been done in machine learning through feature maps where identify part of the feature space responsible for the predicted values; 
 
-\emilio{Some preliminary choices/hypotheses fixed }
 
-\emilio{APPlication of our work}
+\emilio{Explanation using MUSes and one-to-one correspondence with non-redundant explanations}
+\emilio{subset minimality vs optimality of the MUSes}
+\emilio{Motivation on why we further improve our algorithm }
+\emilio{something about difficulty of the explanations for logic grid puzzles? sudokus ?}
+\emilio{Application of our work: Explanation Generation context, puzzle solving, scheduling, configuration}
+%%%% {GOAL (high-level to low-level)}
 
-\begin{itemize}
-	\item Human-understandable, interpretability, explainable (High-level XAI to low level constraint solvers ?)
-	\item Explanation using MUSes and one-to-one correspondence with non-redundant explanations
-	\item subset minimality vs optimality of the MUSes
-	\item Motivation on why we further improve our algorithm 
-	\item something about difficulty of the explanations for logic grid puzzles? sudokus ?
-	\item Application of our work: Explanation Generation context, puzzle solving, scheduling, configuration
-\end{itemize}
+Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} constraint program and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
+Explanations in that work are sequences of simple inference steps, involving as few constraints and facts as possible. 
+
+%%% {ISSUES when achieving our GOAL}
+The explanation-generation algorithms presented in that work rely heavily on calls for  \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived program, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs.
+
+The explanation steps in the seminal work are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g., taking the number of constraints and facts into account, as well as a valuation of their complexity (or priority). 
+
+The algorithm developed in that work has two main weaknesses: first, it provides no guarantees on the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
+Secondly, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate implied fact.
+However, using multiple MUS calls per literal in each iterations quickly causes efficiency problems, causing the explanation generation process to take several hours.
 
 
 Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
@@ -182,12 +194,14 @@ Motivated by these observations, we develop algorithms that aid explaining CSPs 
 
 \paragraph*{Publication history} This article is an extension of a previous paper presented at the International Joint Conference on Artificial Intelligence 2021 \cite{ijcai2021}. The current paper extends the previous paper with more detailed examples, extensive experiments on a large data set of puzzles, as well as a novel algorithm for efficiently computing explanations.
 
-The rest of this paper is structured as follows. 
+The rest of this paper is structured as follows. \cref{sec:related-works} examines works related to explanations in constraint solving as well as efficient extraction of unsatisfiable subsets. In \cref{sec:background}, we introduce the theoretic foundations on our implicit hitting set approach. \cref{sec:motivation} describes the motivation behind our work to develop the concept of \comus, which is introduced in \cref{sec:OCUS}. Next, in \cref{sec:OUS} we present alternative methods for computing optimal explanations in the explanation sequence. We improve the efficiency of our approaches by introducing concepts such as incrementality and correction subset extraction in \cref{sec:efficient-ocus}. Finally, we evaluate our approach on large set of puzzle instances in \cref{sec:experiments} and conclude with some future prospects.
 
-\section{Related Works}
-\label{sec:related-works}
+\section{Related Works}\label{sec:related-works}
+
+Recent works have focused on finding unsatisfiable subsets 
+
 \begin{itemize}
-	\item XAI $\rightarrow$ CP
+	%\item XAI $\rightarrow$ CP
 	\item something about explanations and quality of the explanations 
 	\item something about reviewing explanations for csps presented at IJCAI
 	\item something about weighted Unsatisfiable subsets
@@ -310,7 +324,7 @@ We see three main points of improvement, all of which will be tackled by our gen
 
 
 
-\section{Optimal Constraint Unsatisfiable Subsets}
+\section{Optimal Constraint Unsatisfiable Subsets}\label{sec:OCUS}
 
 The first two considerations from the \cref{sec:motivation} lead to the following definition. 
 
@@ -421,7 +435,7 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver.
 
-\section{Optimal Unsatisfiable Subsets} 
+\section{Optimal Unsatisfiable Subsets}\label{sec:OUS}
 
 In this section, we analyze if instead of working MUS-based, we can also generate optimal explanations by replacing the MUS call by an \omus{} call in \cref{alg:oneStep-omus}.
 More precisely, the question is: Can we take advantage of the computed information by \omus call that compensates the possible overhead of introducing constrainedness in \comus?
@@ -442,7 +456,7 @@ More precisely, the question is: Can we take advantage of the computed informati
 
 \paragraph{OUS-based explanations} Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$. \cref{alg:ousb} depicts an improved version of the \omus algorithm with an optional numerical parameter v representing a given bound. Before we present these improvements, consider this bound set to $\infty$, ensuring that the bound doesn't interfere with a regular \omus call.
 
-\paragraph{Bounded OUS}The switch from MUS to \omus{} still requires to loop over every literal and therefore introduces computational overhead since the problem to be solved is much more difficult than before.
+\subsection{Bounded OUS}The switch from MUS to \omus{} still requires to loop over every literal and therefore introduces computational overhead since the problem to be solved is much more difficult than before.
 When iterating over the remaining literals to explain at line 2 of \cref{alg:oneStep-omus}, every computed \omus will be guaranteed to be optimal, and therefore provides an upper bound $f(S_{best})$ on the cost of the remaining literals to explain. 
 
 Every computed hitting set by \ohs inside the \omus algorithm produces a lower bound $f(S)$ on the current \omus. Consequently, $f(S_{best})$ can be considered an early stopping criteria $f(S_{best}) < f(S)$, in other words if the cost of the current hitting set is larger than the cost of the best explanation so far, \omus will not be able to find a better (cheaper) explanation for that literal. The rest of \omus-loop for that literal to explain, can therefore be skipped. This is represented by line 3 in \ousb algorithm (\cref{alg:ousb}).
@@ -467,7 +481,7 @@ Every computed hitting set by \ohs inside the \omus algorithm produces a lower b
 \end{algorithm}
 
 
-\paragraph{Iterated OUS} Explanations with bounded \omus{}s still compute extra hitting sets until the upper bound is reached or until a \omus is found.  More importantly, \ousb is still sensitive to initial ordering of the literals to  explain.
+\subsection{Iterated OUS} Explanations with bounded \omus{}s still compute extra hitting sets until the upper bound is reached or until a \omus is found.  More importantly, \ousb is still sensitive to initial ordering of the literals to  explain.
 
 In an effort to cope with the excessive calls to \ohs for all candidate literals to explain, and to benefit from the cost of the computed hitting sets, we introduce \iterativeonestep. In this approach, we do not repeatedly call \omus (or \ousb) until optimality, but do one iteration at a time; each time continuing with the most promising literal. Every literal is associated with a hitting set and it's corresponding cost. We then keep track using a priority queue sorted by the cost of the last computed hitting set for every remaining literal to explain. 
 
@@ -495,7 +509,7 @@ In an effort to cope with the excessive calls to \ohs for all candidate literals
 The \iterativeonestep algorithm works as follows. \iterativeonestep repeatedly extracts the best candidate literal-to-explain out of the priority queue. Similar to Algorithm~\ref{alg:comus}, if the corresponding hitting set is unsatisfiable, it is guaranteed to be an \omus, otherwise a number of correction subsets are extracted from $\subsetT$ and added to the collection of sets to hit $\setstohit_{\ell}$. Finally, a new hitting set is computed and the literal is pushed back in the priority queue. 
 
 
-\section{Efficient OCUS computation for explanations}
+\section{Efficient O(C)US computation for explanations}\label{sec:efficient-ocus}
 
 %Algorithm~\ref{alg:comus} is generic and can also be used to find (unconstrained) \omus{}s, namely with a trivially true $p$.
 %However, its constrainedness property allows to remove the need to compute a MUS/\omus for every literal. This decreases the complexity of explanation sequence generation from $O(n^2)$ calls to MUS to $O(n)$ calls to OCUS, namely, once for every step in the sequence. 
@@ -511,9 +525,9 @@ The \iterativeonestep algorithm works as follows. \iterativeonestep repeatedly e
 	%	\end{itemize}
 
 
-We now discuss optimizations to the OCUS algorithm that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
+We now discuss optimizations applicable to the O(C)US algorithms that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 
-\subsection{Incremental O(C)US Computation.}
+\subsection{Incremental O(C)US Computation}
 Inherently, generating a sequence of explanations still requires many O(C)US calls . 
 Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
 calls \onestepo iteratively with a growing interpretation $I$ until $I=\Iend$.
@@ -530,7 +544,7 @@ When a second call to \comus is performed, we can then initialize $\setstohit$ a
 The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:backgr}), and we have this upper bound on the set of formulas to be used, we can initialize all relevant decision variables once. To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ we need to ensure that the MIP solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$, for example by giving all other literals infinite weight in the cost function. In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 
 %Algo onestep bounded sketch:
-\paragraph{Bounded OUS}
+\paragraph{Bounded OUS} 
 
 \begin{algorithm}[!h]
 	\DontPrintSemicolon

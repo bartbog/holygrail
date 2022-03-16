@@ -922,13 +922,13 @@ The table depicts for each configuration \begin{inparaenum}[(1)]
 			& \multicolumn{5}{c|}{\textbf{No \grow}} & \multicolumn{5}{c}{\textbf{\corrsubsets}}\\[1ex]
 			%	\cline{2-9}
 			\textbf{config}         &  explained  &  \%\textsc{OPT} &   \%\sat & \%\grow &  $N_{hs}$ & explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{hs}$ \\ \midrule
-			OCUS                    & [231 / 403] &          96.38\% &  3.25\% & 0.38\% &      6008 & [231 / 403] &         19.21\% &    0.83\% &    79.96\% &      2725\\
-			OUS Iter.               & [271 / 403] &          88.06\% & 10.87\% & 1.07\% &      7523 & [271 / 403] &          9.83\% &    0.88\% &    89.29\% &     20941 \\
-			OUSb                    & [227 / 403] &          86.66\% &  12.5\% & 0.84\% &      9351 & [227 / 403] &          7.31\% &    1.27\% &    91.43\% &     22230\\
-			OUSb+Lit. Incr. HS      & [311 / 403] &          95.83\% &  4.06\% & 0.11\% &       914 & [231 / 403] &          40.5\% &    2.78\% &    56.72\% &      1172 \\
-			OUS Iter.+Lit. Incr. HS & [327 / 403] &          96.14\% &  3.55\% & 0.31\% &       667 & [270 / 403] &         36.73\% &    0.82\% &    62.45\% &      1165 \\
-			OCUS+Incr. HS           & [314 / 403] &          99.08\% &  0.86\% & 0.06\% &       342 & [240 / 403] &         47.81\% &    0.71\% &    51.48\% &       306\\
-			MUS                     & [311 / 403] &            --- &       --- &  --- &     --- & [311 / 403] &           --- &      ---&       ---&        --- \\
+			OCUS                    & [237 / 403] &          96.14\% &  3.43\% & 0.43\% &      5961 & [-- / 403] &         26.45\% & 1.05\% &    72.51\% &      8954\\
+			OUS Iter.               & [300 / 403] &          88.71\% & 10.23\% & 1.05\% &      7480 & [-- / 403] &          13.05\% & 1.04\% &    85.91\% &     84367 \\
+			OUSb                    & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310 & [-- / 403] &          9.99\% & 1.77\% &    88.23\% &     80662\\
+			OUSb+Lit. Incr. HS      & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &       911 & [310 / 403] &         41.33\% & 2.89\% &    55.78\% &      1220 \\
+			OUS Iter.+Lit. Incr. HS & [272 / 403] &          96.28\% &  3.42\% &  0.3\% &       673 & [311 / 403] &         36.9\% & 0.83\% &    62.27\% &      1249 \\
+			OCUS+Incr. HS           & [252 / 403] &          98.27\% &  1.52\% & 0.21\% &       340 & [311 / 403] &         50.76\% & 0.67\% &    48.57\% &       318\\
+			MUS                     & [311 / 403] &              --- &     --- &    --- &       --- & [311 / 403] &           --- &      ---&       ---&        --- \\
 			%	\bottomrule
 		\end{tabular}
 	\end{adjustbox}
@@ -936,9 +936,7 @@ The table depicts for each configuration \begin{inparaenum}[(1)]
 	\label{tab:runtime-decomposition}
 \end{table}
 
-
-
-Ignoring the right part (CorrSubsets) for the moment, most of the time in the O(C)US algorithms, even for the incremental variants, is spent in computing optimal hitting sets.
+Ignoring the right part of \cref{tab:runtime-decomposition} (CorrSubsets) for the moment, most of the time in the O(C)US algorithms, even for the incremental variants, is spent in computing optimal hitting sets.
 The same trend we see when adding incrementality in \cref{fig:rq2_incrementality_full} is translated in the number of instances on one side, as well as the average number of computed hitting sets on the other side. This confirms the need for incrementality especially in the context of explanation sequence generation.
 
 %
@@ -1039,7 +1037,7 @@ The following configurations are compared:
 	\item \emph{\maxsat Corr.+\sat} works similarly to \emph{Disj. \maxsat Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
 \end{itemize}
 
-\paragraph{MaxSAT weighing scheme}The \maxsat solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. In the experimental  For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
+\paragraph{MaxSAT weighing scheme} The \maxsat solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
 
 
 \begin{figure}[!ht]

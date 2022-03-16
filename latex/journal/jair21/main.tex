@@ -748,7 +748,7 @@ The question is: \emph{can we find non-overlapping correction subsets to impose 
 %Detail: how do we do it? 
 Inspired by \cite{marques2013computing}, the \corrsubsets procedure, depicted in Algorithm \ref{alg:corr-subsets-grow-with-sat}, computes a collection of disjoint minimum correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). The \corrsubsets procedure will repeatedly compute a satisfiable subset $\m{S} \subseteq \m{S}'$ and add its complement to 
 \begin{inparaenum}[(i)] 
-\item the collection of disjoint MCSes and;
+\item the collection of disjoint MCSes $\m{K}$ and;
 \item $\m{S}$, ensuring that the constraints of the correction subset cannot be present in the next correction subset,
 \end{inparaenum}
 until no more satisfiable subsets can be found. 
@@ -758,8 +758,8 @@ until no more satisfiable subsets can be found.
 	$\m{K}, \ \subsetT' \gets \emptyset, \ \subsetT$ \label{alg:disjmcs:init} \;
 	
 	\While{$\sat(\m{S}')$}{
-		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \;
-		$ \m{S}' \gets \m{S}'  \cup  \m{C} $\;
+		$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \label{alg:corr-subsets-grow-with-sat:corr-subset}\;
+		$ \m{S}' \gets \m{S}'  \cup  \m{C} $\label{alg:corr-subsets-grow-with-sat:mapping}\;
 		$ \m{K} \gets \m{K} \cup \{\m{C} \}$\;
 	}
 	\Return $\m{K}$
@@ -767,19 +767,27 @@ until no more satisfiable subsets can be found.
 	\label{alg:corr-subsets-grow-with-sat}
 \end{algorithm}
 
-Blindly applying this to the incremental \comus case, leads to \emph{UNSAT} after the first iteration since both polarities of the literals are present in either the hitting set or the correction subset. Step 1 of \cref{tab:example-explanation-generation:incr:step1} illustrates this case where $x_1$ is present in the hitting set $\m{S}$ and $\lnot x_1$ in the correction subset $F \setminus \m{S}$.
+%\paragraph{Incrementality}
+For \comus, \cref{alg:corr-subsets-grow-with-sat} is directly applicable and will be able to compute \emph{disjoint} correction subsets. However for the \emph{incremental} \comus case, the \sat call after first iteration produces \emph{UNSAT} since both polarities of the literals are present in either the hitting set or the correction subset. Step 1 of \cref{tab:example-explanation-generation:incr:step1} illustrates this case where $x_1$ is present in the hitting set $\m{S}$ and $\lnot x_1$ in the correction subset $F \setminus \m{S}$. 
+Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints and the current interpretation, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I)$. This allows for extra correction subsets that are disjoint in the eye of the hitting set solver.
 
+\subsubsection{Domain specific correction subset enumeration}
+ Extending the observations from \ref{para:domainspecificgrow}, we propose two variants of \cref{alg:corr-subsets-grow-with-sat}.
+%\begin{itemize}
+The first variant is Disjoint \maxsat Correction Subsets, a.k.a \emph{Disj. \maxsat Corr.}. This correction subset enumerator repeatedly grows using the domain specific \maxsat introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
+The second approach, \emph{\maxsat Corr.+\sat} works similarly to \emph{Disj. \maxsat Corr}, however only the first \grow is done with the domain specific \maxsat. The subsequent \grow calls are done using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality.
+%\end{itemize}
+%. Therefore, we adapt \cref{alg:corr-subsets-grow-with-sat:mapping} of \cref{alg:corr-subsets-grow-with-sat} to take into account the incremental variant. Namely, we project the computed correction subset (\cref{alg:corr-subsets-grow-with-sat:corr-subset}) on the subset of clauses that can be selected by hitting set solver.
 
-
-\paragraph{Disj. \maxsat Corr.} of \cref{alg:disjoint_correction_subsets} repeatedly grows a given subset $\m{S}$ using the \emph{Dom.-spec. \maxsat}, then computes the consequent correction subset $\m{S'}$ and adds it to a collection of correction subsets $\m{K}$ until $\m{S}$ is no more satisfiable. We make these correction susbets \emph{disjoint}, by adding them to $\m{S} = \m{S} \cup \m{S}'$ to ensure that they have to be present in the satisfiable subset and therefore cannot be present in the corresponding corrections subset. However, we go one step further and take advantage of the explanation \emph{sequence} generation context. Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints and the current interpretation, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I)$. This allows for extra correction subsets that are disjoint in the eye of the hitting set solver.
-
-\paragraph{\maxsat Corr.+\sat} of \cref{alg:greedy_correction_subsets} also works in the same way as \emph{Disj. \maxsat Corr.}, however only the first subset $\m{S}$ is grown using the \emph{Dom.-spec. \maxsat}. The subsequent grows are done using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. The procedure is repeated until $\m{S}$ is unsatisfiable or the grow model doesn't improve anymore. 
-
+%\paragraph{Disjoint \maxsat Correction Subsets} of \cref{alg:disjoint_correction_subsets} repeatedly grows a given subset $\m{S}$ using the \emph{Dom.-spec. \maxsat}, then computes the consequent correction subset $\m{S'}$ and adds it to a collection of correction subsets $\m{K}$ until $\m{S}$ is no more satisfiable. We make these correction susbets \emph{disjoint}, by adding them to $\m{S} = \m{S} \cup \m{S}'$ to ensure that they have to be present in the satisfiable subset and therefore cannot be present in the corresponding corrections subset. However, we go one step further and take advantage of the explanation \emph{sequence} generation context. Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints and the current interpretation, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I)$. This allows for extra correction subsets that are disjoint in the eye of the hitting set solver.
+%
+%\paragraph{Alternative} of \cref{alg:greedy_correction_subsets} also works in the same way as \emph{Disj. \maxsat Corr.}, however only the first subset $\m{S}$ is grown using the \emph{Dom.-spec. \maxsat}. The subsequent grows are done using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. The procedure is repeated until $\m{S}$ is unsatisfiable or the grow model doesn't improve anymore. 
+%
 
 %\paragraph{Incremental OCUS}\emilio{Write about disjoint correction subsets, how they are not directly mappable to OCUS incr, and what we did to improve that } \emilio{add advantage of projecting on  $\formulac \cup I$}
 
-\paragraph{SAT-based Correction Subsets}
-\emilio{Write about the performance overhead of MaxSAT solving and relative speed of SAT solving compared to that}
+%\paragraph{SAT-based Correction Subsets}
+%\emilio{Write about the performance overhead of MaxSAT solving and relative speed of SAT solving compared to that}
 %Optimizatino: what do we do? Can we improve it by imposing independent constraints on the sets to hit ?
 %\subsection{Speeding up the startup}
 %Why would bootstrap OUS before the calls work ?
@@ -804,12 +812,8 @@ Blindly applying this to the incremental \comus case, leads to \emph{UNSAT} afte
 %	\item Did we have to explain the previous steps as well?
 %\end{itemize}
 
-
-
-
-
 %\section{Additional optimizations}
-\clearpage
+%\clearpage
 \section{Experiments}\label{sec:experiments}
 In this section, we validate the performance improvement of the different versions of our algorithms.
 \subsection*{Experimental Setup}
@@ -924,7 +928,7 @@ The table depicts for each configuration \begin{inparaenum}[(1)]
 			OUSb+Lit. Incr. HS      & [311 / 403] &          95.83\% &  4.06\% & 0.11\% &       914 & [231 / 403] &          40.5\% &    2.78\% &    56.72\% &      1172 \\
 			OUS Iter.+Lit. Incr. HS & [327 / 403] &          96.14\% &  3.55\% & 0.31\% &       667 & [270 / 403] &         36.73\% &    0.82\% &    62.45\% &      1165 \\
 			OCUS+Incr. HS           & [314 / 403] &          99.08\% &  0.86\% & 0.06\% &       342 & [240 / 403] &         47.81\% &    0.71\% &    51.48\% &       306\\
-			MUS                     & [311 / 403] &            ---- &       ---- &  ---- &     ---- & [311 / 403] &           ---- &      ----&       ----&        ---- \\
+			MUS                     & [311 / 403] &            --- &       --- &  --- &     --- & [311 / 403] &           --- &      ---&       ---&        --- \\
 			%	\bottomrule
 		\end{tabular}
 	\end{adjustbox}

@@ -471,10 +471,8 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 	
 \end{example}
 
-Table \ref{tab:example-explanation-generation-not-incremental} depicts the results of algorithm \ref{alg:comus} for generating an OCUS of given $\formula$, $f$ and $p$. 
-In this example, the \grow we used is the complement of the model provided by the \sat solver. 
-
-The collection of sets-to-hit \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that contains exactly one of $\{\lnot x_1, x_2, \lnot x_3\}$ (due to $p$). Once an unsatisfiable subset is found, it's guaranteed to be optimal and validate the given constraint. In this example, step 4 of Table~\ref{tab:example-explanation-generation} signifies that using constraint $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
+In this example, the \grow we used corresponds to the model provided by the \sat solver. 
+\cref{tab:example-explanation-generation-not-incremental} breaks down the intermediate steps of algorithm \ref{alg:comus} for generating an OCUS of given $\formula_{constr}$, $f$ and $p$. 
 
 \begin{table}[!h]
 	\centering
@@ -484,16 +482,31 @@ The collection of sets-to-hit \setstohit is initialized as the empty set. At eac
 		\toprule[2pt]
 		&        &    &      & $\emptyset$                                \\
 		\midrule
-		1. & $\{ \lnot x_1\}$                    & $\mathit{true}$  & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$            & $\{ \{c_3, x_1, x_2, \lnot x_3 \}\}$                                \\
-                        \\
+		1. & $\{ \lnot x_1\}$   &$\mathit{true}$  & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2 \}$            & $\{ \dots, \{c_3, x_2, \lnot x_3 \}\}$\\
+		\midrule
+		2. & $\{ \lnot x_3\}$   &$\mathit{true}$  & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, \lnot x_3 \}$            & $\{ \dots, \{c_3, x_2 \}\}$\\
+		\midrule
+		3. & $\{ x_2\}$   		&$\mathit{true}$  & $\{c_1, c_2, c_3 \}$ 							& $\{ \dots, \{c_4, \lnot x_1, \lnot x_3 \}\}$\\
+		\midrule
+		4. & $\{ c_4, x_2 \}$   	&$\mathit{true}$  & $\{c_1,c_2, c_4, \lnot x_1 , x_2, \lnot x_3 \}$ &$\{ \dots, \{c_4, \lnot x_1, \lnot x_3 \}\}$\\
+		\midrule
+		5. & $\{ c_3, \lnot x_3\}$ 	&$\mathit{true}$  & $\{c_1,c_3, c_4, \lnot x_3 \}$ &$\{ \dots, \{c_2, \lnot x_1, x_2 \}\}$\\
+		\midrule
+		6. & $\{ c_3, \lnot x_1\}$ 	&$\mathit{false}$  & & \\
+		
 	\end{tabular}
 	\caption{Example: Explanation sequence generated with \onestepo \emph{incremental}}
-	\label{tab:example-explanation-generation}
+	\label{tab:example-explanation-generation-not-incremental}
 \end{table}
+
+The collection of sets-to-hit \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that contains exactly one of $\{\lnot x_1, x_2, \lnot x_3\}$ (due to $p$). Once an unsatisfiable subset is found, it's guaranteed to be optimal and validate the given constraint. In this small example, we see that the unoptimized \comus hits all of the remaining literals suggesting that a better quality grow would to a lower amount of additional iterations. Finally, step 6 of \cref{tab:example-explanation-generation-not-incremental} signifies that using constraint $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
+%\emilio{add the explanation step decomposition}
+
+
 
 \section{Optimal Unsatisfiable Subsets}\label{sec:OUS}
 
-Since the tasks of explaining the different literals are independent, we might not want to pollute the sets that are independent of each other. Therefore, in this section, we analyze if instead of working \comus-based, we can also generate optimal explanations by replacing the MUS call by an \omus{} call at line~\ref{alg:onestep:mus-call} of \cref{alg:oneStep}. 
+Since the tasks of explaining the different literals are independent, we might not want to pollute the sets that are independent of each other, as illustrated in \cref{tab:example-explanation-generation-not-incremental}. Therefore, in this section, we analyze if instead of working \comus-based, we can also generate optimal explanations by replacing the MUS call by an \omus{} call at line~\ref{alg:onestep:mus-call} of \cref{alg:oneStep}. 
 More precisely, the question is: Can we encode the constrainedness of \comus-based explanations and compensate the possible overhead of individual \omus{} calls?
 
 %
@@ -649,35 +662,34 @@ Since the restriction on the third type of elements of $\formula$ are already st
 We evaluate different grow strategies in the experiments section, including the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
 
 
-\begin{example}[\textit{continued}] Consider the 4 previously introduced clauses from our running example. To define the input for the OCUS call, we add new clauses representing the final interpretation $\Iend =  \{\lnot x_1, x_2, \lnot x_3\}$:
-	\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
-	with initial interpretation $ I = I_0 = \emptyset$ and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
-	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
-	The formula \emph{incremental constrained} \formula in the \comus-call is thus: 
-	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
-	\[\formula_{incr, constr}= \formulac\land \Iend \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge \dots \wedge c_10\}\]	
-	
-	
-	We define $p\triangleq$ \emph{exactly-one$(\{\lnot x_1, x_2, \lnot x_3\})$}, to explain one literal at a time, and cost function $f = \sum w_ic_i$ over clause weights \[w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=\infty, w_6=\infty, w_7=\infty, w_8=1, w_9=1, w_{10}=1\]
+\begin{example}[\textit{continued}] To define the input for incremental OCUS call, we add new clauses representing the final interpretation $\Iend =  \{\lnot x_1, x_2, \lnot x_3\}$:
+	\[ c_8 := \{ x_1\}\qquad  c_9:=\{\lnot x_2\} \qquad  c_{10} := \{ x_3\}\]
+%	with initial interpretation $ I = I_0 = \emptyset$ and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
+%	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
+
+		
+	For OCUS incremental, $p$ is remains the same, but th cost function $f = \sum w_ic_i$ is now defined over clause weights \[w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=1, w_6=1, w_7=1, w_8=\infty, w_9=\infty, w_{10}=\infty\]
 	Note how the weights of clauses $c_5, c_6, c_7$ are set to $\infty$ in order to prevent the hitting set solver from selecting these clauses as the literals have not been derived yet; and more importantly, it allows for reusing the computed satisfiable subsets potentially containing these clauses across explanation calls.
 	
-	Finally, for explaining one of the literals, we proceed to call \comus on formula $\formula_{incr, constr}$ with given cost function $f$ and \emph{exactly-one} constraint $p$:
-	\[\comus( \formulac\land \Iend \land \overline{(\Iend\setminus I)}, f, p)\]
+	The incremental \comus-call is now: 
+	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
+	\[\comus( \formulac\land \textbf{\Iend} \land \overline{(\Iend\setminus I)}, f, p)\]
+	
+%	Finally, for explaining one of the literals, we proceed to call \comus on formula $\formula_{incr, constr}$ with given cost function $f$ and \emph{exactly-one} constraint $p$:
+%	\[\comus( \formulac\land \Iend \land \overline{(\Iend\setminus I)}, f, p)\]
+In this example, the \grow we used is the one called \emph{Max-Unif} in \cref{sec:experiments:domain-specific-grow}.
 		
 \end{example}
 
-Table \ref{tab:example-explanation-generation} depicts the results of algorithm \ref{alg:comus} for generating an OCUS of given $\formula$, $f$ and $p$. 
-In this example, the \grow we used is the one called \emph{Max-Unif} in \cref{sec:experiments:domain-specific-grow}. 
 
-The collection of sets-to-hit \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that contains exactly one of $\{\lnot x_1, x_2, \lnot x_3\}$ (due to $p$). Once an unsatisfiable subset is found, it's guaranteed to be optimal and validate the given constraint. In this example, step 4 of Table~\ref{tab:example-explanation-generation} signifies that using constraint $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
 
 \begin{table}[!h]
 	\centering
 		\begin{tabular}{lcccc} 
-			\multicolumn{5}{c}{OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
+%			\multicolumn{5}{c}{OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
 			Step & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ 
 			\toprule[2pt]
-	  			&        &    &      & $\emptyset$                                \\
+	  			&    \phantom{$\{ c_1, c_2, x_1, \lnot x_3 \}$}    &    &      & $\emptyset$                                \\
 			\midrule
 			1. & $\{ \lnot x_1\}$                    & $\mathit{true}$  & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$            & $\{ \{c_3, x_1, x_2, \lnot x_3 \}\}$                                \\
 			\midrule	
@@ -685,29 +697,47 @@ The collection of sets-to-hit \setstohit is initialized as the empty set. At eac
 			\midrule % x2 and c1 and c2 and c4 and ~c3 and ~x3 and ~x1
 			3. & $\{x_2, c_1\}$                      & $\mathit{true}$  & $\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$       & $\{ ..., \{x_1 , \lnot x_2 , x_3 , c_3 \}\}$                        \\ 
 			\midrule
-			4. & $\{\lnot x_1, c_3\}$  & $\mathit{false}$ & - & - \\ &&&&\\
-			\multicolumn{5}{c}{OCUS explanation: $c_1 \wedge c_2 \wedge x_1 \implies x_3$} \\ \midrule\midrule
-%		\end{tabular}
-	
-%		\begin{tabular}{lcccc} 
-%		& $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ 
-%		\toprule[2pt] % x1 and x2 and x3 and c1 and c2 and c3 and ~c4
+			4. & $\{\lnot x_1, c_3\}$  & $\mathit{false}$ & - & - \\% &&&&\\
+		\end{tabular}
+	\caption{\textit{Example (continued)}. Explanation step 1 ($\mathbf{c_3 \implies x_1}$) of the explanation sequence generated with \onestepo \emph{incremental}}
+	\label{tab:example-explanation-generation:incr:step1}
+	\end{table}
+For explaining the remaining literals ($\lnot x_2$ and $x_3$), we adapt the weights of clauses $c_5 := \lnot x_1$ and $c_8 := x_1$ to $w_5 = \infty$ and $w_8 = 1$ respectively. Similarly for the last explanation, we adapt the weights to reflect the current interpretation and that we only want to explain $\lnot x2$.
+
+\begin{table}[!h]
+	\centering
+	\begin{tabular}{lcccc} 
+%		\multicolumn{5}{c}{OCUS explanation: $c_1 \wedge c_2 \wedge x_1 \implies x_3$} \\ \midrule\midrule
+		Step & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ \toprule[2pt]
+		%		\toprule[2pt] % x1 and x2 and x3 and c1 and c2 and c3 and ~c4
 		5. &  $\{ c_1,  x_1 , x_2 \}$  & $\mathit{true}$ & $\{ c_1, c_2 , c_3,  x_1 , x_2, x_3 \}$    &  $\{..., \{ c_4, \lnot x_2, \lnot x_3\}\}$                                \\
 		\midrule % x1 and c1 and c3 and c4 and ~c2 and ~x3 and ~x2
 		6. &  $\{ c_1, x_1, \lnot x_3 \}$  & $\mathit{true}$ & $\{ c_1,  c_3, c_4, x_1, \lnot x_2,\lnot x_3 \}$    &  $\{..., \{ c_2, x_2, x_3\}\}$                                \\
 		\midrule % x1 and ~x3 and c1 and c2
-		7. &  $\{ c_1, c_2, x_1, \lnot x_3 \}$  & $\mathit{false}$ &    &                                 \\
-		&&&&\\ % $x_3 \wedge c_4 \implies \lnot x_2 $
-		\multicolumn{5}{c}{OCUS explanation: $c_4 \wedge x_3 \implies \lnot x_2$} \\ \midrule \midrule
-				8. &  $\{ c_4, x_2, x_3  \}$  & $\mathit{false}$ &   &                            \\
-		\end{tabular}
-	\caption{Example: Explanation sequence generated with \onestepo \emph{incremental}}
-	\label{tab:example-explanation-generation}
+		7. &  $\{ c_1, c_2, x_1, \lnot x_3 \}$  & $\mathit{false}$ & \phantom{$\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$}   &                                 \\
+	\end{tabular}
+\caption{\textit{Example (continued)}. Explanation step 2 ($\mathbf{c_1 \wedge c_2 \wedge x_1 \implies x_3}$) of the explanation sequence generated with \onestepo \emph{incremental}}
+\label{tab:example-explanation-generation:incr:step2}
+\end{table}
+\begin{table}[!h]
+	\centering
+	\begin{tabular}{lcccc} 
+%		\multicolumn{5}{c}{OCUS explanation: $c_4 \wedge x_3 \implies \lnot x_2$} \\ \midrule \midrule
+		Step & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ \toprule[2pt]
+
+		8. &  $\{ c_4, x_2, x_3  \}$  & $\mathit{false}$ & \phantom{$\{ c_1,  c_3, c_4, x_1, \lnot x_2,\lnot x_3 \}$}    & \phantom{$\{..., \{ c_2, \lnot x_2, \lnot x_3\}\}$ }\\
+	\end{tabular}
+	\caption{\textit{Example (continued)}. Explanation step 3 ($\mathbf{c_4 \wedge x_3 \implies \lnot x_2}$) of the explanation sequence generated with \onestepo \emph{incremental}}
+\label{tab:example-explanation-generation:incr:step3}
 \end{table}
 
-For explaining the remaining literals ($\lnot x_2$ and $x_3$), we adapt the weight of clause $c_5 := x_1$ to $w_5 = 1$ and $c_8 := \lnot x_1$ to $w_8 = \infty$.
+\paragraph{Incrementality} What we see in the second (\cref{tab:example-explanation-generation:incr:step2}) and the third explanation step (\cref{tab:example-explanation-generation:incr:step3}), is the efficiency of keeping track of the computed satisfiable subsets. In step 5 (\cref{tab:example-explanation-generation:incr:step2}) for example, one does not have to start from scratch, but by hitting the updated sets-to-hit (where $x_1$ cannot be taken), the \comus algorithm starts from a good candidate. The same observation regarding the efficiency of information re-use can be made in step 8 of \cref{tab:example-explanation-generation:incr:step3} where the first hitting set corresponds to an \comus.
 
-\paragraph{Incrementality} What we see in the consecutive steps for computing the next explanation in the sequence, is the efficiency of keeping track of the computed satisfiable subsets. 
+
+
+%For explaining the remaining literals ($\lnot x_2$ and $x_3$), we adapt the weight of clause $c_5 := x_1$ to $w_5 = 1$ and $c_8 := \lnot x_1$ to $w_8 = \infty$.
+
+
 
 
 \subsection{Correction Subsets enumeration}\label{sec:correction_subset_enum}
@@ -721,7 +751,7 @@ Inspired by \cite{marques2013computing}, the \corrsubsets procedure, depicted in
 \item the collection of disjoint MCSes and;
 \item $\m{S}$, ensuring that the constraints of the correction subset cannot be present in the next correction subset,
 \end{inparaenum}
-until no more satisfiable subsets can be found.
+until no more satisfiable subsets can be found. 
 
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
@@ -736,14 +766,17 @@ until no more satisfiable subsets can be found.
 	\caption{$\corrsubsets(\formula,\subsetT)$ }
 	\label{alg:corr-subsets-grow-with-sat}
 \end{algorithm}
-	In \cref{sec:correction_subset_enum}, we extended the idea of a better \grow procedure to correction subset enumeration in the context of O(C)US explanation sequence generation. For that, we adapted the generic disjoint correction subset procedure to the following 2 strategies.
+
+Blindly applying this to the incremental \comus case, leads to \emph{UNSAT} after the first iteration since both polarities of the literals are present in either the hitting set or the correction subset. Step 1 of \cref{tab:example-explanation-generation:incr:step1} illustrates this case where $x_1$ is present in the hitting set $\m{S}$ and $\lnot x_1$ in the correction subset $F \setminus \m{S}$.
+
+
 
 \paragraph{Disj. \maxsat Corr.} of \cref{alg:disjoint_correction_subsets} repeatedly grows a given subset $\m{S}$ using the \emph{Dom.-spec. \maxsat}, then computes the consequent correction subset $\m{S'}$ and adds it to a collection of correction subsets $\m{K}$ until $\m{S}$ is no more satisfiable. We make these correction susbets \emph{disjoint}, by adding them to $\m{S} = \m{S} \cup \m{S}'$ to ensure that they have to be present in the satisfiable subset and therefore cannot be present in the corresponding corrections subset. However, we go one step further and take advantage of the explanation \emph{sequence} generation context. Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints and the current interpretation, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I)$. This allows for extra correction subsets that are disjoint in the eye of the hitting set solver.
 
 \paragraph{\maxsat Corr.+\sat} of \cref{alg:greedy_correction_subsets} also works in the same way as \emph{Disj. \maxsat Corr.}, however only the first subset $\m{S}$ is grown using the \emph{Dom.-spec. \maxsat}. The subsequent grows are done using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. The procedure is repeated until $\m{S}$ is unsatisfiable or the grow model doesn't improve anymore. 
 
 
-\paragraph{Incremental OCUS}\emilio{Write about disjoint correction subsets, how they are not directly mappable to OCUS incr, and what we did to improve that } \emilio{add advantage of projecting on  $\formulac \cup I$}
+%\paragraph{Incremental OCUS}\emilio{Write about disjoint correction subsets, how they are not directly mappable to OCUS incr, and what we did to improve that } \emilio{add advantage of projecting on  $\formulac \cup I$}
 
 \paragraph{SAT-based Correction Subsets}
 \emilio{Write about the performance overhead of MaxSAT solving and relative speed of SAT solving compared to that}

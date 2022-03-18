@@ -1,6 +1,6 @@
 \documentclass[twoside,11pt]{article}
 \usepackage{jair, theapa, rawfonts}
-\usepackage[dvipsnames]{xcolor}
+\usepackage[usenames,dvipsnames]{xcolor}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage[ruled,linesnumbered]{algorithm2e}
 \usepackage{thmtools} 
@@ -21,7 +21,7 @@
 
 
 %%%%%%
-\newcommand\citet[1]{\citeauthor{#1}~[\citeyear{#1}]}
+\newcommand\citet[1]{\citeauthor{#1}~\citeyear{#1}}
 
 \newcommand\m[1]{\mathcal{#1}}
 
@@ -114,6 +114,8 @@
 \newcommand\iterativeonestepDisj{\ensuremath{\call{Explain-One-Step-Iterative-DisjointMCSes}}\xspace}
 %%%%%%
 
+
+\input{latextips.tex}
 
 \begin{document}
 	
@@ -251,20 +253,38 @@ In the last few years, driven by the increasingly many successes of Artificial I
 In the research community, this need manifests itself through the emergence of (interdisciplinary) workshops and conferences on this topic~\cite{xai-ijcai,FAT} and American and European incentives to stimulate research in the area~\cite{gunning2017explainable,hamonrobustness,fetproact}. 
 
 While the main focus of XAI research has been on explaining black-box machine learning systems \cite{lundberg2017unified,guidotti2018survey,ignatiev2019abduction}, also model-based systems, which are typically considered more transparent, are in need of explanation mechanisms. 
-Indeed, by advances in solving methods in research fields such as constraint programming \cite{fai/Rossi06} and SAT \cite{faia/2009-185}, as well as by hardware improvement, such systems now easily consider millions of alternatives in short amounts of time. 
+Indeed, by advances in solving methods in research fields such as constraint programming \cite{fai/Rossi06} and Boolean satisfiability (SAT) \cite{faia/2009-185}, as well as by hardware improvement, such systems now easily consider millions of alternatives in short amounts of time. 
 Because of this complexity, the question arises how to generate human-interpretable explanations of the conclusions they make. 
+
+\bart{In the previous paragraph we jump a bit fast from ``model-based systems'' to ``CP and SAT''. 
+There is also work going on explainability in for instance Description Logics, in Argumentation, ... 
+Also the sentence in the paragraph that follows is not very accurate: it is true that \emph{Explanations for CP/SAT-like systems have focussed on UNSAT problems.} But not for ``model-based systems'' in general. In DL for instance one aims at explaining logical proofs. (why does phi follow from psi). I think some more references are needed for ``explanations for model-based systems'' going a bit broader than what is considered now. (for inspiration, see the XLoKR workshops). 
+Next,  a sentence is needed that our focus is on CP/SAT-style systems. And then we can that in THESE reseach areas, there ahas been a strong focus on explaining UNSATisfiable instances.}
 
 Explanations for model-based systems have been considered mostly for explain \textit{unsatisfiable} problem instances~\cite{junker2001quickxplain}, and have recently seen a rejuvenation in various subdomains of constraint reasoning \cite{fox2017explainable,vcyras2019argumentation,chakraborti2017plan,ecai/BogaertsGCG20}.
 
-In this context, we recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} and applied them to Zebra puzzles; similar explanations, but for a wider range of puzzles, have been investigated by \citet{schotten}. 
-Our current work is motivated by a concrete algorithmic need: to generate these explanations efficiently, we need algorithms that can find optimal MUSs with respect to a given cost function, where the cost function approximates human-understandability of the corresponding explanation step. 
-The closest related works can be found in the literature on generating or enumerating MUSs \cite{conf/sat/LynceM04,liffiton2016fast}.
+In this context, we recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} and applied them to Zebra puzzles; similar explanations, but for a wider range of puzzles, have been investigated by \citet{schotten}.  
+\bart{We can probably phrase this a bit stronger. They are not just similar explanations. In their own work they say that ``We advance on the work
+of [Bogaerts et al., 2020]'', so we can probably quite fairly say that \citet{schotten} build on our work and apply it to more puzzles (phrased slightly more politically careful)}
+Our current work is motivated by a concrete algorithmic need: to generate these explanations efficiently, we need algorithms that can find MUSs that are optimal with respect to a given cost function, where the cost function approximates human-understandability of the corresponding explanation step. 
+The closest related work can be found in the literature on generating or enumerating MUSs \cite{conf/sat/LynceM04,liffiton2016fast}.
 Different techniques are employed to find MUSs, including  manipulating resolution proofs produced by SAT solvers \cite{goldberg,DBLP:journals/fmsd/GershmanKS08,DBLP:conf/sat/DershowitzHN06}, incremental solving to enable/disable clauses and branch-and-bound search \cite{DBLP:conf/dac/OhMASM04}, or by BDD-manipulation methods \cite{huang}.
 
 Other methods work by means of translation into a so-called Quantified \maxsat \cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressivity of Quantified Boolean Formulas (QBF) \cite{QBF} with optimization as known from \maxsat \cite{DBLP:series/faia/LiM09}, or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest} bootstrapped using MCS-enumeration \cite{marques2020reasoning}. 
+\bart{This ``boostrapped using MCS enumeration'' sounds like a technical detail, not something that requires an explicit mention in this section... }
 
 An \textit{abstract} framework for describing \hitsetbased algorithms, including optimization was developed by \citet{DBLP:conf/kr/SaikkoWJ16}. While our approach can be seen to fit the framework, the terminology is focused on MaxSAT rather than MUS and would complicate our exposition.
-To the best of our knowledge, only few have considered \emph{optimizing} MUSs: the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest}. 
+To the best of our knowledge, only few \bart{few what} have considered \emph{optimizing} MUSs: the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest}. 
+
+\bart{The paragraph splits above are strange. 
+I would propose:
+\begin{itemize}
+  \item New paragraph before ``The closest related work'' (to separate ``our work'' from ``related work''. 
+  \item No break before ``Other methods''. 
+  \item The sentence ``to the best of our knowledge'' also goes in that paragraph
+  \item The sentence about the ABSTRACT framework is a separate paragraph. It is something else.
+\end{itemize}
+}
 
 %\begin{itemize}
 %	%\item XAI $\rightarrow$ CP
@@ -292,10 +312,11 @@ We present all methods using propositional logic but our results easily generali
 
 Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. 
 A clause is a disjunction of literals, i.e $c_1 = x_1 \vee \lnot x_2 $. A formula $\formula$ in conjunctive normal form (CNF) is a conjunction of clauses. 
-Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. We use the term clause and constraint interchangeably.
+Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. We use the term clause and constraint interchangeably. \bart{Do we? Sounds like a bad idea. We DEFINITELY use ``constraint'' in settings where we do NOT mean clause, for instance in OCUS. 
+If there are places in the paper where we use ``constraint'' but mean ``clause'', I would propose that we just fix those places.}
 
 We consider the following four clauses as our running example across the different sections to illustrate the concepts introduced:
-\begin{example}\label{example:intro}
+\begin{example}\label{example:intro}\TIPdefVSchoice
 	Let $\formulac$ be a CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
 \[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
 \end{example}
@@ -303,6 +324,16 @@ We consider the following four clauses as our running example across the differe
 A (partial) interpretation $\m{I}$ is a consistent (not containing both $p$ and $\lnot p$) set of literals, for example $\{\lnot x_2,  x_3\}$. 
 A \emph{model} of \formula is an interpretation that satisfies \formula; $\formula$ is said to be \emph{unsatisfiable} if it has no models.
 Satisfaction of a formula \formula by an interpretation is defined as usual~\cite{faia/2009-185}.
+\bart{The sentence that satisfaction is defined as usual is as long as just deifning it:
+``An interpretation $\m{I}$ \emph{satisfies} \formula if $\m{I}$ contains at least one literal from each clause in $\formula$. ''
+only AFTER this sentence, should the sentence about models come: 
+An interpretation that satisfies $\formula$ is also called a \emph{model} of \formula. 
+A \formula is \emph{satisfiable} if it has at least one model and \emph{unsatisfiable} otherwise.}
+
+
+\bart{in what follows, there are definitions such as ``maximal consequence'' that are given in a sentence that starts with ``In our running example''. It is better to give the definitions INDEPENDENT from the example, and AFTERWARDS apply them to the example. Also, the sentence defining $\negset{I}$ is a bit in a strange place, in between the ``definition'' of end interpretation and ``initial interpretation''.   
+By the way, I do not think we should talk about ``end'' and ``initial'' interpretation here. The reader does not know what that is yet. That will come when we define explanation sequences. 
+Consequence and maximal consequence can be defined here. They are logical concepts (independent of explanations)} 
 
 A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models. 
 In our running example, $\Iend = \{x_1, \lnot x_2,  x_3\}$ denotes the \emph{maximal consequence} that holds in all models and is also called the \emph{end interpretation}.
@@ -331,6 +362,11 @@ Such a $\m{S}$ is a \emph{minimal correction subset} (MCS)  of \formula if no st
 \end{definition}
 
 Each  MCS of \formula is the complement of an MSS of \formula and vice versa. 
+
+\begin{example}
+  \bart{Give a small example here. A CNF, an MCS and a MUS of it. Say that the MUS contains at least one element in the MCS. ANd that this is not a coincidence.}
+\end{example}
+
 
 \begin{definition}\label{def:minimal-hs}
 Given a collection of sets $\m{H}$, a hitting set of $\m{H}$ is a set $h$ such that  $h \cap C \neq \emptyset$ for every $C \in \m{H}$. A hitting set is \emph{minimal} if no strict subset of it is also a hitting set.

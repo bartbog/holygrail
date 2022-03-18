@@ -48,7 +48,7 @@
 \renewcommand\comment[1]{#1}
 \newcommand{\tias}[1]{{\comment{\color{blue}Tias:#1}}}
 \newcommand{\emilio}[1]{{\comment{\color{red}Emilio: #1}}}
-\newcommand{\bart}[1]{{\comment{\color{green}Bart: #1}}}
+\newcommand{\bart}[1]{{\comment{\color{OliveGreen}Bart: #1}}}
 \newcommand{\new}[1]{{\comment{{\color{blue} #1}}}}
 
 %% Factoring
@@ -145,6 +145,9 @@
 \maketitle
 \tableofcontents
 
+
+\bart{There is no abstract? Is this according to the JAIR instructions}
+
 \section{Introduction}
 \label{sec:introduction}
 %%% XAI context
@@ -166,39 +169,83 @@
 %\emilio{Application of our work: Explanation Generation context, puzzle solving, scheduling, configuration}
 %%%% {GOAL (high-level to low-level)}
 
-Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} constraint program and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
-Explanations in that work are sequences of simple inference steps, involving as few constraints and facts as possible. 
+Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} constraint program 
+\bart{Not super fond of the word ``program''. Theory/Formula is the logical name. ``Set of constraints'' could also work (especially since later we will talk about ``MUSs'', where the S stands for subset. 
+``Model'' can also be used in more CP-oriented terminology (but risk of confusion with ``solutoin''. }
+and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
+Explanations in that work are sequences of simple inference steps, involving as few constraints and previously-derived facts as possible. 
 
 %%% {ISSUES when achieving our GOAL}
 The explanation-generation algorithms presented in that work rely heavily on calls for  \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived program, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs.
 
 The explanation steps in the seminal work are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g., taking the number of constraints and facts into account, as well as a valuation of their complexity (or priority). 
+\bart{What does this last part (after the comma) of the last sentence mean? 
+Explanations are optimized wrt 
+  1) a cost function (I know what this is!)
+  2) a valuation of their complexity or priority???  What is this? 
+}
 
-The algorithm developed in that work has two main weaknesses: first, it provides no guarantees on the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
+The algorithm developed in that work has two main weaknesses.
+First, it provides no guarantees on the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
 Secondly, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate implied fact.
 However, using multiple MUS calls per literal in each iterations quickly causes efficiency problems, causing the explanation generation process to take several hours.
+\bart{\begin{itemize}
+        \item The previous paragraph will be hard to follow for readers. For the conference version, we can get away with this. For the journal version I t hink that before this paragraph we should illustrate, informally what we mean by ``an explanation sequence'', ``implied facts'' etcetera. 
+        \item ``Several hours'' is not very informative. I would say ``several hours, even for simple puzzles that are designed to be solveable by humans'' or something of the kind. 
+      \end{itemize}
+}
 
 
 Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
 \begin{itemize}
 \item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
 
-\item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. In other words, we introduce the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem and we show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
+\item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. 
+We formalize and generalize this observation by introducing the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem. We then show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
 
-\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive O(C)US calls, as well as an iterated OUS algorithm that will \emph{only expand the most promising literals-to-explain}.
+\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive O(C)US calls, as well as an iterated OUS algorithm \bart{Names are important. I have already mentioned a couple of times that ``iterated OUS'' is a bad name. Because ``this iterated OUS algorithm'' is not an OUS algorithm. The problem it solves is OCUS for a specific C. WE should fix a better name and replace it throughout the paper. 
+}
+that will \emph{only expand the most promising literals-to-explain}.
 
 % correction subset enumeration
-\item We investigate how to impose additional constraints on the collection of sets-to-hit using domain-specific knowledge by balancing a trade-off between efficiency of the \grow strategy and quality of generated satisfiable subsets.
+\item We investigate how to impose additional constraints on the collection of sets-to-hit using domain-specific knowledge by balancing a trade-off between efficiency of the \grow strategy and quality of generated satisfiable subsets. 
+\bart{Hmm... 
+\begin{itemize}
+\item Why does this not belong in the previous contribution? Is this not a technique for optimizing the O(C)US algorithms, exploiting domain specific information? 
+\item``Additional constraints''? Is that so? Would a different grow not just result in another set-to-hit? 
+\item ``constraints on the collection of sets-to-hit''. Not really, right. There are ``constraints'' on the sets-to-hit. 
+\item What is the ``quality of the generated satisfiabable subsets''. 
+\item This entire paragraph assumes that the reader knows how hitting-set based US solving works. We cannot make this assumption. This means that either we explain it beforehand, or we avoid going into technical details such as ``satisfiable subsets'', ``grow'', ``sets-to-hit''
+\end{itemize}}
+ 
 
 \item Finally, we extensively evaluate our approaches on a large number of CSP instances.
 
 \end{itemize}
 
-\paragraph*{Publication history} This article is an extension of a previous paper presented at the International Joint Conference on Artificial Intelligence 2021 \cite{ijcai2021}. The current paper extends the previous paper with more detailed examples, extensive experiments on a large data set of puzzles, as well as a novel algorithm for efficiently computing explanations.
+\paragraph*{Publication history} This article is an extension of a previous paper presented at the International Joint Conference on Artificial Intelligence 2021 \cite{ijcai2021}. The current paper extends the previous paper with more detailed examples, extensive experiments on a large data set of puzzles, as well as a novel algorithm for efficiently computing explanations.\bart{Here, we might want to be more precise. Not ``a novel algorithm'', but say which one it is.}
+\bart{I would be inclined to move the history after the ``The rest of this paper is structured as follows''. Now it kind of braks the flow of the intro. The history is something most readers will want to skip, it is nicer if it is at the end of the section}
 
-The rest of this paper is structured as follows. \cref{sec:related-works} examines works related to explanations in constraint solving as well as efficient extraction of unsatisfiable subsets. In \cref{sec:background}, we introduce the theoretic foundations on our implicit hitting set approach. \cref{sec:motivation} describes the motivation behind our work to develop the concept of \comus, which is introduced in \cref{sec:OCUS}. Next, in \cref{sec:OUS} we present alternative methods for computing optimal explanations in the explanation sequence. We improve the efficiency of our approaches by introducing concepts such as incrementality and correction subset extraction in \cref{sec:efficient-ocus}. Finally, we evaluate our approach on large set of puzzle instances in \cref{sec:experiments} and conclude with some future prospects.
+The rest of this paper is structured as follows. 
+\cref{sec:related-works} examines works related to explanations in constraint solving as well as efficient extraction of unsatisfiable subsets. 
+\bart{Not sure if the word ``examine'' is very good here. I would rather go for ``We discuss'' or something similar. 
+Also, not sure if we need to already say abut which topics we will talk precisely in that section.  In any case, I would not call it ``extraction'' but rather ``computation''.  
+Also: something is off with the structure of this sentence.  I think what it says now is that we discuss ``works'' that are related to BOTH topics.
+finally: related work (uncountable), see lower}
+In \cref{sec:background}, we introduce the theoretic foundations on our implicit hitting set approach. \cref{sec:motivation} describes the motivation behind our work to develop the concept of \comus, 
+\bart{``describes the motivation behind our work to develop the concept of OCUS --> Hard to read! Split in two sentences or simplify. \cref{sec:motivation} motivates our work, and \cref{sec:OCUS} introduces the OCUS problem \emph{as well as a simple algorithm to compute OCUSs} --> THe last part is now also in that section, no?}
+which is introduced in \cref{sec:OCUS}. Next, in \cref{sec:OUS} we present alternative methods for computing optimal explanations in the explanation sequence.
+\bart{explanations in the explanation sequence?}
+\bart{whta do you mean by ''alternative methods? As a reader I now wonder about the difference between  \cref{sec:OUS} and \cref{sec:efficient-ocus} }
+We improve the efficiency of our approaches by introducing concepts such as incrementality and correction subset extraction in \cref{sec:efficient-ocus}. 
+\bart{We do not introduce these concepts, right? Incrementality is a long-existing concept. We make our algorithms incremental. }
+\bart{``correction subset extraction'' is already a part of the basic OCUS algorithm. I guess that in this sectino, we will have a DIFFERENT method for extracting it, no?}
+Finally, we evaluate our approach on large set of puzzle instances in \cref{sec:experiments} and conclude with some future prospects.
 
 \section{Related Works}\label{sec:related-works}
+\bart{``Related Work'' (uncountable). 
+This section discusses a vast body of related work. 
+If you would have a section in which you discuss a detailed a couple of papers in a lot of detail, you might want to call it ``works'', but if you are discussing research lines, as we are doing here, work is uncountable. }
 
 In the last few years, driven by the increasingly many successes of Artificial Intelligence (AI), there is a growing need for \textbf{eXplainable Artificial Intelligence (XAI)}~\cite{miller2019explanation}.
 In the research community, this need manifests itself through the emergence of (interdisciplinary) workshops and conferences on this topic~\cite{xai-ijcai,FAT} and American and European incentives to stimulate research in the area~\cite{gunning2017explainable,hamonrobustness,fetproact}. 

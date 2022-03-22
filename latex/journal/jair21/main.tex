@@ -276,6 +276,7 @@ In the research community, this need manifests itself through the emergence of (
 While the main focus of XAI research has been on explaining black-box machine learning systems \cite{lundberg2017unified,guidotti2018survey,ignatiev2019abduction}, also model-based systems, which are typically considered more transparent, are in need of explanation mechanisms. 
 For instance, \cite{vassiliades2021argumentation} survey the important methods that use argumentation \cite{modgil2013added} to provide explainability in AI, with for example applications in medical diagnosis \cite{obeid2019using}. Abstract argumentation frameworks introduce an abstract formalism to explain argumentative acceptance \cite{vsevselja2013abstract,liao2020explanation,ulbricht2021strong}. Description Logics \cite{baader2004description} on the other hand, aim at explaining logical proofs \cite{alrabbaa2021finding,koopmann2021two}, i.e `why does phi follow from psi?'. 
 
+\emilio{I need a little help in formulating this well...}
 \bart{In the previous paragraph we jump a bit fast from ``model-based systems'' to ``CP and SAT''. 
 There is also work going on explainability in for instance Description Logics, in Argumentation, ... 
 Also the sentence in the paragraph that follows is not very accurate: it is true that \emph{Explanations for CP/SAT-like systems have focussed on UNSAT problems.} But not for ``model-based systems'' in general. In DL for instance one aims at explaining logical proofs. (why does phi follow from psi). I think some more references are needed for ``explanations for model-based systems'' going a bit broader than what is considered now. (for inspiration, see the XLoKR workshops). 
@@ -320,7 +321,7 @@ An \textit{abstract} framework for describing \hitsetbased algorithms, including
 
 \section{Background}\label{sec:background}
 
-We present all methods using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics is given in terms of a satisfaction relation  between expressions in the language and possible states of affairs (assignments of values to variables).
+We present all methods using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics is given in terms of a satisfaction relation between expressions in the language and possible states of affairs (assignments of values to variables).
 
 Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. 
 A clause is a disjunction of literals, i.e $c_1 = x_1 \vee \lnot x_2 $. A formula $\formula$ in conjunctive normal form (CNF) is a conjunction of clauses. 
@@ -390,8 +391,8 @@ Consider the following examples to illustrate the concepts related to unsatisfia
 	Let $\formulac_2$ be a unsatisfiable CNF formula over atoms $x_1, x_2, x_3$ with the following clauses:
 	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
 	\[ c_5 := \lnot x_2 \vee \lnot x_3 \qquad  c_6 := \lnot x_1 \vee  x_2 \qquad  c_7 := \lnot x_1 \vee  \lnot x_3 \]
-	The subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an example of a Minimal Unsatisfiable Subset (MUS). $ \{c_1\}, \{c_2, c_6\}$ are examples of a minimal correction subsets (MCSes). We observe that MUS $\{c_1, c_2, c_4, c_6\}$ hits at least one clause of each MCS and (trivially) vice versa. Another observation is that clause $\{c_1\}$ is a unit MCS, which poses a strong constraint on the MUSes of $\formulac_2$. More precisely, the MUSes of $\formulac_2$ have to contain $\{c_1\}$.
 \end{example}
+The subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an example of a Minimal Unsatisfiable Subset (MUS) and $ \{c_1\}, \{c_2, c_6\}$ are examples of a minimal correction subsets (MCSes). We observe that MUS $\{c_1, c_2, c_4, c_6\}$ hits at least one clause of each MCS (and vice versa). Another observation is that clause $\{c_1\}$ is considered a unit MCS, which poses a strong constraint on the MUSes of $\formulac_2$. More precisely, the MUSes of $\formulac_2$ have to contain $\{c_1\}$.
 
 \section{Motivation}\label{sec:motivation}
 

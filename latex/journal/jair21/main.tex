@@ -147,8 +147,23 @@
 \maketitle
 \tableofcontents
 
+\begin{abstract}
+	We build on a recently proposed method for explaining solutions of constraint satisfaction problems.
+	An explanation here is a \textit{sequence} of simple inference steps, where the simplicity of an inference step is measured by the number and types of constraints and facts used, and where the sequence explains all logical consequences of the problem. 
+	We build on these formal foundations and tackle two emerging questions, namely how to generate explanations that are provably optimal (with respect to the given cost metric) and how to generate them efficiently. 
+	To answer these questions, we develop 
+	\begin{inparaenum}[1)]
+		\item an implicit hitting set algorithm for finding \textit{optimal} unsatisfiable subsets;
+		\item a method to reduce multiple calls for (optimal) unsatisfiable subsets to a single call that takes \emph{constraints} on the subset into account;
+		% a way to explain that we try to
+		\item a method for re-using relevant information over multiple calls to these algorithms and;
+		\item a method for imposing stronger constraints on the computed subsets balancing efficiency and quality. 
+	\end{inparaenum}
+	The implicit hitting set-based algorithm is also applicable to other problems that require finding cost-optimal (weighted) unsatisfiable subsets.
+	We specifically show that this approach can be used to effectively find sequences of \textit{optimal} explanation steps for a large set of constraint satisfaction problems.
+\end{abstract}
 
-\bart{There is no abstract? Is this according to the JAIR instructions}
+%\bart{There is no abstract? Is this according to the JAIR instructions}
 
 \section{Introduction}
 \label{sec:introduction}
@@ -171,32 +186,32 @@
 %\emilio{Application of our work: Explanation Generation context, puzzle solving, scheduling, configuration}
 %%%% {GOAL (high-level to low-level)}
 
-Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} constraint program 
-\bart{Not super fond of the word ``program''. Theory/Formula is the logical name. ``Set of constraints'' could also work (especially since later we will talk about ``MUSs'', where the S stands for subset. 
-``Model'' can also be used in more CP-oriented terminology (but risk of confusion with ``solutoin''. }
+%Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} constraint theory 
+Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} set of constraints
+%\bart{Not super fond of the word ``program''. Theory/Formula is the logical name. ``Set of constraints'' could also work (especially since later we will talk about ``MUSs'', where the S stands for subset. 
+%``Model'' can also be used in more CP-oriented terminology (but risk of confusion with ``solutoin''. }
 and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
-Explanations in that work are sequences of simple inference steps, involving as few constraints and previously-derived facts as possible. 
+Explanations in that work are sequences of simple inference steps, a.k.a an \emph{explanation sequence}, involving as few constraints and previously-derived facts as possible. Every explanation allows the user to derive new facts, implied by a combination of constraints and already derived facts.
 
 %%% {ISSUES when achieving our GOAL}
-The explanation-generation algorithms presented in that work rely heavily on calls for  \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived program, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs.
+The explanation-generation algorithms presented in that work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs.
 
-The explanation steps in the seminal work are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g., taking the number of constraints and facts into account, as well as a valuation of their complexity (or priority). 
-\bart{What does this last part (after the comma) of the last sentence mean? 
-Explanations are optimized wrt 
-  1) a cost function (I know what this is!)
-  2) a valuation of their complexity or priority???  What is this? 
-}
+The explanation steps in the seminal work are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g., taking the number of constraints and facts into account, as well as an estimate of their cognitive complexity. For example, in the evaluation of explanations for logic grid puzzles, the given clues of the puzzle are considered more difficult than simpler reasoning tricks, and therefore have a higher cost.
+%\bart{What does this last part (after the comma) of the last sentence mean? 
+%Explanations are optimized wrt 
+%  1) a cost function (I know what this is!)
+%  2) a valuation of their complexity or priority???  What is this? 
+%}
 
 The algorithm developed in that work has two main weaknesses.
 First, it provides no guarantees on the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
-Secondly, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate implied fact.
-However, using multiple MUS calls per literal in each iterations quickly causes efficiency problems, causing the explanation generation process to take several hours.
-\bart{\begin{itemize}
-        \item The previous paragraph will be hard to follow for readers. For the conference version, we can get away with this. For the journal version I t hink that before this paragraph we should illustrate, informally what we mean by ``an explanation sequence'', ``implied facts'' etcetera. 
-        \item ``Several hours'' is not very informative. I would say ``several hours, even for simple puzzles that are designed to be solveable by humans'' or something of the kind. 
-      \end{itemize}
-}
-
+Second, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate fact to explain.
+However, using multiple MUS calls per literal in each iteration quickly causes efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
+%\bart{\begin{itemize}
+%        \item The previous paragraph will be hard to follow for readers. For the conference version, we can get away with this. For the journal version I t hink that before this paragraph we should illustrate, informally what we mean by ``an explanation sequence'', ``implied facts'' etcetera. 
+%        \item ``Several hours'' is not very informative. I would say ``several hours, even for simple puzzles that are designed to be solveable by humans'' or something of the kind. 
+%      \end{itemize}
+%}
 
 Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
 \begin{itemize}
@@ -205,86 +220,83 @@ Motivated by these observations, we develop algorithms that aid explaining CSPs 
 \item We observe that many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. 
 We formalize and generalize this observation by introducing the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem. We then show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
 
-\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive O(C)US calls, as well as an iterated OUS algorithm \bart{Names are important. I have already mentioned a couple of times that ``iterated OUS'' is a bad name. Because ``this iterated OUS algorithm'' is not an OUS algorithm. The problem it solves is OCUS for a specific C. WE should fix a better name and replace it throughout the paper. 
-}
+\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include the development of methods for \textbf{information re-use} between consecutive O(C)US calls, as well as a constrained version of the OUS algorithm 
+%\bart{Names are important. I have already mentioned a couple of times that ``iterated OUS'' is a bad name. Because ``this iterated OUS algorithm'' is not an OUS algorithm. The problem it solves is OCUS for a specific C. WE should fix a better name and replace it throughout the paper. 
+%}
 that will \emph{only expand the most promising literals-to-explain}.
-
-% correction subset enumeration
-\item We investigate how to impose additional constraints on the collection of sets-to-hit using domain-specific knowledge by balancing a trade-off between efficiency of the \grow strategy and quality of generated satisfiable subsets. 
-\bart{Hmm... 
-\begin{itemize}
-\item Why does this not belong in the previous contribution? Is this not a technique for optimizing the O(C)US algorithms, exploiting domain specific information? 
-\item``Additional constraints''? Is that so? Would a different grow not just result in another set-to-hit? 
-\item ``constraints on the collection of sets-to-hit''. Not really, right. There are ``constraints'' on the sets-to-hit. 
-\item What is the ``quality of the generated satisfiabable subsets''. 
-\item This entire paragraph assumes that the reader knows how hitting-set based US solving works. We cannot make this assumption. This means that either we explain it beforehand, or we avoid going into technical details such as ``satisfiable subsets'', ``grow'', ``sets-to-hit''
-\end{itemize}}
+%
+%\item 
+%% correction subset enumeration
+%\item We investigate how to impose additional constraints on the collection of sets-to-hit using domain-specific knowledge by balancing a trade-off between efficiency of the \grow strategy and quality of generated satisfiable subsets. 
+%\bart{Hmm... 
+%\begin{itemize}
+%\item Why does this not belong in the previous contribution? Is this not a technique for optimizing the O(C)US algorithms, exploiting domain specific information? 
+%\item``Additional constraints''? Is that so? Would a different grow not just result in another set-to-hit? 
+%\item ``constraints on the collection of sets-to-hit''. Not really, right. There are ``constraints'' on the sets-to-hit. 
+%\item What is the ``quality of the generated satisfiabable subsets''. 
+%\item This entire paragraph assumes that the reader knows how hitting-set based US solving works. We cannot make this assumption. This means that either we explain it beforehand, or we avoid going into technical details such as ``satisfiable subsets'', ``grow'', ``sets-to-hit''
+%\end{itemize}}
  
 
 \item Finally, we extensively evaluate our approaches on a large number of CSP instances.
 
 \end{itemize}
 
-\paragraph*{Publication history} This article is an extension of a previous paper presented at the International Joint Conference on Artificial Intelligence 2021 \cite{ijcai2021}. The current paper extends the previous paper with more detailed examples, extensive experiments on a large data set of puzzles, as well as a novel algorithm for efficiently computing explanations.\bart{Here, we might want to be more precise. Not ``a novel algorithm'', but say which one it is.}
-\bart{I would be inclined to move the history after the ``The rest of this paper is structured as follows''. Now it kind of braks the flow of the intro. The history is something most readers will want to skip, it is nicer if it is at the end of the section}
-
 The rest of this paper is structured as follows. 
-\cref{sec:related-works} examines works related to explanations in constraint solving as well as efficient extraction of unsatisfiable subsets. 
-\bart{Not sure if the word ``examine'' is very good here. I would rather go for ``We discuss'' or something similar. 
-Also, not sure if we need to already say abut which topics we will talk precisely in that section.  In any case, I would not call it ``extraction'' but rather ``computation''.  
-Also: something is off with the structure of this sentence.  I think what it says now is that we discuss ``works'' that are related to BOTH topics.
-finally: related work (uncountable), see lower}
-In \cref{sec:background}, we introduce the theoretic foundations on our implicit hitting set approach. \cref{sec:motivation} describes the motivation behind our work to develop the concept of \comus, 
-\bart{``describes the motivation behind our work to develop the concept of OCUS --> Hard to read! Split in two sentences or simplify. \cref{sec:motivation} motivates our work, and \cref{sec:OCUS} introduces the OCUS problem \emph{as well as a simple algorithm to compute OCUSs} --> THe last part is now also in that section, no?}
-which is introduced in \cref{sec:OCUS}. Next, in \cref{sec:OUS} we present alternative methods for computing optimal explanations in the explanation sequence.
-\bart{explanations in the explanation sequence?}
-\bart{whta do you mean by ''alternative methods? As a reader I now wonder about the difference between  \cref{sec:OUS} and \cref{sec:efficient-ocus} }
-We improve the efficiency of our approaches by introducing concepts such as incrementality and correction subset extraction in \cref{sec:efficient-ocus}. 
-\bart{We do not introduce these concepts, right? Incrementality is a long-existing concept. We make our algorithms incremental. }
-\bart{``correction subset extraction'' is already a part of the basic OCUS algorithm. I guess that in this sectino, we will have a DIFFERENT method for extracting it, no?}
+In \cref{sec:related-works}, we discuss work related to efficiently computing unsatisfiable subsets. \cref{sec:background} introduces the theoretic foundations on our implicit hitting set approach. \cref{sec:motivation} motivates our work, and \cref{sec:OCUS} introduces the OCUS problem as well as \emph{a simple algorithm to compute OCUSs}. Next, in \cref{sec:OUS}, we look at 2 other methods for computing the next best explanation in the explanation sequence. In \cref{sec:efficient-ocus}, we present methods to improve the efficiency of our algorithms, e.g by making them incremental, or using different methods to extract multiple correction subsets.
 Finally, we evaluate our approach on large set of puzzle instances in \cref{sec:experiments} and conclude with some future prospects.
 
-\section{Related Works}\label{sec:related-works}
-\bart{``Related Work'' (uncountable). 
-This section discusses a vast body of related work. 
-If you would have a section in which you discuss a detailed a couple of papers in a lot of detail, you might want to call it ``works'', but if you are discussing research lines, as we are doing here, work is uncountable. }
+%\cref{sec:related-works} discuss works related to explanations in constraint solving as well as efficient extraction of unsatisfiable subsets. 
+%\bart{Not sure if the word ``examine'' is very good here. I would rather go for ``We discuss'' or something similar. 
+%Also, not sure if we need to already say abut which topics we will talk precisely in that section.  In any case, I would not call it ``extraction'' but rather ``computation''.  
+%Also: something is off with the structure of this sentence.  I think what it says now is that we discuss ``works'' that are related to BOTH topics.
+%finally: related work (uncountable), see lower}
+%In \cref{sec:background}, we introduce the theoretic foundations on our implicit hitting set approach. \cref{sec:motivation} describes the motivation behind our work to develop the concept of \comus, 
+%\bart{``describes the motivation behind our work to develop the concept of OCUS --> Hard to read! Split in two sentences or simplify. \cref{sec:motivation} motivates our work, and \cref{sec:OCUS} introduces the OCUS problem \emph{as well as a simple algorithm to compute OCUSs} --> THe last part is now also in that section, no?}
+%which is introduced in \cref{sec:OCUS}. 
+%Next, in \cref{sec:OUS} we present alternative methods for computing optimal explanations in the explanation sequence.
+%\bart{explanations in the explanation sequence?}
+%\bart{whta do you mean by ''alternative methods? As a reader I now wonder about the difference between  \cref{sec:OUS} and \cref{sec:efficient-ocus} }
+%We improve the efficiency of our approaches by introducing concepts such as incrementality and correction subset extraction in \cref{sec:efficient-ocus}. 
+%\bart{We do not introduce these concepts, right? Incrementality is a long-existing concept. We make our algorithms incremental. }
+%%\bart{``correction subset extraction'' is already a part of the basic OCUS algorithm. I guess that in this sectino, we will have a DIFFERENT method for extracting it, no?}
+%Finally, we evaluate our approach on large set of puzzle instances in \cref{sec:experiments} and conclude with some future prospects.
+
+\paragraph*{Publication history} This article is an extension of a previous paper presented at the International Joint Conference on Artificial Intelligence 2021 \cite{ijcai2021}. The current paper extends the previous paper with more detailed examples, extensive experiments on a large data set of puzzles, as well as a novel Constrained \omus algorithm for efficiently computing explanations.
+%\bart{Here, we might want to be more precise. Not ``a novel algorithm'', but say which one it is.}
+
+\section{Related Work}\label{sec:related-works}
+%\bart{``Related Work'' (uncountable). 
+%This section discusses a vast body of related work. 
+%If you would have a section in which you discuss a detailed a couple of papers in a lot of detail, you might want to call it ``works'', but if you are discussing research lines, as we are doing here, work is uncountable. }
 
 In the last few years, driven by the increasingly many successes of Artificial Intelligence (AI), there is a growing need for \textbf{eXplainable Artificial Intelligence (XAI)}~\cite{miller2019explanation}.
 In the research community, this need manifests itself through the emergence of (interdisciplinary) workshops and conferences on this topic~\cite{xai-ijcai,FAT} and American and European incentives to stimulate research in the area~\cite{gunning2017explainable,hamonrobustness,fetproact}. 
 
 While the main focus of XAI research has been on explaining black-box machine learning systems \cite{lundberg2017unified,guidotti2018survey,ignatiev2019abduction}, also model-based systems, which are typically considered more transparent, are in need of explanation mechanisms. 
-Indeed, by advances in solving methods in research fields such as constraint programming \cite{fai/Rossi06} and Boolean satisfiability (SAT) \cite{faia/2009-185}, as well as by hardware improvement, such systems now easily consider millions of alternatives in short amounts of time. 
-Because of this complexity, the question arises how to generate human-interpretable explanations of the conclusions they make. 
+For instance, \cite{vassiliades2021argumentation} survey the important methods that use argumentation \cite{modgil2013added} to provide explainability in AI, with for example applications in medical diagnosis \cite{obeid2019using}. Abstract argumentation frameworks introduce an abstract formalism to explain argumentative acceptance \cite{vsevselja2013abstract,liao2020explanation,ulbricht2021strong}. Description Logics \cite{baader2004description} on the other hand, aim at explaining logical proofs \cite{alrabbaa2021finding,koopmann2021two}, i.e `why does phi follow from psi?'. 
 
 \bart{In the previous paragraph we jump a bit fast from ``model-based systems'' to ``CP and SAT''. 
 There is also work going on explainability in for instance Description Logics, in Argumentation, ... 
 Also the sentence in the paragraph that follows is not very accurate: it is true that \emph{Explanations for CP/SAT-like systems have focussed on UNSAT problems.} But not for ``model-based systems'' in general. In DL for instance one aims at explaining logical proofs. (why does phi follow from psi). I think some more references are needed for ``explanations for model-based systems'' going a bit broader than what is considered now. (for inspiration, see the XLoKR workshops). 
 Next,  a sentence is needed that our focus is on CP/SAT-style systems. And then we can that in THESE reseach areas, there ahas been a strong focus on explaining UNSATisfiable instances.}
 
-Explanations for model-based systems have been considered mostly for explain \textit{unsatisfiable} problem instances~\cite{junker2001quickxplain}, and have recently seen a rejuvenation in various subdomains of constraint reasoning \cite{fox2017explainable,vcyras2019argumentation,chakraborti2017plan,ecai/BogaertsGCG20}.
+The main focus of our work lies in providing explainable agency \cite{langley2017explainable} to Constraint Programming \cite{fai/Rossi06} and Boolean satisfiability (SAT) \cite{faia/2009-185}  systems.
+Advances in solving, as well as hardware improvements allow for such systems now easily consider millions of alternatives in short amounts of time.
+Because of this complexity, the question arises how to generate human-interpretable explanations of the conclusions they make. 
+In these CP and SAT, there has been a strong focus on explaining \textit{unsatisfiable} problem instances~\cite{junker2001quickxplain}, and have recently seen a rejuvenation in various subdomains of constraint reasoning \cite{fox2017explainable,vcyras2019argumentation,chakraborti2017plan,ecai/BogaertsGCG20}.
 
-In this context, we recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} and applied them to Zebra puzzles; similar explanations, but for a wider range of puzzles, have been investigated by \citet{schotten}.  
-\bart{We can probably phrase this a bit stronger. They are not just similar explanations. In their own work they say that ``We advance on the work
-of [Bogaerts et al., 2020]'', so we can probably quite fairly say that \citet{schotten} build on our work and apply it to more puzzles (phrased slightly more politically careful)}
+In this context, we recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} and applied them to Zebra puzzles; building on our work \cite{bogaerts2020framework}, \citet{schotten} investigated interpretable explanations using MUSes but for a wider range of puzzles.  
+%\bart{We can probably phrase this a bit stronger. They are not just similar explanations. In their own work they say that ``We advance on the work
+%of [Bogaerts et al., 2020]'', so we can probably quite fairly say that \citet{schotten} build on our work and apply it to more puzzles (phrased slightly more politically careful)}
 Our current work is motivated by a concrete algorithmic need: to generate these explanations efficiently, we need algorithms that can find MUSs that are optimal with respect to a given cost function, where the cost function approximates human-understandability of the corresponding explanation step. 
+
 The closest related work can be found in the literature on generating or enumerating MUSs \cite{conf/sat/LynceM04,liffiton2016fast}.
 Different techniques are employed to find MUSs, including  manipulating resolution proofs produced by SAT solvers \cite{goldberg,DBLP:journals/fmsd/GershmanKS08,DBLP:conf/sat/DershowitzHN06}, incremental solving to enable/disable clauses and branch-and-bound search \cite{DBLP:conf/dac/OhMASM04}, or by BDD-manipulation methods \cite{huang}.
-
-Other methods work by means of translation into a so-called Quantified \maxsat \cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressivity of Quantified Boolean Formulas (QBF) \cite{QBF} with optimization as known from \maxsat \cite{DBLP:series/faia/LiM09}, or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest} bootstrapped using MCS-enumeration \cite{marques2020reasoning}. 
-\bart{This ``boostrapped using MCS enumeration'' sounds like a technical detail, not something that requires an explicit mention in this section... }
+Other methods work by means of translation into a so-called Quantified \maxsat \cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressivity of Quantified Boolean Formulas (QBF) \cite{QBF} with optimization as known from \maxsat \cite{DBLP:series/faia/LiM09}, or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest}.
+To the best of our knowledge, only few works have considered \emph{optimizing} MUSs: the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest}. 
 
 An \textit{abstract} framework for describing \hitsetbased algorithms, including optimization was developed by \citet{DBLP:conf/kr/SaikkoWJ16}. While our approach can be seen to fit the framework, the terminology is focused on MaxSAT rather than MUS and would complicate our exposition.
-To the best of our knowledge, only few \bart{few what} have considered \emph{optimizing} MUSs: the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest}. 
-
-\bart{The paragraph splits above are strange. 
-I would propose:
-\begin{itemize}
-  \item New paragraph before ``The closest related work'' (to separate ``our work'' from ``related work''. 
-  \item No break before ``Other methods''. 
-  \item The sentence ``to the best of our knowledge'' also goes in that paragraph
-  \item The sentence about the ABSTRACT framework is a separate paragraph. It is something else.
-\end{itemize}
-}
 
 %\begin{itemize}
 %	%\item XAI $\rightarrow$ CP
@@ -312,34 +324,31 @@ We present all methods using propositional logic but our results easily generali
 
 Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. 
 A clause is a disjunction of literals, i.e $c_1 = x_1 \vee \lnot x_2 $. A formula $\formula$ in conjunctive normal form (CNF) is a conjunction of clauses. 
-Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. We use the term clause and constraint interchangeably. \bart{Do we? Sounds like a bad idea. We DEFINITELY use ``constraint'' in settings where we do NOT mean clause, for instance in OCUS. 
-If there are places in the paper where we use ``constraint'' but mean ``clause'', I would propose that we just fix those places.}
+Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. 
+%\bart{If there are places in the paper where we use ``constraint'' but mean ``clause'', I would propose that we just fix those places.}
 
-We consider the following four clauses as our running example across the different sections to illustrate the concepts introduced:
-\begin{example}\label{example:intro}\TIPdefVSchoice
-	Let $\formulac$ be a CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
-\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
-\end{example}
-
-A (partial) interpretation $\m{I}$ is a consistent (not containing both $p$ and $\lnot p$) set of literals, for example $\{\lnot x_2,  x_3\}$. 
+A (partial) interpretation $\m{I}$ is a consistent (not containing both $p$ and $\lnot p$) set of literals. 
 A \emph{model} of \formula is an interpretation that satisfies \formula; $\formula$ is said to be \emph{unsatisfiable} if it has no models.
 Satisfaction of a formula \formula by an interpretation is defined as usual~\cite{faia/2009-185}.
-\bart{The sentence that satisfaction is defined as usual is as long as just deifning it:
-``An interpretation $\m{I}$ \emph{satisfies} \formula if $\m{I}$ contains at least one literal from each clause in $\formula$. ''
-only AFTER this sentence, should the sentence about models come: 
+%\bart{The sentence that satisfaction is defined as usual is as long as just deifning it:
+An interpretation $\m{I}$ \emph{satisfies} \formula if $\m{I}$ contains at least one literal from each clause in $\formula$.
+%only AFTER this sentence, should the sentence about models come: 
 An interpretation that satisfies $\formula$ is also called a \emph{model} of \formula. 
-A \formula is \emph{satisfiable} if it has at least one model and \emph{unsatisfiable} otherwise.}
+A \formula is \emph{satisfiable} if it has at least one model and \emph{unsatisfiable} otherwise. 
 
-
-\bart{in what follows, there are definitions such as ``maximal consequence'' that are given in a sentence that starts with ``In our running example''. It is better to give the definitions INDEPENDENT from the example, and AFTERWARDS apply them to the example. Also, the sentence defining $\negset{I}$ is a bit in a strange place, in between the ``definition'' of end interpretation and ``initial interpretation''.   
-By the way, I do not think we should talk about ``end'' and ``initial'' interpretation here. The reader does not know what that is yet. That will come when we define explanation sequences. 
-Consequence and maximal consequence can be defined here. They are logical concepts (independent of explanations)} 
-
-A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models. 
-In our running example, $\Iend = \{x_1, \lnot x_2,  x_3\}$ denotes the \emph{maximal consequence} that holds in all models and is also called the \emph{end interpretation}.
+A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models. The \emph{maximal consequence} of a formula \formula, denotes a consequence that holds in all models.
+%\bart{in what follows, there are definitions such as ``maximal consequence'' that are given in a sentence that starts with ``In our running example''. It is better to give the definitions INDEPENDENT from the example, and AFTERWARDS apply them to the example. Also, the sentence defining $\negset{I}$ is a bit in a strange place, in between the ``definition'' of end interpretation and ``initial interpretation''.   
+%By the way, I do not think we should talk about ``end'' and ``initial'' interpretation here. The reader does not know what that is yet. That will come when we define explanation sequences. 
+%Consequence and maximal consequence can be defined here. They are logical concepts (independent of explanations)} 
+%A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models. 
+%In our running example, $\Iend = \{x_1, \lnot x_2,  x_3\}$ denotes the \emph{maximal consequence} that holds in all models and is also called the \emph{end interpretation}.
 If $I$ is a set of literals, we write $\negset{I}$ for the set of literals $\{\lnot l\mid l\in I\}$.
 
-For example, if we define $I_0 = \emptyset$ as the \emph{initial interpretation}, then $\Iend \setminus I_0 = \{x_1, \lnot x_2,  x_3\}$ represents the remaining literals to derive and $\negset{\Iend \setminus I_0} = \{\lnot x_1,  x_2,  \lnot x_3\}$ represents the complement of the remaining literals.
+\begin{example}\label{example:intro}%\TIPdefVSchoice
+	Let $\formulac_1$ be a CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
+	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
+	An example of an interpretation is $\{\lnot x_2, x_3\}$. The maximal consequence of formula $\formulac$ is $\{x_1, \lnot x_2, x_3\}$.
+\end{example}
 
 %\subsection{Properties and definitions}
 In the following, we introduce key properties on unsatisfiable subsets on which we build our algorithms.
@@ -350,7 +359,6 @@ A \emph{Minimal Unsatisfiable Subset} (MUS) of
 \muses{\F} denotes the set of MUSs of \F. 
 \end{definition}
 
-
 \begin{definition}
 A set $\m{S} \subseteq \formula$ is a \emph{Maximal Satisfiable Subset} (MSS) of $ \formula$ if $\m{S}$ is satisfiable and for all $\m{S}'$ with $\m{S}  \subsetneq  \m{S}'\subseteq\formula $, $\m{S}'$ is unsatisfiable.
 \end{definition}
@@ -360,18 +368,14 @@ A set $\m{S} \subseteq \formula$ is a \emph{correction subset} of \formula if $\
 Such a $\m{S}$ is a \emph{minimal correction subset} (MCS)  of \formula if no strict subset of $\m{S}$ is also a correction subset. 
 \mcses{\F} denotes the set of MCSs of \F. 
 \end{definition}
-
-Each  MCS of \formula is the complement of an MSS of \formula and vice versa. 
-
-\begin{example}
-  \bart{Give a small example here. A CNF, an MCS and a MUS of it. Say that the MUS contains at least one element in the MCS. ANd that this is not a coincidence.}
-\end{example}
-
+%\begin{property}
+Each  MCS of \formula is the complement of an MSS of \formula and vice versa. 	
+%\end{property}
 
 \begin{definition}\label{def:minimal-hs}
 Given a collection of sets $\m{H}$, a hitting set of $\m{H}$ is a set $h$ such that  $h \cap C \neq \emptyset$ for every $C \in \m{H}$. A hitting set is \emph{minimal} if no strict subset of it is also a hitting set.
-\end{definition}
 
+\end{definition}
 
 The next proposition is the well-known hitting set duality \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}  between MCSs and MUSs that forms the basis of our algorithms, as well as algorithms to compute MSSs \cite{DBLP:conf/sat/DaviesB13} and \emph{cardinality-minimal} MUSs \cite{ignatiev2015smallest}.
 
@@ -380,6 +384,14 @@ The next proposition is the well-known hitting set duality \cite{DBLP:journals/j
 A set  $\m{S} \subseteq \formula$ is an MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.
 A set  $\m{S} \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
 \end{proposition}
+
+Consider the following examples to illustrate the concepts related to unsatisfiability introduced in the previous definitions:
+\begin{example}\label{example:unsat}%\TIPdefVSchoice
+	Let $\formulac_2$ be a unsatisfiable CNF formula over atoms $x_1, x_2, x_3$ with the following clauses:
+	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
+	\[ c_5 := \lnot x_2 \vee \lnot x_3 \qquad  c_6 := \lnot x_1 \vee  x_2 \qquad  c_7 := \lnot x_1 \vee  \lnot x_3 \]
+	The subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an example of a Minimal Unsatisfiable Subset (MUS). $ \{c_1\}, \{c_2, c_6\}$ are examples of a minimal correction subsets (MCSes). We observe that MUS $\{c_1, c_2, c_4, c_6\}$ hits at least one clause of each MCS and (trivially) vice versa. Another observation is that clause $\{c_1\}$ is a unit MCS, which poses a strong constraint on the MUSes of $\formulac_2$. More precisely, the MUSes of $\formulac_2$ have to contain $\{c_1\}$.
+\end{example}
 
 \section{Motivation}\label{sec:motivation}
 
@@ -405,11 +417,19 @@ ${\cal S}_{best} \gets \mathit{nil}$\;
 The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by the total cost of the elements used in the explanation.
 An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a subset of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals entailed by $I'$ and $\formulac'$ which are not yet explained.
 
+
 The key part of the algorithm is the search for the next best explanation, given an interpretation $I$ derived so far. 
 \cref{alg:oneStep} shows the gist of how this was done.
 It takes as input the formula \formulac, a cost function $f$ quantifying the quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
 To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequently selects the lowest cost one from found MUSs.
 The reason this works is because there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of (subsets of) $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}. 
+
+Consider the following four clauses as our running example:
+\begin{example}\label{example:intro}%\TIPdefVSchoice
+	Let $\formulac$ be a CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
+	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
+	We define $I_0 = \{x_1\}$ as the given interpretation, a.k.a the \emph{initial interpretation}. Therefore, the maximal consequence also denoted as the end interpretation is represented by  $\Iend = \{x_1, \lnot x_2,  x_3\}$.  $\Iend \setminus I_0 = \{x_1, \lnot x_2,  x_3\}$  represents each of the remaining literals to explain. If $\negset{\Iend \setminus I_0} = \{\lnot x_1,  x_2,  \lnot x_3\}$ represents the complement of the remaining literals. For example, if we want to compute an explanation explaining how to derive $\lnot x_2$, we simply extract a $MUS(\formulac \land I \land \neg l)$ = $MUS(\formulac \wedge \{x_1\} \wedge \{x_2\})$.
+\end{example}
 
 Experiments have shown that such a MUS-based approach can easily take hours, especially when multiple MUS calls are performed to increase the chance of finding a good MUS, and hence that algorithmic improvements are needed to make it more practical \cite{bogaerts2021framework}. 
 We see three main points of improvement, all of which will be tackled by our generic OCUS algorithm presented in the next section. 
@@ -639,7 +659,7 @@ Every computed hitting set by \ohs inside the \omus algorithm produces a lower b
 
 
 
-\subsection{Iterated OUS} Explanations with bounded \omus{}s compute extra hitting sets until the upper bound is reached or until a \omus is found. More importantly, \ousb is sensitive to initial ordering of the literals to explain. This is especially the case for the first \ousb call which might require an exponential number of hitting sets to be computed, before being able to find an \omus.  
+\subsection{Constrained OUSs} Explanations with bounded \omus{}s compute extra hitting sets until the upper bound is reached or until a \omus is found. More importantly, \ousb is sensitive to initial ordering of the literals to explain. This is especially the case for the first \ousb call which might require an exponential number of hitting sets to be computed, before being able to find an \omus.  
 
 In an effort to cope with the excessive calls to \ohs for all candidate literals to explain, and to benefit from the cost of the computed hitting sets, we introduce \iterativeonestep. In this approach, we do not repeatedly call \omus (or \ousb) until optimality, but do one iteration at a time; each time continuing with the most promising literal. Every literal is associated with a hitting set and it's corresponding cost. We then keep track using a priority queue sorted by the cost of the last computed hitting set for every remaining literal to explain. 
 

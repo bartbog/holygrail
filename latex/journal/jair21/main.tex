@@ -403,7 +403,10 @@ Our work is motivated by the problem of explaining the solution to satisfaction 
 \bart{To be more precise: we do not try to explain a satisfaction problem (I would think that is: explaining what the problem is), but we try to explain how to find the/a solution to a satisfactin problem, or how to explain entailed information from it.}
 \emilio{solved}
 through a sequence of simple explanation steps. This can be used to teach people problem-solving skills, to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed), and in interactive tutoring assistants. 
-\bart{What are ``human-computer solving assistants''?}\emilio{an computer assistant that helps you solve ?}
+\bart{What are ``human-computer solving assistants''?}\emilio{an computer assistant that helps you solve ?}\bart{Not really, probably rather ``solving assistants'' that are something in between human and computer or something of the kind. But, I see you replaced it with interactive tutoring assistants. That is already better. But not perfect yet :p 
+SOmething still feels odd about this term: 
+Are ``assistants'' not always interactive? What does this assistant help you with? The assistants helps you being a good tutor? Not really, right? (but that is how I read this term). 
+Maybe ``interactive tutoring systems''? A system that provides/does interactive tutoring, that is. }
 
 Our original explanation generation algorithm \cite{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), an initial interpretation $I_0$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, e.g. by means of a weight for every clause. 
 The goal is to find a sequence of \textit{simple} explanation steps that explains the maximal consequence \Iend, a.k.a. the end interpretation,  entailed by the given initial interpretation $I_0$. In each explanation step, some literals from \Iend will be explained which gives rise to a precision-increasing sequence of interpretations between $I_0$ and $I_{end}$. Therefore, the intermediate interpretation $I$ at a given step in this sequence will consist of all the literals ``derived so far''. 
@@ -480,6 +483,7 @@ We see three main points of improvement, all of which will be tackled by our gen
 Since the second point of improvement is a general case of the first point, we tackle both problems in the following section (\cref{sec:OCUS}) by introducing the concept of \emph{Optimal Constraint} Unsatisfiable Subsets. For an explanation of how we address the third issue of repeated similar calls to \onestep, we refer to \cref{sec:ocusEx}.
 
 \section{Optimal Constraint Unsatisfiable Subsets}\label{sec:OCUS}\emilio{Constraint $\rightarrow$ Constrained ?}
+\bart{Yes, it was ``constrained'' in the IJCAI  paper. Constrained has a meaning, namely: the subsets are constrained: there is a constraint on them. Optimal constraint unsatisfiable subset is something that does not really seem to have a meaning}
 
 The first two considerations from the \cref{sec:motivation} lead to the following definition. 
 
@@ -617,7 +621,8 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 
 Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depend on monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice however, one is bound by limitations of the chosen hitting set solver.
 
-\begin{example}[\textit{continued}] Consider the 4 previously introduced clauses from our running example. To define the input for the OCUS call with initial interpretation $ I = I_0 = \emptyset$, we add new clauses the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: \bart{This is not a sentence. Split it up. 
+\begin{example}[\textit{continued}]
+\bart{It is good to now and then recall these clauses, to avoid having to scroll back to the first page. HERE they are extremely important (to undderstand the table. Might be good to recall them.} Consider the 4 previously introduced clauses from our running example. To define the input for the OCUS call with initial interpretation $ I = I_0 = \emptyset$, we add new clauses the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: \bart{This is not a sentence. Split it up. 
 Consider a call for \onestep with $ I = I_0 = \emptyset$. At Line XYZ, $\m{F}$ is constructed, consisting of ... and the following three new clauses.}
 %	\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
 %	with initial interpretation $ I = I_0 = \emptyset$ and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 

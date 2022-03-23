@@ -18,8 +18,6 @@
 \usepackage{cancel}
 %\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
 
-
-
 %%%%%%
 \newcommand\citet[1]{\citeauthor{#1}~\citeyear{#1}}
 
@@ -36,8 +34,8 @@
 \newtheorem{lemma}[lem]{Lemma}
 \newtheorem{propo}{Proposition}
 \newtheorem{proposition}[propo]{Proposition}
-%\newtheorem*{ex}{Example}
-\newtheorem*{example}{Example}
+\newtheorem{ex}{Example}
+\newtheorem{example}{Example}
 \newtheorem{obs}{Observation}
 \newtheorem{observation}[obs]{Observation}
 \newtheorem{theorem}[thm]{Theorem}
@@ -163,7 +161,7 @@
 	We specifically show that this approach can be used to effectively find sequences of \textit{optimal} explanation steps for a large set of constraint satisfaction problems.
 \end{abstract}
 
-%\bart{There is no abstract? Is this according to the JAIR instructions}
+\emilio{Check clauses vs constraints}
 
 \section{Introduction}
 \label{sec:introduction}
@@ -188,8 +186,9 @@
 
 %Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} constraint theory 
 Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} set of constraints
-%\bart{Not super fond of the word ``program''. Theory/Formula is the logical name. ``Set of constraints'' could also work (especially since later we will talk about ``MUSs'', where the S stands for subset. 
-%``Model'' can also be used in more CP-oriented terminology (but risk of confusion with ``solutoin''. }
+\bart{Not super fond of the word ``program''. Theory/Formula is the logical name. ``Set of constraints'' could also work (especially since later we will talk about ``MUSs'', where the S stands for subset. 
+``Model'' can also be used in more CP-oriented terminology (but risk of confusion with ``solutoin''. }
+\emilio{solved}
 and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
 Explanations in that work are sequences of simple inference steps, a.k.a an \emph{explanation sequence}, involving as few constraints and previously-derived facts as possible. Every explanation allows the user to derive new facts, implied by a combination of constraints and already derived facts.
 
@@ -326,7 +325,8 @@ We present all methods using propositional logic but our results easily generali
 Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. 
 A clause is a disjunction of literals, i.e $c_1 = x_1 \vee \lnot x_2 $. A formula $\formula$ in conjunctive normal form (CNF) is a conjunction of clauses. 
 Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. 
-%\bart{If there are places in the paper where we use ``constraint'' but mean ``clause'', I would propose that we just fix those places.}
+\bart{If there are places in the paper where we use ``constraint'' but mean ``clause'', I would propose that we just fix those places.}
+\emilio{Solved}
 
 A (partial) interpretation $\m{I}$ is a consistent (not containing both $p$ and $\lnot p$) set of literals. 
 A \emph{model} of \formula is an interpretation that satisfies \formula; $\formula$ is said to be \emph{unsatisfiable} if it has no models.
@@ -348,7 +348,8 @@ If $I$ is a set of literals, we write $\negset{I}$ for the set of literals $\{\l
 \begin{example}\label{example:intro}\TIPdefVSchoice
 \bart{Emilio, please do not just remove my feedback.}
 \bart{Why are examples not numbered?}
-	Let $\formulac_1$ be a CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
+\emilio{Example numbering solved}
+	Let $\formulac_1$ be the CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
 	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
 	An example of an interpretation is $\{\lnot x_2, x_3\}$. The maximal consequence of formula $\formulac$ is $\{x_1, \lnot x_2, x_3\}$.
 \end{example}
@@ -390,7 +391,7 @@ A set  $\m{S} \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{min
 
 Consider the following examples to illustrate the concepts related to unsatisfiability introduced in the previous definitions:
 \begin{example}\label{example:unsat}\TIPdefVSchoice
-	Let $\formulac_2$ be a unsatisfiable CNF formula over atoms $x_1, x_2, x_3$ with the following clauses:
+	Let $\formulac_2$ be the unsatisfiable CNF formula over atoms $x_1, x_2, x_3$ with the following clauses:
 	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
 	\[ c_5 := \lnot x_2 \vee \lnot x_3 \qquad  c_6 := \lnot x_1 \vee  x_2 \qquad  c_7 := \lnot x_1 \vee  \lnot x_3 \]
 \end{example}
@@ -398,27 +399,22 @@ The subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an example of a Minimal Unsati
 
 \section{Motivation}\label{sec:motivation}
 
-Our work is motivated by the problem of explaining satisfaction problems \bart{To be more precise: we do not try to explain a satisfaction problem (I would think that is: explaining what the problem is), but we try to explain how to find the/a solution to a satisfactin problem, or how to explain entailed information from it.} through a sequence of simple explanation steps. This can be used to teach people problem-solving skills, to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed), and in human-computer solving assistants. \bart{What are ``human-computer solving assistants''?}
+Our work is motivated by the problem of explaining the solution to satisfaction problems, or how to explain the information entailed from it,
+\bart{To be more precise: we do not try to explain a satisfaction problem (I would think that is: explaining what the problem is), but we try to explain how to find the/a solution to a satisfactin problem, or how to explain entailed information from it.}
+\emilio{solved}
+through a sequence of simple explanation steps. This can be used to teach people problem-solving skills, to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed), and in interactive tutoring assistants. 
+\bart{What are ``human-computer solving assistants''?}\emilio{an computer assistant that helps you solve ?}
 
-Our original explanation generation algorithm \cite{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), a partial interpretation $I$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, by means of a weight for every clause and literal in \formula.  \bart{What is \formula? Why a distinction between clauses and literals in \formula?} 
-\bart{Three inputs are described but the algorithm below takes four inputs.  Probably better to put the algorithm later (when it is explained) } 
+Our original explanation generation algorithm \cite{ecai/BogaertsGCG20} starts from a formula $\formulac$ (in the application coming from a high level CSP), an initial interpretation $I_0$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, e.g. by means of a weight for every clause. 
+The goal is to find a sequence of \textit{simple} explanation steps that explains the maximal consequence \Iend, a.k.a. the end interpretation,  entailed by the given initial interpretation $I_0$. In each explanation step, some literals from \Iend will be explained which gives rise to a precision-increasing sequence of interpretations between $I_0$ and $I_{end}$. Therefore, the intermediate interpretation $I$ at a given step in this sequence will consist of all the literals ``derived so far''. 
+%, a   from  interpretation $\Iend$ that holds in all models of our problem. 
 
-\bart{try to use symbosl consistently: in the explanation ABOVE the algorithm: $I$ is used for the \emph{INITAL} interpretation. In Algo 1, $I$ is an \emph{intermediate} interpretation (also in the explanation later). Might be good to use a different symbol for those and do this \emph{consistently} throughout the paper. For instance $I_0$ for the initial.}
+An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a subset of already derived literals, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals entailed by $I'$ and $\formulac'$ which are not yet explained. The simplicity of an explanation step is measured by the total cost of the elements used in the explanation.
 
-\begin{algorithm}[!h]
-\DontPrintSemicolon
-\caption{$\onestep(\formulac,f,I,\Iend)$}
-\label{alg:oneStep}
-${\cal S}_{best} \gets \mathit{nil}$\;
-\For{$l \in \{\Iend \setminus I\}$}{
-	${\cal S} \gets \call{MUS}{(\formulac \land I \land \neg l)}$\label{alg:onestep:mus-call}\;
-	\If{$f({\cal S})<f({\cal S}_{best})$\label{alg:oneStep:ifcheck}}{
-		${\cal S}_{best} \gets {\cal S}$\;
-	}
-}
-\Return{${\cal S}_{best}$} 
-\end{algorithm}
+\bart{What is \formula? Why a distinction between clauses and literals in \formula?} \emilio{No distinction needed}
+\bart{Three inputs are described but the algorithm below takes four inputs.  Probably better to put the algorithm later (when it is explained) } \emilio{Moved}
 
+\bart{try to use symbosl consistently: in the explanation ABOVE the algorithm: $I$ is used for the \emph{INITAL} interpretation. In Algo 1, $I$ is an \emph{intermediate} interpretation (also in the explanation later). Might be good to use a different symbol for those and do this \emph{consistently} throughout the paper. For instance $I_0$ for the initial.} \emilio{adapted}
 
 \bart{Probably, it is better to 
 \begin{itemize}
@@ -427,32 +423,51 @@ ${\cal S}_{best} \gets \mathit{nil}$\;
   \item Then you can say what a single of these explanations is (this will make use of a subset of those ``previously derived literals''
   \item then you can say how to compute explanations (Algo 1)
 \end{itemize}
-}
+}\emilio{adapted}
 
-The goal is to find a sequence of \textit{simple} explanation steps, where the simplicity of a step is measured by the total cost of the elements used in the explanation.
-An explanation step is an implication $I' \wedge \formulac' \implies N$ where $I'$ is a subset of already derived literals \bart{``a subset of already derived literals'' is not clear at this point. }, $\formulac'$ is a subset of constraints of the input formula $\formulac$, and $N$ is a set of literals entailed by $I'$ and $\formulac'$ which are not yet explained.
+\bart{``next best'' means, not the best but the best alternative. I would say something in the lines of ``the best explanation step given [...]''}
 
-
-The key part of the algorithm is the search for the next best \bart{``next best'' means, not the best but the best alternative. I would say something in the lines of ``the best explanation step given [...]''} explanation, given an interpretation $I$ derived so far. 
+The key part of the algorithm is the search for the best explanation step given an interpretation $I$ derived so far. 
 \cref{alg:oneStep} shows the gist of how this was done.
-It takes as input the formula \formulac, a cost function $f$ quantifying the quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
-To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS and subsequently selects the lowest cost one from found MUSs.
-The reason this works is because there is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg l$ and so-called \emph{non-redundant explanation} of $l$ in terms of (subsets of) $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}. 
+It takes as input the problem constraints \formulac, a cost function $f$ quantifying the quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
+To compute an explanation, this procedure iterates over the literals that are still to explain, computes for each of them an associated MUS, and subsequently selects the lowest cost one from found MUSs.
+The reason this works is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg \ell$ and so-called \emph{non-redundant explanation} of $\ell$ in terms of (subsets of) $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}. 
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	\caption{$\onestep(\formulac,f,I,\Iend)$}
+	\label{alg:oneStep}
+	${\cal S}_{best} \gets \mathit{nil}$\;
+	\For{$l \in \{\Iend \setminus I\}$\label{alg:onestep:repetition:mus-call}}{
+		${\cal S} \gets \call{MUS}{(\formulac \land I \land \neg l)}$\label{alg:onestep:mus-call}\;
+		\If{$f({\cal S})<f({\cal S}_{best})$\label{alg:oneStep:ifcheck}}{
+			${\cal S}_{best} \gets {\cal S}$\;
+		}
+	}
+	\Return{${\cal S}_{best}$} 
+\end{algorithm}
 
 Consider the following four clauses as our running example:
 \begin{example}\label{example:intro}\TIPdefVSchoice
 \bart{If it is a running example, probably $\formulac$ is not a very good name. It is a good idea to make a distinction between a symbol to represent a generic formula, and the specific one from the running example.}
-	Let $\formulac$ be a CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
+	\bart{denoted refers to notation. Do you mean ``called''? It is better to introduce this terminology outside of the example and here simply say what the end interpretation is for this example}
+
+	Let $\formulac_{ex}$ be the CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
 	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
-	We can define $I_0 = \{\lnot x_2\}$ as the given interpretation, a.k.a the \emph{initial interpretation}. \bart{Therefore? In this case sounds better, no} Therefore, the maximal consequence also denoted  \bart{denoted refers to notation. Do you mean ``called''? It is better to introduce this terminology outside of the example and here simply say what the end interpretation is for this example} as the end interpretation is represented by  $\Iend = \{x_1, \lnot x_2,  x_3\}$.  $\Iend \setminus I_0 = \{x_1, x_3\}$  represents each of the remaining literals to explain. and its complement is denoted by $\negset{\Iend \setminus I_0} = \{\lnot x_1, \lnot x_3\}$. For computing a non-redundant explanation of $x_3$, we simply extract a $MUS(\formulac \land I \land \neg l)$ = $MUS(\formulac \wedge \{\lnot x_2\} \wedge \{\lnot x_3\}) = \{ c_2 , c_3, \{\lnot x_2\}, \{x_3\} \}$, also written as $\lnot x_2 \wedge c_2 \wedge c_3 \implies x_3 $.
-		\bart{THere is an $I$ and an $I_0$ in this example. Consisent use of symbols!}
+	We define $I_0 = \{\lnot x_2\}$ as the \emph{initial interpretation} with corresponding \emph{end interpretation} $\Iend = \{x_1, \lnot x_2,  x_3\}$.
+  $\Iend \setminus I_0 = \{x_1, x_3\}$  represents each of the remaining literals to explain, and its complement is denoted by $\negset{\Iend \setminus I_0} = \{\lnot x_1, \lnot x_3\}$. For computing a non-redundant explanation of $x_3$, we simply extract a $MUS(\formulac \land I_0 \land \neg l)$ = $MUS(\formulac \wedge \{\lnot x_2\} \wedge \{\lnot x_3\}) = \{ c_2 , c_3, \{\lnot x_2\}, \{x_3\} \}$, also written as $\lnot x_2 \wedge c_2 \wedge c_3 \implies x_3 $.
 \end{example}
 
-Experiments have shown that such a MUS-based approach can easily take hours, especially when multiple MUS \bart{This ``mulitple MUS calls'' is not clear here. Needs more detailed explanation. } calls are performed to increase the chance of finding a good MUS, and hence that algorithmic improvements are needed to make it more practical \cite{bogaerts2021framework} \bart{duplicate referencez? Seems to be in there twice}. 
+\bart{This ``mulitple MUS calls'' is not clear here. Needs more detailed explanation. }\emilio{adapted}
+Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for all remaining literals to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS. 
+In practice, MUS extraction algorithms do not provide any guarantee of $\subseteq$-minimality or optimality with respect to a given cost function. Therefore, in that work, we cope with the guarantees by considering increasingly larger subsets of the unsatisfiable formula ($\formulac \land I \land \neg l$).
+
+Hence, there is a need for algorithmic improvements to make it more practical.
 We see three main points of improvement, all of which will be tackled by our generic OCUS algorithm presented in the next section. 
 
 \begin{itemize}
-\item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the explanation found is indeed optimal (with respect to the given cost function). Performing multiple MUS calls \bart{Still not clear for the reader who has not read our work} is only a heuristic that is used to circumvent the restriction that \textit{there are no algorithms for cost-based unsatisfiable subset \textbf{optimization}}. 
+	
+\item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the explanation found is indeed optimal (with respect to the given cost function). Performing multiple MUS calls  is only a heuristic that is used to circumvent the restriction that \textit{there are no algorithms for cost-based unsatisfiable subset \textbf{optimization}}. \bart{Still not clear for the reader who has not read our work}\emilio{Clarified it a bit}
 
 \item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$. This begs the questions whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
 
@@ -460,11 +475,11 @@ We see three main points of improvement, all of which will be tackled by our gen
 
 \end{itemize}
 
-\bart{Maybe it can be good to provide a final sentence to conclude this section. Eg referencing t o the exact section where each of these pionts is tackled. Or mentioneing that point two is actually more general than point one and that we will do the general case immediately in the next section.}   
+\bart{Maybe it can be good to provide a final sentence to conclude this section. Eg referencing t o the exact section where each of these pionts is tackled. Or mentioneing that point two is actually more general than point one and that we will do the general case immediately in the next section.} \emilio{ok}
 
+Since the second point of improvement is a general case of the first point, we tackle both problems in the following section (\cref{sec:OCUS}) by introducing the concept of \emph{Optimal Constraint} Unsatisfiable Subsets. For an explanation of how we address the third issue of repeated similar calls to \onestep, we refer to \cref{sec:ocusEx}.
 
-
-\section{Optimal Constraint Unsatisfiable Subsets}\label{sec:OCUS}
+\section{Optimal Constraint Unsatisfiable Subsets}\label{sec:OCUS}\emilio{Constraint $\rightarrow$ Constrained ?}
 
 The first two considerations from the \cref{sec:motivation} lead to the following definition. 
 
@@ -528,7 +543,7 @@ where $S$ is a set of MIP decision variables, one for every clause in $\formula$
 %\bart{Previous sentence instead of earlier ``indicator'' sentence?}
 %
 %In our application, 
-$f$ is a weighted sum over the variables in $S$. For example, (unit) clauses representing previously derived facts can be given small weights and regular constraints can be given large weights, such that explanations are penalized for including constraints when previously derived facts can be used instead. %relevant facts are directly available.
+$f$ is a weighted sum over the variables in $S$. For example, (unit) clauses representing previously derived facts can be given small weights and regular clauses can be given large weights, such that explanations are penalized for including clauses when previously derived facts can be used instead. %relevant facts are directly available.
 
 
 \begin{algorithm}[!h]
@@ -661,7 +676,7 @@ The collection of sets-to-hit \setstohit is initialized as the empty set. At eac
 I would rephrase to something of the form ``If this set $\m{S}$ is unsatisfiable, it is guaranteed to be an OCUS}, it's \TIPnoContractions guaranteed to be optimal and validate the given constraint \bart{Optimality is only defined wrt those sets validating the constraint. I would not repeat this}. 
 In this small example, we see that the unoptimized \comus hits all of the remaining literals suggesting that a better quality grow would to a lower amount of additional iterations. \bart{I have no idea what this sentence says. 
 What is ``the unoptimized \comus''? What does it mean to ``hit all of the remaining literals''? What does that have to do with ``a better quality grow''? Which step are we even talking about?}
-Finally, step 6 of \cref{tab:example-explanation-generation-not-incremental} signifies that using constraint $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.  
+Finally, step 6 of \cref{tab:example-explanation-generation-not-incremental} signifies that using clause $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.  
 %\emilio{add the explanation step decomposition}
 
 
@@ -816,7 +831,7 @@ but on the other hand we also want the procedure to be very efficient as it is c
 For the case of explanations we are in, we make the following observations: 
 \begin{itemize}
 \item Our formula at hand (using the notation from the \onestepo algorithm) consists of three types of clauses: \begin{inparaenum}\item  (translations of) the problem constraints (this is \formulac) \item literals representing the assignment found thus far (this is $I$), and \item the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). \end{inparaenum}
-\item $\formulac$ and $I$ together are satisfiable, with assignment $I_{end}$, and \emph{mutually supportive}, by this we mean that making more constraints in \formulac true, more literals in $I$ will automatically become true and vice versa. 
+\item $\formulac$ and $I$ together are satisfiable, with assignment $I_{end}$, and \emph{mutually supportive}, by this we mean that making more clauses in \formulac true, more literals in $I$ will automatically become true and vice versa. 
 \item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
 \end{itemize}
 Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow($\m{S}$,$\F$) procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. %This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 

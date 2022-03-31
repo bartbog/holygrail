@@ -147,27 +147,31 @@
 \maketitle
 \tableofcontents
 
-\begin{abstract}\bart{I prefer the abstract to start with context. ``We build on'' is going immediately to our work. 
-THe same thing could be said in a sentence of the form ``Recently, a new method for [...]''}
+
+\begin{abstract}
+
 	We build on a recently proposed method for explaining solutions of constraint satisfaction problems.
 	An explanation here is a \textit{sequence} of simple inference steps, where the simplicity of an inference step is measured by the number and types of constraints and facts used, and where the sequence explains all logical consequences of the problem. 
-	We build on these formal foundations and tackle two emerging \bart{emerging means they are still ``coming into existence''. I think the questions have already emerged, no?} questions, namely how to generate explanations that are provably optimal (with respect to the given cost metric) and how to generate them efficiently. 
-	\bart{Are these really two different questions? The first question was already answered in our ECAI paper. We know how to generate optimal explanations. We just did not know how t o generate them \emph{efficiently}.}
-	To answer these questions, we develop 
+	The explanation-generation algorithms presented in that work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. The generation of an explanation sequence for a logic grid puzzle ranges from a few minutes to a few hours, which is more than a human would take.
+	Therefore, we build on these formal foundations and tackle the main point of improvement \removed{\bart{emerging means they are still ``coming into existence''. I think the questions have already emerged, no?}}, namely how to \emph{efficiently} generate explanations that are provably \emph{optimal} (with respect to the given cost metric). 
+	\removed{\bart{Are these really two different questions? The first question was already answered in our ECAI paper. We know how to generate optimal explanations. We just did not know how t o generate them \emph{efficiently}.}}
+	\removed{\bart{The relation between OUS and explanation is unclear. Insert a sentence describing this relation}}
+	To address this issue, we develop 
 	\begin{inparaenum}[1)]
-		\item an implicit hitting set algorithm for finding \textit{optimal} unsatisfiable subsets; \bart{The relation between OUS and explanation is unclear. Insert a sentence describing this relation}
-		\item a method to reduce multiple calls for (optimal) unsatisfiable subsets to a single call that takes \emph{constraints} on the subset into account;
+		\item an implicit hitting set algorithm for finding \emph{optimal} \emph{constrained} unsatisfiable subsets, where `constrainedness' reduces the multiple calls for (optimal) unsatisfiable subsets to a single call;	\removed{\bart{The first contribution is not really present separately in the paper any more. Do we want to list it as a separate one here? }}
 		% a way to explain that we try to
 		\item a method for re-using relevant information over multiple calls to these algorithms and;
 		\item a method for imposing stronger constraints on the computed subsets balancing efficiency and quality.   \bart{Hard to parse: what or who ``balances efficiency and quality''? } 
-		 \bart{Apart from the grammar: understanding this sentence woulod require in-depth knowledge of how our algorithm works. You refer to ``the computed subsets'' but this is something a reader has no clue about. Subsets of what? What are ``constraints on these subsets'' (I honestly also don't know, assuming that ``the subsets'' are the MCSs; if the subsets are the hitting sets, I have a clue) Should be reformulated at a level of abstraction that matches the abstract}
- \tias{not immediately clear to me what this refers to; also 'an iterated approach that improves efficiency by iteratively improving the most promising literal to explain}
+		\bart{Apart from the grammar: understanding this sentence woulod require in-depth knowledge of how our algorithm works. You refer to ``the computed subsets'' but this is something a reader has no clue about. Subsets of what? What are ``constraints on these subsets'' (I honestly also don't know, assuming that ``the subsets'' are the MCSs; if the subsets are the hitting sets, I have a clue) Should be reformulated at a level of abstraction that matches the abstract}
+		\tias{not immediately clear to me what this refers to; also 'an iterated approach that improves efficiency by iteratively improving the most promising literal to explain}
 	\end{inparaenum}
-	\bart{The first contribution is not really present separately in the paper any more. Do we want to list it as a separate one here? }
-	The implicit hitting set-based algorithm is also applicable to other problems that require finding cost-optimal (weighted) unsatisfiable subsets. 
-	 \bart{This is kind of a vacuous claim. ``Our algorithm is also applicable to other problems that require solving precisely the problem we solve here. Our paper does not do anything in this direction, so I would drop it. } 
-	We specifically show that this approach can be used to effectively find sequences of \textit{optimal} explanation steps for a large set of constraint satisfaction problems.
-	\bart{Can we say something of the kind: We experimentally validate our algorithms on .... . These experiments show that our algorithm outperforms ... both in terms of quality of the explanation and in time to generate it ... . '}
+
+%	The implicit hitting set-based algorithm is also applicable to other problems that require finding cost-optimal (weighted) unsatisfiable subsets. 
+	\removed{\bart{This is kind of a vacuous claim. ``Our algorithm is also applicable to other problems that require solving precisely the problem we solve here. Our paper does not do anything in this direction, so I would drop it. }}
+	We experimentally validate our algorithms on a large number of CSP instances. These experiments show that our algorithms outperform the MUS approach both in terms of quality of the explanation and in time to generate it. 
+	
+%	show that this approach can be used to effectively find sequences of \textit{optimal} explanation steps for a large set of constraint satisfaction problems.
+	\removed{\bart{Can we say something of the kind: We experimentally validate our algorithms on .... . These experiments show that our algorithm outperforms ... both in terms of quality of the explanation and in time to generate it ... . '}}
 \end{abstract}
 
 \emilio{Check clauses vs constraints}

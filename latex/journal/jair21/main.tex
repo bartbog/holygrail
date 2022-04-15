@@ -648,7 +648,9 @@ s.t. \quad & p(D) \label{eq:constraint}\\
 % well, its not arbitrary but linear, and it is a weighted sum; will have to do
 %\bart{indeed, it is not arbitrary! But that's exactly the point: if we say ``we only support linear objective functions'', then that reviewers concern ``how will you encode this as MIP?'' is resolved. We simply did not say that in the prior work. In any case, the model also doesn't hurt and breaks text a bit... } 
 In the case of \comus-based explanations, $p$ is expressed as 
-\[\sum_{\ell \in \overline{\Iend\setminus I}} d_{\ell} = 1\] and
+\begin{equation} 
+	\sum_{\ell \in \overline{\Iend\setminus I}} d_{\ell} = 1 
+\end{equation} and
 %On top of that, the $p$ can be used to enforce that some constraints in \formula are hard constraints and should always be included in the hitting set. %make a distinction between hard constraints (those that \emph{must} be included in the OCUS), which can be useful in case constraints are reified using assumption literals, or to \emph{group} constraints that should be enabled/disabled simultaneously. 
 %\emilio{not trivial at all!!! If I understand correctly C = Hard + indicator variables where p imposes constraints on not using the Hard, but only the indicator variables}
 %\emilio{Added an example:}
@@ -788,7 +790,10 @@ We add the following three new clauses, which represent the complement of litera
 	%	\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
 	%	with initial interpretation $ I = I_0 = \emptyset$ and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
 	\[ \{\lnot x_1\}\qquad  \{x_2\} \qquad\{\lnot x_3\}\]
-		To ensure that we explain only one literal at a time, we add constraint $p$ defined on the MIP decision variables for literals to explain: \[p:= \sum(\{ d_{\{\lnot x_1\}}, d_{\{x_2\}}, d_{\{\lnot x_3\}}\}) = 1\]
+		To ensure that we explain only one literal at a time, we add constraint $p$ defined on the MIP decision variables corresponding to the literals to explain: 
+	\begin{equation}
+		p:= \sum(\{ d_{\{\lnot x_1\}}, d_{\{x_2\}}, d_{\{\lnot x_3\}}\}) = 1
+	\end{equation}
 %	The formula \emph{constrained} \formula in the \comus-call is thus: \bart{What is ``The formula \emph{constrained} \formula''? (I cannot pares this). And why does $\formula$ below suddenly get a subscript (it does not in the algo, nor in this sentence)}
 	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
 %	\[\formula_{constr}= \formulac\land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge \dots \wedge c_{7}\}\]	
@@ -828,7 +833,10 @@ We add the following three new clauses, which represent the complement of litera
 At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consisting of :
 %\bart{What is ``The formula \emph{constrained} \formula''? (I cannot pares this). And why does $\formula$ below suddenly get a subscript (it does not in the algo, nor in this sentence)}
 %	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
-\[\formula = \formularunning \land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge \dots \wedge c_{4} \wedge \{\lnot x_1\} \wedge  \{x_2\} \wedge  \{\lnot x_3\}\}\]	
+\begin{equation}
+\formula = \formularunning \land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge \dots \wedge c_{4} \wedge \{\lnot x_1\} \wedge  \{x_2\} \wedge  \{\lnot x_3\}\}	
+\end{equation}
+
 %	\bart{The order in which these things come is a bit weird. 
 	%		The beginning of the example should contain all the assumptions we make: what precisely $f$ is, is something to be defined BEFORE the call to the algorithm. Explain that before. What is I, what is f, ... 
 	%		THEN you can explain how the algorithm works with these inputs, what it constructs, ... ($f$ is not constructed, it ``already existed''. ALso refer to line numbers of the algorithm. It helps.}
@@ -837,7 +845,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	%	
 	Finally, for generating an explanation step, we proceed to call \comus on formula $\formula$ with given cost function $f$ and \emph{exactly-one} constraint $p$:
 	%		\[\comus( \formulac\land I \land \overline{(\Iend\setminus I) 	}, f, p)\]
-	\[\comus( \formula, f, p)\]
+	\begin{equation}\comus( \formula, f, p)\end{equation}
 %In this example, the \grow we used corresponds to the model provided by the \sat solver. 
 %\tias{Merge conflict, possible duplicate:}
 %In this example, the \grow we used corresponds to the model provided by the \sat solver.  
@@ -872,9 +880,12 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 		\cref{ex:onestep-ocus} - Explanation step generated with \onestepo}
 	\label{tab:example-explanation-generation-not-incremental}
 \end{table}
+	In this small example, we use the set consisting of the complement of the model provided by the \sat solver as the \corrsubsets procedure. 
+	
 	\cref{tab:example-explanation-generation-not-incremental} breaks down the intermediate steps of algorithm \ref{alg:comus} for generating an OCUS of given $\formula$, $f$ and $p$. 
 	First, the collection of sets-to-hit \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that contains exactly one of $\{\lnot x_1, x_2, \lnot x_3\}$ (due to $p$). If this set is an unsatisfiable, it is guaranteed to be an OCUS.
-In this small example, we see that the \comus algorithm first hits all the literals of $\overline{\Iend\setminus I}$ (steps 1-3 of \cref{tab:example-explanation-generation-not-incremental}) and then starts combining the same literals with the other clauses until an OCUS is found (step 6). Finally, step 6 of \cref{tab:example-explanation-generation-not-incremental} signifies that using clause $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
+	
+ The first iterations show that the \comus algorithm first hits all the literals of $\overline{\Iend\setminus I}$ (steps 1-3 of \cref{tab:example-explanation-generation-not-incremental}) and then starts combining the same literals with the other clauses until an OCUS is found (step 6). Finally, step 6 of \cref{tab:example-explanation-generation-not-incremental} signifies that using clause $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
 %
 %suggesting that a better quality \corrsubsets procedure would to a lower amount of additional iterations. 
 % 
@@ -891,7 +902,7 @@ In this small example, we see that the \comus algorithm first hits all the liter
 
 \section{Optimal Unsatisfiable Subsets}\label{sec:OUS}
 
-Since the tasks of explaining the different literals are independent, we might not want to pollute the sets that are independent of each other, as illustrated in \cref{tab:example-explanation-generation-not-incremental}. Therefore, in this section, we analyze if instead of working \comus-based, we can also generate optimal explanations by replacing the MUS call by an \omus{} call at line~\ref{alg:onestep:mus-call} of \cref{alg:oneStep}. 
+Since the tasks of explaining the different literals are independent, we might not want to pollute the sets that are independent of each other, as illustrated in \cref{tab:example-explanation-generation-not-incremental}. Therefore, in this section, we analyze if instead of working \comus-based, we can also \emph{efficiently} generate optimal explanations by replacing the MUS call by an \omus{} call at line~\ref{alg:onestep:mus-call} of \cref{alg:oneStep}. 
 More precisely, the question is: Can we provide explanation as good as \onestepo and compensate the possible overhead of individual \omus{} calls?
 \emilio{Check fromulation of the question}
 %

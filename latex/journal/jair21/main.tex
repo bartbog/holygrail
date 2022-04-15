@@ -577,26 +577,25 @@ $\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if
 \subsection{Using OCUS to explain one step}
 \onestep implicitly uses an ``exactly one of'' constraint on the set of literals to explain, and the way this is done is by considering each literal from that set separately. It searches for a good, but not necessarily optimal CUS (US that satisfies the constraint in question). The goal is however to find an optimal one.
 Therefore, when considering the procedure \onestep from the perspective of OCUS defined above, the task of the procedure is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets that contain exactly one literal of $\overline{\Iend\setminus I}$. The pseudo code for this is shown in \cref{alg:oneStepOCUS}.
-
-We choose to represent the exactly one constraint $p$ as the sum shown on \cref{alg:oneStepOCUS:exactlyone}. For that, we associate a decision variable $s_{\ell}$ for every clause in order to count the occurrence of a clause in a subset of $\formulac\land I\land \overline{\Iend\setminus I}$, where $s_{\ell} = 1$ ($s_{\ell} = 0$) if it is (not) present in the subset. 
-In \cref{sec:computing_an_ocus}, we provide the details on how to compute an OCUS.
-\emilio{Check explanation here for exactly one constraint}
-
+%\emilio{Proposed laternative: }
 
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
 	
 	\caption{$\onestepo(\formulac,f,I,\Iend)$}
 	\label{alg:oneStepOCUS}
-	$p \gets \sum\limits_{\ell \in \overline{\Iend\setminus I}} s_{\ell} = 1$ \; 
+	$p \gets \sum\limits_{\ell \in \overline{\Iend\setminus I}} d_{\ell} = 1$ \; 
 	\emilio{$p \leftarrow$ exactly one literal of $\overline{\Iend\setminus I}$} \label{alg:oneStepOCUS:exactlyone}\;
-%	\emilio{$p \leftarrow$ exactly one literal of $\ell \in \overline{\Iend\setminus I}}$} \; %one literal of $\{p \ | \ p \in \overline{\Iend\setminus I}\}$\; 
-	\bart{``exactly one of'' is a bit vague. Can you make p explicit here? }
-	\emilio{I'm not sure the above definitions of $p$ are better...I wrote $p$ as the sum of the indicator variables $s$ associated with every $\ell \in \overline{\Iend\setminus I}$ that must be equal to 1, but this also is MIP specific. } \;
-	%EMILIO: written as a sum
-	\Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$\label{alg:oneStepOCUS:ocus-call}} 
+	%	\emilio{$p \leftarrow$ exactly one literal of $\ell \in \overline{\Iend\setminus I}}$} \; %one literal of $\{p \ | \ p \in \overline{\Iend\setminus I}\}$\; 
+\bart{``exactly one of'' is a bit vague. Can you make p explicit here? }
+\emilio{I'm not sure the above definitions of $p$ are better...I wrote $p$ as the sum of the indicator variables $s$ associated with every $\ell \in \overline{\Iend\setminus I}$ that must be equal to 1, but this also is MIP specific. } \;
+%EMILIO: written as a sum
+\Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$\label{alg:oneStepOCUS:ocus-call}} 
 \end{algorithm}
-
+\bart{Also, a single line is a bit limited for an algorithm.}
+We choose to represent the exactly one constraint $p$ as the sum shown on \cref{alg:oneStepOCUS:exactlyone}. For that, we associate a decision variable $d_{\ell}$ for every clause in order to count the occurrence of a clause in a subset of $\formulac\land I\land \overline{\Iend\setminus I}$, where $d_{\ell} = 1$ ($d_{\ell} = 0$) if it is (not) present in the subset. 
+In the next section (\cref{sec:computing_an_ocus}), we provide the details on how to compute an OCUS.
+\emilio{Check explanation here for exactly one constraint}
 
 % \tias{Make sure it is on the same page as this line}. 
 %\bart{There is not a lot to ``see'' in algorithm 2. }
@@ -630,22 +629,27 @@ In our implementation, we use a cost function $f$ that is encoded as a linear te
 %EMILIO: ADAPTED
 thus allowing the use of highly optimized mixed integer programming (MIP) solvers. 
 
-We define $S$ as a set of MIP decision variables, more precisely one for every clause in $\formula$, and $\setstohit$ as the collection of sets-to-hit, where every set-to-hit is the minimum correction subset encoded in the MIP formulation.
+We define $D$ as a set of MIP decision variables, more precisely one for every clause in $\formula$, and $\setstohit$ as the collection of sets-to-hit, where every set-to-hit $ H \in \setstohit$ is a minimum correction subset of $\formula$ encoded in the MIP formulation. 
+%% repetition:
+%The goal is to find a hitting set $D$ that minimizes $f(D)$ and satisfies $p$.
 The \cohs formulation is as follows:
 %\bart{should be minimize or -f}\emilio{adapted}
 \begin{align*}
 \small
-\mini_{{S}} \quad & f(S) \\ 
-s.t. \quad & p(S) \\
-  & sum(H) \geq 1, \quad & \forall H \in \setstohit \text{\bart{It has not been said what $\mathcal{H}$ is and how it relates to $S$. We should also pay some attention: the distinction between $S$ (the set of all variables representing presence of a clause) and $\mathcal{S}$ (the actual subset of $F$) is not very easy to see. Maybe a different symbol would be better}}
+\mini_{{D}} \quad & f(D) \\ 
+s.t. \quad & p(D) \\
+  & sum(H) \geq 1, \quad & \forall H \in \setstohit 
   \\
-  & s \in \{0,1\}, \quad  & \forall s \in S     
+  & d \in \{0,1\}, \quad  & \forall d \in D     
 \end{align*}
+%\bart{It has not been said what $\mathcal{H}$ is and how it relates to $S$. We should also pay some attention: the distinction between $S$ (the set of all variables representing presence of a clause) and $\mathcal{S}$ (the actual subset of $F$) is not very easy to see. Maybe a different symbol would be better}
+% EMILIO: Added new variables for the MIP decision vars and description of how they related to S (subset of a formula)
+
 %\bart{This is not what the reviewers asked for! They asked for MIP models of our ``arbitrary objective functions''. A mip encoding of a generic hitting set problem with only some ``at least one'' constraints is not going to help us, I think. }
 % well, its not arbitrary but linear, and it is a weighted sum; will have to do
 %\bart{indeed, it is not arbitrary! But that's exactly the point: if we say ``we only support linear objective functions'', then that reviewers concern ``how will you encode this as MIP?'' is resolved. We simply did not say that in the prior work. In any case, the model also doesn't hurt and breaks text a bit... } 
-where $S$ is a set of MIP decision variables, one for every clause in $\formula$. In our case, $p$ is expressed as 
-\[\sum_{s \in \overline{\Iend\setminus I}} s = 1,\] and
+In our case, $p$ is expressed as 
+\[\sum_{\ell \in \overline{\Iend\setminus I}} d_{\ell} = 1\] and
 %On top of that, the $p$ can be used to enforce that some constraints in \formula are hard constraints and should always be included in the hitting set. %make a distinction between hard constraints (those that \emph{must} be included in the OCUS), which can be useful in case constraints are reified using assumption literals, or to \emph{group} constraints that should be enabled/disabled simultaneously. 
 %\emilio{not trivial at all!!! If I understand correctly C = Hard + indicator variables where p imposes constraints on not using the Hard, but only the indicator variables}
 %\emilio{Added an example:}
@@ -654,7 +658,7 @@ where $S$ is a set of MIP decision variables, one for every clause in $\formula$
 %\bart{Previous sentence instead of earlier ``indicator'' sentence?}
 %
 %In our application, 
-$f$ is a weighted sum over the variables in $S$. For example, (unit) clauses representing previously derived facts can be given small weights and regular clauses can be given large weights, such that explanations are penalized for including clauses when previously derived facts can be used instead. %relevant facts are directly available.
+$f$ is a weighted sum over the variables in $D$. For example, (unit) clauses representing previously derived facts can be given small weights and regular clauses can be given large weights, such that explanations are penalized for including clauses when previously derived facts can be used instead. %relevant facts are directly available.
 
 
 %\begin{algorithm}[!h]
@@ -666,40 +670,35 @@ $f$ is a weighted sum over the variables in $S$. For example, (unit) clauses rep
 %\Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$} 
 %\end{algorithm}
 
-
 Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}. It combines the hitting set-based approach for MUSs of \citet{ignatiev2015smallest} with the use of a MIP solver for (weighted) hitting sets as proposed for maximum satisfiability by \citet{DBLP:conf/sat/DaviesB13}. The key novelty is the ability to add structural constraints to the hitting set solver, without impacting the duality principles of \cref{prop:MCS-MUS-hittingset}, as we will show.
 
-
 \begin{algorithm}[!h]
-\DontPrintSemicolon
-$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
-\While{true}{
-	$\m{S} \gets \cohs(\setstohit,f,p) $  \;
-	\If{ $\lnot \sat(\m{S})$}{\label{alg:ocus-sat-check}
-		\Return{$\m{S}$} \;
+	\DontPrintSemicolon
+	$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+	\While{true}{
+		$\m{S} \gets \cohs(\setstohit,f,p) $  \;
+		\If{ $\lnot \sat(\m{S})$}{\label{alg:ocus-sat-check}
+			\Return{$\m{S}$} \;
+		}
+		$\m{K} \gets \corrsubsets(\subsetT, \formula)$ \label{line:grow}\;
+		$\setstohit  \gets \setstohit  \cup \m{K} $  \label{alg:ocus:complement}\;
 	}
-	$\m{K} \gets \corrsubsets(\subsetT, \formula)$ \label{line:grow}\;
-	$\setstohit  \gets \setstohit  \cup \m{K} $  \label{alg:ocus:complement}\;
-}
-\caption{$\comus(\formula,f,p)$ }
-\label{alg:comus}
+	\caption{$\comus(\formula,f,p)$ }
+	\label{alg:comus}
 \end{algorithm}
 
 %Ignoring \cref{line:grow} for a moment, 
 The algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
-In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, correction subsets of $\m{S}$ are computed and added to the collection of sets-to-hit \setstohit. 
+In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, correction subsets of $\formula$ from $\m{S}$ are computed and added to the collection of sets-to-hit \setstohit. 
 %%\tias{Had to rewored to multiple subsets, for the union on line 8 to be correct}
 %% EMILIO Added also sets-to-hit for clarity and correction substes of F not S
 \emilio{Is it not correction subsets of F from S?}
 
+\bart{It is not clear what the above algorithm is doing in this place in the text. It is not referenced.}
 
+%\bart{I also thin kthat later in the text, there will be other implementations of \corrsubsets. So maybe you should call this one $\corrsubsets\_\grow$ or something?}
+%% EMILIO: Added a section for correction subsets grow
 
-\bart{It is not clear what the above algorithm is doing in this place in the text. It is not referenced. 
-I think the text below is still from when the grow was still IN the algorithm and has not been adapted to the new presentation.
-
-Also, a single line is a bit limited for an algorithm.
-
-I also thin kthat later in the text, there will be other implementations of \corrsubsets. So maybe you should call this one $\corrsubsets\_\grow$ or something?}
 %Similar to %OCUS 
 %As in the SMUS algorithm of \cite{ignatiev2015smallest}, our algorithm contains an (optional) call to \grow. 
 %The purpose of the \grow is to expand a satisfiable subset of $\m{F}$ further, to find a smaller correction subset and as such find stronger constraints on the hitting sets. 
@@ -707,36 +706,42 @@ I also thin kthat later in the text, there will be other implementations of \cor
 %% EMILIO: REMOVED
 %\TIPcitet[\citet{ignatiev2015smallest}]
 %% EMILIO: ADAPTED
-% As in the SMUS algorithm of \citet{ignatiev2015smallest}, our algorithm contains an (optional) call to \grow.
+
 \paragraph{Correction subset grow} 
-As in the SMUS algorithm of \citet{ignatiev2015smallest}, our algorithm relies on an (optional) call to \grow. 
-The purpose of the \grow is to expand a satisfiable subset $\m{S}$ of $\m{F}$ further such that its complement, a correction subset, is a small as possible.
-Shrinking the correction subset as a result of the \grow find stronger constraints on the sets-to-hit, since it restricts the choice for clauses that need to be selected. 
-In our algorithm, we include \corrsubsets which returns a non-empty set of correction subsets. Relating back to the SMUS algorithm, this corresponds to merging \grow procedure and the complement of the grown satisfiable subset into one call to \corrsubsets, for example the set $\{\formula \setminus \grow(\m{S}, \formula)\}$.
-The reason is that we aim to extract \emph{additional} correction subsets, that ideally do not intersect with each other, and therefore pose additional constraints on the sets-to-hit. In \cref{sec:correction_subset_enum}, we propose different methods for enumerating multiple correction subsets. %For now, consider $\formula \setminus \grow(\m{S}, \formula)$ as an implementation for \corrsubsets.
+The $\comus$ algorithm is constructed similarly to the SMUS algorithm of \citet{ignatiev2015smallest}. %, our algorithm relies on an (optional) call to \grow. 
+\emilio{Any idea on how to rephrase this ?}
+The key differences of our approach are the call to a \cohs solver and the \corrsubsets procedure, originally presented as calls to a \texttt{MinimumHS} solver and \texttt{grow} respectively in the SMUS algorithm. 
+In the SMUS algorithm, the purpose of \texttt{grow} is to expand a satisfiable subset $\m{S}$ of $\m{F}$ further such that its complement, a correction subset, is a small as possible.
+Shrinking the correction subset as a result of the \texttt{grow} finds stronger constraints on the sets-to-hit, since it restricts the choice on the clauses that need to be selected. 
+In our algorithm, we refer to \corrsubsets which returns a non-empty \emph{set} of correction subsets. 
+%Relating back to the SMUS algorithm, this corresponds to merging \grow procedure and the complement of the grown satisfiable subset into one call to \corrsubsets, for example the set $\{\formula \setminus \grow(\m{S}, \formula)\}$.
+The reason is that we aim to extract \emph{additional} correction subsets, that ideally do not intersect with each other, and therefore pose additional \emph{independent} constraints on the sets-to-hit. In \cref{sec:correction_subset_enum}, we propose different methods for enumerating multiple correction subsets. %For now, consider $\formula \setminus \grow(\m{S}, \formula)$ as an implementation for \corrsubsets.
 %\bart{The above sentence can be expanded on a bit more (guide the reader)}
 \emilio{Check expanded section with reference to \corrsubsets instead of \grow.}
+%\bart{I think the text below is still from when the grow was still IN the algorithm and has not been adapted to the new presentation.}
+%% EMILIO: Modified the text and added a section for correction subsets grow
 
-In our case, the calls for hitting sets will also take into account the cost ($f$), as well as the meta-level constraints ($p$); as such, it is not clear a priori which properties a good \corrsubsets function should have here.
+In the case of \comus, the calls for hitting sets will also take into account the cost ($f$), as well as the meta-level constraints ($p$); as such, it is not clear a priori which properties a good \corrsubsets function should have here.
 %We later discuss different possible implementations of \grow, as well as the enumeration of additional correction subsets from the initial grown satisfiable subset 
 %\bart{Unclear. Where does this come from? Make it explicit that grow is just ONE possible implementation of \corrsubsets and that this implementation just returns a single subset. THen you can say that therer are other things that can be done here (akin to xyz in maxsat) that yield more than one correction subset, and that that will be discussed later}. 
 %£
 %We evaluate their performance in \cref{sec:experiments} \bart{Not relevant here, we are already giving a forward reference to where it will be discussed, we don't know what it is, so I see no need for a second forward ref}. 
-For correctness of the algorithm, all we need to know is that \corrsubsets returns a \emph{non-empty} set of \emph{disjoint} correction subset $\m{K}$ from a satisfiable subset $\m{S}$, such that of $\m{F}$ with $\m{S}\subseteq\m{S}'$. 
+
+For correctness of the algorithm, all we need to know is that \corrsubsets returns a \emph{non-empty} set of \emph{disjoint} correction subset $\m{K}$ from a satisfiable subset $\m{S}$. %, such that of $\m{F}$ with $\m{S}\subseteq\m{S}'$. 
 
 %\bart{This is an old sentence? with the NEW algorithm comes new text. Now you should say: what do we need to know about \corrsubsets for correctness? And THEN you can say: this specific condition on grow guarantees that those constraints are indeed satisfied}
 %%EMILIO: Adapted but maybe not perfect yet.
-
 
 \begin{proof}
 	Soundness and completeness of the proposal follow from the fact that all sets added to \setstohit are non-empty \emph{disjoint} correction subsets, and \cref{thm:soundcomplete}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
 \end{proof}
 % \bart{Technically, the Theorem does NOT guarantee that the algorithm will terminate. For this you need to make explicit taht \corrsubsets returns a \textbf{non-empty} set of correction subsets that are \textbf{disjoint} from $\mathcal{S}$.}
 \emilio{Check section on correctness of the algo;}
+
 \begin{theorem}\label{thm:soundcomplete}
-Let $\m{H}$ be a set of correction subsets of \formula. 
-If $\m{S}$ is a hitting set of $\m{H}$ that is $f$-optimal among the hitting sets of $\m{H}$ satisfying a predicate $p$, and  $\m{S}$ is unsatisfiable, then $\m{S}$ is an OCUS of $\formula$. 
-If  $\m{H}$ has no hitting sets satisfying $p$, then $\formula$ has no OCUSs.
+	Let $\m{H}$ be a set of correction subsets of \formula. 
+	If $\m{S}$ is a hitting set of $\m{H}$ that is $f$-optimal among the hitting sets of $\m{H}$ satisfying a predicate $p$, and  $\m{S}$ is unsatisfiable, then $\m{S}$ is an OCUS of $\formula$. 
+	If  $\m{H}$ has no hitting sets satisfying $p$, then $\formula$ has no OCUSs.
 \end{theorem}
 \begin{proof}
 For the first claim, it is clear that $\m{S}$ is unsatisfiable and satisfies $p$. Hence all we need to show is $f$-optimality of $\m{S}$.
@@ -768,17 +773,18 @@ Perhaps surprisingly, correctness of the proposed algorithm does \emph{not} depe
 %\bart{This is not a sentence. Split it up. Consider a call for \onestep with $ I = I_0 = \emptyset$.  and the following three new clauses.}
 %% EMILIO: SPLITTED
 
+In the following, we work out the details on how \comus-based explanations are computed for our running example. 
 \begin{example}[\textit{continued}]\label{ex:onestep-ocus}
-	Consider the 4 previously introduced clauses from our running example $\formularunning$:
+	Recall the 4 previously introduced clauses from our running example $\formularunning$:
 			\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
-	Consider a call for \onestepo with $ I = I_0 = \emptyset$ and $\Iend = \{x_1, \lnot x_2, x_3\}$. 
+	Consider a call to \onestepo with $ I = I_0 = \emptyset$ and $\Iend = \{x_1, \lnot x_2, x_3\}$. 
 We define cost function $f$ as \[f = \sum w_i\cdot c_i + L \] over clause weights $w_1 = 60, w_2 = 60, w_3 = 100, w_4 = 100$, and where $L$ is the \emph{number of literals} of $I \land \overline{(\Iend\setminus I)}$ that are present in the subset. 
 %At \cref{alg:oneStepOCUS:ocus-call} of \cref{alg:oneStepOCUS}, $\m{F}$ is constructed, consisting of 
 We add the following three new clauses, which represent the complement of literals to-be-derived $\overline{\Iend\setminus I}$:
 	%	\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
 	%	with initial interpretation $ I = I_0 = \emptyset$ and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
 	\[ \{\lnot x_1\}\qquad  \{x_2\} \qquad\{\lnot x_3\}\]
-		To ensure that we explain only one literal at a time, we add constraint $p$ defined on the MIP decision variables for literals to explain: \[p:= \sum(\{ s_{\lnot x_1}, s_{x_2}, s_{\lnot x_3}\}) = 1\]
+		To ensure that we explain only one literal at a time, we add constraint $p$ defined on the MIP decision variables for literals to explain: \[p:= \sum(\{ d_{\{\lnot x_1\}}, d_{\{x_2\}}, d_{\{\lnot x_3\}}\}) = 1\]
 %	The formula \emph{constrained} \formula in the \comus-call is thus: \bart{What is ``The formula \emph{constrained} \formula''? (I cannot pares this). And why does $\formula$ below suddenly get a subscript (it does not in the algo, nor in this sentence)}
 	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
 %	\[\formula_{constr}= \formulac\land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge \dots \wedge c_{7}\}\]	

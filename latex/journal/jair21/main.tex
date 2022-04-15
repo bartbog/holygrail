@@ -784,6 +784,7 @@ Consider a call to \onestepo with $ I = \emptyset$ and $\Iend = \{x_1, \lnot x_2
 We define cost function $f$ as 
 \begin{equation}
 	f = \sum w_i\cdot c_i + L
+	\label{eq:cost-function}
 \end{equation}
 %\[ \] 
 over clause weights $w_1 = 60, w_2 = 60, w_3 = 100, w_4 = 100$, and where $L$ is the \emph{number of literals} of $I \land \overline{(\Iend\setminus I)}$ that are present in the subset. 
@@ -795,6 +796,7 @@ We add the following three new clauses, which represent the complement of litera
 		To ensure that we explain only one literal at a time, we add constraint $p$ defined on the MIP decision variables corresponding to the literals to explain: 
 	\begin{equation}
 		p:= \sum(\{ d_{\{\lnot x_1\}}, d_{\{x_2\}}, d_{\{\lnot x_3\}}\}) = 1
+		\label{eq:exactly-one-constraint}
 	\end{equation}
 %	The formula \emph{constrained} \formula in the \comus-call is thus: \bart{What is ``The formula \emph{constrained} \formula''? (I cannot pares this). And why does $\formula$ below suddenly get a subscript (it does not in the algo, nor in this sentence)}
 	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
@@ -837,6 +839,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 %	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
 \begin{equation}
 \formula = \formularunning \land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge \dots \wedge c_{4} \wedge \{\lnot x_1\} \wedge  \{x_2\} \wedge  \{\lnot x_3\}\}	
+\label{eq:explain-one-step-ocus}
 \end{equation}
 
 %	\bart{The order in which these things come is a bit weird. 
@@ -1111,13 +1114,14 @@ In the following example we illustrate the efficiency of bootstrapping with the 
 %the explanation sequence generation for the incremental version of \comus. 
 the \comus-based explanation sequence generation.
 
-\begin{example}[\textit{continued}] To define the input for incremental OCUS call, we need to add new clauses representing the final interpretation $\Iend =  \{\lnot x_1, x_2, \lnot x_3\}$:
-	\[ c_8 := \{ x_1\}\qquad  c_9:=\{\lnot x_2\} \qquad  c_{10} := \{ x_3\}\]
+\begin{example}[\textit{continued}] Consider the previous introduced clauses of our running example $\formularunning$:
+	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
+	To define the input for incremental \comus call with initial interpretation $\m{I}=\emptyset$, we extend $\formularunning$ with the new clauses representing the final interpretation $\Iend =  \{ \{ x_1\},\  \{\lnot x_2\},\ \{ x_3\}\}$ and the complement thereof $\overline{\Iend \setminus \m{I}} =  \{ \{\lnot x_1\},\    \{ x_2\}, \   \{\lnot x_3\}\}$:
+	\[ \{ x_1\}\qquad  \{\lnot x_2\} \qquad \{ x_3\}  \qquad\]
 	%	with initial interpretation $ I = I_0 = \emptyset$ and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
 	%	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
 	
-	
-	For OCUS incremental, $p$ is remains the same, but the cost function $f = \sum w_ic_i$ is now defined over clause weights \[w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=1, w_6=1, w_7=1, w_8=\infty, w_9=\infty, w_{10}=\infty\]
+	For OCUS incremental, $p$ remains the same, but the cost function $f = \sum w_ic_i$ is now defined over clause weights \[w_1 = 60, w_2=60, w_3=100, w_4=100, w_5=1, w_6=1, w_7=1, w_8=\infty, w_9=\infty, w_{10}=\infty\]
 	Note how the weights of clauses $c_5, c_6, c_7$ are set to $\infty$ in order to prevent the hitting set solver from selecting these clauses as the literals have not been derived yet; and more importantly, it allows for reusing the computed satisfiable subsets potentially containing these clauses across explanation calls.
 	
 	The incremental \comus-call is now: 

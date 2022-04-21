@@ -192,31 +192,37 @@ THe same thing could be said in a sentence of the form ``Recently, a new method 
 %%%% {GOAL (high-level to low-level)}
 
 %Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} constraint theory 
+
+\bart{Te paragraph that follows is about explanation sequences (conceptual)}
 Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} set of constraints
 and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
 Explanations in that work are sequences of simple inference steps, a.k.a an \emph{explanation sequence}, involving as few constraints and previously-derived facts as possible. Every explanation derives at least one new fact, implied by a combination of constraints and already derived facts.
 
+\bart{The paragraph that follows is about the ALGORITHM (what it is)} 
 %%% {ISSUES when achieving our GOAL}
 The explanation-generation algorithms presented in that work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs.
 
-The explanation steps in the seminal\tias{you can't call your own work 'seminal'...} work are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g., taking the number of constraints and facts into account, as well as an estimate of their cognitive complexity. For example, in the evaluation of explanations for logic grid puzzles, the given clues of the puzzle are considered more difficult than simpler reasoning tricks, and therefore have a higher cost.
-%\bart{What does this last part (after the comma) of the last sentence mean? 
-%Explanations are optimized wrt 
-%  1) a cost function (I know what this is!)
-%  2) a valuation of their complexity or priority???  What is this? 
-%}
+\bart{The paragraph that follows is about explanation steps (conceptual) }
+The explanation steps in the seminal\tias{you can't call your own work 'seminal'...}\bart{I guess that depends which of the meanings of seminal you think of... {google.com/search?q=define+seminal}} work are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g., taking the number of constraints and facts \bart{used in that step} into account, as well as an estimate of their cognitive complexity. For example, in the evaluation of explanations for logic grid puzzles, the given clues of the puzzle are considered more difficult than simpler reasoning tricks, and therefore have a higher cost.
+\bart{simpler reasoning tricks? 
+Maybe you can make a distinction between
+ - The puzzle-specific clues (which are expressed in natural language) 
+ - The constraints that are shared among all puzzles  (which are implicit) 
+ }
 
-The algorithm developed in that work has two main weaknesses.
+ \bart{The paragraph that follows is about the ALGORITHM (what is missing with it) -- Do you see a better way to order these four paragraphs? } 
+The algorithm developed in that work \bart{``that work'' is repeated quite often. Vary a bit. ``Our previous work'', ``theo algorithm of \citet{ecai/BogaertsGCG20}'', ... }has two main weaknesses.
 First, it provides no guarantees on the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
 Second, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate fact to explain.
-However, using multiple MUS calls per literal in each iteration quickly causes efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
+However, using multiple MUS calls per literal in each iteration quickly triggers efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
 %\bart{\begin{itemize}
 %        \item The previous paragraph will be hard to follow for readers. For the conference version, we can get away with this. For the journal version I t hink that before this paragraph we should illustrate, informally what we mean by ``an explanation sequence'', ``implied facts'' etcetera. 
 %        \item ``Several hours'' is not very informative. I would say ``several hours, even for simple puzzles that are designed to be solveable by humans'' or something of the kind. 
 %      \end{itemize}
 %}
 
-Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
+Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: \bart{What follows are not really ``ways'' in which we improve the SOA. I would rather say these are our contributions. I would rephrase to something of the style: 
+``In this paper, we tackle the limitations discussed above. The main contributions of this paper are as follows:''}
 \begin{itemize}
 \item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
 

@@ -122,6 +122,7 @@
 
 \input{latextips.tex}
 
+
 \begin{document}
 	
 %%%%%%% ALGORITHM KEYWORDS
@@ -547,16 +548,17 @@ We see three main points of improvement, all of which will be tackled by our gen
 %% EMILIO: ADDED 
 
 %Since the second point of improvement is a general case of the first point, we tackle both problems in the following section (\cref{sec:OCUS}) by introducing the concept of \emph{Optimal Constraint} Unsatisfiable Subsets. For an explanation of how we address the third issue of repeated similar calls to \onestep, we refer to \cref{sec:ocusEx}.
-In the next section, we will introduce the concept of \emph{Optimal Constrained} Unsatisfiable Subsets to address the first two main points of improvement. We tackle the third point in \cref{sec:efficient-ocus} together with other optimizations to speed-up explanation \emph{sequence} generation. %For an explanation of how we address the third issue of repeated similar calls to \onestep, we refer to \cref{sec:ocusEx}.
+In the next section, we will introduce the concept of \emph{Optimal Constrained Unsatisfiable Subsets} to address the first two main points of improvement. We tackle the third point in \cref{sec:efficient-ocus} together with other optimizations to speed-up explanation \emph{sequence} generation. %For an explanation of how we address the third issue of repeated similar calls to \onestep, we refer to \cref{sec:ocusEx}.
 
 %\bart{Yes, it was ``constrained'' in the IJCAI  paper. Constrained has a meaning, namely: the subsets are constrained: there is a constraint on them. Optimal constraint unsatisfiable subset is something that does not really seem to have a meaning}}
 %% EMILIO: ADAPTED
 
 \section{Optimal Constrained Unsatisfiable Subsets}\label{sec:OCUS}
 
-The first two considerations, i.e. the lack of optimality guarantees and the fact that we want to explain one literal at a time
+The first two considerations, i.e.\TIPspacingOrCommaAfterIEorEG the lack of optimality guarantees and the fact that we want to explain one literal at a time%
 %by subjecting unsatisfiable subsets to constraints, 
-, from the previous section (\cref{sec:motivation}) lead to the following definition. We define the problem of \emph{Optimal Constrained} Unsatisfiable Subsets (OCUS) as:
+, from the previous section (\cref{sec:motivation}) lead to the following definition.
+% We define the problem of \emph{Optimal Constrained} Unsatisfiable Subsets (OCUS) as: %%% I DELETED THIS. YOU ALREADY SUGGESTED IN THE SENTENCE ABOVE
 %
 
 \begin{definition}\label{definition:ocus}
@@ -564,7 +566,7 @@ Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ 
 %\TIPnonamesinmathmode[$true$ and $false$ ]
 %%EMILIO: Adapted the true and false to math
 We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
-$\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if 
+$\m{S} \subseteq \formula$ an \emph{Optimal Constrained Unsatisfiable Subset (OCUS)} of \formula (with respect to $f$ and $p$) if 
 % \TIPconsistentNames[$\mathcal{C}$ vs $\mathcal{F}$]  % OK: WE USE C FOR THE INPUT, F FOR THE DERIVED FORMULA OF WHICH WE WANT AN OCUS. THAT IS CONSISTENT. 
 \begin{itemize}                                      
 \item $\m{S}$ is unsatisfiable,
@@ -575,6 +577,7 @@ $\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if
 
 \begin{proposition}
 	The problem of finding an OCUS is $\Sigma^P_2$-complete.
+	\bart{The assumptions on $p$ and $f$ should be in the statement of the theorem, not in the proof}
 \end{proposition}
 \begin{proof}
 		If we assume that the predicate $p$ is specified itself as a CNF over (meta)-variables indicating inclusion of clauses of $\m{F}$, and $f$ is obtained by assigning a weight to each such meta-variable, then the complexity of the problem of finding an OCUS is the same as that of the SMUS (cardinality-minimal or `Smallest' MUS) problem  \cite{ignatiev2015smallest}: the associated decision problem is $\Sigma^P_2$-complete. Hardness follows from the fact that SMUS is a special case of OCUS, containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
@@ -582,7 +585,9 @@ $\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if
 
 %\bart{This one paragraph can be expanded to a proposition/theorem for the journal paper. In a conference paper, this handwaving is fine, in journal, it is better to make it formal}
 %%%EMILIO {Good idea, adapted into proposition}
-\subsection{Using OCUS to explain one step}
+\subsection{Using OCUS to explain one step }
+\bart{Terminology: we do not really use OCUS to \emph{explain one step}. We use it to \emph{produce one explanation step}. Explaining a step would be answering the question ``why is this a step''; producing a step is what we really do. I know the algorithm is called ``explain-one-step'', that might not have been the best choice. But definitely in the text we should be clear about what we do.} 
+\TIPcapitalTitles
 \onestep implicitly uses an ``exactly one of'' constraint on the set of literals to explain, and the way this is done is by considering each literal from that set separately. It searches for a good, but not necessarily optimal CUS (US that satisfies the constraint in question). The goal is however to find an optimal one.
 Therefore, when considering the procedure \onestep from the perspective of OCUS defined above, the task of the procedure is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets that contain exactly one literal of $\overline{\Iend\setminus I}$. The pseudo code for this is shown in \cref{alg:oneStepOCUS}.
 %\emilio{Proposed laternative: }
@@ -597,6 +602,8 @@ Therefore, when considering the procedure \onestep from the perspective of OCUS 
 	%	\emilio{$p \leftarrow$ exactly one literal of $\ell \in \overline{\Iend\setminus I}}$} \; %one literal of $\{p \ | \ p \in \overline{\Iend\setminus I}\}$\; 
 \bart{``exactly one of'' is a bit vague. Can you make p explicit here? }
 \emilio{I'm not sure the above definitions of $p$ are better...I wrote $p$ as the sum of the indicator variables $s$ associated with every $\ell \in \overline{\Iend\setminus I}$ that must be equal to 1, but this also is MIP specific. } \;
+\bart{Not super happy with this sum, because the decision variables have not been introduced. Here is an attempt to do :
+it mathematically\[p : 2^{\formulac\land I\land \overline{\Iend\setminus I}}\to\{\ltrue,\lfalse\}:S\mapsto \# (S\cap \overline{\Iend\setminus I})=1\]}
 %EMILIO: written as a sum
 \Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$\label{alg:oneStepOCUS:ocus-call}} 
 \end{algorithm}
@@ -618,7 +625,7 @@ In the next section (\cref{sec:computing_an_ocus}), we provide the details on ho
 %Then afterwards you can say: Algorithms 2 computes such an explanation with a single call to the correct OCUS. }
 %\emilio{Adapted-reprhased}
 %%In the rest of this paper, we study (incremental) algorithms for computing an OCUS. 
-\tias{I think Example 4b should go here!}\emilio{moved and adapted}
+\tias{I think Example 4b should go here!}\emilio{moved and adapted}\bart{I do not see an example here. Where did it go to?}
 
 
 
@@ -636,10 +643,12 @@ In our implementation, we use a cost function $f$ that is encoded as a linear te
 %\bart{the cost function is encoded as a linear TERM, the $p$ indeed as a linear CONSTRAINT}, 
 %EMILIO: ADAPTED
 thus allowing the use of highly optimized mixed integer programming (MIP) solvers. 
+\bart{In my opinion, we should FIRST say what the variables are and THEN that we write a linear term over themm for f for instance. }
 
-We define $D$ as a set of MIP decision variables, more precisely one for every clause in $\formula$, and $\setstohit$ as the collection of sets-to-hit, where every set-to-hit $ H \in \setstohit$ is a minimum correction subset of $\formula$ encoded in the MIP formulation. 
+We define $D$ as a\TIPdefVSchoice set of MIP decision variables, more precisely one for every clause in $\formula$, and $\setstohit$ as the collection of sets-to-hit, where every set-to-hit $ H \in \setstohit$ is a minimum\bart{Drop ``minimum''. We are not sure of that} correction subset of $\formula$ encoded in the MIP formulation. \bart{What precisely is ``encoded in the MIP formulation''? Now it sounds like you are encoding that every H is is a correction subset, but that is certainly not what is going on. What is encoded is that you should hit every set in $\setstohit$, but that is not what this sentence is about.}
 %% repetition:
-The goal is to find a hitting set $D$, that hits every set-to-hit at least once (eq. \ref{eq:set-to-hit}), that minimizes $f(D)$ (eq. \ref{eq:minimization}), and satisfies $p$ (eq. \ref{eq:constraint}).
+The goal is to find a hitting set $D$\bart{$D$ is also what you called your set of decision variables before. Make a macro out of this (to chance notation easily ) and choose another symbol for one of hte two}, that hits every set-to-hit at least once (eq. \ref{eq:set-to-hit}), that minimizes $f(D)$ (eq. \ref{eq:minimization}), and satisfies $p$ (eq. \ref{eq:constraint}).
+\TIPspacingafterabbreviation[eq. \ref{eq:minimization};  Better: use cleveref]
 The \cohs formulation is as follows:
 %\bart{should be minimize or -f}\emilio{adapted}
 \begin{align}
@@ -649,6 +658,8 @@ s.t. \quad & p(D) \label{eq:constraint}\\
   & sum(H) \geq 1, \quad & \forall H \in \setstohit \label{eq:set-to-hit}\\
   & d \in \{0,1\}, \quad  & \forall d \in D     \label{eq:decision-variables}
 \end{align}
+
+\bart{In the above formulation, there should be a distinction between constraints and idicator variables. For instance, with the notation you  introduced, you should not write $sum(H)$ but $sum_{c\in H}(d_c)$ where I used $d_c$ for the decision variable corresponding to the constraint $c$. Also: \TIPmathit[$sum$]}
 %\bart{It has not been said what $\mathcal{H}$ is and how it relates to $S$. We should also pay some attention: the distinction between $S$ (the set of all variables representing presence of a clause) and $\mathcal{S}$ (the actual subset of $F$) is not very easy to see. Maybe a different symbol would be better}
 % EMILIO: Added new variables for the MIP decision vars and description of how they related to S (subset of a formula)
 
@@ -701,9 +712,17 @@ The algorithm alternates calls to a hitting set solver with calls to a \sat orac
 In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, correction subsets of $\formula$ from $\m{S}$ are computed and added to the collection of sets-to-hit \setstohit. 
 %%\tias{Had to rewored to multiple subsets, for the union on line 8 to be correct}
 %% EMILIO Added also sets-to-hit for clarity and correction substes of F not S
-\emilio{Is it not correction subsets of F from S?}
+\emilio{Is it not correction subsets of F from S?}\bart{That is not a thing. I know what correction subsets of $F$ are. I do not know what correction subsets of $F$ from $S$ are. The ``from $S$'' probably comes from all text: corrections subsets of $F$ are computed from $S$, as in ``starting from $S$''. }
+\bart{At this point in the text you should say which assumptions you make about $\corrsubsets$:
+\begin{itemize}
+  \item Given $F$ and a subset $S$, such that $S$ is SATISFIABLE, 
+  \item  it returns a set of subsets of $F\setminus S$
+  \item The result is nonempty. 
+  \item (this is all, right)
+\end{itemize}
+I see that you do this in the following paragraph, but I would expect it to be disucssed IMMEDIATELY when the magic call is introduced in an algorithm
+}
 
-\bart{It is not clear what the above algorithm is doing in this place in the text. It is not referenced.}
 
 %\bart{I also thin kthat later in the text, there will be other implementations of \corrsubsets. So maybe you should call this one $\corrsubsets\_\grow$ or something?}
 %% EMILIO: Added a section for correction subsets grow
@@ -717,6 +736,7 @@ In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, c
 %% EMILIO: ADAPTED
 
 \paragraph{Correction subset grow} 
+\bart{Title of the paragraph: what does this mean ``correction subset grow''? I would say ``Computing Correction Subsets''}
 The $\comus$ algorithm is constructed similarly to the SMUS algorithm of \citet{ignatiev2015smallest}. %, our algorithm relies on an (optional) call to \grow. 
 \emilio{Any idea on how to rephrase this ?}
 The key differences are the call to a \cohs solver and the \corrsubsets procedure, originally presented as calls to a \texttt{MinimumHS} solver and to \texttt{grow} respectively of the SMUS algorithm. 

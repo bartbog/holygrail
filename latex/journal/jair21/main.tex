@@ -1094,7 +1094,7 @@ These are stored in a priority queue, sorted by the cost of the hitting set.
 
 \begin{algorithm}[!ht]
 	\DontPrintSemicolon
-	\caption{$\iterativeonestep(\formulac,f,I,\Iend)$}
+	\caption{$\iterativeonestep(\formulac,f,I,\Iend)$ \bart{I would not call this ``explain-one-step-interleaved''. Actually, this is ani mplementation of OCUS (it does not explain oen step, it produces an ocus). But... It is an OCUS call for a specific $p$ with $p$ being an exactly-one constraint. In that case, it makes different hitting set solvers for each of the literals of which you want exactly one. The argument (in text) why we want to do this is: OCUS spends 96\% of its time in OPT-calls. We suspect this is because the theory gets too large and want to decouple it into largely indpendent pieces. } }
 	\label{alg:oneStepIter}
 	$queue \gets$ \texttt{InitializePriorityQueue($(\ell, \emptyset,\emptyset): 0 \ | \ \forall \ell \in \Iend \setminus I$)}\; %// init with $(l, \emptyset): 0$ for each $l$, or from previous iteration \;
 	%$S_{best} \gets \mathit{nil}$; $v_{best} \gets \infty$\;
@@ -1138,7 +1138,7 @@ Finally, a new hitting set is computed and the literal is pushed back in the pri
 We now discuss optimizations applicable to the O(C)US algorithms that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 
 \subsection{Incremental O(C)US Computation}\label{sec:ocusEx}
-Inherently, generating a sequence of explanations still requires many O(C)US calls . 
+Inherently, generating a sequence of explanations still requires many O(C)US calls. 
 Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
 calls \onestepo iteratively with a growing interpretation $I$ until $I=\Iend$.
 
@@ -1156,7 +1156,7 @@ When a second call to \comus is performed, we can then initialize $\setstohit$ a
 
 The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:background}), and we have this upper bound on the set of formulas to be used, we can initialize all relevant decision variables once. To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ we need to ensure that the MIP solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$, for example by giving all other literals infinite weight in the cost function. In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 
-\subsubsection{Application to literal ordering} 
+\subsubsection{Application to literal ordering \bart{I don't understand this title}} 
 
 Since the interpretation is updated from one explanation step to another, candidate \omus{}s for \onestepomusbounded from a previous explanation step are not guaranteed to be optimal in the current step. 
 The same observation holds for the ordering of the literals in the priority queue of \iterativeonestep.
@@ -1165,6 +1165,7 @@ By bootstrapping the hitting set solvers with the maintained sets-to-hit for eac
 Consequently, both \iterativeonestep and \onestepomusbounded, are provided with a better heuristic value for the ordering of the literals that reflects the actual state in the explanation sequence. 
 \emilio{Small note: In the implementation of \onestepomusbounded we recompute a hitting set for all literals, regardless whtether they provide a OUS in the previous iteration. For all literals, every OUS call goes until the bound and therefore the ordering is not necessarily going to favor the previous found OUSs. But that is ok, since we do it for all the literals and the optimal ones might become even cheaper. But if they are all the same cost, then the first one in the ordering which might not be optimal, could still be very expensive and delay finding a better bound.}
 %%%EMILIO: 
+\bart{I don't understand this subsubsection? What are you saying, that we can do for each literal one hitting set call and use that as a ``heuristic'' as to which one to take first? But that is the default behaviour of bounded, no? Is there any new information in this paragraph? }
 
 %Bootstrapping the hitting set solver also benefits the ordering of the literals for both \iterativeonestep and \onestepomusbounded. 
 %. 

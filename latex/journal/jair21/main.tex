@@ -122,6 +122,7 @@
 
 \input{latextips.tex}
 
+
 \begin{document}
 	
 %%%%%%% ALGORITHM KEYWORDS
@@ -214,10 +215,13 @@
 %%%% {GOAL (high-level to low-level)}
 
 %Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} constraint theory 
+
+\bart{Te paragraph that follows is about explanation sequences (conceptual)}
 Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} set of constraints
 and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
 Explanations in that work are sequences of simple inference steps, a.k.a an \emph{explanation sequence}, involving as few constraints and previously-derived facts as possible. Every explanation derives at least one new fact, implied by a combination of constraints and already derived facts.
 
+\bart{The paragraph that follows is about the ALGORITHM (what it is)} 
 %%% {ISSUES when achieving our GOAL}
 The explanation-generation algorithms presented in that work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs.
 
@@ -228,17 +232,19 @@ The explanation steps of \cite{ecai/BogaertsGCG20} \removed{\tias{you can't call
 %  2) a valuation of their complexity or priority???  What is this? 
 %}
 
-The algorithm developed in that work has two main weaknesses.
+ \bart{The paragraph that follows is about the ALGORITHM (what is missing with it) -- Do you see a better way to order these four paragraphs? } 
+The algorithm developed in that work \bart{``that work'' is repeated quite often. Vary a bit. ``Our previous work'', ``theo algorithm of \citet{ecai/BogaertsGCG20}'', ... }has two main weaknesses.
 First, it provides no guarantees on the quality of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
 Second, it suffers from performance problems: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate fact to explain.
-However, using multiple MUS calls per literal in each iteration quickly causes efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
+However, using multiple MUS calls per literal in each iteration quickly triggers efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
 %\bart{\begin{itemize}
 %        \item The previous paragraph will be hard to follow for readers. For the conference version, we can get away with this. For the journal version I t hink that before this paragraph we should illustrate, informally what we mean by ``an explanation sequence'', ``implied facts'' etcetera. 
 %        \item ``Several hours'' is not very informative. I would say ``several hours, even for simple puzzles that are designed to be solveable by humans'' or something of the kind. 
 %      \end{itemize}
 %}
 
-Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
+Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: \bart{What follows are not really ``ways'' in which we improve the SOA. I would rather say these are our contributions. I would rephrase to something of the style: 
+``In this paper, we tackle the limitations discussed above. The main contributions of this paper are as follows:''}
 \begin{itemize}
 \item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
 
@@ -508,7 +514,7 @@ Consider the following four clauses as our running example:
 %\bart{If it is a running example, probably $\formulac$ is not a very good name. It is a good idea to make a distinction between a symbol to represent a generic formula, and the specific one from the running example.}
 %	\bart{denoted refers to notation. Do you mean ``called''? It is better to introduce this terminology outside of the example and here simply say what the end interpretation is for this example}
 	%emilio: Adapted name of running example
-	Let $\formularunning$ \emilio{maybe it could be $T_{rex}$...} be the CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
+	Let $\formularunning$ \emilio{maybe it could be $T_{rex}$...}\bart{:-)} be the CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
 	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
 	Let $I = \{\lnot x_2\}$ be the given \emph{interpretation} with corresponding maximal consequence $\Iend = \{x_1, \lnot x_2,  x_3\}$
 %	\tias{In these, replace $I_0$ by $I$ to be consistent with algo that you are giving example for; also 'let $I=\{\lnot x_2\}$?}
@@ -542,16 +548,17 @@ We see three main points of improvement, all of which will be tackled by our gen
 %% EMILIO: ADDED 
 
 %Since the second point of improvement is a general case of the first point, we tackle both problems in the following section (\cref{sec:OCUS}) by introducing the concept of \emph{Optimal Constraint} Unsatisfiable Subsets. For an explanation of how we address the third issue of repeated similar calls to \onestep, we refer to \cref{sec:ocusEx}.
-In the next section, we will introduce the concept of \emph{Optimal Constrained} Unsatisfiable Subsets to address the first two main points of improvement. We tackle the third point in \cref{sec:efficient-ocus} together with other optimizations to speed-up explanation \emph{sequence} generation. %For an explanation of how we address the third issue of repeated similar calls to \onestep, we refer to \cref{sec:ocusEx}.
+In the next section, we will introduce the concept of \emph{Optimal Constrained Unsatisfiable Subsets} to address the first two main points of improvement. We tackle the third point in \cref{sec:efficient-ocus} together with other optimizations to speed-up explanation \emph{sequence} generation. %For an explanation of how we address the third issue of repeated similar calls to \onestep, we refer to \cref{sec:ocusEx}.
 
 %\bart{Yes, it was ``constrained'' in the IJCAI  paper. Constrained has a meaning, namely: the subsets are constrained: there is a constraint on them. Optimal constraint unsatisfiable subset is something that does not really seem to have a meaning}}
 %% EMILIO: ADAPTED
 
 \section{Optimal Constrained Unsatisfiable Subsets}\label{sec:OCUS}
 
-The first two considerations, i.e. the lack of optimality guarantees and the fact that we want to explain one literal at a time
+The first two considerations, i.e.\TIPspacingOrCommaAfterIEorEG the lack of optimality guarantees and the fact that we want to explain one literal at a time%
 %by subjecting unsatisfiable subsets to constraints, 
-, from the previous section (\cref{sec:motivation}) lead to the following definition. We define the problem of \emph{Optimal Constrained} Unsatisfiable Subsets (OCUS) as:
+, from the previous section (\cref{sec:motivation}) lead to the following definition.
+% We define the problem of \emph{Optimal Constrained} Unsatisfiable Subsets (OCUS) as: %%% I DELETED THIS. YOU ALREADY SUGGESTED IN THE SENTENCE ABOVE
 %
 
 \begin{definition}\label{definition:ocus}
@@ -559,7 +566,7 @@ Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ 
 %\TIPnonamesinmathmode[$true$ and $false$ ]
 %%EMILIO: Adapted the true and false to math
 We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
-$\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if 
+$\m{S} \subseteq \formula$ an \emph{Optimal Constrained Unsatisfiable Subset (OCUS)} of \formula (with respect to $f$ and $p$) if 
 % \TIPconsistentNames[$\mathcal{C}$ vs $\mathcal{F}$]  % OK: WE USE C FOR THE INPUT, F FOR THE DERIVED FORMULA OF WHICH WE WANT AN OCUS. THAT IS CONSISTENT. 
 \begin{itemize}                                      
 \item $\m{S}$ is unsatisfiable,
@@ -570,6 +577,7 @@ $\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if
 
 \begin{proposition}
 	The problem of finding an OCUS is $\Sigma^P_2$-complete.
+	\bart{The assumptions on $p$ and $f$ should be in the statement of the theorem, not in the proof}
 \end{proposition}
 \begin{proof}
 		If we assume that the predicate $p$ is specified itself as a CNF over (meta)-variables indicating inclusion of clauses of $\m{F}$, and $f$ is obtained by assigning a weight to each such meta-variable, then the complexity of the problem of finding an OCUS is the same as that of the SMUS (cardinality-minimal or `Smallest' MUS) problem  \cite{ignatiev2015smallest}: the associated decision problem is $\Sigma^P_2$-complete. Hardness follows from the fact that SMUS is a special case of OCUS, containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
@@ -577,7 +585,9 @@ $\m{S} \subseteq \formula$ an OCUS of \formula (with respect to $f$ and $p$) if
 
 %\bart{This one paragraph can be expanded to a proposition/theorem for the journal paper. In a conference paper, this handwaving is fine, in journal, it is better to make it formal}
 %%%EMILIO {Good idea, adapted into proposition}
-\subsection{Using OCUS to explain one step}
+\subsection{Using OCUS to explain one step }
+\bart{Terminology: we do not really use OCUS to \emph{explain one step}. We use it to \emph{produce one explanation step}. Explaining a step would be answering the question ``why is this a step''; producing a step is what we really do. I know the algorithm is called ``explain-one-step'', that might not have been the best choice. But definitely in the text we should be clear about what we do.} 
+\TIPcapitalTitles
 \onestep implicitly uses an ``exactly one of'' constraint on the set of literals to explain, and the way this is done is by considering each literal from that set separately. It searches for a good, but not necessarily optimal CUS (US that satisfies the constraint in question). The goal is however to find an optimal one.
 Therefore, when considering the procedure \onestep from the perspective of OCUS defined above, the task of the procedure is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets that contain exactly one literal of $\overline{\Iend\setminus I}$. The pseudo code for this is shown in \cref{alg:oneStepOCUS}.
 %\emilio{Proposed laternative: }
@@ -592,6 +602,8 @@ Therefore, when considering the procedure \onestep from the perspective of OCUS 
 	%	\emilio{$p \leftarrow$ exactly one literal of $\ell \in \overline{\Iend\setminus I}}$} \; %one literal of $\{p \ | \ p \in \overline{\Iend\setminus I}\}$\; 
 \bart{``exactly one of'' is a bit vague. Can you make p explicit here? }
 \emilio{I'm not sure the above definitions of $p$ are better...I wrote $p$ as the sum of the indicator variables $s$ associated with every $\ell \in \overline{\Iend\setminus I}$ that must be equal to 1, but this also is MIP specific. } \;
+\bart{Not super happy with this sum, because the decision variables have not been introduced. Here is an attempt to do :
+it mathematically\[p : 2^{\formulac\land I\land \overline{\Iend\setminus I}}\to\{\ltrue,\lfalse\}:S\mapsto \# (S\cap \overline{\Iend\setminus I})=1\]}
 %EMILIO: written as a sum
 \Return{$\comus(\formulac\land I\land \overline{\Iend\setminus I}, f, p)$\label{alg:oneStepOCUS:ocus-call}} 
 \end{algorithm}
@@ -613,7 +625,7 @@ In the next section (\cref{sec:computing_an_ocus}), we provide the details on ho
 %Then afterwards you can say: Algorithms 2 computes such an explanation with a single call to the correct OCUS. }
 %\emilio{Adapted-reprhased}
 %%In the rest of this paper, we study (incremental) algorithms for computing an OCUS. 
-\tias{I think Example 4b should go here!}\emilio{moved and adapted}
+\tias{I think Example 4b should go here!}\emilio{moved and adapted}\bart{I do not see an example here. Where did it go to?}
 
 
 
@@ -631,10 +643,12 @@ In our implementation, we use a cost function $f$ that is encoded as a linear te
 %\bart{the cost function is encoded as a linear TERM, the $p$ indeed as a linear CONSTRAINT}, 
 %EMILIO: ADAPTED
 thus allowing the use of highly optimized mixed integer programming (MIP) solvers. 
+\bart{In my opinion, we should FIRST say what the variables are and THEN that we write a linear term over themm for f for instance. }
 
-We define $D$ as a set of MIP decision variables, more precisely one for every clause in $\formula$, and $\setstohit$ as the collection of sets-to-hit, where every set-to-hit $ H \in \setstohit$ is a minimum correction subset of $\formula$ encoded in the MIP formulation. 
+We define $D$ as a\TIPdefVSchoice set of MIP decision variables, more precisely one for every clause in $\formula$, and $\setstohit$ as the collection of sets-to-hit, where every set-to-hit $ H \in \setstohit$ is a minimum\bart{Drop ``minimum''. We are not sure of that} correction subset of $\formula$ encoded in the MIP formulation. \bart{What precisely is ``encoded in the MIP formulation''? Now it sounds like you are encoding that every H is is a correction subset, but that is certainly not what is going on. What is encoded is that you should hit every set in $\setstohit$, but that is not what this sentence is about.}
 %% repetition:
-The goal is to find a hitting set $D$, that hits every set-to-hit at least once (eq. \ref{eq:set-to-hit}), that minimizes $f(D)$ (eq. \ref{eq:minimization}), and satisfies $p$ (eq. \ref{eq:constraint}).
+The goal is to find a hitting set $D$\bart{$D$ is also what you called your set of decision variables before. Make a macro out of this (to chance notation easily ) and choose another symbol for one of hte two}, that hits every set-to-hit at least once (eq. \ref{eq:set-to-hit}), that minimizes $f(D)$ (eq. \ref{eq:minimization}), and satisfies $p$ (eq. \ref{eq:constraint}).
+\TIPspacingafterabbreviation[eq. \ref{eq:minimization};  Better: use cleveref]
 The \cohs formulation is as follows:
 %\bart{should be minimize or -f}\emilio{adapted}
 \begin{align}
@@ -644,6 +658,8 @@ s.t. \quad & p(D) \label{eq:constraint}\\
   & sum(H) \geq 1, \quad & \forall H \in \setstohit \label{eq:set-to-hit}\\
   & d \in \{0,1\}, \quad  & \forall d \in D     \label{eq:decision-variables}
 \end{align}
+
+\bart{In the above formulation, there should be a distinction between constraints and idicator variables. For instance, with the notation you  introduced, you should not write $sum(H)$ but $sum_{c\in H}(d_c)$ where I used $d_c$ for the decision variable corresponding to the constraint $c$. Also: \TIPmathit[$sum$]}
 %\bart{It has not been said what $\mathcal{H}$ is and how it relates to $S$. We should also pay some attention: the distinction between $S$ (the set of all variables representing presence of a clause) and $\mathcal{S}$ (the actual subset of $F$) is not very easy to see. Maybe a different symbol would be better}
 % EMILIO: Added new variables for the MIP decision vars and description of how they related to S (subset of a formula)
 
@@ -687,7 +703,7 @@ Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}. It co
 		$\m{K} \gets \corrsubsets(\subsetT, \formula)$ \label{line:grow}\;
 		$\setstohit  \gets \setstohit  \cup \m{K} $  \label{alg:ocus:complement}\;
 	}
-	\caption{$\comus(\formula,f,p)$ }
+	\caption{$\comus(\formula,f,p)$ \bart{In principle it can be that there are no OCUSs. For instance, just take $p$ to always be false. In that case, it willbe CondOptHittingSet that returns ``UNSAT''. We  should still catch this ``FAILURE'' of CondOptHittingSet and return some form of FAIL in that case. I have already assumed this to be fixed in my rewrite of ``onestepBounded''}}
 	\label{alg:comus}
 \end{algorithm}
 
@@ -696,9 +712,17 @@ The algorithm alternates calls to a hitting set solver with calls to a \sat orac
 In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, correction subsets of $\formula$ from $\m{S}$ are computed and added to the collection of sets-to-hit \setstohit. 
 %%\tias{Had to rewored to multiple subsets, for the union on line 8 to be correct}
 %% EMILIO Added also sets-to-hit for clarity and correction substes of F not S
-\emilio{Is it not correction subsets of F from S?}
+\emilio{Is it not correction subsets of F from S?}\bart{That is not a thing. I know what correction subsets of $F$ are. I do not know what correction subsets of $F$ from $S$ are. The ``from $S$'' probably comes from all text: corrections subsets of $F$ are computed from $S$, as in ``starting from $S$''. }
+\bart{At this point in the text you should say which assumptions you make about $\corrsubsets$:
+\begin{itemize}
+  \item Given $F$ and a subset $S$, such that $S$ is SATISFIABLE, 
+  \item  it returns a set of subsets of $F\setminus S$
+  \item The result is nonempty. 
+  \item (this is all, right)
+\end{itemize}
+I see that you do this in the following paragraph, but I would expect it to be disucssed IMMEDIATELY when the magic call is introduced in an algorithm
+}
 
-\bart{It is not clear what the above algorithm is doing in this place in the text. It is not referenced.}
 
 %\bart{I also thin kthat later in the text, there will be other implementations of \corrsubsets. So maybe you should call this one $\corrsubsets\_\grow$ or something?}
 %% EMILIO: Added a section for correction subsets grow
@@ -712,14 +736,15 @@ In case the \sat oracle returns true, i.e., the subset $\m{S}$ is satisfiable, c
 %% EMILIO: ADAPTED
 
 \paragraph{Correction subset grow} 
+\bart{Title of the paragraph: what does this mean ``correction subset grow''? I would say ``Computing Correction Subsets''}
 The $\comus$ algorithm is constructed similarly to the SMUS algorithm of \citet{ignatiev2015smallest}. %, our algorithm relies on an (optional) call to \grow. 
-\emilio{Any idea on how to rephrase this ?}
-The key differences are the call to a \cohs solver and the \corrsubsets procedure, originally presented as calls to a \texttt{MinimumHS} solver and to \texttt{grow} respectively of the SMUS algorithm. 
+\emilio{Any idea on how to rephrase this ?} \bart{I would not make it a different paragraph (for reasons already mentioned above. Instead, I would immediately glue this text to the above and start by sayting ``The most important differences to the SMUS algorithm are ... '' (no need to repeat the similarity again; this is already mentioned above)}
+The key differences are the call to a \cohs solver and the \corrsubsets procedure, originally presented as calls to a \texttt{MinimumHS} solver and to \texttt{grow} respectively of the SMUS algorithm.  \bart{Not a sentence}
 In the SMUS algorithm, the purpose of \texttt{grow} is to expand a satisfiable subset $\m{S}$ of $\m{F}$ further such that its complement, a correction subset, is a small as possible.
 Shrinking the correction subset as a result of the \texttt{grow} finds stronger constraints on the sets-to-hit, since it restricts the choice on the clauses that need to be selected. 
-In our algorithm, we refer to \corrsubsets which returns a non-empty \emph{set} of correction subsets. 
+In our algorithm, we refer to \bart{refer to? Make use of? } \corrsubsets which returns a non-empty \emph{set} of correction subsets. 
 %Relating back to the SMUS algorithm, this corresponds to merging \grow procedure and the complement of the grown satisfiable subset into one call to \corrsubsets, for example the set $\{\formula \setminus \grow(\m{S}, \formula)\}$.
-The reason is that we aim to extract \emph{additional} correction subsets, that ideally \emph{do not intersect} with each other, and therefore pose additional \emph{independent} constraints on the sets-to-hit. In \cref{sec:correction_subset_enum}, we propose different methods for enumerating multiple correction subsets. %For now, consider $\formula \setminus \grow(\m{S}, \formula)$ as an implementation for \corrsubsets.
+The reason is that we aim to extract \emph{additional} \bart{additional to what?} correction subsets, that ideally \emph{do not intersect} with each other \bart{Did we not say that ``do not intersect'' would be impossible to get?}, and therefore pose additional \emph{independent} constraints on the sets-to-hit. In \cref{sec:correction_subset_enum}, we propose different methods for enumerating multiple correction subsets. %For now, consider $\formula \setminus \grow(\m{S}, \formula)$ as an implementation for \corrsubsets.
 %\bart{The above sentence can be expanded on a bit more (guide the reader)}
 \emilio{Check expanded section with reference to \corrsubsets instead of \grow.}
 %\bart{I think the text below is still from when the grow was still IN the algorithm and has not been adapted to the new presentation.}
@@ -731,13 +756,13 @@ In the case of \comus, the calls for hitting sets will also take into account th
 %£
 %We evaluate their performance in \cref{sec:experiments} \bart{Not relevant here, we are already giving a forward reference to where it will be discussed, we don't know what it is, so I see no need for a second forward ref}. 
 
-For correctness of the algorithm, all we need to know is that \corrsubsets returns a \emph{non-empty} set of \emph{disjoint} correction subset $\m{K}$ from a satisfiable subset $\m{S}$. %, such that of $\m{F}$ with $\m{S}\subseteq\m{S}'$. 
+For correctness of the algorithm, all we need to know is that \corrsubsets returns a \emph{non-empty} set of \emph{disjoint} \bart{disjointness is not needed for correctness} correction subsets $\m{K}$ \bart{What is this K doing here?} from a satisfiable subset $\m{S}$ \bart{It is for termination not crucial that the correction subsets do not intersect with $S$?}. %, such that of $\m{F}$ with $\m{S}\subseteq\m{S}'$. 
 
 %\bart{This is an old sentence? with the NEW algorithm comes new text. Now you should say: what do we need to know about \corrsubsets for correctness? And THEN you can say: this specific condition on grow guarantees that those constraints are indeed satisfied}
 %%EMILIO: Adapted but maybe not perfect yet.
 
-\begin{proof}
-	Soundness and completeness of the proposal follow from the fact that all sets added to \setstohit are non-empty \emph{disjoint} correction subsets, and \cref{thm:soundcomplete}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
+\begin{proof} \bart{Statement is missing: what are we proving?}
+	Soundness and completeness of the proposal follow from the fact that all sets added to \setstohit are non-empty \bart{Are all sets non-empty? Probably yes, but is the clue not that the set returned by \corrsubsets is non-empty?} \emph{disjoint} \bart{All sets are disjoint? Definitely not!}  correction subsets, and \cref{thm:soundcomplete}, which states that what is returned is indeed a solution and that a solution will be found if it exists. 
 \end{proof}
 % \bart{Technically, the Theorem does NOT guarantee that the algorithm will terminate. For this you need to make explicit taht \corrsubsets returns a \textbf{non-empty} set of correction subsets that are \textbf{disjoint} from $\mathcal{S}$.}
 \emilio{Check section on correctness of the algo;}
@@ -787,8 +812,12 @@ We define cost function $f$ as
 	f = \sum w_i\cdot c_i + L
 	\label{eq:cost-function}
 \end{equation}
+\bart{Previously, you introduced notation $d_\cdot$ for the decision variables representing whether or not to pick a certain clause. Lower in the example you use it as well, but in the cost function you use $c_i$. Consistency!}
+\bart{Just to be very clear: $f$ is overloaded. $f$ (as input to \onestep) takes \emph{AN EXPLANATION STEP} as input. 
+$f(E,S,N) = ...$ can be defined easily. 
+THEN: LINE 1 will construct a new formula $\mathcal{F}$. THEN a related $f$ is derived to give to OCUS. Make these two explicit).}
 %\[ \] 
-over clause weights $w_1 = 60, w_2 = 60, w_3 = 100, w_4 = 100$, and where $L$ is the \emph{number of literals} of $I \land \overline{(\Iend\setminus I)}$ that are present in the subset. 
+over clause weights $w_1 = 60, w_2 = 60, w_3 = 100, w_4 = 100$, and where $L$ is the \emph{number of literals} of $I \land \overline{(\Iend\setminus I)}$ that are present in the subset \bart{Why do this like this? Why not just write it in the formula (now half of the sum is written in math and the other half in words... $L$ is just $\sum_{c\in ...}d_c$,  no?}. 
 %At \cref{alg:oneStepOCUS:ocus-call} of \cref{alg:oneStepOCUS}, $\m{F}$ is constructed, consisting of 
 We add the following three new clauses, which represent the complement of literals to-be-derived $\overline{\Iend\setminus I}$:
 	%	\[ c_5 := \{ x_1\}\qquad  c_6:=\{\lnot x_2\} \qquad  c_7 := \{ x_3\}\]
@@ -799,6 +828,12 @@ We add the following three new clauses, which represent the complement of litera
 		p:= \sum(\{ d_{\{\lnot x_1\}}, d_{\{x_2\}}, d_{\{\lnot x_3\}}\}) = 1
 		\label{eq:exactly-one-constraint}
 	\end{equation}
+	\bart{I would write: 
+	\begin{equation}
+		p:= d_{\{\lnot x_1\}} + d_{\{x_2\}} + d_{\{\lnot x_3\}} = 1
+		\label{eq:exactly-one-constraint}
+	\end{equation}
+	}
 %	The formula \emph{constrained} \formula in the \comus-call is thus: \bart{What is ``The formula \emph{constrained} \formula''? (I cannot pares this). And why does $\formula$ below suddenly get a subscript (it does not in the algo, nor in this sentence)}
 	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
 %	\[\formula_{constr}= \formulac\land I \land \overline{(\Iend\setminus I)} = \{ c_1 \wedge \dots \wedge c_{7}\}\]	
@@ -863,7 +898,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	\centering
 	\begin{tabular}{lcccc} 
 %		\multicolumn{5}{c}{\bart{what is this doing here? Drop this header}OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
-		Step & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ 
+		Step & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                               & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ 
 		\toprule[2pt]
 		&        &    &      & $\emptyset$                                \\
 		\midrule
@@ -881,17 +916,22 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 		
 	\end{tabular}
 	\caption{
+	\bart{The table headers are wrong. grow should be corrsubsets. THe last column should not longerh ave a acomplement. }  
 		%\bart{Replace $\lnot x_1$ by $c_5$ etcetera. Consistency! }
 		%EMILIO {Replaced it with the inidividual literals in the example instead of the clause for more clarity}
 		\cref{ex:onestep-ocus} - Explanation step generated with \onestepo}
 	\label{tab:example-explanation-generation-not-incremental}
 \end{table}
-	In this small example, we use the set consisting of the complement of the model provided by the \sat solver as the \corrsubsets procedure. 
+	In this small example, we use the set consisting of the complement of the model provided by the \sat solver as the \corrsubsets procedure. \bart{``we use the set as the procedure'': this is a type clash. The procedure RETURNS $\{F\setminus S\}$.}
+	
+	\bart{If I just look at your first line, I get really confused. $S$ consists of only the constraint $\{\lnot x_1\}$ Should the first set-to-hit then not be everything except for this constraint? Somehow there is a lot more added in the ``grow''. So which grow is happening here? }
+	\bart{Also in the example there is a $\lnot x_2$. That was not presernt in $\mathcal{F}$ before. Where does it come from?}
 	
 	\cref{tab:example-explanation-generation-not-incremental} breaks down the intermediate steps of algorithm \ref{alg:comus} for generating an OCUS of given $\formula$, $f$ and $p$. 
 	First, the collection of sets-to-hit \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that contains exactly one of $\{\lnot x_1, x_2, \lnot x_3\}$ (due to $p$). If this set is an unsatisfiable, it is guaranteed to be an OCUS.
 	
- The first iterations show that the \comus algorithm first hits all the literals of $\overline{\Iend\setminus I}$ (steps 1-3 of \cref{tab:example-explanation-generation-not-incremental}) and then starts combining the same literals with the other clauses until an OCUS is found (step 6). Finally, step 6 of \cref{tab:example-explanation-generation-not-incremental} signifies that using clause $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
+ The first iterations show that the \comus algorithm first hits all the literals of $\overline{\Iend\setminus I}$ (steps 1-3 of \cref{tab:example-explanation-generation-not-incremental}) and then starts combining the same \bart{``these'' literals (not clear the same as what)}
+ literals with the other clauses until an OCUS is found (step 6). Finally, step 6 of \cref{tab:example-explanation-generation-not-incremental} signifies that using clause $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
 %
 %suggesting that a better quality \corrsubsets procedure would to a lower amount of additional iterations. 
 % 
@@ -908,9 +948,20 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 
 \section{Optimal Unsatisfiable Subsets}\label{sec:OUS}
 
-Since the tasks of explaining the different literals are independent, we might not want to pollute the sets that are independent of each other, as illustrated in \cref{tab:example-explanation-generation-not-incremental}. Therefore, in this section, we analyze if instead of working \comus-based, we can also \emph{efficiently} generate optimal explanations by replacing the MUS call by an \omus{} call at line~\ref{alg:onestep:mus-call} of \cref{alg:oneStep}. 
+Since the tasks of explaining the different literals are independent, we might not want to pollute the sets that are independent of each other, as illustrated in \cref{tab:example-explanation-generation-not-incremental}. 
+\bart{The previous sentence sounds like something we might have said literally in some meeting. But this is not how yàou can write. 
+\begin{itemize}
+\item ``The tasks of explaining different literals independent'', sure, but we are not really interested in these tasks: we are interested in finding one explanation step. In fact, the algorithms you will develop in the current section will NOT treat them as indpenendent but will impose bounds on one call based on another call. 
+\item `` we might not want to pollute the sets that are independent of each other'', which sets are independent of each other? What does pollute mean here? How can we pollute sets? Do we wish to pollute sets that are \emph{not} indpeendent?  I know the answers of course, but the reader does not a this point. 
+\item ``as illustrated in \cref{tab:example-explanation-generation-not-incremental}. ''  What is illustrated there? That we might not watn to pollute? There has been no discussion about this yet, and I do not think this table ``illustrates'' this.  In fact, if I look at this table: several of the ``sets to hit'' are only applicable for explaining a single literal, but the set to hit at line two is useful BOTH when explaining $x_1$ and when explaining $x_3$. 
+\end{itemize}
+The arugment should be refined. Can we already forward-ref to our experiments? Is it so that too much time is spent in searching hitting sets (of increasingly large sets of sets-to-hit)? That we wish to make this more efficient by splitting it up...à
+}
+
+Therefore, in this section, we analyze if instead of working \comus-based, we can also \emph{efficiently} generate optimal explanations by replacing the MUS call by an \omus{} \bart{Has this been introduced?} call at line~\ref{alg:onestep:mus-call} of \cref{alg:oneStep}. 
 More precisely, the question is: Can we provide explanation as good as \onestepo and compensate the possible overhead of individual \omus{} calls?
 \emilio{Check fromulation of the question}
+\bart{Not very happy with the formulation. Bounded OUS can be called ``separate OUS calls, but the iterated OUS thing is really not what is described in the introduction.  } 
 %
 %\begin{algorithm}[!h]
 %	\DontPrintSemicolon
@@ -932,10 +983,10 @@ More precisely, the question is: Can we provide explanation as good as \onestepo
 
 \subsection{Bounded OUS}
  Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$.
-However, the switch from MUS to \omus{} in \cref{alg:oneStep} still requires to loop over every literal and therefore introduces computational overhead since the problem to be solved is much more difficult than before.
-\paragraph{Upper bound} At \cref{alg:onestep:repetition:mus-call} of \onestep, when iterating over the remaining literals to explain, every computed \omus will be guaranteed to be optimal, and therefore provides an upper bound $f(S_{best})$ on the cost of the remaining literals to explain. 
+However, the switch from MUS to \omus{} in \cref{alg:oneStep} still requires to loop over every literal and therefore introduces computational overhead \bart{compared to what?} since the problem to be solved is much more difficult than before. \bart{Is that so? Which problem is more difficult?} 
+\paragraph{Upper bound} At \cref{alg:onestep:repetition:mus-call} of \onestep, when iterating over the remaining literals to explain, every computed \omus will be guaranteed to be optimal \bart{Obviously, that is what the O in OUS stands for}, and therefore provides an upper bound $f(S_{best})$ \bart{What is $S_{best}$?} on the cost of the remaining literals to explain. \bart{It does not provide a bound on the cost of the remaining literals to explain. It provides an upper bound on the cost of the best explanation. That upper can be USED when considering other literals to explain. Namely, instead of doing a call to OUS, do a call to OCUS, where the constraint (the $p$) now is: \emph{cost is strictly better than the best-found-this-far} }.  
 
-\paragraph{Lower bound} Every hitting set (even the satisfying ones) computed by \ohs inside the \omus algorithm produces a lower bound $f(S)$ on the best candidate \omus. Consequently, $f(S_{best})$ can be used in an early stopping criteria $f(S_{best}) < f(S)$, in other words if the cost of the current hitting set is larger than the cost of the best explanation so far, \omus will not be able to find a better (cheaper) explanation for that literal. 
+\paragraph{Lower bound}\bart{What is described here sounds like an adaptation to the OCUS/OUS algorithm to manually enforce an additional constraint \emph{cost strictly better than best so far}. (a specific line in the code where the $p$ check can be done, if we do not wish to inform the hitting set solver about it). Since we already introduced the whole OCUS machinery, I would say it would be better to use it here. I did this in \cref{alg:oneStepBoundBart}. In my opinion, it is much simpler (no need for \cref{alg:ousb}!), cleaner, and makes better use of the machinery we already have, namely OCUS} Every hitting set (even the satisfying ones) computed by \ohs inside the \omus algorithm produces a lower bound $f(S)$ on the best candidate \omus. Consequently, $f(S_{best})$ can be used in an early stopping criteria $f(S_{best}) < f(S)$, in other words if the cost of the current hitting set is larger than the cost of the best explanation so far, \omus will not be able to find a better (cheaper) explanation for that literal. 
 The rest of \omus-loop for that literal to explain, can therefore be skipped. 
 
 \begin{algorithm}[ht]
@@ -957,8 +1008,8 @@ The rest of \omus-loop for that literal to explain, can therefore be skipped.
 
 
 
-\paragraph{Bounded \omus-based explanations} \onestepomusbounded{} takes advantage of these two observations and uses calls to \ousb, an improved version of the \omus algorithm, to compute the next best explanation step. The algorithm keeps track of the current best \omus candidate $\m{S}_{best}$ and the cost associated with it $v_{best}$. Both variables are only updated if \ousb is able to find an \omus that is cheaper than the current upper bound $v_{best}$ (i.e. line \ref{alg:oneStepBound:ifcheck} of \cref{alg:oneStepBound}).
-However, the worst case scenario for \onestepomusbounded{} is that the literals are ordered such that their respective \omus cost are decreasing.\emilio{Bad phrasing!}   
+\paragraph{Bounded \omus-based explanations} \onestepomusbounded{} takes advantage of these two observations \bart{What are the \emph{two''} observations precisely? } and uses calls to \ousb, an improved version of the \omus algorithm, to compute the next best explanation step. The algorithm keeps track of the current best \omus candidate $\m{S}_{best}$ and the cost associated with it $v_{best}$. Both variables are only updated if \ousb is able to find an \omus that is cheaper than the current upper bound $v_{best}$ (i.e. line \ref{alg:oneStepBound:ifcheck} of \cref{alg:oneStepBound}).
+However, the worst case scenario for \onestepomusbounded{}\bart{why is part of this command italic?} is that the literals are ordered such that their respective \omus cost are decreasing.\emilio{Bad phrasing!}   
 This would prevent the algorithm to benefit from propagating the \omus bound throughout the literals to explain. 
 
 \begin{algorithm}[!ht]
@@ -978,7 +1029,24 @@ This would prevent the algorithm to benefit from propagating the \omus bound thr
 \end{algorithm}
 
 
-Therefore, one option is to order the literals by some heuristic, such as the best OUS found in a previous OUS\_bounded call for this literal (e.g. from the previous explanation step). 
+\begin{algorithm}[!ht]
+	\DontPrintSemicolon
+	\caption{$\onestepomusbounded(\formulac,f,I,\Iend)$ \bart{my version}}
+	\label{alg:oneStepBoundBart}
+	$S_{best} \gets \mathit{nil}$; $v_{best} \gets \infty$\;
+	${\cal S}^l_{best} \gets \mathit{nil}$ for each $l$ // or from previous iteration \;
+	\For{$l \in \{\Iend \setminus I\}$ sorted by $f({\cal S}^l_{best})$}{
+		${\cal S}^l_{best} \gets \call{OCUS}{( (\formulac \land I \land \neg l), f, f \leq v_{best} )}$\;
+		\If{ $ {\cal S}^l_{best}\neq \mathit{FAIL}$ \label{alg:oneStepBound:ifcheck}}{
+			$S_{best} \gets {\cal S}^l_{best}$\;
+			$v_{best} \gets f({\cal S}^l_{best})$\;
+		}
+	}
+	\Return{${\cal S}_{best}$} 
+\end{algorithm}
+
+
+Therefore, one option is to order the literals by some heuristic, such as the best OUS found in a previous OUS\_bounded \bart{use commands for consistent formatting!} call for this literal (e.g. from the previous explanation step). 
 
 
 %The \ousb algorithm (\cref{alg:ousb}) illustrates the improved version of the \omus algorithm, which finds a single (unconstrained) OUS given a formula $\setstohit$, cost function $f$ and optional upper bound on the cost $v$.
@@ -1002,9 +1070,9 @@ Therefore, one option is to order the literals by some heuristic, such as the be
 
 \subsection{Interleaving OUS calls for different literals: a special-case OCUS algorithm} 
 The case to avoid is that an OUS call for a literal takes many hitting set iterations, and returns an 'expensive' OUS with lower-cost OUSs to be found for other literals. 
-Conceptually, one should only do hitting set iterations for a literal that could lead to the globally minimal OUS.
+Conceptually, one should only do hitting set iterations for a literal that could lead to the globally minimal OUS. \bart{unclear. Also: what does the ``could lead'' mean?}
 
-Indeed, this is what the OCUS algorithm is built for: to choose freely among all possible OUS (so across the different literals), and choose the globally optimal next candidate.
+Indeed, this is what the OCUS algorithm is built for: to choose freely among all possible OUS (so across the different literals), and choose the globally optimal next candidate. \bart{what are candidates? It sounds a bit like ``hitting sets'' and OUSs are getting mixed up... }
 
 For the special case where the constraint $p$ is that exactly one of a set of literals must be chosen, we can manually decompose the problem to iteratively search for the best hitting set across the independent problems.
 
@@ -1026,7 +1094,7 @@ These are stored in a priority queue, sorted by the cost of the hitting set.
 
 \begin{algorithm}[!ht]
 	\DontPrintSemicolon
-	\caption{$\iterativeonestep(\formulac,f,I,\Iend)$}
+	\caption{$\iterativeonestep(\formulac,f,I,\Iend)$ \bart{I would not call this ``explain-one-step-interleaved''. Actually, this is ani mplementation of OCUS (it does not explain oen step, it produces an ocus). But... It is an OCUS call for a specific $p$ with $p$ being an exactly-one constraint. In that case, it makes different hitting set solvers for each of the literals of which you want exactly one. The argument (in text) why we want to do this is: OCUS spends 96\% of its time in OPT-calls. We suspect this is because the theory gets too large and want to decouple it into largely indpendent pieces. } }
 	\label{alg:oneStepIter}
 	$queue \gets$ \texttt{InitializePriorityQueue($(\ell, \emptyset,\emptyset): 0 \ | \ \forall \ell \in \Iend \setminus I$)}\; %// init with $(l, \emptyset): 0$ for each $l$, or from previous iteration \;
 	%$S_{best} \gets \mathit{nil}$; $v_{best} \gets \infty$\;
@@ -1070,7 +1138,7 @@ Finally, a new hitting set is computed and the literal is pushed back in the pri
 We now discuss optimizations applicable to the O(C)US algorithms that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 
 \subsection{Incremental O(C)US Computation}\label{sec:ocusEx}
-Inherently, generating a sequence of explanations still requires many O(C)US calls . 
+Inherently, generating a sequence of explanations still requires many O(C)US calls. 
 Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
 calls \onestepo iteratively with a growing interpretation $I$ until $I=\Iend$.
 
@@ -1088,7 +1156,7 @@ When a second call to \comus is performed, we can then initialize $\setstohit$ a
 
 The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:background}), and we have this upper bound on the set of formulas to be used, we can initialize all relevant decision variables once. To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ we need to ensure that the MIP solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$, for example by giving all other literals infinite weight in the cost function. In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 
-\subsubsection{Application to literal ordering} 
+\subsubsection{Application to literal ordering \bart{I don't understand this title}} 
 
 Since the interpretation is updated from one explanation step to another, candidate \omus{}s for \onestepomusbounded from a previous explanation step are not guaranteed to be optimal in the current step. 
 The same observation holds for the ordering of the literals in the priority queue of \iterativeonestep.
@@ -1097,6 +1165,7 @@ By bootstrapping the hitting set solvers with the maintained sets-to-hit for eac
 Consequently, both \iterativeonestep and \onestepomusbounded, are provided with a better heuristic value for the ordering of the literals that reflects the actual state in the explanation sequence. 
 \emilio{Small note: In the implementation of \onestepomusbounded we recompute a hitting set for all literals, regardless whtether they provide a OUS in the previous iteration. For all literals, every OUS call goes until the bound and therefore the ordering is not necessarily going to favor the previous found OUSs. But that is ok, since we do it for all the literals and the optimal ones might become even cheaper. But if they are all the same cost, then the first one in the ordering which might not be optimal, could still be very expensive and delay finding a better bound.}
 %%%EMILIO: 
+\bart{I don't understand this subsubsection? What are you saying, that we can do for each literal one hitting set call and use that as a ``heuristic'' as to which one to take first? But that is the default behaviour of bounded, no? Is there any new information in this paragraph? }
 
 %Bootstrapping the hitting set solver also benefits the ordering of the literals for both \iterativeonestep and \onestepomusbounded. 
 %. 

@@ -1453,7 +1453,7 @@ Figure \ref{fig:rq2_incrementality} depicts the average (over all the puzzles) c
 
 \begin{figure}[!h]
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/rq3_cactus_r_2022_04_20_SAT.pdf}
+	\includegraphics[width=0.8\textwidth]{figures/rq3_cactus_r_2022_04_22_SAT.pdf}
 	\caption{Time to generate a full explanation sequence with No \grow for incremental and non-incremental O(C)US algorithms. Incrementality clearly shows improvement in the number of instances solved for all O(C)US algorithms.}
 	\label{fig:rq2_cactus_incrementality_log}
 \end{figure}
@@ -1484,7 +1484,7 @@ The table depicts for each configuration \begin{inparaenum}[(1)]
 	\item \%\textsc{OPT} the percentage of time spent in the hitting set solver;
 	\item \%\sat the percentage of time spent in the sat solver:
 	\item \%\grow the percentage of time spent in the grow procedure; and
-	\item $N_{hs}$ the average total number of hitting sets.
+	\item $N_{sth}$ the average total number of sets-to-hit computed.
 \end{inparaenum}
 
 
@@ -1494,7 +1494,7 @@ The table depicts for each configuration \begin{inparaenum}[(1)]
 \begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
 	& \multicolumn{5}{c|}{\textbf{No \grow}} & \multicolumn{5}{c}{\textbf{\corrsubsets}}\\[1ex]
 	%	\cline{2-9}
-	\textbf{config}         &  explained  &  \%\textsc{OPT} &   \%\sat & \%\grow &  $N_{hs}$ & explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{hs}$  \\ \midrule
+	\textbf{config}         &  explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$ & explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$  \\ \midrule
 	OUSb                    & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310 & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149 \\
 	OUS Iter.               & [273 / 403] &          88.58\% & 10.41\% & 1.01\% &      7480 & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878  \\
 	OCUS                    & [233 / 403] &          96.65\% &  3.01\% & 0.35\% &      6245 & [310 / 403] &         19.83\% &   0.82\% &    79.34\% &      3029  \\
@@ -1606,8 +1606,8 @@ The following configurations are compared:
 	\item[{No Grow}] refers to using the model computed by \sat solver when checking for satisfiability.
 	\item[{Dom.-spec. \maxsat}] refers to growing with a \maxsat solver using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). In this case, \maxsat-based \grow uses only the previously derived facts and the original constraints. 
 	\item[{MaxSAT Full}] refers to growing with a \maxsat solver using the full unsatisfiable formula $\mathcal{F}$.
-	\item[{Disj. \maxsat Corr.}] refers to repeatedly calling a \emph{Dom.-spec. \maxsat} and blocking the corresponding correction subset until no more correction subsets can be extracted.
-	\item[{\maxsat Corr.+\sat}] works similarly to \emph{Disj. \maxsat Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
+	\item[{\maxsat Corr.}] refers to repeatedly calling a \emph{Dom.-spec. \maxsat} and blocking the corresponding correction subset until no more correction subsets can be extracted.
+	\item[{\maxsat Corr.+\sat}] works similarly to \emph{\maxsat Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
 \end{description}
 
 \paragraph{MaxSAT weighing scheme} The \maxsat solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
@@ -1641,13 +1641,19 @@ The following configurations are compared:
 		\label{fig:rq3_grow:iter_ous_incr}
 	\end{subfigure}
 	\\
-	\begin{subfigure}{\textwidth}
+	\begin{subfigure}{0.5\textwidth}
 		\centering
-		\includegraphics[width=0.5\textwidth]{figures/rq2_cactus_log_2022_04_20_OCUSIncr_HS.pdf}
+		\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_04_20_OCUSIncr_HS.pdf}
 		\caption{OCUS Incremental.}
 		\label{fig:rq3_grow:ocus}
 	\end{subfigure}
-	\caption{Average cumulative explanation time of correction subset configurations for the incremental O(C)US variants. The legends for each graph are ordered from slowest (top) to fastest (bottom).}
+	\begin{subfigure}{0.5\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/rq2_corr_subsets_2022_04_22.pdf}
+		\caption{OCUS Incremental.}
+		\label{fig:rq3_grow:ocus}
+	\end{subfigure}
+	\caption{Average cumulative explanation time of correction subset configurations for the incremental O(C)US variants. The legends for each graph are ordered from the least instances explained (top) to the most instances explained (bottom).}
 	\label{fig:q3:grow_configurations}
 \end{figure}
 
@@ -1702,22 +1708,22 @@ In this section, we analyze whether the algorithms we developed are fit for an i
 	\label{tab:indiv-explanations}
 \end{table}
 
-\begin{table}[!h]
-	\centering
-	\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{r|c|c|cccccc}
-	config &    $\overline{t_{expl}}$ & $\overline{t_{1}}$ &  $q_{25}$ &  $q_{50}$ &  $q_{75}$  & $q_{95}$ &  $q_{98}$ &   $q_{100}$ \\\midrule
-	OUSb &                   499.67 &              13.60 &      2.02 &      3.81 &       6.52 &    41.92 &    173.72 &  3028.68 \\
-	OUS Iter. &                   152.97 &              18.25 &      1.72 &      3.33 &       5.61 &   132.65 &    226.99 &  1152.09 \\
-	OCUS &                   145.59 &              16.91 &      1.03 &      1.86 &       8.10 &    98.32 &    115.31 &   513.07 \\
-	OUSb+Lit. Incr. HS &                   504.78 &               8.74 &      0.48 &      0.69 &       1.21 &    53.59 &     57.88 &  3428.02 \\
-	OUS Iter.+Lit. Incr. HS &                   182.74 &              12.39 &      0.42 &      0.61 &      29.50 &    48.92 &     52.12 &  1831.79 \\
-	OCUS+Incr. HS &                   146.85 &              11.89 &      0.39 &      0.73 &      28.82 &    36.54 &     39.04 &   383.28 \\
-\end{tabular}
-	\end{adjustbox}
-	\caption{\textbf{ALL instances:} Runtime analysis of individual explanations decomposed into time to generate the first explanation ($t_1$), the average time to produce an additional explanation and the quantiles of the explanation times.}
-	\label{tab:indiv-explanations}
-\end{table}
+%\begin{table}[!h]
+%	\centering
+%	\begin{adjustbox}{max width=\textwidth}
+%\begin{tabular}{r|c|c|cccccc}
+%	config &    $\overline{t_{expl}}$ & $\overline{t_{1}}$ &  $q_{25}$ &  $q_{50}$ &  $q_{75}$  & $q_{95}$ &  $q_{98}$ &   $q_{100}$ \\\midrule
+%	OUSb &                   499.67 &              13.60 &      2.02 &      3.81 &       6.52 &    41.92 &    173.72 &  3028.68 \\
+%	OUS Iter. &                   152.97 &              18.25 &      1.72 &      3.33 &       5.61 &   132.65 &    226.99 &  1152.09 \\
+%	OCUS &                   145.59 &              16.91 &      1.03 &      1.86 &       8.10 &    98.32 &    115.31 &   513.07 \\
+%	OUSb+Lit. Incr. HS &                   504.78 &               8.74 &      0.48 &      0.69 &       1.21 &    53.59 &     57.88 &  3428.02 \\
+%	OUS Iter.+Lit. Incr. HS &                   182.74 &              12.39 &      0.42 &      0.61 &      29.50 &    48.92 &     52.12 &  1831.79 \\
+%	OCUS+Incr. HS &                   146.85 &              11.89 &      0.39 &      0.73 &      28.82 &    36.54 &     39.04 &   383.28 \\
+%\end{tabular}
+%	\end{adjustbox}
+%	\caption{\textbf{ALL instances:} Runtime analysis of individual explanations decomposed into time to generate the first explanation ($t_1$), the average time to produce an additional explanation and the quantiles of the explanation times.}
+%	\label{tab:indiv-explanations}
+%\end{table}
 
 In \cref{tab:indiv-explanations}, we see that on average, \emph{OUS Iter.+Lit. Incr. HS} takes the least time to produce the first explanation, and is on average significantly faster to generate an explanation. This makes the iterated approach a viable candidate for explanation generating during interactive problem solving.
 

@@ -74,8 +74,9 @@
 \newcommand\ltrue{\mm{\textbf{t}}}
 \newcommand\lfalse{\mm{\textbf{f}}}
 \newcommand\uservars{\ensuremath{\m{U} }\xspace}
-\newcommand\call[1]{\mm{\textsc{#1}}}
+\newcommand\call[1]{\mm{\texttt{#1}}}
 \newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+%\newcommand\cohs{\texttt{CondOptHittingSet}\xspace}
 \newcommand\ohs{\mm{\call{OptHittingSet}}}
 \newcommand\disjcorr{\mm{\call{DisjCorrSets}}}
 \newcommand\disjcorrincr{\mm{\call{DisjCorrSetsIncremental}}}
@@ -91,6 +92,7 @@
 \newcommand\ousbiterincr{\mm{\call{OUSIter+Lit. Incr. HS}}}
 \newcommand\corrss{\mm{\call{CorrSS}}}
 \newcommand\corrsubsets{\mm{\call{CorrSubsets}}}
+%\newcommand\corrsubsets{\texttt{CorrSubsets}\xspace}
 \newcommand\comusdisj{\mm{\call{OCUSConstrainedDisjMCSes}}}
 \newcommand\disjmcs{\mm{\call{DisjointMCSes}\xspace}}
 \newcommand\disjmcsconstrained{\mm{\call{DisjointMCSesConstrained}\xspace}}
@@ -115,6 +117,7 @@
 \newcommand\onestepomus{\ensuremath{\call{Explain-One-Step-OUS}}\xspace}
 \newcommand\onestepomusbounded{\ensuremath{\call{Explain-One-Step-OCUS-Bounded}}\xspace}
 
+%\newcommand\onestepo{\texttt{Explain-One-Step-OCUS}\xspace}
 \newcommand\onestepo{\ensuremath{\call{Explain-One-Step-OCUS}}\xspace}
 \newcommand\iterativeonestep{\ensuremath{\call{Explain-One-Step-OCUS-Split}}\xspace}
 %%%%%%
@@ -629,7 +632,7 @@ Therefore, when considering the procedure \onestep from the perspective of OCUS 
 $\formula \gets \formulac\land I\land \overline{\Iend\setminus I}$\;
 $p : 2^{\formula}\to\{\ltrue,\lfalse\}:S \mapsto \# (S\cap \overline{\Iend\setminus I})=1$\label{alg:oneStepOCUS:exactlyone}\;
 %EMILIO: written as a sum
-\Return{$\comus(\formula, f, p)$\label{alg:oneStepOCUS:ocus-call}} 
+\Return{$\call{OCUS}(\formula, f, p)$\label{alg:oneStepOCUS:ocus-call}} 
 \end{algorithm}
 %\bart{Also, a single line is a bit limited for an algorithm.}
 We define the exactly one constraint $p$ as the equality constraint shown on line \ref{alg:oneStepOCUS:exactlyone} of algorithm \ref{alg:oneStepOCUS}. $p$ evaluates to \textit{true} if the intersection of the negated literals to explain $\Iend\setminus I$ with the subset $\m{S}$ of $\formula$ considered is equal to 1, otherwise $p$ evaluates to \textit{false}. 
@@ -875,7 +878,7 @@ We define cost function $f$ as
 \bart{Just to be very clear: $f$ is overloaded. $f$ (as input to \onestep) takes \emph{AN EXPLANATION STEP} as input. 
 $f(E,S,N) = ...$ can be defined easily. 
 THEN: LINE 1 will construct a new formula $\mathcal{F}$. THEN a related $f$ is derived to give to OCUS. Make these two explicit).}
-\emilio{Comment added to \onestep, resolving that first.}
+\emilio{Comment added to \onestep, need to resolve that first.}
 %\[ \] 
 over clause weights $w_1 = 60, w_2 = 60, w_3 = 100, w_4 = 100$, and a linear term to counts the \emph{number of literals} of $I \land \overline{(\Iend\setminus I)}$ that are present in the subset.
 % \bart{Why do this like this? Why not just write it in the formula (now half of the sum is written in math and the other half in words... $L$ is just $\sum_{c\in ...}d_c$,  no?}. 
@@ -955,44 +958,121 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 %
 %\bart{Ah, wait, what follows is still part of the example (why is it not in the example environment?). 
 %	The sentence above should probably come later? Or just be dropped?}
+
+
 \begin{table}[!h]
 	\centering
-	\begin{tabular}{lcccc} 
-%		\multicolumn{5}{c}{\bart{what is this doing here? Drop this header}OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
-		Step & $\m{S}$                             & $\sat(\m{S})$    & \corrsubsets($\m{S}$, $\formula$)                               & $\setstohit  \gets \setstohit  \cup \m{K}$ \\ 
-		\toprule[2pt]
-		&        &    &      & $\emptyset$                                \\
-		\midrule
-		1. & $\{ \lnot x_1\}$   &$\mathit{true}$  & $\{\{c_3, x_2, \lnot x_3 \}\}$            & $\{ \dots, \{c_3, x_2, \lnot x_3 \}\}$\\
-		\midrule
-		2. & $\{ \lnot x_3\}$   &$\mathit{true}$  & $\{\{c_3, x_2 \}\}$            & $\{ \dots, \{c_3, x_2 \}\}$\\
-		\midrule
-		3. & $\{ x_2\}$   		&$\mathit{true}$  & $\{\{c_4, \lnot x_1, \lnot x_3 \}\}$ 							& $\{ \dots, \{c_4, \lnot x_1, \lnot x_3 \}\}$\\
-		\midrule
-		4. & $\{ c_4, x_2 \}$   	&$\mathit{true}$  & $\{\{c_3 \}\}$ &$\{ \dots, \{c_3 \}\}$\\
-		\midrule
-		5. & $\{ c_3, \lnot x_3\}$ 	&$\mathit{true}$  & $\{\{c_2, \lnot x_1, x_2 \}\}$ &$\{ \dots, \{c_2, \lnot x_1, x_2 \}\}$\\
-		\midrule
-		6. & $\mathbf{\{ c_3, \lnot x_1\}}$ 	&$\mathit{false}$  & & \\
-		
-	\end{tabular}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccc} 
+			%		\multicolumn{5}{c}{\bart{what is this doing here? Drop this header}OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
+			Step & $\m{S}$                             & $\sat(\m{S})$ & $\setstohit  \gets \setstohit  \cup  \corrsubsets(\m{S}, \formula) $ \\ 
+			\toprule[2pt]
+			&        &    &      $\emptyset$                                \\
+			\midrule
+			1. & $\{ \lnot x_1\}$   &$\mathit{true}$ &   $\{ \dots, \{ c_1, c_2, c_3, c_4, x_2, \lnot x_3 \}\}$\\
+			\midrule
+			2. & $\{ x_2\}$   		&$\mathit{true}$&  $\{ \dots, \{c_4, \lnot x_1, \lnot x_3 \}\}$\\
+			\midrule
+			2. & $\{ \lnot x_3\}$   &$\mathit{true}$ &  $\{ \dots, \{c_1, c_2, c_3, c_4, \lnot x_1, x_2 \}\}$\\
+
+			\midrule
+			4. & $\{ c_1,  x_2\}$   	&$\mathit{true}$ &$\{ \dots, \{c_2, c_3, c_4, \lnot x_1, \lnot x_3 \}\}$\\
+			\midrule
+			5. & $\{c_2, x_2\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_3, c_4, \lnot x_1, \lnot x_3 \}\}$\\
+			\midrule
+			5. & $\{c_1, \lnot x_3\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_2, c_3, c_4, \lnot x_1, x_2 \}\}$\\
+			\midrule
+			5. & $\{c_2, \lnot x_1\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_3, c_4,x_2,  \lnot x_3 \}\}$\\
+			\midrule
+			5. & $\{c_1, \lnot x_1\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_2, c_3, c_4, x_2, \lnot x_3 \}\}$\\
+			\midrule
+			5. & $\{c_2, \lnot x_3 \}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_3, c_4, \lnot x_1, x_2 \}\}$\\
+			\midrule
+			5. & $\{ c_4, x_2\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_2, c_3, \lnot x_1, \lnot x_3 \}\}$\\
+			\midrule
+			5. & $\{ c_3, x_2\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_2, c_4, \lnot x_1, \lnot x_3 \}\}$\\
+			\midrule
+			6. & $\mathbf{\{ c_3, \lnot x_1\}}$ 	&$\mathit{false}$  & \\
+			
+	\end{tabular}\end{adjustbox}
 	\caption{
-%	\bart{The table headers are wrong. grow should be corrsubsets. THe last column should not longerh ave a acomplement. } ADAPTED
+		%	\bart{The table headers are wrong. grow should be corrsubsets. THe last column should not longerh ave a acomplement. } ADAPTED
 		%\bart{Replace $\lnot x_1$ by $c_5$ etcetera. Consistency! }
 		%EMILIO {Replaced it with the inidividual literals in the example instead of the clause for more clarity}
-		\cref{ex:onestep-ocus} - Explanation step generated with \onestepo}
+		\cref{ex:onestep-ocus} - Explanation step generated with \onestepo no grow just the complement
+%		\emilio{Proposed update on the table, with $\mu$ being the model provided by the SAT solver}	
+	}
 	\label{tab:example-explanation-generation-not-incremental}
 \end{table}
-	In this small example, we use the following the \corrsubsets procedure: if $\m{S}$ is satisfiable, use the model provided by the \sat solver to grow $\m{S}$ into a larger satisfiable subset, and return  $\{F\setminus S\}$.  
-	\bart{``we use the set as the procedure'': this is a type clash. The procedure RETURNS $\{F\setminus S\}$.}
-	\bart{If I just look at your first line, I get really confused. $S$ consists of only the constraint $\{\lnot x_1\}$ Should the first set-to-hit then not be everything except for this constraint? Somehow there is a lot more added in the ``grow''. So which grow is happening here? }\emilio{I use the model provided by the sat solver, that's wby I added the "grow" step}
-	\bart{Also in the example there is a $\lnot x_2$. That was not presernt in $\mathcal{F}$ before. Where does it come from? }\emilio{There was a small typo}
-	\emilio{Suggestion for improvement: Add SAT model after SAT(S) in table ?}
+
+\begin{table}[!h]
+	\centering
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lcccc} 
+			%		\multicolumn{5}{c}{\bart{what is this doing here? Drop this header}OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
+			Step & $\m{S}$                             & $\sat(\m{S})$  & $\mu$                 & $\setstohit  \gets \setstohit  \cup  \corrsubsets(\m{S}, \formula) $ \\ 
+			\toprule[2pt]
+			&        &    &     & $\emptyset$                                \\
+			\midrule
+			1. & $\{ \lnot x_1\}$   &$\mathit{true}$ &  $\{c_1, c_2, c_4, \lnot x_1 \}$            & $\{ \dots, \{c_3, x_2, \lnot x_3 \}\}$\\
+			\midrule
+			2. & $\{ \lnot x_3\}$   &$\mathit{true}$ &  $\{c_1,c_2, c_4, \lnot x_1, \lnot x_3 \}$            & $\{ \dots, \{c_3, x_2 \}\}$\\
+			\midrule
+			3. & $\{ x_2\}$   		&$\mathit{true}$&  $\{c_1, c_2 ,c_3, x_2\}$ 							& $\{ \dots, \{c_4, \lnot x_1, \lnot x_3 \}\}$\\
+			\midrule
+			4. & $\{ c_4, x_2 \}$   	&$\mathit{true}$ &  $\{c_1, c_2, c_4, \lnot x_1, x_2, \lnot x_3\}$ &$\{ \dots, \{c_3 \}\}$\\
+			\midrule
+			5. & $\{ c_3, \lnot x_3\}$ 	&$\mathit{true}$&  $\{c_1, c_3, c_4, \lnot x_3\}$ &$\{ \dots, \{c_2, \lnot x_1, x_2 \}\}$\\
+			\midrule
+			6. & $\mathbf{\{ c_3, \lnot x_1\}}$ 	&$\mathit{false}$  & & \\
+			
+	\end{tabular}\end{adjustbox}
+	\caption{
+		%	\bart{The table headers are wrong. grow should be corrsubsets. THe last column should not longerh ave a acomplement. } ADAPTED
+		%\bart{Replace $\lnot x_1$ by $c_5$ etcetera. Consistency! }
+		%EMILIO {Replaced it with the inidividual literals in the example instead of the clause for more clarity}
+		\cref{ex:onestep-ocus} - Explanation step generated with \onestepo
+\emilio{Proposed update on the table, with $\mu$ being the model provided by the SAT solver}	
+}
+	\label{tab:example-explanation-generation-not-incremental}
+\end{table}
+
+%\begin{table}[!h]
+%	\centering
+%			\begin{adjustbox}{max width=\textwidth}
+%	\begin{tabular}{lccccc} 
+%%		\multicolumn{5}{c}{\bart{what is this doing here? Drop this header}OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
+%		Step & $\m{S}$                             & $\sat(\m{S})$  & $\mu$  & \corrsubsets($\m{S}$, $\formula$)                               & $\setstohit  \gets \setstohit  \cup \m{K}$ \\ 
+%		\toprule[2pt]
+%		&        &    &   &   & $\emptyset$                                \\
+%		\midrule
+%		1. & $\{ \lnot x_1\}$   &$\mathit{true}$ & & $\{\{c_3, x_2, \lnot x_3 \}\}$            & $\{ \dots, \{c_3, x_2, \lnot x_3 \}\}$\\
+%		\midrule
+%		2. & $\{ \lnot x_3\}$   &$\mathit{true}$ & & $\{\{c_3, x_2 \}\}$            & $\{ \dots, \{c_3, x_2 \}\}$\\
+%		\midrule
+%		3. & $\{ x_2\}$   		&$\mathit{true}$&  & $\{\{c_4, \lnot x_1, \lnot x_3 \}\}$ 							& $\{ \dots, \{c_4, \lnot x_1, \lnot x_3 \}\}$\\
+%		\midrule
+%		4. & $\{ c_4, x_2 \}$   	&$\mathit{true}$ & & $\{\{c_3 \}\}$ &$\{ \dots, \{c_3 \}\}$\\
+%		\midrule
+%		5. & $\{ c_3, \lnot x_3\}$ 	&$\mathit{true}$&  & $\{\{c_2, \lnot x_1, x_2 \}\}$ &$\{ \dots, \{c_2, \lnot x_1, x_2 \}\}$\\
+%		\midrule
+%		6. & $\mathbf{\{ c_3, \lnot x_1\}}$ 	&$\mathit{false}$  & & \\
+%		
+%	\end{tabular}\end{adjustbox}
+%	\caption{
+%%	\bart{The table headers are wrong. grow should be corrsubsets. THe last column should not longerh ave a acomplement. } ADAPTED
+%		%\bart{Replace $\lnot x_1$ by $c_5$ etcetera. Consistency! }
+%		%EMILIO {Replaced it with the inidividual literals in the example instead of the clause for more clarity}
+%		\cref{ex:onestep-ocus} - Explanation step generated with \onestepo}
+%	\label{tab:example-explanation-generation-not-incremental}
+%\end{table}
+	In this small example, the \corrsubsets procedure simply returns $\{F\setminus S\}$. 
+	%if $\m{S}$ is satisfiable, use the model provided by the \sat solver to grow $\m{S}$ into a larger satisfiable subset, and return  $\{F\setminus S\}$.  
+%	\bart{``we use the set as the procedure'': this is a type clash. The procedure RETURNS $\{F\setminus S\}$.}
+%	\bart{If I just look at your first line, I get really confused. $S$ consists of only the constraint $\{\lnot x_1\}$ Should the first set-to-hit then not be everything except for this constraint? Somehow there is a lot more added in the ``grow''. So which grow is happening here? }\emilio{I use the model provided by the sat solver, that's wby I added the "grow" step}
+%	\bart{Also in the example there is a $\lnot x_2$. That was not presernt in $\mathcal{F}$ before. Where does it come from? }\emilio{There was a small typo}
+%	\emilio{Suggestion for improvement: Add SAT model after SAT(S) in table ?}
 % ADAPTED
-	
-
-
-	
 	\cref{tab:example-explanation-generation-not-incremental} breaks down the intermediate steps of algorithm \ref{alg:comus} for generating an OCUS of given $\formula$, $f$ and $p$. 
 	First, the collection of sets-to-hit \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that contains exactly one of $\{\lnot x_1, x_2, \lnot x_3\}$ (due to $p$). If this set is an unsatisfiable, it is guaranteed to be an OCUS.
 	
@@ -1016,22 +1096,28 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 
 \section{Optimal Unsatisfiable Subsets\emilio{Adapt title to fit narrative OCUS call with p set to true}}\label{sec:OUS}
 
-Experiments show that when generating an explanation step with \onestepo most of time is spent in searching for hitting sets of increasingly large sets of sets-to-hit. Therefore, in order to make generation of one explanation step more efficient 
+In the previous section, we saw that when generating an explanation step with \comus most of the time is spent in searching for hitting sets. 
+Especially since the hitting set solver needs to consider an increasingly large sets of sets-to-hit potentially combining an exponential number of literals and clauses.
+%In this section, we look at how to make the generation of one explanation step more efficient by splitting up the \comus-call into individual calls for every literal.
+Therefore, in this section, we analyze if instead of working \comus-based, we can also \emph{efficiently} generate an explanation step by splitting up the \comus-call into individual optimal calls for every literal.
+% replacing the MUS call by an \omus{} \bart{Has this been introduced?} call at line~\ref{alg:onestep:mus-call} of \cref{alg:oneStep}. 
 
-Since the tasks of explaining the different literals are independent, we might not want to pollute the sets that are independent of each other, as illustrated in \cref{tab:example-explanation-generation-not-incremental}. 
-\bart{The previous sentence sounds like something we might have said literally in some meeting. But this is not how yàou can write. 
-\begin{itemize}
-\item ``The tasks of explaining different literals independent'', sure, but we are not really interested in these tasks: we are interested in finding one explanation step. In fact, the algorithms you will develop in the current section will NOT treat them as indpenendent but will impose bounds on one call based on another call. 
-\item `` we might not want to pollute the sets that are independent of each other'', which sets are independent of each other? What does pollute mean here? How can we pollute sets? Do we wish to pollute sets that are \emph{not} indpeendent?  I know the answers of course, but the reader does not a this point. 
-\item ``as illustrated in \cref{tab:example-explanation-generation-not-incremental}. ''  What is illustrated there? That we might not watn to pollute? There has been no discussion about this yet, and I do not think this table ``illustrates'' this.  In fact, if I look at this table: several of the ``sets to hit'' are only applicable for explaining a single literal, but the set to hit at line two is useful BOTH when explaining $x_1$ and when explaining $x_3$. 
-\end{itemize}
-The arugment should be refined. Can we already forward-ref to our experiments? Is it so that too much time is spent in searching hitting sets (of increasingly large sets of sets-to-hit)? That we wish to make this more efficient by splitting it up...à
-}
 
-Therefore, in this section, we analyze if instead of working \comus-based, we can also \emph{efficiently} generate optimal explanations by replacing the MUS call by an \omus{} \bart{Has this been introduced?} call at line~\ref{alg:onestep:mus-call} of \cref{alg:oneStep}. 
-More precisely, the question is: Can we provide explanation as good as \onestepo and compensate the possible overhead of individual \omus{} calls?
-\emilio{Check fromulation of the question}
-\bart{Not very happy with the formulation. Bounded OUS can be called ``separate OUS calls, but the iterated OUS thing is really not what is described in the introduction.  } 
+%Since the tasks of explaining the different literals are independent, we might not want to pollute the sets that are independent of each other, as illustrated in \cref{tab:example-explanation-generation-not-incremental}. 
+%\bart{The previous sentence sounds like something we might have said literally in some meeting. But this is not how yàou can write. 
+%\begin{itemize}
+%\item ``The tasks of explaining different literals independent'', sure, but we are not really interested in these tasks: we are interested in finding one explanation step. In fact, the algorithms you will develop in the current section will NOT treat them as indpenendent but will impose bounds on one call based on another call. 
+%\item `` we might not want to pollute the sets that are independent of each other'', which sets are independent of each other? What does pollute mean here? How can we pollute sets? Do we wish to pollute sets that are \emph{not} indpeendent?  I know the answers of course, but the reader does not a this point. 
+%\item ``as illustrated in \cref{tab:example-explanation-generation-not-incremental}. ''  What is illustrated there? That we might not watn to pollute? There has been no discussion about this yet, and I do not think this table ``illustrates'' this.  In fact, if I look at this table: several of the ``sets to hit'' are only applicable for explaining a single literal, but the set to hit at line two is useful BOTH when explaining $x_1$ and when explaining $x_3$. 
+%\end{itemize}
+%The arugment should be refined. Can we already forward-ref to our experiments? Is it so that too much time is spent in searching hitting sets (of increasingly large sets of sets-to-hit)? That we wish to make this more efficient by splitting it up...à
+%}
+%% REMOVED the forward loooking at the table in the experiments and relying on the table in previous section where the complement is sufficient to show that an increasingly large collection of sets-to-hit are considered.
+
+%Therefore, in this section, we analyze if instead of working \comus-based, we can also \emph{efficiently} generate optimal explanations by replacing the MUS call by an \omus{} \bart{Has this been introduced?} call at line~\ref{alg:onestep:mus-call} of \cref{alg:oneStep}. 
+%More precisely, the question is: Can we provide explanation as good as \onestepo and compensate the possible overhead of individual \omus{} calls?
+%\emilio{Check fromulation of the question}
+%\bart{Not very happy with the formulation. Bounded OUS can be called ``separate OUS calls, but the iterated OUS thing is really not what is described in the introduction.  } 
 %
 %\begin{algorithm}[!h]
 %	\DontPrintSemicolon

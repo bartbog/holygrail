@@ -980,19 +980,19 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 			\midrule
 			5. & $\{c_2, x_2\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_3, c_4, \lnot x_1, \lnot x_3 \}\}$\\
 			\midrule
-			5. & $\{c_1, \lnot x_3\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_2, c_3, c_4, \lnot x_1, x_2 \}\}$\\
+			6. & $\{c_1, \lnot x_3\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_2, c_3, c_4, \lnot x_1, x_2 \}\}$\\
 			\midrule
-			5. & $\{c_2, \lnot x_1\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_3, c_4,x_2,  \lnot x_3 \}\}$\\
+			7. & $\{c_2, \lnot x_1\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_3, c_4,x_2,  \lnot x_3 \}\}$\\
 			\midrule
-			5. & $\{c_1, \lnot x_1\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_2, c_3, c_4, x_2, \lnot x_3 \}\}$\\
+			8. & $\{c_1, \lnot x_1\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_2, c_3, c_4, x_2, \lnot x_3 \}\}$\\
 			\midrule
-			5. & $\{c_2, \lnot x_3 \}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_3, c_4, \lnot x_1, x_2 \}\}$\\
+			9. & $\{c_2, \lnot x_3 \}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_3, c_4, \lnot x_1, x_2 \}\}$\\
 			\midrule
-			5. & $\{ c_4, x_2\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_2, c_3, \lnot x_1, \lnot x_3 \}\}$\\
+			10. & $\{ c_4, x_2\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_2, c_3, \lnot x_1, \lnot x_3 \}\}$\\
 			\midrule
-			5. & $\{ c_3, x_2\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_2, c_4, \lnot x_1, \lnot x_3 \}\}$\\
+			11. & $\{ c_3, x_2\}$ 	&$\mathit{true}$ &$\{ \dots, \{c_1, c_2, c_4, \lnot x_1, \lnot x_3 \}\}$\\
 			\midrule
-			6. & $\mathbf{\{ c_3, \lnot x_1\}}$ 	&$\mathit{false}$  & \\
+			12. & $\mathbf{\{ c_3, \lnot x_1\}}$ 	&$\mathit{false}$  & \\
 			
 	\end{tabular}\end{adjustbox}
 	\caption{
@@ -1077,10 +1077,9 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	First, the collection of sets-to-hit \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that contains exactly one of $\{\lnot x_1, x_2, \lnot x_3\}$ (due to $p$). If this set is an unsatisfiable, it is guaranteed to be an OCUS.
 	
  The first iterations show that the \comus algorithm first hits all the literals of $\overline{\Iend\setminus I}$ (steps 1-3 of \cref{tab:example-explanation-generation-not-incremental}) and then starts combining one literal of $\overline{\Iend\setminus I}$ % \bart{``these'' literals (not clear the same as what)}
-  with the remaining clauses until an OCUS is found (step 6). Finally, step 6 of \cref{tab:example-explanation-generation-not-incremental} signifies that using clause $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
-%
-%suggesting that a better quality \corrsubsets procedure would to a lower amount of additional iterations. 
-% 
+  with the remaining clauses until an OCUS is found (step 12). Finally, step 12 of \cref{tab:example-explanation-generation-not-incremental} signifies that using clause $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
+
+  
 % \bart{careful: if we will later introduce MCS enumeration, it is no longer the case that ``once an unsatisfiable subset is found, it is optimal''. 
 %I would rephrase to something of the form ``If this set $\m{S}$ is unsatisfiable, it is guaranteed to be an OCUS}, it's \TIPnoContractions guaranteed to be optimal and validate the given constraint \bart{Optimality is only defined wrt those sets validating the constraint. I would not repeat this}. 
 %% EMILIO: CHANGED.
@@ -1091,8 +1090,10 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 %\emilio{add the explanation step decomposition}
 %
 \end{example}
-
-
+%The main observation from the 
+Finally, observe from \cref{ex:onestep-ocus} that the \comus algorithm requires a lot of intermediate steps in order to find an \comus. Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
+This last observation suggests that a better targeted \corrsubsets procedure is required to lower the amount of iterations.   
+\emilio{Maybe should be moved to example env. I thought putting it here would be an interesting conclusion for this section.}
 
 \section{Optimal Unsatisfiable Subsets\emilio{Adapt title to fit narrative OCUS call with p set to true}}\label{sec:OUS}
 
@@ -1137,7 +1138,8 @@ Therefore, in this section, we analyze if instead of working \comus-based, we ca
 %\cref{alg:ousb} depicts an improved version of the \omus algorithm with an optional numerical parameter v representing a given bound.
 %Before we present these improvements, consider this bound set to $\infty$, ensuring that the bound doesn't interfere with a regular \omus call.
 
-\subsection{Bounded OUS}
+
+\subsection{Bounded OCUS}
  Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$.
 However, the switch from MUS to \omus{} in \cref{alg:oneStep} still requires to loop over every literal and therefore introduces computational overhead \bart{compared to what?} since the problem to be solved is much more difficult than before. \bart{Is that so? Which problem is more difficult?} 
 \paragraph{Upper bound} At \cref{alg:onestep:repetition:mus-call} of \onestep, when iterating over the remaining literals to explain, every computed \omus will be guaranteed to be optimal \bart{Obviously, that is what the O in OUS stands for}, and therefore provides an upper bound $f(S_{best})$ \bart{What is $S_{best}$?} on the cost of the remaining literals to explain. \bart{It does not provide a bound on the cost of the remaining literals to explain. It provides an upper bound on the cost of the best explanation. That upper can be USED when considering other literals to explain. Namely, instead of doing a call to OUS, do a call to OCUS, where the constraint (the $p$) now is: \emph{cost is strictly better than the best-found-this-far} }.  

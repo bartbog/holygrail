@@ -504,10 +504,33 @@ The simplicity of an explanation step is measured by the total cost of the eleme
 %%% EMILIO :adapted
 
 The key part of the algorithm is the search for the best explanation step given an interpretation $I$ of literals derived so far. 
-\cref{alg:oneStep} shows the gist of how this was done.
+\cref{alg:oneStep} shows the gist of how this was done. 
 It takes as input the problem constraints \formulac, a cost function $f$ quantifying the quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
+\emilio{Check the following with modification to the cost function so that it fits the journal paper more:} Throughout the paper, we consider cost functions $f$ that are given an input subset of $\formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ and are able to differentiate between the given constraints $\formulac$, the maximal consequence $ \Iend$ and the complement of the remaining literals to explain $\overline{\Iend \setminus I}$. 
+\emilio{Otherwhise, just from the algorithms, I have the impression it's not possible to recreate a whole explanation sequence with re-reading AIJ paper. The propagation step is not obvious.}
 To compute an explanation, this procedure iterates over the literals that are still to explain (line \ref{alg:onestep:repetition:mus-call} of \cref{alg:oneStep}), computes for each of them an associated MUS (line \ref{alg:onestep:mus-call}), and subsequently selects the lowest cost one from found MUSs (line \ref{alg:oneStep:ifcheck}).
 The reason this works is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg \ell$ and so-called \emph{non-redundant explanation} of $\ell$ in terms of (subsets of) $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}. 
+
+	\emilio{Reacting on the comment in one of the later examples on the form of the cost function for OCUS. Here we consider a cost function $f(S)$ that does not consider the same input as the one in the \cite{ecai/BogaertsGCG20}, that is $f(E, S, N)$ of the form. Should we adapt this for clarity ? Also in the paper it's not \onestep, but `min-explanation(I, T) where I is the interreptation and T are the constraitns '}
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	\caption{$\mathtt{explain}(\formulac,f,I_0)$}
+%	\label{alg:oneStep}
+	$\Iend \gets \mathtt{propagate}(I \wedge \formulac)$\;
+	Seq $\gets$ empty sequence\;
+	$	I \gets I_0$\;
+	\While{$I \neq Iend$}{
+		$S \gets \onestep(\formulac, f, I , \Iend)$\;
+		$I' \gets I \cap S$ \;
+		$\formulac' \gets C \cap S $\;
+		$N \gets \mathtt{propagate}(I' \wedge \formulac')$\;
+		append $(I', \formulac', N)$ to Seq\;
+		$I \gets I \cup N$\;
+	}
+	\Return{Seq} \;
+	
+\end{algorithm}
 
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
@@ -521,7 +544,7 @@ The reason this works is a one-to-one correspondence between MUSs of $\formulac 
 		}
 	}
 	\Return{${\cal S}_{best}$} \;
-	\emilio{Reacting on the comment in one of the later examples on the form of the cost function for OCUS. Here we consider a cost function $f(S)$ that does not consider the same input as the one in the \cite{ecai/BogaertsGCG20}, that is $f(E, S, N)$ of the form. Should we adapt this for clarity ? Also in the paper it's not \onestep, but `min-explanation(I, T) where I is the interreptation and T are the constraitns '}
+
 \end{algorithm}
 
 Consider the following four clauses as our running example:
@@ -631,8 +654,11 @@ Therefore, when considering the procedure \onestep from the perspective of OCUS 
 %it mathematically
 $\formula \gets \formulac\land I\land \overline{\Iend\setminus I}$\;
 $p : 2^{\formula}\to\{\ltrue,\lfalse\}:S \mapsto \# (S\cap \overline{\Iend\setminus I})=1$\label{alg:oneStepOCUS:exactlyone}\;
+$\m{S} , \mathit{status} \gets \call{OCUS}(\formula, f, p)$\label{alg:oneStepOCUS:ocus-call}\;
 %EMILIO: written as a sum
-\Return{$\call{OCUS}(\formula, f, p)$\label{alg:oneStepOCUS:ocus-call}} 
+\lIf{$\mathit{status} \neq \mathit{FAILURE}$}{\Return{$\m{S}$} }
+\lElse{\Return{$\emptyset$}}
+ \emilio{This is very ugly, but the failure case has to be propgated upstream in the algorithm...}
 \end{algorithm}
 %\bart{Also, a single line is a bit limited for an algorithm.}
 We define the exactly one constraint $p$ as the equality constraint shown on line \ref{alg:oneStepOCUS:exactlyone} of algorithm \ref{alg:oneStepOCUS}. $p$ evaluates to \textit{true} if the intersection of the negated literals to explain $\Iend\setminus I$ with the subset $\m{S}$ of $\formula$ considered is equal to 1, otherwise $p$ evaluates to \textit{false}. 
@@ -676,7 +702,7 @@ thus allowing the use of highly optimized mixed integer programming (MIP) solver
 \bart{In my opinion, we should FIRST say what the variables are and THEN that we write a linear term over themm for f for instance. }
 \emilio{Is this what you mean ?}
 
-\paragraph{Implicit hitting set problem} We define $\decisionvariables = \{d_c \ | \ c \in \formula\}$ as the set of MIP decision variables, more precisely one for every clause $c$ in $\formula$, and $\setstohit$ as the collection of sets-to-hit. 
+\paragraph{Hitting set problem} We define $\decisionvariables = \{d_c \ | \ c \in \formula\}$ as the set of MIP decision variables, more precisely one for every clause $c$ in $\formula$, and $\setstohit$ as the collection of sets-to-hit. 
 %A subset $D'$ is said to hit a set-to-hit $\settohit$  if $D' \cap \settohit \neq \emptyset$.
 %\TIPdefVSchoice : indeed should ahve been the 
 % where every set-to-hit $ \settohit \in \setstohit$ should be hit at least once. 
@@ -737,10 +763,11 @@ In the case of \comus, every set to hit corresponds to a correction subset of $\
 	\DontPrintSemicolon
 	$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
 	\While{true}{
-		$\m{S} \gets \cohs(\setstohit,f,p) $  \;
+		$\m{S}, \mathit{status} \gets \cohs(\setstohit,f,p) $  \;
+		\lIf{$\mathit{status} = \mathit{FAILURE}$}{\Return{$(\emptyset, \mathit{status})$}}
 
-		\If{ $\lnot \sat(\m{S})$ \emph{\texttt{or}} $\m{S} = \emptyset $}{\label{alg:ocus-sat-check}
-			\Return{$\m{S}$} \;
+		\If{ $\lnot \sat(\m{S})$ \label{alg:ocus-sat-check}}{
+			\Return{$(\m{S}, \mathit{status})$} \;
 		}
 		$\m{K} \gets \corrsubsets(\subsetT, \formula)$ \label{line:grow}\;
 		$\setstohit  \gets \setstohit  \cup \m{K} $  \label{alg:ocus:complement}\;
@@ -969,7 +996,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 			\toprule[2pt]
 			&        &    &      $\emptyset$                                \\
 			\midrule
-			1. & $\{ \lnot x_1\}$   &$\mathit{true}$ &   $\{ \dots, \{ c_1, c_2, c_3, c_4, x_2, \lnot x_3 \}\}$\\
+			1. & $\{ \lnot x_1\}$   &$\mathit{true}$ &   $\{ \{ c_1, c_2, c_3, c_4, x_2, \lnot x_3 \}\}$\\
 			\midrule
 			2. & $\{ x_2\}$   		&$\mathit{true}$&  $\{ \dots, \{c_4, \lnot x_1, \lnot x_3 \}\}$\\
 			\midrule
@@ -1004,38 +1031,38 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	}
 	\label{tab:example-explanation-generation-not-incremental}
 \end{table}
-
-\begin{table}[!h]
-	\centering
-	\begin{adjustbox}{max width=\textwidth}
-		\begin{tabular}{lcccc} 
-			%		\multicolumn{5}{c}{\bart{what is this doing here? Drop this header}OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
-			Step & $\m{S}$                             & $\sat(\m{S})$  & $\mu$                 & $\setstohit  \gets \setstohit  \cup  \corrsubsets(\m{S}, \formula) $ \\ 
-			\toprule[2pt]
-			&        &    &     & $\emptyset$                                \\
-			\midrule
-			1. & $\{ \lnot x_1\}$   &$\mathit{true}$ &  $\{c_1, c_2, c_4, \lnot x_1 \}$            & $\{ \dots, \{c_3, x_2, \lnot x_3 \}\}$\\
-			\midrule
-			2. & $\{ \lnot x_3\}$   &$\mathit{true}$ &  $\{c_1,c_2, c_4, \lnot x_1, \lnot x_3 \}$            & $\{ \dots, \{c_3, x_2 \}\}$\\
-			\midrule
-			3. & $\{ x_2\}$   		&$\mathit{true}$&  $\{c_1, c_2 ,c_3, x_2\}$ 							& $\{ \dots, \{c_4, \lnot x_1, \lnot x_3 \}\}$\\
-			\midrule
-			4. & $\{ c_4, x_2 \}$   	&$\mathit{true}$ &  $\{c_1, c_2, c_4, \lnot x_1, x_2, \lnot x_3\}$ &$\{ \dots, \{c_3 \}\}$\\
-			\midrule
-			5. & $\{ c_3, \lnot x_3\}$ 	&$\mathit{true}$&  $\{c_1, c_3, c_4, \lnot x_3\}$ &$\{ \dots, \{c_2, \lnot x_1, x_2 \}\}$\\
-			\midrule
-			6. & $\mathbf{\{ c_3, \lnot x_1\}}$ 	&$\mathit{false}$  & & \\
-			
-	\end{tabular}\end{adjustbox}
-	\caption{
-		%	\bart{The table headers are wrong. grow should be corrsubsets. THe last column should not longerh ave a acomplement. } ADAPTED
-		%\bart{Replace $\lnot x_1$ by $c_5$ etcetera. Consistency! }
-		%EMILIO {Replaced it with the inidividual literals in the example instead of the clause for more clarity}
-		\cref{ex:onestep-ocus} - Explanation step generated with \onestepo
-\emilio{Proposed update on the table, with $\mu$ being the model provided by the SAT solver}	
-}
-	\label{tab:example-explanation-generation-not-incremental}
-\end{table}
+%
+%\begin{table}[!h]
+%	\centering
+%	\begin{adjustbox}{max width=\textwidth}
+%		\begin{tabular}{lcccc} 
+%			%		\multicolumn{5}{c}{\bart{what is this doing here? Drop this header}OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
+%			Step & $\m{S}$                             & $\sat(\m{S})$  & $\mu$                 & $\setstohit  \gets \setstohit  \cup  \corrsubsets(\m{S}, \formula) $ \\ 
+%			\toprule[2pt]
+%			&        &    &     & $\emptyset$                                \\
+%			\midrule
+%			1. & $\{ \lnot x_1\}$   &$\mathit{true}$ &  $\{c_1, c_2, c_4, \lnot x_1 \}$            & $\{ \dots, \{c_3, x_2, \lnot x_3 \}\}$\\
+%			\midrule
+%			2. & $\{ \lnot x_3\}$   &$\mathit{true}$ &  $\{c_1,c_2, c_4, \lnot x_1, \lnot x_3 \}$            & $\{ \dots, \{c_3, x_2 \}\}$\\
+%			\midrule
+%			3. & $\{ x_2\}$   		&$\mathit{true}$&  $\{c_1, c_2 ,c_3, x_2\}$ 							& $\{ \dots, \{c_4, \lnot x_1, \lnot x_3 \}\}$\\
+%			\midrule
+%			4. & $\{ c_4, x_2 \}$   	&$\mathit{true}$ &  $\{c_1, c_2, c_4, \lnot x_1, x_2, \lnot x_3\}$ &$\{ \dots, \{c_3 \}\}$\\
+%			\midrule
+%			5. & $\{ c_3, \lnot x_3\}$ 	&$\mathit{true}$&  $\{c_1, c_3, c_4, \lnot x_3\}$ &$\{ \dots, \{c_2, \lnot x_1, x_2 \}\}$\\
+%			\midrule
+%			6. & $\mathbf{\{ c_3, \lnot x_1\}}$ 	&$\mathit{false}$  & & \\
+%			
+%	\end{tabular}\end{adjustbox}
+%	\caption{
+%		%	\bart{The table headers are wrong. grow should be corrsubsets. THe last column should not longerh ave a acomplement. } ADAPTED
+%		%\bart{Replace $\lnot x_1$ by $c_5$ etcetera. Consistency! }
+%		%EMILIO {Replaced it with the inidividual literals in the example instead of the clause for more clarity}
+%		\cref{ex:onestep-ocus} - Explanation step generated with \onestepo
+%\emilio{Proposed update on the table, with $\mu$ being the model provided by the SAT solver}	
+%}
+%	\label{tab:example-explanation-generation-not-incremental}
+%\end{table}
 
 %\begin{table}[!h]
 %	\centering
@@ -1138,14 +1165,20 @@ Therefore, in this section, we analyze if instead of working \comus-based, we ca
 %\cref{alg:ousb} depicts an improved version of the \omus algorithm with an optional numerical parameter v representing a given bound.
 %Before we present these improvements, consider this bound set to $\infty$, ensuring that the bound doesn't interfere with a regular \omus call.
 
-
+\emilio{I'm interchanging \comus and \omus here, and this is rather confusing for me as well. If we decide to add predicate $p$ as the upper bound check, it's going to be an \comus.  \omus with trivially true $p$ is still an \comus. Not sure how to make a good distinction in the notation in the following text to make sure that the reader is not confused between \comus and \omus.} 
 \subsection{Bounded OCUS}
- Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$.
-However, the switch from MUS to \omus{} in \cref{alg:oneStep} still requires to loop over every literal and therefore introduces computational overhead \bart{compared to what?} since the problem to be solved is much more difficult than before. \bart{Is that so? Which problem is more difficult?} 
-\paragraph{Upper bound} At \cref{alg:onestep:repetition:mus-call} of \onestep, when iterating over the remaining literals to explain, every computed \omus will be guaranteed to be optimal \bart{Obviously, that is what the O in OUS stands for}, and therefore provides an upper bound $f(S_{best})$ \bart{What is $S_{best}$?} on the cost of the remaining literals to explain. \bart{It does not provide a bound on the cost of the remaining literals to explain. It provides an upper bound on the cost of the best explanation. That upper can be USED when considering other literals to explain. Namely, instead of doing a call to OUS, do a call to OCUS, where the constraint (the $p$) now is: \emph{cost is strictly better than the best-found-this-far} }.  
+ Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$. 
+ The associated call to compute an \comus of given constraints $\formulac$, interpretation $I$, cost function $f$ for every literal to explain $\ell$ is reduced to $\comus(\formulac \wedge I \wedge \lnot \ell, f, true )$.
+However, the switch from MUS to \omus{} in \cref{alg:oneStep} still requires to loop over every literal potentially introducing overhead compared to the single \comus call. %\bart{compared to what?} 
 
-\paragraph{Lower bound}\bart{What is described here sounds like an adaptation to the OCUS/OUS algorithm to manually enforce an additional constraint \emph{cost strictly better than best so far}. (a specific line in the code where the $p$ check can be done, if we do not wish to inform the hitting set solver about it). Since we already introduced the whole OCUS machinery, I would say it would be better to use it here. I did this in \cref{alg:oneStepBoundBart}. In my opinion, it is much simpler (no need for \cref{alg:ousb}!), cleaner, and makes better use of the machinery we already have, namely OCUS} Every hitting set (even the satisfying ones) computed by \ohs inside the \omus algorithm produces a lower bound $f(S)$ on the best candidate \omus. Consequently, $f(S_{best})$ can be used in an early stopping criteria $f(S_{best}) < f(S)$, in other words if the cost of the current hitting set is larger than the cost of the best explanation so far, \omus will not be able to find a better (cheaper) explanation for that literal. 
-The rest of \omus-loop for that literal to explain, can therefore be skipped. 
+\paragraph{Upper bound} At \cref{alg:onestep:repetition:mus-call} of \onestep, when iterating over the remaining literals to explain, every computed \omus will provide an upper bound on the cost of the best explanation. By keeping track of the best candidate explanation, its corresponding cost can be considered as an upper bound for the remaining literals to explain.
+
+\paragraph{Lower bound} Every hitting set (even the satisfying ones) computed inside the \comus algorithm produces a lower bound. Consequently, the cost of the best candidate explanation so far can be used as an early stopping criteria. In other words if the cost of the current hitting set is larger than the cost of the best explanation so far, \comus will not be able to find a better (cheaper) explanation for that literal. 
+
+%be guaranteed to be optimal \bart{Obviously, that is what the O in OUS stands for}, and therefore provides an upper bound $f(S_{best})$ \bart{What is $S_{best}$?} on the cost of the remaining literals to explain. \bart{It does not provide a bound on the cost of the remaining literals to explain. It provides an upper bound on the cost of the best explanation. That upper can be USED when considering other literals to explain. Namely, instead of doing a call to OUS, do a call to OCUS, where the constraint (the $p$) now is: \emph{cost is strictly better than the best-found-this-far} }.  
+
+%\paragraph{Lower bound}\bart{What is described here sounds like an adaptation to the OCUS/OUS algorithm to manually enforce an additional constraint \emph{cost strictly better than best so far}. (a specific line in the code where the $p$ check can be done, if we do not wish to inform the hitting set solver about it). Since we already introduced the whole OCUS machinery, I would say it would be better to use it here. I did this in \cref{alg:oneStepBoundBart}. In my opinion, it is much simpler (no need for \cref{alg:ousb}!), cleaner, and makes better use of the machinery we already have, namely OCUS} 
+%The rest of \omus-loop for that literal to explain, can therefore be skipped. 
 
 %\begin{algorithm}[ht]
 %	\DontPrintSemicolon
@@ -1164,11 +1197,11 @@ The rest of \omus-loop for that literal to explain, can therefore be skipped.
 %	\label{alg:ousb}
 %\end{algorithm}
 
+\paragraph{Bounded \comus-based explanations} \onestepomusbounded{} uses calls to the \comus algorithm for every individual literal to compute the next best explanation step. The algorithm keeps track of the current best \comus candidate $\m{S}_{best}$ and the cost associated with it $v_{best}$.  
+Both variables are only updated if the \comus algorithm is able to find an \comus that is cheaper than the current upper bound $v_{best}$. 
+Predicate $f \leq v_{best}$ of the \comus-call at line \ref{alg:oneStepBound:cost_check} of \cref{alg:oneStepBoundBart} allows us to ensure the cost of the hitting set does not exceed the upper bound. In case it does happen, the hitting set solver will return a failure message meaning that a better candidate explanation cannot be computed for that literal given current interpretation $I$.
 
 
-\paragraph{Bounded \omus-based explanations} \onestepomusbounded{} takes advantage of these two observations \bart{What are the \emph{two''} observations precisely? } and uses calls to \ousb, an improved version of the \omus algorithm, to compute the next best explanation step. The algorithm keeps track of the current best \omus candidate $\m{S}_{best}$ and the cost associated with it $v_{best}$. Both variables are only updated if \ousb is able to find an \omus that is cheaper than the current upper bound $v_{best}$ (i.e. line \ref{alg:oneStepBound:ifcheck} of \cref{alg:oneStepBound}).
-However, the worst case scenario for \onestepomusbounded{}\bart{why is part of this command italic?} is that the literals are ordered such that their respective \omus cost are decreasing.\emilio{Bad phrasing!}   
-This would prevent the algorithm to benefit from propagating the \omus bound throughout the literals to explain. 
 
 %\begin{algorithm}[!ht]
 %	\DontPrintSemicolon
@@ -1189,13 +1222,13 @@ This would prevent the algorithm to benefit from propagating the \omus bound thr
 
 \begin{algorithm}[!ht]
 	\DontPrintSemicolon
-	\caption{$\onestepomusbounded(\formulac,f,I,\Iend)$ \bart{my version}}
+	\caption{$\onestepomusbounded(\formulac,f,I,\Iend)$}
 	\label{alg:oneStepBoundBart}
 	$S_{best} \gets \mathit{nil}$; $v_{best} \gets \infty$\;
 	${\cal S}^l_{best} \gets \mathit{nil}$ for each $l$ // or from previous iteration \;
 	\For{$l \in \{\Iend \setminus I\}$ sorted by $f({\cal S}^l_{best})$}{
-		${\cal S}^l_{best} \gets \call{OCUS}{( (\formulac \land I \land \neg l), f, f \leq v_{best} )}$\;
-		\If{ $ {\cal S}^l_{best}\neq \emptyset$ \label{alg:oneStepBound:ifcheck}}{
+		${\cal S}^l_{best}, \mathit{status} \gets \call{OCUS}{( (\formulac \land I \land \neg l), f, f \leq v_{best} )}$\label{alg:oneStepBound:cost_check}\;
+		\If{$\mathit{status} \neq \mathit{FAILURE}$ }{
 			$S_{best} \gets {\cal S}^l_{best}$\;
 			$v_{best} \gets f({\cal S}^l_{best})$\;
 		}
@@ -1204,30 +1237,21 @@ This would prevent the algorithm to benefit from propagating the \omus bound thr
 \end{algorithm}
 
 
-Therefore, one option is to order the literals by some heuristic, such as the best OUS found in a previous OUS\_bounded \bart{use commands for consistent formatting!} call for this literal (e.g. from the previous explanation step). 
 
 
 %The \ousb algorithm (\cref{alg:ousb}) illustrates the improved version of the \omus algorithm, which finds a single (unconstrained) OUS given a formula $\setstohit$, cost function $f$ and optional upper bound on the cost $v$.
 %The early stopping criteria is represented by line \ref{alg:ousb-value-check}.
-
-
-
-
-
 %To compute \omus{}s, we reuse the observation of \cref{prop:MCS-MUS-hittingset} and  introduce the \\ \ousb{} algorithm depicted in \cref{alg:ousb}, a special case of \comus algorithm with a trivially true $p$. 
-
-
-
 %Obtaining a good upper-bound $v$ quickly can further reduce runtime.
 %The bounding can therefore be used in a variant of \cref{alg:oneStep} where for a literal $l$, the corresponding formula $\formula = \formulac \land I \land \neg l$. 
 %
 
-
-
-
-
 \subsection{Interleaving OUS calls for different literals: a special-case OCUS algorithm} 
-The case to avoid is that an OUS call for a literal takes many hitting set iterations, and returns an 'expensive' OUS with lower-cost OUSs to be found for other literals. 
+The case to avoid for \onestepomusbounded{} is that an OUS call for a literal takes many hitting set iterations, and returns an `expensive' \comus with lower-cost \comus{s} to be found for other literals. 
+%The worst case scenario for \onestepomusbounded{} is an ordering of the literals such that their respective \comus cost is decreasing. %\emilio{Bad phrasing!}   
+This would prevent the algorithm to benefit from propagating the \comus bound throughout the literals to explain. 
+One option is to order the literals by some heuristic, such as the best \comus found in a previous \comus call for this literal (e.g. from the previous explanation step). 
+
 Conceptually, one should only do hitting set iterations for a literal that could lead to the globally minimal OUS. \bart{unclear. Also: what does the ``could lead'' mean?}
 
 Indeed, this is what the OCUS algorithm is built for: to choose freely among all possible OUS (so across the different literals), and choose the globally optimal next candidate. \bart{what are candidates? It sounds a bit like ``hitting sets'' and OUSs are getting mixed up... }

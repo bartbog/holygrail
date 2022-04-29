@@ -1252,31 +1252,31 @@ The case to avoid for \onestepomusbounded{} is that an OUS call for a literal ta
 This would prevent the algorithm to benefit from propagating the \comus bound throughout the literals to explain. 
 One option is to order the literals by some heuristic, such as the best \comus found in a previous \comus call for this literal (e.g. from the previous explanation step). 
 
-Conceptually, one should only do hitting set iterations for a literal that could lead to the globally minimal OUS. \bart{unclear. Also: what does the ``could lead'' mean?}
-
-Indeed, this is what the OCUS algorithm is built for: to choose freely among all possible OUS (so across the different literals), and choose the globally optimal next candidate. \bart{what are candidates? It sounds a bit like ``hitting sets'' and OUSs are getting mixed up... }
+Conceptually, one should only do hitting set iterations for the most promising literal, one that is most likely to produce an \comus with the lowest cost. 
+%\bart{unclear. Also: what does the ``could lead'' mean?} clarified!
+%Indeed, this is what the \comus algorithm is built for: to choose freely among all possible \omus{s} (so across the different literals), and choose the globally optimal next candidate \omus. 
+Indeed, this is what the \comus algorithm is built for: to choose freely among all possible hitting sets across the different literals in order to find the globally optimal next candidate \omus. 
+%\bart{what are candidates? It sounds a bit like ``hitting sets'' and OUSs are getting mixed up... }
+%\emilio{They are getting a bit mixed up here. Even the actual version is }
 
 For the special case where the constraint $p$ is that exactly one of a set of literals must be chosen, we can manually decompose the problem to iteratively search for the best hitting set across the independent problems.
-
 %In the extreme, one could do a single OUS iteration (so computing one hitting set) for every literal and use that as a heuristic for which l
-
 %Explanations with bounded \omus{}s compute extra hitting sets until the upper bound is reached or until a \omus is found. More importantly, \ousb is sensitive to initial ordering of the literals to explain. This is especially the case for the first \ousb call which might require an exponential number of hitting sets to be computed, before being able to find an \omus.  
-
 %In an effort to cope with the excessive calls to \ohs for all candidate literals to explain, and to benefit from the cost of the computed hitting sets, we introduce \iterativeonestep. 
-In this approach, we do not repeatedly call \omus (or \ousb) until optimality, but do one hitting-set iteration at a time; each time continuing with the most promising literal. 
+In this approach, we do not repeatedly call (bounded) \comus until optimality, but do one hitting-set iteration at a time; each time continuing with the most promising literal. 
 
-This is shown in \cref{alg:oneStepIter}.
-Every literal to explain is associated with \begin{inparaenum}[(1)]
-	\item its current \emph{collection of sets to hit}; and
-	\item corresponding \emph{optimal hitting set} (initially the empty set for both) as well as
-	\item it's corresponding \emph{cost}.
+This is shown in \cref{alg:oneStepIter}. Every literal to explain $\ell$ is associated with:~\begin{inparaenum}[(1)]
+	\item its current \emph{collection of sets to hit} ${\setstohit_{\ell}}$; and
+	\item corresponding \emph{optimal hitting set} ${\m{S}_\ell}$ (initially the empty set for both) as well as
+	\item it's corresponding \emph{cost} ${f(\m{S}_\ell)}$.
 \end{inparaenum}
 These are stored in a priority queue, sorted by the cost of the hitting set. 
 
 
 \begin{algorithm}[!ht]
 	\DontPrintSemicolon
-	\caption{$\iterativeonestep(\formulac,f,I,\Iend)$ \bart{I would not call this ``explain-one-step-interleaved''. Actually, this is ani mplementation of OCUS (it does not explain oen step, it produces an ocus). But... It is an OCUS call for a specific $p$ with $p$ being an exactly-one constraint. In that case, it makes different hitting set solvers for each of the literals of which you want exactly one. The argument (in text) why we want to do this is: OCUS spends 96\% of its time in OPT-calls. We suspect this is because the theory gets too large and want to decouple it into largely indpendent pieces. } }
+	\caption{$\iterativeonestep(\formulac,f,I,\Iend)$ %\bart{I would not call this ``explain-one-step-interleaved''. Actually, this is ani mplementation of OCUS (it does not explain oen step, it produces an ocus). But... It is an OCUS call for a specific $p$ with $p$ being an exactly-one constraint. In that case, it makes different hitting set solvers for each of the literals of which you want exactly one. The argument (in text) why we want to do this is: OCUS spends 96\% of its time in OPT-calls. We suspect this is because the theory gets too large and want to decouple it into largely indpendent pieces. } 
+	}
 	\label{alg:oneStepIter}
 	$queue \gets$ \texttt{InitializePriorityQueue($(\ell, \emptyset,\emptyset): 0 \ | \ \forall \ell \in \Iend \setminus I$)}\; %// init with $(l, \emptyset): 0$ for each $l$, or from previous iteration \;
 	%$S_{best} \gets \mathit{nil}$; $v_{best} \gets \infty$\;
@@ -1297,7 +1297,7 @@ These are stored in a priority queue, sorted by the cost of the hitting set.
 
 %The \iterativeonestep algorithm works as follows. 
 \iterativeonestep repeatedly extracts the best literal-to-explain and corresponding hitting set out of the priority queue. Similar to Algorithm~\ref{alg:comus}, if the corresponding hitting set is unsatisfiable, it is guaranteed to be the cost-minimal \omus. 
-This is because this the queue ensures that this hitting set is the lowest scoring candidate across all literals, and because each candidate hitting set is guaranteed to be an optimal hitting set of the collected sets to hit. 
+This is because this the queue ensures that this hitting set is the lowest scoring candidate across all literals, and because each candidate hitting set is guaranteed to be an optimal hitting set of the collected sets-to-hit. 
 If the hitting set is satisfiable, a number of correction subsets are extracted from the literal-specific unsatisfiable formula and added to the collection of sets to hit $\setstohit_{\ell}$. 
 Finally, a new hitting set is computed and the literal is pushed back in the priority queue. 
 
@@ -1319,7 +1319,7 @@ Finally, a new hitting set is computed and the literal is pushed back in the pri
 
 We now discuss optimizations applicable to the O(C)US algorithms that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 
-\subsection{Incremental O(C)US computation}\label{sec:ocusEx}
+\subsection{Incremental OCUS computation}\label{sec:ocusEx}
 Inherently, generating a sequence of explanations still requires many O(C)US calls. 
 Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
 calls \onestepo iteratively with a growing interpretation $I$ until $I=\Iend$.
@@ -1336,19 +1336,30 @@ as the intermediate results of a call to \corrsubsets.
 
 When a second call to \comus is performed, we can then initialize $\setstohit$ as the complement of each of these satisfiable subsets with respect to $\formula_2$, i.e., \[\setstohit\gets \{\formula_2\setminus \m{S}\mid \m{S}\in \satsets\}.\]
 
-The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:background}), and we have this upper bound on the set of formulas to be used, we can initialize all relevant decision variables once. To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ we need to ensure that the MIP solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$, for example by giving all other literals infinite weight in the cost function. In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
-\bart{From a presentation perspective: the infinite weights are just an implementation trick related to MIP solvers where retracting constraints is not very easy. It is good to mention it (you should!) but in the first place I would phrase this as being part of $p$. In the second place you can mention that for the specific case of MIP solver you use the infinite weight trick... In all the examples, I would also phrase this as part of $p$. Conceptually, these things  \emph{are} constraints; it is forbidden to pick this specific variable. }
+The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. 
+For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. 
+To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, we need to ensure that the hitting set solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$. 
+%% talk about the general case incremental hitting set solver 
+For incremental hitting set solvers, this means updating the constraint $p$ at every explanation step to include (1) only literals from interpretation $I$ at the current explanation step, and (2) the exactly one constraint for explaining one literal at a time.
 
-\subsubsection{Application to literal ordering \bart{I don't understand this title}} 
+Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:background}), and we have this upper bound on the set of formulas to be used, we can initialize all relevant decision variables once. 
+Furthermore, retracting a constraint $p$ to replace it with an update one (in the next explanation call) is non-trivial for MIP solvers. 
+Therefore, we assign an infinite weight in the cost function to all literals of $\Iend\setminus I$ and update their weights as soon as they have been derived according to the given cost function.
+In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 
-Since the interpretation is updated from one explanation step to another, candidate \omus{}s for \onestepomusbounded from a previous explanation step are not guaranteed to be optimal in the current step. 
-The same observation holds for the ordering of the literals in the priority queue of \iterativeonestep.
-%This is where the maintained sets-to-hit come into play. 
-By bootstrapping the hitting set solvers with the maintained sets-to-hit for each literal, we are able to extract a new hitting set and its updated cost. 
-Consequently, both \iterativeonestep and \onestepomusbounded, are provided with a better heuristic value for the ordering of the literals that reflects the actual state in the explanation sequence. 
-\emilio{Small note: In the implementation of \onestepomusbounded we recompute a hitting set for all literals, regardless whtether they provide a OUS in the previous iteration. For all literals, every OUS call goes until the bound and therefore the ordering is not necessarily going to favor the previous found OUSs. But that is ok, since we do it for all the literals and the optimal ones might become even cheaper. But if they are all the same cost, then the first one in the ordering which might not be optimal, could still be very expensive and delay finding a better bound.}
-%%%EMILIO: 
-\bart{I don't understand this subsubsection? What are you saying, that we can do for each literal one hitting set call and use that as a ``heuristic'' as to which one to take first? But that is the default behaviour of bounded, no? Is there any new information in this paragraph? }
+%\bart{From a presentation perspective: the infinite weights are just an implementation trick related to MIP solvers where retracting constraints is not very easy. It is good to mention it (you should!) but in the first place I would phrase this as being part of $p$. In the second place you can mention that for the specific case of MIP solver you use the infinite weight trick... In all the examples, I would also phrase this as part of $p$. Conceptually, these things  \emph{are} constraints; it is forbidden to pick this specific variable. }
+%\emilio{attempt at seperating hitting set solver from the specific case of the MIP HS-solver implemenation }
+
+%\subsubsection{Improving the literal ordering} 
+%
+%Since the interpretation is updated from one explanation step to another, candidate \omus{}s for \onestepomusbounded from a previous explanation step are not guaranteed to be optimal in the current step. 
+%The same observation holds for the ordering of the literals in the priority queue of \iterativeonestep.
+%%This is where the maintained sets-to-hit come into play. 
+%By bootstrapping the hitting set solvers with the maintained sets-to-hit for each literal, we are able to extract a new hitting set and its updated cost. 
+%Consequently, both \iterativeonestep and \onestepomusbounded, are provided with a better heuristic value for the ordering of the literals that reflects the actual state in the explanation sequence. 
+%\emilio{Small note: In the implementation of \onestepomusbounded we recompute a hitting set for all literals, regardless whtether they provide a OUS in the previous iteration. For all literals, every OUS call goes until the bound and therefore the ordering is not necessarily going to favor the previous found OUSs. But that is ok, since we do it for all the literals and the optimal ones might become even cheaper. But if they are all the same cost, then the first one in the ordering which might not be optimal, could still be very expensive and delay finding a better bound.}
+%%%%EMILIO: 
+%\bart{I don't understand this subsubsection? What are you saying, that we can do for each literal one hitting set call and use that as a ``heuristic'' as to which one to take first? But that is the default behaviour of bounded, no? Is there any new information in this paragraph? }
 
 %Bootstrapping the hitting set solver also benefits the ordering of the literals for both \iterativeonestep and \onestepomusbounded. 
 %. 
@@ -1376,7 +1387,7 @@ the \comus-based explanation sequence generation.
 %	\[ \{ x_1\}\qquad  \{\lnot x_2\} \qquad \{ x_3\}  \qquad\]
 	%	with initial interpretation $ I = I_0 = \emptyset$ and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
 	%	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
-	For OCUS incremental, $p$ remains the same, but the cost function $f = w_i c_i$ is defined as a weighted sum over the following weights:
+	For OCUS incremental, $p$ remains the same, but the cost function $f = \sum w_i \cdot c_i$ is defined as a weighted sum over the following weights:
 	\begin{align*}
 	\text{\textbf{\emph{Clause weights:}}} & \ w_1 = 60 \  \qquad w_2=60  \qquad  \ \ \ w_3=100 \qquad w_4=100 \\
 	\text{\textbf{\emph{$I \wedge \overline{\Iend \setminus I}$ weights:}}}& \  w_{\lnot x_1}=1  \qquad w_{ x_2}=1 \ \ \ \qquad w_{\lnot x_3}=1 \\
@@ -1391,97 +1402,97 @@ the \comus-based explanation sequence generation.
 %	\end{equation}	
 %	$f$  now defined over clause weights: 
 %	Note how the weights of clauses $c_5, c_6, c_7$ are set to $\infty$ in order to prevent the hitting set solver from selecting these clauses as the literals have not been derived yet;
-%	
 	The incremental \comus-call is now: 	% 	 Given \formulac, $f$, $\m{I}$ and $\Iend$ we have an OCUS-call with
 	\begin{equation}
 	\comus( \formulac\land \textbf{\Iend} \land \overline{(\Iend\setminus I)}, f, p)		
 	\end{equation}
 	%	Finally, for explaining one of the literals, we proceed to call \comus on formula $\formula_{incr, constr}$ with given cost function $f$ and \emph{exactly-one} constraint $p$:
 	%	\[\comus( \formulac\land \Iend \land \overline{(\Iend\setminus I)}, f, p)\]	
+	In this example, we use model provided by the \sat solver to grow subset $\m{S}$ into a larger satisfiable subset. The \corrsubsets procedure here simply returns $\{\formula \setminus \m{S}\}$.
 The following tables (Tables \ref{tab:example-explanation-generation:incr:step1} to \ref{tab:example-explanation-generation:incr:step3}) summarize the intermediate steps to compute an \comus-based explanation sequence for our running example. 
 The literals that cannot be selected by the hitting set solver have been struck out. 
-%\tias{the above does not invovle grow yet, and should go to section 7.1}
-%The 
-%
-%In this example \tias{This refers to the table, needs a separate example environment and intro}, the \grow we used is the one called \emph{Max-Unif} in \cref{sec:experiments:domain-specific-grow}.
-%
-%
-%
 
-\begin{table}[!h]
+\begin{table}[!ht]
 	\centering
+	\begin{adjustbox}{max width=\textwidth}
 	\begin{tabular}{lcccc} 
 		%			\multicolumn{5}{c}{OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
-		Step & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ 
-		\toprule[2pt]
+		Step & $\m{S}$                             & $\sat(\m{S})$    &           $\mu$                       & $\setstohit  \gets \setstohit  \cup \corrsubsets(\m{S}, \formula)$ \\ 
+		\toprule[1pt]
 		&    \phantom{$\{ c_1, c_2, x_1, \lnot x_3 \}$}    &    &      & $\emptyset$                                \\
 		\midrule
 		1. & $\{ \lnot x_1\}$                    & $\mathit{true}$  & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, x_3 \}$            & $\{ \{c_3, \cancel{x_1}, x_2, \lnot x_3 \}\}$                                \\
 		\midrule	
 		2. & $\{\lnot x_3\}$                     & $\mathit{true}$  & $\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$ & $\{ ..., \{c_3, \cancel{x_1} , x_2 , \cancel{x_3} \}\}$                               \\  
 		\midrule % x2 and c1 and c2 and c4 and ~c3 and ~x3 and ~x1
-		3. & $\{x_2, c_1\}$                      & $\mathit{true}$  & $\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$       & $\{ ..., \{\cancel{x_1} , \cancel{\lnot x_2} , \cancel{x_3} , c_3 \}\}$                        \\ 
+		3. & $\{x_2\}$                     & $\mathit{true}$  & $\{c_1, c_2, c_3, x_1, x_2, x_3 \}$ & $\{ ..., \{c_4, \lnot x_1 ,\cancel{\lnot x_2} , \lnot x_3 \}\}$                               \\  
+		\midrule % x2 and c1 and c2 and c4 and ~c3 and ~x3 and ~x1
+		4. & $\{c_4, x_2\}$                      & $\mathit{true}$  & $\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$       & $\{ ..., \{ c_3, \cancel{x_1} , \cancel{\lnot x_2} , \cancel{x_3} \}\}$                        \\ 
+		\midrule % x2 and c1 and c2 and c4 and ~c3 and ~x3 and ~x1
+		5. & $\{c_3, \lnot x_3\}$                      & $\mathit{true}$  & $\{  c_1, c_3, c_4, x_1 ,\lnot x_2 , \lnot x_3\}$       & $\{ ..., \{c_2, x_2, \cancel{x_3},  \lnot x_1 \}\}$                        \\ 
 		\midrule
-		4. & $\{\lnot x_1, c_3\}$  & $\mathit{false}$ & - & - \\% &&&&\\
+		6. & $\{\lnot x_1, c_3\}$  & $\mathit{false}$ & - & - \\% &&&&\\
 	\end{tabular}
+\end{adjustbox}
 	\caption{\textit{Example (continued)}. Explanation step 1 ($\mathbf{c_3 \implies x_1}$) of the explanation sequence generated with \onestepo \emph{incremental}.}
 	\label{tab:example-explanation-generation:incr:step1}
 \end{table}
 
-Since $x_1$ has been explained, we adapt the weights of the clauses $\{x_1\}$ and $\{\lnot x_1\}$ to\\ $w_{x_1} = 1$ and $w_{\lnot x_1} = \infty$ respectively. 
-%	\text{\textbf{\emph{$I \wedge \overline{\Iend \setminus I}$ weights:}}}& \  w_{\lnot x_1}=1  \qquad w_{ x_2}=1 \ \ \ \qquad w_{\lnot x_3}=1 \\
-%\text{\textbf{\emph{$\Iend \setminus I$ weights:}}}& \  w_{x_1}=\infty  \qquad w_{\lnot x_2}=\infty \qquad w_{x_3}=\infty
-%respectively. 
-
-
+In \cref{tab:example-explanation-generation:incr:step1}, the most striking aspect is the number of steps (from 12 to 6) required to find an \comus that is greatly reduced as a result of choosing an effective grow, compared to no grow at all. 
+For the next explanation step, since $x_1$ has been explained, we adapt the weights of the clauses $\{x_1\}$ and $\{\lnot x_1\}$ to $w_{x_1} = 1$ and $w_{\lnot x_1} = \infty$ respectively. 
 %More precisely, we see the literals ($x_1$ , $\lnot x_2$ and $x_3$) that have not been derived yet in the collection of sets-to-hit. 
-
 %This shows the benefit of maintaining the sets-to-hit  the second (\cref{tab:example-explanation-generation:incr:step2}) and the third explanation step (\cref{tab:example-explanation-generation:incr:step3}). In step 5 (\cref{tab:example-explanation-generation:incr:step2}) for example, one does not have to start from scratch, but by hitting the updated sets-to-hit (where $x_1$ cannot be taken), the \comus algorithm starts from a good candidate. The same observation regarding the effectiveness of information re-use can be made in step 8 of \cref{tab:example-explanation-generation:incr:step3} where the first hitting set corresponds to an \comus.
-
 \begin{table}[!h]
 	\centering
+	\begin{adjustbox}{max width=\textwidth}
 	\begin{tabular}{lcccc} 
 		%		\multicolumn{5}{c}{OCUS explanation: $c_1 \wedge c_2 \wedge x_1 \implies x_3$} \\ \midrule\midrule
-		Step & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ \toprule[2pt]
+		Step & $\m{S}$                             & $\sat(\m{S})$    &          $\mu$                  & $\setstohit  \gets \setstohit  \cup \corrsubsets(\m{S}, \formula)      $ \\ \toprule[2pt]
 		%		\toprule[2pt] % x1 and x2 and x3 and c1 and c2 and c3 and ~c4
-		 &    &  &     &  $\{ \{c_3, x_1, x_2, \lnot x_3 \}, $                                \\
-		  &    &  &     &  $\{x_1 , \cancel{\lnot x_2} , \cancel{x_3} , c_3 \}, $                                \\
-		   &    &  &     &  $\{x_1 , \cancel{\lnot x_2} , \cancel{x_3} , c_3 \} \}$                                \\\midrule
-		5. &  $\{ c_1,  x_1 , x_2 \}$  & $\mathit{true}$ & $\{ c_1, c_2 , c_3,  x_1 , x_2, x_3 \}$    &  $\{..., \{ c_4, \cancel{\lnot x_2}, \lnot x_3\}\}$                                \\
+			&    &  &     &  $\{ \{c_3, {x_1}, x_2, \lnot x_3 \}, $                                \\
+			&    &  &     &  $\{c_3, {x_1} , x_2 , \cancel{x_3}\}, $                                \\
+			&    &  &     &  $\{c_4, \cancel{\lnot x_1} ,\cancel{\lnot x_2} , \lnot x_3\}, $                                \\
+			&    &  &     &  $\{c_3, {x_1} , \cancel{\lnot x_2} , \cancel{x_3}\}, $                                \\
+			&    &  &     &  $\{c_2, x_2, \cancel{x_3},  \cancel{\lnot x_1}\}\} $                                \\\midrule
+		5. &  $\{ c_2 ,x_1, \lnot x_3\}$  & $\mathit{true}$ & $\{ c_2, c_3, c_4,  x_1 , x_2, \lnot x_3 \}$    &  $\{..., \{ c_1, \cancel{x_3},  \cancel{\lnot x_2}\}\}$                                \\
 		\midrule % x1 and c1 and c3 and c4 and ~c2 and ~x3 and ~x2
-		6. &  $\{ c_1, x_1, \lnot x_3 \}$  & $\mathit{true}$ & $\{ c_1,  c_3, c_4, x_1, \lnot x_2,\lnot x_3 \}$    &  $\{..., \{ c_2, x_2, \cancel{x_3}\}\}$                                \\
-		\midrule % x1 and ~x3 and c1 and c2
-		7. &  $\{ c_1, c_2, x_1, \lnot x_3 \}$  & $\mathit{false}$ & \phantom{$\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$}   &                                 \\
+		6. &  $\{ c_1, c_2, x_1, \lnot x_3 \}$  & $\mathit{false}$ & \phantom{$\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$}   &                                 \\
 	\end{tabular}
+\end{adjustbox}
 	\caption{\textit{Example (continued)}. Explanation step 2 ($\mathbf{c_1 \wedge c_2 \wedge x_1 \implies x_3}$) of the explanation sequence generated with \onestepo \emph{incremental}.}
 	\label{tab:example-explanation-generation:incr:step2}
 \end{table}
-\bart{De tabel bevat nog ``grow'' (algoritme niet meere)}
-\cref{tab:example-explanation-generation:incr:step2} highlights the benefit of maintaining the collection of sets-to-hit, but also more importantly the presence of the literals not explained yet as a consequence of incrementality.  \bart{Je zegt: die tabel highlight benefits. Maar dat is nogal cryptisch. Kan je wat details geven. Bijv hoeveel extra iteraties nodig geweest waren als het non-incremental was?}
-\bart{Ik snap die ``but more importantly'' niet. Zijn die literals waar je niets mee kan doe nbelangrijker dan het bijhoude nva nde sets-to-hit?}
 
-Similarly for the last explanation, we adapt the weights to reflect the current interpretation and that we only want to explain $\lnot x_2$ ($w_{x_3} = 1$ and $w_{\lnot x_3} = \infty$).
+
+%\bart{De tabel bevat nog ``grow'' (algoritme niet meere)}
+%\cref{tab:example-explanation-generation:incr:step2} highlights the benefit of maintaining the collection of sets-to-hit, but also more importantly the presence of the literals not explained yet as a consequence of incrementality.  \bart{Je zegt: die tabel highlight benefits. Maar dat is nogal cryptisch. Kan je wat details geven. Bijv hoeveel extra iteraties nodig geweest waren als het non-incremental was?}
+%\bart{Ik snap die ``but more importantly'' niet. Zijn die literals waar je niets mee kan doe nbelangrijker dan het bijhoude nva nde sets-to-hit?}
+
+Similarly for the last explanation step, we adapt the weights to reflect the current interpretation and that we only want to explain $\lnot x_2$ ($w_{x_3} = 1$ and $w_{\lnot x_3} = \infty$).
 
 \begin{table}[!h]
 	\centering
+	\begin{adjustbox}{max width=\textwidth}
 	\begin{tabular}{lcccc} 
 		%		\multicolumn{5}{c}{OCUS explanation: $c_4 \wedge x_3 \implies \lnot x_2$} \\ \midrule \midrule
-		Step & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \m{S}\}$ \\ \toprule[2pt]
-		 &    &  &     &  $\{ \{c_3, x_1, x_2, \cancel{\lnot x_3} \}, $                                \\
-		&    &  &     &  $\{x_1 , \cancel{\lnot x_2} , x_3 , c_3 \}, $                                \\
-		&    &  &     &  $\{x_1 , \cancel{\lnot x_2} , x_3 , c_3 \},$                                \\
-		&    &  & &  $\{ c_4, \cancel{\lnot x_2}, \cancel{\lnot x_3}\},$                                \\
-		&    &  &     &  $ \{ c_2, x_2, x_3\}\}$                                \\\midrule
-		8. &  $\{ c_4, x_2, x_3  \}$  & $\mathit{false}$ & \phantom{$\{ c_1,  c_3, c_4, x_1, \lnot x_2,\lnot x_3 \}$}    & \phantom{$\{..., \{ c_2, \lnot x_2, \lnot x_3\}\}$ }\\
+		Step & $\m{S}$                             & $\sat(\m{S})$    & \grow($\m{S}$, $\formula$)                                 & $\setstohit  \gets \setstohit  \cup \corrsubsets(\m{S}, \formula)$ \\ \toprule[2pt]
+			&    &  &     &  $\{ \{c_3, {x_1}, x_2,\cancel{\lnot x_3} \}, $                                \\
+			&    &  &     &  $\{c_3, {x_1} , x_2 , {x_3}\}, $                                \\
+			&    &  &     &  $\{c_4, \cancel{\lnot x_1} ,\cancel{\lnot x_2} , \cancel{\lnot x_3}\}, $                                \\
+			&    &  &     &  $\{c_3, {x_1} , \cancel{\lnot x_2} , {x_3}\}, $                                \\
+			&    &  &     &  $\{c_2, x_2, {x_3},  \cancel{\lnot x_1}\}, $                                \\
+			&    &  &     &  $\{ c_1, {x_3},  \cancel{\lnot x_2}\}\}$                                \\\midrule
+		7. &  $\{ c_4, x_2, x_3  \}$  & $\mathit{false}$ & \phantom{$\{ c_1,  c_3, c_4, x_1, \lnot x_2,\lnot x_3 \}$}    & \phantom{$\{..., \{ c_2, \lnot x_2, \lnot x_3\}\}$ }\\
 	\end{tabular}
+	\end{adjustbox}
 	\caption{\textit{Example (continued)}. Explanation step 3 ($\mathbf{c_4 \wedge x_3 \implies \lnot x_2}$) of the explanation sequence generated with \onestepo \emph{incremental}.}
 	\label{tab:example-explanation-generation:incr:step3}
 \end{table}
 
-Observe subset $\{ c_4, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ where only $c_4$ can be taken and isn't present in any of the other sets-to-hit.
-\bart{I don't understand the previous sentence}
+Observe set-to-hit $\{ c_4, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$. Given the current interpretation and the literal $\lnot x_2$ to explain, only $c_4$ can be taken.  
+%\bart{I don't understand the previous sentence} ADAPTED
 Since this subset is disjoint from the other sets-to-hit for the hitting set solver due to the updated weights poses a strong constraint on the sets-to-hit. 
-\bart{Cannot parse this sentence either. Try to split it up in a couple of sentences}
+%\bart{Cannot parse this sentence either. Try to split it up in a couple of sentences} IMPROVED 
 \end{example}
 In section \ref{sec:correction_subset_enum}, we take advantage of this last remark to compute additional sets-to-hit that are disjoint of each other from the incremental point of view during the \corrsubsets procedure.
 \bart{Hmm... disjoint from the incremental point of view... Not so sure about that. It really does not have anything to do with incrementality. It might have something to do with $p$ (and $f$). 

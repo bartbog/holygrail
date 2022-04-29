@@ -680,8 +680,8 @@ In the next section, we provide the details on how to compute an OCUS.
 %\emilio{Adapted-reprhased}
 %%In the rest of this paper, we study (incremental) algorithms for computing an OCUS. 
 %\tias{I think Example 4b should go here!}\emilio{moved and adapted}
-\bart{I do not see an example here. Where did it go to?}
-\emilio{It's been moved to the end of section 5.2 : since the rest of the explanations on how to compute an ocus is explained here}
+% \bart{I do not see an example here. Where did it go to?}
+% \emilio{It's been moved to the end of section 5.2 : since the rest of the explanations on how to compute an ocus is explained here}
 
 \subsection{Computing an \comus}\label{sec:computing_an_ocus}
 
@@ -1337,6 +1337,7 @@ as the intermediate results of a call to \corrsubsets.
 When a second call to \comus is performed, we can then initialize $\setstohit$ as the complement of each of these satisfiable subsets with respect to $\formula_2$, i.e., \[\setstohit\gets \{\formula_2\setminus \m{S}\mid \m{S}\in \satsets\}.\]
 
 The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. For hitting set solvers that natively implement incrementality, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:background}), and we have this upper bound on the set of formulas to be used, we can initialize all relevant decision variables once. To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$ we need to ensure that the MIP solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$, for example by giving all other literals infinite weight in the cost function. In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
+\bart{From a presentation perspective: the infinite weights are just an implementation trick related to MIP solvers where retracting constraints is not very easy. It is good to mention it (you should!) but in the first place I would phrase this as being part of $p$. In the second place you can mention that for the specific case of MIP solver you use the infinite weight trick... In all the examples, I would also phrase this as part of $p$. Conceptually, these things  \emph{are} constraints; it is forbidden to pick this specific variable. }
 
 \subsubsection{Application to literal ordering \bart{I don't understand this title}} 
 
@@ -1455,9 +1456,11 @@ Since $x_1$ has been explained, we adapt the weights of the clauses $\{x_1\}$ an
 	\caption{\textit{Example (continued)}. Explanation step 2 ($\mathbf{c_1 \wedge c_2 \wedge x_1 \implies x_3}$) of the explanation sequence generated with \onestepo \emph{incremental}.}
 	\label{tab:example-explanation-generation:incr:step2}
 \end{table}
-\cref{tab:example-explanation-generation:incr:step2} highlights the benefit of maintaining the collection of sets-to-hit, but also more importantly the presence of the literals not explained yet as a consequence of incrementality. 
+\bart{De tabel bevat nog ``grow'' (algoritme niet meere)}
+\cref{tab:example-explanation-generation:incr:step2} highlights the benefit of maintaining the collection of sets-to-hit, but also more importantly the presence of the literals not explained yet as a consequence of incrementality.  \bart{Je zegt: die tabel highlight benefits. Maar dat is nogal cryptisch. Kan je wat details geven. Bijv hoeveel extra iteraties nodig geweest waren als het non-incremental was?}
+\bart{Ik snap die ``but more importantly'' niet. Zijn die literals waar je niets mee kan doe nbelangrijker dan het bijhoude nva nde sets-to-hit?}
 
-Similarly for the last explanation, we adapt the weights to reflect the current interpretation and that we only want to explain $\lnot x2$ ($w_{x_3} = 1$ and $w_{\lnot x_3} = \infty$).
+Similarly for the last explanation, we adapt the weights to reflect the current interpretation and that we only want to explain $\lnot x_2$ ($w_{x_3} = 1$ and $w_{\lnot x_3} = \infty$).
 
 \begin{table}[!h]
 	\centering
@@ -1475,9 +1478,15 @@ Similarly for the last explanation, we adapt the weights to reflect the current 
 	\label{tab:example-explanation-generation:incr:step3}
 \end{table}
 
-Observe subset $\{ c_4, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ where only $c_4$ can be taken and isn't present in any of the other sets-to-hit. Since this subset is disjoint from the other sets-to-hit for the hitting set solver due to the updated weights poses a strong constraint on the sets-to-hit. 
+Observe subset $\{ c_4, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ where only $c_4$ can be taken and isn't present in any of the other sets-to-hit.
+\bart{I don't understand the previous sentence}
+Since this subset is disjoint from the other sets-to-hit for the hitting set solver due to the updated weights poses a strong constraint on the sets-to-hit. 
+\bart{Cannot parse this sentence either. Try to split it up in a couple of sentences}
 \end{example}
 In section \ref{sec:correction_subset_enum}, we take advantage of this last remark to compute additional sets-to-hit that are disjoint of each other from the incremental point of view during the \corrsubsets procedure.
+\bart{Hmm... disjoint from the incremental point of view... Not so sure about that. It really does not have anything to do with incrementality. It might have something to do with $p$ (and $f$). 
+In terms of $p$ I would phrase it something like this: 
+``Two sets $S_1$ and $S_2$ are $p$-disjoint/$p$-independent/... if every set that hits both $S_1$ and $S_2$ and satisfies $p$ contains $s_1\in S_1$ and $s_2\in S_2$ with $s_1\neq s_2$.'' }
 %\paragraph{Incrementality} 
 
 \subsection{Computing correction subsets}
@@ -1485,11 +1494,14 @@ In section \ref{sec:correction_subset_enum}, we take advantage of this last rema
 As hinted in the previous sections, the \corrsubsets generates a set of disjoint correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
 In a first phase, the satisfiable subset is grown into a maximally satisfiable subset and then in the second phase its complement is taken. We first discuss, how to efficiently grow the satisfiable subset using domain-specific information.
 
+\bart{Het zit hier nog vol met verwijzingen naar GROW. Ik denk dat je eerder in de tekst (in de algoritmes) de GROW hebtt vervangen. Heel de paper moet analoog aangepast worden}
 \subsubsection{Domain-specific implementations of \grow.} \label{para:domainspecificgrow}
 
-The goal of the \grow procedure is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence, a stronger restriction for the hitting set solver is found.  
+The goal of the \grow procedure is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence imposes stronger restrictions on the hitting sets.
 
-Choosing an effective \grow procedure requires finding a difficult balance: on the one hand, we want our subformula to be as large as possible (which ultimately would correspond to computing the maximum satisfiable subformula), %to derive the most precise information we can get, 
+There are multiple conflicting criteria that determine what makes an effective \grow procedure:
+% Choosing an effective \grow procedure requires finding a difficult balance: 
+on the one hand, we want our subformula to be as large as possible (which ultimately would correspond to computing the maximum satisfiable subformula), %to derive the most precise information we can get, 
 but on the other hand we also want the procedure to be very efficient as it is called in every iteration. 
 
 For the case of explanations we are in, we make the following observations: 
@@ -1509,6 +1521,7 @@ Since the restriction on the third type of elements of $\formula$ are already st
 %\paragraph{MaxSAT weighing scheme} The \maxsat solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
 
 We evaluate different grow strategies in the experiments section, including the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
+\bart{This section still makes sense to me. However, it only describes a single type of grow based on maxsat. In the experiments we will have multiple. In that case I would expect them to also be described here. Or... we drop all the ones we do not discuss here from the experiments...}
 
 
 
@@ -1519,16 +1532,17 @@ We evaluate different grow strategies in the experiments section, including the 
 
 \subsubsection{Correction subsets enumeration}\label{sec:correction_subset_enum}
 %Observation: A lot of time is spent in ... 
-Both the \comus and the \iterativeonestep algorithm rely on repeatedly alternating between computing hitting sets and subsequently correction subsets. 
+Our \comus algorithm relies on repeatedly alternating between computing hitting sets and subsequently correction subsets. 
 The question is: can we cheaply find \textit{multiple}, ideally \emph{disjoint}, correction subsets and thereby add multiple sets-to-hit in one go?
 % \emph{can we find non-overlapping correction subsets to impose independent constraints on the sets-to-hit?} \tias{is that the question? I think the question is: can we cheaply find \textit{multiple}, ideally diverse, correction subsets and thereby add multiple sets-to-hit in one go?}
+\bart{I would propose to motivate this from the observation: MIP calls are much more expensive than the rest. Need to compensate}
 
 %Detail: how do we do it? 
-Inspired by \cite{marques2013computing}, the \corrsubsets procedure, depicted in \cref{alg:corr-subsets-grow-with-sat}, computes a collection of disjoint correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 
+Inspired by \cite{marques2013computing}, the \corrsubsets procedure, depicted in \cref{alg:corr-subsets-grow-with-sat}, computes a collection of \bart{Replace disjoint} disjoint correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 
 The \corrsubsets procedure will repeatedly compute a satisfiable subset $\m{S} \subseteq \m{S}'$ and add its complement to 
 \begin{inparaenum}[(i)] 
 \item the collection of disjoint MCSes $\m{K}$ and;
-\item $\m{S}$, ensuring that the constraints of the correction subset cannot be present in the next correction subset,
+\item $\m{S}$, ensuring that the constraints of the correction subset cannot be present in the next correction subset, 
 \end{inparaenum}
 until no more satisfiable subsets can be found. 
 
@@ -1548,18 +1562,22 @@ until no more satisfiable subsets can be found.
 \end{algorithm}
 
 %\paragraph{Incrementality}
-For \comus, \cref{alg:corr-subsets-grow-with-sat} is directly applicable and will be able to compute \emph{disjoint} correction subsets. However for the \emph{incremental} \comus case, the \sat call after first iteration produces \emph{UNSAT} since both polarities of the literals are present in either the hitting set or the correction subset. Step 1 of \cref{tab:example-explanation-generation:incr:step1} illustrates this case where $x_1$ is present in the hitting set $\m{S}$ and $\lnot x_1$ in the correction subset $F \setminus \m{S}$. 
+For \comus, \cref{alg:corr-subsets-grow-with-sat} is directly applicable and will be able to compute \emph{disjoint} correction subsets. However for the \emph{incremental} \comus case, the \sat call after first iteration produces \emph{UNSAT} since both polarities of the literals are present in either the hitting set or the correction subset.
+\bart{These are not properties of OCUS and INCR-OCUS. 
+This is an issue with \emph{our use} of OCUS. The way we USE the incremental OCUS for generating explanations (by adding the two polarities) means that this will not do anything. But, you could perfectly do incremental ocus in a setting where it DOES produce multiple correction subsets}
+Step 1 of \cref{tab:example-explanation-generation:incr:step1} illustrates this case where $x_1$ is present in the hitting set $\m{S}$ and $\lnot x_1$ in the correction subset $F \setminus \m{S}$. 
 
 Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints and the current interpretation, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I)$. This allows for extra correction subsets that are disjoint in the eye of the hitting set solver.
+\bart{If you introduce a notion of $p$-disjoint, such as I suggested higher in the text, you can be precise about it: for a specific $p$, the computed sets are $p$-disjoint (or disjoint modulo $p$ or ... whatever you wish to call it). That would allow you to avoid the vague terminology ``disjoint in the eyes of thehitting set solver'' (of which nobody really knows what it means)}
 
 \paragraph{Domain-specific correction subset enumeration} Extending the observation from \cref{para:domainspecificgrow} that a call to an efficient \maxsat solver helps in finding maximally satisfiable subsets, we propose two variants of \cref{alg:corr-subsets-grow-with-sat}.
 %\begin{itemize}
 
 The first variant is \emph{Disjoint \maxsat Correction Subsets}, a.k.a \emph{Disj. \maxsat Corr.}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
 
-The second approach, \emph{\maxsat Corr.+\sat} works similarly to \emph{Disj. \maxsat Corr}, however only the first \grow is done with the domain specific \maxsat. The subsequent \grow calls are done using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality.
+The second approach, \emph{\maxsat Corr.+\sat} works similarly to \emph{Disj. \maxsat Corr}, however only the first \grow is done with the domain specific \maxsat. The subsequent \grow calls are done using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. \bart{using the model computed by, what does that mean? Simply, the model computed by?}
 
-\begin{example}[\textit{continued}] 
+\begin{example}[\cref{ex:ocus-incr:expl-seq} continued] 
 	Consider the same setting as in \cref{ex:ocus-incr:expl-seq} with given interpretation $\m{I} =\emptyset$ and $\Iend = \{x_1, \lnot x_2, x_3\}$.
 	The following table illustrates the efficiency of \corrsubsets algorithm even in the incremental setting starting from given $\{\lnot x_3\}$ of our running example. 
 	\begin{table}[!h]

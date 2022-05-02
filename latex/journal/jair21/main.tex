@@ -1499,7 +1499,7 @@ Finally, for the last explanation step, we adapt the weights to reflect the curr
 
 %\bart{Cannot parse this sentence either. Try to split it up in a couple of sentences} IMPROVED 
 Observe set-to-hit $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ in the collection of previously compute sets-to-hit of \cref{tab:example-explanation-generation:incr:step3}. Given the current interpretation and the literal $\lnot x_2$ to explain, only $c_4$ can \underline{and} has to be taken.  
-Since this subset is $p$-disjoint from the other sets-to-hit in the eye of the hitting set solver, it therefore poses a strong constraint on the sets-to-hit. 
+Since this subset is $p$-disjoint from the other sets-to-hit in the eye of the hitting set solver, it therefore poses a stronger restriction on the sets-to-hit. 
 \end{example}
 
 \begin{proposition}\label{prop:p-disjoint}
@@ -1514,15 +1514,18 @@ In section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-d
 
 \subsection{Computing correction subsets}
 
-As hinted in the previous sections, the \corrsubsets generates a set of disjoint correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
-In a first phase, the satisfiable subset is grown into a maximally satisfiable subset and then in the second phase its complement is taken. We first discuss, how to efficiently grow the satisfiable subset using domain-specific information.
+The \corrsubsets procedure generates a set of correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
+However, calling \onestepo on our running example has shown that a naive `No grow' \corrsubsets, i.e. returning $\{\formula \setminus  \subsetT \}$, drastically increases the number of sets-to-hit required compared to using the model provided by the \sat solver. 
+This last observation suggests that the input satisfiable subset should be efficiently grown into a larger satisfiable subset before computing the complement.
+We first discuss, how to efficiently grow the satisfiable subset capitalizing on the domain-specific context of explanation generation.
 
-\bart{Het zit hier nog vol met verwijzingen naar GROW. Ik denk dat je eerder in de tekst (in de algoritmes) de GROW hebtt vervangen. Heel de paper moet analoog aangepast worden}
-\subsubsection{Domain-specific implementations of \grow.} \label{para:domainspecificgrow}
+%\bart{Het zit hier nog vol met verwijzingen naar GROW. Ik denk dat je eerder in de tekst (in de algoritmes) de GROW hebtt vervangen. Heel de paper moet analoog aangepast worden}
+\subsubsection{Growing satisfiable subsets using domain-specific information.} \label{para:domainspecificgrow}
 
-The goal of the \grow procedure is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence imposes stronger restrictions on the hitting sets.
 
-There are multiple conflicting criteria that determine what makes an effective \grow procedure:
+The goal of the `grow' phase of the \corrsubsets procedure is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence imposes stronger restrictions on the hitting sets.
+
+There are multiple conflicting criteria that determine what makes an effective `grow' procedure:
 % Choosing an effective \grow procedure requires finding a difficult balance: 
 on the one hand, we want our subformula to be as large as possible (which ultimately would correspond to computing the maximum satisfiable subformula), %to derive the most precise information we can get, 
 but on the other hand we also want the procedure to be very efficient as it is called in every iteration. 
@@ -1539,26 +1542,41 @@ For the case of explanations we are in, we make the following observations:
 \item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
 \end{itemize}
 
-Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow{($\m{S}$, $\F$)} procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. %This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 
+Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense %to use the \grow{($\m{S}$, $\F$)} procedure 
+to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient (partial) \maxsat solver. 
+Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
+
+%The following configurations are compared:
+%\begin{description}
+%%	\item[No grow.] does not grow and returns the complement .
+%%	\item[SAT] refers to using the model computed by \sat solver when checking for satisfiability.
+%	\item[{Dom.-spec. \maxsat}] refers to growing with a \maxsat solver using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). In this case, \maxsat-based \grow uses only the previously derived facts and the original constraints. 
+%	\item[{MaxSAT Full}] refers to growing with a \maxsat solver using the full unsatisfiable formula $\mathcal{F}$.
+%	\item[{\maxsat Corr.}] refers to repeatedly calling a \emph{Dom.-spec. \maxsat} and blocking the corresponding correction subset until no more correction subsets can be extracted.
+%	\item[{\maxsat Corr.+\sat}] works similarly to \emph{\maxsat Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
+%\end{description}
+
+
+%OLD: Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow{($\m{S}$, $\F$)} procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
+%This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 
 
 %\paragraph{MaxSAT weighing scheme} The \maxsat solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
 
-We evaluate different grow strategies in the experiments section, including the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
+We evaluate different grow strategies as part of the \corrsubsets procedure in the experiments section, including the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
 \bart{This section still makes sense to me. However, it only describes a single type of grow based on maxsat. In the experiments we will have multiple. In that case I would expect them to also be described here. Or... we drop all the ones we do not discuss here from the experiments...}
-
-
+\emilio{Added `No grow' and sat model in the intro.}
 
 %For explaining the remaining literals ($\lnot x_2$ and $x_3$), we adapt the weight of clause $c_5 := x_1$ to $w_5 = 1$ and $c_8 := \lnot x_1$ to $w_8 = \infty$.
-
-
 
 
 \subsubsection{Correction subsets enumeration}\label{sec:correction_subset_enum}
 %Observation: A lot of time is spent in ... 
 Our \comus algorithm relies on repeatedly alternating between computing hitting sets and subsequently correction subsets. 
-The question is: can we cheaply find \textit{multiple}, ideally \emph{disjoint}, correction subsets and thereby add multiple sets-to-hit in one go?
+The increasingly large collection of sets-to-hit makes finding an optimal hitting set much more expensive compared to the \corrsubsets procedure, that solely relies on finding correction subsets from a given satisfiable subset.
+The question is: can we compensate cheaply find \textit{multiple}, ideally \emph{$p$-disjoint}, correction subsets and thereby add multiple sets-to-hit in one go?
 % \emph{can we find non-overlapping correction subsets to impose independent constraints on the sets-to-hit?} \tias{is that the question? I think the question is: can we cheaply find \textit{multiple}, ideally diverse, correction subsets and thereby add multiple sets-to-hit in one go?}
-\bart{I would propose to motivate this from the observation: MIP calls are much more expensive than the rest. Need to compensate}
+%\bart{I would propose to motivate this from the observation: MIP calls are much more expensive than the rest. Need to compensate}
+
 
 %Detail: how do we do it? 
 Inspired by \cite{marques2013computing}, the \corrsubsets procedure, depicted in \cref{alg:corr-subsets-grow-with-sat}, computes a collection of \bart{Replace disjoint} disjoint correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 

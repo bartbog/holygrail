@@ -1393,7 +1393,7 @@ the \comus-based explanation sequence generation.
 	\text{\textbf{\emph{$I \wedge \overline{\Iend \setminus I}$ weights:}}}& \  w_{\lnot x_1}=1  \qquad w_{ x_2}=1 \ \ \ \qquad w_{\lnot x_3}=1 \\
 	\text{\textbf{\emph{$\Iend \setminus I$ weights:}}}& \  w_{x_1}=\infty  \qquad w_{\lnot x_2}=\infty \qquad w_{x_3}=\infty
 	\end{align*}
-	Note how the literals that haven't been derived yet ($\Iend \setminus I$) are given an infinite weight in order to prevent the hitting set solver from selecting these clauses. More importantly, it allows for reusing the computed satisfiable subsets potentially containing these clauses across explanation calls.
+	Note how the literals that haven't been derived yet ($\Iend \setminus I$) are given an infinite weight according to \cref{sec:ocusEx} for incrementality purposes.
 %	\[w_1 = 60, w_2=60, w_3=100, w_4=100\]
 %	\[ w_{x_1}=1 \qquad w_{\lnot x_1}=1 \qquad w_{x_2}=1 \qquad w_{\lnot x_3}=\infty \qquad w_{\lnot x_2}=\infty \qquad w_{x_3}=\infty\]
 %	
@@ -1438,37 +1438,42 @@ The literals that cannot be selected by the hitting set solver have been struck 
 	\label{tab:example-explanation-generation:incr:step1}
 \end{table}
 
-In \cref{tab:example-explanation-generation:incr:step1}, the most striking aspect is the number of steps (from 12 to 6) required to find an \comus that is greatly reduced as a result of choosing an effective grow, compared to no grow at all. 
+The most striking aspect of \cref{tab:example-explanation-generation:incr:step1} is the number of steps  required to find an \comus that is greatly reduced, i.e. from 12 to 6, as a result of choosing an effective grow, compared to no grow at all. 
 For the next explanation step, since $x_1$ has been explained, we adapt the weights of the clauses $\{x_1\}$ and $\{\lnot x_1\}$ to $w_{x_1} = 1$ and $w_{\lnot x_1} = \infty$ respectively. 
+
+
+
 %More precisely, we see the literals ($x_1$ , $\lnot x_2$ and $x_3$) that have not been derived yet in the collection of sets-to-hit. 
 %This shows the benefit of maintaining the sets-to-hit  the second (\cref{tab:example-explanation-generation:incr:step2}) and the third explanation step (\cref{tab:example-explanation-generation:incr:step3}). In step 5 (\cref{tab:example-explanation-generation:incr:step2}) for example, one does not have to start from scratch, but by hitting the updated sets-to-hit (where $x_1$ cannot be taken), the \comus algorithm starts from a good candidate. The same observation regarding the effectiveness of information re-use can be made in step 8 of \cref{tab:example-explanation-generation:incr:step3} where the first hitting set corresponds to an \comus.
-\begin{table}[!h]
-	\centering
-	\begin{adjustbox}{max width=\textwidth}
-	\begin{tabular}{lcccc} 
-		%		\multicolumn{5}{c}{OCUS explanation: $c_1 \wedge c_2 \wedge x_1 \implies x_3$} \\ \midrule\midrule
-		Step & $\m{S}$                             & $\sat(\m{S})$    &          $\mu$                  & $\setstohit  \gets \setstohit  \cup \corrsubsets(\m{S}, \formula)      $ \\ \toprule[2pt]
-		%		\toprule[2pt] % x1 and x2 and x3 and c1 and c2 and c3 and ~c4
-			&    &  &     &  $\{ \{c_3, {x_1}, x_2, \lnot x_3 \}, $                                \\
-			&    &  &     &  $\{c_3, {x_1} , x_2 , \cancel{x_3}\}, $                                \\
-			&    &  &     &  $\{c_4, \cancel{\lnot x_1} ,\cancel{\lnot x_2} , \lnot x_3\}, $                                \\
-			&    &  &     &  $\{c_3, {x_1} , \cancel{\lnot x_2} , \cancel{x_3}\}, $                                \\
-			&    &  &     &  $\{c_2, x_2, \cancel{x_3},  \cancel{\lnot x_1}\}\} $                                \\\midrule
-		5. &  $\{ c_2 ,x_1, \lnot x_3\}$  & $\mathit{true}$ & $\{ c_2, c_3, c_4,  x_1 , x_2, \lnot x_3 \}$    &  $\{..., \{ c_1, \cancel{x_3},  \cancel{\lnot x_2}\}\}$                                \\
-		\midrule % x1 and c1 and c3 and c4 and ~c2 and ~x3 and ~x2
-		6. &  $\{ c_1, c_2, x_1, \lnot x_3 \}$  & $\mathit{false}$ & \phantom{$\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$}   &                                 \\
-	\end{tabular}
-\end{adjustbox}
-	\caption{\textit{Example (continued)}. Explanation step 2 ($\mathbf{c_1 \wedge c_2 \wedge x_1 \implies x_3}$) of the explanation sequence generated with \onestepo \emph{incremental}.}
-	\label{tab:example-explanation-generation:incr:step2}
-\end{table}
-
 
 %\bart{De tabel bevat nog ``grow'' (algoritme niet meere)}
 %\cref{tab:example-explanation-generation:incr:step2} highlights the benefit of maintaining the collection of sets-to-hit, but also more importantly the presence of the literals not explained yet as a consequence of incrementality.  \bart{Je zegt: die tabel highlight benefits. Maar dat is nogal cryptisch. Kan je wat details geven. Bijv hoeveel extra iteraties nodig geweest waren als het non-incremental was?}
 %\bart{Ik snap die ``but more importantly'' niet. Zijn die literals waar je niets mee kan doe nbelangrijker dan het bijhoude nva nde sets-to-hit?}
 
-Similarly for the last explanation step, we adapt the weights to reflect the current interpretation and that we only want to explain $\lnot x_2$ ($w_{x_3} = 1$ and $w_{\lnot x_3} = \infty$).
+\begin{table}[!h]
+	\centering
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lcccc} 
+			%		\multicolumn{5}{c}{OCUS explanation: $c_1 \wedge c_2 \wedge x_1 \implies x_3$} \\ \midrule\midrule
+			Step & $\m{S}$                             & $\sat(\m{S})$    &          $\mu$                  & $\setstohit  \gets \setstohit  \cup \corrsubsets(\m{S}, \formula)      $ \\ \toprule[2pt]
+			%		\toprule[2pt] % x1 and x2 and x3 and c1 and c2 and c3 and ~c4
+			&    &  &     &  $\{ \{c_3, {x_1}, x_2, \lnot x_3 \}, $                                \\
+			&    &  &     &  $\{c_3, {x_1} , x_2 , \cancel{x_3}\}, $                                \\
+			&    &  &     &  $\{c_4, \cancel{\lnot x_1} ,\cancel{\lnot x_2} , \lnot x_3\}, $                                \\
+			&    &  &     &  $\{c_3, {x_1} , \cancel{\lnot x_2} , \cancel{x_3}\}, $                                \\
+			&    &  &     &  $\{c_2, x_2, \cancel{x_3},  \cancel{\lnot x_1}\}\} $                                \\\midrule
+			5. &  $\{ c_2 ,x_1, \lnot x_3\}$  & $\mathit{true}$ & $\{ c_2, c_3, c_4,  x_1 , x_2, \lnot x_3 \}$    &  $\{..., \{ c_1, \cancel{x_3},  \cancel{\lnot x_2}\}\}$                                \\
+			\midrule % x1 and c1 and c3 and c4 and ~c2 and ~x3 and ~x2
+			6. &  $\{ c_1, c_2, x_1, \lnot x_3 \}$  & $\mathit{false}$ & \phantom{$\{c_1 , c_2 , c_4, \lnot x_1 , \lnot x_2 ,  \lnot x_3 \}$}   &                                 \\
+		\end{tabular}
+	\end{adjustbox}
+	\caption{\textit{Example (continued)}. Explanation step 2 ($\mathbf{c_1 \wedge c_2 \wedge x_1 \implies x_3}$) of the explanation sequence generated with \onestepo \emph{incremental}.}
+	\label{tab:example-explanation-generation:incr:step2}
+\end{table}
+
+In the intermediate \comus steps of explanation step 2, depicted at \cref{tab:example-explanation-generation:incr:step2}, we observe the effect of incrementality from the number of steps required to find an \comus. Using the previously computed sets-to-hit ensures that the \comus algorithm starts from a good candidate \comus. If the same \comus-call is performed without bootstrapping the previous sets-to-hit, the number of intermediate steps is higher, i.e. 5 instead of 2.
+
+Finally, for the last explanation step, we adapt the weights to reflect the current interpretation and that we only want to explain $\lnot x_2$ ($w_{x_3} = 1$ and $w_{\lnot x_3} = \infty$).
 
 \begin{table}[!h]
 	\centering
@@ -1489,16 +1494,23 @@ Similarly for the last explanation step, we adapt the weights to reflect the cur
 	\label{tab:example-explanation-generation:incr:step3}
 \end{table}
 
-Observe set-to-hit $\{ c_4, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$. Given the current interpretation and the literal $\lnot x_2$ to explain, only $c_4$ can be taken.  
+
 %\bart{I don't understand the previous sentence} ADAPTED
-Since this subset is disjoint from the other sets-to-hit for the hitting set solver due to the updated weights poses a strong constraint on the sets-to-hit. 
+
 %\bart{Cannot parse this sentence either. Try to split it up in a couple of sentences} IMPROVED 
+Observe set-to-hit $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ in the collection of previously compute sets-to-hit of \cref{tab:example-explanation-generation:incr:step3}. Given the current interpretation and the literal $\lnot x_2$ to explain, only $c_4$ can \underline{and} has to be taken.  
+Since this subset is $p$-disjoint from the other sets-to-hit in the eye of the hitting set solver, it therefore poses a strong constraint on the sets-to-hit. 
 \end{example}
-In section \ref{sec:correction_subset_enum}, we take advantage of this last remark to compute additional sets-to-hit that are disjoint of each other from the incremental point of view during the \corrsubsets procedure.
-\bart{Hmm... disjoint from the incremental point of view... Not so sure about that. It really does not have anything to do with incrementality. It might have something to do with $p$ (and $f$). 
-In terms of $p$ I would phrase it something like this: 
-``Two sets $S_1$ and $S_2$ are $p$-disjoint/$p$-independent/... if every set that hits both $S_1$ and $S_2$ and satisfies $p$ contains $s_1\in S_1$ and $s_2\in S_2$ with $s_1\neq s_2$.'' }
-%\paragraph{Incrementality} 
+
+\begin{proposition}\label{prop:p-disjoint}
+	Two sets $S_1$ and $S_2$ are $p$-disjoint if every set that hits both $S_1$ and $S_2$ and satisfies $p$ contains $s_1\in S_1$ and $s_2\in S_2$ with $s_1 \neq s_2$.
+\end{proposition}
+
+In section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-disjoint} to enumerate multiple correction subsets that $p$-disjoint of each other during the \corrsubsets procedure.
+%\bart{Hmm... disjoint from the incremental point of view... Not so sure about that. It really does not have anything to do with incrementality. It might have something to do with $p$ (and $f$). 
+%In terms of $p$ I would phrase it something like this: 
+%``'' }
+%%\paragraph{Incrementality} 
 
 \subsection{Computing correction subsets}
 

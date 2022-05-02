@@ -1376,7 +1376,7 @@ In this way, the MIP solver will automatically maintain and reuse previously fou
 
 %In \cref{alg:oneStepBound}, we represent the incremental version of \ousb which keeps track of the sets-to-hit\tias{see note above, it doesn't?} in order to speed-up the \omus computation, and re-uses the upper bounds to sort the remaining literals to explain. 
 
-\subsubsection{Efficiently generating an explanation sequence with Incremental OCUS}
+\subsubsection{Efficiently generating an explanation sequence with Incremental OCUS} \label{sec:ocus-incr}
 In the following example we illustrate the efficiency of bootstrapping with the previous computed sets-to-hit in order to speed-up 
 %the explanation sequence generation for the incremental version of \comus. 
 the \comus-based explanation sequence generation.
@@ -1572,14 +1572,17 @@ We evaluate different grow strategies as part of the \corrsubsets procedure in t
 \subsubsection{Correction subsets enumeration}\label{sec:correction_subset_enum}
 %Observation: A lot of time is spent in ... 
 Our \comus algorithm relies on repeatedly alternating between computing hitting sets and subsequently correction subsets. 
-The increasingly large collection of sets-to-hit makes finding an optimal hitting set much more expensive compared to the \corrsubsets procedure, that solely relies on finding correction subsets from a given satisfiable subset.
-The question is: can we compensate cheaply find \textit{multiple}, ideally \emph{$p$-disjoint}, correction subsets and thereby add multiple sets-to-hit in one go?
+Ideally, \comus algorithm should even distribute computation between the hitting set solver and the \corrsubsets procedure.
+However, the increasingly large collection of sets-to-hit makes finding optimal hitting sets much more expensive compared to the \corrsubsets procedure, that solely relies on finding correction subsets from a given satisfiable subset.
+Additionally, in the last explanation step of \cref{ex:ocus-incr:expl-seq}, we saw that one of the sets-to-hit ($\{c_4, \cancel{\lnot x_1} ,\cancel{\lnot x_2} , \cancel{\lnot x_3}\}$) was $p$-disjoint to the others, imposing a strong restriction on the hitting set solver. 
+%% something about disjoint correction subsets
+The question is: can we cheaply find \textit{multiple}, ideally \emph{$p$-disjoint}, correction subsets and thereby add multiple sets-to-hit in one go?
 % \emph{can we find non-overlapping correction subsets to impose independent constraints on the sets-to-hit?} \tias{is that the question? I think the question is: can we cheaply find \textit{multiple}, ideally diverse, correction subsets and thereby add multiple sets-to-hit in one go?}
 %\bart{I would propose to motivate this from the observation: MIP calls are much more expensive than the rest. Need to compensate}
 
 
 %Detail: how do we do it? 
-Inspired by \cite{marques2013computing}, the \corrsubsets procedure, depicted in \cref{alg:corr-subsets-grow-with-sat}, computes a collection of \bart{Replace disjoint} disjoint correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 
+Inspired by \cite{marques2013computing}, the \corrsubsets procedure, depicted in \cref{alg:corr-subsets-grow-with-sat}, computes a collection of correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 
 The \corrsubsets procedure will repeatedly compute a satisfiable subset $\m{S} \subseteq \m{S}'$ and add its complement to 
 \begin{inparaenum}[(i)] 
 \item the collection of disjoint MCSes $\m{K}$ and;
@@ -1603,15 +1606,19 @@ until no more satisfiable subsets can be found.
 \end{algorithm}
 
 %\paragraph{Incrementality}
-For \comus, \cref{alg:corr-subsets-grow-with-sat} is directly applicable and will be able to compute \emph{disjoint} correction subsets. However for the \emph{incremental} \comus case, the \sat call after first iteration produces \emph{UNSAT} since both polarities of the literals are present in either the hitting set or the correction subset.
+For \comus, \cref{alg:corr-subsets-grow-with-sat} is directly applicable and will be able to compute \emph{disjoint} correction subsets. 
+If the same procedure is directly applied to the \emph{incremental} \comus of \cref{sec:ocus-incr}, then the \sat call will produce \emph{UNSAT} after the first iteration since both polarities of the literals are present in either the hitting set or the correction subset.
 \bart{These are not properties of OCUS and INCR-OCUS. 
 This is an issue with \emph{our use} of OCUS. The way we USE the incremental OCUS for generating explanations (by adding the two polarities) means that this will not do anything. But, you could perfectly do incremental ocus in a setting where it DOES produce multiple correction subsets}
+\emilio{Is this a better way to put it ?}
 Step 1 of \cref{tab:example-explanation-generation:incr:step1} illustrates this case where $x_1$ is present in the hitting set $\m{S}$ and $\lnot x_1$ in the correction subset $F \setminus \m{S}$. 
+Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints and the current interpretation, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I)$. 
 
-Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints and the current interpretation, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I)$. This allows for extra correction subsets that are disjoint in the eye of the hitting set solver.
-\bart{If you introduce a notion of $p$-disjoint, such as I suggested higher in the text, you can be precise about it: for a specific $p$, the computed sets are $p$-disjoint (or disjoint modulo $p$ or ... whatever you wish to call it). That would allow you to avoid the vague terminology ``disjoint in the eyes of thehitting set solver'' (of which nobody really knows what it means)}
+This allows for extra correction subsets that are $p$-disjoint.
+%\bart{If you introduce a notion of $p$-disjoint, such as I suggested higher in the text, you can be precise about it: for a specific $p$, the computed sets are $p$-disjoint (or disjoint modulo $p$ or ... whatever you wish to call it). That would allow you to avoid the vague terminology ``disjoint in the eyes of thehitting set solver'' (of which nobody really knows what it means)}
+%%% rephrased
 
-\paragraph{Domain-specific correction subset enumeration} Extending the observation from \cref{para:domainspecificgrow} that a call to an efficient \maxsat solver helps in finding maximally satisfiable subsets, we propose two variants of \cref{alg:corr-subsets-grow-with-sat}.
+\paragraph{Efficient correction subset enumeration} Extending the observation from \cref{para:domainspecificgrow} that a call to an efficient \maxsat solver helps in finding maximally satisfiable subsets, we propose two variants of \cref{alg:corr-subsets-grow-with-sat}.
 %\begin{itemize}
 
 The first variant is \emph{Disjoint \maxsat Correction Subsets}, a.k.a \emph{Disj. \maxsat Corr.}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 

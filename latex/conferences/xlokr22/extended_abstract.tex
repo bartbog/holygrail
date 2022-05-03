@@ -2,25 +2,111 @@
 % LLNCS macro package for Springer Computer Science proceedings;
 % Version 2.21 of 2022/01/12
 %
-\documentclass[runningheads]{llncs}
+\documentclass{llncs}
 %
-\usepackage[T1]{fontenc}
 \usepackage{graphicx}
 %\usepackage[round]{natbib}
 %\usepackage[capitalise]{cleveref}
-\usepackage{enumitem}\usepackage{paralist}
+% \usepackage{natbib}
+%\usepackage{biblatex}s
+%\usepackage{enumitem}
+\usepackage{paralist}
+
 % If you use the hyperref package, please uncomment the following two lines
 % to display URLs in blue roman font according to Springer's eBook style:
 %\usepackage{color}
 %\renewcommand\UrlFont{\color{blue}\rmfamily}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{amsmath,amssymb}%,amsthm}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{thmtools} 
+\usepackage{multirow,array}
+\usepackage{booktabs}
+
 \newcommand\m[1]{\mathcal{#1}}
 
+%% Comments
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}Tias:#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}Emilio: #1}}}
+\newcommand{\checkthis}[1]{{\comment{\color{red}CheckRephrasing: #1}}}
+\newcommand{\bart}[1]{{\comment{\color{OliveGreen}Bart: #1}}}
+\newcommand{\new}[1]{{\comment{{\color{blue} #1}}}}
+\newcommand{\removed}[1]{\sout{#1}}
+
+%% Factoring
+\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\decisionvariables{{D}}
+\newcommand\decisionvariable{{d}}
+\newcommand\settohit{H}
+\newcommand\hittingset{h}
+\newcommand\F{\ensuremath{\m{F} }\xspace}
+\newcommand\subsetT{\ensuremath{\m{S} }\xspace}
+\newcommand\bestsubsetT{\ensuremath{\m{S}_{best}}\xspace}
+\newcommand\corrsetT{\ensuremath{\m{K} }\xspace}
+\newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+\newcommand\Iend{\ensuremath{I_\mathit{end} }\xspace}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulac{\ensuremath{\m{C} }\xspace}
+\newcommand\formularunning{\ensuremath{T_{rex} }\xspace}
+\newcommand\formulag{\ensuremath{\m{G} }\xspace}
 \newcommand\mm[1]{\ensuremath{#1}\xspace}
+\newcommand\nat{\mm{\mathbb{N}}}
+\newcommand\ltrue{\mm{\textbf{t}}}
+\newcommand\lfalse{\mm{\textbf{f}}}
+\newcommand\uservars{\ensuremath{\m{U} }\xspace}
 \newcommand\call[1]{\mm{\texttt{#1}}}
+\newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+%\newcommand\cohs{\texttt{CondOptHittingSet}\xspace}
+\newcommand\ohs{\mm{\call{OptHittingSet}}}
+\newcommand\disjcorr{\mm{\call{DisjCorrSets}}}
+\newcommand\disjcorrincr{\mm{\call{DisjCorrSetsIncremental}}}
+\newcommand\disjcorrconstrained{\mm{\call{DisjCorrSetsConstrained}}}
+\newcommand\sat{\texttt{{SAT}}\xspace}
+\newcommand\grow{\mm{\call{Grow}}}
+\newcommand\omus{\mm{\call{OUS}}}
 \newcommand\comus{\mm{\call{OCUS}}}
+\newcommand\comusincr{\mm{\call{OCUS+Incr. HS}}}
+\newcommand\ousb{\mm{\call{OUS\_Bounded}}}
+\newcommand\ousbiter{\mm{\call{OUSIter}}}
+\newcommand\ousbincr{\mm{\call{OUSb+Lit. Incr. HS}}}
+\newcommand\ousbiterincr{\mm{\call{OUSIter+Lit. Incr. HS}}}
+\newcommand\corrss{\mm{\call{CorrSS}}}
+\newcommand\corrsubsets{\mm{\call{CorrSubsets}}}
+%\newcommand\corrsubsets{\texttt{CorrSubsets}\xspace}
+\newcommand\comusdisj{\mm{\call{OCUSConstrainedDisjMCSes}}}
+\newcommand\disjmcs{\mm{\call{DisjointMCSes}\xspace}}
+\newcommand\disjmcsconstrained{\mm{\call{DisjointMCSesConstrained}\xspace}}
+\newcommand\omusinc{\mm{\call{OUS-Inc}}}
+\newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+\newcommand\satsets{\mm{\mathbf{SSs}}}
+\newcommand\fall{\mm{\formula_{\mathit{all}}}}
+\newcommand\algemilio[1]{\emilio{#1}\;}
+\newcommand\UB{ub}
+\newcommand\LB{lb}
+\newcommand\maxsat{MaxSAT\xspace}
+\newcommand\voc{\ensuremath{\Sigma}\xspace}
+\newcommand\negset[1]{\mm{\overline{#1}}}
+
+\newcommand{\algorithmicbreak}{\textbf{break}}
+%%%%%
+\newcommand\muses[1]{\ensuremath{\mathit{MUSs}(#1)}\xspace}
+\newcommand\mcses[1]{\ensuremath{\mathit{MCSs}(#1)}\xspace}
+
+%%%%%%%
+\newcommand\onestep{\ensuremath{\call{Explain-One-Step}}\xspace}
+\newcommand\onestepomus{\ensuremath{\call{Explain-One-Step-OUS}}\xspace}
+\newcommand\onestepomusbounded{\ensuremath{\call{Explain-One-Step-OCUS-Bounded}}\xspace}
+
+%\newcommand\onestepo{\texttt{Explain-One-Step-OCUS}\xspace}
+\newcommand\onestepo{\ensuremath{\call{Explain-One-Step-OCUS}}\xspace}
+\newcommand\iterativeonestep{\ensuremath{\call{Explain-One-Step-OCUS-Split}}\xspace}
+%%%%%%
+
 
 \begin{document}
-%
+
 \title{Efficiently explaining CSPs with Optimal Unsatisfiable Subset Optimization}
 \subtitle{(Extended abstract)}
 
@@ -43,6 +129,8 @@ KULeuven, Oude markt 13, 3000 Leuven, Belgium\\
 %
 \maketitle              % typeset the header of the contribution
 %
+
+
 \begin{abstract}
 	We build on a recently introduced a framework for computing a sequence of \emph{simple} explanation steps that explains all logical consequences of a Constraint Satisfaction problem (CSP). 
 	The explanation-generation algorithms of that work exploit a one-to-one correspondence between so-called \emph{non-redundant explanations} and minimal unsatisfiable subets (MUS) of a derived unsatisfiable formula.	
@@ -79,18 +167,150 @@ KULeuven, Oude markt 13, 3000 Leuven, Belgium\\
 %\end{inparaenum}
 %We experimentally validate our algorithms on a large number of CSP instances. These experiments show that our algorithms outperform the MUS approach both in terms of quality of the explanation and in time to generate it. 
 %show that this approach can be used to effectively find sequences of \textit{optimal} explanation steps for a large set of constraint satisfaction problems.
-\keywords{Unsatisfiable Subset Optimization\and Explanations\and Constraint Satisfaction Problems.}
+%\keywords{Unsatisfiable Subset Optimization\and Explanations\and Constraint Satisfaction Problems.}
 \end{abstract}
 %
 %
 %
 \section{Introduction}
-	Recently \cite{bogaerts2020framework}, introduced a framework that generates a sequence of \emph{simple} explanation steps that explains all logical consequences of a Constraint Satisfaction problem (CSP). 
-The explanation-generation algorithms presented in that work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
-The generation of an explanation sequence for a logic grid puzzle ranges from a few minutes to a few hours, which is more than a human would take.
+Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} set of constraints
+and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
+Explanations in that work are sequences of simple inference steps, a.k.a an \emph{explanation sequence}, involving as few constraints and previously-derived facts as possible. Every explanation derives at least one new fact, implied by a combination of constraints and already derived facts.
+
+The explanation steps of \cite{ecai/BogaertsGCG20} are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g., taking the number of constraints and facts into account, as well as an estimate of their cognitive complexity.
+For example, in the evaluation of explanations for logic grid puzzles, the given clues of the puzzle are considered more difficult than simpler reasoning tricks, and therefore have a higher cost.
+
+In practice, the explanation-generation algorithms presented in our previous work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
+
+However, the algorithm developed in \cite{ecai/BogaertsGCG20} has two main weaknesses.
+First, it provides \emph{no guarantees on the quality} of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
+Second, it suffers from \emph{performance problems}: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate fact to explain.
+However, using multiple MUS calls per literal in each iteration quickly triggers efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
+
+In this paper, we tackle the limitations discussed above. The main contributions of this paper are as follows:
+
+\begin{itemize}
+	\item We formalize the by introducing the (cost-)\emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem.
+	\item We develop algorithms that compute OCUSs based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
+	
+	
+%\item We develop algorithms that compute (cost-)\textbf{Optimal} \textbf{Constrained} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
+%
+%\item We observe that in the explanation setting, many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. 
+%
+%We formalize and generalize this observation by introducing the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem. We then show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
+
+%\item We develop techniques for \textbf{optimizing} the OCUS algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. 
+%Such optimizations include 
+%\begin{itemize}[(i)]
+%	\item the development of methods for \textbf{information re-use} between consecutive O(C)US calls; as well as 
+%	\item an explanation-specific version of the OCUS algorithm %\emilio{that expands the candidate-explanation of the most promising literal-to-explain}.
+%\end{itemize} 
+%\item Finally, we extensively evaluate our approaches on a large number of CSP instances.
+
+\end{itemize}
+
 \section{Preliminaries}
 
+We present all methods using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics is given in terms of a satisfaction relation between expressions in the language and possible states of affairs (assignments of values to variables).
+
+Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. 
+A clause is a disjunction of literals. A formula $\formula$ in conjunctive normal form (CNF) is a conjunction of clauses. 
+Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. 
+%%%% EMILIO: FIXED places where constraints mean clauses
+%\bart{If there are places in the paper where we use ``constraint'' but mean ``clause'', I would propose that we just fix those places.}
+%\emilio{Solved}
+
+A (partial) interpretation $\m{I}$ is a consistent (not containing both $p$ and $\lnot p$) set of literals. 
+A \emph{model} of \formula is an interpretation that satisfies \formula; $\formula$ is said to be \emph{unsatisfiable} if it has no models.
+Satisfaction of a formula \formula by an interpretation is defined as usual~\cite{faia/2009-185}.
+%\bart{The sentence that satisfaction is defined as usual is as long as just deifning it:
+	An interpretation $\m{I}$ \emph{satisfies} \formula if $\m{I}$ contains at least one literal from each clause in $\formula$.
+	%only AFTER this sentence, should the sentence about models come: 
+	An interpretation that satisfies $\formula$ is also called a \emph{model} of \formula. 
+	A \formula is \emph{satisfiable} if it has at least one model and \emph{unsatisfiable} otherwise. 
+	
+	A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models. The \emph{maximal consequence} of a formula \formula, denotes a consequence that holds in all models.
+	%\bart{in what follows, there are definitions such as ``maximal consequence'' that are given in a sentence that starts with ``In our running example''. It is better to give the definitions INDEPENDENT from the example, and AFTERWARDS apply them to the example. Also, the sentence defining $\negset{I}$ is a bit in a strange place, in between the ``definition'' of end interpretation and ``initial interpretation''.   
+		%By the way, I do not think we should talk about ``end'' and ``initial'' interpretation here. The reader does not know what that is yet. That will come when we define explanation sequences. 
+		%Consequence and maximal consequence can be defined here. They are logical concepts (independent of explanations)} 
+	%A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models. 
+	%In our running example, $\Iend = \{x_1, \lnot x_2,  x_3\}$ denotes the \emph{maximal consequence} that holds in all models and is also called the \emph{end interpretation}.
+	If $I$ is a set of literals, we write $\negset{I}$ for the set of literals $\{\lnot l\mid l\in I\}$.
+
+	%\subsection{Properties and definitions}
+	In the following, we introduce key properties on unsatisfiable subsets on which we build our algorithms.
+	
+	\begin{definition}
+		A \emph{Minimal Unsatisfiable Subset} (MUS) of 
+		\F is an unsatisfiable subset $\m{S}$ of $\F$ for which every strict subset of $\m{S} $ is satisfiable. 
+		\muses{\F} denotes the set of MUSs of \F. 
+	\end{definition}
+	
+	\begin{definition}
+		A set $\m{S} \subseteq \formula$ is a \emph{Maximal Satisfiable Subset} (MSS) of $ \formula$ if $\m{S}$ is satisfiable and for all $\m{S}'$ with $\m{S}  \subsetneq  \m{S}'\subseteq\formula $, $\m{S}'$ is unsatisfiable.
+	\end{definition}
+	
+	\begin{definition}
+		A set $\m{S} \subseteq \formula$ is a \emph{correction subset} of \formula if $\formula\setminus\m{S}$ is satisfiable. 
+		Such a $\m{S}$ is a \emph{minimal correction subset} (MCS)  of \formula if no strict subset of $\m{S}$ is also a correction subset. 
+		\mcses{\F} denotes the set of MCSs of \F. 
+	\end{definition}
+	%\begin{property}
+	Each  MCS of \formula is the complement of an MSS of \formula and vice versa. 	
+	%\end{property}
+	
+	\begin{definition}\label{def:minimal-hs}
+		Given a collection of sets $\m{H}$, a hitting set of $\m{H}$ is a set $h$ such that  $h \cap C \neq \emptyset$ for every $C \in \m{H}$. A hitting set is \emph{minimal} if no strict subset of it is also a hitting set.
+		
+	\end{definition}
+	
+	The next proposition is the well-known hitting set duality \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}  between MCSs and MUSs that forms the basis of our algorithms, as well as algorithms to compute MSSs \cite{DBLP:conf/sat/DaviesB13} and \emph{cardinality-minimal} MUSs \cite{ignatiev2015smallest}.
+	
+	\begin{proposition}\label{prop:MCS-MUS-hittingset}
+		
+		A set  $\m{S} \subseteq \formula$ is an MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.
+		A set  $\m{S} \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
+	\end{proposition}
+	
 \section{OCUS}
+
+\begin{definition}\label{definition:ocus}
+	Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula} \to \{\mathit{true}, \mathit{false} \}$. 
+	%\TIPnonamesinmathmode[$true$ and $false$ ]
+	%%EMILIO: Adapted the true and false to math
+	We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
+		$\m{S} \subseteq \formula$ an \emph{Optimal Constrained Unsatisfiable Subset (OCUS)} of \formula (with respect to $f$ and $p$) if 
+		% \TIPconsistentNames[$\mathcal{C}$ vs $\mathcal{F}$]  % OK: WE USE C FOR THE INPUT, F FOR THE DERIVED FORMULA OF WHICH WE WANT AN OCUS. THAT IS CONSISTENT. 
+		\begin{itemize}%[(1)]                          
+			\item $\m{S}$ is unsatisfiable,
+			\item $p(\m{S})$ is true, and
+			\item all other unsatisfiable $\m{S}'\subseteq \formula$ for which $p(\m{S}')$ is true satisfy $f(\m{S}')\geq f(\m{S})$.
+		\end{itemize}
+\end{definition}
+	
+	\begin{proposition}
+		Let \emph{\formula} be a CNF formula, ${p}$ be a predicate specified as a CNF over (meta)-variables indicating inclusion of clauses of \emph{\formula}, and ${f}$ be a cost-function obtained by assigning a weight to each such meta-variable, then the problem complexity of finding an OCUS is \emph{$\Sigma^\emph{P}_2$-complete}.
+		%	Let $\formula$ be a CNF formula with cost function $f$ and predicate $p$ defined over the mzt. The problem of finding an OCUS of \formula given $f$, and $p$ is $\Sigma^P_2$-complete.
+		%	\bart{The assumptions on $p$ and $f$ should be in the statement of the theorem, not in the proof}
+	\end{proposition}
+
+\begin{algorithm}[!h]
+	\DontPrintSemicolon
+	$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+	\While{true}{
+		$\m{S}, \mathit{status} \gets \cohs(\setstohit,f,p) $  \;
+		\lIf{$\mathit{status} = \mathit{FAILURE}$}{\Return{$(\emptyset, \mathit{status})$}}
+		
+		\If{ $\lnot \sat(\m{S})$ \label{alg:ocus-sat-check}}{
+			\Return{$(\m{S}, \mathit{status})$} \;
+		}
+		$\m{K} \gets \corrsubsets(\subsetT, \formula)$ \label{line:grow}\;
+		$\setstohit  \gets \setstohit  \cup \m{K} $  \label{alg:ocus:complement}\;
+	}
+	\caption{$\comus(\formula,f,p)$ \bart{In principle it can be that there are no OCUSs. For instance, just take $p$ to always be false. In that case, it willbe CondOptHittingSet that returns ``UNSAT''. We  should still catch this ``FAILURE'' of CondOptHittingSet and return some form of FAIL in that case. I have already assumed this to be fixed in my rewrite of ``onestepBounded''}\emilio{Added case to if check}}
+	\label{alg:comus}
+\end{algorithm}
 
 \section{Explanations}
 
@@ -105,6 +325,7 @@ The generation of an explanation sequence for a logic grid puzzle ranges from a 
 % References will then be sorted and formatted in the correct style.
 %
  \bibliographystyle{splncs04}
-\bibliography{krrlib,ref}
+ \bibliography{krrlib.bib,ref.bib}
+%\printbibliography
 
 \end{document}

@@ -1637,7 +1637,7 @@ By incorporating explanation-specific information, we are able to enumerating ex
 			%			3. & $\{x_2, c_1\}$                      & $\mathit{true}$  & $\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$       & $\{ ..., \{\cancel{x_1} , \cancel{\lnot x_2} , \cancel{x_3} , c_3 \}\}$                        \\ 
 			%			\midrule
 			%			4. & $\{\lnot x_1, c_3\}$  & $\mathit{false}$ & - & - \\% &&&&\\
-			3 & $\{c_3, x_2, \lnot x_3\}$& $\mathit{false}$  &  &                       \\  
+			3 & $\{c_1, c_3, \lnot x_1, x_2, \lnot x_3\}$& $\mathit{false}$  &  &                       \\  
 		\end{tabular}
 		\caption{\textit{Example (continued)}. Correction Subset enumeration from hitting set $\{ \lnot x_3\}$ with \comus \emph{incremental}.}
 		\label{tab:example-corr-subsets:ocus-incr}
@@ -1651,13 +1651,14 @@ By incorporating explanation-specific information, we are able to enumerating ex
 %\bart{If you introduce a notion of $p$-disjoint, such as I suggested higher in the text, you can be precise about it: for a specific $p$, the computed sets are $p$-disjoint (or disjoint modulo $p$ or ... whatever you wish to call it). That would allow you to avoid the vague terminology ``disjoint in the eyes of thehitting set solver'' (of which nobody really knows what it means)}
 %%% rephrased
 
-\paragraph{Efficient correction subset enumeration} Extending the observation from \cref{para:domainspecificgrow} that a call to an efficient \maxsat solver helps in finding maximally satisfiable subsets, we propose two variants of \cref{alg:corr-subsets-grow-with-sat}.
+\paragraph{Efficient correction subset enumeration} Extending the observation that a call to an efficient \maxsat solver helps in finding maximally satisfiable subsets, we propose two variants of \cref{alg:corr-subsets-grow-with-sat}.
 %\begin{itemize}
 
-The first variant is \emph{Disjoint \maxsat Correction Subsets}, a.k.a \emph{Disj. \maxsat Corr.}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
+The first variant is \emph{\maxsat Correction Subsets}, a.k.a \emph{\maxsat Corr.}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
 
-The second approach, \emph{\maxsat Corr.+\sat} works similarly to \emph{Disj. \maxsat Corr}, however only the first \grow is done with the domain specific \maxsat. The subsequent \grow calls are done using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. \bart{using the model computed by, what does that mean? Simply, the model computed by?}
+The second approach, \emph{\maxsat Corr.+\sat} works similarly to \emph{Disj. \maxsat Corr}, however only the first \grow is done with the domain specific \maxsat. The subsequent \grow calls correspond to extracting the larger satisfiable model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. \bart{using the model computed by, what does that mean? Simply, the model computed by?}
 
+We compare these approaches with a baseline, that repeatedly turns the 
 %\emilio{Add example to correction subset enumeration: Another observation is that clause $\{c_1\}$ is a unit-sized MCS, which poses a strong constraint on the MUSes of $\formulac_2$. More precisely, the MUSes of $\formulac_2$ have to contain $\{c_1\}$.}
 
 %\end{itemize}

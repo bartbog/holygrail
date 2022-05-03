@@ -1613,7 +1613,41 @@ This is an issue with \emph{our use} of OCUS. The way we USE the incremental OCU
 \emilio{Is this a better way to put it ?}
 Step 1 of \cref{tab:example-explanation-generation:incr:step1} illustrates this case where $x_1$ is present in the hitting set $\m{S}$ and $\lnot x_1$ in the correction subset $F \setminus \m{S}$. 
 Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints and the current interpretation, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I)$. 
-Using only $p$, helps in enumerating extra correction subsets that are $p$-disjoint.
+By incorporating explanation-specific information, we are able to enumerating extra correction subsets that are $p$-disjoint.
+%In the following example, we show helps in enumerating extra correction subsets that are $p$-disjoint.
+
+\begin{example}[\cref{ex:ocus-incr:expl-seq} continued] 
+	Consider the same setting as in \cref{ex:ocus-incr:expl-seq} with given interpretation $\m{I} =\emptyset$ and $\Iend = \{x_1, \lnot x_2, x_3\}$.
+	The following table illustrates the efficiency of \corrsubsets algorithm even in the incremental setting starting from given $\{\lnot x_3\}$ of our running example. 
+	\begin{table}[!h]
+		\centering
+		\begin{tabular}{lcccc} 
+			%			\multicolumn{5}{c}{OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
+			Step & $\m{S}'$                             & $\sat(\m{S}')$    & $\m{S}' \gets \grow(\m{S}', \formula)$      & $\m{K}  \gets \m{K}  \cup \{  \formula \setminus \m{S}'\}$ \\ 
+			\toprule[2pt]
+			&    \phantom{$\{ c_1, c_2, x_1, \lnot x_3 \}$}    &    &      & $\emptyset$                                \\\midrule
+			%%%%% SS: c1 and c2 and c4 and ~x2 and -8 and ~c3 and ~x3 and ~x1
+			%%%%% MCS: x1 and x2 and x3 and c3
+			1. & $\{ \lnot x_3\}$                    & $\mathit{true}$  & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, \lnot x_3 \}$            & $\{ \{c_3, x_1, x_2, x_3\}\}$                                \\\midrule
+			%%%%% HS: x2 and ~x3 and c3
+			%%%%% SS: x1 and x2 and c2 and c3 and c4 and -8 and ~c1 and ~x3
+			%%%%% MCS: x3 and c1 and ~x1 and ~x2
+			2. & $\{c_3, x_2, \lnot x_3\}$ & $\mathit{true}$  & $\{c_2 , c_3, c_4, x_1 , x_2, \lnot x_3 \}$ & $\{ ..., \{c_1, \lnot x_1, \lnot x_2, x_3\}\}$                               \\\midrule
+			%			\midrule % x2 and c1 and c2 and c4 and ~c3 and ~x3 and ~x1
+			%			3. & $\{x_2, c_1\}$                      & $\mathit{true}$  & $\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$       & $\{ ..., \{\cancel{x_1} , \cancel{\lnot x_2} , \cancel{x_3} , c_3 \}\}$                        \\ 
+			%			\midrule
+			%			4. & $\{\lnot x_1, c_3\}$  & $\mathit{false}$ & - & - \\% &&&&\\
+			3 & $\{c_3, x_2, \lnot x_3\}$& $\mathit{false}$  &  &                       \\  
+		\end{tabular}
+		\caption{\textit{Example (continued)}. Correction Subset enumeration from hitting set $\{ \lnot x_3\}$ with \comus \emph{incremental}.}
+		\label{tab:example-corr-subsets:ocus-incr}
+	\end{table}
+	
+	Taking a closer look at step 1 of \ref{tab:example-corr-subsets:ocus-incr}, one observes that $\lnot x_3$ is present in $\m{S}$ and $x_3$ is in the computed correction subset. If we were to directly add it to $\m{S}$, the algorithm would stop at the next iteration since $\m{S}$ would be unsatisfiable. However, $x_3$ (and $x_1$) cannot be selected by the hitting set solver, and therefore should not be added. By adding only $c_3$ and $x_2$, we are able to compute disjoint correction subsets in the eye of the hitting set solver.
+	
+\end{example}
+
+
 %\bart{If you introduce a notion of $p$-disjoint, such as I suggested higher in the text, you can be precise about it: for a specific $p$, the computed sets are $p$-disjoint (or disjoint modulo $p$ or ... whatever you wish to call it). That would allow you to avoid the vague terminology ``disjoint in the eyes of thehitting set solver'' (of which nobody really knows what it means)}
 %%% rephrased
 
@@ -1624,36 +1658,6 @@ The first variant is \emph{Disjoint \maxsat Correction Subsets}, a.k.a \emph{Dis
 
 The second approach, \emph{\maxsat Corr.+\sat} works similarly to \emph{Disj. \maxsat Corr}, however only the first \grow is done with the domain specific \maxsat. The subsequent \grow calls are done using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. \bart{using the model computed by, what does that mean? Simply, the model computed by?}
 
-\begin{example}[\cref{ex:ocus-incr:expl-seq} continued] 
-	Consider the same setting as in \cref{ex:ocus-incr:expl-seq} with given interpretation $\m{I} =\emptyset$ and $\Iend = \{x_1, \lnot x_2, x_3\}$.
-	The following table illustrates the efficiency of \corrsubsets algorithm even in the incremental setting starting from given $\{\lnot x_3\}$ of our running example. 
-	\begin{table}[!h]
-		\centering
-		\begin{tabular}{lcccc} 
-			%			\multicolumn{5}{c}{OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
-			Step & $\m{S}'$                             & $\sat(\m{S}')$    & \grow($\m{S}'$, $\formula$)                                 & $\m{K}  \gets \m{K}  \cup \{  \formula \setminus \m{S}'\}$ \\ 
-			\toprule[2pt]
-			&    \phantom{$\{ c_1, c_2, x_1, \lnot x_3 \}$}    &    &      & $\emptyset$                                \\
-			\midrule
-			%%%%% SS: c1 and c2 and c4 and ~x2 and -8 and ~c3 and ~x3 and ~x1
-			%%%%% MCS: x1 and x2 and x3 and c3
-			1. & $\{ \lnot x_3\}$                    & $\mathit{true}$  & $\{c_1, c_2, c_4, \lnot x_1, \lnot x_2, \lnot x_3 \}$            & $\{ \{c_3, x_1, x_2, x_3\}\}$                                \\\midrule
-			%%%%% HS: x2 and ~x3 and c3
-			%%%%% SS: x1 and x2 and c2 and c3 and c4 and -8 and ~c1 and ~x3
-			%%%%% MCS: x3 and c1 and ~x1 and ~x2
-			2. & $\{c_3, x_2, \lnot x_3\}$ & $\mathit{false}$  & $\{c_2 , c_3, c_4, x_1 , x_2, \lnot x_3 \}$ & $\{ ..., \{c_1, \lnot x_1, \lnot x_2, x_3\}\}$                               \\  
-%			\midrule % x2 and c1 and c2 and c4 and ~c3 and ~x3 and ~x1
-%			3. & $\{x_2, c_1\}$                      & $\mathit{true}$  & $\{  c_1 , c_2 , c_4, \lnot x_1 , x_2 , \lnot x_3\}$       & $\{ ..., \{\cancel{x_1} , \cancel{\lnot x_2} , \cancel{x_3} , c_3 \}\}$                        \\ 
-%			\midrule
-%			4. & $\{\lnot x_1, c_3\}$  & $\mathit{false}$ & - & - \\% &&&&\\
-		\end{tabular}
-		\caption{\textit{Example (continued)}. Correction Subset enumeration from hitting set $\{ \lnot x_3\}$ with \comus \emph{incremental}.}
-		\label{tab:example-corr-subsets:ocus-incr}
-	\end{table}
-
-Taking a closer look at step 1 of \ref{tab:example-corr-subsets:ocus-incr}, one observes that $\lnot x_3$ is present in $\m{S}$ and $x_3$ is in the computed correction subset. If we were to directly add it to $\m{S}$, the algorithm would stop at the next iteration since $\m{S}$ would be unsatisfiable. However, $x_3$ (and $x_1$) cannot be selected by the hitting set solver, and therefore should not be added. By adding only $c_3$ and $x_2$, we are able to compute disjoint correction subsets in the eye of the hitting set solver.
-
-\end{example}
 %\emilio{Add example to correction subset enumeration: Another observation is that clause $\{c_1\}$ is a unit-sized MCS, which poses a strong constraint on the MUSes of $\formulac_2$. More precisely, the MUSes of $\formulac_2$ have to contain $\{c_1\}$.}
 
 %\end{itemize}

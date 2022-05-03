@@ -13,11 +13,17 @@
 % to display URLs in blue roman font according to Springer's eBook style:
 %\usepackage{color}
 %\renewcommand\UrlFont{\color{blue}\rmfamily}
-%
+\newcommand\m[1]{\mathcal{#1}}
+
+\newcommand\mm[1]{\ensuremath{#1}\xspace}
+\newcommand\call[1]{\mm{\texttt{#1}}}
+\newcommand\comus{\mm{\call{OCUS}}}
+
 \begin{document}
 %
-\title{Efficiently explaining CSPs with Optimal Unsatisfiable Subset Optimization (Extended Abstract)}
-%
+\title{Efficiently explaining CSPs with Optimal Unsatisfiable Subset Optimization}
+\subtitle{(Extended abstract)}
+
 %\titlerunning{Abbreviated paper title}
 % If the paper title is too long for the running head, you can set
 % an abbreviated paper title here
@@ -38,10 +44,13 @@ KULeuven, Oude markt 13, 3000 Leuven, Belgium\\
 \maketitle              % typeset the header of the contribution
 %
 \begin{abstract}
-	Recently, Bogearts et al.~\cite{bogaerts2020framework}, introduced a framework to generate a sequence of \emph{simple} explanation steps that explains all logical consequences of a Constraint Satisfaction problem (CSP). 
-    An explanation in that work exploit a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs of a derived unsatisfiable formula.
-    Bogearts et al. \cite{bogaerts2020framework} identified the need for Unsatisfiable Subsets that are provably \emph{optimal} with respect to a given cost metric (that characterizes simplicity of explanations). 
-	We present an implicit hitting set-based algorithm for \emph{efficiently} computing \emph{cost-optimal} \emph{constrained} unsatisfiable subsets. In the use-case of explanation for CSPs, `constrainedness', allows for the formulation structural constraints on the explanation.
+	We build on a recently introduced a framework for computing a sequence of \emph{simple} explanation steps that explains all logical consequences of a Constraint Satisfaction problem (CSP). 
+	The explanation-generation algorithms of that work exploit a one-to-one correspondence between so-called \emph{non-redundant explanations} and minimal unsatisfiable subets (MUS) of a derived unsatisfiable formula.	
+	Since only $\subseteq$-minimal unsatisfiable subsets have been developed, the explanation generating algorithms rely on a heuristic to guarantee optimality of the explanations with respect to a given cost-metric (quantifying human-understandability).
+%	In that work, a cost-metric is used to quantify how difficult an explanation is based on the used constraints 
+%	To guarantee optimality of explanations with respect to a given cost-metric, the explanation generating algorithms rely heavily on repeated calls to MUSs.%of an increasingly larger subset of unsatisfiable formula.
+	We therefore introduce \emph{optimal} \emph{constrained} unsatisfiable subsets (OCUS) and an implicit hitting set-based algorithm for \emph{efficiently} computing them. 
+%	In the use-case of explanation for CSPs, `constrainedness', allows for the formulation structural constraints on the explanation.
 %The explanation-generation algorithms presented in that work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
 %
 %

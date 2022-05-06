@@ -1,0 +1,207 @@
+\documentclass[a4paper,UKenglish,cleveref, autoref, thm-restate, pdfa]{lipics-v2021}
+%This is a template for producing LIPIcs articles. 
+%See lipics-v2021-authors-guidelines.pdf for further information.
+%for A4 paper format use option "a4paper", for US-letter use option "letterpaper"
+%for british hyphenation rules use option "UKenglish", for american hyphenation rules use option "USenglish"
+%for section-numbered lemmas etc., use "numberwithinsect"
+%for enabling cleveref support, use "cleveref"
+%for enabling autoref support, use "autoref"
+%for anonymousing the authors (e.g. for double-blind review), add "anonymous"
+%for enabling thm-restate support, use "thm-restate"
+%for enabling a two-column layout for the author/affilation part (only applicable for > 6 authors), use "authorcolumns"
+%for producing a PDF according the PDF/A standard, add "pdfa"
+
+\pdfoutput=1 %uncomment to ensure pdflatex processing (mandatatory e.g. to submit to arXiv)
+%\hideLIPIcs  %uncomment to remove references to LIPIcs series (logo, DOI, ...), e.g. when preparing a pre-final version to be uploaded to arXiv or another public repository
+
+%\graphicspath{{./graphics/}}%helpful if your graphic files are in another directory
+
+\bibliographystyle{plainurl}% the mandatory bibstyle
+
+\title{Efficiently Explaining CSPs with Unsatisfiable Subset Optimization (extended abstract)}
+
+%\titlerunning{Efficn} %TODO optional, please use if title is longer than one line
+%
+%\author{Jane {Open Access}}{Dummy University Computing Laboratory, [optional: Address], Country \and My second affiliation, Country \and \url{http://www.myhomepage.edu} }{johnqpublic@dummyuni.org}{https://orcid.org/0000-0002-1825-0097}{(Optional) author-specific funding acknowledgements}%TODO mandatory, please use full name; only 1 author per \author macro; first two parameters are mandatory, other parameters can be empty. Please provide at least the name of the affiliation and the country. The full address is optional. Use additional curly braces to indicate the correct name splitting when the last name consists of multiple name parts.
+
+\author{Emilio Gamba\footnote{Corresponding author}}{Data Analytics Lab, Vrije Universiteit Brussel, Belgium}{emilio.gamba@vub.be}{https://orcid.org/0000-0003-1720-9428}{}
+
+\author{Bart Bogaerts}{Artificial Intelligence Lab, Vrije Universiteit Brussel, Belgium \and \url{https://www.bartbogaerts.eu}}{bart.bogaerts@vub.be}{https://orcid.org/0000-0003-3460-4251}{}
+
+\author{Tias Guns}{Data Analytics Lab, Vrije Universiteit Brussel, Belgium \and DTAI, KULeuven, Belgium \and \url{https://people.cs.kuleuven.be/~tias.guns/}}{tias.guns@kuleuven.be}{https://orcid.org/0000-0002-2156-2155}{}
+
+\authorrunning{E. Gamba and B. Bogaerts and T. Guns} 
+
+\Copyright{CC-BY} %TODO mandatory, please use full first names. LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
+
+\ccsdesc[100]{\textcolor{red}{Replace ccsdesc macro with valid one}} %TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm 
+
+\keywords{Dummy keyword} %TODO mandatory; please add comma-separated list of keywords
+
+\category{} %optional, e.g. invited paper
+
+\relatedversion{} %optional, e.g. full version hosted on arXiv, HAL, or other respository/website
+%\relatedversiondetails[linktext={opt. text shown instead of the URL}, cite=DBLP:books/mk/GrayR93]{Classification (e.g. Full Version, Extended Version, Previous Version}{URL to related version} %linktext and cite are optional
+
+%\supplement{}%optional, e.g. related research data, source code, ... hosted on a repository like zenodo, figshare, GitHub, ...
+%\supplementdetails[linktext={opt. text shown instead of the URL}, cite=DBLP:books/mk/GrayR93, subcategory={Description, Subcategory}, swhid={Software Heritage Identifier}]{General Classification (e.g. Software, Dataset, Model, ...)}{URL to related version} %linktext, cite, and subcategory are optional
+
+%\funding{(Optional) general funding statement \dots}%optional, to capture a funding statement, which applies to all authors. Please enter author specific funding statements as fifth argument of the \author macro.
+
+\acknowledgements{This research received partial funding from the Flemish Government (AI Research Program); the FWO Flanders project G070521N; and funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (Grant No. 101002802, CHAT-Opt).}%optional
+
+%\nolinenumbers %uncomment to disable line numbering
+
+
+
+%Editor-only macros:: begin (do not touch as author)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\EventEditors{John Q. Open and Joan R. Access}
+%\EventNoEds{2}
+%\EventLongTitle{42nd Conference on Very Important Topics (CVIT 2016)}
+%\EventShortTitle{CVIT 2016}
+%\EventAcronym{CVIT}
+%\EventYear{2016}
+%\EventDate{December 24--27, 2016}
+%\EventLocation{Little Whinging, United Kingdom}
+%\EventLogo{}
+%\SeriesVolume{42}
+%\ArticleNo{23}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% Comments
+%\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}Tias:#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}Emilio: #1}}}
+\newcommand{\checkthis}[1]{{\comment{\color{red}CheckRephrasing: #1}}}
+\newcommand{\bart}[1]{{\comment{\color{OliveGreen}Bart: #1}}}
+\newcommand{\new}[1]{{\comment{{\color{blue} #1}}}}
+\newcommand{\removed}[1]{\sout{#1}}
+
+\newcommand\comus{OCUS}
+\newcommand\corrsubsets{Correction Subsets}
+\begin{document}
+
+\maketitle
+
+%TODO mandatory: add short abstract of the document
+%\begin{abstract}
+% We build on a recently proposed method for explaining solutions of constraint satisfaction problems.
+% An explanation here is a \textit{sequence} of simple inference steps, where the simplicity of an inference step is measured by the number and types of constraints and facts used, and where the sequence explains all logical consequences of the problem. 
+% The explanation-generation algorithms presented in that work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. The generation of an explanation sequence for a logic grid puzzle ranges from a few minutes to a few hours, which is more than a human would take.
+% Therefore, we build on these formal foundations and tackle the main point of improvement 
+% %%% EMILIO: I changed the questions (efficiency and optimality) into a point of improvement
+% namely how to \emph{efficiently} generate explanations that are provably \emph{optimal} (with respect to the given cost metric). 
+% %%% Emilio: Added a sentence on that
+% To address this issue, we develop (1) an implicit hitting set algorithm for finding \emph{optimal} \emph{constrained} unsatisfiable subsets, where `constrainedness' reduces the multiple calls for (optimal) unsatisfiable subsets to a single call; (2) a method for re-using relevant information over multiple calls to these algorithms and; (3) methods for exploiting domain-specific information to speed-up explanation sequence generation.
+%We experimentally validate our algorithms on a large number of CSP instances. These experiments show that our algorithms outperform the MUS approach both in terms of quality of the explanation and in time to generate it. 
+%show that this approach can be used to effectively find sequences of \textit{optimal} explanation steps for a large set of constraint satisfaction problems.
+%\end{abstract}
+
+
+
+\section{Introduction}
+\label{sec:introduction}
+%%% XAI context
+% Human-understandable, interpretability, explainable (High-level XAI to low level constraint solvers ?)
+% Up until recently, Artificial Intelligence (AI) systems were considered to be a black-box. In this context, eXplainable Artificial Intelligence (XAI), a sub-field of AI, tries to explain how, and why, certain decisions were made by the AI system especially in critical application such as medical diagnosis where decisions have possibly life-altering consequences.
+% XAI has therefore seen many efforts for trying to open the black such as conference workshops \cite{workshop on XAI}, as well as national \cite{DARPA} and international initiatives \cite{EU initiatives,CLAIRE,..}.
+%
+%A lot of the focus in XAI lies in providing insight on prediction tasks .. 
+
+%%% 
+
+%A lot of research has been done in machine learning through feature maps where identify part of the feature space responsible for the predicted values; 
+
+
+%\emilio{Explanation using MUSes and one-to-one correspondence with non-redundant explanations}
+%\emilio{subset minimality vs optimality of the MUSes}
+%\emilio{Motivation on why we further improve our algorithm }
+%\emilio{something about difficulty of the explanations for logic grid puzzles? sudokus ?}
+%\emilio{Application of our work: Explanation Generation context, puzzle solving, scheduling, configuration}
+%%%% {GOAL (high-level to low-level)}
+
+%Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} constraint theory 
+%\emilio{Modified ordering and adapted text to fit.}
+%\bart{Te paragraph that follows is about explanation sequences (conceptual)}
+Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} set of constraints
+and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
+Explanations in that work are sequences of simple inference steps, a.k.a an \emph{explanation sequence}, involving as few constraints and previously-derived facts as possible. Every explanation derives at least one new fact, implied by a combination of constraints and already derived facts.
+
+The explanation steps of \cite{ecai/BogaertsGCG20} are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g., taking the number of constraints and facts into account, as well as an estimate of their cognitive complexity.
+For example, in the evaluation of explanations for logic grid puzzles, the given clues of the puzzle are considered more difficult than simpler reasoning tricks, and therefore have a higher cost.
+
+%%% {ISSUES when achieving our GOAL}
+In practice, the explanation-generation algorithms presented in our previous work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
+
+%\bart{What does this last part (after the comma) of the last sentence mean? 
+	%Explanations are optimized wrt 
+	%  1) a cost function (I know what this is!)
+	%  2) a valuation of their complexity or priority???  What is this? 
+	%}
+However, the algorithm developed in \cite{ecai/BogaertsGCG20} has two main weaknesses.
+First, it provides \emph{no guarantees on the quality} of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
+Second, it suffers from \emph{performance problems}: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate fact to explain.
+However, using multiple MUS calls per literal in each iteration quickly triggers efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
+%\bart{\begin{itemize}
+		%        \item The previous paragraph will be hard to follow for readers. For the conference version, we can get away with this. For the journal version I t hink that before this paragraph we should illustrate, informally what we mean by ``an explanation sequence'', ``implied facts'' etcetera. 
+		%        \item ``Several hours'' is not very informative. I would say ``several hours, even for simple puzzles that are designed to be solveable by humans'' or something of the kind. 
+		%      \end{itemize}
+	%}
+In this paper, we tackle the limitations discussed above: %The main contributions of this paper are as follows:
+%Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
+%\bart{What follows are not really ``ways'' in which we improve the SOA. I would rather say these are our contributions. I would rephrase to something of the style: ``In this paper, we tackle the limitations discussed above. The main contributions of this paper are as follows:''}
+%% Emilio: Adapted
+\begin{itemize}
+	
+	
+	
+	\item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
+	
+	\item We observe that in the explanation setting, many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. 
+	We formalize and generalize this observation by introducing the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem. We then show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
+	
+	\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include 
+	\begin{bracketenumerate}
+		\item the development of methods for \textbf{information re-use} between consecutive O(C)US calls; as well as 
+		\item an explanation-specific version of the OCUS algorithm \emilio{that expands the candidate-explanation of the most promising literal-to-explain}.
+\end{bracketenumerate} 
+	% Can also change it to  to only `explanation-specific' instead of algorithm that expands on the most promising literal-to-explain. } % that expands the candidate-explanation of the most promising literal-to-explain.
+%\bart{Names are important. I have already mentioned a couple of times that ``iterated OUS'' is a bad name. Because ``this iterated OUS algorithm'' is not an OUS algorithm. The problem it solves is OCUS for a specific C. WE should fix a better name and replace it throughout the paper. 
+	%}
+%that \emph{iteratively expands the candidate-explanation} of the most promising literal-to-explain. \tias{Agree with comment in comments about 'iterated OUS' being a bad name; an alternative attempt here} \tias{Does this match the contribs of the paper? to recheck later; e.g. multiple corr subsets?}
+%
+%\item 
+%% correction subset enumeration
+%\item We investigate how to impose additional constraints on the collection of sets-to-hit using domain-specific knowledge by balancing a trade-off between efficiency of the \grow strategy and quality of generated satisfiable subsets. 
+%\bart{Hmm... 
+	%\begin{itemize}
+	%\item Why does this not belong in the previous contribution? Is this not a technique for optimizing the O(C)US algorithms, exploiting domain specific information? 
+	%\item``Additional constraints''? Is that so? Would a different grow not just result in another set-to-hit? 
+	%\item ``constraints on the collection of sets-to-hit''. Not really, right. There are ``constraints'' on the sets-to-hit. 
+	%\item What is the ``quality of the generated satisfiabable subsets''. 
+	%\item This entire paragraph assumes that the reader knows how hitting-set based US solving works. We cannot make this assumption. This means that either we explain it beforehand, or we avoid going into technical details such as ``satisfiable subsets'', ``grow'', ``sets-to-hit''
+	%\end{itemize}}
+	
+	
+	\item Finally, we extensively evaluate our approaches on a large number of CSP instances.
+	
+\end{itemize}
+
+In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function. For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \cite{bogaerts2021framework}, by optimal constrained unsatisfiable subsets (\comus). Our algorithm for computing \comus{}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. In this approach, the main bottleneck of this approach is having to repeatedly compute optimal hitting sets followed by a cheap call to the sat solver and computing a correction subset. To compensate, we developed a correction subset enumeration method that balances the trade-off between efficiency and quality of generated subsets.
+
+%%%%% From 
+%\emilio{Say something the enumeration of corrections subsets that beats simply growing}
+ With the observed impact of different `\corrsubsets' methods, an open question remains whether we can quantify precisely and in a generic way what a \textit{good} or even the best set-to-hit is in a hitting set approach. 
+
+For efficiently generating the whole explanation sequence, we introduced incrementality which allows the re-use of computed information, more precisely satisfiable subsets, that remains valid from one explanation call to another.
+
+The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question.
+
+The concept of bounded (incremental) OUS and OCUS are not limited to explanations of satisfaction problems and we are keen to explore other applications too.
+%A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
+One potential avenue for future work is how do these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
+
+\bibliography{krrlib,ref}
+\end{document}

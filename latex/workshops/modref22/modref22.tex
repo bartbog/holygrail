@@ -120,7 +120,7 @@
 \newcommand\sat{\texttt{{SAT}}\xspace}
 \newcommand\grow{\mm{\call{Grow}}}
 \newcommand\omus{\mm{\call{OUS}}}
-\newcommand\comus{\mm{\call{OCUS}}}
+\newcommand\comus{\textsc{OCUS}}
 \newcommand\comusincr{\mm{\call{OCUS+Incr.~HS}}}
 \newcommand\ousb{\mm{\call{OCUS\_Bounded}}}
 \newcommand\ousbiter{\mm{\call{OCUSIter}}}
@@ -229,39 +229,39 @@ In this talk, we present the following contributions to tackle the limitations d
 %% Emilio: Adapted
 \begin{itemize}
 
-	\item We develop an algorithm that computes (cost-)\textbf{Optimal} \emph{Constrained} Unsatisfiable Subsets (OCUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
+	\item We develop an algorithm that computes (cost-)\textbf{Optimal} \emph{Constrained} Unsatisfiable Subsets (\comus{s}) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
 
-	\item We develop techniques for \textbf{optimizing} the OCUS algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include 
+	\item We develop techniques for \textbf{optimizing} the \comus~algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include 
 	\begin{bracketenumerate}
-		\item the development of methods for \textbf{information re-use} between consecutive OCUS calls;
-		\item an explanation-specific version of the OCUS algorithm. 
+		\item the development of methods for \textbf{information re-use} between consecutive \comus~calls;
+		\item an explanation-specific version of the \comus~algorithm. 
 		
 \end{bracketenumerate} 
-\item Finally, we extensively evaluate the different extensions of the base \comus algorithm on a large number of CSP instances including the puzzles from \cite{ecai/BogaertsGCG20,hoffmann2019explainable}, as well as, generated Sudoku instances of varying difficulty.
+\item Finally, we extensively evaluate the different extensions of the base \comus~algorithm on a large number of CSP instances including the puzzles from \cite{ecai/BogaertsGCG20,hoffmann2019explainable}, as well as, generated Sudoku instances of varying difficulty.
 \end{itemize}
 %In .
 %\vspace{-0.5\baselineskip}
 %\section{Discussion}
 %\vspace{-0.5\baselineskip}
 
-An example of the algorithmic challenges tackled in this talk is how to compute \comus{s}. 
-The algorithm we present relies on the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets.
+%An example of the algorithmic challenges tackled in this talk is how to compute \comus{s}. 
+The algorithms we present rely on the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets.
 %The algorithm .
 However, the main bottleneck of this approach is having to repeatedly compute optimal hitting sets followed by a cheap call to the sat solver and computing a correction subset.
 
 %The challenge 
-Based on the runtime for explaining the puzzles in our benchmark data set we noticed that most of the time is spent in computing hitting sets when calling the \comus algorithm.
+Based on the runtime for explaining the puzzles in our benchmark data set we notice that most of the time is spent in computing hitting sets when calling the \comus~algorithm.
 % Using th
 %Using this naive approach, we see that most of the time is spent in computing hitting sets.
 Especially, since the hitting set solver needs to consider an increasingly large collection of sets-to-hit potentially combining an exponential number of literals and clauses.
 
-To compensate, we developed a correction subset enumeration method that balances the trade-off between efficiency and quality of generated subsets.
+To compensate, we develop a correction subset enumeration method that balances the trade-off between efficiency and quality of generated subsets.
 Results show that, within a given timeout window, our correction subset enumeration method is able to explain more instances compared to a naive approach by shifting the computation away from the hitting set solver.
 %Furthermore, our explanation-specific implementation of $\comus$, \emph{expl.-spec.~OCUS}, 
 %% something about decomposing the explnaations for every fact to explain
 %% focusing/targeting the fact to explain that is most likely to lead to a good candidate expalnation. 
 
-For efficiently generating the whole \emph{explanation sequence}, we introduced incrementality which allows the re-use of computed information, more precisely satisfiable subsets that remain valid from one explanation call to another.
+For efficiently generating the whole \emph{explanation sequence}, we introduce incrementality which allows the re-use of computed information, more precisely satisfiable subsets that remain valid from one explanation call to another.
 Our results show that adding incrementality improves the speed of generating a full explanation sequence and require less sets-to-hit to be computed.
 
 %Lastly, when comparing the quality of generated explanation sequence with a standard MUS extraction technique to the optimal , we see that 
@@ -271,7 +271,7 @@ To conclude, with the observed impact of different methods for enumerating corre
 %The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question.
 
 
-Finally, the concept of (incremental) OCUS is not limited to explanations of satisfaction problems and we are keen to explore other applications too.
+Finally, the concept of (incremental) \comus~is not limited to explanations of satisfaction problems and we are keen to explore other applications too.
 %A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
 One potential avenue for future work is how do these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
 %\newpage

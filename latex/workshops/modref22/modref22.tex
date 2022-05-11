@@ -79,8 +79,87 @@
 \newcommand{\new}[1]{{\comment{{\color{blue} #1}}}}
 \newcommand{\removed}[1]{\sout{#1}}
 
-\newcommand\comus{OCUS}
-\newcommand\corrsubsets{Correction Subsets}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{amssymb,amsthm}
+\usepackage{thmtools} 
+\usepackage{cancel}
+\usepackage{adjustbox}
+\usepackage{booktabs} % To thicken table lines
+\DeclareMathOperator*{\mini}{minimize}
+
+\newcommand\m[1]{\mathcal{#1}}
+
+\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\decisionvariables{{D}}
+\newcommand\decisionvariable{{d}}
+\newcommand\settohit{H}
+\newcommand\hittingset{h}
+\newcommand\F{\ensuremath{\m{F} }\xspace}
+\newcommand\subsetT{\ensuremath{\m{S} }\xspace}
+\newcommand\bestsubsetT{\ensuremath{\m{S}_{best}}\xspace}
+\newcommand\corrsetT{\ensuremath{\m{K} }\xspace}
+\newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+\newcommand\Iend{\ensuremath{I_\mathit{end} }\xspace}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulac{\ensuremath{\m{C} }\xspace}
+\newcommand\formularunning{\ensuremath{T_{rex} }\xspace}
+\newcommand\formulag{\ensuremath{\m{G} }\xspace}
+\newcommand\mm[1]{\ensuremath{#1}\xspace}
+\newcommand\nat{\mm{\mathbb{N}}}
+\newcommand\ltrue{\mm{\textbf{t}}}
+\newcommand\lfalse{\mm{\textbf{f}}}
+\newcommand\uservars{\ensuremath{\m{U} }\xspace}
+\newcommand\call[1]{\mm{\texttt{#1}}}
+\newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+%\newcommand\cohs{\texttt{CondOptHittingSet}\xspace}
+\newcommand\ohs{\mm{\call{OptHittingSet}}}
+\newcommand\disjcorr{\mm{\call{DisjCorrSets}}}
+\newcommand\disjcorrincr{\mm{\call{DisjCorrSetsIncremental}}}
+\newcommand\disjcorrconstrained{\mm{\call{DisjCorrSetsConstrained}}}
+\newcommand\sat{\texttt{{SAT}}\xspace}
+\newcommand\grow{\mm{\call{Grow}}}
+\newcommand\omus{\mm{\call{OUS}}}
+\newcommand\comus{\textsc{OCUS}}
+\newcommand\comusincr{\mm{\call{OCUS+Incr.~HS}}}
+\newcommand\ousb{\mm{\call{OCUS\_Bounded}}}
+\newcommand\ousbiter{\mm{\call{OCUSIter}}}
+\newcommand\ousbincr{\mm{\call{OCUSb+Lit.~Incr.~HS}}}
+\newcommand\ousbiterincr{\mm{\call{OCUSIter+Lit.~Incr.~HS}}}
+\newcommand\corrss{\mm{\call{CorrSS}}}
+\newcommand\corrsubsets{\mm{\call{CorrSubsets}}}
+%\newcommand\corrsubsets{\texttt{CorrSubsets}\xspace}
+\newcommand\comusdisj{\mm{\call{OCUSConstrainedDisjMCSes}}}
+\newcommand\disjmcs{\mm{\call{DisjointMCSes}\xspace}}
+\newcommand\disjmcsconstrained{\mm{\call{DisjointMCSesConstrained}\xspace}}
+\newcommand\omusinc{\mm{\call{OUS-Inc}}}
+\newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+\newcommand\satsets{\mm{\mathbf{SSs}}}
+\newcommand\fall{\mm{\formula_{\mathit{all}}}}
+\newcommand\algemilio[1]{\emilio{#1}\;}
+\newcommand\UB{ub}
+\newcommand\LB{lb}
+\newcommand\maxsat{MaxSAT\xspace}
+\newcommand\voc{\ensuremath{\Sigma}\xspace}
+\newcommand\negset[1]{\mm{\overline{#1}}}
+
+\newcommand{\algorithmicbreak}{\textbf{break}}
+%%%%%
+\newcommand\muses[1]{\ensuremath{\mathit{MUSs}(#1)}\xspace}
+\newcommand\mcses[1]{\ensuremath{\mathit{MCSs}(#1)}\xspace}
+
+%%%%%%%
+\newcommand\onestep{\ensuremath{\call{Explain-One-Step}}\xspace}
+\newcommand\onestepomus{\ensuremath{\call{Explain-One-Step-OUS}}\xspace}
+\newcommand\onestepomusbounded{\ensuremath{\call{Explain-One-Step-OCUS-Bounded}}\xspace}
+
+%\newcommand\onestepo{\texttt{Explain-One-Step-OCUS}\xspace}
+\newcommand\onestepo{\ensuremath{\call{Explain-One-Step-OCUS}}\xspace}
+\newcommand\iterativeonestep{\ensuremath{\call{Explain-One-Step-OCUS-Split}}\xspace}
+
+%\usepackage{titlesec}
+%\titlespacing*{\section}{0pt}{1.1\baselineskip}{\baselineskip}
+
 \begin{document}
 
 \maketitle
@@ -100,9 +179,10 @@
 %\end{abstract}
 
 
-
-\section{Introduction}
-\label{sec:introduction}
+%\vspace{-0.5\baselineskip}
+%\section{Introduction}
+%\label{sec:introduction}
+%\vspace{-0.5\baselineskip}
 %%% XAI context
 % Human-understandable, interpretability, explainable (High-level XAI to low level constraint solvers ?)
 % Up until recently, Artificial Intelligence (AI) systems were considered to be a black-box. In this context, eXplainable Artificial Intelligence (XAI), a sub-field of AI, tries to explain how, and why, certain decisions were made by the AI system especially in critical application such as medical diagnosis where decisions have possibly life-altering consequences.
@@ -144,64 +224,124 @@ However, the algorithm developed in \cite{ecai/BogaertsGCG20} has two main weakn
 First, it provides \emph{no guarantees on the quality} of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
 Second, it suffers from \emph{performance problems}: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate fact to explain.
 However, using multiple MUS calls per literal in each iteration quickly triggers efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
-%\bart{\begin{itemize}
-		%        \item The previous paragraph will be hard to follow for readers. For the conference version, we can get away with this. For the journal version I t hink that before this paragraph we should illustrate, informally what we mean by ``an explanation sequence'', ``implied facts'' etcetera. 
-		%        \item ``Several hours'' is not very informative. I would say ``several hours, even for simple puzzles that are designed to be solveable by humans'' or something of the kind. 
-		%      \end{itemize}
-	%}
-In this paper, we tackle the limitations discussed above: %The main contributions of this paper are as follows:
-%Motivated by these observations, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
-%\bart{What follows are not really ``ways'' in which we improve the SOA. I would rather say these are our contributions. I would rephrase to something of the style: ``In this paper, we tackle the limitations discussed above. The main contributions of this paper are as follows:''}
+We observe that in the explanation setting, many of the individual calls for MUSs can actually be replaced by a single call that searches for an optimal unsatisfiable subset among subsets satisfying certain structural constraints.
+In this talk, we present the following contributions to tackle the limitations discussed above:
 %% Emilio: Adapted
 \begin{itemize}
-	
-	
-	
-	\item We develop algorithms that compute (cost-)\textbf{Optimal} Unsatisfiable Subsets (from now on called OUSs) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
-	
-	\item We observe that in the explanation setting, many of the individual calls for MUSs (or OUSs) can actually be replaced by a single call that searches for an optimal unsatisfiable subset \textbf{among subsets satisfying certain structural constraints}. 
-	We formalize and generalize this observation by introducing the \emph{Optimal \textbf{Constrained} Unsatisfiable Subsets (OCUS)} problem. We then show how $O(n^2)$ calls to MUS/OUS can be replaced by $O(n)$ calls to an OCUS oracle, where $n$ denotes the number of facts to explain. 
-	
-	\item We develop techniques for \textbf{optimizing} the O(C)US algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include 
-	\begin{bracketenumerate}
-		\item the development of methods for \textbf{information re-use} between consecutive O(C)US calls; as well as 
-		\item an explanation-specific version of the OCUS algorithm \emilio{that expands the candidate-explanation of the most promising literal-to-explain}.
-\end{bracketenumerate} 
-	% Can also change it to  to only `explanation-specific' instead of algorithm that expands on the most promising literal-to-explain. } % that expands the candidate-explanation of the most promising literal-to-explain.
-%\bart{Names are important. I have already mentioned a couple of times that ``iterated OUS'' is a bad name. Because ``this iterated OUS algorithm'' is not an OUS algorithm. The problem it solves is OCUS for a specific C. WE should fix a better name and replace it throughout the paper. 
-	%}
-%that \emph{iteratively expands the candidate-explanation} of the most promising literal-to-explain. \tias{Agree with comment in comments about 'iterated OUS' being a bad name; an alternative attempt here} \tias{Does this match the contribs of the paper? to recheck later; e.g. multiple corr subsets?}
-%
-%\item 
-%% correction subset enumeration
-%\item We investigate how to impose additional constraints on the collection of sets-to-hit using domain-specific knowledge by balancing a trade-off between efficiency of the \grow strategy and quality of generated satisfiable subsets. 
-%\bart{Hmm... 
-	%\begin{itemize}
-	%\item Why does this not belong in the previous contribution? Is this not a technique for optimizing the O(C)US algorithms, exploiting domain specific information? 
-	%\item``Additional constraints''? Is that so? Would a different grow not just result in another set-to-hit? 
-	%\item ``constraints on the collection of sets-to-hit''. Not really, right. There are ``constraints'' on the sets-to-hit. 
-	%\item What is the ``quality of the generated satisfiabable subsets''. 
-	%\item This entire paragraph assumes that the reader knows how hitting-set based US solving works. We cannot make this assumption. This means that either we explain it beforehand, or we avoid going into technical details such as ``satisfiable subsets'', ``grow'', ``sets-to-hit''
-	%\end{itemize}}
-	
-	
-	\item Finally, we extensively evaluate our approaches on a large number of CSP instances.
-	
-\end{itemize}
 
-In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function. For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \cite{bogaerts2021framework}, by optimal constrained unsatisfiable subsets (\comus). Our algorithm for computing \comus{}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. In this approach, the main bottleneck of this approach is having to repeatedly compute optimal hitting sets followed by a cheap call to the sat solver and computing a correction subset. To compensate, we developed a correction subset enumeration method that balances the trade-off between efficiency and quality of generated subsets.
+	\item We develop an algorithm that computes (cost-)\textbf{Optimal} \emph{Constrained} Unsatisfiable Subsets (\comus{s}) based on the well-known hitting-set duality that is also used for computing cardinality-minimal MUSs \cite{ignatiev2015smallest,DBLP:conf/kr/SaikkoWJ16}.
+
+	\item We develop techniques for \textbf{optimizing} the \comus~algorithms further, exploiting domain-specific information coming from the fact that we are in the \emph{explanation-generation context}. Such optimizations include 
+	\begin{bracketenumerate}
+		\item the development of methods for \textbf{information re-use} between consecutive \comus~calls;
+		\item an explanation-specific version of the \comus~algorithm. 
+		
+\end{bracketenumerate} 
+\item Finally, we extensively evaluate the different extensions of the base \comus~algorithm on a large number of CSP instances including the puzzles from \cite{ecai/BogaertsGCG20,hoffmann2019explainable}, as well as, generated Sudoku instances of varying difficulty.
+\end{itemize}
+%In .
+%\vspace{-0.5\baselineskip}
+%\section{Discussion}
+%\vspace{-0.5\baselineskip}
+
+%An example of the algorithmic challenges tackled in this talk is how to compute \comus{s}. 
+The algorithms we present rely on the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets.
+%The algorithm .
+However, the main bottleneck of this approach is having to repeatedly compute optimal hitting sets followed by a cheap call to the sat solver and computing a correction subset.
+
+%The challenge 
+Based on the runtime for explaining the puzzles in our benchmark data set we notice that most of the time is spent in computing hitting sets when calling the \comus~algorithm.
+% Using th
+%Using this naive approach, we see that most of the time is spent in computing hitting sets.
+Especially, since the hitting set solver needs to consider an increasingly large collection of sets-to-hit potentially combining an exponential number of literals and clauses.
+
+To compensate, we develop a correction subset enumeration method that balances the trade-off between efficiency and quality of generated subsets.
+Results show that, within a given timeout window, our correction subset enumeration method is able to explain more instances compared to a naive approach by shifting the computation away from the hitting set solver.
+%Furthermore, our explanation-specific implementation of $\comus$, \emph{expl.-spec.~OCUS}, 
+%% something about decomposing the explnaations for every fact to explain
+%% focusing/targeting the fact to explain that is most likely to lead to a good candidate expalnation. 
+
+For efficiently generating the whole \emph{explanation sequence}, we introduce incrementality which allows the re-use of computed information, more precisely satisfiable subsets that remain valid from one explanation call to another.
+Our results show that adding incrementality improves the speed of generating a full explanation sequence and require less sets-to-hit to be computed.
+
+%Lastly, when comparing the quality of generated explanation sequence with a standard MUS extraction technique to the optimal , we see that 
+
+To conclude, with the observed impact of different methods for enumerating correction subsets, an open question remains whether we can quantify precisely, and in a generic way, what a good or even the \emph{best} set-to-hit is in a hitting set approach. 
+
+%The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question.
+
+
+Finally, the concept of (incremental) \comus~is not limited to explanations of satisfaction problems and we are keen to explore other applications too.
+%A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
+One potential avenue for future work is how do these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
+%\newpage
+\bibliography{krrlib,ref}
+\end{document}
+
+
+%Since the hitting set solver computes hitting sets on a increasing large number of sets-to-hit, we propose an explanation-specific implementation of $\comus$.
+
+%Since the hitting set solver computes, we  expl.-spec.~OCUS+Incr
+
+
+%
+%\begin{table}[!h]
+%	\centering
+%	\begin{adjustbox}{max width=\textwidth}
+	%		\begin{tabular}{r|c|c|c|c|c|c|c|c}
+		%			& \multicolumn{4}{c|}{\textbf{\sat}} & \multicolumn{4}{c}{\textbf{\maxsat+\sat Corr.}}\\[1ex]
+		%			%	\cline{2-9}
+		%			\textbf{config}         &  explained  &  \%\texttt{OPT} &   \%\sat & \%\corrss  & explained  &  \%\texttt{OPT} &   \%\sat & \%\corrss   \\ \midrule
+		%			%			OUSb                    & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310 & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149 \\
+		%			
+		%			OCUS                    & 233/403 &          96.65\% &  3.01\% & 0.35\% &      310/403 &         19.83\% &   0.82\% &    79.34\%  \\
+		%			expl.-spec.~OCUS 		& 273/403 &          88.58\% & 10.41\% & 1.01\% &      309/403 &          9.96\% &   0.89\% &    89.15\%  \\
+		%			%			OUSb+Lit. Incr. HS      & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &      1538 & [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220  \\
+		%			
+		%			OCUS+Incr.             & 242/403 &          99.16\% &  0.78\% & 0.06\% &      311/403 &         50.76\% &   0.67\% &    48.57\% \\
+		%			expl.-spec.~OCUS+Incr.  & 272/403 &          96.28\% &  3.42\% &  0.3\% &      311/403 &          36.9\% &   0.83\% &    62.27\%  \\
+		%			MUS                     & 311/403 &              --- &     --- &    --- &      311/403 &             --- &       ---&          --- \\
+		%			%	\bottomrule
+		%		\end{tabular}
+	%	\end{adjustbox}
+%	\caption{Runtime decomposition of core parts of \call{O(C)US}. On the left, most of the computation time is spent in computing more optimal (constrained) hitting sets, while on the right, the runtime is shifted towards higher quality correction subsets.}
+%	\label{tab:runtime-decomposition}
+%\end{table}
+
+% demonstrate that keeping track of previously compute correction subsets reduces the time required to fully explain an instance.
+%
+%. For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \cite{bogaerts2021framework}, by optimal constrained unsatisfiable subsets (\comus). Our algorithm for computing \comus{}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. In this approach, the main bottleneck of this approach is having to repeatedly compute optimal hitting sets followed by a cheap call to the sat solver and computing a correction subset. To compensate, we developed a correction subset enumeration method that balances the trade-off between efficiency and quality of generated subsets.
 
 %%%%% From 
 %\emilio{Say something the enumeration of corrections subsets that beats simply growing}
- With the observed impact of different `\corrsubsets' methods, an open question remains whether we can quantify precisely and in a generic way what a \textit{good} or even the best set-to-hit is in a hitting set approach. 
+%\vspace{-0.5\baselineskip}
+%\section{Conclusion}
+%\vspace{-0.5\baselineskip}
 
-For efficiently generating the whole explanation sequence, we introduced incrementality which allows the re-use of computed information, more precisely satisfiable subsets, that remains valid from one explanation call to another.
+% and alternates calls to a hitting set solver, checking satisfiability of the computed optimal \emph{constrained} hitting set and the extraction of correction subsets, until an OCUS is found.
+%Therefore, demonstrate that most of 
 
-The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question.
+%\begin{table}[!h]
+%	\centering
+%	\begin{adjustbox}{max width=\textwidth}
+	%		\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
+		%			& \multicolumn{5}{c|}{\textbf{\sat}} & \multicolumn{5}{c}{\textbf{\maxsat+\sat Corr.}}\\[1ex]
+		%			%	\cline{2-9}
+		%			\textbf{config}         &  \emph{explained}  &  \%\texttt{OPT} &   \%\sat & \%\corrss &  $N_{sth}$ & \emph{explained}  &  \%\texttt{OPT} &   \%\sat & \%\corrss &  $N_{sth}$  \\ \midrule
+		%			%			OUSb                    & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310 & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149 \\
+		%			
+		%			OCUS                    & 233/403 &          96.65\% &  3.01\% & 0.35\% &      6245 & 310/403 &         19.83\% &   0.82\% &    79.34\% &      3029  \\
+		%			expl.-spec.~OCUS 		& 273/403 &          88.58\% & 10.41\% & 1.01\% &      7480 & 309/403 &          9.96\% &   0.89\% &    89.15\% &     23878  \\
+		%			%			OUSb+Lit. Incr. HS      & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &      1538 & [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220  \\
+		%			
+		%			OCUS+Incr.             & 242/403 &          99.16\% &  0.78\% & 0.06\% &       405 & 311/403 &         50.76\% &   0.67\% &    48.57\% &       318 \\
+		%			expl.-spec.~OCUS+Incr.  & 272/403 &          96.28\% &  3.42\% &  0.3\% &      1713 & 311/403 &          36.9\% &   0.83\% &    62.27\% &      1249  \\
+		%			MUS                     & 311/403 &              --- &     --- &    --- &       --- & 311/403 &             --- &       ---&          ---&        --- \\
+		%			%	\bottomrule
+		%		\end{tabular}
+	%	\end{adjustbox}
+%	\caption{Runtime decomposition of core parts of \call{OCUS}.}
+%	\label{tab:runtime-decomposition}
+%\end{table}
 
-The concept of bounded (incremental) OUS and OCUS are not limited to explanations of satisfaction problems and we are keen to explore other applications too.
-%A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
-One potential avenue for future work is how do these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
-
-\bibliography{krrlib,ref}
-\end{document}
+%By evaluating 

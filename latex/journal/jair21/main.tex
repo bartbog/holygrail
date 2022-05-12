@@ -45,7 +45,7 @@
 
 %% Comments
 \newcommand\comment[1]{\marginpar{\tiny #1}}
-%\renewcommand\comment[1]{}
+\renewcommand\comment[1]{#1}
 \newcommand{\tias}[1]{{\comment{\color{blue}Tias:#1}}}
 \newcommand{\emilio}[1]{{\comment{\color{red}Emilio: #1}}}
 \newcommand{\checkthis}[1]{{\comment{\color{red}CheckRephrasing: #1}}}
@@ -86,8 +86,8 @@
 \newcommand\omus{\mm{\call{OUS}}}
 \newcommand\comus{\mm{\call{OCUS}}}
 \newcommand\comusincr{\mm{\call{OCUS+Incr.~HS}}}
-\newcommand\ousb{\mm{\call{OCUS\_Bounded}}}
-\newcommand\ousbiter{\mm{\call{OCUSIter}}}
+\newcommand\ousb{\mm{\call{OCUS\_Bound}}}
+\newcommand\ousbiter{\mm{\call{OCUS\_Split}}}
 \newcommand\ousbincr{\mm{\call{OCUSb+Lit.~Incr.~HS}}}
 \newcommand\ousbiterincr{\mm{\call{OCUSIter+Lit.~Incr.~HS}}}
 \newcommand\corrss{\mm{\call{CorrSS}}}
@@ -1757,25 +1757,27 @@ In the MUS-based approach we used PySAT’s deletion-based MUS extractor MUSX [M
 
 Regarding the benchmark dataset, we rely on a set of generated Sudoku puzzles of increasing difficulty (different amount of given numbers), the Logic Grid puzzles of \cite{bogaerts2021framework}, as well as a number of instances taken from \cite{schotten}\footnote{We express our gratitude towards Matthew. J. McIlree and Christopher Jefferson at the University of St. Andrews for providing their help with the extraction of CNF formatted instances from Essence problem specifications \cite{frisch2008essence} using Savile Row \cite{nightingale2017automatically}, as well as the problem instances themselves.}\footnote{The code for all experiments is made available at \texttt{https://github.com/ML-KULeuven/ocus-explain}.}. 
 
+When generating an explanation sequence for these puzzles, the unsatisfiable subsets identify which constraints and which previously derived facts should be combined to derive new information. 
 Similar to \cite{ijcai2021}, for Logic Grid puzzles and Sudoku puzzles, we assign a cost of 60 for puzzle-agnostic constraints; 100 for puzzle-specific constraints; and cost 1 for facts.
-This cost function yielded reasonable explanations such that the use of a puzzle-agnostic constraint (considered relatively easy) for all other puzzles we assign a cost of 60 when using a constraint and a cost 1 for facts.
-In \cref{tab:puzzle-composition-family}, we summarize the average number of clauses (avg. $\#$ {clauses}), the average number of literals to explain (avg. $\#$ lits-to-explain) as well as the number puzzles (n) in the benchmark data set for each puzzle family. 
+%This cost function yielded reasonable explanations such that the use of a puzzle-agnostic constraint (considered relatively easy)  Tias: broken sentence, not sure it is relevant here
+For all other puzzles we assign a cost of 60 when using a constraint and a cost 1 for facts.
+In \cref{apx:puzzledata}, \cref{tab:puzzle-composition-family}, we summarize the average number of clauses (avg. $\#$ {clauses}), the average number of literals to explain (avg. $\#$ lits-to-explain) as well as the number puzzles (n) in the benchmark data set for each puzzle family. 
 %\tias{Refer to your table in the appendix here somewhere}
 
-When generating an explanation sequence for these puzzles, the unsatisfiable subset identifies which constraints and which previously derived facts should be combined to derive new information. Our experiments are designed to answer the following research questions:  
+Our experiments are designed to answer the following research questions:  
 
 \begin{enumerate}[label={Q\arabic*}, ref={Q\arabic*}]
 \item  What is the effect of requiring optimality of the generated MUSs on the \textbf{quality} of the generate explanations ? \label{rq:q1}
-\item   Does \textbf{re-use} of information across the different iterations improve efficiency? \label{rq:q2}
+\item   Does \textbf{re-use} of information across the different iterations improve efficiency? \label{rq:q2} \tias{not sure 'reuse' is consistent with story...}
 \item  Which domain-specific Correction Subset method improves the overall runtime? \label{rq:q3}
 \begin{enumerate}
 	\item How does extraction multiple correction subsets affect runtime ? 
-\end{enumerate}
+\end{enumerate} \tias{just the 'a' one is fine?}
 \item   What is the efficiency of a single step O(C)US and is single step sufficiently efficient for an interactive context 
 \begin{enumerate}
 \item from an incremental (random explanation?) solving point of view ?
 \item from an instantaneous(time-to-first) explanation  point of view ?
-\end{enumerate} \label{rq:q4}
+\end{enumerate} \label{rq:q4} \tias{revisit after reading exps}
 \end{enumerate}
 
 \subsection{Explanation quality}
@@ -1809,13 +1811,14 @@ To answer \textbf{Q2}, we compare the effect of incrementality in the search for
 Next to \begin{inparaenum}[(1)]
 	\item \textbf{\comus}, we also include
 	\item the \emph{bounded} \comus (\ousb) algorithm, where we call the \comus algorithm for every literal in every step, but we reuse information by giving it the current best bound $f(S_{best})$ and iterating over the literals that performed best in the previous call first;
-	\item the \emph{interleaved} OCUS (\ousbiter) approach, where we only expand the most promising literal by taking advantage of the lower bound on the explanation cost.
+	\item the \emph{split} OCUS (\ousbiter) approach, where we split up the computations by iteratively selecting the most promising literal and expanding only one hitting set for it, then re-evaluating the most promising literal and so forth.
 \end{inparaenum}
 
-\emilio{Not sure what the best way is to refer to these 3 approaches, do send some suggestions. I will adapt the graph as soon as I have the final legends.}
+\emilio{Not sure what the best way is to refer to these 3 approaches, do send some suggestions. I will adapt the graph as soon as I have the final legends.}\tias{Done, following the algo names}
 
 For \comus, incrementality (\emph{+Incr}) is achieved by reusing the same incremental MIP hitting set solver throughout the explanation calls, as explained in \cref{sec:ocusEx}. 
-Whereas \ousb and \ousbiter (\emph{+Incr. HS}) use a separate incremental hitting set solver for every literal to explain, throughout the explanation calls. Once the literal is explained, the hitting set solver is discarded.
+Methods \ousb and \ousbiter use a separate hitting set solver for every literal to explain. Each hitting set solver can similarly be made incremental (with respect to its own literal) across the explanation calls (\emph{+Incr. HS}), or not.% Once the literal is explained, the hitting set solver is discarded.
+\tias{Both can just be referred to as 'Incr' I think... Otherwise Incr and Incr-lit}
 
 %Figure \ref{fig:rq2_cactus_incrementality_log} depicts the average (over all the puzzles) cumulative explanation time to derive a number of literals. Note that all puzzles contain the same number of literals. When a method times out for a puzzle at one step, a runtime value of 3600 is used in computing the averages for all future steps. In case, the number of literals in a puzzle is less than the maximum number of literals to explain, then the cumulative time to derive the last literal is used for computing the average. 
 Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances fully explained through time before the given 1 hour timeout. In each configuration depicted, we use the following \corrsubsets procedure: \begin{inparaenum}[(1)]
@@ -1834,10 +1837,15 @@ Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances f
 %\tias{This aggregates over MANY puzzles... do you have such figures, or a table, for each puzzle 'instance' family separately? I am especially curious to now if this avg time of 200 for the 1st step is 'average' behaviour, or 'averaged' behavior: is it typically the case, or is something timing out in the first step pushing this up}
 %\tias{Should we go for cactusplots instead? nr of puzzles explained per time (full explanation, not cut up into steps)}
 \emilio{is the time to explain linked to the "difficulty" of the instance, i.e. sum of the explanation costs/ $\#$ of explanations ?}
-If we compare all configurations, we see that the plain \emph{MUS}-based implementation is able to explain more instances than all \emph{O(C)US} implementations, as it solves a simpler problem (with worse quality results as shown in \textbf{Q1}).%, especially since the \emph{MUS}-based implementation does not take weights into consideration, .% \emilio{Hypothesis: Most of the puzzles (instances 250+) are harder to explain, 
+If we compare all configurations, we see that the plain \emph{MUS}-based implementation is able to explain more instances than all \emph{O(C)US} implementations, as it solves a simpler problem (with worse quality results as shown in \textbf{Q1}). %, especially since the \emph{MUS}-based implementation does not take weights into consideration, .% \emilio{Hypothesis: Most of the puzzles (instances 250+) are harder to explain, 
+\tias{First explain OCUS versus OUS-Bound/OUS-split (dashed lines, can have exactly the same color as the incr ones actually): OCUS a bit faster than MUS but only in for simple instances, OCUS-Bound faster than OCUS for easier instances but solves about same number of instances, OCUS-Split considerably faster and more instances than the other}
+
+\tias{Then incrementality: for OCUS there is a speed-up, for OUS-bound it is neglegible and for OUS-split there is a speed-up in all but its most difficult instances.}\tias{TO discuss: or is it only for the easiest instances, and this is carried on in the cumulative?}
 Already at the beginning, the effect of incrementality is noticeable on the number of instances explained, but it isn't very pronounced. 
 We see that the curves of the incremental variants are generally located somewhat lower. 
-The best runtime to explain the entire sequence, is obtained with \ousbiterincr, that is, using an incremental hitting set solver \emph{for every individual literal to explain} and only expanding the literal that is most likely to provide a cost-minimal \comus.
+
+\tias{Then this to conclude}
+The best runtimes are obtained with \ousbiterincr, that is, using an incremental hitting set solver \emph{for every individual literal to explain} and only expanding the literal that is most likely to provide a cost-minimal \comus.
 
 %The left part of \cref{tab:runtime-decomposition} in for \ousb incrementality allows for solving 4 more instances; \comus incremental variant solves 9 more instances than the base \comus and \ousbiterincr is able to solve 1 more instance than \ousbiter.
 %The most striking observation from this figure is the jump at the beginning of \ousb and \ousbincr. For both configurations, around 50 \% of the timed-out instances timeout at the first step. Since \ousb and \ousbincr need to find an \emph{OUS} before having a good upper bound on the explanation, the first literals to explain will have an important impact on the time to generate the first explanation. More generally, the ordering of the literals-to-explain plays an important factor in explanation generation. 
@@ -1845,7 +1853,8 @@ The best runtime to explain the entire sequence, is obtained with \ousbiterincr,
 %Already, the difference is clear, 5with runtime curves separating for each configuration and their incremental variant. \emilio{Don't know the good word for curves separating}
 %The long trailing end of each configuration is explained by the presence of the \emilio{add puzzle name here} puzzle, that has 375 literals to explain compared to the others which have 250 literals or less to explain.
 %\emilio{Ensure 2 graphs are at the same height! Somehow it matches with the caption under the figures}
-In \cref{tab:runtime-decomposition}, we decompose the time spent in each core parts of the \call{O(C)US} algorithms only for the instances that do not timeout. If we did, the average \% of time would not be representative as it would be biased by for instance the expensive \grow or \textsc{OPT} call. 
+\tias{Needs a paragraph title/experiment question, what are we deep-diving into? "Comparison of time spent in hitting set solver, sat solver and correction subset computation"?}
+In \cref{tab:runtime-decomposition}, we decompose the time spent in each core parts of the \call{O(C)US} algorithms. We only included in the runtimes the instances that do not timeout\tias{that can be explained within the timeout by all methods???}, to allow a fair comparison. %If we did, the average \% of time would not be representative as it would be biased by for instance the expensive \grow or \textsc{OPT} call. 
 The table depicts for each configuration \begin{inparaenum}[(1)]
 	\item the number of instances \emph{explained}
 	\item \%\textsc{OPT} the percentage of time spent in the hitting set solver;
@@ -1862,12 +1871,12 @@ The table depicts for each configuration \begin{inparaenum}[(1)]
 	& \multicolumn{5}{c|}{\textbf{\sat}} & \multicolumn{5}{c}{\textbf{\maxsat+\sat Corr.}}\\[1ex]
 	%	\cline{2-9}
 	\textbf{config}         &  explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$ & explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$  \\ \midrule
-	OUSb                    & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310 & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149 \\
-	OUS Iter.               & [273 / 403] &          88.58\% & 10.41\% & 1.01\% &      7480 & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878  \\
 	OCUS                    & [233 / 403] &          96.65\% &  3.01\% & 0.35\% &      6245 & [310 / 403] &         19.83\% &   0.82\% &    79.34\% &      3029  \\
-	OUSb+Lit. Incr. HS      & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &      1538 & [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220  \\
-	OUS Iter.+Lit. Incr. HS & [272 / 403] &          96.28\% &  3.42\% &  0.3\% &      1713 & [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249  \\
 	OCUS+Incr. HS           & [242 / 403] &          99.16\% &  0.78\% & 0.06\% &       405 & [311 / 403] &         50.76\% &   0.67\% &    48.57\% &       318 \\
+	OUSb                    & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310 & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149 \\
+	OUSb+Lit. Incr. HS      & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &      1538 & [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220  \\
+	OUS Iter.               & [273 / 403] &          88.58\% & 10.41\% & 1.01\% &      7480 & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878  \\
+	OUS Iter.+Lit. Incr. HS & [272 / 403] &          96.28\% &  3.42\% &  0.3\% &      1713 & [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249  \\
 	MUS                     & [311 / 403] &              --- &     --- &    --- &       --- & [311 / 403] &             --- &       ---&          ---&        --- \\
 	%	\bottomrule
 \end{tabular}
@@ -1876,7 +1885,7 @@ The table depicts for each configuration \begin{inparaenum}[(1)]
 	\label{tab:runtime-decomposition}
 \end{table}
 
-Ignoring the right part of \cref{tab:runtime-decomposition} (CorrSubsets) for a moment, we observe that most of the time in the OCUS algorithms is spent in computing optimal hitting sets, even more so for the incremental variants.
+Ignoring the right part of \cref{tab:runtime-decomposition} (CorrSubsets) for a moment, we observe that most of the time in all the OCUS algorithms is spent in computing optimal hitting sets, even more so for the incremental variants.
 The results in the $N_{sth}$ column, highlight the decrease in the amount of sets-to-hit that need to be computed when adding incrementality, in our case, by keeping track of the previously computed satisfiable subsets. 
 Indeed, similar to the results of \cref{ex:ocus-incr:expl-seq}, the \comus algorithms do not need to recompute the previously derived sets-to-hit, and will therefore start with a good candidate hitting set at the beginning of an explanation step.
 %The same trend is observed when adding incrementality in \cref{tab:runtime-decomposition},   is translated in the number of instances on one side, as well as the average number of computed hitting sets on the other side. 
@@ -1963,16 +1972,18 @@ Indeed, similar to the results of \cref{ex:ocus-incr:expl-seq}, the \comus algor
 %\end{figure}
 
 \subsection{Improving correction subset extraction}
-
+\tias{Alt: as the above table shows, most time is spent in the hitting set computation, hence there is promise in reducing its effort by computing better or more correction subsets, thereby having better collections of sets-to-hit.}
 In our O(C)US algorithm, we do not just aim to find any correction subsets, but we prefer small correction subsets: subsets that impose strong restrictions on the assignments the optimal hitting set solver can find. 
-This induces a trade-off between \emph{efficiency} of the \grow strategy and \emph{quality} of the produced satisfiable subset inside the \corrsubsets procedure.
+
+This induces a trade-off between \emph{efficiency} of the \grow strategy\tias{not just grow, but \corrsubsets?} and \emph{quality} of the produced satisfiable subset inside the \corrsubsets procedure\tias{quality of the resulting sets-to-hit actually, not just the corrsubset on its own}.
 
 %In our O(C)US algorithm, we do not just aim to find any satisfiable subsets, but we prefer \emph{high quality} satisfiable subsets: subsets that impose strong restrictions on the assignments the optimal hitting set solver can find. This induces a trade-off between \emph{efficiency} of the \grow strategy and \emph{quality} of the produced satisfiable subset.
 
 \subsubsection{Domain-specific correction subset enumeration}\label{sec:experiments:domain-specific-grow}
 
-In this section, we evaluate whether an efficient \maxsat-call and further correction subset eumeration help balance the search for stronger constraints on the sets-to-hit using \maxsat grow and correction subset enumeration strategies introduced in \cref{sec:correction_subset_enum}.
-Thus, to answer \textbf{Q3}, we compared the incremental variants of \comus, \ousb, \ousbiter, that only differ in which \corrsubsets strategy they use.  
+In this section, we evaluate whether an efficient \maxsat-call and further correction subset enumeration help balance the search for %stronger constraints on the 
+sets-to-hit using \maxsat grow, and correction subset enumeration strategies introduced in \cref{sec:correction_subset_enum}. \tias{This sentence rather complicated}
+Thus, to answer \textbf{Q3}, we compare the incremental variants of \comus, \ousb, \ousbiter, and only change the \corrsubsets strategy they use.  
 In \cref{tab:correction-subset-proc-description}, we summarize the different \corrsubsets configurations compared.
 
 \begin{table}[!h]
@@ -2003,7 +2014,7 @@ In \cref{tab:correction-subset-proc-description}, we summarize the different \co
 			%	\bottomrule
 	\end{tabular}
 	\end{adjustbox}
-	\caption{Description of the correction subset procedures.}
+	\caption{Description of the correction subset procedures. \tias{How about: Single SAT, single MaxSAT, single MaxSAT-Dom, Mult SAT (SAT Corr), Mult MaxSAT-Dom, Mult MaxSAT-Dom1+SAT, also explained in that order}}
 	\label{tab:correction-subset-proc-description}
 \end{table}
 %\begin{itemize}%[(a)]
@@ -2014,7 +2025,7 @@ In \cref{tab:correction-subset-proc-description}, we summarize the different \co
 %	\item \maxsat Corr.+\sat~works similarly to \emph{\maxsat Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
 %	\item .
 %\end{itemize}
-\paragraph{MaxSAT weighing scheme} The \maxsat solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
+\paragraph{MaxSAT weighing scheme} The \maxsat solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif})\tias{should be 'unweighted' or 'no weights'?}, cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results (not shown), so we use uniform weights in all subsequent experiments.
 
 %\begin{figure}[!h]
 %	\centering
@@ -2033,39 +2044,40 @@ In \cref{tab:correction-subset-proc-description}, we summarize the different \co
 \begin{figure}[!ht]
 	\begin{subfigure}{0.5\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_04_20_OUSbLit_Incr_HS.pdf}
-		\caption{Bounded OUS Incremental.}
-		\label{fig:rq3_grow:ousb_incr}
+		\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_04_20_OCUSIncr_HS.pdf}
+		\caption{OCUS +Incr}
+		\label{fig:rq3_grow:ocus}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_04_20_OUS_IterLit_Incr_HS.pdf}
-		\caption{Interleaved OUS Incremental.}
-		\label{fig:rq3_grow:iter_ous_incr}
+		\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_04_20_OUSbLit_Incr_HS.pdf}
+		\caption{OCUS\_Bound +Incr}
+		\label{fig:rq3_grow:ousb_incr}
 	\end{subfigure}
 	\\
 	\begin{subfigure}{0.5\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_04_20_OCUSIncr_HS.pdf}
-		\caption{OCUS Incremental.}
-		\label{fig:rq3_grow:ocus}
+		\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_04_20_OUS_IterLit_Incr_HS.pdf}
+		\caption{OCUS\_Split +Incr}
+		\label{fig:rq3_grow:iter_ous_incr}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{figures/rq2_corr_subsets_2022_04_22.pdf}
-		\caption{OCUS Incremental.}
-		\label{fig:rq3_grow:ocus}
+		\caption{TODO}
+		\label{fig:rq3_grow:ocus:smth}
 	\end{subfigure}
 	\caption{Average cumulative explanation time of correction subset configurations for the incremental O(C)US variants. The legends for each graph are ordered from the least instances explained (top) to the most instances explained (bottom).}
 	\label{fig:q3:grow_configurations}
 \end{figure}
-\tias{What is going on here??}
+\tias{All lines should be solid in a-c. What is going on with the 'd' figure here??}
 
-Figure \ref{fig:q3:grow_configurations} depicts the number of instances solved across time for the three incremental variants. For all algorithms, \emph{\maxsat Corr.+\sat} ranks first substantially beating the \emph{\sat} approach. However, only \emph{\maxsat Corr.+\sat} is able to consistently beat the naive MUS-based expalnations. 
+Figure \ref{fig:q3:grow_configurations} depicts for each incremental OCUS algorithm, the number of instances solved across time for varying correction subset approaches. For all algorithms, \emph{\maxsat Corr.+\sat} ranks first substantially beating the \emph{\sat} approach. However, only \emph{\maxsat Corr.+\sat} is able to consistently beat the naive MUS-based expalnations. 
 The bottom right graph of figure \ref{fig:q3:grow_configurations}, corresponds to the average cumulative explanation time for deriving the literals using the best configuration (\emph{\maxsat Corr.+\sat}).
 In the case of \ousbincr, the initial ordering of the literals to explain still impacts the explanation time immensely, even if the correction subset configuration compensates in the long run. 
 The iterated incremental approach of \ousbiterincr combined with \emph{\maxsat Corr.+\sat} is consistently the best explanation sequence configuration.
 
+\tias{Smoother: we now look back to Table 6, focussing on the right side. It shows the runtime decomposition for MS+corr..., also for the non-incremental OCUS variants. We can observe that...}
 When decomposing the runtime of all O(C)US configurations in \cref{tab:runtime-decomposition}, the shift of computation from the hitting set solver to correction subset enumeration clearly shows its benefits.
 More instances are explained, and for the incremental configuration, the computation is more balanced. 
 
@@ -2156,7 +2168,7 @@ One potential avenue for future work is how do these explanation generating meth
 
 \clearpage
 \appendix
-\section*{Appendix A.}
+\section{}\label{apx:puzzledata}
 
 \emilio{Regenerate table with puzzle characteristics}
 \begin{table}[!h]\centering

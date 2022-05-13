@@ -1169,12 +1169,11 @@ Therefore, in this section, we analyze if instead of working \comus-based, we ca
 %\end{algorithm}
 
 Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$, i.e., 
-$\omus{}(\formula,f):=\comus{}(\formula,f,\ltrue} $ for each $\formula$ and $f$. 
+$\omus{}(\formula,f):=\comus{}(\formula,f,\ltrue) $ for each $\formula$ and $f$. 
 %The associated call to compute an \comus of given constraints $\formulac$, interpretation $I$, cost function $f$ for every literal to explain $\ell$ is reduced as follows: $\omus{}(\formulac \wedge I \wedge \lnot \ell, f) = \comus(\formulac \wedge I \wedge \lnot \ell, f, true )$.
 
 %\cref{alg:ousb} depicts an improved version of the \omus algorithm with an optional numerical parameter v representing a given bound.
 %Before we present these improvements, consider this bound set to $\infty$, ensuring that the bound doesn't interfere with a regular \omus call.
-
  
 \subsection{Bounded OCUS}
 However, the switch from MUS to \omus{} in \cref{alg:oneStep} still requires to loop over every literal and computing the \omus{}, potentially introducing overhead compared to the single \comus call. %\bart{compared to what?} 
@@ -1519,9 +1518,11 @@ Finally, for the last explanation step, we adapt the weights to reflect the curr
 %\bart{Cannot parse this sentence either. Try to split it up in a couple of sentences} IMPROVED 
 Observe set-to-hit $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ in the collection of previously compute sets-to-hit of \cref{tab:example-explanation-generation:incr:step3}. Given the current interpretation and the literal $\lnot x_2$ to explain, only $c_4$ can \underline{and} has to be taken.  
 Since this subset is $p$-disjoint from the other sets-to-hit in the eye of the hitting set solver, it therefore poses a stronger restriction on the sets-to-hit. 
+\bart{I suggested that you use ``p-disjoint'', but if you do, you should also define it. This is not an existing thing!}
 \end{example}
 
 \begin{proposition}\label{prop:p-disjoint}
+	\bart{I think ou want a definition here. This is not a proposition... it makes no claim. You also want to defined it either BEFORE the example, or you say in the example that this observed phenomenon will be called p-disjointness and refer forwards to the definitoin}
 	Two sets $S_1$ and $S_2$ are $p$-disjoint if every set that hits both $S_1$ and $S_2$ and satisfies $p$ contains $s_1\in S_1$ and $s_2\in S_2$ with $s_1 \neq s_2$.
 \end{proposition}
 
@@ -1534,7 +1535,7 @@ In section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-d
 \subsection{Computing correction subsets}
 
 The \corrsubsets procedure generates a set of correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
-However, calling \onestepo on our running example has shown that a naive `No grow' \corrsubsets, i.e. returning $\{\formula \setminus  \subsetT \}$, drastically increases the number of sets-to-hit required compared to using the model provided by the \sat solver. 
+However, calling \onestepo on our running example has shown that a naive `No grow' \corrsubsets, i.e.\TIPspacingafterabbreviation[i.e.,] returning $\{\formula \setminus  \subsetT \}$, drastically increases the number of sets-to-hit required compared to using the model provided by the \sat solver. 
 This last observation suggests that the satisfiable subset \tias{This is Sl right? if so, repeat its symbol} should be efficiently grown into a larger satisfiable subset before computing the complement.
 We first discuss how to efficiently grow the satisfiable subset capitalizing on the domain-specific context of explanation generation.
 
@@ -1546,7 +1547,7 @@ The goal of the `grow' phase of the \corrsubsets procedure is to turn $\m{S}$ in
 
 There are multiple conflicting criteria that determine what makes an effective `grow' procedure:
 % Choosing an effective \grow procedure requires finding a difficult balance: 
-on the one hand, we want our subformula to be as large as possible (which ultimately would correspond to computing the maximum satisfiable subformula), %to derive the most precise information we can get, 
+on the one hand, we want our subformula to be as large as possible (which ultimately would correspond to computing a maximal satisfiable subformula), %to derive the most precise information we can get, 
 but on the other hand we also want the procedure to be very efficient as it is called in every iteration. 
 
 For the case of explanations we are in, we make the following observations: 
@@ -1584,6 +1585,7 @@ Furthermore, we can initialize this call as well as any call to a \sat solver wi
 We evaluate different grow strategies as part of the \corrsubsets procedure in the experiments section, including not growing, using the sat model to grow, and the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
 \bart{This section still makes sense to me. However, it only describes a single type of grow based on maxsat. In the experiments we will have multiple. In that case I would expect them to also be described here. Or... we drop all the ones we do not discuss here from the experiments...}
 \emilio{Added `No grow' and sat model in the intro.}
+\bart{You should give them names here. So that you can refer back in the experiements, and that it is clear where this comes from. The way it is presented now feels like: the first two are just a couple of small tests, and there is only one real grow. Try to present it as: two simple options: no grow and sat model (with absolutely no reason to ever want to do the first), and one more advanced, domain specific thing}
 
 %For explaining the remaining literals ($\lnot x_2$ and $x_3$), we adapt the weight of clause $c_5 := x_1$ to $w_5 = 1$ and $c_8 := \lnot x_1$ to $w_8 = \infty$.
 
@@ -1626,7 +1628,13 @@ until no more satisfiable subsets can be found.
 	\caption{$\corrsubsets(\formula,\subsetT)$ }
 	\label{alg:corr-subsets-grow-with-sat}
 \end{algorithm}
-\emilio{I changed this algorithm, to add the check whether the grow improves the subset S. Also, I removed the intermediate S', since it adds an extra step. Please do tell me what you think of it. If it's ok, the in-text algorithm description should be adapted} \tias{OK, maar wat als de if al in de iteratie waar is?}
+\emilio{I changed this algorithm, to add the check whether the grow improves the subset S. Also, I removed the intermediate S', since it adds an extra step. Please do tell me what you think of it. If it's ok, the in-text algorithm description should be adapted} \tias{OK, maar wat als de if al in de iteratie waar is?} 
+\bart{Dat ziet er niet goed uit: 
+	\begin{itemize}
+		\item  als if de eerste keer slagat, krijg je lege set terug?
+		\item Ik zie niet waaro mje zou willen returnen op lijn 4. Het is toch niet omdat grow niets extra geeft dat je klaar bent? Kan je een goede reden geven waarom je dit NIET zou willen? (wat is de motivatie voor de change???) 
+	\end{itemize}	
+}
 
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
@@ -1649,6 +1657,14 @@ If the same procedure is directly applied to the \emph{incremental} \comus of \c
 \bart{These are not properties of OCUS and INCR-OCUS. 
 This is an issue with \emph{our use} of OCUS. The way we USE the incremental OCUS for generating explanations (by adding the two polarities) means that this will not do anything. But, you could perfectly do incremental ocus in a setting where it DOES produce multiple correction subsets}
 \emilio{Is this a better way to put it ?} \tias{Sec 7.1 describes both the 'SS' way, and the 'MIP incremental' way. I think what you write only refers to the 'MIP incrementa' way, because 'F' in that case is C cup Iend cup bar(Iend minus I0) so both the positive and negative literals of Iend are in it, and hence F without S' will contain the oposite literals to S', and S will contain both when doing S is S cup C. So, maybe be a bit more explicit about it, as well as about this being in the MIP-style case (for an appropriate name for it)} 
+\bart{Indeed, there are two different ways of doing incremental. I would definitely not use ``MIP'' as a name. The difference is.
+	\begin{itemize}
+		\item One of them keeps track of SSs. This ALWAYS works. 
+		\item The other keepst track of (M)CSs. This ONLY works in case we have an upper bound on the inputs (we know that every input will always be a subset of a fixed and given set). This idea is not really related to MIP, but IF we do idea number two with a MIP (or SAT or ...) solver, we can not just reuse the (M)CSs, but we can ALSO keep the solver warm on top of it. 
+	\end{itemize}
+So, suggestion for names: SS-based and CS-based 
+
+Now the problem described here is not a problem of either of the two approaches. The REAL problem is WHAT that overapproxated set IS: namely that it contains all literals as well as their negations. } 
 Step 1 of \cref{tab:example-explanation-generation:incr:step1} illustrates this case where $x_1$ is present in the hitting set $\m{S}$ and $\lnot x_1$ in the correction subset $F \setminus \m{S}$ \tias{I dont see this in table 2, it does not explicitly name the correction subset F without S either; cut this sentence? or write S, F and the corr subset in full, without refering to table 2? if S is ... and F is .. then F without S is and hence ...}
 
 \tias{I am unsure of the next paragraph, is it proposing an alternative to the above? If so, write that "An alternative we propose is... we will denote it as 'its name in the exps'}

@@ -1711,17 +1711,24 @@ By incorporating explanation-specific information, we are able to enumerate extr
 \paragraph{Efficient correction subset enumeration} Extending the observation that a call to an efficient \maxsat solver helps in finding maximally satisfiable subsets, we propose two variants of \cref{alg:corr-subsets-grow-with-sat}.
 %\begin{itemize}
 
-The first variant is \emph{\maxsat Correction Subsets}, a.k.a \emph{\maxsat Corr.}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
+The first variant is \emph{\maxsat Correction Subsets}, a.k.a \TIPnoContractions[No abbrevaitions like aka either in scientific text]   \emph{\maxsat Corr.}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
 
 The second approach, \emph{\maxsat+\sat Corr.} works similarly to \emph{\maxsat Corr}, however only the first \grow is done with the domain specific \maxsat. The subsequent \grow calls extract a larger satisfiable model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. 
+\bart{When I read this, it really sounds completely arbitrary: why would we ever wnt to do the first iteration in a different way? Why is there no option that only has sat grows? } 
 %\bart{using the model computed by, what does that mean? Simply, the model computed by?}
 
-We consider \emph{\sat Corr.} as the baseline. \emph{\sat Corr.} repeatedly grows the satisfiable subset $\m{S}'$ using a satisfiable model extracted by the \sat. 
-This approach requires adding extra step at line~\ref{alg:corr-subsets-grow-with-sat:corr-subset} of \cref{alg:corr-subsets-grow-with-sat} that check whether the grown subsets $\m{S}'' \gets \grow (\m{S}', \formula)$, has improved. 
+We consider \emph{\sat Corr.} as the baseline. \emph{\sat Corr.} repeatedly grows the satisfiable subset $\m{S}'$ using a satisfiable model extracted by the \sat.  \bart{Aha, here it is: if it is the baseline, please do it first: 
+	\begin{itemize}
+		\item First, sat corr subsets
+		\item Then, maxsat corr subsets (everything with maxsat)
+		\item Then, potentially as a middleway, first maxsat, rest sat.
+	\end{itemize}}
+This approach requires adding extra step at line~\ref{alg:corr-subsets-grow-with-sat:corr-subset} of \cref{alg:corr-subsets-grow-with-sat} that check whether the grown subsets $\m{S}'' \gets \grow (\m{S}', \formula)$, has improved.  \bart{Why??? I don't believe this.}
 In case $\m{S}'$ cannot be improved, i.e. $\m{S}'' = \m{S}'$, then the algorithm stops and returns the found correction subsets. \emilio{todo: \begin{inparaenum}[(i)]
 		\item add result to experiment
 		\item Change description and remvoe check
 	\end{inparaenum}}
+
 %\emilio{Add example to correction subset enumeration: Another observation is that clause $\{c_1\}$ is a unit-sized MCS, which poses a strong constraint on the MUSes of $\formulac_2$. More precisely, the MUSes of $\formulac_2$ have to contain $\{c_1\}$.}
 
 %\end{itemize}
@@ -1754,6 +1761,7 @@ In case $\m{S}'$ cannot be improved, i.e. $\m{S}'' = \m{S}'$, then the algorithm
 %\end{itemize}
 
 \tias{Ends a bit abruptly but OK}
+\bart{Proposal: End with something like: In the next section, we experimentally evaluate these different methods to compute correction subsets... }
 
 %\subsection{Interactivity}
 %\emilio{Add a note here}

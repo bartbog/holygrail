@@ -570,6 +570,8 @@ Consider the following four clauses as our running example:
 %% EMILIO: HAS been clarified
 Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literals to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS. 
 Furthermore, MUS extraction algorithms do not provide any guarantee of $\subseteq$-minimality or optimality with respect to a given cost function. Therefore, in \citet{bogaerts2020framework}, we handle the absence of $\subseteq$-minimality and optimality guarantees by considering increasingly larger subsets of the unsatisfiable formula ($\formulac \land I \land \neg l$).
+\bart{Do not write ``in Bogaerts, Gamba and Guns''. I would prefer to keep these unsatisfiable subsets out of my body. 
+	But also/... this is a crappy reference: it is duplicate in the list and this specific one is from the wrong year, has no publicatoin data, ... }
 
 Hence, there is a need for algorithmic improvements to make it more practical.
 We see three main points of improvement, all of which will be tackled by our generic OCUS algorithm presented in the next section. 
@@ -1778,14 +1780,15 @@ In this section, we validate the performance improvement of the different versio
 
 \subsection*{Experimental setup}
 
-Our experiments were run on a compute cluster where each explanation sequence was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor, a time limit of 60 minutes and a memory-limit of 8GB. The core code is written on top of PySAT 0.1.7.dev1.
+Our experiments\footnote{The code for all experiments is made available at \texttt{https://github.com/ML-KULeuven/ocus-explain}.} were run on a compute cluster where each explanation sequence was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor, a time limit of 60 minutes and a memory-limit of 8GB. The core code is written on top of PySAT 0.1.7.dev1.
 For the MIP calls, we used Gurobi 9.1.2, for SAT calls MiniSat 2.2 and for MaxSAT calls RC2 as bundled with PySAT.
-In the MUS-based approach we used PySAT’s deletion-based MUS extractor MUSX [Marques-Silva, 2010].
+In the MUS-based approach we used PySAT’s deletion-based MUS extractor MUSX [Marques-Silva, 2010]. \bart{Did you just copy  this from another PDF? next time, copy the source... Please use cite } 
 
-Regarding the benchmark dataset, we rely on a set of generated Sudoku puzzles of increasing difficulty (different amount of given numbers), the Logic Grid puzzles of \cite{bogaerts2021framework}, as well as a number of instances taken from \cite{schotten}\footnote{We express our gratitude towards Matthew. J. McIlree and Christopher Jefferson at the University of St. Andrews for providing their help with the extraction of CNF formatted instances from Essence problem specifications \cite{frisch2008essence} using Savile Row \cite{nightingale2017automatically}, as well as the problem instances themselves.}\footnote{The code for all experiments is made available at \texttt{https://github.com/ML-KULeuven/ocus-explain}.}. 
+Regarding the benchmark dataset, we rely on a set of generated Sudoku puzzles of increasing difficulty (different amount of given numbers), the Logic Grid puzzles of \citet{bogaerts2021framework}, as well as a number of instances taken from \cite{schotten}.\footnote{We express our gratitude towards Matthew. J. McIlree and Christopher Jefferson at the University of St. Andrews for their help with the extraction of CNF instances from Essence problem specifications \cite{frisch2008essence} using Savile Row \cite{nightingale2017automatically}, as well as for supplying the problem instances themselves.}
+\bart{If I hear ``a number of instances of'', I get suspicious. How did you select them?}
 
 When generating an explanation sequence for these puzzles, the unsatisfiable subsets identify which constraints and which previously derived facts should be combined to derive new information. 
-Similar to \cite{ijcai2021}, for Logic Grid puzzles and Sudoku puzzles, we assign a cost of 60 for puzzle-agnostic constraints; 100 for puzzle-specific constraints; and cost 1 for facts.
+Similar to \cite{ijcai2021}, for Logic Grid puzzles and Sudoku puzzles, we assign a cost of 60 for puzzle-agnostic constraints; 100 for puzzle-specific constraints; and cost 1 for facts. \bart{What are puzzle specific constraints in Sudoku??? } 
 %This cost function yielded reasonable explanations such that the use of a puzzle-agnostic constraint (considered relatively easy)  Tias: broken sentence, not sure it is relevant here
 For all other puzzles we assign a cost of 60 when using a constraint and a cost 1 for facts.
 In \cref{apx:puzzledata}, \cref{tab:puzzle-composition-family}, we summarize the average number of clauses (avg. $\#$ {clauses}), the average number of literals to explain (avg. $\#$ lits-to-explain) as well as the number puzzles (n) in the benchmark data set for each puzzle family. 
@@ -1794,11 +1797,11 @@ In \cref{apx:puzzledata}, \cref{tab:puzzle-composition-family}, we summarize the
 Our experiments are designed to answer the following research questions:  
 
 \begin{enumerate}[label={Q\arabic*}, ref={Q\arabic*}]
-\item  What is the effect of requiring optimality of the generated MUSs on the \textbf{quality} of the generate explanations ? \label{rq:q1}
+\item  What is the effect of requiring optimality of MUSs on the \textbf{quality} of the generated explanations ? \label{rq:q1}
 \item   Does \textbf{re-use} of information across the different iterations improve efficiency? \label{rq:q2} \tias{not sure 'reuse' is consistent with story...}
 \item  Which domain-specific Correction Subset method improves the overall runtime? \label{rq:q3}
 \begin{enumerate}
-	\item How does extraction multiple correction subsets affect runtime ? 
+	\item How does extraction \bart{of} multiple correction subsets affect runtime ?  
 \end{enumerate} \tias{just the 'a' one is fine?}
 \item   What is the efficiency of a single step O(C)US and is single step sufficiently efficient for an interactive context 
 \begin{enumerate}
@@ -1845,18 +1848,21 @@ Next to \begin{inparaenum}[(1)]
 
 For \comus, incrementality (\emph{+Incr}) is achieved by reusing the same incremental MIP hitting set solver throughout the explanation calls, as explained in \cref{sec:ocusEx}. 
 Methods \ousb and \ousbiter use a separate hitting set solver for every literal to explain. Each hitting set solver can similarly be made incremental (with respect to its own literal) across the explanation calls (\emph{+Incr. HS}), or not.% Once the literal is explained, the hitting set solver is discarded.
-\tias{Both can just be referred to as 'Incr' I think... Otherwise Incr and Incr-lit}
+\tias{Both can just be referred to as 'Incr' I think... Otherwise Incr and Incr-lit} \bart{I would just say incr. You make the algorithms Incremental. End of story. The ``lit'' already follows from the ``bould/split'' setup}
+\bart{formatting: avoid things like \comus\emph{+Incr} (format consistently)}
 
 %Figure \ref{fig:rq2_cactus_incrementality_log} depicts the average (over all the puzzles) cumulative explanation time to derive a number of literals. Note that all puzzles contain the same number of literals. When a method times out for a puzzle at one step, a runtime value of 3600 is used in computing the averages for all future steps. In case, the number of literals in a puzzle is less than the maximum number of literals to explain, then the cumulative time to derive the last literal is used for computing the average. 
 Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances fully explained through time before the given 1 hour timeout. In each configuration depicted, we use the following \corrsubsets procedure: \begin{inparaenum}[(1)]
 	\item grow satisfiable subset $\m{S}$ of the \comus algorithm by extracting a satisfiable model from the \sat solver
-	\item return its complement ($\{\formula \setminus \m{S}\}$).
+	\item return its complement ($\{\formula \setminus \m{S}\}$). \bart{give this a name earlier. No need to explain  it here (but should be clealry explain earlier}
 \end{inparaenum} 
+\bart{No need for inparaenum in journal version.}
 
 \begin{figure}[!h]
 	\centering
 	\includegraphics[width=0.8\textwidth]{figures/rq3_cactus_r_2022_04_22_SAT.pdf}
-	\caption{Time to generate a full explanation sequence with a naive \corrsubsets procedure for incremental and non-incremental OCUS algorithms. Incrementality clearly shows improvement in the number of instances solved for all O(C)US algorithms.}
+	\caption{Time to generate a full explanation sequence with a naive \corrsubsets procedure for incremental and non-incremental OCUS algorithms. Incrementality clearly shows improvement in the number of instances solved for all O(C)US algorithms.
+	\bart{I would not call this ``clearly''. There seems to be a MARGINAL improvement due to incrementality in ONE of the configurations. Does this text come from an old graph (I remember seing several pictures where the improvement was indeed better...) }  }
 	\label{fig:rq2_cactus_incrementality_log}
 \end{figure}
  \tias{please cut the y-axis at 1}

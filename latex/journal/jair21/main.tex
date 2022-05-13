@@ -219,15 +219,17 @@
 
 %Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} constraint theory 
 %\emilio{Modified ordering and adapted text to fit.}
-\bart{Te paragraph that follows is about explanation sequences (conceptual)}
+%\bart{Te paragraph that follows is about explanation sequences (conceptual)}
 Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} set of constraints
 and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
-Explanations in that work are sequences of simple inference steps, a.k.a an \emph{explanation sequence}, involving as few constraints and previously-derived facts as possible. Every explanation derives at least one new fact, implied by a combination of constraints and already derived facts.
+Explanations in that work are sequences of simple inference steps, 
+%a.k.a an \emph{explanation sequence},  %Removed this: plural singular mismatch and also: do not like abbreviations like a.k.a. -BB
+involving as few constraints and previously-derived facts as possible. Every explanation step derives at least one new fact, implied by a combination of constraints and already derived facts.
 
 The explanation steps of \cite{ecai/BogaertsGCG20} are heuristically optimized with respect to a given cost function that should approximate human-understandability, e.g., taking the number of constraints and facts into account, as well as an estimate of their cognitive complexity.
-For example, in the evaluation of explanations for logic grid puzzles, the given clues of the puzzle are considered more difficult than simpler reasoning tricks, and therefore have a higher cost.
+For example, in the evaluation of explanations for logic grid puzzles, the given clues of the puzzle are considered more difficult than simpler reasoning tricks, that are present in all instances of such puzzles and therefore have a higher cost.
 
-\bart{The paragraph that follows is about the ALGORITHM (what it is)} 
+%\bart{The paragraph that follows is about the ALGORITHM (what it is)} 
 %%% {ISSUES when achieving our GOAL}
 
 In practice, the explanation-generation algorithms presented in our previous work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
@@ -237,11 +239,11 @@ In practice, the explanation-generation algorithms presented in our previous wor
 %  1) a cost function (I know what this is!)
 %  2) a valuation of their complexity or priority???  What is this? 
 %}
- \bart{The paragraph that follows is about the ALGORITHM (what is missing with it) -- Do you see a better way to order these four paragraphs? } 
- \emilio{Ordering adapted}
- \bart{``that work'' is repeated quite often. Vary a bit. ``Our previous work'', ``theo algorithm of \citet{ecai/BogaertsGCG20}'', ... }
+% \bart{The paragraph that follows is about the ALGORITHM (what is missing with it) -- Do you see a better way to order these four paragraphs? } 
+% \emilio{Ordering adapted}
+% \bart{``that work'' is repeated quite often. Vary a bit. ``Our previous work'', ``theo algorithm of \citet{ecai/BogaertsGCG20}'', ... }
 
-However, the algorithm developed in \citet{ecai/BogaertsGCG20} has two main weaknesses.
+However, the algorithm of \citet{ecai/BogaertsGCG20} has two main weaknesses.
 First, it provides \emph{no guarantees on the quality} of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
 Second, it suffers from \emph{performance problems}: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate fact to explain.
 However, using multiple MUS calls per literal in each iteration quickly triggers efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
@@ -321,20 +323,14 @@ In the last few years, driven by the increasingly many successes of Artificial I
 In the research community, this need manifests itself through the emergence of (interdisciplinary) workshops and conferences on this topic~\cite{xai-ijcai,FAT} and American and European incentives to stimulate research in the area~\cite{gunning2017explainable,hamonrobustness,fetproact}. 
 
 While the main focus of XAI research has been on explaining black-box machine learning systems \cite{lundberg2017unified,guidotti2018survey,ignatiev2019abduction}, also model-based systems, which are typically considered more transparent, are in need of explanation mechanisms. 
-For instance, \cite{vassiliades2021argumentation} survey the important methods that use argumentation \cite{modgil2013added} to provide explainability in AI, with for example applications in medical diagnosis \cite{obeid2019using}. Abstract argumentation frameworks introduce an abstract formalism to explain argumentative acceptance \cite{vsevselja2013abstract,liao2020explanation,ulbricht2021strong}. Description Logics \cite{baader2004description} on the other hand, aim at explaining logical proofs \cite{alrabbaa2021finding,koopmann2021two}, i.e `why does phi follow from psi?'. 
-
-\emilio{I need a little help in formulating this well...}
-\bart{In the previous paragraph we jump a bit fast from ``model-based systems'' to ``CP and SAT''. 
-There is also work going on explainability in for instance Description Logics, in Argumentation, ... 
-Also the sentence in the paragraph that follows is not very accurate: it is true that \emph{Explanations for CP/SAT-like systems have focussed on UNSAT problems.} But not for ``model-based systems'' in general. In DL for instance one aims at explaining logical proofs. (why does phi follow from psi). I think some more references are needed for ``explanations for model-based systems'' going a bit broader than what is considered now. (for inspiration, see the XLoKR workshops). 
-Next,  a sentence is needed that our focus is on CP/SAT-style systems. And then we can that in THESE reseach areas, there ahas been a strong focus on explaining UNSATisfiable instances.}
+For instance, \citet{vassiliades2021argumentation} survey the important methods that use argumentation \cite{modgil2013added} to provide explainability in AI, with for example applications in medical diagnosis \cite{obeid2019using}. Abstract argumentation frameworks introduce an abstract formalism to explain argumentative acceptance \cite{vsevselja2013abstract,liao2020explanation,ulbricht2021strong}. Description Logics \cite{baader2004description} on the other hand, aim at explaining logical proofs \cite{alrabbaa2021finding,koopmann2021two}, i.e `why does phi follow from psi?'. 
 
 The main focus of our work lies in providing explainable agency \cite{langley2017explainable} to Constraint Programming \cite{fai/Rossi06} and Boolean satisfiability (SAT) \cite{faia/2009-185}  systems.
 Advances in solving, as well as hardware improvements allow for such systems now easily consider millions of alternatives in short amounts of time.
 Because of this complexity, the question arises how to generate human-interpretable explanations of the conclusions they make. 
-In the CP and SAT communities, there has been a strong focus on explaining \textit{unsatisfiable} problem instances~\cite{junker2001quickxplain}, and have recently seen a rejuvenation in various subdomains of constraint reasoning \cite{fox2017explainable,vcyras2019argumentation,chakraborti2017plan,ecai/BogaertsGCG20}.
+In the CP and SAT communities, there has been a strong focus on explaining \textit{unsatisfiable} problem instances~\cite{junker2001quickxplain}, and have recently seen a rejuvenation in various subdomains of constraint reasoning \cite{fox2017explainable,vcyras2019argumentation,chakraborti2017plan,ecai/BogaertsGCG20}. \bart{This ``and have recetnly seen'', what does it refer to? Does not fit the rest of the sentence} 
 
-In this context, we recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} and applied them to Zebra puzzles; building on this work, \citet{schotten} investigated interpretable explanations using MUSes but for a wider range of puzzles.  
+In this context, we recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} and applied them to Zebra puzzles; building on this work, \citet{schotten} investigated interpretable explanations using MUSes but for a wider range of puzzles.   \bart{MUSes? Not known atthis point. ``But''? There seems to be no contradiction here} 
 %\bart{We can probably phrase this a bit stronger. They are not just similar explanations. In their own work they say that ``We advance on the work
 %of [Bogaerts et al., 2020]'', so we can probably quite fairly say that \citet{schotten} build on our work and apply it to more puzzles (phrased slightly more politically careful)}
 Our current work is motivated by a concrete algorithmic need: to generate these explanations efficiently, we need algorithms that can find MUSs that are optimal with respect to a given cost function, where the cost function approximates human-understandability of the corresponding explanation step. 
@@ -658,15 +654,16 @@ Therefore, when considering the procedure \onestep from the perspective of OCUS 
 %\bart{Not super happy with this sum, because the decision variables have not been introduced. Here is an attempt to do :
 %it mathematically
 $\formula \gets \formulac\land I\land \overline{\Iend\setminus I}$\;
-$p : 2^{\formula}\to\{\ltrue,\lfalse\}:S \mapsto \# (S\cap \overline{\Iend\setminus  I})=1$\label{alg:oneStepOCUS:exactlyone}\;
+$p \gets \lambda S. \# (S\cap \overline{\Iend\setminus  I})=1$\label{alg:oneStepOCUS:exactlyone}\;
+$p \gets (S\mapsto \# (S\cap \overline{\Iend\setminus  I})=1)$\label{alg:oneStepOCUS:exactlyone}\;
 $\m{S} , \mathit{status} \gets \call{OCUS}(\formula, f, p)$\label{alg:oneStepOCUS:ocus-call}\;
 %EMILIO: written as a sum
 \lIf{$\mathit{status} \neq \mathit{FAILURE}$}{\Return{$\m{S}$} }
 \lElse{\Return{$\emptyset$}}
 \end{algorithm}
-\tias{Bart herwerkt p declaratie}
+\tias{Bart herwerkt p declaratie}\bart{Done. Er zijn nu twee opties. Voorkeur?}
 \emilio{This is very ugly, but the failure case has to be propgated upstream in the algorithm...}
-\tias{Idon't understand line 2, p:2f->{t,f} defines a function and its scope, so not sure it is appropriate inside the code, but what does the rest do?}
+%\tias{Idon't understand line 2, p:2f->{t,f} defines a function and its scope, so not sure it is appropriate inside the code, but what does the rest do?}
 %\bart{Also, a single line is a bit limited for an algorithm.}
 We define the exactly one constraint $p$ as the equality constraint shown on line \ref{alg:oneStepOCUS:exactlyone} of algorithm \ref{alg:oneStepOCUS}. $p$ evaluates to \textit{true} if the intersection of the negated literals to explain $\Iend\setminus I$ with the subset $\m{S}$ of $\formula$ considered is equal to 1, otherwise $p$ evaluates to \textit{false}. 
 \tias{Iets dat hoger algo niet gaat falen...}
@@ -707,10 +704,8 @@ Condition $p$ can easily be encoded as a linear constraint (see eq.~\ref{eq:cost
 %\bart{the cost function is encoded as a linear TERM, the $p$ indeed as a linear CONSTRAINT}, 
 %EMILIO: ADAPTED
 thus allowing the use of highly optimized mixed integer programming (MIP) solvers. 
-\bart{In my opinion, we should FIRST say what the variables are and THEN that we write a linear term over themm for f for instance. }
-\emilio{Is this what you mean ?}
 
-\paragraph{Hitting set problem} We define $\decisionvariables = \{d_c \ | \ c \in \formula\}$ as the set of MIP decision variables, more precisely one for every clause $c$ in $\formula$, and $\setstohit$ as the collection of sets-to-hit. 
+\paragraph{Hitting set problem} Given $\formula$, we define a MIP decision variable $d_c$ for every $c\in \formula$ and write  $\decisionvariables = \{d_c \ | \ c \in \formula\}$ for the set of all such variables. \bart{There was a remark here that you ``define $\setstohit$ as the collection of sets to hit''. You cannot deifne it as such. You can assume that such a set is gien (if you want to formulate something as a hitting set.} But that is not possible:  and $\setstohit$ as the collection of sets-to-hit.  
 %A subset $D'$ is said to hit a set-to-hit $\settohit$  if $D' \cap \settohit \neq \emptyset$.
 %\TIPdefVSchoice : indeed should ahve been the 
 % where every set-to-hit $ \settohit \in \setstohit$ should be hit at least once. 
@@ -730,9 +725,9 @@ s.t. \quad & p(\hittingset) \label{eq:constraint}\\
 \end{align}
 %\bart{In the above formulation, there should be a distinction between constraints and idicator variables. For instance, with the notation you  introduced, you should not write $sum(H)$ but $sum_{c\in H}(d_c)$ where I used $d_c$ for the decision variable corresponding to the constraint $c$. }
 %%% EMILIO: Adapted!
-In the case of \comus, every set to hit corresponds to a correction subset of $\formula$ encoded in the MIP formulation with its corresponding decision variables. 
-\bart{What precisely is ``encoded in the MIP formulation''? Now it sounds like you are encoding that every H is is a correction subset, but that is certainly not what is going on. What is encoded is that you should hit every set in $\setstohit$, but that is not what this sentence is about.}
-\emilio{Added some clarifications on the link I wanted to make between the sets-to-hit and correction susbets that are computed}
+In the case of \comus, every set to hit corresponds to a correction subset of $\formula$. % encoded in the MIP formulation with its corresponding decision variables. 
+%\bart{What precisely is ``encoded in the MIP formulation''? Now it sounds like you are encoding that every H is is a correction subset, but that is certainly not what is going on. What is encoded is that you should hit every set in $\setstohit$, but that is not what this sentence is about.}
+%\emilio{Added some clarifications on the link I wanted to make between the sets-to-hit and correction susbets that are computed}
 
 %\bart{It has not been said what $\mathcal{H}$ is and how it relates to $S$. We should also pay some attention: the distinction between $S$ (the set of all variables representing presence of a clause) and $\mathcal{S}$ (the actual subset of $F$) is not very easy to see. Maybe a different symbol would be better}
 % EMILIO: Added new variables for the MIP decision vars and description of how they related to S (subset of a formula)
@@ -783,8 +778,8 @@ In the case of \comus, every set to hit corresponds to a correction subset of $\
 	\caption{$\comus(\formula,f,p)$ }
 	\label{alg:comus}
 \end{algorithm}
-\bart{In principle it can be that there are no OCUSs. For instance, just take $p$ to always be false. In that case, it willbe CondOptHittingSet that returns ``UNSAT''. We  should still catch this ``FAILURE'' of CondOptHittingSet and return some form of FAIL in that case. I have already assumed this to be fixed in my rewrite of ``onestepBounded''}
-\emilio{Added case to if check}
+%\bart{In principle it can be that there are no OCUSs. For instance, just take $p$ to always be false. In that case, it willbe CondOptHittingSet that returns ``UNSAT''. We  should still catch this ``FAILURE'' of CondOptHittingSet and return some form of FAIL in that case. I have already assumed this to be fixed in my rewrite of ``onestepBounded''}
+%\emilio{Added case to if check}
 
 %Ignoring \cref{line:grow} for a moment, 
 The algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
@@ -1135,8 +1130,8 @@ This last observation suggests that a better targeted \corrsubsets procedure is 
 
 \section{Multiple Optimal Unsatisfiable Subsets}\label{sec:OUS} %\emilio{Adapt title to fit narrative OCUS call with p set to true}
 
-In the previous section, we saw that when generating an explanation step with \comus most of the time is spent in searching for hitting sets. 
-Especially since the hitting set solver needs to consider an increasingly large sets of sets-to-hit, potentially searching over an exponential number of literals and clauses.
+In the previous section, we saw \bart{We did not see that yet. Should we say ``Preliminary experiements have shown that''} that when generating an explanation step with \comus, most of the time is spent in searching for hitting sets. 
+The main reason of r this is that the hitting set solver needs to consider an increasingly large sets of sets-to-hit, potentially searching over an exponential number of literals and clauses.
 %In this section, we look at how to make the generation of one explanation step more efficient by splitting up the \comus-call into individual calls for every literal.
 
 Therefore, in this section, we analyze if instead of working \comus-based, we can also generate an explanation step by splitting up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal.
@@ -1173,13 +1168,13 @@ Therefore, in this section, we analyze if instead of working \comus-based, we ca
 %	\Return{${\cal S}_{best}$} 
 %\end{algorithm}
 
-Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$. 
-The associated call to compute an \comus of given constraints $\formulac$, interpretation $I$, cost function $f$ for every literal to explain $\ell$ is reduced as follows: $\omus{}(\formulac \wedge I \wedge \lnot \ell, f) = \comus(\formulac \wedge I \wedge \lnot \ell, f, true )$.
+Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$, i.e., 
+$\omus{}(\formula,f):=\comus{}(\formula,f,\ltrue} $ for each $\formula$ and $f$. 
+%The associated call to compute an \comus of given constraints $\formulac$, interpretation $I$, cost function $f$ for every literal to explain $\ell$ is reduced as follows: $\omus{}(\formulac \wedge I \wedge \lnot \ell, f) = \comus(\formulac \wedge I \wedge \lnot \ell, f, true )$.
 
 %\cref{alg:ousb} depicts an improved version of the \omus algorithm with an optional numerical parameter v representing a given bound.
 %Before we present these improvements, consider this bound set to $\infty$, ensuring that the bound doesn't interfere with a regular \omus call.
 
-\emilio{I'm interchanging \comus and \omus here, and this is rather confusing for me as well. If we decide to add predicate $p$ as the upper bound check, it's going to be an \comus.  \omus with trivially true $p$ is still an \comus. Not sure how to make a good distinction in the notation in the following text to make sure that the reader is not confused between \comus and \omus.}\tias{Reworked it}
  
 \subsection{Bounded OCUS}
 However, the switch from MUS to \omus{} in \cref{alg:oneStep} still requires to loop over every literal and computing the \omus{}, potentially introducing overhead compared to the single \comus call. %\bart{compared to what?} 

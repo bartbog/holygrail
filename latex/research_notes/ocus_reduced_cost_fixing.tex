@@ -1,0 +1,223 @@
+\documentclass[11pt]{article}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage{thmtools} 
+\usepackage{booktabs}
+\usepackage{paralist}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{multirow,array}
+\usepackage[normalem]{ulem}
+\usepackage{enumitem}
+%\usepackage{hyperref}
+\usepackage[capitalise]{cleveref}
+
+\usepackage{cancel}
+%\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+
+%%%%%%
+\newcommand\citet[1]{\citeauthor{#1}~\citeyear{#1}}
+
+\newcommand\m[1]{\mathcal{#1}}
+
+\DeclareMathOperator*{\mini}{minimize}
+
+%% Theorems/Theory
+\newtheorem{thm}{Theorem}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{prop}{Property}
+\newtheorem{property}[prop]{Property}
+\newtheorem{lem}{Lemma}
+\newtheorem{lemma}[lem]{Lemma}
+\newtheorem{propo}{Proposition}
+\newtheorem{proposition}[propo]{Proposition}
+\newtheorem{ex}{Example}
+\newtheorem{example}{Example}
+\newtheorem{obs}{Observation}
+\newtheorem{observation}[obs]{Observation}
+\newtheorem{theorem}[thm]{Theorem}
+
+
+%% Comments
+\newcommand\comment[1]{\marginpar{\tiny #1}}
+\renewcommand\comment[1]{#1}
+%\renewcommand\comment[1]{#1}
+\newcommand{\tias}[1]{{\comment{\color{blue}Tias:#1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}Emilio: #1}}}
+\newcommand{\checkthis}[1]{{\comment{\color{red}CheckRephrasing: #1}}}
+\newcommand{\bart}[1]{{\comment{\color{OliveGreen}Bart: #1}}}
+\newcommand{\new}[1]{{\comment{{\color{blue} #1}}}}
+\newcommand{\removed}[1]{\sout{#1}}
+
+%% Factoring
+\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
+\newcommand\decisionvariables{{D}}
+\newcommand\decisionvariable{{d}}
+\newcommand\settohit{H}
+\newcommand\hittingset{h}
+\newcommand\F{\ensuremath{\m{F} }\xspace}
+\newcommand\subsetT{\ensuremath{\m{S} }\xspace}
+\newcommand\bestsubsetT{\ensuremath{\m{S}_{best}}\xspace}
+\newcommand\corrsetT{\ensuremath{\m{K} }\xspace}
+\newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
+\newcommand\Iend{\ensuremath{I_\mathit{end} }\xspace}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulac{\ensuremath{\m{C} }\xspace}
+\newcommand\formularunning{\ensuremath{C }\xspace}
+\newcommand\formulag{\ensuremath{\m{G} }\xspace}
+\newcommand\mm[1]{\ensuremath{#1}\xspace}
+\newcommand\nat{\mm{\mathbb{N}}}
+\newcommand\ltrue{\mm{\textbf{t}}}
+\newcommand\lfalse{\mm{\textbf{f}}}
+\newcommand\uservars{\ensuremath{\m{U} }\xspace}
+\newcommand\call[1]{\mm{\texttt{#1}}}
+\newcommand\cohs{\mm{\call{CondOptHittingSet}}}
+%\newcommand\cohs{\texttt{CondOptHittingSet}\xspace}
+\newcommand\ohs{\mm{\call{OptHittingSet}}}
+\newcommand\disjcorr{\mm{\call{DisjCorrSets}}}
+\newcommand\disjcorrincr{\mm{\call{DisjCorrSetsIncremental}}}
+\newcommand\disjcorrconstrained{\mm{\call{DisjCorrSetsConstrained}}}
+\newcommand\sat{\texttt{{SAT}}\xspace}
+\newcommand\grow{\mm{\call{Grow}}}
+\newcommand\omus{\mm{\call{OUS}}}
+\newcommand\comus{\mm{\call{OCUS}}}
+\newcommand\comusincr{\mm{\call{OCUS+Incr.~HS}}}
+\newcommand\ousb{\mm{\call{OCUS\_Bound}}}
+\newcommand\ousbiter{\mm{\call{OCUS\_Split}}}
+\newcommand\ousbincr{\mm{\call{OCUSb+Lit.~Incr.~HS}}}
+\newcommand\ousbiterincr{\mm{\call{OCUSIter+Lit.~Incr.~HS}}}
+\newcommand\corrss{\mm{\call{CorrSS}}}
+\newcommand\corrsubsets{\mm{\call{CorrSubsets}}}
+%\newcommand\corrsubsets{\texttt{CorrSubsets}\xspace}
+\newcommand\comusdisj{\mm{\call{OCUSConstrainedDisjMCSes}}}
+\newcommand\disjmcs{\mm{\call{DisjointMCSes}\xspace}}
+\newcommand\disjmcsconstrained{\mm{\call{DisjointMCSesConstrained}\xspace}}
+\newcommand\omusinc{\mm{\call{OUS-Inc}}}
+\newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
+\newcommand\satsets{\mm{\mathbf{SSs}}}
+\newcommand\fall{\mm{\formula_{\mathit{all}}}}
+\newcommand\algemilio[1]{\emilio{#1}\;}
+\newcommand\UB{ub}
+\newcommand\LB{lb}
+\newcommand\maxsat{MaxSAT\xspace}
+\newcommand\voc{\ensuremath{\Sigma}\xspace}
+\newcommand\negset[1]{\mm{\overline{#1}}}
+
+\newcommand{\algorithmicbreak}{\textbf{break}}
+%%%%%
+\newcommand\muses[1]{\ensuremath{\mathit{MUSs}(#1)}\xspace}
+\newcommand\mcses[1]{\ensuremath{\mathit{MCSs}(#1)}\xspace}
+
+%%%%%%%
+\newcommand\onestep{\ensuremath{\call{Explain-One-Step}}\xspace}
+\newcommand\onestepomus{\ensuremath{\call{Explain-One-Step-OUS}}\xspace}
+\newcommand\onestepomusbounded{\ensuremath{\call{Explain-One-Step-OCUS-Bounded}}\xspace}
+
+%\newcommand\onestepo{\texttt{Explain-One-Step-OCUS}\xspace}
+\newcommand\onestepo{\ensuremath{\call{Explain-One-Step-OCUS}}\xspace}
+\newcommand\iterativeonestep{\ensuremath{\call{Explain-One-Step-OCUS-Split}}\xspace}
+%%%%%%
+
+
+\input{latextips.tex}
+
+
+\begin{document}
+	
+	%%%%%%% ALGORITHM KEYWORDS
+	\SetKwInOut{Input}{Input}
+	\SetKwInOut{OptInput}{Optional}
+	\SetKwInOut{Output}{Output}
+	\SetKwInOut{State}{State}
+	\SetKwInOut{Ext.}{Ext}
+	\SetKwComment{command}{/*}{*/}
+	\SetKw{Break}{break}
+	%%%%%%%
+	
+	\title{Research note: Reduced-cost fixing for OCUS}
+	
+	\section{Optimal Constrained Unsatisfiable Subsets}\label{sec:OCUS}
+	
+	\begin{algorithm}[!h]
+		\DontPrintSemicolon
+		$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
+		$LB \gets 0; UB \gets \infty$\;
+		\While{$LB < UB$}{
+			$hs\_is\_opt, \m{S} \gets \cohs(\setstohit,f,p) $ \label{line:opt} \;
+			\lIf{hs\_is\_opt}{$LB \gets f(\m{S})$}
+			\lIf{ $\lnot \sat(\m{S})$ \label{alg:ocus-sat-check}}{\Return{$\m{S}$}}
+
+			$\m{K}, \m{S}' \gets \corrsubsets(\subsetT, \formula)$ \label{line:grow}\;
+			$\setstohit  \gets \setstohit  \cup \m{K} $  \label{alg:ocus:complement}\;
+		}
+		\caption{$\comus(\formula,f,p)$ }
+		\label{alg:comus}
+	\end{algorithm}
+	
+	
+	\begin{algorithm}[!h]
+		\DontPrintSemicolon
+		$\m{K} \gets \emptyset$\;
+		$\subsetT' \gets  \subsetT$ \label{alg:disjmcs:init} \;
+		
+		\While{$\sat(\m{S}')$}{
+			$\m{C} \gets  \formula \setminus \grow(\m{S}', \formula)$ \label{alg:corr-subsets-grow-with-sat:corr-subset}\;
+			$ \m{S}' \gets \m{S}'  \cup  \m{C} $\label{alg:corr-subsets-grow-with-sat:mapping}\;
+			$ \m{K} \gets \m{K} \cup \{\m{C} \}$\;
+		}
+		\Return $\m{K}, m{S}'$
+		\caption{$\corrsubsets(\subsetT, \formula)$ }
+		\label{alg:corr-subsets-grow-with-sat-old}
+	\end{algorithm}
+	
+	\newpage
+	\section{Multiple Optimal Constrained Unsatisfiable Subsets}\label{sec:OCUS}
+	
+	\begin{algorithm}[!ht]
+		\DontPrintSemicolon
+		\caption{$\onestepomusbounded(\formulac,f,I,\Iend)$}
+		\label{alg:oneStepBoundBart}
+		$\m{S}_{best} \gets \mathit{nil}$ \;
+		${\cal S}^l_{best} \gets \mathit{nil}$ for each $l$ \quad \quad (or from previous iteration) \;
+		\For{$l \in \{\Iend \setminus I\}$ sorted by $f({\cal S}^l_{best})$\label{alg:oneStepBoundBart:sorting}}{
+			${\cal S}^l_{best}, \mathit{status} \gets \call{OCUS}{( (\formulac \land I \land \neg l), f, f(\m{S}) \leq f(\m{S}_{best}) )}$\label{alg:oneStepBound:cost_check}\;
+			\If{$\mathit{status} \neq \mathit{FAILURE}$ }{
+				$\m{S}_{best} \gets \m{S}^l_{best}$\;
+			}
+		}
+		\Return{${\cal S}_{best}$} 
+	\end{algorithm}
+	
+	
+	\begin{algorithm}[!ht]
+		\DontPrintSemicolon
+		\caption{$\iterativeonestep(\formulac,f,I,\Iend)$}
+		\label{alg:oneStepIter}
+		$queue \gets$ \texttt{InitializePriorityQueue($(\ell, \emptyset,\emptyset): 0 \ | \ \forall \ell \in \Iend \setminus I$)}\; %// init with $(l, \emptyset): 0$ for each $l$, or from previous iteration \;
+		%$S_{best} \gets \mathit{nil}$; $v_{best} \gets \infty$\;
+		%${\cal S}^l_{best} \gets \mathit{nil}$ for each $l$ // or from previous iteration \;
+		\While{$(\ell, \m{S}_\ell, \setstohit_{\ell}) \gets queue.pop()$}{
+			%\For{$l \in \{\Iend \setminus I\}$ sorted by $f({\cal S}^l_{best})$}{
+				\If{ $\lnot \sat(\m{S}_\ell)$}{\label{alg:onestepIter-sat-check}
+					\Return{$\m{S}_\ell$} \;
+				}
+				
+				$\m{K} \gets \corrsubsets(\subsetT_\ell, (\formulac \land I \land \neg \ell))$\;
+				$\setstohit_\ell  \gets \setstohit_\ell  \cup \m{K} $\;
+				$\m{S}_\ell \gets OptHittingSet(\setstohit_\ell,f) $  \;
+				%			$\m{S} \gets \call{OUS\_oneIter}{( (\formulac \land I \land \neg l), f,\m{S})}$\;
+				\texttt{queue.push($(\ell, \m{S}_\ell, \setstohit_{\ell}): f(\m{S_\ell})$)}\;
+			}
+		\end{algorithm}
+		
+		
+
+	
+	\clearpage
+	\bibliography{krrlib,ref}
+	\bibliographystyle{theapa}
+\end{document}

@@ -1647,23 +1647,23 @@ The \corrsubsets procedure will repeatedly compute a satisfiable subset $\m{S}' 
 \end{inparaenum}
 until no more satisfiable subsets can be found. 
 
-\begin{algorithm}[!h]
-	\DontPrintSemicolon
-	$\m{K} \gets \emptyset$\;
-%	$\subsetT' \gets  \subsetT$ \label{alg:disjmcs:init} \;
-	
-	\While{$\sat(\m{S})$}{
-
-		$\m{S}' \gets \grow(\m{S}, \formula)$ \;
-		\lIf{$\m{S}' = \m{S}$}{\Return $\m{K}$}
-		$\m{C} \gets  \formula \setminus \m{S}'$ \label{alg:corr-subsets-grow-with-sat:corr-subset}\;		
-		$ \m{S} \gets \m{S}  \cup  \m{C} $\label{alg:corr-subsets-grow-with-sat:mapping}\;
-		$ \m{K} \gets \m{K} \cup \{\m{C} \}$\;
-	}
-	\Return $\m{K}$
-	\caption{$\corrsubsets(\formula,\subsetT)$ }
-	\label{alg:corr-subsets-grow-with-sat}
-\end{algorithm}
+%\begin{algorithm}[!h]
+%	\DontPrintSemicolon
+%	$\m{K} \gets \emptyset$\;
+%%	$\subsetT' \gets  \subsetT$ \label{alg:disjmcs:init} \;
+%	
+%	\While{$\sat(\m{S})$}{
+%
+%		$\m{S}' \gets \grow(\m{S}, \formula)$ \;
+%		\lIf{$\m{S}' = \m{S}$}{\Return $\m{K}$}
+%		$\m{C} \gets  \formula \setminus \m{S}'$ \label{alg:corr-subsets-grow-with-sat:corr-subset}\;		
+%		$ \m{S} \gets \m{S}  \cup  \m{C} $\label{alg:corr-subsets-grow-with-sat:mapping}\;
+%		$ \m{K} \gets \m{K} \cup \{\m{C} \}$\;
+%	}
+%	\Return $\m{K}$
+%	\caption{$\corrsubsets(\formula,\subsetT)$ }
+%	\label{alg:corr-subsets-grow-with-sat}
+%\end{algorithm}
 \emilio{I changed this algorithm, to add the check whether the grow improves the subset S. Also, I removed the intermediate S', since it adds an extra step. Please do tell me what you think of it. If it's ok, the in-text algorithm description should be adapted} \tias{OK, maar wat als de if al in de iteratie waar is?} 
 \bart{Dat ziet er niet goed uit: 
 	\begin{itemize}

@@ -999,8 +999,8 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 \formula = \formularunning \land I \land \overline{(\Iend\setminus I)} =  c_1 \wedge \dots \wedge c_{4} \wedge \lnot x_1 \wedge  x_2 \wedge  \lnot x_3	%\wedge \{\lnot x_1\} \wedge  \{x_2\} \wedge  \{\lnot x_3\}\}	
 \label{eq:explain-one-step-ocus}
 \end{equation}
-\tias{$T_{rex}$ while funny, is undefined? should be c1..c4?}
-\emilio{Has been repeated in the beginning of example but not explicitly written as a conjunction}
+%\tias{$T_{rex}$ while funny, is undefined? should be c1..c4?}
+%\emilio{Has been repeated in the beginning of example but not explicitly written as a conjunction}
 %	\bart{The order in which these things come is a bit weird. 
 	%		The beginning of the example should contain all the assumptions we make: what precisely $f$ is, is something to be defined BEFORE the call to the algorithm. Explain that before. What is I, what is f, ... 
 	%		THEN you can explain how the algorithm works with these inputs, what it constructs, ... ($f$ is not constructed, it ``already existed''. ALso refer to line numbers of the algorithm. It helps.}
@@ -1017,14 +1017,14 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 %
 %\bart{Ah, wait, what follows is still part of the example (why is it not in the example environment?). 
 %	The sentence above should probably come later? Or just be dropped?}
-
+	In this small example, the $\corrsubsets(\m{S}, \formula)$ procedure simply returns $\{F\setminus S\}$. 
 
 \begin{table}[!h]
 	\centering
 	\begin{adjustbox}{max width=\textwidth}
 		\begin{tabular}{lccc} 
 			%		\multicolumn{5}{c}{\bart{what is this doing here? Drop this header}OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
-			Step & $\m{S}$                             & $\sat(\m{S})$ & $\setstohit  \gets \setstohit  \cup  \corrsubsets(\m{S}, \formula) $\emilio{suggestion $\setstohit  \gets \setstohit  \cup  \{\formula \setminus \m{S}\} $} \\ 
+			Step & $\m{S}$                             & $\sat(\m{S})$ & $\setstohit  \gets \setstohit  \cup  \corrsubsets(\m{S}, \formula) $ \\ 
 			\toprule[2pt]
 			&        &    &      $\emptyset$                                \\
 			\midrule
@@ -1125,7 +1125,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 %		\cref{ex:onestep-ocus} - Explanation step generated with \onestepo}
 %	\label{tab:example-explanation-generation-not-incremental}
 %\end{table}
-	In this small example, the \corrsubsets procedure simply returns $\{F\setminus S\}$. 
+
 	%if $\m{S}$ is satisfiable, use the model provided by the \sat solver to grow $\m{S}$ into a larger satisfiable subset, and return  $\{F\setminus S\}$.  
 %	\bart{``we use the set as the procedure'': this is a type clash. The procedure RETURNS $\{F\setminus S\}$.}
 %	\bart{If I just look at your first line, I get really confused. $S$ consists of only the constraint $\{\lnot x_1\}$ Should the first set-to-hit then not be everything except for this constraint? Somehow there is a lot more added in the ``grow''. So which grow is happening here? }\emilio{I use the model provided by the sat solver, that's wby I added the "grow" step}
@@ -1133,10 +1133,11 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 %	\emilio{Suggestion for improvement: Add SAT model after SAT(S) in table ?}
 % ADAPTED
 	\cref{tab:example-explanation-generation-not-incremental} breaks down the intermediate steps of algorithm \ref{alg:comus} for generating an OCUS of given $\formula$, $f$ and $p$. 
-	First, the collection of sets-to-hit \setstohit is initialized as the empty set. At each iteration, the hitting set solver will search for a cost-minimal assignment that hits all sets in \setstohit and that contains exactly one of $\{\lnot x_1, x_2, \lnot x_3\}$ (due to $p$). If this set is an unsatisfiable, it is guaranteed to be an OCUS.
+	First, the collection of sets-to-hit \setstohit is initialized as the empty set. At each iteration, the hitting set solver searches for a cost-minimal assignment that hits all sets in \setstohit and that contains exactly one of $\{\lnot x_1, x_2, \lnot x_3\}$ (due to $p$). If the hitting set is an unsatisfiable, it is guaranteed to be an OCUS.
 	
  The first iterations show that the \comus algorithm first hits all the literals of $\overline{\Iend\setminus I}$ (steps 1-3 of \cref{tab:example-explanation-generation-not-incremental}) and then starts combining one literal of $\overline{\Iend\setminus I}$ % \bart{``these'' literals (not clear the same as what)}
-  with the remaining clauses until an OCUS is found (step 12). Finally, step 12 of \cref{tab:example-explanation-generation-not-incremental} signifies that using clause $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
+  with the remaining clauses until an OCUS is found (step 12). 
+  Finally, step 12 of \cref{tab:example-explanation-generation-not-incremental} signifies that using clause $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
 
   
 % \bart{careful: if we will later introduce MCS enumeration, it is no longer the case that ``once an unsatisfiable subset is found, it is optimal''. 

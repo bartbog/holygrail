@@ -8,7 +8,7 @@
 \usepackage{paralist}
 \usepackage{caption}
 \usepackage{subcaption}
-
+\usepackage{lscape}
 \usepackage{graphicx}
 \usepackage{adjustbox}
 \usepackage{multirow,array}
@@ -1933,7 +1933,7 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
 \begin{subfigure}{0.47\textwidth}
 	\centering
 	\includegraphics[width=\textwidth]{figures/incremental_vs_non_SAT_2022_05_25.pdf}
-	\caption{Q2 - Effect of introducing incrementality on the time to generate a whole explanation sequence with \sat-based \grow.\emilio{Explanation not added, but interesting way to compare incrementeality and non-incrementaltiy}}
+	\caption{Q2 - Effect of introducing incrementality on the time to generate a whole explanation sequence with \sat-based \grow.\emilio{Interpretation not added, but interesting way to compare incrementeality and non-incrementaltiy}}
 	\label{fig:rq2_runtime_incr_non_incr}
 \end{subfigure}
 \end{figure}
@@ -2006,6 +2006,8 @@ In general, we see that the curves of the incremental variants are generally loc
 
 The best runtimes are obtained with \ousbiterincr, that is, using an incremental hitting set solver \emph{for every individual literal-to-explain} and only expanding the literal that is most likely to provide a cost-minimal \comus.
 
+
+
 %The left part of \cref{tab:runtime-decomposition} in for \ousb incrementality allows for solving 4 more instances; \comus incremental variant solves 9 more instances than the base \comus and \ousbiterincr is able to solve 1 more instance than \ousbiter.
 %The most striking observation from this figure is the jump at the beginning of \ousb and \ousbincr. For both configurations, around 50 \% of the timed-out instances timeout at the first step. Since \ousb and \ousbincr need to find an \emph{OUS} before having a good upper bound on the explanation, the first literals to explain will have an important impact on the time to generate the first explanation. More generally, the ordering of the literals-to-explain plays an important factor in explanation generation. 
 %Furthermore, note how this is not the case with \ousbiter and \ousbiterincr, where the ordering of the literals-to-explain is constantly being revised. 
@@ -2013,7 +2015,7 @@ The best runtimes are obtained with \ousbiterincr, that is, using an incremental
 %The long trailing end of each configuration is explained by the presence of the \emilio{add puzzle name here} puzzle, that has 375 literals to explain compared to the others which have 250 literals or less to explain.
 %\emilio{Ensure 2 graphs are at the same height! Somehow it matches with the caption under the figures}
 
-\tias{Needs a paragraph title/experiment question, what are we deep-diving into? "Comparison of time spent in hitting set solver, sat solver and correction subset computation"?}
+%\tias{Needs a paragraph title/experiment question, what are we deep-diving into? "Comparison of time spent in hitting set solver, sat solver and correction subset computation"?}
 \paragraph{Runtime decomposition} In \cref{tab:runtime-decomposition}, we decompose the time spent in each core parts of the \call{O(C)US} algorithms to answer \textbf{\ref{rq:time-critical}}. We only included the runtimes of the instances that do not timeout, to allow a fair comparison. %If we did, the average \% of time would not be representative as it would be biased by for instance the expensive \grow or \textsc{OPT} call. 
 The table depicts for each configuration 
 \begin{inparaenum}[(1)]
@@ -2028,7 +2030,7 @@ The table depicts for each configuration
 	\centering
 	\begin{adjustbox}{max width=\textwidth}
 		\begin{tabular}{r|c|c|c|c|c}
-%			& \multicolumn{5}{c}{\textbf{\sat}} \\[1ex]
+			%			& \multicolumn{5}{c}{\textbf{\sat}} \\[1ex]
 			%	\cline{2-9}
 			\textbf{config}             &  explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$ \\ \midrule
 			\comus                      & [233 / 403] &          96.65\% &  3.01\% & 0.35\% &      6245     \\
@@ -2067,26 +2069,6 @@ The table depicts for each configuration
 %\end{table}
 
 
-\begin{table}[!h]
-	\centering
-	\begin{adjustbox}{max width=\textwidth}
-		\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
-			& \multicolumn{5}{c|}{\textbf{MaxSAT+\sat Corr.}} & \multicolumn{5}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
-%				\cline{2-9}
-			\textbf{config}          & explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$   & explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$  \\ \midrule 
-			\comus       & [310 / 403] &         19.83\% &   0.82\% &    79.34\% &      3029     & [237 / 403] &         91.44\% & 4.07\% &  4.49\% &      5223 \\ 
-			\comusincr   & [311 / 403] &         50.76\% &   0.67\% &    48.57\% &       318     & [245 / 403] &         97.96\% & 1.15\% &  0.89\% &       406 \\ 
-			\comusbound  & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149     & [309 / 403] &           58.62\% & 9.93\% &   31.46\% &     26902 \\ 
-			\ousbincr  		& [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220     & [309 / 403] &        91.06\% & 5.85\% &       3.09\% &      1432 \\ 
-			\ousbiter    & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878     & [311 / 403] &          64.26\% & 5.72\% &      30.02\% &     25334 \\ 
-			\ousbiterincr& [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249     & [311 / 403] &          91.99\% & 2.22\% &  0.0\% &         1418 \\ 
-			MUS                     & [311 / 403] &             --- &       ---&          ---&        ---    &  &             --- &       ---&          ---&        --- \\ 
-			%	\bottomrule
-		\end{tabular}
-	\end{adjustbox}
-	\caption{Runtime decomposition of core parts of \call{O(C)US}. On the left, most of the computation time is spent in computing more optimal (constrained) hitting sets, while on the right, the runtime is shifted towards higher quality correction subsets.}
-	\label{tab:runtime-decomposition}
-\end{table}
 %
 %\begin{table}[!h]
 %	\centering
@@ -2294,9 +2276,54 @@ In the case of \ousbincr, the initial ordering of the literals to explain still 
 The iterated incremental approach of \ousbiterincr combined with \emph{\maxsat Corr.+\sat} is consistently the best explanation sequence configuration.
 
 %\tias{Smoother: we now look back to Table 6, focussing on the right side. It shows the runtime decomposition for MS+corr..., also for the non-incremental OCUS variants. We can observe that...}
-\paragraph{Runtime decomposition} We now look back to \cref{tab:runtime-decomposition} focusing on the right side.  It shows the runtime decomposition for the best performing \corrsubsets configuration, i.e.~\emph{Multi}-\sat, also for the non-incremental OCUS variants. We can observe that the shift in computation from the hitting set solver to correction subset enumeration clearly shows its benefits.
-More instances are explained, and for the incremental configuration, the computation is more balanced. 
+\paragraph{Runtime decomposition} We now look at the runtime decomposition in \cref{tab:runtime-decomposition-corr-susbet-enum} for the 2 best performing \corrsubsets configuration, i.e.~MaxSAT+Multi-\sat and \emph{Multi}-\sat, also for the non-incremental OCUS variants. For \emph{MaxSAT+Multi-\sat}, we observe that the shift in computation from the hitting set solver to correction subset enumeration clearly shows its benefits.
+More instances are explained, and for the incremental configuration, the computation is more balanced.  
 
+\begin{landscape}
+	 \vspace*{\fill}
+	\thispagestyle{empty}
+\begin{table}[!h]
+	\centering
+%	\begin{adjustbox}{max width=\textheight}
+		\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
+			& \multicolumn{5}{c|}{\textbf{MaxSAT+Multi-\sat}} & \multicolumn{5}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
+			%				\cline{2-9}
+			\textbf{config}          & \textbf{explained}  &  \textbf{\%\textsc{OPT}} &   \textbf{\%\sat} & \textbf{\%\corrss} &  $\mathbf{N_{sth}}$   & \textbf{explained}  &  \textbf{\%\textsc{OPT}} &   \textbf{\%\sat} & \textbf{\%\corrss} &  $\mathbf{N_{sth}}$  \\ \midrule 
+			\comus       & [310 / 403] &         19.83\% &   0.82\% &    79.34\% &      3029     & [237 / 403] &         91.44\% & 4.07\% &  4.49\% &      5223 \\ 
+			\comusincr   & [311 / 403] &         50.76\% &   0.67\% &    48.57\% &       318     & [245 / 403] &         97.96\% & 1.15\% &  0.89\% &       406 \\ 
+			\comusbound  & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149     & [309 / 403] &           58.62\% & 9.93\% &   31.46\% &     26902 \\ 
+			\ousbincr  		& [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220     & [309 / 403] &        91.06\% & 5.85\% &       3.09\% &      1432 \\ 
+			\ousbiter    & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878     & [311 / 403] &          64.26\% & 5.72\% &      30.02\% &     25334 \\ 
+			\ousbiterincr& [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249     & [311 / 403] &          91.99\% & 2.22\% &  0.0\% &         1418 \\ 
+			MUS                     & [311 / 403] &             --- &       ---&          ---&        ---    &  &             --- &       ---&          ---&        --- \\ 
+			%	\bottomrule
+		\end{tabular}
+%	\end{adjustbox}
+	\caption{Runtime decomposition of core parts of \call{OCUS}. On the left, most of the computation time is spent in computing more optimal (constrained) hitting sets, while on the right, the runtime is shifted towards higher quality correction subsets.}
+	\label{tab:runtime-decomposition-corr-susbet-enum}
+\end{table}
+	 \vspace*{\fill}
+\begin{table}[!h]
+	\centering
+	\begin{adjustbox}{max width=1.4\textwidth}
+		\begin{tabular}{r|c|c|cccccc|c|c|cccccc}
+						& \multicolumn{8}{c|}{\textbf{MaxSAT+Multi-\sat}} & \multicolumn{8}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
+			\textbf{config}          & $\mathbf{\overline{t_{1}}}$ & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ &$\mathbf{\overline{t_{1}}}$  & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ \\ \midrule
+			\comus          &               4.04 &                  6.87 &      0.93 &      1.56 &       3.34 &    14.06 &     20.78 &    401 &               7.70 &        6.44 &  0.43 &  0.63 &  1.48 &  20.56 &  51.26 &  2522 \\
+			\comusincr      &               8.24 &                  1.87 &      0.34 &      0.46 &       0.76 &     5.26 &     16.84 &    342 &               8.19 &        3.59 &  0.28 &  0.42 &  0.71 &   9.68 &  26.49 &  2298 \\
+			\comusbound     &               5.46 &                 13.57 &      1.95 &      3.63 &       6.01 &    13.51 &     23.50 &    893 &               2.56 &        1.16 &  0.55 &  0.83 &  1.40 &   2.34 &   3.02 &   324 \\
+			\ousbincr       &              22.09 &                  1.35 &      0.45 &      0.62 &       0.85 &     2.40 &      7.53 &   2568 &               5.06 &        0.86 &  0.42 &  0.55 &  0.74 &   1.47 &   2.05 &  1629 \\
+			\ousbiter       &               4.56 &                  3.22 &      1.62 &      3.09 &       5.03 &    12.75 &     18.93 &    389 &               0.90 &        1.06 &  0.54 &  0.81 &  1.37 &   2.35 &   3.03 &   261 \\
+			\ousbiterincr   &               7.90 &                  0.88 &      0.38 &      0.52 &       0.67 &     1.72 &      5.68 &    180 &               2.03 &        0.52 &  0.35 &  0.46 &  0.57 &   0.87 &   1.30 &   211 \\
+			
+			%	\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+	\caption{\textbf{Non-timedout instances:} Decomposition of runtime for individual explanations into time to generate the first explanation ($t_1$), the average time to produce an additional explanation $\overline{t_{expl}}$ and the quantiles of the explanation times.}
+	\label{tab:indiv-explanations-all}
+\end{table}
+	 \vspace*{\fill}
+\end{landscape}
 %\
 
 %\begin{table}[!h]
@@ -2324,27 +2351,26 @@ More instances are explained, and for the incremental configuration, the computa
 
 \subsection{Single step O(C)US for interactive explanations}
 
-In this section, we analyze whether the algorithms we developed are fit for an interactive context. By an interactive context, we consider two types of settings. First, the user wants an immediate explanation for the given CSP and the second, the user is incrementally solving the puzzle and in the background explanations are being computed. \cref{tab:indiv-explanations} depicts the average time to generate an explanation $\overline{t_{expl}}$, average time to produce the first explanation $\overline{t_{1}}$, and the explanation time quantiles 25 up to 100, where quantile 100 $q_{100}$ symbols the most expensive step to generate.
+In this section, we analyze whether the algorithms we developed are fit for an interactive context. By an interactive context, we consider two types of settings. First, the user wants an immediate explanation for the given CSP and the second, the user is incrementally solving the puzzle and in the background explanations are being computed. \cref{tab:indiv-explanations-all} depicts the two best performing \corrsubsets procedures. For each procedure, we compute the average time to generate an explanation $\overline{t_{expl}}$, average time to produce the first explanation $\overline{t_{1}}$, and the explanation time quantiles 25 up to 100, where quantile 100 $q_{100}$ symbols the most expensive step to generate.
 
-\begin{table}[!h]
-	\centering
-	\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{r|c|c|cccccc}
-	config & $\overline{t_{expl}}$ & $\overline{t_{1}}$ &  $q_{25}$ &  $q_{50}$ &  $q_{75}$  & $q_{95}$ &  $q_{98}$ & $q_{100}$ \\\midrule
-
-\comus &                  6.87 &               4.04 &      0.93 &      1.56 &       3.34 &    14.06 &     20.78 &    400.73 \\
-\comusincr &                  1.87 &               8.24 &      0.34 &      0.46 &       0.76 &     5.26 &     16.84 &    342.03 \\
-	\comusbound &                 13.57 &               5.46 &      1.95 &      3.63 &       6.01 &    13.51 &     23.50 &    893.17 \\
-	\ousbincr  &                  1.35 &              22.09 &      0.45 &      0.62 &       0.85 &     2.40 &      7.53 &   2568.67 \\
-	\ousbiter &                  3.22 &               4.56 &      1.62 &      3.09 &       5.03 &    12.75 &     18.93 &    388.95 \\
-	\ousbiterincr &                  0.88 &               7.90 &      0.38 &      0.52 &       0.67 &     1.72 &      5.68 &    180.10 \\
-
-	%	\bottomrule
-\end{tabular}
-	\end{adjustbox}
-	\caption{\textbf{Non-timedout instances:} Runtime analysis of individual explanations decomposed into time to generate the first explanation ($t_1$), the average time to produce an additional explanation and the quantiles of the explanation times.}
-	\label{tab:indiv-explanations}
-\end{table}
+%\begin{table}[!h]
+%	\centering
+%	\begin{adjustbox}{max width=\textwidth}
+%\begin{tabular}{r|c|c|cccccc}
+%config          & $\overline{t_{1}}$ & $\overline{t_{expl}}$ &  $q_{25}$ &  $q_{50}$ &  $q_{75}$  & $q_{95}$ &  $q_{98}$ & $q_{100}$ \\\midrule
+%\comus          &               4.04 &                  6.87 &      0.93 &      1.56 &       3.34 &    14.06 &     20.78 &    400.73 \\
+%\comusincr      &               8.24 &                  1.87 &      0.34 &      0.46 &       0.76 &     5.26 &     16.84 &    342.03 \\
+%\comusbound     &               5.46 &                 13.57 &      1.95 &      3.63 &       6.01 &    13.51 &     23.50 &    893.17 \\
+%\ousbincr       &              22.09 &                  1.35 &      0.45 &      0.62 &       0.85 &     2.40 &      7.53 &   2568.67 \\
+%\ousbiter       &               4.56 &                  3.22 &      1.62 &      3.09 &       5.03 &    12.75 &     18.93 &    388.95 \\
+%\ousbiterincr   &               7.90 &                  0.88 &      0.38 &      0.52 &       0.67 &     1.72 &      5.68 &    180.10 \\
+%
+%	%	\bottomrule
+%\end{tabular}
+%	\end{adjustbox}
+%	\caption{\textbf{Non-timedout instances:} Decomposition of runtime for individual explanations into time to generate the first explanation ($t_1$), the average time to produce an additional explanation $\overline{t_{expl}}$ and the quantiles of the explanation times.}
+%	\label{tab:indiv-explanations}
+%\end{table}
 
 %\begin{table}[!h]
 %	\centering
@@ -2363,21 +2389,25 @@ In this section, we analyze whether the algorithms we developed are fit for an i
 %	\label{tab:indiv-explanations}
 %\end{table}
 
-In \cref{tab:indiv-explanations}, we see that on average, \emph{OUS Iter.+Lit. Incr. HS} takes the least time to produce the first explanation, and is on average significantly faster to generate an explanation. This makes the iterated approach a viable candidate for explanation generating during interactive problem solving.
+We notice that on average, \emph{\ousbiterincr} takes the least time to produce the first explanation, and is on average significantly faster to generate an explanation, especially combined with Multi-\sat. This makes the iterated approach a viable candidate for explanation generating during interactive problem solving.
 
 \section{Conclusion and future work}
 
-In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function. For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \cite{bogaerts2021framework}, by optimal constrained unsatisfiable subsets (\comus). Our algorithm for computing {}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. In this approach, the main bottleneck of this approach is having to repeatedly compute optimal hitting sets followed by a cheap call to the sat solver and computing a correction subset. To compensate, we developed a correction subset enumeration method that balances the trade-off between efficiency and quality of generated subsets.
+In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function. For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \cite{bogaerts2021framework}, by optimal constrained unsatisfiable subsets (\comus). Our algorithm for computing {}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. In this approach, the main bottleneck of this approach is having to repeatedly compute \emph{optimal} hitting sets followed by a cheap call to the sat solver and computing a correction subset. 
+To compensate, we developed methods for enumerating correction subset that balance the trade-off between efficiency and quality of generated subsets. 
 
 %%%%% From 
 %\emilio{Say something the enumeration of corrections subsets that beats simply growing}
 With the observed impact of different `\corrsubsets' methods, an open question remains whether we can quantify precisely and in a generic way what a \textit{good} or even the best set-to-hit is in a hitting set approach. 
 
-For efficiently generating the whole explanation sequence, we introduced incrementality which allows the re-use of computed information, more precisely satisfiable subsets, that remains valid from one explanation call to another.
+For efficiently generating the whole explanation sequence, we introduced incrementality which allows the re-use of computed information. 
+Satisfiable subsets remain valid from one explanation call to another.
+In the case of \comus for explanation-sequence generation, where the underlying hitting set solver is MIP-based, we instantiate the MIP-solver once for all explanation steps and keep track of computed sets-to-hit.
+By making use of a weighing strategy dependent on the explanation step, we guarantee that the MIP-solver selects only clauses in the sets-to-hit that are valid in the current explanation step.
 
 The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question.
 
-The concept of bounded (incremental) OUS and OCUS are not limited to explanations of satisfaction problems and we are keen to explore other applications too.
+The concept of bounded (incremental) OCUS is not limited to explanations of satisfaction problems and we are keen to explore other applications too.
 %A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
 One potential avenue for future work is how do these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
 

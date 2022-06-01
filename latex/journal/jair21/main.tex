@@ -337,15 +337,15 @@ In the CP and SAT communities, there has been a strong focus on explaining \text
 %\bart{This ``and have recetnly seen'', what does it refer to? Does not fit the rest of the sentence} 
 
 %In this context, we recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} and applied them to Zebra puzzles; building on this work, \citet{schotten} investigated interpretable explanations using MUSs but for a wider range of puzzles.   \bart{MUSs? Not known atthis point. ``But''? There seems to be no contradiction here} 
-We recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} for explaining the solution of satisfiable instances exploiting a one-to-one correspondence between so-called non-redundant explanations and MUSs of a derived program. The focus of \citet{ecai/BogaertsGCG20} has been on explaining Zebra puzzles; building on this work, \citet{schotten} investigated interpretable explanations using MUSs but for a wider range of puzzles.   \bart{MUSs? Not known atthis point. ``But''? There seems to be no contradiction here} 
-\emilio{i have extended previous paragraph to include MUSs and extended this part to included the link between non-redundant expalnations and MUSs. If OK, please remove comments}
+We recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} for explaining the solution of satisfiable instances exploiting a one-to-one correspondence between so-called non-redundant explanations and MUSs of a derived program. The focus of \citet{ecai/BogaertsGCG20} has been on explaining Zebra puzzles; building on this work, \citet{schotten} investigated interpretable explanations using MUSs but for a wider range of puzzles.   \bart{MUSs? Not known at this point. ``But''? There seems to be no contradiction here} 
+\emilio{i have extended previous paragraph to include MUSs and extended this part to included the link between non-redundant explanations and MUSs. If OK, please remove comments}
 %\bart{We can probably phrase this a bit stronger. They are not just similar explanations. In their own work they say that ``We advance on the work
 %of [Bogaerts et al., 2020]'', so we can probably quite fairly say that \citet{schotten} build on our work and apply it to more puzzles (phrased slightly more politically careful)}
 Our current work is motivated by a concrete algorithmic need: to generate these explanations \emph{efficiently}, we need algorithms that can find MUSs that are optimal with respect to a given cost function, where the cost function approximates human-understandability of the corresponding explanation step. 
 
 The closest related work can be found in the literature on generating or enumerating MUSs \cite{conf/sat/LynceM04,liffiton2016fast}.
 Different techniques are employed to find MUSs, including  manipulating resolution proofs produced by SAT solvers \cite{goldberg,DBLP:journals/fmsd/GershmanKS08,DBLP:conf/sat/DershowitzHN06}, incremental solving to enable/disable clauses and branch-and-bound search \cite{DBLP:conf/dac/OhMASM04}, or by BDD-manipulation methods \cite{huang}.
-Other methods work by means of translation into a so-called Quantified \maxsat \cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressivity of Quantified Boolean Formulas (QBF) \cite{QBF} with optimization as known from \maxsat \cite{DBLP:series/faia/LiM09}, or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest}.
+Other methods work by means of translation into a so-called Quantified \maxsat \cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressiveness of Quantified Boolean Formulas (QBF) \cite{QBF} with optimization as known from \maxsat \cite{DBLP:series/faia/LiM09}, or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest}.
 To the best of our knowledge, only few works have considered \emph{optimizing} MUSs: the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest}. 
 
 An \textit{abstract} framework for describing \hitsetbased algorithms, including optimization was developed by \citet{DBLP:conf/kr/SaikkoWJ16}. While our approach can be seen to fit the framework, the terminology is focused on MaxSAT rather than MUS and would complicate our exposition.
@@ -455,7 +455,7 @@ Consider the following examples to illustrate the concepts related to unsatisfia
 	\[ c_6 := \lnot x_1 \vee  x_2 \qquad  c_7 := \lnot x_1 \vee  \lnot x_3 \]
 
 \end{example}
-In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an example of a Minimal Unsatisfiable Subset (MUS) and $ \{c_1\},\{c_4\}, \{c_2,c_5\},\{c_5, c_6\}, \{c_3, c_6\}$ are examples of a minimal correction subsets (MCSes). We observe that MUS $\{c_1, c_2, c_4, c_6\}$ hits at least one clause of each MCS. 
+In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an example of a Minimal Unsatisfiable Subset (MUS) and $ \{c_1\},\{c_4\}, \{c_2,c_5\},\{c_5, c_6\}, \{c_3, c_6\}$ are examples of a minimal correction subsets (MCSs). We observe that MUS $\{c_1, c_2, c_4, c_6\}$ hits at least one clause of each MCS. 
 
 
 %mcses= [['c_3', 'c_5', 'c_7'], ['c_6', 'c_7'], ['c_2', 'c_6'], ['c_4'], ['c_1']]
@@ -720,7 +720,7 @@ For this, we will assume to have access to a solver \cohs that can compute hitti
 The choice of the underlying hitting set solver will thus determine which types of cost functions and constraints are possible. 
 In our implementation, we use a cost function $f$ that is encoded as a linear term (weighted sum) where, for instance, constraints are given a larger weight than the already derived literals. 
 For instance, (unit) clauses representing previously derived facts can be given small weights and regular clauses can be given large weights, such that explanations are penalized for including clauses when previously derived facts can be used instead. %relevant facts are directly available.
-Condition $p$ can easily be encoded as a linear constraint (see eq.~\ref{eq:cost-function} for an example), 
+Condition $p$ can easily be encoded as a linear constraint (see \cref{eq:exactly-one-constraint} for an example), 
 %\bart{the cost function is encoded as a linear TERM, the $p$ indeed as a linear CONSTRAINT}, 
 %EMILIO: ADAPTED
 thus allowing the use of highly optimized mixed integer programming (MIP) solvers. 
@@ -731,7 +731,7 @@ thus allowing the use of highly optimized mixed integer programming (MIP) solver
 %\TIPdefVSchoice : indeed should ahve been the 
 % where every set-to-hit $ \settohit \in \setstohit$ should be hit at least once. 
 %% repetition:
-The goal is to find a hitting set $\hittingset \subseteq D$ that hits every set-to-hit at least once (Eq.~\ref{eq:set-to-hit}), that minimizes $f(D)$ (Eq.~\ref{eq:minimization}), and satisfies $p$ (Eq.~\ref{eq:constraint}).
+The goal is to find a hitting set $\hittingset \subseteq D$ that hits every set-to-hit at least once (\cref{eq:set-to-hit}), that minimizes $f(D)$ (\cref{eq:minimization}), and satisfies $p$ (\cref{eq:constraint}).
 %\bart{$D$ is also what you called your set of decision variables before. Make a macro out of this (to chance notation easily ) and choose another symbol for one of hte two}, that hits every set-to-hit at least once , .
 %%\TIPspacingafterabbreviation[eq. \ref{eq:minimization};  Better: use cleveref]
 %% ADAPTED SPACING of abbreviation with tilde ~
@@ -950,7 +950,7 @@ We add the following three new clauses, which represent the complement of litera
 	%	with initial interpretation $ I = I_0 = \emptyset$ and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
 	\[ \{\lnot x_1\}\qquad  \{x_2\} \qquad\{\lnot x_3\}\]
 		To ensure that we only explain one literal at a time, we add predicate $p$ as
-		\begin{equation}
+		\begin{equation}\label{eq:cost-function}
 		p(S) := \# (S\cap \{\lnot x_1, x_2, \lnot x_3\})=1
 		\end{equation}
 	The MIP encoding of predicate $p$ corresponds to
@@ -2199,7 +2199,7 @@ In this section, we evaluate whether an efficient \maxsat-call is able to balanc
 %stronger constraints on the 
 %sets-to-hit using \maxsat grow, and correction subset enumeration strategies introduced in \cref{sec:correction_subset_enum}. 
 %\tias{This sentence rather complicated}
-Thus, to answer \textbf{\ref{rq:q3}}, we compare the incremental variants of \comus, \emph{bounded} \comus, \emph{splitted} \comus, and only change the \corrsubsets strategy they use.  
+Thus, to answer \textbf{\ref{rq:q3}}, we compare the incremental variants of \comus, \emph{bounded} \comus, \emph{split} \comus, and only change the \corrsubsets strategy they use.  
 In \cref{tab:correction-subset-proc-description}, we summarize the different \corrsubsets configurations compared.
 %\begin{itemize}%[(a)]
 %	\item \sat refers to using a model computed by \sat solver to grow the input satisfiable subset;
@@ -2270,7 +2270,7 @@ In \cref{tab:correction-subset-proc-description}, we summarize the different \co
 
 \tias{All lines should be solid in a-c. What is going on with the 'd' figure here??}
 
-Figure \ref{fig:q3:grow_configurations} depicts for each incremental OCUS algorithm, the number of instances solved across time for varying correction subset approaches. For all algorithms, \emph{\maxsat Corr.+\sat} ranks first substantially beating the \emph{\sat} approach. However, only \emph{\maxsat Corr.+\sat} is able to consistently beat the naive MUS-based expalnations. 
+Figure \ref{fig:q3:grow_configurations} depicts for each incremental OCUS algorithm, the number of instances solved across time for varying correction subset approaches. For all algorithms, \emph{\maxsat Corr.+\sat} ranks first substantially beating the \emph{\sat} approach. However, only \emph{\maxsat Corr.+\sat} is able to consistently beat the naive MUS-based explanations. 
 The bottom right graph of figure \ref{fig:q3:grow_configurations}, corresponds to the average cumulative explanation time for deriving the literals using the best configuration (\emph{\maxsat Corr.+\sat}).
 In the case of \ousbincr, the initial ordering of the literals to explain still impacts the explanation time immensely, even if the correction subset configuration compensates in the long run. 
 The iterated incremental approach of \ousbiterincr combined with \emph{\maxsat Corr.+\sat} is consistently the best explanation sequence configuration.
@@ -2351,7 +2351,7 @@ More instances are explained, and for the incremental configuration, the computa
 
 \subsection{Single step O(C)US for interactive explanations}
 
-In this section, we analyze whether the algorithms we developed are fit for an interactive context. By an interactive context, we consider two types of settings. First, the user wants an immediate explanation for the given CSP and the second, the user is incrementally solving the puzzle and in the background explanations are being computed. \cref{tab:indiv-explanations-all} depicts the two best performing \corrsubsets procedures. For each procedure, we compute the average time to generate an explanation $\overline{t_{expl}}$, average time to produce the first explanation $\overline{t_{1}}$, and the explanation time quantiles 25 up to 100, where quantile 100 $q_{100}$ symbols the most expensive step to generate.
+In this section, we analyze whether the algorithms we developed are fit for an interactive context. By an interactive context, we consider two types of settings. First, the user wants an immediate explanation for the given CSP and second, the user is incrementally solving the puzzle and in the background explanations are being computed. \cref{tab:indiv-explanations-all} depicts the two best performing \corrsubsets procedures. For each procedure, we compute the average time to generate an explanation $\overline{t_{expl}}$, average time to produce the first explanation $\overline{t_{1}}$, and the explanation time quantiles 25 up to 100, where quantile 100 $q_{100}$ symbols the most expensive step to generate.
 
 %\begin{table}[!h]
 %	\centering
@@ -2390,10 +2390,11 @@ In this section, we analyze whether the algorithms we developed are fit for an i
 %\end{table}
 
 We notice that on average, \emph{\ousbiterincr} takes the least time to produce the first explanation, and is on average significantly faster to generate an explanation, especially combined with Multi-\sat. This makes the iterated approach a viable candidate for explanation generating during interactive problem solving.
+\emilio{is this a viable candidate because it is faster than the others?	But is it fast enough? What is the max acceptable time?}
 
 \section{Conclusion and future work}
 
-In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function. For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \cite{bogaerts2021framework}, by optimal constrained unsatisfiable subsets (\comus). Our algorithm for computing {}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. In this approach, the main bottleneck of this approach is having to repeatedly compute \emph{optimal} hitting sets followed by a cheap call to the sat solver and computing a correction subset. 
+In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function. For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \cite{bogaerts2021framework}, by optimal constrained unsatisfiable subsets (\comus). Our algorithm for computing \comus{}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. In this approach, the main bottleneck of this approach is having to repeatedly compute \emph{optimal} hitting sets followed by a cheap call to the \sat solver and computing a correction subset. 
 To compensate, we developed methods for enumerating correction subset that balance the trade-off between efficiency and quality of generated subsets. 
 
 %%%%% From 
@@ -2405,13 +2406,13 @@ Satisfiable subsets remain valid from one explanation call to another.
 In the case of \comus for explanation-sequence generation, where the underlying hitting set solver is MIP-based, we instantiate the MIP-solver once for all explanation steps and keep track of computed sets-to-hit.
 By making use of a weighing strategy dependent on the explanation step, we guarantee that the MIP-solver selects only clauses in the sets-to-hit that are valid in the current explanation step.
 
-\emilio{We present a case of constrainedness in the ocus algorithm: such as the bounded-OCUS explanations}
+\emilio{We present a case of constrainedness in the \comus algorithm: such as the bounded-OCUS explanations}
 
 The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question.
 
-The concept of bounded (incremental) OCUS is not limited to explanations of satisfaction problems and we are keen to explore other applications too.
+The concept of bounded (incremental) \comus is not limited to explanations of satisfaction problems and we are keen to explore other applications too.
 %A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
-One potential avenue for future work is how do these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
+One potential avenue for future work is how these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
 
 \acks{This research received partial funding from the Flemish Government (AI Research Program); the FWO Flanders project G070521N; and funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (Grant No. 101002802, CHAT-Opt).}
 
@@ -2428,14 +2429,14 @@ One potential avenue for future work is how do these explanation generating meth
 		\textbf{puzzle type} & \textbf{instance} &              &          &                      \\
 		\midrule
 %		\textbf{sudoku} & 4x4 &            9 &      544 &                   41 \\
-		\textbf{sudoku} & 9x9 - simple  &          25 &    ..... & \dots\\
+		\textbf{Sudoku} & 9x9 - simple  &          25 &    ..... & \dots\\
 		 & 9x9 - easy &          25 &  \dots  & \dots\\
 		 & 9x9 - medium &          25 & \dots    &      \dots\\
 		 & 9x9 - expert &          25 &   \dots  & \dots\\
 %		& 16x16 &           25 &   154624 &                 2246 \\
 %		& 25x25 &           25 &   940000 &                 9403 \\
 		\midrule
-		\textbf{logic} & pastaPuzzle &            1 &     4572 &                   96 \\
+		\textbf{logic} & pasta Puzzle &            1 &     4572 &                   96 \\
 		& 150 &            8 &     7535 &                  150 \\
 		& 250 &            1 &    17577 &                  250 \\
 		\midrule
@@ -2450,7 +2451,7 @@ One potential avenue for future work is how do these explanation generating meth
 		& binairo &          156 &    16759 &                   99 \\
 		& skyscrapers &           16 &    17991 &                  159 \\
 		& tents &            4 &    18644 &                  476 \\
-		& sudoku &           76 &    34143 &                  729 \\
+		& Sudoku &           76 &    34143 &                  729 \\
 		& miracle &            1 &    59331 &                  729 \\
 		& x-sums &            1 &   109717 &                  729 \\
 		& killersudoku &           13 &  3609685 &                  729 \\

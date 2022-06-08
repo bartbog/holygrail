@@ -143,24 +143,22 @@
 	\maketitle
 	
 %	\section{Optimal Constrained Unsatisfiable Subsets}\label{sec:OCUS}
-	\begin{minipage}{0.58\textwidth}
 		\begin{algorithm}[H]
 			\DontPrintSemicolon
 			$\setstohit  \gets \emptyset$ \; %\label{omus-line1} 
-			$LB \gets 0; UB \gets \infty$\;
-			\While{$LB < UB$}{
+			$\mathbf{LB} \gets 0; \mathbf{UB} \gets \infty$\;
+			\While{$\mathbf{LB} < \mathbf{UB}$}{
 				$hs\_is\_opt, \m{S} \gets \cohs(\setstohit,f,p) $\label{line:opt}\;
-				\lIf{hs\_is\_opt}{$LB \gets f(\m{S})$}
-				\lIf{ $\lnot \sat(\m{S})$ \label{alg:ocus-sat-check}}{\Return{$\m{S}$}}
+				\uIf{hs\_is\_opt}{$\mathbf{LB} \gets f(\m{S})$}
+				\uIf{ $\lnot \sat(\m{S})$ \label{alg:ocus-sat-check}}{\Return{$\m{S}$}}
 				
 				$\m{K}, \m{S}' \gets \corrsubsets(\subsetT, \formula)$ \label{line:grow}\;
 				$\setstohit  \gets \setstohit  \cup \m{K} $  \label{alg:ocus:complement}\;
+				\uIf{$f(\m{S}') < \mathbf{UB}$}{$\mathbf{UB} \gets f(\m{S}')$}				
 			}
 			\caption{$\comus(\formula,f,p)$ }
 			\label{alg:comus}
 		\end{algorithm}
-	\end{minipage}\hfill
-	\begin{minipage}{0.4\textwidth}
 			\begin{algorithm}[H]
 			\DontPrintSemicolon
 			$\m{K} \gets \emptyset$\;
@@ -171,11 +169,11 @@
 				$ \m{S}' \gets \m{S}'  \cup  \m{C} $\label{alg:corr-subsets-grow-with-sat:mapping}\;
 				$ \m{K} \gets \m{K} \cup \{\m{C} \}$\;
 			}
-			\Return $\m{K}, m{S}'$
+			\Return $\m{K}, \m{S}'$
 			\caption{$\corrsubsets(\subsetT, \formula)$ }
 			\label{alg:corr-subsets-grow-with-sat-old}
 		\end{algorithm}
-	\end{minipage}
+
 	
 	
 	

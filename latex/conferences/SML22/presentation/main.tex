@@ -1,7 +1,7 @@
 
 %%%%%%%%%%%%%%
-\documentclass[handout]{beamer}
-%\documentclass{beamer}
+%\documentclass[handout]{beamer}
+\documentclass{beamer}
 \usepackage[ruled,linesnumbered]{algorithm2e}
 \usepackage{natbib}
 \usepackage{layouts}
@@ -288,34 +288,63 @@
 	\begin{frame}{Motivation}
 		\framesubtitle{Explaining SAT problems}
 
+
+
+	\begin{minipage}{0.6\textwidth}
 		\begin{problemspec}
-			\begin{description}
-				\item[$\mathbf{C}$] Constraints (alldifferent, ...)
-				\item[$\mathbf{I}$] Partial assignment (Givens  in Sudoku) 
-				\item[$\mathbf{I_{end}}$] Full assignment
-			\end{description}
-			%					\item[Goal] Generate an explanation sequence that explains step-by-step how to derive the facts of the solution.\pause
-			%	\item[$f$] A cost function quantifying explanation difficulty.
-	\end{problemspec}
-					\textbf{How do you explain SAT ? }	\pause
-					\begin{itemize}
-			\item Sequence of \textit{simple} explanations (\cite{bogaerts2020step})
-		
-			\item Explanation takes form of a inference step: 
-			$ C' \wedge I' \implies N $\pause
-			\begin{itemize}
-				\item $C' \subseteq \mathbf{C}$ Subset constraints\pause
-				\item $I' \subseteq \mathbf{I}$ facts derived\pause
-				\item $N  \in \mathbf{sol}\setminus \mathbf{I}$ new fact \pause
-			\end{itemize}
-		\item $f$ cost function -- quantify explanation difficulty \pause
-		\item How to compute them ? For every fact-to-explain compute : 
-					\[MUS(\mathbf{C} \wedge \mathbf{I} \wedge \lnot N )\]
-		\end{itemize}
-%	\begin{figure}
-%		\includegraphics{imagefile}
-%	\end{figure}
+	\begin{itemize}
+		\item[$\mathbf{C}$] Constraints (alldifferent, ...)
+		\item[$\mathbf{I}$] Partial assignment (Givens  in Sudoku) 
+		\item[$\mathbf{I_{end}}$] Full assignment
+	\end{itemize}
+	%					\item[Goal] Generate an explanation sequence that explains step-by-step how to derive the facts of the solution.\pause
+	%	\item[$f$] A cost function quantifying explanation difficulty.
+\end{problemspec}
+	\end{minipage}
+	\begin{minipage}{0.39\textwidth}
+		\centering
+		\includegraphics[width=0.6\textwidth]{figures/sudoku_alldiff.jpg}
+	\end{minipage}
+
 	\end{frame}
+
+
+	\begin{frame}{Motivation}
+	\framesubtitle{Explaining SAT problems}
+
+\begin{minipage}{0.24\textwidth}	
+		\includegraphics[width=\textwidth]{figures/sudoku_alldiff.jpg}	
+\end{minipage}\hfill
+\begin{minipage}{0.75\textwidth}
+	
+	\textbf{How do you explain SAT ? }	\pause
+	\begin{itemize}
+		\item Sequence of \textit{simple} explanations (\cite{bogaerts2020step})
+		
+		\item Explanation takes form of a inference step: 
+		$ C' \wedge I' \implies N $\pause
+		\begin{itemize}
+			\item $C' \subseteq \mathbf{C}$ Subset constraints\pause
+			\item $I' \subseteq \mathbf{I}$ facts derived\pause
+			\item $N  \in \mathbf{sol}\setminus \mathbf{I}$ new fact \pause
+		\end{itemize}
+		\item $f$ cost function -- quantify explanation difficulty \pause
+		\item How to compute them ? \pause
+		\begin{itemize}
+			\item For every remaining fact-to-explain ($N  \in \mathbf{sol}\setminus \mathbf{I}$) compute 
+			\[S = MUS(\mathbf{C} \wedge \mathbf{I} \wedge \lnot N )\]
+			\item Select the cheapest one $f(S)$
+		\end{itemize}
+	\end{itemize}
+\end{minipage}
+
+
+
+%	\begin{figure}
+	%		\includegraphics{imagefile}
+	%	\end{figure}
+\end{frame}
+
 
 	\section{Challenges and Open questions}
 	
@@ -385,7 +414,7 @@
 %					\item $I' \subseteq \mathbf{I}$ facts derived
 %					\item $N  \in \mathbf{sol}\setminus \mathbf{I}$ new fact \pause
 					\item $f$ cost function --- quantify explanation difficutly
-					\item $p$ exactly-one($ \{\lnot N  \ : N \in   I_{end} \setminus I \}$) explain one fact at a time 
+					\item $p$ exactly-one($ \{\lnot N  \ : N \in   I_{end} \setminus I \}$) (explain one fact at a time)
 				\end{itemize}
 					\[\call{OCUS}(C \wedge I  \wedge \{\lnot N : N \in   I_{end} \setminus I \}, f, p)\]
 
@@ -441,6 +470,25 @@
 			\end{description}
 			\vfill
 		\end{frame}
+	
+						\begin{frame}
+		\frametitle{Outline}
+		\tableofcontents[currentsection]
+	\end{frame}
+	
+	\begin{frame}{Conclusion}
+		\begin{center}\Large
+			What can OCUS do for YOU ? 
+		\end{center}
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.3\textwidth]{figures/i_want_you_ocus.png}
+	\end{figure}
+	\begin{itemize}
+		\item cost-optimal Constrained Unsatisfiable Subsets
+		\item Looking for other application domain that can use these 
+	\end{itemize}
+	\end{frame}
 		
 		
 		\begin{frame}{Future work}

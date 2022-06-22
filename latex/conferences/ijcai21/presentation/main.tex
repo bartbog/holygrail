@@ -1,5 +1,5 @@
-%\documentclass[handout]{beamer}
-\documentclass{beamer}
+\documentclass[handout]{beamer}
+%\documentclass{beamer}
 \usepackage[ruled,linesnumbered]{algorithm2e}
 \usepackage{natbib}
 \usepackage{layouts}
@@ -30,15 +30,15 @@
 \newcommand\Ipartial{\m{I}}
 \newcommand\factexpl{fact\xspace}
 \newcommand\LitsToExplain{FactsToExplain}
- 
- \newcommand\nat{\m{\mathbb{N}}}
- \newcommand\subsetT{\m{\mathcal{S}}}
- \newcommand\ltrue{\m{\textbf{t}}}
- \newcommand\lfalse{\m{\textbf{f}}}
- 	\newcommand\call[1]{\m{\textsc{#1}}}
- \newcommand\onestep{\call{OneStep}}
+
+\newcommand\nat{\m{\mathbb{N}}}
+\newcommand\subsetT{\m{\mathcal{S}}}
+\newcommand\ltrue{\m{\textbf{t}}}
+\newcommand\lfalse{\m{\textbf{f}}}
+\newcommand\call[1]{\m{\textsc{#1}}}
+\newcommand\onestep{\call{OneStep}}
 % \renewcommand{\labelitemi}{$\triangleright$}
- \renewcommand{\thealgocf}{}
+\renewcommand{\thealgocf}{}
 \makeatletter
 \setbeamertemplate{footline}
 {
@@ -61,18 +61,18 @@
 \begin{document}
 	
 	\begin{frame}
-	\maketitle
-\end{frame}
-
-
+		\maketitle
+	\end{frame}
+	
+	
 	\AtBeginSection[]
 	{
-	\begin{frame}
-		\frametitle{Outline}
-		\tableofcontents[currentsection]
-	\end{frame}
+		\begin{frame}
+			\frametitle{Outline}
+			\tableofcontents[currentsection]
+		\end{frame}
 	}
-
+	
 	\AtBeginSubsection[]
 	{
 		\begin{frame}
@@ -83,56 +83,56 @@
 	
 	\begin{frame}
 		
-			\setlength{\textfloatsep}{0pt}
-	\frametitle{Examples of Constraint Satisfaction Problems}
+		\setlength{\textfloatsep}{0pt}
+		\frametitle{Examples of Constraint Satisfaction Problems}
 		\begin{minipage}[t]{0.45\textwidth}
 			\begin{figure}[h]
 				\includegraphics[width=\textwidth]{figures/logic_puzzle.png}
 				\vspace{-8mm}
 				\caption{\small Logic Grid Puzzle}
 			\end{figure}
-		\vspace{-6mm}\pause
-					\begin{figure}[h]
-			\centering
-			\includegraphics[width=.5\textwidth]{figures/sudoku.jpg}
-			\vspace{-3mm}
-			\caption{\small Sudoku}
-		\end{figure}
+			\vspace{-6mm}\pause
+			\begin{figure}[h]
+				\centering
+				\includegraphics[width=.5\textwidth]{figures/sudoku.jpg}
+				\vspace{-3mm}
+				\caption{\small Sudoku}
+			\end{figure}
 		\end{minipage}\pause
-	\hfill
-			\begin{minipage}[t]{0.45\textwidth}
+		\hfill
+		\begin{minipage}[t]{0.45\textwidth}
 			\begin{figure}[h]
 				\includegraphics[width=\textwidth]{figures/scheduling.png}
 				\vspace{-9mm}
 				\caption{\small Scheduling Problem}
 			\end{figure}
-		\vspace{-6mm}\pause
-		\begin{figure}[h]
-			\includegraphics[width=\textwidth]{figures/omus-presentation-car.png}
-			\vspace{-9mm}
-			\caption{\small Configuration problems}
-		\end{figure}
+			\vspace{-6mm}\pause
+			\begin{figure}[h]
+				\includegraphics[width=\textwidth]{figures/omus-presentation-car.png}
+				\vspace{-9mm}
+				\caption{\small Configuration problems}
+			\end{figure}
 		\end{minipage}
-	\footnote{\tiny \url{https://www.researchgate.net/figure/The-schedule-of-4-3-job-shop-scheduling-problem_fig2_301279276}}
+		\footnote{\tiny \url{https://www.researchgate.net/figure/The-schedule-of-4-3-job-shop-scheduling-problem_fig2_301279276}}
 	\end{frame}
-
-\begin{frame}
-	\begin{center}
-		\Large
-		How do you explain the solution of an Constraint Satisfaction Problem ? 
-	\end{center}
-\end{frame}
-
+	
+	\begin{frame}
+		\begin{center}
+			\Large
+			How do you explain the solution of an Constraint Satisfaction Problem ? 
+		\end{center}
+	\end{frame}
+	
 	\begin{frame}
 		\frametitle{Outline}
 		\tableofcontents
 	\end{frame}
-
+	
 	\section{Background}
 	\begin{frame}{Background}
-	\framesubtitle{Context}
-	In \cite{bogaerts2020step}, we proposed:\pause
-
+		\framesubtitle{Context}
+		In \cite{bogaerts2020step}, we proposed:\pause
+		
 		\begin{itemize}
 			\item[$\triangleright$] Step-wise explanation problem \pause
 			\begin{description}
@@ -141,54 +141,54 @@
 				\item[Goal] Generate an explanation sequence that explains step-by-step how to derive the facts of the solution.\pause
 				\item[$f$] A cost function quantifying explanation difficulty.
 			\end{description}
-%			\item[$\triangleright$] Algorithm \pause
-%			\item[$\triangleright$] Heuristics for guiding the search for explanations
+			%			\item[$\triangleright$] Algorithm \pause
+			%			\item[$\triangleright$] Heuristics for guiding the search for explanations
 		\end{itemize}
-	
-		\end{frame}
-
-
-%\section{Background}
-\begin{frame}{Background}{Non-redundant explanations}
-	Computing non-redundant explanations of a single fact can be done using Minimal Unsat Core (MUS) extraction:
-	\begin{theorem}
-		There is a one-to-one correspondence between $\subseteq$-minimal unsatisfiable cores of MUS($\theory\land \lnot \ell$) and non-redundant explanations of $\theory\cup\{\ell\}$.
-	\end{theorem}
-	
+		
 	\end{frame}
 	
-%	\begin{frame}{Use cases}
-%		
-%		\begin{itemize}
-%			\item[$\triangleright$] Teach humans how to solve a certain problem
-%			\item[$\triangleright$] Quantify problem difficulty
-%			\item[$\triangleright$] ``Help'' button
-%			\item[$\triangleright$] Interactive configuration/planning/scheduling
-%		\end{itemize}
-%		
-%	\end{frame}
-
+	
+	%\section{Background}
+	\begin{frame}{Background}{Non-redundant explanations}
+		Computing non-redundant explanations of a single fact can be done using Minimal Unsat Core (MUS) extraction:
+		\begin{theorem}
+			There is a one-to-one correspondence between $\subseteq$-minimal unsatisfiable cores of MUS($\theory\land \lnot \ell$) and non-redundant explanations of $\theory\cup\{\ell\}$.
+		\end{theorem}
+		
+	\end{frame}
+	
+	%	\begin{frame}{Use cases}
+		%		
+		%		\begin{itemize}
+			%			\item[$\triangleright$] Teach humans how to solve a certain problem
+			%			\item[$\triangleright$] Quantify problem difficulty
+			%			\item[$\triangleright$] ``Help'' button
+			%			\item[$\triangleright$] Interactive configuration/planning/scheduling
+			%		\end{itemize}
+		%		
+		%	\end{frame}
+	
 	\setlength{\algomargin}{15pt}
 	\begin{frame}{Background}
 		\framesubtitle{\cite{bogaerts2020step}: MUS-Based Explanation Generation}
 		%  TODO ALGORITHM FROM IJCAI MUS... 
 		
 		
-\begin{figure}
-	\centering
-	\includegraphics[width=0.8\textwidth]{figures/ijcai_ocus_presentation_mus.png}
-\end{figure}\pause
-			\begin{alertblock}{Note}
-					\small
+		\begin{figure}
+			\centering
+			\includegraphics[width=0.8\textwidth]{figures/ijcai_ocus_presentation_mus.png}
+		\end{figure}\pause
+		\begin{alertblock}{Note}
+			\small
 			The cost-function is \textbf{not} encoded in the MUS computation, but in the explanation finding heuristic. There is \emph{no guarantee} that the non-redundant explanation is \emph{provably cost-optimal}!
 		\end{alertblock}
 	\end{frame}
-
-\section{Motivation}
+	
+	\section{Motivation}
 	\begin{frame}{Motivation}
 		\framesubtitle{Challenges and open questions from \cite{bogaerts2020step}}
 		
-				\begin{description}[font=\color{vuborange}\itshape]
+		\begin{description}[font=\color{vuborange}\itshape]
 			%			\small
 			\item[Optimality] Explanations not provably optimal, \emph{heuristically} found.
 			\begin{itemize}
@@ -196,669 +196,678 @@
 				%				\item MUS-based heuristic
 				\item[$\triangleright$] Alternative: SMUS $\#$-minimal (\cite{ignatiev2015smallest})
 			\end{itemize} \pause
-				\begin{itemize}
-			\item[Q1] How do you guarantee provably optimal explanations ?\pause
-		\end{itemize}
+			\begin{itemize}
+				\item[Q1] How do you guarantee provably optimal explanations ?\pause
+			\end{itemize}
 		\end{description}
-
+		
 		\begin{description}[font=\color{vuborange}\itshape]
 			
 			\item[Efficiency] Explanation generation takes a lot of time: \pause
-					\begin{itemize}
+			\begin{itemize}
 				\item[Q2] Can we avoid looping over the literals when searching for the next best explanation ?\pause
-%					\begin{itemize}
-%						\item[$\triangleright$] \emph{Constrainedness}
-%					\end{itemize}
+				%					\begin{itemize}
+					%						\item[$\triangleright$] \emph{Constrainedness}
+					%					\end{itemize}
 				\item[Q3] Can we reuse information from an explanation call to another?
-%				\begin{itemize}
-%					\item[$\triangleright$] \emph{Incrementality}
-%				\end{itemize}
+				%				\begin{itemize}
+					%					\item[$\triangleright$] \emph{Incrementality}
+					%				\end{itemize}
 			\end{itemize}
 		\end{description}
-
+		
 	\end{frame}
-
-
-
-
-\section{The OCUS Problem}
-
-\subsection{Optimality}
-
-\begin{frame}{Optimal explanations}
-	\begin{center}
-		\Large
-		How do you guarantee provably \emph{optimal} explanations ? 
-	\end{center}
-\end{frame}
-
-	\begin{frame}{Optimality}
-	\framesubtitle{Integrating the cost function in non-redundant explanation computation}
-	\begin{definition}
-			\small
-		Let $\m{F}$ be a formula, $f:2^{\m{F}} \to \nat$ a cost function. We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
-		$\mathcal{S} \subseteq \m{F}$ an \emph{OUS}$^*$ of $F$ (with respect to $f$) if \begin{itemize}                                      
-			\item[$\triangleright$] $\subsetT$ is unsatisfiable,
-			%       \item $p(\subsetT)$ is true
-			\item[$\triangleright$] all other unsatisfiable $\mathcal{S}'\subseteq \m{F}$ satisfy $f(\mathcal{S}')\geq f(\mathcal{S})$.
-		\end{itemize}
-	\end{definition}
-	$^*$ = \emph{Optimal} Unsatisfiable Subset
-
-
-		\end{frame}
-	
-	\begin{frame}{OUS-Based Explanation Generation and Beyond}
-
-
-		%  TODO ALGORITHM FROM IJCAI MUS... 
-			\vfill
-	\begin{figure}
-		\centering
-		\includegraphics[width=0.8\textwidth]{figures/ijcai_ocus_presentation_ous.png}
-	\end{figure}
-	\Large
-	\vfill\pause
-\begin{center}
-	
-	Can we \emph{avoid looping over the literals} when searching for the next best explanation ?		
-\end{center}
-	\vfill
-	\end{frame}
-
-%\begin{frame}{\emph{Beyond} OUS-Based Explanation Generation}
-%
-%
-%%\begin{minipage}{0.23\textwidth}
-%%	\hfill
-%%\end{minipage}
-%%\begin{minipage}{0.52\textwidth}
-%%	{\SetAlCapFnt{\footnotesize}
-%%		\footnotesize
-%%		\begin{algorithm}[H]
-%%			\caption{\footnotesize$\onestep(\theory,f,\LitsToExplain)$}
-%%			\label{alg:oneStep}
-%%			
-%%			{\color{gray} $X_{best} \gets \mathit{nil}$}\;
-%%			\large
-%%			\For{ \color{vuborange}$\factexpl \in \LitsToExplain$ }{
-%%				\footnotesize
-%%				\color{gray}$X \gets \call{OUS}{(\theory \land \neg \factexpl, f)}$\;
-%%				\If{\color{gray}$f(X)<f(X_{best})$}{
-%%					$X_{best} \gets X$\;
-%%				}
-%%			}
-%%			\footnotesize	\color{gray}
-%%			\Return{\color{gray}$X_{best}$} 
-%%		\end{algorithm}
-%%	}
-%%\end{minipage}
-%
-%%\begin{minipage}{0.48\textwidth}
-%%	$\call{MUS}(\theory \land \neg \factexpl_1)$
-%%	
-%%	$\call{MUS}(\theory \land \neg \factexpl_2)$
-%%	
-%%	$\dots$
-%%	
-%%	$\call{MUS}(\theory \land \neg \factexpl_n)$
-%%	\vfill
-%%\end{minipage}
-%%\begin{minipage}{0.49\textwidth}
-%%	$\call{OUS}(\theory \land \neg \factexpl_1, f)$
-%%	
-%%	$\call{OUS}(\theory \land \neg \factexpl_2, f)$
-%%	
-%%	$\dots$
-%%	
-%%	$\call{OUS}(\theory \land \neg \factexpl_n, f)$
-%%\end{minipage}
-%\begin{figure}
-%	\centering
-%	\includegraphics[width=0.6\textwidth]{figures/ijcai_ocus_presentation_ous.png}
-%\end{figure}
-%
-%
-%
-%\end{frame}
-
-\subsection{Constrainedness}
-
-
-\begin{frame}{Constrainedness}
-	\framesubtitle{Beyond OUS-based explanations}
-	\only<1>{
-		\begin{figure}
-			\includegraphics[width=0.8\textwidth]{figures/ijcai_ocus_presentation_ous.png}
-		\end{figure}
-	\vfill
-	}
-	\only<2>{
-	\begin{figure}
-		\includegraphics[width=0.8\textwidth]{figures/ijcai_ocus_presentation_ous_2.png}
-	\end{figure}
-\vfill
-}
-\only<3>{
-		\begin{figure}
-		\includegraphics[width=0.6\textwidth]{figures/ijcai_ocus_presentation_ous_2.png}
-	\end{figure}
-\begin{itemize}
-	\item[$\triangleright$] The different calls to $\call{OUS}$ \dots are very similar. Can we exploit this ?
-\end{itemize}	
-\vfill
-	}
-
-\only<4>{
-			\begin{figure}
-		\includegraphics[width=0.6\textwidth]{figures/ijcai_ocus_presentation_ous_2.png}
-	\end{figure}
-	\begin{itemize}
-		\item[$\triangleright$] The different calls to $\call{OUS}$ \dots are very similar. Can we exploit this ?
-		
-		\item[$\triangleright$] Essentially, the task is: find a single unsatisfiable subset of 
-		\[\theory \land \{\lnot \factexpl \ | \ \factexpl \in \LitsToExplain\} \] \pause
-		that:
-		\begin{itemize}
-			\item Contains \emph{exactly one} $\lnot \factexpl$ with $\factexpl \in \LitsToExplain $ \pause
-			\item Is optimal w.r.t.\ $f$
-		\end{itemize}
-	\end{itemize}	
-}
 	
 	
-\end{frame}
-% 
-\begin{frame}{Constrainedness}
-	\framesubtitle{The OCUS problem}
-	\begin{definition}
-			\small
-		Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula}\to \{\ltrue,\lfalse\}$. We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
-		$\subsetT \subseteq \formula$ an \emph{OCUS}$^*$ of \formula (with respect to $f$ and $p$) if \begin{itemize}                                      
-			\item $\subsetT$ is unsatisfiable,
-			\item $p(\subsetT)$ is true
-			\item \emph{all other unsatisfiable $\subsetT'\subseteq \formula$ with $p(\subsetT')=\ltrue$ satisfy $f(\subsetT')\geq f(\subsetT)$}.
-		\end{itemize}
-	\end{definition}
-	$^*$ = Optimal \emph{Constrained} Unsatisfiable Subset
-\end{frame}
-
-
-
-\newcommand\onestepo{\ensuremath{\call{explain-One-Step-ocus}}\xspace}
-\begin{frame}{OCUS-Based explanation generation}
-	\vfill
-	\begin{algorithm}[H]
-		\DontPrintSemicolon
-		\caption{$\onestepo(\theory,f,\LitsToExplain)$}
-		\label{alg:oneStepOCUS}
-		$p \leftarrow$ exactly one of $\{\lnot \factexpl \ | \ \factexpl \in \LitsToExplain\}$\;
-		\Return{$\call{OCUS}(\theory \wedge \{\lnot \factexpl \ | \ \factexpl \in \LitsToExplain\}, f, p)$}
-	\end{algorithm}\pause
-\vfill
-	\begin{center}
-		\Large
-		\textbf{Q}: How to compute OCUSs?		
-	\end{center}
-\vfill
-
-\end{frame}
-
-
-\newcommand\muses[1]{\textsc{mus}s(\m{#1})}
-\newcommand\mcses[1]{\textsc{mcs}s(\m{#1})}
-%\begin{frame}{How to find OCUSs?}
-%
-%	
-%\end{frame}
-
-\newcommand\setstohit{\m{\mathcal{H}}}
-\newcommand\grow{\call{Grow}}
-\newcommand\sat{\call{SAT}}
-\newcommand\comus{\call{ocus}}
-\newcommand\cohs{\call{cost-optimal-hittingset}}
-
-\section{An OCUS algorithm: A hitting set-based algorithm}
-
-\begin{frame}{Minimal Hitting set problem}
-\begin{itemize}
-	\item Set of elements $\{c_1,c_2,...,c_n\}$ \pause
-	\item Collection $\m{H}$ of sets-to-hit \pause
-	\item \textbf{Goal}: Find the smallest hitting set such that every set-to-hit is hit at least once by an element of the hitting set. \pause
-\end{itemize}
-\vfill
-
-	\begin{minipage}{0.48\textwidth}
-		\only<4-5>{
-		For example: 
-		\begin{enumerate}
-			\item[$H_1$] = $\{c_2, c_4, c_7\}$
-			\item[$H_2$] = $\{c_3, c_5\}$
-			\item[$H_3$] = $\{c_2, c_6\}$
-			\item[$H_4$] = $\{c_1, c_8\}$
-		\end{enumerate}
-	}
-		\only<6>{
-%			\color{gray}
-			For example: 
-			\begin{enumerate}
-				\item[\color{gray}$H_1$]\color{gray} = $\{c_2, c_4, c_7\}$
-				\item[\color{gray}$H_2$]\color{gray} = $\{c_3, c_5\}$
-				\item[\color{gray}$H_3$]\color{gray} = $\{c_2, c_6\}$
-				\item[\emph{$H_4$}]\emph{ = $\{c_1, c_8\}$}
-			\end{enumerate}
-		}
-			\only<7>{
-		
-		For example: 
-		\begin{enumerate}
-			\item[\emph{$H_1$}] \emph{= $\{c_2, c_4, c_7\}$}
-			\item[\color{gray}$H_2$]\color{gray} = $\{c_3, c_5\}$
-			\item[\emph{$H_3$}] \emph{= $\{c_2, c_6\}$}
-			\item[\color{gray}$H_4$]\color{gray} = $\{c_1, c_8\}$
-		\end{enumerate}
-	}
-			\only<8>{
-		For example: 
-		\begin{enumerate}
-			\item[\color{gray}$H_1$]\color{gray} = $\{c_2, c_4, c_7\}$
-			\item[\emph{$H_2$}]\emph{ = $\{c_3, c_5\}$}
-			\item[\color{gray}$H_3$]\color{gray} = $\{c_2, c_6\}$
-			\item[\color{gray}$H_4$]\color{gray} = $\{c_1, c_8\}$
-		\end{enumerate}
-	}
-	\end{minipage}
-	\begin{minipage}{0.48\textwidth}
-		\only<5>{
-		Example hitting sets:
-		\begin{itemize}
-			\item $\{c_1, c_2, c_3\}$
-			\item $\{c_8, c_2, c_5\}$
-			\item \dots
-		\end{itemize}
-	}
-		\only<6>{
-	Example hitting sets:
-	\begin{itemize}
-		\item $\{$ \emph{$c_1$}$, c_2, c_3\}$
-		
-		\item $\{c_8, c_2, c_5\}$
-		\item \dots
-	\end{itemize}
-}
-		\only<7>{
-	Example hitting sets:
-	\begin{itemize}
-		\item $\{c_1,$ \emph{$c_2$}$, c_3\}$
-		\item $\{c_8, c_2, c_5\}$
-		\item \dots
-	\end{itemize}
-}
-		\only<8>{
-	Example hitting sets:
-	\begin{itemize}
-		\item $\{c_1, c_2,$ \emph{$c_3$}$\}$
-		\item $\{c_8, c_2, c_5\}$
-		\item \dots
-	\end{itemize}
-}
-
-	\end{minipage}
-
-
-\end{frame}
-
-\begin{frame}{\emph{Cost-Optimal} Hitting set problem}
-	\begin{itemize}
-		\item Set of elements $\{c_1,c_2,...,c_n\}$
-		\item Collection $\m{H}$ of sets-to-hit\pause
-		\item cost associated for every element:
-		\[ w_1 =  \emph{3}, w_2= \emph{5}, w_3 = w_4 = ...= w_n = 1\]\pause
-		\item \textbf{Goal}: Find the \emph{optimal} hitting set such that every set-to-hit is hit by at least once an element of the hitting set with \emph{minimal total cost}.
-	\end{itemize}
-	\vfill
-	\begin{minipage}{0.48\textwidth}
-		For example: 
-		\begin{enumerate}
-			\item[$H_1$] = $\{c_2, c_4, c_7\}$
-			\item[$H_2$] = $\{c_3, c_5\}$
-			\item[$H_3$] = $\{c_2, c_6\}$
-			\item[$H_4$] = $\{c_1, c_8\}$
-		\end{enumerate}
-	\end{minipage}
-	\begin{minipage}{0.48\textwidth}
-		Optimal hitting sets:
-		\begin{itemize}
-			\item \st{$\{c_1, c_2, c_3\}$}
-			\begin{itemize}
-				\item cost: \emph{7}
-				\end{itemize}
-			\item $\{c_3, c_4, c_6, c_8\}$ \emph{\checkmark}
-			\begin{itemize}
-				\item cost: \emph{4}
-			\end{itemize}
-		\item \dots
-		\end{itemize}
-	\end{minipage}
-\end{frame}
-
-
-%\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
-%	\framesubtitle{Implicit Hitting set duality}
-%	
-%	\begin{minipage}{0.65\textwidth}
-%		%     
-%		A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.\\
-%		A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
-%	\end{minipage}
-%\end{frame}
-
-
-\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
-		\framesubtitle{Minimum Correction Subset vs Satisfiable Subset}
-
-\begin{theorem}
-A set $\subsetT \subseteq \formula $ is a correction subset of $\formula$ if $ \formula \setminus \subsetT$ is satisfiable, a.k.a. Satisfiable Subset. \\ \pause
-A correction set $\subsetT$ is a minimum correction subset if no strict subset $\subsetT' \subset \subsetT$ is also a correction set.
-\end{theorem}
-\end{frame}
-\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
-	\framesubtitle{Implicit Hitting set duality}
-	
-	\begin{itemize}
-		\item[$\triangleright$] Exploit implicit hitting set--based duality between {\color{blue}MCSes} and {\color{teal}MUSes} (\cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87})
-	\end{itemize}
-	
-\begin{theorem}\label{prop:MCS-MUS-hittingset}
-	%     
-	A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.\\
-	A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
-\end{theorem}
-\begin{itemize}
-	\item[$\triangleright$] We extended this to OCUS: 
-\end{itemize}
-\end{frame}
-\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
-
-	{\SetAlCapFnt{\small}
-	\small
-	\begin{algorithm}[H]
-		\DontPrintSemicolon
-		$\setstohit  \gets \emptyset$ \tcp*{\footnotesize Collection of sets-to-hit} %\label{omus-line1} 
-		\While{\color{black} true}{
-			$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $ \tcp*{\footnotesize hitting set}%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
-			% f{optimal} solution}
-			% \tcp{\small set with all unique clauses from hitting set}
-			%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
-			% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-			% \tcp{IF UNSAT, $hs$ is the OUS }
-			\If{\color{black} $\lnot \sat(\subsetT)$}{
-				\Return{\color{teal}$\subsetT$} \tcp*{\footnotesize OCUS found!}
-			}
-			$\subsetT \gets  \grow(\subsetT,\formula) $ \label{line:grow}\tcp*{\footnotesize Grow Satisfiable subset}
-			$\setstohit  \gets \setstohit \ \cup $ {\color{blue}$\{  \formula \setminus \subsetT\}$} \tcp*{\footnotesize Add correction subset (new set-to-hit)}
-		}
-		\caption{\small$\comus(\formula,f,p)$ }
-		\label{alg:comus}
-	\end{algorithm}
-}
-%\end{minipage}
-
-\end{frame}
-
-%\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
-%	
-%	{\SetAlCapFnt{\small}
-%		\small
-%		\begin{algorithm}[H]
-%			\DontPrintSemicolon
-%			$\setstohit  \gets \emptyset$ \tcp*{\footnotesize Collection of sets-to-hit} %\label{omus-line1} 
-%			\While{\color{black} true}{
-%				$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $ \tcp*{\footnotesize hitting set}%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
-%				% f{optimal} solution}
-%				% \tcp{\small set with all unique clauses from hitting set}
-%				%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
-%				% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
-%				% \tcp{IF UNSAT, $hs$ is the OUS }
-%				\If{\color{black} $\lnot \sat(\subsetT)$}{
-%					\Return{\color{teal}$\subsetT$} \tcp*{\footnotesize OCUS found!}
-%				}
-%				$\subsetT \gets  \grow(\subsetT,\formula) $ \label{line:grow}\tcp*{\footnotesize Grow Satisfiable subset}
-%				$\setstohit  \gets \setstohit \ \cup $ {\color{blue}$\{  \formula \setminus \subsetT\}$} \tcp*{\footnotesize Add correction subset (new set-to-hit)}
-%			}
-%			\caption{\small$\comus(\formula,f,p)$ }
-%			\label{alg:comus}
-%		\end{algorithm}
-%	}
-%	%\end{minipage}
-%	
-%\end{frame}
-
-\subsection{Incrementality}
-
-\begin{frame}{Improving efficiency of our OCUS algorithm..}
-	\framesubtitle{...in the context of explanation sequence generation}
-	\begin{center}
-		\Large
-	Can we \emph{reuse information} from an explanation step (OCUS-call) to another? 	
-	\end{center}
-\end{frame}
-
-
-
-
-\begin{frame}{Incrementality}
-	
-	{\SetAlCapFnt{\footnotesize}
-		\footnotesize
-	\begin{algorithm}[H]
-		
-		\DontPrintSemicolon
-		\emph{\bf  $\setstohit  \gets \dots$} \tcp*{\footnotesize\emph{Collection of sets to hit}}
-		\While{\color{gray} true}{
-			$\subsetT \gets \cohs(\emph{\setstohit},f,p) $  \tcp*{\footnotesize hitting set}
-			\color{gray}
-			\If{\color{gray} $\lnot \sat(\subsetT)$}{
-				\Return{\color{gray}$\subsetT$} \tcp*{\footnotesize OCUS found!}
-			}
-			$\subsetT \gets  \grow(\subsetT,\formula) $ \label{line:grow}\tcp*{\footnotesize Grow Satisfiable subset}
-			{\color{black}$\setstohit  \gets \setstohit  \cup \emph{\{  \formula \setminus \subsetT\}}$ }\tcp*{\footnotesize Add correction subset (set-to-hit)}
-		}
-		\caption{$\comus(\formula,f,p)$ }
-		\label{alg:comus}
-	\end{algorithm}
-}\pause
-\vfill
-\begin{itemize}
-	\item[$\triangleright$] Keep track of collection of correction sets $\m{H}$ that need to be hit \pause
-	\item[$\triangleright$] Each set H in \m{H} is the complement (with respect to the formula at hand) of a \emph{satisfiable subset} \pause
-	\begin{itemize}
-		\item[$\rightarrow$] Keep track of \emph{set of Satisfiable Subsets \textbf{SSs}} \pause
-		\item[$\rightarrow$] Bootstrap $\m{H} \gets \{\m{F}_2 \setminus \m{S} | \m{S}  \in  \mathbf{SSs} \}$ 
-	\end{itemize}
 	
 	
-\end{itemize}
-
-\end{frame}
-
-%\subsection{Efficiency}
-
-%\begin{frame}{Efficiency}
-%	\framesubtitle{Explanation specific `Grow'}{}
-%	
-%	{\SetAlCapFnt{\footnotesize}
-%		\footnotesize
-%	\begin{algorithm}[H]
-%		\DontPrintSemicolon
-%		\color{gray}
-%		\bf  $\setstohit  \gets \dots$ \; %\label{omus-line1} 
-%		\While{\color{gray}true}{
-%			$\subsetT \gets \cohs(\setstohit,f,p) $  \;
-%
-%			\If{\color{gray} $\lnot \sat(\subsetT)$}{
-%				\Return{\color{gray}$\subsetT$} \;
-%			}
-%			\emph{$\subsetT \gets  \grow(\subsetT,\formula) $} \label{line:grow}\;
-%			$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \subsetT\}$ \;
-%		}
-%		\caption{\scriptsize$\comus(\formula,f,p)$ }
-%		\label{alg:comus}
-%	\end{algorithm}
-%	}\pause
-%	\vfill
-%	When calling OCUS, the theory consists of 
-%	
-%	\begin{itemize}
-%		\item[$\triangleright$] \emph{$\theory$} The original theory (constraints) 
-%		\item[$\triangleright$] \emph{ $\{\lnot \factexpl| \factexpl \in \LitsToExplain\}$} The negation of \LitsToExplain 
-%			\begin{itemize}
-%			\item[Q1:] What to take into account for \emph{\grow}?
-%			\item[Q2:] What about the cost function?
-%		\end{itemize}
-%	\end{itemize}
-%	
-%
-%	%		\end{minipage}
-%	
-%	
-%\end{frame}
-
-%\begin{frame}{Bounded OUSs}
-%	\framesubtitle{Improving efficiency of OUS-based explanations}
-%	
-%	{\SetAlCapFnt{\footnotesize}
-%		\footnotesize
-%	\begin{algorithm}[H]
-%		\caption{$\onestep(\theory,f,\LitsToExplain)$}
-%		\label{alg:oneStep}
-%		\color{gray}
-%		$X_{best} \gets \theory \land \bigwedge_{\factexpl\in \LitsToExplain}\lnot \factexpl$\;
-%		
-%		\For{\color{gray}$\factexpl \in \LitsToExplain$}{
-%			{\color{black}$X \gets \call{OUS}{(\theory \land \neg \factexpl,f, \emph{f(X_{best})})}$}\;
-%			\If{\color{gray}$X \neq null$ and $f(X)<f(X_{best})$}{
-%				$X_{best} \gets X$\;
-%			}
-%		}
-%		\Return{\color{gray}$X_{best}$} 
-%	\end{algorithm} 
-%} \pause
-%	
-%	\begin{alertblock}{Bounded OUS computation}
-%			\small
-%		In the OUS algorithm, if $f(S) > f(X_{best})$, \textbf{STOP}!
-%		We can't find a better (cheaper) explanation.
-%	\end{alertblock}
-%	
-%\end{frame}
-%
-%
-%\begin{frame}{Bounded OUSs}
-%	\framesubtitle{Improving execution time of OUS-based explanations}
-%	
-%	{\SetAlCapFnt{\footnotesize}
-%	\footnotesize
-%	\begin{algorithm}[H]
-%		\caption{$\onestep(\theory,f,\LitsToExplain)$}
-%		\label{alg:oneStep}
-%		\color{gray}
-%		$X_{best} \gets \theory \land \bigwedge_{\factexpl\in \LitsToExplain}\lnot \factexpl$\;
-%		
-%		\For{\color{gray}$\factexpl \in \LitsToExplain$}{
-%			{\color{black}$X \gets \call{OUS}{(\theory \land \neg \factexpl,f, \emph{f(X_{best})})}$}\;
-%			\If{\color{gray}$X \neq null$ and $f(X)<f(X_{best})$}{
-%				$X_{best} \gets X$\;
-%			}
-%		}
-%		\Return{\color{gray}$X_{best}$} 
-%	\end{algorithm} 
-%} 
-%	
-%	\begin{exampleblock}{}
-%	\begin{enumerate}	\small
-%		\item Keep track of the score for all literals not explained yet: serves as an upperbound on explanation cost.\pause
-%		\item Sort the literals according to their cost.
-%	\end{enumerate}
-%
-%	\end{exampleblock}
-%
-%\end{frame}
-\begin{frame}
-	\frametitle{Outline}
-	\tableofcontents
-\end{frame}
-
-\section{Results}
-
-\begin{frame}{Results - Explanation quality}
-	\vfill
-	\centering
-	\includegraphics[width=0.5\columnwidth]{figures/heatmap_costs_mus_cous.pdf}
-%	\vfill	
-\end{frame}
-
-\begin{frame}{Results - Explanation specific grow}
+	\section{The OCUS Problem}
 	
-	\begin{figure}
-		\includegraphics[width=0.9\textwidth]{figures/new_cumul_grow_avg_time_lits_derived_new.pdf}
-	\end{figure}
-\end{frame}
-
-
-\begin{frame}{Results - Constrainedness and Incrementality}
-%	\framesubtitle{Explanation configurations compared}
-	\begin{figure}
-		\includegraphics[width=0.9\textwidth]{figures/cumul_incr_avg_time_lits_derived_new.pdf}
-	\end{figure}
-\end{frame}
-
-
-\section{Conclusion and Future work}
-\begin{frame}{Conclusion}
-	In this paper, we introduce (cost-)\emph{\underline{O}ptimal \underline{C}onstrained} \underline{U}nsatisfiable \underline{S}ubsets (OCUS) problem and solved it using the \emph{implicit hitting set duality} between {\color{blue}MCSes} and {\color{teal}MUSes}.
-	\vfill
-	\begin{description}
-		\item[Optimality] Cost-function quantifies explanation difficulty. \pause
-		\item[Constrainedness] Analyze structural constraints on the form of the explanations.\pause
-		\item[Incrementality] Reuse-information between successive explanation calls.
-%		\item[Efficiency] 
-%		\begin{enumerate}
-%			\item Explanation-specific grow;
-%			\item Bound and sort OUS calls
-%		\end{enumerate}
-	\end{description}
-	\vfill
-\end{frame}
+	\subsection{Optimality}
 	
-
-	\begin{frame}{Future work}
-
-\begin{itemize}
-	\item[$\triangleright$] Learning the optimization function (from humans)
-	\item[$\triangleright$] Explaining optimization (different types of ``why'' queries); close relation to Explainable AI Planning \cite{fox2017explainable}
-	\item[$\triangleright$] Scaling up (approximate algorithms; decomposition of explanation search)
-	\item[$\triangleright$] Incremental algorithms over different ``why'' queries
-	% \item 
-\end{itemize}	
-	
-	
-\end{frame}
-
-
-	\begin{frame}
+	\begin{frame}{Optimal explanations}
 		\begin{center}
-			{\huge Questions?}
-		\end{center}		
-	\end{frame}
-
-	
-	\begin{frame}[allowframebreaks]
-		\frametitle{References}
-		\bibliographystyle{named}
-		\bibliography{refs}
+			\Large
+			How do you guarantee provably \emph{optimal} explanations ? 
+		\end{center}
 	\end{frame}
 	
-
+	\begin{frame}{Optimality}
+		\framesubtitle{Integrating the cost function in non-redundant explanation computation}
+		\begin{definition}
+			\small
+			Let $\m{F}$ be a formula, $f:2^{\m{F}} \to \nat$ a cost function. We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
+				$\mathcal{S} \subseteq \m{F}$ an \emph{OUS}$^*$ of $F$ (with respect to $f$) if \begin{itemize}                                      
+					\item[$\triangleright$] $\subsetT$ is unsatisfiable,
+					%       \item $p(\subsetT)$ is true
+					\item[$\triangleright$] all other unsatisfiable $\mathcal{S}'\subseteq \m{F}$ satisfy $f(\mathcal{S}')\geq f(\mathcal{S})$.
+				\end{itemize}
+			\end{definition}
+			$^*$ = \emph{Optimal} Unsatisfiable Subset
+			
+			
+		\end{frame}
+		
+		\begin{frame}{OUS-Based Explanation Generation and Beyond}
+			
+			
+			%  TODO ALGORITHM FROM IJCAI MUS... 
+			\vfill
+			\begin{figure}
+				\centering
+				\includegraphics[width=0.8\textwidth]{figures/ijcai_ocus_presentation_ous.png}
+			\end{figure}
+			\Large
+			\vfill\pause
+			\begin{center}
+				
+				Can we \emph{avoid looping over the literals} when searching for the next best explanation ?		
+			\end{center}
+			\vfill
+		\end{frame}
+		
+		%\begin{frame}{\emph{Beyond} OUS-Based Explanation Generation}
+		%
+		%
+		%%\begin{minipage}{0.23\textwidth}
+		%%	\hfill
+		%%\end{minipage}
+		%%\begin{minipage}{0.52\textwidth}
+		%%	{\SetAlCapFnt{\footnotesize}
+			%%		\footnotesize
+			%%		\begin{algorithm}[H]
+				%%			\caption{\footnotesize$\onestep(\theory,f,\LitsToExplain)$}
+				%%			\label{alg:oneStep}
+				%%			
+				%%			{\color{gray} $X_{best} \gets \mathit{nil}$}\;
+				%%			\large
+				%%			\For{ \color{vuborange}$\factexpl \in \LitsToExplain$ }{
+					%%				\footnotesize
+					%%				\color{gray}$X \gets \call{OUS}{(\theory \land \neg \factexpl, f)}$\;
+					%%				\If{\color{gray}$f(X)<f(X_{best})$}{
+						%%					$X_{best} \gets X$\;
+						%%				}
+					%%			}
+				%%			\footnotesize	\color{gray}
+				%%			\Return{\color{gray}$X_{best}$} 
+				%%		\end{algorithm}
+			%%	}
+		%%\end{minipage}
+		%
+		%%\begin{minipage}{0.48\textwidth}
+		%%	$\call{MUS}(\theory \land \neg \factexpl_1)$
+		%%	
+		%%	$\call{MUS}(\theory \land \neg \factexpl_2)$
+		%%	
+		%%	$\dots$
+		%%	
+		%%	$\call{MUS}(\theory \land \neg \factexpl_n)$
+		%%	\vfill
+		%%\end{minipage}
+		%%\begin{minipage}{0.49\textwidth}
+		%%	$\call{OUS}(\theory \land \neg \factexpl_1, f)$
+		%%	
+		%%	$\call{OUS}(\theory \land \neg \factexpl_2, f)$
+		%%	
+		%%	$\dots$
+		%%	
+		%%	$\call{OUS}(\theory \land \neg \factexpl_n, f)$
+		%%\end{minipage}
+		%\begin{figure}
+		%	\centering
+		%	\includegraphics[width=0.6\textwidth]{figures/ijcai_ocus_presentation_ous.png}
+		%\end{figure}
+		%
+		%
+		%
+		%\end{frame}
+		
+		\subsection{Constrainedness}
+		
+		
+		\begin{frame}{Constrainedness}
+			\framesubtitle{Beyond OUS-based explanations}
+			\only<1>{
+				\begin{figure}
+					\includegraphics[width=0.8\textwidth]{figures/ijcai_ocus_presentation_ous.png}
+				\end{figure}
+				\vfill
+			}
+			\only<2>{
+				\begin{figure}
+					\includegraphics[width=0.8\textwidth]{figures/ijcai_ocus_presentation_ous_2.png}
+				\end{figure}
+				\vfill
+			}
+			\only<3>{
+				\begin{figure}
+					\includegraphics[width=0.6\textwidth]{figures/ijcai_ocus_presentation_ous_2.png}
+				\end{figure}
+				\begin{itemize}
+					\item[$\triangleright$] The different calls to $\call{OUS}$ \dots are very similar. Can we exploit this ?
+				\end{itemize}	
+				\vfill
+			}
+			
+			\only<4>{
+				\begin{figure}
+					\includegraphics[width=0.6\textwidth]{figures/ijcai_ocus_presentation_ous_2.png}
+				\end{figure}
+				\begin{itemize}
+					\item[$\triangleright$] The different calls to $\call{OUS}$ \dots are very similar. Can we exploit this ?
+					
+					\item[$\triangleright$] Essentially, the task is: find a single unsatisfiable subset of 
+					\[\theory \land \{\lnot \factexpl \ | \ \factexpl \in \LitsToExplain\} \] \pause
+					that:
+					\begin{itemize}
+						\item Contains \emph{exactly one} $\lnot \factexpl$ with $\factexpl \in \LitsToExplain $ \pause
+						\item Is optimal w.r.t.\ $f$
+					\end{itemize}
+				\end{itemize}	
+			}
+			
+			
+		\end{frame}
+		% 
+		\begin{frame}{Constrainedness}
+			\framesubtitle{The OCUS problem}
+			\begin{definition}
+				\small
+				Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula}\to \{\ltrue,\lfalse\}$. We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
+					$\subsetT \subseteq \formula$ an \emph{OCUS}$^*$ of \formula (with respect to $f$ and $p$) if \begin{itemize}                                      
+						\item $\subsetT$ is unsatisfiable,
+						\item $p(\subsetT)$ is true
+						\item \emph{all other unsatisfiable $\subsetT'\subseteq \formula$ with $p(\subsetT')=\ltrue$ satisfy $f(\subsetT')\geq f(\subsetT)$}.
+					\end{itemize}
+				\end{definition}
+				$^*$ = Optimal \emph{Constrained} Unsatisfiable Subset
+			\end{frame}
+			
+			
+			
+			\newcommand\onestepo{\ensuremath{\call{explain-One-Step-ocus}}\xspace}
+			\begin{frame}{OCUS-Based explanation generation}
+				\vfill
+				\begin{algorithm}[H]
+					\DontPrintSemicolon
+					\caption{$\onestepo(\theory,f,\LitsToExplain)$}
+					\label{alg:oneStepOCUS}
+					$p \leftarrow$ exactly one of $\{\lnot \factexpl \ | \ \factexpl \in \LitsToExplain\}$\;
+					\Return{$\call{OCUS}(\theory \wedge \{\lnot \factexpl \ | \ \factexpl \in \LitsToExplain\}, f, p)$}
+				\end{algorithm}\pause
+				\vfill
+				\begin{center}
+					\Large
+					\textbf{Q}: How to compute OCUSs?		
+				\end{center}
+				\vfill
+				
+			\end{frame}
+			
+			
+			\newcommand\muses[1]{\textsc{mus}s(\m{#1})}
+			\newcommand\mcses[1]{\textsc{mcs}s(\m{#1})}
+			%\begin{frame}{How to find OCUSs?}
+			%
+			%	
+			%\end{frame}
+			
+			\newcommand\setstohit{\m{\mathcal{H}}}
+			\newcommand\grow{\call{Grow}}
+			\newcommand\sat{\call{SAT}}
+			\newcommand\comus{\call{ocus}}
+			\newcommand\cohs{\call{cost-optimal-hittingset}}
+			
+			\section{An OCUS algorithm: A hitting set-based algorithm}
+			
+			\begin{frame}{Minimal Hitting set problem}
+				\begin{itemize}
+					\item Set of elements $\{c_1,c_2,...,c_n\}$ \pause
+					\item Collection $\m{H}$ of sets-to-hit \pause
+					\item \textbf{Goal}: Find the smallest hitting set such that every set-to-hit is hit at least once by an element of the hitting set. \pause
+				\end{itemize}
+				\vfill
+				
+				\begin{minipage}{0.48\textwidth}
+					\only<4-5>{
+						For example: 
+						\begin{enumerate}
+							\item[$H_1$] = $\{c_2, c_4, c_7\}$
+							\item[$H_2$] = $\{c_3, c_5\}$
+							\item[$H_3$] = $\{c_2, c_6\}$
+							\item[$H_4$] = $\{c_1, c_8\}$
+						\end{enumerate}
+					}
+					\only<6>{
+						%			\color{gray}
+						For example: 
+						\begin{enumerate}
+							\item[\color{gray}$H_1$]\color{gray} = $\{c_2, c_4, c_7\}$
+							\item[\color{gray}$H_2$]\color{gray} = $\{c_3, c_5\}$
+							\item[\color{gray}$H_3$]\color{gray} = $\{c_2, c_6\}$
+							\item[\emph{$H_4$}]\emph{ = $\{c_1, c_8\}$}
+						\end{enumerate}
+					}
+					\only<7>{
+						
+						For example: 
+						\begin{enumerate}
+							\item[\emph{$H_1$}] \emph{= $\{c_2, c_4, c_7\}$}
+							\item[\color{gray}$H_2$]\color{gray} = $\{c_3, c_5\}$
+							\item[\emph{$H_3$}] \emph{= $\{c_2, c_6\}$}
+							\item[\color{gray}$H_4$]\color{gray} = $\{c_1, c_8\}$
+						\end{enumerate}
+					}
+					\only<8>{
+						For example: 
+						\begin{enumerate}
+							\item[\color{gray}$H_1$]\color{gray} = $\{c_2, c_4, c_7\}$
+							\item[\emph{$H_2$}]\emph{ = $\{c_3, c_5\}$}
+							\item[\color{gray}$H_3$]\color{gray} = $\{c_2, c_6\}$
+							\item[\color{gray}$H_4$]\color{gray} = $\{c_1, c_8\}$
+						\end{enumerate}
+					}
+				\end{minipage}
+				\begin{minipage}{0.48\textwidth}
+					\only<5>{
+						Example hitting sets:
+						\begin{itemize}
+							\item $\{c_1, c_2, c_3\}$
+							\item $\{c_8, c_2, c_5\}$
+							\item \dots
+						\end{itemize}
+					}
+					\only<6>{
+						Example hitting sets:
+						\begin{itemize}
+							\item $\{$ \emph{$c_1$}$, c_2, c_3\}$
+							
+							\item $\{c_8, c_2, c_5\}$
+							\item \dots
+						\end{itemize}
+					}
+					\only<7>{
+						Example hitting sets:
+						\begin{itemize}
+							\item $\{c_1,$ \emph{$c_2$}$, c_3\}$
+							\item $\{c_8, c_2, c_5\}$
+							\item \dots
+						\end{itemize}
+					}
+					\only<8>{
+						Example hitting sets:
+						\begin{itemize}
+							\item $\{c_1, c_2,$ \emph{$c_3$}$\}$
+							\item $\{c_8, c_2, c_5\}$
+							\item \dots
+						\end{itemize}
+					}
+					
+				\end{minipage}
+				
+				
+			\end{frame}
+			
+			\begin{frame}{\emph{Cost-Optimal} Hitting set problem}
+				\begin{itemize}
+					\item Set of elements $\{c_1,c_2,...,c_n\}$
+					\item Collection $\m{H}$ of sets-to-hit\pause
+					\item cost associated for every element:
+					\[ w_1 =  \emph{3}, w_2= \emph{5}, w_3 = w_4 = ...= w_n = 1\]\pause
+					\item \textbf{Goal}: Find the \emph{optimal} hitting set such that every set-to-hit is hit by at least once an element of the hitting set with \emph{minimal total cost}.
+				\end{itemize}
+				\vfill
+				\begin{minipage}{0.48\textwidth}
+					For example: 
+					\begin{enumerate}
+						\item[$H_1$] = $\{c_2, c_4, c_7\}$
+						\item[$H_2$] = $\{c_3, c_5\}$
+						\item[$H_3$] = $\{c_2, c_6\}$
+						\item[$H_4$] = $\{c_1, c_8\}$
+					\end{enumerate}
+				\end{minipage}
+				\begin{minipage}{0.48\textwidth}
+					Optimal hitting sets:
+					\begin{itemize}
+						\item \st{$\{c_1, c_2, c_3\}$}
+						\begin{itemize}
+							\item cost: \emph{7}
+						\end{itemize}
+						\item $\{c_3, c_4, c_6, c_8\}$ \emph{\checkmark}
+						\begin{itemize}
+							\item cost: \emph{4}
+						\end{itemize}
+						\item \dots
+					\end{itemize}
+				\end{minipage}
+			\end{frame}
+			
+			
+			%\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+			%	\framesubtitle{Implicit Hitting set duality}
+			%	
+			%	\begin{minipage}{0.65\textwidth}
+				%		%     
+				%		A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.\\
+				%		A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
+				%	\end{minipage}
+			%\end{frame}
+			
+			
+			\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+				\framesubtitle{Minimum Correction Subset vs Satisfiable Subset}
+				
+				\begin{theorem}
+					A set $\subsetT \subseteq \formula $ is a correction subset of $\formula$ if $ \formula \setminus \subsetT$ is satisfiable, a.k.a. Satisfiable Subset. \\ \pause
+					A correction set $\subsetT$ is a minimum correction subset if no strict subset $\subsetT' \subset \subsetT$ is also a correction set.
+				\end{theorem}
+			\end{frame}
+			\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+				\framesubtitle{Implicit Hitting set duality}
+				
+				\begin{itemize}
+					\item[$\triangleright$] Exploit implicit hitting set--based duality between {\color{blue}MCSes} and {\color{teal}MUSes} (\cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87})
+				\end{itemize}
+				
+				\begin{theorem}\label{prop:MCS-MUS-hittingset}
+					%     
+					A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}.\\
+					A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
+				\end{theorem}
+				\begin{itemize}
+					\item[$\triangleright$] We extended this to OCUS: 
+				\end{itemize}
+			\end{frame}
+			\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+				
+				{\SetAlCapFnt{\small}
+					\small
+					\begin{algorithm}[H]
+						\DontPrintSemicolon
+						$\setstohit  \gets \emptyset$ \tcp*{\footnotesize Collection of sets-to-hit} %\label{omus-line1} 
+						\While{\color{black} true}{
+							$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $ \tcp*{\footnotesize hitting set}%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+								% f{optimal} solution}
+							% \tcp{\small set with all unique clauses from hitting set}
+							%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+							% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+							% \tcp{IF UNSAT, $hs$ is the OUS }
+							\If{\color{black} $\lnot \sat(\subsetT)$}{
+								\Return{\color{teal}$\subsetT$} \tcp*{\footnotesize OCUS found!}
+							}
+							$\subsetT \gets  \grow(\subsetT,\formula) $ \label{line:grow}\tcp*{\footnotesize Grow Satisfiable subset}
+							$\setstohit  \gets \setstohit \ \cup $ {\color{blue}$\{  \formula \setminus \subsetT\}$} \tcp*{\footnotesize Add correction subset (new set-to-hit)}
+						}
+						\caption{\small$\comus(\formula,f,p)$ }
+						\label{alg:comus}
+					\end{algorithm}
+				}
+				%\end{minipage}
+				
+			\end{frame}
+			
+			%\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+			%	
+			%	{\SetAlCapFnt{\small}
+				%		\small
+				%		\begin{algorithm}[H]
+					%			\DontPrintSemicolon
+					%			$\setstohit  \gets \emptyset$ \tcp*{\footnotesize Collection of sets-to-hit} %\label{omus-line1} 
+					%			\While{\color{black} true}{
+						%				$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $ \tcp*{\footnotesize hitting set}%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+							%				% f{optimal} solution}
+						%				% \tcp{\small set with all unique clauses from hitting set}
+						%				%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+						%				% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+						%				% \tcp{IF UNSAT, $hs$ is the OUS }
+						%				\If{\color{black} $\lnot \sat(\subsetT)$}{
+							%					\Return{\color{teal}$\subsetT$} \tcp*{\footnotesize OCUS found!}
+							%				}
+						%				$\subsetT \gets  \grow(\subsetT,\formula) $ \label{line:grow}\tcp*{\footnotesize Grow Satisfiable subset}
+						%				$\setstohit  \gets \setstohit \ \cup $ {\color{blue}$\{  \formula \setminus \subsetT\}$} \tcp*{\footnotesize Add correction subset (new set-to-hit)}
+						%			}
+					%			\caption{\small$\comus(\formula,f,p)$ }
+					%			\label{alg:comus}
+					%		\end{algorithm}
+				%	}
+			%	%\end{minipage}
+			%	
+			%\end{frame}
+			
+			\subsection{Incrementality}
+			
+			\begin{frame}{Improving efficiency of our OCUS algorithm..}
+				\framesubtitle{...in the context of explanation sequence generation}
+				\begin{center}
+					\Large
+					Can we \emph{reuse information} from an explanation step (OCUS-call) to another? 	
+				\end{center}
+			\end{frame}
+			
+			
+			
+			
+			\begin{frame}{Incrementality}
+				
+				{\SetAlCapFnt{\footnotesize}
+					\footnotesize
+					\begin{algorithm}[H]
+						
+						\DontPrintSemicolon
+						\emph{\bf  $\setstohit  \gets \dots$} \tcp*{\footnotesize\emph{Collection of sets to hit}}
+						\While{\color{gray} true}{
+							$\subsetT \gets \cohs(\emph{\setstohit},f,p) $  \tcp*{\footnotesize hitting set}
+							\color{gray}
+							\If{\color{gray} $\lnot \sat(\subsetT)$}{
+								\Return{\color{gray}$\subsetT$} \tcp*{\footnotesize OCUS found!}
+							}
+							$\subsetT \gets  \grow(\subsetT,\formula) $ \label{line:grow}\tcp*{\footnotesize Grow Satisfiable subset}
+							{\color{black}$\setstohit  \gets \setstohit  \cup \emph{\{  \formula \setminus \subsetT\}}$ }\tcp*{\footnotesize Add correction subset (set-to-hit)}
+						}
+						\caption{$\comus(\formula,f,p)$ }
+						\label{alg:comus}
+					\end{algorithm}
+				}\pause
+				\vfill
+				\begin{itemize}
+					\item[$\triangleright$] Keep track of collection of correction sets $\m{H}$ that need to be hit \pause
+					\item[$\triangleright$] Each set H in \m{H} is the complement (with respect to the formula at hand) of a \emph{satisfiable subset} \pause
+					\begin{itemize}
+						\item[$\rightarrow$] Keep track of \emph{set of Satisfiable Subsets \textbf{SSs}} \pause
+						\item[$\rightarrow$] Bootstrap $\m{H} \gets \{\m{F}_2 \setminus \m{S} | \m{S}  \in  \mathbf{SSs} \}$ 
+					\end{itemize}
+					
+					
+				\end{itemize}
+				
+			\end{frame}
+			
+			%\subsection{Efficiency}
+			
+			%\begin{frame}{Efficiency}
+			%	\framesubtitle{Explanation specific `Grow'}{}
+			%	
+			%	{\SetAlCapFnt{\footnotesize}
+				%		\footnotesize
+				%	\begin{algorithm}[H]
+					%		\DontPrintSemicolon
+					%		\color{gray}
+					%		\bf  $\setstohit  \gets \dots$ \; %\label{omus-line1} 
+					%		\While{\color{gray}true}{
+						%			$\subsetT \gets \cohs(\setstohit,f,p) $  \;
+						%
+						%			\If{\color{gray} $\lnot \sat(\subsetT)$}{
+							%				\Return{\color{gray}$\subsetT$} \;
+							%			}
+						%			\emph{$\subsetT \gets  \grow(\subsetT,\formula) $} \label{line:grow}\;
+						%			$\setstohit  \gets \setstohit  \cup \{  \formula \setminus \subsetT\}$ \;
+						%		}
+					%		\caption{\scriptsize$\comus(\formula,f,p)$ }
+					%		\label{alg:comus}
+					%	\end{algorithm}
+				%	}\pause
+			%	\vfill
+			%	When calling OCUS, the theory consists of 
+			%	
+			%	\begin{itemize}
+				%		\item[$\triangleright$] \emph{$\theory$} The original theory (constraints) 
+				%		\item[$\triangleright$] \emph{ $\{\lnot \factexpl| \factexpl \in \LitsToExplain\}$} The negation of \LitsToExplain 
+				%			\begin{itemize}
+					%			\item[Q1:] What to take into account for \emph{\grow}?
+					%			\item[Q2:] What about the cost function?
+					%		\end{itemize}
+				%	\end{itemize}
+			%	
+			%
+			%	%		\end{minipage}
+		%	
+		%	
+		%\end{frame}
+		
+		%\begin{frame}{Bounded OUSs}
+		%	\framesubtitle{Improving efficiency of OUS-based explanations}
+		%	
+		%	{\SetAlCapFnt{\footnotesize}
+			%		\footnotesize
+			%	\begin{algorithm}[H]
+				%		\caption{$\onestep(\theory,f,\LitsToExplain)$}
+				%		\label{alg:oneStep}
+				%		\color{gray}
+				%		$X_{best} \gets \theory \land \bigwedge_{\factexpl\in \LitsToExplain}\lnot \factexpl$\;
+				%		
+				%		\For{\color{gray}$\factexpl \in \LitsToExplain$}{
+					%			{\color{black}$X \gets \call{OUS}{(\theory \land \neg \factexpl,f, \emph{f(X_{best})})}$}\;
+					%			\If{\color{gray}$X \neq null$ and $f(X)<f(X_{best})$}{
+						%				$X_{best} \gets X$\;
+						%			}
+					%		}
+				%		\Return{\color{gray}$X_{best}$} 
+				%	\end{algorithm} 
+			%} \pause
+		%	
+		%	\begin{alertblock}{Bounded OUS computation}
+			%			\small
+			%		In the OUS algorithm, if $f(S) > f(X_{best})$, \textbf{STOP}!
+			%		We can't find a better (cheaper) explanation.
+			%	\end{alertblock}
+		%	
+		%\end{frame}
+		%
+		%
+		%\begin{frame}{Bounded OUSs}
+		%	\framesubtitle{Improving execution time of OUS-based explanations}
+		%	
+		%	{\SetAlCapFnt{\footnotesize}
+			%	\footnotesize
+			%	\begin{algorithm}[H]
+				%		\caption{$\onestep(\theory,f,\LitsToExplain)$}
+				%		\label{alg:oneStep}
+				%		\color{gray}
+				%		$X_{best} \gets \theory \land \bigwedge_{\factexpl\in \LitsToExplain}\lnot \factexpl$\;
+				%		
+				%		\For{\color{gray}$\factexpl \in \LitsToExplain$}{
+					%			{\color{black}$X \gets \call{OUS}{(\theory \land \neg \factexpl,f, \emph{f(X_{best})})}$}\;
+					%			\If{\color{gray}$X \neq null$ and $f(X)<f(X_{best})$}{
+						%				$X_{best} \gets X$\;
+						%			}
+					%		}
+				%		\Return{\color{gray}$X_{best}$} 
+				%	\end{algorithm} 
+			%} 
+		%	
+		%	\begin{exampleblock}{}
+			%	\begin{enumerate}	\small
+				%		\item Keep track of the score for all literals not explained yet: serves as an upperbound on explanation cost.\pause
+				%		\item Sort the literals according to their cost.
+				%	\end{enumerate}
+			%
+			%	\end{exampleblock}
+		%
+		%\end{frame}
+		\begin{frame}
+			\frametitle{Outline}
+			\tableofcontents
+		\end{frame}
+		
+		\section{Results}
+		
+		\begin{frame}{Results - Explanation quality}
+			%	\vfill
+			%	\centering
+			%	\includegraphics[width=0.5\columnwidth]{figures/heatmap_costs_mus_cous.pdf}
+			%	\vfill	
+		\end{frame}
+		
+		\begin{frame}{Results - Explanation specific grow}
+			
+			%	\begin{figure}
+				%		\includegraphics[width=0.9\textwidth]{figures/new_cumul_grow_avg_time_lits_derived_new.pdf}
+				%	\end{figure}
+		\end{frame}
+		
+		
+		\begin{frame}{Results - Constrainedness and Incrementality}
+			%	\framesubtitle{Explanation configurations compared}
+			%	\begin{figure}
+				%		\includegraphics[width=0.9\textwidth]{figures/cumul_incr_avg_time_lits_derived_new.pdf}
+				%	\end{figure}
+		\end{frame}
+		
+		
+		\section{Conclusion and Future work}
+		\begin{frame}{Conclusion}
+			In this paper, we introduce (cost-)\emph{\underline{O}ptimal \underline{C}onstrained} \underline{U}nsatisfiable \underline{S}ubsets (OCUS) problem and solved it using the \emph{implicit hitting set duality} between {\color{blue}MCSes} and {\color{teal}MUSes}.
+			\vfill
+			\begin{description}
+				\item[Optimality] Cost-function quantifies explanation difficulty. \pause
+				\item[Constrainedness] Analyze structural constraints on the form of the explanations.\pause
+				\item[Incrementality] Reuse-information between successive explanation calls.
+				%		\item[Efficiency] 
+				%		\begin{enumerate}
+					%			\item Explanation-specific grow;
+					%			\item Bound and sort OUS calls
+					%		\end{enumerate}
+			\end{description}
+			\vfill
+		\end{frame}
+		
+		
+		\begin{frame}{Future work}
+			
+			\begin{itemize}
+				\item[$\triangleright$] Learning the optimization function (from humans)
+				\item[$\triangleright$] Explaining optimization (different types of ``why'' queries); close relation to Explainable AI Planning \cite{fox2017explainable}
+				\item[$\triangleright$] Scaling up (approximate algorithms; decomposition of explanation search)
+				\item[$\triangleright$] Incremental algorithms over different ``why'' queries
+				% \item 
+			\end{itemize}	
+			
+			
+		\end{frame}
+		
+		
+		\begin{frame}
+			\begin{center}
+				{\huge Questions?}
+			\end{center}		
+		\end{frame}
+		
+		
+		\begin{frame}[allowframebreaks]
+			\frametitle{References}
+			\bibliographystyle{named}
+			\bibliography{refs}
+		\end{frame}
+		
+		
+		
+	\end{document}
 	
-\end{document}
+	
+	
+	
+	
+	
+	
+	
+	

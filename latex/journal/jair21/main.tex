@@ -1420,24 +1420,24 @@ In this way, the MIP solver will automatically maintain and reuse previously fou
 %In \cref{alg:oneStepBound}, we represent the incremental version of \ousb which keeps track of the sets-to-hit\tias{see note above, it doesn't?} in order to speed-up the \omus computation, and re-uses the upper bounds to sort the remaining literals to explain. 
 
 \paragraph{Efficiently generating an explanation sequence with Incremental OCUS} \label{sec:ocus-incr}
-In the following example we illustrate the efficiency of bootstrapping with the previous computed sets-to-hit in order to speed-up 
+In the following example we illustrate the efficiency of incrementality with MIP to speed-up 
 %the explanation sequence generation for the incremental version of \comus. 
-the \comus-based explanation sequence generation.
+generating an \comus-based explanation sequence.
 
 \begin{example}[\textit{continued}]\label{ex:ocus-incr:expl-seq} Consider the previous introduced clauses of our running example $\formularunning$:
 	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
-	To define the input for incremental \comus call with initial interpretation $\m{I}=\emptyset$, we extend $\formularunning$ with the new clauses representing the final interpretation $\Iend =  \{ \{ x_1\},\  \{\lnot x_2\},\ \{ x_3\}\}$ and the complement thereof $\overline{\Iend \setminus \m{I}} =  \{ \{\lnot x_1\},\    \{ x_2\}, \   \{\lnot x_3\}\}$.
+	To define the input for the MIP-incremental \comus with initial interpretation $\m{I}=\emptyset$, we extend $\formularunning$ with the new clauses representing the final interpretation $\Iend =  \{ \{ x_1\},\  \{\lnot x_2\},\ \{ x_3\}\}$ and the complement thereof $\overline{\Iend \setminus \m{I}} =  \{ \{\lnot x_1\},\    \{ x_2\}, \   \{\lnot x_3\}\}$.
 %	\[ \{ x_1\}\qquad  \{\lnot x_2\} \qquad \{ x_3\}  \qquad\]
 	%	with initial interpretation $ I = I_0 = \emptyset$ and the complement of the to-be-derived facts $\overline{\Iend\setminus I}$: 
 	%	\[ c_8 := \{\lnot x_1\}\qquad  c_9:=\{x_2\} \qquad  c_{10} := \{\lnot x_3\}\]
-	For OCUS incremental, $p$ remains the same, but the cost function $f_I $ is defined as a weighted sum over the following weights:
+	For the MIP-incremental variant of OCUS, $p$ remains the same. The cost function $f_I $ is defined as a weighted sum over the following weights:
 	\begin{align*}
 	\text{\textbf{\emph{Clause weights:}}} & \ w_1 = 60 \  \qquad w_2=60  \qquad  \ \ \ w_3=100 \qquad w_4=100 \\
 	\text{\textbf{\emph{$I \wedge \overline{\Iend \setminus I}$ weights:}}}& \  w_{\lnot x_1}=1  \qquad w_{ x_2}=1 \ \ \ \qquad w_{\lnot x_3}=1 \\
 	\text{\textbf{\emph{$\Iend \setminus I$ weights:}}}& \  w_{x_1}=\infty  \qquad w_{\lnot x_2}=\infty \qquad w_{x_3}=\infty
 	\end{align*}
 	Note how the literals that haven't been derived yet ($\Iend \setminus I$) are given an infinite weight according to \cref{sec:ocusEx} for incrementality purposes.
-	Therefore, $f_I$ will be updated at every explanation whenever interpretation $I$ changes.
+	Therefore, $f_I$ will be updated at every explanation step whenever interpretation $I$ changes.
 %	\[w_1 = 60, w_2=60, w_3=100, w_4=100\]
 %	\[ w_{x_1}=1 \qquad w_{\lnot x_1}=1 \qquad w_{x_2}=1 \qquad w_{\lnot x_3}=\infty \qquad w_{\lnot x_2}=\infty \qquad w_{x_3}=\infty\]
 %	\tias{Hier moet iets gebeuren... iets dat deze $f$ van I afhangt en wordt geupdate in elke iteratie, dus we definieren een $f_I$ (die in Eq 9 gebruikt wordt)} 
@@ -1452,8 +1452,8 @@ the \comus-based explanation sequence generation.
 	\end{equation}
 	%	Finally, for explaining one of the literals, we proceed to call \comus on formula $\formula_{incr, constr}$ with given cost function $f$ and \emph{exactly-one} constraint $p$:
 	%	\[\comus( \formulac\land \Iend \land \overline{(\Iend\setminus I)}, f, p)\]	
-	In this example, we grow hitting set $\m{S}$ into a larger satisfiable subset using the model provided by the \sat solver to grow subset $\m{S}$. % \tias{replace mu by grow(S), schrijf dat corrsubset reutrn F without grow(S)}). 
-	Hence, the \corrsubsets procedure hence simply returns $\m{K} = \{\formula \setminus \grow(\m{S})\}$.
+	In this example, the $\grow(\m{S}, \formula)$ procedure uses the model provided by the \sat solver to grow a given subset $\m{S}$. % \tias{replace mu by grow(S), schrijf dat corrsubset reutrn F without grow(S)}). 
+	The \corrsubsets procedure simply returns $\m{K} = \{\formula \setminus \grow(\m{S}, \formula)\}$.
 The following tables (Tables \ref{tab:example-explanation-generation:incr:step1} to \ref{tab:example-explanation-generation:incr:step3}) summarize the intermediate steps to compute an \comus-based explanation sequence for our running example. 
 The literals that cannot be selected by the hitting set solver have been struck out because they have not been derived yet. 
 
@@ -1485,8 +1485,9 @@ The literals that cannot be selected by the hitting set solver have been struck 
 %\tias{Om later consistent te zijn, hier neg x3 boven neg x1}
 %\tias{Table header, what is mu? not used in algo? is it the solution of the SAT solver? if so repeat so. or is it the grow (like in table 4)? Also, instead of H is H cup corr.. maybe write K = corrSubs, like in the algos?}
 
-The most striking aspect of \cref{tab:example-explanation-generation:incr:step1} compared to \cref{tab:example-explanation-generation-not-incremental} is the number of steps required to find an \comus that is greatly reduced, i.e. from 12 to 6, as a result of choosing an effective grow. %, compared to no grow at all. 
-For the next explanation step, since $x_1$ has been explained, we adapt the weights of the clauses $\{x_1\}$ and $\{\lnot x_1\}$ to $w_{x_1} = 1$ and $w_{\lnot x_1} = \infty$ respectively and recompute $\setstohit$ using the satisfiable subsets $\satsets$ (not shown) obtained in the previous iteration. 
+The most striking aspect of \cref{tab:example-explanation-generation:incr:step1} compared to \cref{tab:example-explanation-generation-not-incremental} is the number of steps required to find an \comus that is greatly reduced, i.e. from 12 steps to 6, as a result of choosing an effective grow. %, compared to no grow at all. 
+For the next explanation step, since $x_1$ has been explained, we adapt the weights of the clauses $\{x_1\}$ and $\{\lnot x_1\}$ to $w_{x_1} = 1$ and $w_{\lnot x_1} = \infty$ respectively. 
+%% and recompute $\setstohit$ using the satisfiable subsets $\satsets$ (not shown) obtained in the previous iteration. 
 
 
 
@@ -1559,13 +1560,14 @@ In this case, subset $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\l
 	Two sets $S_1$ and $S_2$ are $p$-disjoint if every set that hits both $S_1$ and $S_2$ and satisfies $p$ contains $s_1\in S_1$ and $s_2\in S_2$ with $s_1 \neq s_2$.
 \end{definition}
 
-In section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-disjoint} to enumerate multiple correction subsets that are $p$-disjoint of each other during the \corrsubsets procedure.
+In the next section, motivated by the effectiveness of a non-trivial \grow, we first analyze different \grow procedures . Next, in section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-disjoint} to enumerate multiple correction subsets that are $p$-disjoint of each other during the \corrsubsets procedure.
+
 %\bart{Hmm... disjoint from the incremental point of view... Not so sure about that. It really does not have anything to do with incrementality. It might have something to do with $p$ (and $f$). 
 %In terms of $p$ I would phrase it something like this: 
 %``'' }
 %%\paragraph{Incrementality} 
 
-\subsection{Computing correction subsets}
+\subsection{Computing correction subsets}\label{sec:computing-correction-subsets}
 
 The \corrsubsets procedure generates a set of correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
 However, calling \onestepo on our running example has shown that a naive `No grow' \corrsubsets, i.e.~returning $\{\formula \setminus  \subsetT \}$, drastically increases the number of sets-to-hit required compared to using the model provided by the \sat solver. 
@@ -1618,11 +1620,12 @@ Furthermore, we can initialize this call as well as any call to a \sat solver wi
 We evaluate different grow strategies as part of the $\corrsubsets(\m{S}, \formula)$ procedure in the experiments section including:
 \begin{description}
 	\item[SAT] extracts a satisfying model from the \sat solver to turn $\m{S}$ into a larger satisfiable subset. This will be considered the baseline for comparing the other grow-variants.
+	\item[SubsetMax-SAT] extends the satisfiable subset computed by \sat further by adding every remaining clause $c \in \formula \setminus \m{S}$ if $\m{S} \cup \{c\}$ is satisfiable. 
 	\item[MaxSAT] grows with a \maxsat solver using only the previously derived facts and the original constraints. % The \maxsat-based \grow uses only the previously derived facts and the original constraints.
 	\item[MaxSAT Full] grow with a \maxsat solver using the full unsatisfiable formula $\mathcal{F}$.
 \end{description} 
-In the experiments, we omit the `no grow' procedure where the complement $\{\formula \setminus \m{S}\}$ is returned by \corrsubsets. Not growing produces large sets-to-hit as seen in \cref{tab:example-explanation-generation-not-incremental} of the running example.
-Additional experiments comparing the effectiveness of the naive `no grow' to growing with the \sat solver procedure show that `no grow' leads to significantly longer \comus runtimes.
+In the experiments, we omit the `No grow' procedure where the complement $\{\formula \setminus \m{S}\}$ is returned by \corrsubsets. Not growing produces large sets-to-hit as seen in \cref{tab:example-explanation-generation-not-incremental} of the running example.
+Additional experiments comparing the effectiveness of the naive `No grow' to growing with the \sat solver procedure show that `No grow' leads to significantly longer \comus runtimes.
 
 % Since not growing subset $\m{S}$ leads to  has shown  does not improve satisfiable subset $\m{S}$ and returns $\{\formula \setminus \m{S}\}$.
 %not growing, using the sat model to grow, and the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
@@ -1635,8 +1638,8 @@ Additional experiments comparing the effectiveness of the naive `no grow' to gro
 
 \subsubsection{Correction subsets enumeration}\label{sec:correction_subset_enum}
 %Observation: A lot of time is spent in ... 
-Our \comus algorithm relies on repeatedly alternating between computing hitting sets and subsequently correction subsets. 
-Ideally, \comus algorithm should even distribute computation between the hitting set solver and the \corrsubsets procedure.
+Our \comus algorithm repeatedly alternates between computing hitting sets and subsequently correction subsets. 
+Ideally, \comus algorithm should distribute computation evenly between the hitting set solver and the \corrsubsets procedure.
 However, the increasingly large collection of sets-to-hit makes finding optimal hitting sets much more expensive compared to the \corrsubsets procedure, that solely relies on finding correction subsets from a given satisfiable subset.
 Additionally, in the last explanation step of \cref{ex:ocus-incr:expl-seq}, we saw that one of the sets-to-hit ($\{c_4, \cancel{\lnot x_1} ,\cancel{\lnot x_2} , \cancel{\lnot x_3}\}$) was $p$-disjoint to the others, imposing a strong restriction on the hitting set solver. 
 %% something about disjoint correction subsets
@@ -1709,18 +1712,18 @@ If the same procedure is directly applied to the incremental \comus variant that
 %Step 1 of \cref{tab:example-explanation-generation:incr:step1} illustrates this case where $x_1$ is present in the hitting set $\m{S}$ and $\lnot x_1$ in the correction subset $F \setminus \m{S}$ \tias{I dont see this in table 2, it does not explicitly name the correction subset F without S either; cut this sentence? or write S, F and the corr subset in full, without refering to table 2? if S is ... and F is .. then F without S is and hence ...}
 
 %\tias{I am unsure of the next paragraph, is it proposing an alternative to the above? If so, write that "An alternative we propose is... we will denote it as 'its name in the exps'}
-\paragraph{Correction subsets enumeration with incremental MIP} Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints, the current interpretation and the negated literals to explain, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I \cup \overline{\Iend \setminus I}) $. 
+\paragraph{Correction subsets enumeration with incremental MIP} Since only the base constraints $\formulac$, the current interpretation $I$ and the literals of $\overline{(\Iend\setminus I)}$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints, the current interpretation and the negated literals to explain, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I \cup \overline{\Iend \setminus I}) $. 
 By incorporating \emph{explanation-specific} information, we are able to enumerate extra correction subsets that are $p$-disjoint.
 %In the following example, we show helps in enumerating extra correction subsets that are $p$-disjoint.
 
 \begin{example}[\cref{ex:ocus-incr:expl-seq} continued] \label{ex:correction-subset-enum}
-	Consider the same setting as in \cref{ex:ocus-incr:expl-seq} with given interpretation $\m{I} =\emptyset$ and $\Iend = \{x_1, \lnot x_2, x_3\}$.
+	Consider the same setting as in \cref{ex:ocus-incr:expl-seq} with given initial interpretation $\m{I} =\emptyset$ and $\Iend = \{x_1, \lnot x_2, x_3\}$.
 	\cref{tab:example-corr-subsets:ocus-incr} illustrates the efficiency of the incremental variant of the \corrsubsets algorithm starting from hitting set $\m{S} := \{\lnot x_3\}$ as in the first step of our running example (\cref{tab:example-explanation-generation:incr:step1} of \cref{ex:ocus-incr:expl-seq}). This example uses the \sat-based \grow of \cref{para:domainspecificgrow}. 
 	\begin{table}[!h]
 		\centering
 		\begin{tabular}{lcccc} 
 			%			\multicolumn{5}{c}{OCUS explanation: $c_3 \implies x_1$} \\ \midrule \midrule
-			Step & $\m{S}$                             & $\sat(\m{S})$    & $\m{S}' \gets \grow(\m{S}, \formula)$      & $\m{K}  \gets \m{K}  \cup \{  \formula \setminus \m{S}'\}$ \\ 
+			Step & $\m{S}'$                             & $\sat(\m{S}')$    & $\m{S}' \gets \grow(\m{S}, \formula)$      & $\m{K}  \gets \m{K}  \cup \{  \formula \setminus \m{S}'\}$ \\ 
 			\toprule[2pt]
 			&    \phantom{$\{ c_1, c_2, x_1, \lnot x_3 \}$}    &    &      & $\emptyset$                                \\\midrule
 			%%%%% SS: c1 and c2 and c4 and ~x2 and -8 and ~c3 and ~x3 and ~x1
@@ -1741,12 +1744,12 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 	\end{table}
 %\emilio{Adapt headers of table if algo changes.}
 %	\begin{example}[\cref{ex:ocus-incr:expl-seq} continued] 
-	The MIP-based incremental variant of \comus uses unsatisfiable formula \formula defined as $\formulac\land \textbf{\Iend} \land \overline{(\Iend\setminus I)}$. For given interpretation $I = \emptyset$, it corresponds $\formula := \formulac\land \{ x_1\}\land  \{\lnot x_2\}\land \{ x_3\}\land \{ \lnot x_1\}\land  \{ x_2\}\land \{ \lnot x_3\}$.
+	The MIP-based incremental variant of \comus uses unsatisfiable formula \formula defined as $\formulac\land \textbf{\Iend} \land \overline{(\Iend\setminus I)}$. For given interpretation $I = \emptyset$, the $\formula$ corresponds $\formula := \formulac\land \{ x_1\}\land  \{\lnot x_2\}\land \{ x_3\}\land \{ \lnot x_1\}\land  \{ x_2\}\land \{ \lnot x_3\}$.
 %	contains both $\{x_2, \lnot x_2\}$, $x_2$ will be present in the $\m{S}'$ and $\lnot x_2$ in $\m{C}$.  
 %	Therefore, at line line~\ref{alg:corr-subsets-grow-with-sat:mapping}, the newly formed $\m{S}'$ will contain $\{x_2, \lnot x_2\}$ leading to UNSAT when the while-loop is repeated.
 %	\end{example}
-	Taking a closer look at step 1 of \cref{tab:example-corr-subsets:ocus-incr}, $\lnot x_3$ is present in $\m{S}$ and $x_3$ is in the computed correction subset. If we were to directly add it to $\m{S}$, the algorithm would stop at the next iteration since $\m{S}$ would be unsatisfiable. However, $x_3$ (and $x_1$) cannot be selected by the hitting set solver, and therefore should not be added. 
-	By adding only the clauses from $\{\formula \setminus \m{S}\}$ projected onto $ (\formulac\cup I \cup \overline{\Iend \setminus I})$, i.e.~$c_3$ and $x_2$, we are able to compute \textbf{multiple} correction subsets that are $p$-disjoint for the hitting set solver. %\tias{in the eye? reword}
+	Taking a closer look at step 1 of \cref{tab:example-corr-subsets:ocus-incr}, $\lnot x_3$ is present in $\m{S}$ and $x_3$ is in the corresponding correction subset. If we were to add it directly to $\m{S}$, the algorithm would stop at the next iteration since $\m{S}$ would be unsatisfiable. However, $x_3$ (and $x_1$) cannot be selected by the hitting set solver, and therefore should not be added. 
+	By adding only the clauses from $\{\formula \setminus \m{S}\}$ projected onto $ (\formulac\cup I \cup \overline{\Iend \setminus I})$, i.e.~$c_3$ and $x_2$, we are able to enumerate \textbf{multiple} correction subsets that are $p$-disjoint for the hitting set solver. %\tias{in the eye? reword}
 \end{example}
 
 
@@ -1758,7 +1761,8 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 \paragraph{Efficient correction subset enumeration}  Extending the observation that a call to an efficient \maxsat solver helps in finding maximally satisfiable subsets, we propose two additional variants of \cref{alg:corr-subsets-grow-with-sat}:
 \begin{enumerate}
 	\item The first variant is \emph{Multi-MaxSAT}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
-	\item The second approach, \emph{MaxSAT+Multi-\sat} works similarly to \emph{Multi-\maxsat Corr.}, however only the first \grow is done with the domain specific \maxsat. Subsequent \grow calls extract a larger satisfiable using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. 
+	\item \emilio{I propose to remove this one since it's difficult to motivate : The second approach, \emph{MaxSAT+Multi-\sat} works similarly to \emph{Multi-\maxsat Corr.}, however only the first \grow is done with the domain specific \maxsat. Subsequent \grow calls extract a larger satisfiable using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. }
+	\item The second variant \emph{Multi-SubsetMax-SAT} repeatedly grows using the \emph{SubsetMax-SAT} to balance the trade-off between efficiency and quality.
 \end{enumerate}
 
 %\bart{When I read this, it really sounds completely arbitrary: why would we ever wnt to do the first iteration in a different way? Why is there no option that only has sat grows? } 
@@ -1785,19 +1789,23 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 			\hline
 			\textbf{\corrsubsets}  &  \textbf{Description}\\\hline
 			
-			\multirow{2}{*}{Single \sat} & \textit{Extract a satisfiable model computed by the \sat solver to grow the} \\
+			\multirow{2}{*}{\emph{Single} \sat} & \textit{Extract a satisfiable model computed by the \sat solver to grow the} \\
 			& \textit{input satisfiable subset.} \\\hline
-			\multirow{3}{*}{Single MaxSAT} & \textit{Grow with an unweighted \maxsat solver using domain-specific }\\
+			\multirow{2}{*}{\emph{Single} SubsetMax-\sat} & \textit{extends the satisfiable subset computed by \sat by adding every} \\
+			&			\textit{remaining clause $c \in \formula \setminus \m{S}$ if $\m{S} \cup \{c\}$ is satisfiable.} \\\hline
+			\multirow{3}{*}{\emph{Single} MaxSAT} & \textit{Grow with an unweighted \maxsat solver using domain-specific }\\
 			&  \textit{information, i.e. only previously derived facts and the original}\\
 			&  \textit{constraints (see Section~\ref{sec:ocusEx}).}\\\hline
-			\multirow{2}{*}{Single MaxSAT Full} & \textit{Grow with an unweighted \maxsat solver using the full } \\
+			\multirow{2}{*}{\emph{Single} MaxSAT Full} & \textit{Grow with an unweighted \maxsat solver using the full } \\
 			 & \textit{unsatisfiable formula $\mathcal{F}$.} \\\hline
 		\multirow{2}{*}{\emph{Multi}-\sat} & \textit{Similar to \emph{\maxsat}, except all \grow calls rely on extracting}\\
 		&  \textit{a satisfiable model from \sat solver.}\\\hline
 			\multirow{2}{*}{\emph{Multi}-MaxSAT}& \textit{Repeatedly call a \emph{Dom.-spec. \maxsat} and block the corresponding}\\ 
 			& \textit{correction subset until no more correction subsets can be extracted.}\\\hline
-			\multirow{2}{*}{Single MaxSAT+\emph{Multi}-\sat} & \textit{Similar to \emph{Multi}-\maxsat, except the first grows uses \emph{domain-spe-}}\\
-			& \textit{\emph{cific} \emph{\maxsat} and consequent \grow calls use the \sat-based \grow.}  \\\hline 
+%			\multirow{2}{*}{Single MaxSAT+\emph{Multi}-\sat} & \textit{Similar to \emph{Multi}-\maxsat, except the first grows uses \emph{domain-spe-}}\\
+%			& \textit{\emph{cific} \emph{\maxsat} and consequent \grow calls use the \sat-based \grow.}  \\\hline 
+%			
+		\emph{Multi}-SubsetMax-\sat &	Repeatedly grow using the \emph{SubsetMax-\sat}.\\\hline 
 %			&  \textit{\sat solver.}\\
 			%			OUS Iter. &                  3.22 &               4.56 &      1.62 &      3.09 &       5.03 &    12.75 &     18.93 &    388.95 \\
 			%			OCUS &                  6.87 &               4.04 &      0.93 &      1.56 &       3.34 &    14.06 &     20.78 &    400.73 \\
@@ -1966,7 +1974,7 @@ Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances f
 \begin{figure}[!h]
 %\begin{subfigure}{0.49\textwidth}
 	\centering
-	\includegraphics[width=\textwidth]{figures/rq3_cactus_r_2022_06_22_Greedy-Sat__Actual__Unif..pdf}
+	\includegraphics[width=\textwidth]{figures/grow/rq3_cactus_r_2022_06_22_Greedy-Sat__Actual__Unif.pdf}
 	\caption{Time to generate a full explanation sequence with a naive \corrsubsets procedure for incremental and non-incremental \comus algorithms. Incrementality improves the number of instances solved and the time required to solve them for all O(C)US algorithms.
 %	\bart{I would not call this ``clearly''. There seems to be a MARGINAL improvement due to incrementality in ONE of the configurations. Does this text come from an old graph (I remember seing several pictures where the improvement was indeed better...) }  
 }
@@ -2228,20 +2236,20 @@ In \cref{tab:correction-subset-proc-description}, we summarize the different \co
 \begin{figure}[!ht]
 	\begin{subfigure}{0.5\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_06_03_OUSbLit_Incr_HS.pdf}
+		\includegraphics[width=\textwidth]{figures/effect_grow_incremental/rq2_cactus_log_2022_06_22_OUSbLit_Incr_HS.pdf}
 		\caption{\ousbincr}
 		\label{fig:rq3_grow:ocus}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_06_03_OUS_IterLit_Incr_HS.pdf}
+		\includegraphics[width=\textwidth]{figures/effect_grow_incremental/rq2_cactus_log_2022_06_22_OUS_IterLit_Incr_HS.pdf}
 		\caption{\ousbiterincr}
 		\label{fig:rq3_grow:ousb_incr}
 	\end{subfigure}
 	\\
 	\begin{subfigure}{\textwidth}
 		
-		\includegraphics[width=0.93\textwidth]{figures/rq2_cactus_log_2022_06_03_OCUSIncr_HS.pdf}
+		\includegraphics[width=0.93\textwidth]{figures/effect_grow_incremental/rq2_cactus_log_2022_06_22_OCUSIncr_HS.pdf}
 		\caption{\comusincr\hphantom{-----------------------------------------------------------}}
 		\label{fig:rq3_grow:ousb_incr}
 	\end{subfigure}

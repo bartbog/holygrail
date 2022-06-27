@@ -83,6 +83,7 @@
 \newcommand\disjcorrincr{\mm{\call{DisjCorrSetsIncremental}}}
 \newcommand\disjcorrconstrained{\mm{\call{DisjCorrSetsConstrained}}}
 \newcommand\sat{\texttt{{SAT}}\xspace}
+\newcommand\subsetmaxsat{\texttt{SubsetMax-SAT}}
 \newcommand\grow{\mm{\call{Grow}}}
 \newcommand\omus{\mm{\call{OUS}}}
 \newcommand\comus{\mm{\call{OCUS}}}
@@ -107,7 +108,9 @@
 \newcommand\algemilio[1]{\emilio{#1}\;}
 \newcommand\UB{ub}
 \newcommand\LB{lb}
-\newcommand\maxsat{MaxSAT\xspace}
+\newcommand\maxsat{\texttt{MaxSAT}}
+\newcommand\domspecmaxsat{\texttt{Dom.-spec.}~\texttt{MaxSAT}}
+\newcommand\maxsatfull{\texttt{MaxSAT Full}}
 \newcommand\voc{\ensuremath{\Sigma}\xspace}
 \newcommand\negset[1]{\mm{\overline{#1}}}
 
@@ -345,10 +348,10 @@ Our current work is motivated by a concrete algorithmic need: to generate these 
 
 The closest related work can be found in the literature on generating or enumerating MUSs \cite{conf/sat/LynceM04,liffiton2016fast}.
 Different techniques are employed to find MUSs, including  manipulating resolution proofs produced by SAT solvers \cite{goldberg,DBLP:journals/fmsd/GershmanKS08,DBLP:conf/sat/DershowitzHN06}, incremental solving to enable/disable clauses and branch-and-bound search \cite{DBLP:conf/dac/OhMASM04}, or by BDD-manipulation methods \cite{huang}.
-Other methods work by means of translation into a so-called Quantified \maxsat \cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressiveness of Quantified Boolean Formulas (QBF) \cite{QBF} with optimization as known from \maxsat \cite{DBLP:series/faia/LiM09}, or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest}.
+Other methods work by means of translation into a so-called Quantified \maxsat~\cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressiveness of Quantified Boolean Formulas (QBF) \cite{QBF} with optimization as known from \maxsat~\cite{DBLP:series/faia/LiM09}, or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest}.
 To the best of our knowledge, only few works have considered \emph{optimizing} MUSs: the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest}. 
 
-An \textit{abstract} framework for describing \hitsetbased algorithms, including optimization was developed by \citet{DBLP:conf/kr/SaikkoWJ16}. While our approach can be seen to fit the framework, the terminology is focused on MaxSAT rather than MUS and would complicate our exposition.
+An \textit{abstract} framework for describing \hitsetbased algorithms, including optimization was developed by \citet{DBLP:conf/kr/SaikkoWJ16}. While our approach can be seen to fit the framework, the terminology is focused on \maxsat~rather than MUS and would complicate our exposition.
 
 %\begin{itemize}
 %	%\item XAI $\rightarrow$ CP
@@ -359,8 +362,8 @@ An \textit{abstract} framework for describing \hitsetbased algorithms, including
 %	\begin{itemize}
 %%		\item  (?) Abstract cores
 %		\item  Disjoint MCS enumeration
-%		\item  something about incrementaltity (and more specifically) in \maxsat solving which could be applied to weighted MUSes
-%		\item Implicit hitting set techniques in \maxsat and MUS
+%		\item  something about incrementaltity (and more specifically) in \maxsat~solving which could be applied to weighted MUSes
+%		\item Implicit hitting set techniques in \maxsat~and MUS
 %	\end{itemize}
 %%	\item Searching for explainable solutions in Sudoku 
 %\end{itemize}
@@ -1598,37 +1601,37 @@ For the case of explanations, we make the following observations:
 \end{itemize}
 
 Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense %to use the \grow{($\m{S}$, $\F$)} procedure 
-to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient (partial) \maxsat solver. 
+to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient (partial) \maxsat~solver. 
 Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
 
 %The following configurations are compared:
 %\begin{description}
 %%	\item[No grow.] does not grow and returns the complement .
 %%	\item[SAT] refers to using the model computed by \sat solver when checking for satisfiability.
-%	\item[{Dom.-spec. \maxsat}] refers to growing with a \maxsat solver using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). In this case, \maxsat-based \grow uses only the previously derived facts and the original constraints. 
-%	\item[{MaxSAT Full}] refers to growing with a \maxsat solver using the full unsatisfiable formula $\mathcal{F}$.
-%	\item[{\maxsat Corr.}] refers to repeatedly calling a \emph{Dom.-spec. \maxsat} and blocking the corresponding correction subset until no more correction subsets can be extracted.
-%	\item[{\maxsat Corr.+\sat}] works similarly to \emph{\maxsat Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
+%	\item[{Dom.-spec. \maxsat}] refers to growing with a \maxsat~solver using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). In this case, \maxsat-based \grow uses only the previously derived facts and the original constraints. 
+%	\item[{MaxSAT Full}] refers to growing with a \maxsat~solver using the full unsatisfiable formula $\mathcal{F}$.
+%	\item[{\maxsat~Corr.}] refers to repeatedly calling a \emph{Dom.-spec. \maxsat} and blocking the corresponding correction subset until no more correction subsets can be extracted.
+%	\item[{\maxsat~Corr.+\sat}] works similarly to \emph{\maxsat~Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
 %\end{description}
 
 
-%OLD: Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow{($\m{S}$, $\F$)} procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
+%OLD: Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow{($\m{S}$, $\F$)} procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat~solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
 %This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 
 
-%\paragraph{MaxSAT weighing scheme} The \maxsat solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
+%\paragraph{MaxSAT weighing scheme} The \maxsat~solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
 
 We evaluate different grow strategies as part of the $\corrsubsets(\m{S}, \formula)$ procedure in the experiments section including:
 \begin{description}
-	\item[SAT] extracts a satisfying model from the \sat solver to turn $\m{S}$ into a larger satisfiable subset. This will be considered the baseline for comparing the other grow-variants.
-	\item[SubsetMax-SAT] extends the satisfiable subset computed by \sat further by adding every remaining clause $c \in \formula \setminus \m{S}$ if $\m{S} \cup \{c\}$ is satisfiable. 
-	\item[MaxSAT] grows with a \maxsat solver using only the previously derived facts and the original constraints. % The \maxsat-based \grow uses only the previously derived facts and the original constraints.
-	\item[MaxSAT Full] grow with a \maxsat solver using the full unsatisfiable formula $\mathcal{F}$.
+	\item[\sat] extracts a satisfying model from the \sat solver to turn $\m{S}$ into a larger satisfiable subset. This will be considered the baseline for comparing the other grow-variants.
+	\item[\subsetmaxsat] extends the satisfiable subset computed by \sat further by adding every remaining clause $c \in \formula \setminus \m{S}$ if $\m{S} \cup \{c\}$ is satisfiable. 
+	\item[\domspecmaxsat] grows with a \maxsat~solver using only the previously derived facts and the original constraints. % The \maxsat-based \grow uses only the previously derived facts and the original constraints.
+	\item[\maxsatfull] grow with a \maxsat~solver using the full unsatisfiable formula $\mathcal{F}$.
 \end{description} 
 In the experiments, we omit the `No grow' procedure where the complement $\{\formula \setminus \m{S}\}$ is returned by \corrsubsets. Not growing produces large sets-to-hit as seen in \cref{tab:example-explanation-generation-not-incremental} of the running example.
 Additional experiments comparing the effectiveness of the naive `No grow' to growing with the \sat solver procedure show that `No grow' leads to significantly longer \comus runtimes.
 
 % Since not growing subset $\m{S}$ leads to  has shown  does not improve satisfiable subset $\m{S}$ and returns $\{\formula \setminus \m{S}\}$.
-%not growing, using the sat model to grow, and the use of partial \maxsat as well as weighted partial \maxsat based on the weights in the cost function $f$.
+%not growing, using the sat model to grow, and the use of partial \maxsat~as well as weighted partial \maxsat~based on the weights in the cost function $f$.
 %\bart{This section still makes sense to me. However, it only describes a single type of grow based on maxsat. In the experiments we will have multiple. In that case I would expect them to also be described here. Or... we drop all the ones we do not discuss here from the experiments...}
 %\emilio{Added `No grow' and sat model in the intro.}
 %\bart{You should give them names here. So that you can refer back in the experiements, and that it is clear where this comes from. The way it is presented now feels like: the first two are just a couple of small tests, and there is only one real grow. Try to present it as: two simple options: no grow and sat model (with absolutely no reason to ever want to do the first), and one more advanced, domain specific thing}
@@ -1758,11 +1761,11 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 
 \cref{ex:correction-subset-enum} depicts the effectiveness of enumerating multiple correction subset that are $p$-disjoint by projecting the correction subset onto the unsatisfiable formula for the current interpretation $(\formulac\cup I \cup \overline{\Iend \setminus I})$. In the rest of the paper, we consider correction subset enumeration with a \sat-based grow as the baseline approach. We refer to it as \emph{Multi-\sat}.
 
-\paragraph{Efficient correction subset enumeration}  Extending the observation that a call to an efficient \maxsat solver helps in finding maximally satisfiable subsets, we propose two additional variants of \cref{alg:corr-subsets-grow-with-sat}:
+\paragraph{Efficient correction subset enumeration}  Extending the observation that a call to an efficient \maxsat~solver helps in finding maximally satisfiable subsets, we propose two additional variants of \cref{alg:corr-subsets-grow-with-sat}:
 \begin{enumerate}
-	\item The first variant is \emph{Multi-MaxSAT}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
-	\item \emilio{I propose to remove this one since it's difficult to motivate : The second approach, \emph{MaxSAT+Multi-\sat} works similarly to \emph{Multi-\maxsat Corr.}, however only the first \grow is done with the domain specific \maxsat. Subsequent \grow calls extract a larger satisfiable using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. }
-	\item The second variant \emph{Multi-SubsetMax-SAT} repeatedly grows using the \emph{SubsetMax-SAT} to balance the trade-off between efficiency and quality.
+	\item The first variant is \emph{Multi-\maxsat}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat~introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
+	\item \emilio{I propose to remove this one since it's difficult to motivate : The second approach, \emph{\domspecmaxsat+Multi-\sat} works similarly to \emph{Multi-\domspecmaxsat}, however only the first \grow is done with the domain specific \maxsat. Subsequent \grow calls extract a larger satisfiable using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. }
+	\item The second variant \emph{Multi-\subsetmaxsat} repeatedly grows using the \emph{\subsetmaxsat} to balance the trade-off between efficiency and quality.
 \end{enumerate}
 
 %\bart{When I read this, it really sounds completely arbitrary: why would we ever wnt to do the first iteration in a different way? Why is there no option that only has sat grows? } 
@@ -1780,6 +1783,7 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 %		\item Change description and remvoe check
 %	\end{inparaenum}}
 
+Repeatedly grow with \emph{Single} \sat and block the corresponding correction subset until no more correction susbets can be extracted.
 
 \begin{table}[!h]
 	\centering
@@ -1789,23 +1793,26 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 			\hline
 			\textbf{\corrsubsets}  &  \textbf{Description}\\\hline
 			
-			\multirow{2}{*}{\emph{Single} \sat} & \textit{Extract a satisfiable model computed by the \sat solver to grow the} \\
-			& \textit{input satisfiable subset.} \\\hline
-			\multirow{2}{*}{\emph{Single} SubsetMax-\sat} & \textit{extends the satisfiable subset computed by \sat by adding every} \\
+			\sat & \textit{Extract a satisfiable model computed by the \sat solver.} \\\hline
+			\multirow{2}{*}{\subsetmaxsat} & \textit{Extends the satisfiable subset computed by \sat by adding every} \\
 			&			\textit{remaining clause $c \in \formula \setminus \m{S}$ if $\m{S} \cup \{c\}$ is satisfiable.} \\\hline
-			\multirow{3}{*}{\emph{Single} MaxSAT} & \textit{Grow with an unweighted \maxsat solver using domain-specific }\\
+			\multirow{3}{*}{\domspecmaxsat} & \textit{Grow using an unweighted \maxsat~solver with domain-specific }\\
 			&  \textit{information, i.e. only previously derived facts and the original}\\
 			&  \textit{constraints (see Section~\ref{sec:ocusEx}).}\\\hline
-			\multirow{2}{*}{\emph{Single} MaxSAT Full} & \textit{Grow with an unweighted \maxsat solver using the full } \\
+			\multirow{2}{*}{\maxsatfull} & \textit{Grow with an unweighted \maxsat~solver using the full } \\
 			 & \textit{unsatisfiable formula $\mathcal{F}$.} \\\hline
-		\multirow{2}{*}{\emph{Multi}-\sat} & \textit{Similar to \emph{\maxsat}, except all \grow calls rely on extracting}\\
-		&  \textit{a satisfiable model from \sat solver.}\\\hline
-			\multirow{2}{*}{\emph{Multi}-MaxSAT}& \textit{Repeatedly call a \emph{Dom.-spec. \maxsat} and block the corresponding}\\ 
+%		\multirow{2}{*}{\emph{Multi}-\sat} & \textit{Similar to \emph{\maxsat}, except all \grow calls rely on extracting}\\
+%		&  \textit{a satisfiable model from \sat solver.}\\\hline
+			\multirow{2}{*}{\emph{Multi}~\sat}& \textit{Repeatedly grow with \textbf{\sat}  and block the corresponding correction}\\ 
+& \textit{subset until no more correction subsets can be extracted.}\\\hline
+			\multirow{2}{*}{\emph{Multi}~\domspecmaxsat}& \textit{Repeatedly with \textbf{\emph{\domspecmaxsat}} and block the corresponding}\\ 
 			& \textit{correction subset until no more correction subsets can be extracted.}\\\hline
+
 %			\multirow{2}{*}{Single MaxSAT+\emph{Multi}-\sat} & \textit{Similar to \emph{Multi}-\maxsat, except the first grows uses \emph{domain-spe-}}\\
 %			& \textit{\emph{cific} \emph{\maxsat} and consequent \grow calls use the \sat-based \grow.}  \\\hline 
 %			
-		\emph{Multi}-SubsetMax-\sat &	Repeatedly grow using the \emph{SubsetMax-\sat}.\\\hline 
+		\multirow{2}{*}{\emph{Multi}~\subsetmaxsat} &	\textit{Repeatedly grow with \textbf{\emph{\subsetmaxsat}}  and block the corresponding}\\ 
+		& \textit{correction subset until no more correction subsets can be extracted.}\\\hline
 %			&  \textit{\sat solver.}\\
 			%			OUS Iter. &                  3.22 &               4.56 &      1.62 &      3.09 &       5.03 &    12.75 &     18.93 &    388.95 \\
 			%			OCUS &                  6.87 &               4.04 &      0.93 &      1.56 &       3.34 &    14.06 &     20.78 &    400.73 \\
@@ -1827,9 +1834,9 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 %\end{itemize}
 %. Therefore, we adapt \cref{alg:corr-subsets-grow-with-sat:mapping} of \cref{alg:corr-subsets-grow-with-sat} to take into account the incremental variant. Namely, we project the computed correction subset (\cref{alg:corr-subsets-grow-with-sat:corr-subset}) on the subset of clauses that can be selected by hitting set solver.
 
-%\paragraph{Disjoint \maxsat Correction Subsets} of \cref{alg:disjoint_correction_subsets} repeatedly grows a given subset $\m{S}$ using the \emph{Dom.-spec. \maxsat}, then computes the consequent correction subset $\m{S'}$ and adds it to a collection of correction subsets $\m{K}$ until $\m{S}$ is no more satisfiable. We make these correction susbets \emph{disjoint}, by adding them to $\m{S} = \m{S} \cup \m{S}'$ to ensure that they have to be present in the satisfiable subset and therefore cannot be present in the corresponding corrections subset. However, we go one step further and take advantage of the explanation \emph{sequence} generation context. Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints and the current interpretation, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I)$. This allows for extra correction subsets that are disjoint in the eye of the hitting set solver.
+%\paragraph{Disjoint \maxsat~Correction Subsets} of \cref{alg:disjoint_correction_subsets} repeatedly grows a given subset $\m{S}$ using the \emph{Dom.-spec. \maxsat}, then computes the consequent correction subset $\m{S'}$ and adds it to a collection of correction subsets $\m{K}$ until $\m{S}$ is no more satisfiable. We make these correction susbets \emph{disjoint}, by adding them to $\m{S} = \m{S} \cup \m{S}'$ to ensure that they have to be present in the satisfiable subset and therefore cannot be present in the corresponding corrections subset. However, we go one step further and take advantage of the explanation \emph{sequence} generation context. Since only the base constraints $\formulac$ and the current interpretation $I$ can be hit by the hitting set solver, we project the correction subset $\m{S'}$ onto the base constraints and the current interpretation, before adding it to the subset to grow $\m{S} = \m{S}' \cap (\formulac\cup I)$. This allows for extra correction subsets that are disjoint in the eye of the hitting set solver.
 %
-%\paragraph{Alternative} of \cref{alg:greedy_correction_subsets} also works in the same way as \emph{Disj. \maxsat Corr.}, however only the first subset $\m{S}$ is grown using the \emph{Dom.-spec. \maxsat}. The subsequent grows are done using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. The procedure is repeated until $\m{S}$ is unsatisfiable or the grow model doesn't improve anymore. 
+%\paragraph{Alternative} of \cref{alg:greedy_correction_subsets} also works in the same way as \emph{Disj. \maxsat~Corr.}, however only the first subset $\m{S}$ is grown using the \emph{Dom.-spec. \maxsat}. The subsequent grows are done using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. The procedure is repeated until $\m{S}$ is unsatisfiable or the grow model doesn't improve anymore. 
 %
 
 %\paragraph{Incremental OCUS}\emilio{Write about disjoint correction subsets, how they are not directly mappable to OCUS incr, and what we did to improve that } \emilio{add advantage of projecting on  $\formulac \cup I$}
@@ -1872,7 +1879,7 @@ In this section, we validate the performance improvement of the different versio
 \subsection*{Experimental setup}
 
 Our experiments\footnote{The code for all experiments is made available at \texttt{https://github.com/ML-KULeuven/ocus-explain}.} were run on a compute cluster where each explanation sequence was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor, a time limit of 60 minutes and a memory-limit of 8GB. The core code is written on top of PySAT 0.1.7.dev1.
-For the MIP calls, we used Gurobi 9.1.2, for SAT calls MiniSat 2.2 and for MaxSAT calls RC2 as bundled with PySAT.
+For the MIP calls, we used Gurobi 9.1.2, for SAT calls MiniSat 2.2 and for \maxsat~calls RC2 as bundled with PySAT.
 In the MUS-based approach we used PySAT’s deletion-based MUS extractor MUSX~\cite{marques2010minimal}. 
 
 Regarding the benchmark dataset, we rely on a set of generated Sudoku puzzles of increasing difficulty (different amount of given numbers), the Logic Grid puzzles of \citet{bogaerts2021framework}, as well as the instances from \cite{schotten}.\footnote{We express our gratitude towards Matthew. J. McIlree and Christopher Jefferson at the University of St. Andrews for their help with the extraction of CNF instances from Essence problem specifications \cite{frisch2008essence} using Savile Row \cite{nightingale2017automatically}, as well as for supplying the problem instances themselves.}
@@ -1887,21 +1894,23 @@ Similar to \cite{ijcai2021}, for Logic Grid puzzles, we assign a cost of 60 for 
 For all other puzzles we assign a cost of 60 when using a constraint and a cost 1 for facts.
 In \cref{apx:puzzledata}, \cref{tab:puzzle-composition-family}, we summarize the average number of clauses (avg. $\#$ {clauses}), the average number of literals to explain (avg. $\#$ lits-to-explain) as well as the number puzzles (n) in the benchmark data set for each puzzle family. 
 %\tias{Refer to your table in the appendix here somewhere}
-
-Our experiments are designed to answer the following research questions:  
+\paragraph{Research Questions} Our experiments are designed to answer the following research questions:  
 
 \begin{enumerate}[label={Q\arabic*}, ref={Q\arabic*}]
 \item  What is the effect of requiring optimality of MUSs on the \textbf{quality} of the generated explanations ? \label{rq:q1}
 
-\item   Does \textbf{re-use} of information across the different iterations improve efficiency? \label{rq:q2} \emilio{Give name to incrementality with MIP-Solver and adapt rq for that.}
-
-\item \emilio{Generating some ideas for reformulation:
-	\begin{itemize}
-		\item What is the impact of introducing incrementality in MIP solving on the efficiency of \comus ?
-		\item Does instantiating the MIP solver once on the full unsatisfiable formula and keeping track of the correction subsets across the different iterations improve runtime?
-		\item ...
-	\end{itemize}}
 \item What are the time-critical components of \comus~?\label{rq:time-critical}
+
+\item What is the impact of information \textbf{re-use} on the efficiency of OCUS ? \label{rq:information-reuse}
+%\item   Does \textbf{re-use} of information across the different iterations improve efficiency? \label{rq:q2} \emilio{Give name to incrementality with MIP-Solver and adapt rq for that.}
+
+%\item \emilio{Generating some ideas for reformulation:
+%	\begin{itemize}
+%		\item What is the impact of introducing incrementality in MIP solving on the efficiency of \comus ?
+%		\item Does instantiating the MIP solver once on the full unsatisfiable formula and keeping track of the correction subsets across the different iterations improve runtime?
+%		\item ...
+%	\end{itemize}}
+
 \item  How does extraction of \emph{multiple} correction subsets affect performance ?\label{rq:q3}
 %\begin{enumerate}
 %	\item How does extraction of multiple correction subsets affect runtime ?  \label{rq:q3}
@@ -1930,25 +1939,106 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
 %	\caption{Q1 - Explanation quality comparison of optimal versus subset-minimal explanations in the generated puzzle explanation sequences.}
 %	\label{fig:rq1_heatmap}
 %\end{figure}
-
 \begin{figure}[!h]
 	\begin{subfigure}{0.48\textwidth}
-	\centering
-	\includegraphics[width=\textwidth]{figures/heatmapcosts_ocus_mus_2022040412.pdf}
-	\caption{Q1 - Explanation quality comparison of optimal versus subset-minimal explanations in the generated puzzle explanation sequences.}
-	\label{fig:rq1_heatmap}
-\end{subfigure}\hfill
-\begin{subfigure}{0.47\textwidth}
-	\centering
-	\includegraphics[width=\textwidth]{figures/incremental/incremental_vs_non_SAT_2022_06_22.pdf}
-	\caption{Q2 - Runtime comparison of introducing incrementality on the time to generate a whole explanation sequence with \sat-based \grow.}
-	\label{fig:rq2_runtime_incr_non_incr}
-\end{subfigure}
+		\centering
+		\includegraphics[width=0.9\textwidth]{figures/heatmapcosts_ocus_mus_2022040412.pdf}
+		\caption{Q1 - Explanation quality comparison of optimal versus subset-minimal explanations in the generated puzzle explanation sequences.}
+		\label{fig:rq1_heatmap}
+	\end{subfigure}\hfill
+	\begin{subfigure}{0.47\textwidth}
+		\centering
+		\includegraphics[width=0.9\textwidth]{figures/incremental/incremental_vs_non_SAT_2022_06_22.pdf}
+		\caption{Q2 - Runtime comparison of introducing incrementality on the time to generate a whole explanation sequence with \sat-based \grow.}
+		\label{fig:rq2_runtime_incr_non_incr}
+	\end{subfigure}
 \end{figure}
+
+
+\subsection{Runtime decomposition} To evaluate the time critical components of \comus, we decompose the time spent in each core parts of the \call{O(C)US} algorithms in \cref{tab:runtime-decomposition}. We only included the runtimes of the instances that do not timeout, to allow a fair comparison. %If we did, the average \% of time would not be representative as it would be biased by for instance the expensive \grow or \textsc{OPT} call. 
+The table depicts for each configuration 
+\begin{inparaenum}[(1)]
+	\item the number of instances \emph{explained};
+	\item \%\texttt{OPT} the percentage of time spent in the hitting set solver;
+	\item \%\sat the percentage of time spent in the sat solver:
+	\item \%\texttt{CorrSS} the percentage of time spent in the grow procedure; and
+	\item $N_{sth}$ the average total number of sets-to-hit computed.
+\end{inparaenum}
+
+%\begin{table}[!h]
+%	\centering
+%	\begin{adjustbox}{max width=\textwidth}
+	%\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
+	%	& \multicolumn{5}{c|}{\textbf{\sat}} & \multicolumn{5}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
+	%	%	\cline{2-9}
+	%	\textbf{config}         &  explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$ & explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$  \\ \midrule
+	%	\comus                    & [233 / 403] &          96.65\% &  3.01\% & 0.35\% &      6245 & [237 / 403] &         91.44\% & 4.07\% &  4.49\% &      5223 \\
+	%	\comusincr          & [242 / 403] &          99.16\% &  0.78\% & 0.06\% &       405 & [245 / 403] &         97.96\% & 1.15\% &  0.89\% &       406 \\
+	%	\comusbound                    & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310 & [309 / 403] &           58.62\% & 9.93\% &   31.46\% &     26902 \\
+	%	\ousbincr  			  & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &      1538 & [309 / 403] &        91.06\% & 5.85\% &       3.09\% &      1432 \\
+	%	\ousbiter               & [273 / 403] &          88.58\% & 10.41\% & 1.01\% &      7480 & [311 / 403] &          64.26\% & 5.72\% &      30.02\% &     25334 \\
+	%	\ousbiterincr & [272 / 403] &          96.28\% &  3.42\% &  0.3\% &      1713 & [311 / 403] &          91.99\% & 2.22\% &  0.0\% &         1418 \\
+	%	MUS                     & [311 / 403] &              --- &     --- &    --- &       --- & [311 / 403] &             --- &       ---&          ---&        --- \\
+	%	%	\bottomrule
+	%\end{tabular}
+	%	\end{adjustbox}
+%	\caption{Runtime decomposition of core parts of \call{O(C)US}. On the left, most of the computation time is spent in computing more optimal (constrained) hitting sets, while on the right, the runtime is shifted towards higher quality correction subsets.}
+%	\label{tab:runtime-decomposition}
+%\end{table}
+
+
+%
+%\begin{table}[!h]
+%	\centering
+%	\begin{adjustbox}{max width=\textwidth}
+	%		\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
+		%			& \multicolumn{5}{c|}{\textbf{\sat}} & \multicolumn{5}{c}{\textbf{\maxsat+\sat Corr.}}\\[1ex]
+		%			%	\cline{2-9}
+		%			\textbf{config}         &  explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$ & explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$  \\ \midrule
+		%			OCUS                    & [233 / 403] &          96.65\% &  3.01\% & 0.35\% &      6245 & [310 / 403] &         19.83\% &   0.82\% &    79.34\% &      3029  \\
+		%			OCUS+Incr. HS           & [242 / 403] &          99.16\% &  0.78\% & 0.06\% &       405 & [311 / 403] &         50.76\% &   0.67\% &    48.57\% &       318 \\
+		%			OUSb                    & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310 & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149 \\
+		%			OUSb+Lit. Incr. HS      & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &      1538 & [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220  \\
+		%			OUS Iter.               & [273 / 403] &          88.58\% & 10.41\% & 1.01\% &      7480 & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878  \\
+		%			OUS Iter.+Lit. Incr. HS & [272 / 403] &          96.28\% &  3.42\% &  0.3\% &      1713 & [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249  \\
+		%			MUS                     & [311 / 403] &              --- &     --- &    --- &       --- & [311 / 403] &             --- &       ---&          ---&        --- \\
+		%			%	\bottomrule
+		%		\end{tabular}
+	%	\end{adjustbox}
+%	\caption{Runtime decomposition of core parts of \call{O(C)US}. On the left, most of the computation time is spent in computing more optimal (constrained) hitting sets, while on the right, the runtime is shifted towards higher quality correction subsets.}
+%	\label{tab:runtime-decomposition}
+%\end{table}
+
+Looking closer at the runtime decomposition, we observe that most of the time in all the \comus algorithms is spent in computing optimal hitting sets, even more so for the incremental variants.
+The results in the $N_{sth}$ column, highlight the decrease in the amount of sets-to-hit that need to be computed when adding incrementality, in our case, re-using the MIP solver between explanation steps. 
+Indeed, similar to the results of \cref{ex:ocus-incr:expl-seq}, the \comus algorithms do not need to recompute the previously derived sets-to-hit, and will therefore start with a good candidate hitting set at the beginning of an explanation step.
+%The same trend is observed when adding incrementality in \cref{tab:runtime-decomposition},   is translated in the number of instances on one side, as well as the average number of computed hitting sets on the other side. 
+
+\begin{table}[!h]
+	\centering
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{r|c|c|c|c|c}
+			%			& \multicolumn{5}{c}{\textbf{\sat}} \\[1ex]
+			%	\cline{2-9}
+			\textbf{config}             &  explained  &  \%\texttt{OPT} &   \%\sat & \%\corrss &  $N_{sth}$ \\ \midrule
+			\comus                      & [233 / 403] &          96.65\% &  3.01\% & 0.35\% &      6245     \\
+			\comusbound                 & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310     \\
+			\ousbiter                       & [273 / 403] &          88.58\% & 10.41\% & 1.01\% &      7480     \\\midrule
+			\comusincr                  & [242 / 403] &          99.16\% &  0.78\% & 0.06\% &       405     \\
+			\ousbincr  			        & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &      1538     \\
+			\ousbiterincr               & [272 / 403] &          96.28\% &  3.42\% &  0.3\% &      1713     \\\midrule
+			MUS                          & [311 / 403] &              --- &     --- &    --- &       ---    \\
+			%	\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+	\caption{Runtime decomposition of core parts of \call{O(C)US}. On the left, most of the computation time is spent in computing more optimal (constrained) hitting sets, while on the right, the runtime is shifted towards higher quality correction subsets.}
+	\label{tab:runtime-decomposition}
+\end{table}
+
 
 \subsection{Information re-use}\label{sec:experiments:incrementality}
 
-To answer \textbf{Q2}, we compare the effect of incrementality in the search for explanations. 
+To answer \textbf{\ref{rq:information-reuse}}, we compare the effect of incrementality in the search for explanations. 
 Next to \begin{inparaenum}[(1)]
 	\item \textbf{\comus}, we also include
 	\item the \emph{bounded} \comus (\ousb) algorithm, where we call the \comus algorithm for every literal in every step, but we reuse information by giving it the current best bound $f(S_{best})$ and iterating over the literals that performed best in the previous call first;
@@ -1957,7 +2047,7 @@ Next to \begin{inparaenum}[(1)]
 
 %\emilio{Not sure what the best way is to refer to these 3 approaches, do send some suggestions. I will adapt the graph as soon as I have the final legends.}\tias{Done, following the algo names}
 
-For \comus, incrementality (\emph{+Incr}) is achieved by reusing the same incremental MIP hitting set solver throughout the explanation calls, as explained in \cref{sec:ocusEx}. 
+For \comus, incrementality (\emph{+Incr}) is achieved by reusing the same MIP hitting set solver throughout the explanation calls, as explained in \cref{sec:ocusEx}. 
 Methods \ousb and \ousbiter use a separate hitting set solver for every literal to explain. Each hitting set solver can similarly be made incremental (with respect to its own literal) across the explanation calls (\emph{+Incr.}), or not.% Once the literal is explained, the hitting set solver is discarded.
 %\tias{Both can just be referred to as 'Incr' I think... Otherwise Incr and Incr-lit} \bart{I would just say incr. You make the algorithms Incremental. End of story. The ``lit'' already follows from the ``bould/split'' setup}
 %\bart{formatting: avoid things like \comusincr\emph{+Incr} (format consistently)}
@@ -1974,8 +2064,8 @@ Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances f
 \begin{figure}[!h]
 %\begin{subfigure}{0.49\textwidth}
 	\centering
-	\includegraphics[width=\textwidth]{figures/grow/rq3_cactus_r_2022_06_22_Greedy-Sat__Actual__Unif.pdf}
-	\caption{Time to generate a full explanation sequence with a naive \corrsubsets procedure for incremental and non-incremental \comus algorithms. Incrementality improves the number of instances solved and the time required to solve them for all O(C)US algorithms.
+	\includegraphics[width=0.8\textwidth]{figures/grow/rq3_cactus_r_2022_06_22_SAT.pdf}
+	\caption{Time to generate a full explanation sequence with a single \sat grow call in the \corrsubsets procedure for incremental and non-incremental \comus algorithms. Incrementality improves the number of instances solved and the time required to solve them for all O(C)US algorithms.
 %	\bart{I would not call this ``clearly''. There seems to be a MARGINAL improvement due to incrementality in ONE of the configurations. Does this text come from an old graph (I remember seing several pictures where the improvement was indeed better...) }  
 }
 	\label{fig:rq2_cactus_incrementality_log}
@@ -1995,17 +2085,17 @@ Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances f
 %\tias{Should we go for cactusplots instead? nr of puzzles explained per time (full explanation, not cut up into steps)}
 %\emilio{is the time to explain linked to the "difficulty" of the instance, i.e. sum of the explanation costs/ $\#$ of explanations ?}
 
-\paragraph{General speed-up incrementality} If we compare all configurations, we see that \mus is faster than the plain \mus-based implementation for simpler instances. \mus is able to explain more instances than all \emph{OCUS} versions, as it solves a simpler problem (with worse quality results as shown in \textbf{Q1}).
+\paragraph{General speed-up incrementality} If we compare all configurations, we see that \comus is faster than the plain \mus-based implementation for simpler instances. \mus is able to explain more instances than all \emph{OCUS} versions, as it solves a simpler problem (with worse quality results as shown in \textbf{Q1}).
 \comusbound is faster than \comus for easier instances but explains about same number of instances, and \comussplit is considerably faster and solves the most instances out of all \comus algorithms.
  %, especially since the \emph{MUS}-based implementation does not take weights into consideration, .% \emilio{Hypothesis: Most of the puzzles (instances 250+) are harder to explain, 
 %\tias{First explain OCUS versus OUS-Bound/OUS-split (dashed lines, can have exactly the same color as the incr ones actually): OCUS a bit faster than MUS but only in for simple instances, OCUS-Bound faster than OCUS for easier instances but solves about same number of instances, OCUS-Split considerably faster and more instances than the other}
 %\paragraph{incrementality}
 
-The effect of introducing incrementality produces a general speed-up in \comus, for \comusbound it is negligible and for \comussplit there is a speed-up in all but its most difficult instances.
-In general, we see that the curves of the incremental variants are generally located somewhat lower.
+The effect of introducing incrementality produces a general speed-up in \comus. For \comusbound it is negligible and for \comussplit there is a speed-up in all but its most difficult instances.
+In general, we see that the curves of the incremental variants are located somewhat lower.
 The best runtimes are obtained with \ousbiterincr, that is, using an incremental hitting set solver \emph{for every individual literal-to-explain} and only expanding the literal that is most likely to provide a cost-minimal \comus.
 
-\paragraph{Instance-level speed-up with incrementality} Next, we analyze the speed-up of introducing incrementality at the instance level. \cref{fig:rq2_runtime_incr_non_incr} compares the time to generate a full sequence for the incremental variant with the non-incremental version for each puzzle of every \comus configuration. A result in the the upper triangle signifies an improvement using incrementality, the black line represents no-improvement, and the lower triangle indicates worse performance with incrementality.
+\paragraph{Instance-level speed-up with incrementality} Next, we analyze the speed-up of introducing incrementality at the instance level. \cref{fig:rq2_runtime_incr_non_incr} compares the time to generate a full sequence for the incremental variant with the non-incremental version for each puzzle of every \comus configuration. Results in the upper triangle signify an improvement using incrementality, the black line represents no-improvement, and the lower triangle indicates worse performance with incrementality.
 
 Taking a closer look at the results for \comus, the story is similar to the results of \cref{fig:rq2_cactus_incrementality_log}. Many of the instances that are explained quickly (around 10 to 20 seconds) by \comusincr, whereas non-incremental \comus takes much longer to explain some instances, even leading to a timeout.
 Incrementality with \comussplit and \comusbound produce only marginal improvements on the runtime. Most of the instances lie close to the black line.
@@ -2024,85 +2114,6 @@ Only a few instances for \comussplit are in the lower triangle in contrast with 
 %The long trailing end of each configuration is explained by the presence of the \emilio{add puzzle name here} puzzle, that has 375 literals to explain compared to the others which have 250 literals or less to explain.
 %\emilio{Ensure 2 graphs are at the same height! Somehow it matches with the caption under the figures}
 %\tias{Needs a paragraph title/experiment question, what are we deep-diving into? "Comparison of time spent in hitting set solver, sat solver and correction subset computation"?}
-\paragraph{Runtime decomposition} In \cref{tab:runtime-decomposition}, we decompose the time spent in each core parts of the \call{O(C)US} algorithms to answer \textbf{\ref{rq:time-critical}}. We only included the runtimes of the instances that do not timeout, to allow a fair comparison. %If we did, the average \% of time would not be representative as it would be biased by for instance the expensive \grow or \textsc{OPT} call. 
-The table depicts for each configuration 
-\begin{inparaenum}[(1)]
-	\item the number of instances \emph{explained};
-	\item \%\textsc{OPT} the percentage of time spent in the hitting set solver;
-	\item \%\sat the percentage of time spent in the sat solver:
-	\item \%\grow the percentage of time spent in the grow procedure; and
-	\item $N_{sth}$ the average total number of sets-to-hit computed.
-\end{inparaenum}
-
-\begin{table}[!h]
-	\centering
-	\begin{adjustbox}{max width=\textwidth}
-		\begin{tabular}{r|c|c|c|c|c}
-			%			& \multicolumn{5}{c}{\textbf{\sat}} \\[1ex]
-			%	\cline{2-9}
-			\textbf{config}             &  explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$ \\ \midrule
-			\comus                      & [233 / 403] &          96.65\% &  3.01\% & 0.35\% &      6245     \\
-			\comusincr                  & [242 / 403] &          99.16\% &  0.78\% & 0.06\% &       405     \\
-			\comusbound                 & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310     \\
-			\ousbincr  			        & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &      1538     \\
-			\ousbiter                       & [273 / 403] &          88.58\% & 10.41\% & 1.01\% &      7480     \\
-			\ousbiterincr               & [272 / 403] &          96.28\% &  3.42\% &  0.3\% &      1713     \\
-			MUS                          & [311 / 403] &              --- &     --- &    --- &       ---    \\
-			%	\bottomrule
-		\end{tabular}
-	\end{adjustbox}
-	\caption{Runtime decomposition of core parts of \call{O(C)US}. On the left, most of the computation time is spent in computing more optimal (constrained) hitting sets, while on the right, the runtime is shifted towards higher quality correction subsets.}
-	\label{tab:runtime-decomposition}
-\end{table}
-
-%\begin{table}[!h]
-%	\centering
-%	\begin{adjustbox}{max width=\textwidth}
-%\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
-%	& \multicolumn{5}{c|}{\textbf{\sat}} & \multicolumn{5}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
-%	%	\cline{2-9}
-%	\textbf{config}         &  explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$ & explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$  \\ \midrule
-%	\comus                    & [233 / 403] &          96.65\% &  3.01\% & 0.35\% &      6245 & [237 / 403] &         91.44\% & 4.07\% &  4.49\% &      5223 \\
-%	\comusincr          & [242 / 403] &          99.16\% &  0.78\% & 0.06\% &       405 & [245 / 403] &         97.96\% & 1.15\% &  0.89\% &       406 \\
-%	\comusbound                    & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310 & [309 / 403] &           58.62\% & 9.93\% &   31.46\% &     26902 \\
-%	\ousbincr  			  & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &      1538 & [309 / 403] &        91.06\% & 5.85\% &       3.09\% &      1432 \\
-%	\ousbiter               & [273 / 403] &          88.58\% & 10.41\% & 1.01\% &      7480 & [311 / 403] &          64.26\% & 5.72\% &      30.02\% &     25334 \\
-%	\ousbiterincr & [272 / 403] &          96.28\% &  3.42\% &  0.3\% &      1713 & [311 / 403] &          91.99\% & 2.22\% &  0.0\% &         1418 \\
-%	MUS                     & [311 / 403] &              --- &     --- &    --- &       --- & [311 / 403] &             --- &       ---&          ---&        --- \\
-%	%	\bottomrule
-%\end{tabular}
-%	\end{adjustbox}
-%	\caption{Runtime decomposition of core parts of \call{O(C)US}. On the left, most of the computation time is spent in computing more optimal (constrained) hitting sets, while on the right, the runtime is shifted towards higher quality correction subsets.}
-%	\label{tab:runtime-decomposition}
-%\end{table}
-
-
-%
-%\begin{table}[!h]
-%	\centering
-%	\begin{adjustbox}{max width=\textwidth}
-%		\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
-%			& \multicolumn{5}{c|}{\textbf{\sat}} & \multicolumn{5}{c}{\textbf{\maxsat+\sat Corr.}}\\[1ex]
-%			%	\cline{2-9}
-%			\textbf{config}         &  explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$ & explained  &  \%\textsc{OPT} &   \%\sat & \%\corrss &  $N_{sth}$  \\ \midrule
-%			OCUS                    & [233 / 403] &          96.65\% &  3.01\% & 0.35\% &      6245 & [310 / 403] &         19.83\% &   0.82\% &    79.34\% &      3029  \\
-%			OCUS+Incr. HS           & [242 / 403] &          99.16\% &  0.78\% & 0.06\% &       405 & [311 / 403] &         50.76\% &   0.67\% &    48.57\% &       318 \\
-%			OUSb                    & [229 / 403] &          86.86\% & 12.31\% & 0.83\% &      9310 & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149 \\
-%			OUSb+Lit. Incr. HS      & [233 / 403] &          95.95\% &  3.94\% &  0.1\% &      1538 & [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220  \\
-%			OUS Iter.               & [273 / 403] &          88.58\% & 10.41\% & 1.01\% &      7480 & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878  \\
-%			OUS Iter.+Lit. Incr. HS & [272 / 403] &          96.28\% &  3.42\% &  0.3\% &      1713 & [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249  \\
-%			MUS                     & [311 / 403] &              --- &     --- &    --- &       --- & [311 / 403] &             --- &       ---&          ---&        --- \\
-%			%	\bottomrule
-%		\end{tabular}
-%	\end{adjustbox}
-%	\caption{Runtime decomposition of core parts of \call{O(C)US}. On the left, most of the computation time is spent in computing more optimal (constrained) hitting sets, while on the right, the runtime is shifted towards higher quality correction subsets.}
-%	\label{tab:runtime-decomposition}
-%\end{table}
-
-Looking closer at the runtime decomposition, we observe that most of the time in all the OCUS algorithms is spent in computing optimal hitting sets, even more so for the incremental variants.
-The results in the $N_{sth}$ column, highlight the decrease in the amount of sets-to-hit that need to be computed when adding incrementality, in our case, by keeping track of the previously computed satisfiable subsets. 
-Indeed, similar to the results of \cref{ex:ocus-incr:expl-seq}, the \comus algorithms do not need to recompute the previously derived sets-to-hit, and will therefore start with a good candidate hitting set at the beginning of an explanation step.
-%The same trend is observed when adding incrementality in \cref{tab:runtime-decomposition},   is translated in the number of instances on one side, as well as the average number of computed hitting sets on the other side. 
 
 %
 %\begin{figure}[!h]
@@ -2187,7 +2198,7 @@ Indeed, similar to the results of \cref{ex:ocus-incr:expl-seq}, the \comus algor
 
 \subsection{Improving correction subset extraction}
 %\tias{Alt: 
-	As the above table shows, most time is spent in the hitting set computation, hence there is potential in reducing its effort by computing better or more correction subsets, thereby having better collections of sets-to-hit.
+	As \cref{tab:runtime-decomposition} table shows, most time is spent in the hitting set computation. Hence, there is potential in reducing its effort by computing better or more correction subsets, thereby having better collections of sets-to-hit.
 %}
 %In our O(C)US algorithm, we do not just aim to find any correction subsets, but we prefer small correction subsets: subsets that impose strong restrictions on the assignments the optimal hitting set solver can find. 
 This induces a trade-off between 
@@ -2202,34 +2213,34 @@ the \corrsubsets procedure.
 
 \subsubsection{Domain-specific correction subset enumeration}\label{sec:experiments:domain-specific-grow}
 
-In this section, we evaluate whether an efficient \maxsat-call is able to balance efficiency and quality of the produced satisfiable subset. Second, we analyze whether the enumeration of multiple correction subset evens the computation between the hitting set solver and the \corrsubsets procedure.
+In this section, we evaluate whether an efficient \grow-call (\domspecmaxsat, \subsetmaxsat, ...) is able to balance efficiency and quality of the produced satisfiable subset. Second, we analyze whether the enumeration of multiple correction subset evens the computation between the hitting set solver and the \corrsubsets procedure.
 
 %stronger constraints on the 
-%sets-to-hit using \maxsat grow, and correction subset enumeration strategies introduced in \cref{sec:correction_subset_enum}. 
+%sets-to-hit using \maxsat~grow, and correction subset enumeration strategies introduced in \cref{sec:correction_subset_enum}. 
 %\tias{This sentence rather complicated}
 Thus, to answer \textbf{\ref{rq:q3}}, we compare the incremental variants of \comus, \emph{bounded} \comus, \emph{split} \comus, and only change the \corrsubsets strategy they use.  
 In \cref{tab:correction-subset-proc-description}, we summarize the different \corrsubsets configurations compared.
 %\begin{itemize}%[(a)]
 %	\item \sat refers to using a model computed by \sat solver to grow the input satisfiable subset;
-%	\item Dom.-spec.~\maxsat refers to growing with a \maxsat solver using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). In this case, \maxsat-based \grow uses only the previously derived facts and the original constraints;
-%	\item MaxSAT Full refers to growing with a \maxsat solver using the full unsatisfiable formula $\mathcal{F}$;
-%	\item \maxsat Corr.~refers to repeatedly calling a \emph{Dom.-spec. \maxsat} and blocking the corresponding correction subset until no more correction subsets can be extracted;
-%	\item \maxsat Corr.+\sat~works similarly to \emph{\maxsat Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
+%	\item Dom.-spec.~\maxsat~refers to growing with a \maxsat~solver using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). In this case, \maxsat-based \grow uses only the previously derived facts and the original constraints;
+%	\item MaxSAT Full refers to growing with a \maxsat~solver using the full unsatisfiable formula $\mathcal{F}$;
+%	\item \maxsat~Corr.~refers to repeatedly calling a \emph{Dom.-spec. \maxsat} and blocking the corresponding correction subset until no more correction subsets can be extracted;
+%	\item \maxsat~Corr.+\sat~works similarly to \emph{\maxsat~Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
 %	\item .
 %\end{itemize}
-\paragraph{MaxSAT weighing scheme} The \maxsat solver (\emph{Max}) can combined with different weighing schemes: unweighted, cost-function weights (equal to the weights in $f$), or the inverse of these costs defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec.~\maxsat} and \emph{MaxSAT Full}, unweighted provided the best results (not shown), so we use unweighted \maxsat calls in all subsequent experiments.
+\paragraph{\maxsat~weighing scheme} The \maxsat~solver can combined with different weighing schemes: unweighted, cost-function weights (equal to the weights in $f$), or the inverse of these costs defined as $\max_j(w_j) + 1 - w_i$. For both \emph{\domspecmaxsat} and \emph{\maxsat~Full}, unweighted provided the best results (not shown), so we use unweighted \maxsat~calls in all subsequent experiments.
 
 %\begin{figure}[!h]
 %	\centering
 %	\includegraphics[width=\textwidth]{figures/rq3_cactus_r_2022_03_29_Greedy_MCSes__Actual__Unif..pdf}
-%	\caption{Time to generate a full explanation sequence with \maxsat Corr.+\sat for incremental and non-incremental O(C)US algorithms. Incrementality clearly shows improvement in the number of instances solved for all O(C)US algorithms.}
+%	\caption{Time to generate a full explanation sequence with \maxsat~Corr.+\sat for incremental and non-incremental O(C)US algorithms. Incrementality clearly shows improvement in the number of instances solved for all O(C)US algorithms.}
 %	\label{fig:rq2_cactus_incrementality_corr_subsets}
 %\end{figure}
 
 %\begin{figure}[!h]
 %	\centering
 %	\includegraphics[width=\textwidth]{figures/rq3_cactus_log_2022_03_29_Greedy_MCSes__Actual__Unif..pdf}
-%	\caption{Time to generate a full explanation sequence with \maxsat Corr.+\sat for incremental and non-incremental O(C)US algorithms. Incrementality clearly shows improvement in the number of instances solved for all O(C)US algorithms.}
+%	\caption{Time to generate a full explanation sequence with \maxsat~Corr.+\sat for incremental and non-incremental O(C)US algorithms. Incrementality clearly shows improvement in the number of instances solved for all O(C)US algorithms.}
 %	\label{fig:rq2_cactus_incrementality_corr_subsets_log}
 %\end{figure}
 
@@ -2276,15 +2287,19 @@ In \cref{tab:correction-subset-proc-description}, we summarize the different \co
 
 \emilio{The story for multi-\sat-correct \comus }
 
-\tias{All lines should be solid in a-c. What is going on with the 'd' figure here??}
+%\tias{All lines should be solid in a-c. What is going on with the 'd' figure here??}
 
-Figure \ref{fig:q3:grow_configurations} depicts for each incremental OCUS algorithm, the number of instances solved across time for varying correction subset approaches. For all algorithms, \emph{\maxsat Corr.+\sat} ranks first, substantially beating the \emph{\sat} approach. However, only \emph{\maxsat Corr.+\sat} is able to consistently beat the naive MUS-based explanations. 
-The bottom right graph of figure \ref{fig:q3:grow_configurations}, corresponds to the average cumulative explanation time for deriving the literals using the best configuration (\emph{\maxsat Corr.+\sat}).
+Figure \ref{fig:q3:grow_configurations} depicts for each incremental OCUS algorithm, the number of instances solved across time for varying correction subset approaches. 
+For all algorithms, \emph{\domspecmaxsat+Multi \sat} ranks first, substantially beating the \emph{\sat} approach. 
+However, only \emph{\domspecmaxsat+Multi \sat} is able to consistently beat the naive MUS-based explanations. 
+%The bottom right graph of figure \ref{fig:q3:grow_configurations}, corresponds to the average cumulative explanation time for deriving the literals using the best configuration (\emph{\maxsat~Corr.+\sat}).
+\emilio{In the graphs here, we don't see the impact of the ordering of the literals to explain:
 In the case of \ousbincr, the initial ordering of the literals to explain still impacts the explanation time immensely, even if the correction subset configuration compensates in the long run. 
-The iterated incremental approach of \ousbiterincr combined with \emph{\maxsat Corr.+\sat} is consistently the best explanation sequence configuration.
+}
+The iterated incremental approach of \ousbiterincr combined with \emph{\domspecmaxsat~+Multi-\sat} is consistently the best explanation sequence configuration.
 
 %\tias{Smoother: we now look back to Table 6, focussing on the right side. It shows the runtime decomposition for MS+corr..., also for the non-incremental OCUS variants. We can observe that...}
-\paragraph{Runtime decomposition} We now look at the runtime decomposition in \cref{tab:runtime-decomposition-corr-susbet-enum} for the 2 best performing \corrsubsets configuration, i.e.~MaxSAT+Multi-\sat and \emph{Multi}-\sat, also for the non-incremental OCUS variants. For \emph{MaxSAT+Multi-\sat}, we observe that the shift in computation from the hitting set solver to correction subset enumeration clearly shows its benefits.
+\paragraph{Runtime decomposition} We now look at the runtime decomposition in \cref{tab:runtime-decomposition-corr-susbet-enum} for the 2 best performing \corrsubsets configuration, i.e.~\domspecmaxsat+Multi-\sat and \emph{Multi}-\subsetmaxsat, also for the non-incremental OCUS variants. For \emph{\maxsat+Multi-\sat}, we observe that the shift in computation from the hitting set solver to correction subset enumeration clearly shows its benefits.
 More instances are explained, and for the incremental configuration, the computation is more balanced.  
 
 \begin{landscape}
@@ -2294,15 +2309,15 @@ More instances are explained, and for the incremental configuration, the computa
 	\centering
 %	\begin{adjustbox}{max width=\textheight}
 		\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
-			& \multicolumn{5}{c|}{\textbf{MaxSAT+Multi-\sat}} & \multicolumn{5}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
+			& \multicolumn{5}{c|}{\textbf{\maxsat+Multi-\sat}} & \multicolumn{5}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
 			%				\cline{2-9}
 			\textbf{config}          & \textbf{explained}  &  \textbf{\%\textsc{OPT}} &   \textbf{\%\sat} & \textbf{\%\corrss} &  $\mathbf{N_{sth}}$   & \textbf{explained}  &  \textbf{\%\textsc{OPT}} &   \textbf{\%\sat} & \textbf{\%\corrss} &  $\mathbf{N_{sth}}$  \\ \midrule 
 			\comus       & [310 / 403] &         19.83\% &   0.82\% &    79.34\% &      3029     & [237 / 403] &         91.44\% & 4.07\% &  4.49\% &      5223 \\ 
-			\comusincr   & [311 / 403] &         50.76\% &   0.67\% &    48.57\% &       318     & [245 / 403] &         97.96\% & 1.15\% &  0.89\% &       406 \\ 
 			\comusbound  & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149     & [309 / 403] &           58.62\% & 9.93\% &   31.46\% &     26902 \\ 
+			\ousbiter    & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878     & [311 / 403] &          64.26\% & 5.72\% &      30.02\% &     25334 \\ \hline
+			\comusincr   & [311 / 403] &         50.76\% &   0.67\% &    48.57\% &       318     & [245 / 403] &         97.96\% & 1.15\% &  0.89\% &       406 \\ 
 			\ousbincr  		& [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220     & [309 / 403] &        91.06\% & 5.85\% &       3.09\% &      1432 \\ 
-			\ousbiter    & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878     & [311 / 403] &          64.26\% & 5.72\% &      30.02\% &     25334 \\ 
-			\ousbiterincr& [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249     & [311 / 403] &          91.99\% & 2.22\% &  0.0\% &         1418 \\ 
+			\ousbiterincr& [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249     & [311 / 403] &          91.99\% & 2.22\% &  0.0\% &         1418 \\  \hline
 			MUS                     & [311 / 403] &             --- &       ---&          ---&        ---    &  &             --- &       ---&          ---&        --- \\ 
 			%	\bottomrule
 		\end{tabular}
@@ -2315,13 +2330,13 @@ More instances are explained, and for the incremental configuration, the computa
 	\centering
 	\begin{adjustbox}{max width=1.4\textwidth}
 		\begin{tabular}{r|c|c|cccccc|c|c|cccccc}
-						& \multicolumn{8}{c|}{\textbf{MaxSAT+Multi-\sat}} & \multicolumn{8}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
+						& \multicolumn{8}{c|}{\textbf{\maxsat+Multi-\sat}} & \multicolumn{8}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
 			\textbf{config}          & $\mathbf{\overline{t_{1}}}$ & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ &$\mathbf{\overline{t_{1}}}$  & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ \\ \midrule
 			\comus          &               4.04 &                  6.87 &      0.93 &      1.56 &       3.34 &    14.06 &     20.78 &    401 &               7.70 &        6.44 &  0.43 &  0.63 &  1.48 &  20.56 &  51.26 &  2522 \\
-			\comusincr      &               8.24 &                  1.87 &      0.34 &      0.46 &       0.76 &     5.26 &     16.84 &    342 &               8.19 &        3.59 &  0.28 &  0.42 &  0.71 &   9.68 &  26.49 &  2298 \\
 			\comusbound     &               5.46 &                 13.57 &      1.95 &      3.63 &       6.01 &    13.51 &     23.50 &    893 &               2.56 &        1.16 &  0.55 &  0.83 &  1.40 &   2.34 &   3.02 &   324 \\
-			\ousbincr       &              22.09 &                  1.35 &      0.45 &      0.62 &       0.85 &     2.40 &      7.53 &   2568 &               5.06 &        0.86 &  0.42 &  0.55 &  0.74 &   1.47 &   2.05 &  1629 \\
-			\ousbiter       &               4.56 &                  3.22 &      1.62 &      3.09 &       5.03 &    12.75 &     18.93 &    389 &               0.90 &        1.06 &  0.54 &  0.81 &  1.37 &   2.35 &   3.03 &   261 \\
+			\ousbiter       &               4.56 &                  3.22 &      1.62 &      3.09 &       5.03 &    12.75 &     18.93 &    389 &               0.90 &        1.06 &  0.54 &  0.81 &  1.37 &   2.35 &   3.03 &   261 \\ \hline
+			\comusincr      &               8.24 &                  1.87 &      0.34 &      0.46 &       0.76 &     5.26 &     16.84 &    342 &               8.19 &        3.59 &  0.28 &  0.42 &  0.71 &   9.68 &  26.49 &  2298 \\
+			\ousbincr       &              22.09 &                  1.35 &      0.45 &      0.62 &       0.85 &     2.40 &      7.53 &   2568 &               5.06 &        0.86 &  0.42 &  0.55 &  0.74 &   1.47 &   2.05 &  1629 \\ 
 			\ousbiterincr   &               7.90 &                  0.88 &      0.38 &      0.52 &       0.67 &     1.72 &      5.68 &    180 &               2.03 &        0.52 &  0.35 &  0.46 &  0.57 &   0.87 &   1.30 &   211 \\
 			
 			%	\bottomrule
@@ -2397,12 +2412,20 @@ In this section, we analyze whether the algorithms we developed are fit for an i
 %	\label{tab:indiv-explanations}
 %\end{table}
 
-We notice that on average, \emph{\ousbiterincr} takes the least time to produce the first explanation, and is on average significantly faster to generate an explanation, especially combined with Multi-\sat. This makes the iterated approach a viable candidate for explanation generating during interactive problem solving.
-\emilio{is this a viable candidate because it is faster than the others?	But is it fast enough? What is the max acceptable time?}
+
+We notice that on average, \emph{\ousbiterincr} takes the least time to produce the first explanation, and is on average significantly faster to generate an explanation, especially combined with Multi-\sat. 
+This makes the iterated approach a viable candidate for explanation generating during interactive problem solving.
+\emilio{Remark from Marjolein: is this a viable candidate because it is faster than the others?	But is it fast enough? What is the max acceptable time?}
+%Finally, 
+In the case of \emph{\ousbincr}, the time to the first explanation reflects how important the initial ordering of the literals to explain is for quickly finding a good bound on the cost of the next best explanation. In the long run, incrementality and the correction subset configuration compensates are able to compensate bringing the average time to explain much closer to \emph{\ousbiterincr}.
+
 
 \section{Conclusion and future work}
 
-In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function. For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \cite{bogaerts2021framework}, by optimal constrained unsatisfiable subsets (\comus). Our algorithm for computing \comus{}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. In this approach, the main bottleneck of this approach is having to repeatedly compute \emph{optimal} hitting sets followed by a cheap call to the \sat solver and computing a correction subset. 
+In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function. 
+For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \cite{bogaerts2021framework}, by optimal constrained unsatisfiable subsets (\comus).
+Our algorithm for computing \comus{}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. 
+In this approach, the main bottleneck of this approach is having to repeatedly compute \emph{optimal} hitting sets followed by a cheap call to the \sat solver and computing a correction subset. 
 To compensate, we developed methods for enumerating correction subset that balance the trade-off between efficiency and quality of generated subsets. 
 
 %%%%% From 
@@ -2414,16 +2437,12 @@ Satisfiable subsets remain valid from one explanation call to another.
 In the case of \comus for explanation-sequence generation, where the underlying hitting set solver is MIP-based, we instantiate the MIP-solver once for all explanation steps and keep track of computed sets-to-hit.
 By making use of a weighing strategy dependent on the explanation step, we guarantee that the MIP-solver selects only clauses in the sets-to-hit that are valid in the current explanation step.
 
-\emilio{We present a case of constrainedness in the \comus algorithm: such as the bounded-OCUS explanations}
-
-The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question.
-
 The concept of bounded (incremental) \comus is not limited to explanations of satisfaction problems and we are keen to explore other applications too.
 %A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
 One potential avenue for future work is how these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
+The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question.
 
 \acks{This research received partial funding from the Flemish Government (AI Research Program); the FWO Flanders project G070521N; and funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (Grant No. 101002802, CHAT-Opt).}
-
 
 \clearpage
 \appendix

@@ -2064,7 +2064,7 @@ Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances f
 \begin{figure}[!h]
 %\begin{subfigure}{0.49\textwidth}
 	\centering
-	\includegraphics[width=0.8\textwidth]{figures/grow/rq3_cactus_r_2022_06_22_SAT.pdf}
+	\includegraphics[width=0.8\textwidth]{figures/grow/rq3_cactus_r_2022_06_27_SAT.pdf}
 	\caption{Time to generate a full explanation sequence with a single \sat grow call in the \corrsubsets procedure for incremental and non-incremental \comus algorithms. Incrementality improves the number of instances solved and the time required to solve them for all O(C)US algorithms.
 %	\bart{I would not call this ``clearly''. There seems to be a MARGINAL improvement due to incrementality in ONE of the configurations. Does this text come from an old graph (I remember seing several pictures where the improvement was indeed better...) }  
 }
@@ -2247,20 +2247,20 @@ In \cref{tab:correction-subset-proc-description}, we summarize the different \co
 \begin{figure}[!ht]
 	\begin{subfigure}{0.5\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{figures/effect_grow_incremental/rq2_cactus_log_2022_06_22_OUSbLit_Incr_HS.pdf}
+		\includegraphics[width=\textwidth]{figures/effect_grow_incremental/rq2_cactus_log_2022_06_27_OUSbLit_Incr_HS.pdf}
 		\caption{\ousbincr}
 		\label{fig:rq3_grow:ocus}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{figures/effect_grow_incremental/rq2_cactus_log_2022_06_22_OUS_IterLit_Incr_HS.pdf}
+		\includegraphics[width=\textwidth]{figures/effect_grow_incremental/rq2_cactus_log_2022_06_27_OUS_IterLit_Incr_HS.pdf}
 		\caption{\ousbiterincr}
 		\label{fig:rq3_grow:ousb_incr}
 	\end{subfigure}
 	\\
 	\begin{subfigure}{\textwidth}
 		
-		\includegraphics[width=0.93\textwidth]{figures/effect_grow_incremental/rq2_cactus_log_2022_06_22_OCUSIncr_HS.pdf}
+		\includegraphics[width=0.93\textwidth]{figures/effect_grow_incremental/rq2_cactus_log_2022_06_27_OCUSIncr_HS.pdf}
 		\caption{\comusincr\hphantom{-----------------------------------------------------------}}
 		\label{fig:rq3_grow:ousb_incr}
 	\end{subfigure}
@@ -2285,18 +2285,19 @@ In \cref{tab:correction-subset-proc-description}, we summarize the different \co
 	\label{fig:q3:grow_configurations}
 \end{figure}
 
-\emilio{The story for multi-\sat-correct \comus }
+%\emilio{The story for multi-\sat-correct \comus }
 
 %\tias{All lines should be solid in a-c. What is going on with the 'd' figure here??}
 
 Figure \ref{fig:q3:grow_configurations} depicts for each incremental OCUS algorithm, the number of instances solved across time for varying correction subset approaches. 
 For all algorithms, \emph{\domspecmaxsat+Multi \sat} ranks first, substantially beating the \emph{\sat} approach. 
-However, only \emph{\domspecmaxsat+Multi \sat} is able to consistently beat the naive MUS-based explanations. 
+Only \emph{\domspecmaxsat+Multi \sat} is able to \emph{consistently} beat the naive MUS-based explanations. 
 %The bottom right graph of figure \ref{fig:q3:grow_configurations}, corresponds to the average cumulative explanation time for deriving the literals using the best configuration (\emph{\maxsat~Corr.+\sat}).
-\emilio{In the graphs here, we don't see the impact of the ordering of the literals to explain:
-In the case of \ousbincr, the initial ordering of the literals to explain still impacts the explanation time immensely, even if the correction subset configuration compensates in the long run. 
-}
-The iterated incremental approach of \ousbiterincr combined with \emph{\domspecmaxsat~+Multi-\sat} is consistently the best explanation sequence configuration.
+%\emilio{In the graphs here, we don't see the impact of the ordering of the literals to explain:
+%In the case of \ousbincr, the initial ordering of the literals to explain still impacts the explanation time immensely, even if the correction subset configuration compensates in the long run. 
+%}
+Note that, the best method for enumerating correction subsets with \ousbiterincr and \ousbincr is \emph{Multi \subsetmaxsat}. 
+To summarize, the best explanation sequence configuration corresponds to the iterated incremental approach of \ousbiterincr combined with \emph{Multi \subsetmaxsat} .
 
 %\tias{Smoother: we now look back to Table 6, focussing on the right side. It shows the runtime decomposition for MS+corr..., also for the non-incremental OCUS variants. We can observe that...}
 \paragraph{Runtime decomposition} We now look at the runtime decomposition in \cref{tab:runtime-decomposition-corr-susbet-enum} for the 2 best performing \corrsubsets configuration, i.e.~\domspecmaxsat+Multi-\sat and \emph{Multi}-\subsetmaxsat, also for the non-incremental OCUS variants. For \emph{\maxsat+Multi-\sat}, we observe that the shift in computation from the hitting set solver to correction subset enumeration clearly shows its benefits.

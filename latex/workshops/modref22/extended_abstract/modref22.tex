@@ -11,7 +11,7 @@
 %for enabling a two-column layout for the author/affilation part (only applicable for > 6 authors), use "authorcolumns"
 %for producing a PDF according the PDF/A standard, add "pdfa"
 
-\pdfoutput=1 %uncomment to ensure pdflatex processing (mandatatory e.g. to submit to arXiv)
+%\pdfoutput=1 %uncomment to ensure pdflatex processing (mandatatory e.g. to submit to arXiv)
 %\hideLIPIcs  %uncomment to remove references to LIPIcs series (logo, DOI, ...), e.g. when preparing a pre-final version to be uploaded to arXiv or another public repository
 
 %\graphicspath{{./graphics/}}%helpful if your graphic files are in another directory
@@ -36,21 +36,21 @@
 
 \ccsdesc[100]{\textcolor{red}{Replace ccsdesc macro with valid one}} %TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm 
 
-\keywords{Dummy keyword} %TODO mandatory; please add comma-separated list of keywords
+\keywords{Constraint Solving, Satisfaction, Exlainability, Unsatisfiable Subset Optimization} %TODO mandatory; please add comma-separated list of keywords
 
-\category{} %optional, e.g. invited paper
+%\category{} %optional, e.g. invited paper
 
-\relatedversion{} %optional, e.g. full version hosted on arXiv, HAL, or other respository/website
-%\relatedversiondetails[linktext={opt. text shown instead of the URL}, cite=DBLP:books/mk/GrayR93]{Classification (e.g. Full Version, Extended Version, Previous Version}{URL to related version} %linktext and cite are optional
+%\relatedversion{Full version}{} %optional, e.g. full version hosted on arXiv, HAL, or other respository/website
+\relatedversiondetails[linktext={Efficiently Explaining CSPs with Unsatisfiable Subset Optimization}, cite=ijcai2021]{Full version}{\url{https://doi.org/10.24963/ijcai.2021/191}} %linktext and cite are optional
 
-%\supplement{}%optional, e.g. related research data, source code, ... hosted on a repository like zenodo, figshare, GitHub, ...
+\supplement{https://github.com/ML-KULeuven/ocus-explain}%optional, e.g. related research data, source code, ... hosted on a repository like zenodo, figshare, GitHub, ...
 %\supplementdetails[linktext={opt. text shown instead of the URL}, cite=DBLP:books/mk/GrayR93, subcategory={Description, Subcategory}, swhid={Software Heritage Identifier}]{General Classification (e.g. Software, Dataset, Model, ...)}{URL to related version} %linktext, cite, and subcategory are optional
 
-%\funding{(Optional) general funding statement \dots}%optional, to capture a funding statement, which applies to all authors. Please enter author specific funding statements as fifth argument of the \author macro.
+%\funding{}%optional, to capture a funding statement, which applies to all authors. Please enter author specific funding statements as fifth argument of the \author macro.
 
 \acknowledgements{This research received partial funding from the Flemish Government (AI Research Program); the FWO Flanders project G070521N; and funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (Grant No. 101002802, CHAT-Opt).}%optional
 
-%\nolinenumbers %uncomment to disable line numbering
+\nolinenumbers %uncomment to disable line numbering
 
 
 
@@ -79,10 +79,14 @@
 \newcommand{\new}[1]{{\comment{{\color{blue} #1}}}}
 \newcommand{\removed}[1]{\sout{#1}}
 
+
+%\newcommand\citet[1]{\citeauthor{#1}~\citeyear{#1}}
 \usepackage[usenames,dvipsnames]{xcolor}
 \usepackage[ruled,linesnumbered]{algorithm2e}
+%\usepackage[inline]{enumitem}
 \usepackage{amssymb,amsthm}
-\usepackage{thmtools} 
+\usepackage{thmtools}
+\usepackage{float}
 \usepackage{cancel}
 \usepackage{adjustbox}
 \usepackage{booktabs} % To thicken table lines
@@ -120,7 +124,7 @@
 \newcommand\sat{\texttt{{SAT}}\xspace}
 \newcommand\grow{\mm{\call{Grow}}}
 \newcommand\omus{\mm{\call{OUS}}}
-\newcommand\comus{\textsc{OCUS}}
+\newcommand\comus{\texttt{OCUS}}
 \newcommand\comusincr{\mm{\call{OCUS+Incr.~HS}}}
 \newcommand\ousb{\mm{\call{OCUS\_Bounded}}}
 \newcommand\ousbiter{\mm{\call{OCUSIter}}}
@@ -215,6 +219,31 @@ For example, in the evaluation of explanations for logic grid puzzles, the given
 %%% {ISSUES when achieving our GOAL}
 In practice, the explanation-generation algorithms presented in our previous work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
 
+\begin{example} (Sudoku) A traditional Constraint Satisfaction Problem (CSP) can be represented as a triple $CSP = ({\cal V},{\cal D},{\cal C})$ with variables ${\cal V}$, domain ${\cal D}$ and constraint set ${\cal C}$. Let $V_{(r, c)}$, ${\cal D}(V_{(r,c)}) = \{1,...,9\}$ be the decision variables of the 9x9 Sudoku CSP. %. Let ${\cal C } $ be the alldiferent constraints such that: 
+	\begin{minipage}{0.53\textwidth}
+	 Let ${\cal C } $ be the alldiferent constraints such that: 
+			\begin{itemize}
+			\item all different digits on the same row $r$,  \\  $\forall r \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | c \in 1 .. 9 \} )$;
+			\item all different digits in the same column $c$  \\ $\forall c  \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | r \in {1 .. 9}\} )$ ;
+			\item all different digits in the same block   \\ $\forall b_r, b_c  \in 0 .. 2  : \mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | $ \\ $r_i  \in 3b_r+ 1$ $..$ $3b_r+3 ,  c_j \in 3b_c + 1$ $..$  $3b_c + 3 \} )$.
+		\end{itemize}
+	
+	Let $I$ contain the assigned variables at the current state of the grid (e.g. $I = \{V_{(3, 3)}  = 2, \dots \}$).
+		
+	\end{minipage}
+	\begin{minipage}{0.469\textwidth}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{sudoku4.png}
+	\caption{Example of a non-redundant explanation for $V_{(9, 2)}  = 2$}
+%	\caption{Non-redundant explanation for $V_{(9, 2)}  = 2$}
+	\label{fig:example-explanation}
+\end{figure}
+\end{minipage}
+Figure~\ref{fig:example-explanation} is an example of a non-redundant explanation that explains explaining how to derive  $V_{(9, 2)}  = 2$. The explanation is generated by computing a MUS of \{${\cal C} \cup I \cup V_{(9, 2)}  \neq 2$\}. The MUS of the explanation depicted in Figure~\ref{fig:example-explanation} corresponds to
+\[\{\mathtt{alldifferent}(\{V_{(r,1)} | r \in {1 .. 9}\}), \mathtt{alldifferent}(\{V_{(r,3)} | r \in {1 .. 9}\}), V_{(3, 3)}  = 2, V_{(4, 1)}  = 2\] 
+\[ \mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | r_i  \in 7..9 ,  c_j \in 1..3 \},  V_{(7, 2)}  = 2,V_{(8, 2)}  = 2, 	 V_{(9, 2)}  \neq 2\}\]
+\end{example}
 %\bart{What does this last part (after the comma) of the last sentence mean? 
 	%Explanations are optimized wrt 
 	%  1) a cost function (I know what this is!)
@@ -247,21 +276,21 @@ In this talk, we present the following contributions to tackle the limitations d
 %An example of the algorithmic challenges tackled in this talk is how to compute \comus{s}. 
 The algorithms we present rely on the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets.
 %The algorithm .
-However, the main bottleneck of this approach is having to repeatedly compute optimal hitting sets followed by a cheap call to the sat solver and computing a correction subset.
+However, the main bottleneck of this approach is having to repeatedly compute optimal hitting sets, checking its satisfiability by calling the \sat solver and computing a correction subset.
 
 %The challenge 
 Based on the runtime for explaining the puzzles in our benchmark data set we notice that most of the time is spent in computing hitting sets when calling the \comus~algorithm.
 % Using th
 %Using this naive approach, we see that most of the time is spent in computing hitting sets.
-Especially, since the hitting set solver needs to consider an increasingly large collection of sets-to-hit potentially combining an exponential number of literals and clauses.
+This is mainly because the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially combining an exponential number of literals and clauses.
 
 To compensate, we develop a correction subset enumeration method that balances the trade-off between efficiency and quality of generated subsets.
-Results show that, within a given timeout window, our correction subset enumeration method is able to explain more instances compared to a naive approach by shifting the computation away from the hitting set solver.
+Results show that, within a given timeout window, our correction subset enumeration method is able to explain more instances, compared to a naive approach, by shifting the computation away from the hitting set solver.
 %Furthermore, our explanation-specific implementation of $\comus$, \emph{expl.-spec.~OCUS}, 
 %% something about decomposing the explnaations for every fact to explain
 %% focusing/targeting the fact to explain that is most likely to lead to a good candidate expalnation. 
 
-For efficiently generating the whole \emph{explanation sequence}, we introduce incrementality which allows the re-use of computed information, more precisely satisfiable subsets that remain valid from one explanation call to another.
+For efficiently generating the whole \emph{explanation sequence}, we introduce incrementality, which allows the re-use of computed information, specifically satisfiable subsets that remain valid from one explanation call to another.
 Our results show that adding incrementality improves the speed of generating a full explanation sequence and require less sets-to-hit to be computed.
 
 %Lastly, when comparing the quality of generated explanation sequence with a standard MUS extraction technique to the optimal , we see that 
@@ -273,7 +302,7 @@ To conclude, with the observed impact of different methods for enumerating corre
 
 Finally, the concept of (incremental) \comus~is not limited to explanations of satisfaction problems and we are keen to explore other applications too.
 %A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
-One potential avenue for future work is how do these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
+One potential avenue for future work is to ask how these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
 %\newpage
 \bibliography{krrlib,ref}
 \end{document}

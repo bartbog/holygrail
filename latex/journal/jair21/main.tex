@@ -175,7 +175,7 @@
 	(2) a method for re-using relevant information over multiple algorithm calls;
 	(3) methods exploiting domain-specific information to speed up the explanation sequence generation.
 \end{inparaenum}
-	We experimentally validated our algorithms on a large number of CSP instances. We found that our algorithms outperform the MUS approach in terms of explanation quality and computational time.
+	We experimentally validated our algorithms on a large number of CSP instances. We found that our algorithms outperform the MUS approach in terms of explanation quality and computational time (on average up to 56 \% faster than the naïve MUS approach).
 	Our approach can be used to efficiently generate sequences of optimal explanation steps for a large set of constraint satisfaction problems, such as scheduling, configuration problems.
 	
 \end{abstract}
@@ -2231,7 +2231,7 @@ the \corrsubsets procedure.
 
 \subsubsection{Domain-specific correction subset enumeration}\label{sec:experiments:domain-specific-grow}
 
-In this section, we evaluate whether an efficient \grow-call (\domspecmaxsat, \subsetmaxsat, ...) is able to balance efficiency and quality of the produced satisfiable subset. Second, we analyze whether the enumeration of multiple correction subset evens the computation between the hitting set solver and the \corrsubsets procedure.
+In this section, we evaluate whether an efficient \grow-call is able to balance efficiency and quality of the produced satisfiable subset. Second, we analyze whether the enumeration of multiple correction subset evens the computation between the hitting set solver and the \corrsubsets procedure.
 
 %stronger constraints on the 
 %sets-to-hit using \maxsat~grow, and correction subset enumeration strategies introduced in \cref{sec:correction_subset_enum}. 
@@ -2327,19 +2327,33 @@ More instances are explained, and for the incremental configuration, the computa
 \begin{table}[!h]
 	\centering
 %	\begin{adjustbox}{max width=\textheight}
-		\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
-			& \multicolumn{5}{c|}{\textbf{\maxsat+Multi-\sat}} & \multicolumn{5}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
-			%				\cline{2-9}
-			\textbf{config}          & \textbf{explained}  &  \textbf{\%\textsc{OPT}} &   \textbf{\%\sat} & \textbf{\%\corrss} &  $\mathbf{N_{sth}}$   & \textbf{explained}  &  \textbf{\%\textsc{OPT}} &   \textbf{\%\sat} & \textbf{\%\corrss} &  $\mathbf{N_{sth}}$  \\ \midrule 
-			\comus       & [310 / 403] &         19.83\% &   0.82\% &    79.34\% &      3029     & [237 / 403] &         91.44\% & 4.07\% &  4.49\% &      5223 \\ 
-			\comusbound  & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149     & [309 / 403] &           58.62\% & 9.93\% &   31.46\% &     26902 \\ 
-			\ousbiter    & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878     & [311 / 403] &          64.26\% & 5.72\% &      30.02\% &     25334 \\ \hline
-			\comusincr   & [311 / 403] &         50.76\% &   0.67\% &    48.57\% &       318     & [245 / 403] &         97.96\% & 1.15\% &  0.89\% &       406 \\ 
-			\ousbincr  		& [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220     & [309 / 403] &        91.06\% & 5.85\% &       3.09\% &      1432 \\ 
-			\ousbiterincr& [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249     & [311 / 403] &          91.99\% & 2.22\% &  0.0\% &         1418 \\  \hline
-			MUS                     & [311 / 403] &             --- &       ---&          ---&        ---    &  &             --- &       ---&          ---&        --- \\ 
-			%	\bottomrule
-		\end{tabular}
+\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
+	& \multicolumn{5}{c|}{\textbf{\maxsat+Multi-\sat}} & \multicolumn{5}{c}{\textbf{\emph{Multi}-\subsetmaxsat}}\\[1ex]
+	%				\cline{2-9}
+	\textbf{config}          & \textbf{explained}  &  \textbf{\%\textsc{OPT}} &   \textbf{\%\sat} & \textbf{\%\corrss} &  $\mathbf{N_{sth}}$   & \textbf{explained}  &  \textbf{\%\textsc{OPT}} &   \textbf{\%\sat} & \textbf{\%\corrss} &  $\mathbf{N_{sth}}$  \\ \midrule 
+	\comus                  & [310 / 403] &         19.83\% &   0.82\% &    79.34\% &      3029     &  [291 / 291] &  69.5\% &   3.1\% &  27.4\% & 3753  \\ 
+	\comusbound             & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149     &  [310 / 310] &  59.4\% & 13.24\% & 27.35\% & 14023  \\ 
+	\ousbiter               & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878     &  [311 / 311] & 64.77\% &  10.5\% & 24.73\% & 10210  \\ \hline
+	\comusincr              & [311 / 403] &         50.76\% &   0.67\% &    48.57\% &       318     &  [248 / 248] &  89.1\% &  0.91\% &  9.99\% & 430  \\ 
+	\ousbincr  		        & [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220     &  [280 / 280] & 91.79\% &  3.92\% &  4.29\% & 2130  \\ 
+	\ousbiterincr           & [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249     &  [305 / 305] & 89.67\% &  3.13\% &   7.2\% & 2103  \\  \hline
+	MUS                     & [311 / 403] &             --- &       ---&          ---&        ---   &  &             --- &       ---&          ---&        --- \\ 
+	%	\bottomrule
+\end{tabular}
+			%%%%% OLD DATA WITH MULTI-SAT COrrection subset enumeration
+%		\begin{tabular}{r|c|c|c|c|c|c|c|c|c|c}
+%			& \multicolumn{5}{c|}{\textbf{\maxsat+Multi-\sat}} & \multicolumn{5}{c}{\textbf{\emph{Multi}-\subsetmaxsat}}\\[1ex]
+%			%				\cline{2-9}
+%			\textbf{config}          & \textbf{explained}  &  \textbf{\%\textsc{OPT}} &   \textbf{\%\sat} & \textbf{\%\corrss} &  $\mathbf{N_{sth}}$   & \textbf{explained}  &  \textbf{\%\textsc{OPT}} &   \textbf{\%\sat} & \textbf{\%\corrss} &  $\mathbf{N_{sth}}$  \\ \midrule 
+%			\comus       & [310 / 403] &         19.83\% &   0.82\% &    79.34\% &      3029     & [237 / 403] &         91.44\% & 4.07\% &  4.49\% &      5223 \\ 
+%			\comusbound  & [308 / 403] &          7.61\% &   1.34\% &    91.05\% &     25149     & [309 / 403] &           58.62\% & 9.93\% &   31.46\% &     26902 \\ 
+%			\ousbiter    & [309 / 403] &          9.96\% &   0.89\% &    89.15\% &     23878     & [311 / 403] &          64.26\% & 5.72\% &      30.02\% &     25334 \\ \hline
+%			\comusincr   & [311 / 403] &         50.76\% &   0.67\% &    48.57\% &       318     & [245 / 403] &         97.96\% & 1.15\% &  0.89\% &       406 \\ 
+%			\ousbincr  		& [310 / 403] &         41.33\% &   2.89\% &    55.78\% &      1220     & [309 / 403] &        91.06\% & 5.85\% &       3.09\% &      1432 \\ 
+%			\ousbiterincr& [311 / 403] &          36.9\% &   0.83\% &    62.27\% &      1249     & [311 / 403] &          91.99\% & 2.22\% &  0.0\% &         1418 \\  \hline
+%			MUS                     & [311 / 403] &             --- &       ---&          ---&        ---    &  &             --- &       ---&          ---&        --- \\ 
+%			%	\bottomrule
+%		\end{tabular}
 %	\end{adjustbox}
 	\caption{Runtime decomposition of core parts of \call{OCUS}. On the left, most of the computation time is spent in computing more optimal (constrained) hitting sets, while on the right, the runtime is shifted towards higher quality correction subsets.}
 	\label{tab:runtime-decomposition-corr-susbet-enum}
@@ -2347,20 +2361,35 @@ More instances are explained, and for the incremental configuration, the computa
 	 \vspace*{\fill}
 \begin{table}[!h]
 	\centering
-	\begin{adjustbox}{max width=1.4\textwidth}
-		\begin{tabular}{r|c|c|cccccc|c|c|cccccc}
-						& \multicolumn{8}{c|}{\textbf{\maxsat+Multi-\sat}} & \multicolumn{8}{c}{\textbf{\emph{Multi}-\sat}}\\[1ex]
-			\textbf{config}          & $\mathbf{\overline{t_{1}}}$ & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ &$\mathbf{\overline{t_{1}}}$  & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ \\ \midrule
-			\comus          &               4.04 &                  6.87 &      0.93 &      1.56 &       3.34 &    14.06 &     20.78 &    401 &               7.70 &        6.44 &  0.43 &  0.63 &  1.48 &  20.56 &  51.26 &  2522 \\
-			\comusbound     &               5.46 &                 13.57 &      1.95 &      3.63 &       6.01 &    13.51 &     23.50 &    893 &               2.56 &        1.16 &  0.55 &  0.83 &  1.40 &   2.34 &   3.02 &   324 \\
-			\ousbiter       &               4.56 &                  3.22 &      1.62 &      3.09 &       5.03 &    12.75 &     18.93 &    389 &               0.90 &        1.06 &  0.54 &  0.81 &  1.37 &   2.35 &   3.03 &   261 \\ \hline
-			\comusincr      &               8.24 &                  1.87 &      0.34 &      0.46 &       0.76 &     5.26 &     16.84 &    342 &               8.19 &        3.59 &  0.28 &  0.42 &  0.71 &   9.68 &  26.49 &  2298 \\
-			\ousbincr       &              22.09 &                  1.35 &      0.45 &      0.62 &       0.85 &     2.40 &      7.53 &   2568 &               5.06 &        0.86 &  0.42 &  0.55 &  0.74 &   1.47 &   2.05 &  1629 \\ 
-			\ousbiterincr   &               7.90 &                  0.88 &      0.38 &      0.52 &       0.67 &     1.72 &      5.68 &    180 &               2.03 &        0.52 &  0.35 &  0.46 &  0.57 &   0.87 &   1.30 &   211 \\
-			
-			%	\bottomrule
-		\end{tabular}
-	\end{adjustbox}
+\begin{adjustbox}{max width=1.4\textwidth}
+	\begin{tabular}{r|c|c|cccccc|c|c|cccccc}
+		& \multicolumn{8}{c|}{\textbf{\maxsat+Multi-\sat}} & \multicolumn{8}{c}{\textbf{\emph{Multi}-\subsetmaxsat}}\\[1ex]
+		\textbf{config}          & $\mathbf{\overline{t_{1}}}$ & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ &$\mathbf{\overline{t_{1}}}$  & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ \\ \midrule
+		\comus          &               4.04 &                  6.87 &      0.93 &      1.56 &       3.34 &    14.06 &     20.78 &    401 &  7.10 &        4.94 &  0.53 &  0.77 &  1.26 &  9.96 & 36.69 & 1594   \\
+		\comusbound     &           13.57 &           5.46           &      1.95 &      3.63 &       6.01 &    13.51 &     23.50 &    893 &  4.07 &        1.89 &  0.66 &  1.20 &  2.72 &  5.00 &  6.16 &  491   \\
+		\ousbiter       &               4.56 &                  3.22 &      1.62 &      3.09 &       5.03 &    12.75 &     18.93 &    389 &  1.15 &        1.80 &  0.62 &  1.17 &  2.61 &  4.86 &  5.94 &   25   \\ \hline
+		\comusincr      &               8.24 &                  1.87 &      0.34 &      0.46 &       0.76 &     5.26 &     16.84 &    342 &  4.30 &        3.86 &  0.28 &  0.43 &  0.75 &  9.41 & 23.64 & 3452   \\
+		\ousbincr       &              22.09 &                  1.35 &      0.45 &      0.62 &       0.85 &     2.40 &      7.53 &   2568 & 10.06 &        0.83 &  0.42 &  0.56 &  0.76 &  1.43 &  2.16 & 1730   \\ 
+		\ousbiterincr   &               7.90 &                  0.88 &      0.38 &      0.52 &       0.67 &     1.72 &      5.68 &    180 &  3.45 &        0.55 &  0.35 &  0.47 &  0.58 &  0.92 &  1.71 &  219   \\
+		
+		%	\bottomrule
+	\end{tabular}
+\end{adjustbox}
+		%%%%% OLD DATA WITH MULTI-SAT COrrection subset enumeration
+%	\begin{adjustbox}{max width=1.4\textwidth}
+%		\begin{tabular}{r|c|c|cccccc|c|c|cccccc}
+%						& \multicolumn{8}{c|}{\textbf{\maxsat+Multi-\sat}} & \multicolumn{8}{c}{\textbf{\emph{Multi}-\subsetmaxsat}}\\[1ex]
+%			\textbf{config}          & $\mathbf{\overline{t_{1}}}$ & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ &$\mathbf{\overline{t_{1}}}$  & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ \\ \midrule
+%			\comus          &               4.04 &                  6.87 &      0.93 &      1.56 &       3.34 &    14.06 &     20.78 &    401 &               7.70 &        6.44 &  0.43 &  0.63 &  1.48 &  20.56 &  51.26 &  2522 \\
+%			\comusbound     &           13.57 &           5.46           &      1.95 &      3.63 &       6.01 &    13.51 &     23.50 &    893 &               2.56 &        1.16 &  0.55 &  0.83 &  1.40 &   2.34 &   3.02 &   324 \\
+%			\ousbiter       &               4.56 &                  3.22 &      1.62 &      3.09 &       5.03 &    12.75 &     18.93 &    389 &               0.90 &        1.06 &  0.54 &  0.81 &  1.37 &   2.35 &   3.03 &   261 \\ \hline
+%			\comusincr      &               8.24 &                  1.87 &      0.34 &      0.46 &       0.76 &     5.26 &     16.84 &    342 &               8.19 &        3.59 &  0.28 &  0.42 &  0.71 &   9.68 &  26.49 &  2298 \\
+%			\ousbincr       &              22.09 &                  1.35 &      0.45 &      0.62 &       0.85 &     2.40 &      7.53 &   2568 &               5.06 &        0.86 &  0.42 &  0.55 &  0.74 &   1.47 &   2.05 &  1629 \\ 
+%			\ousbiterincr   &               7.90 &                  0.88 &      0.38 &      0.52 &       0.67 &     1.72 &      5.68 &    180 &               2.03 &        0.52 &  0.35 &  0.46 &  0.57 &   0.87 &   1.30 &   211 \\
+%			
+%			%	\bottomrule
+%		\end{tabular}
+%	\end{adjustbox}
 	\caption{\textbf{Non-timedout instances:} Decomposition of runtime for individual explanations into time to generate the first explanation ($t_1$), the average time to produce an additional explanation $\overline{t_{expl}}$ and the quantiles of the explanation times.}
 	\label{tab:indiv-explanations-all}
 \end{table}

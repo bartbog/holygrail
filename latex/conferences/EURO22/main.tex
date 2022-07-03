@@ -11,6 +11,7 @@
 \usepackage{xcolor}
 \usepackage{adjustbox}
 \usepackage{amsmath,amssymb}
+\usepackage{tikzsymbols}
 \usepackage{booktabs}
 \usepackage{calc}
 \usepackage{tikz}
@@ -176,10 +177,10 @@
 			\node (solve) [startstop, below of=model] {SOLVE};
 			\draw [arrow] (model) -- (solve); \pause
 			
-			\node  (modelerror) [startstop, below of=solve] {\color{red} No solution }; %todo: add smiley face sad
+			\node  (modelerror) [startstop, below of=solve, align=center] {\color{red} No solution\\ \Sadey}; %todo: add smiley face sad
 			\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {unsat?} (modelerror); 			
 			\pause
-			\node  (human) [startstop, below of=modelerror, xshift=-1.5cm, align=center] {\color{red} Human?}; %todo: doodle human
+			\node  (human) [startstop, below of=modelerror, xshift=-1.5cm, align=center] {\color{red} Human?\\\drWalley}; %todo: doodle human
 			\draw [dashed] (modelerror) --  (human); 
 			\pause
 			\node  (Infeasible) [startstop, below of=modelerror, xshift=1.5cm, align=center] {\color{red} Infeasible?}; 
@@ -209,9 +210,9 @@
 			\node (solve) [startstop, below of=model] {SOLVE};
 			\draw [arrow] (model) -- (solve); 
 
-			\node  (modelerror) [startstop, below of=solve] {\color{red} No solution }; %todo: add smiley face sad
+			\node  (modelerror) [startstop, below of=solve, align=center] {\color{red} No solution\\ \Sadey}; %todo: add smiley face sad
 			\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {\textbf{unsat?}} (modelerror); 			
-			\node  (human) [startstop, below of=modelerror, xshift=-1.25cm, align=center] {\color{red} Human?}; %todo: doodle human
+			\node  (human) [startstop, below of=modelerror, xshift=-1.25cm, align=center] {\color{red} Human?\\\drWalley}; %todo: doodle human
 			\draw [dashed] (modelerror) --  (human); 
 			\node  (Infeasible) [startstop, below of=modelerror, xshift=1.25cm, align=center] {\color{red} Infeasible?}; 
 			\draw [dashed] (modelerror) --  (Infeasible); 
@@ -250,7 +251,7 @@
 					
 					%					\node  (modelerror) [startstop, below of=solve] {\color{red} modeling error?};
 					%					\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {unsat?} (modelerror); 
-					\node  (solution) [startstop, below of=solve]  {\color{green} solution};
+					\node  (solution) [startstop, below of=solve,align=center]  {\color{green} solution\\ \Smiley};
 					%						\node  (solution) [startstop, below of=sat] {\color{green} solution};
 					%	
 					\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {\textbf{sat?}} (solution);
@@ -282,11 +283,38 @@
 	\begin{frame}{Stepwise explanations for CSPs}
 	\framesubtitle{EXPLANATION STEP}
 
-	\only<1>{figures/sudoku-step1}
-	\only<2>{figures/sudoku-step2}
-		\only<3>{figures/sudoku-step3}
-			\only<4>{figures/sudoku-step4}
+			\only<1>{
+				\begin{figure}[H]
+					\centering
+				\includegraphics[width=0.8\textwidth]{figures/sudoku-step1}
+				\end{figure}
+			}
+					\only<2>{
+				\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/sudoku-step2}
+\end{figure}
+		}
+				\only<3>{
+				\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/sudoku-step3}
+\end{figure}
+	}
+			\only<4>{
+				\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/sudoku-step4}
+\end{figure}
+}
+			\only<5>{
+				\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{figures/sudoku-step5}
+\end{figure}
+}
 	\end{frame}
+
 	\begin{frame}{Stepwise explanations for CSPs}
 		\framesubtitle{EXPLANATION STEP}
 %		In, we introduce \emph{explanation} steps \pause
@@ -317,7 +345,7 @@
 
 \pause 
 \begin{center}
-{\Large \textbf{How ?} \pause \large $\mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_E} $\&$ {\includegraphics[width=10pt]{figures/explanation_S}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $)$ \textbf{is a valid explanation step}}
+{\Large \textbf{How ?} \pause \large $\mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_E_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_S_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $)$ \textbf{is a valid explanation step}}
 \end{center}
 
 	\end{frame}
@@ -665,10 +693,10 @@
 \only<3>{\[ \emph{c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 }  {\color{blue}\qquad c_3 := \lnot x_2  \qquad  c_4 := x_1}\]}
 
 \only<4>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2  \qquad c_3 := \lnot x_2  \qquad  \emph{   c_4 := x_1} \]}
-		\only<3->{	\begin{theorem}
+		\only<3->{	\begin{definition}
 				A set $C \subseteq \formula $ is a \only<3>{\emph{correction subset}}\only<4->{correction subset} of $\formula$ if \only<3>{{\color{blue} $ \formula \setminus \subsetT$}}\only<4->{ $ \formula \setminus \subsetT$} is satisfiable, a.k.a. Satisfiable Subset. \\
 				\only<4->{A correction set $\subsetT$ is a \emph{minimum correction subset} if no strict subset $\subsetT' \subset \subsetT$ is also a correction set.}
-			\end{theorem} }
+			\end{definition} }
 		\end{frame}
 %
 		\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
@@ -737,7 +765,7 @@
 	{\color{blue}$\corrss(\subsetT,\formula)$} 
 	\begin{itemize}
 		\item $\{  \formula \setminus \subsetT\}$ \pause
-		\item   $\{  \formula \setminus \grow(\subsetT, \formula)\}$  \pause $\rightarrow$ {\color{blue} efficient vs qualitative grow ?} \pause
+		\item   $\{  \formula \setminus \grow(\subsetT, \formula)\}$  \pause $\rightarrow$ \textit{ {\color{blue} efficient vs qualitative grow ?}} \pause
 		\item Multiple correction subsets ? 
 	\end{itemize}
 				%\end{minipage}
@@ -781,18 +809,31 @@
 					\large
 					Can we \emph{improve} OCUS-calls in the \emph{context of explanation generation} ? 
 				\end{center} \pause
-			\begin{minipage}{0.49\textwidth}
-				\begin{center}
-					{\Large $\mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_S} $\&$ {\includegraphics[width=10pt]{figures/explanation_E}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $)$ }
-				\end{center}				
-			\end{minipage}
-			\begin{minipage}{0.5\textwidth}
+				\begin{minipage}{0.5\textwidth}
 				\begin{figure}[H]
 					\centering
 					\includegraphics[width=0.8\textwidth]{figures/sudoku3}
 				\end{figure}
-
-\end{minipage}
+			\end{minipage}
+			\begin{minipage}{0.49\textwidth}
+				\begin{center}
+					{\Large $\mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_S_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_E_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $)$ }
+				\end{center}				
+\begin{itemize}
+	\item[{\includegraphics[width=15pt]{figures/explanation_S_full}}] A minimal subset of model constraints \pause
+	\begin{itemize}
+		\item \emph{Does not change} from an explanation step to another \pause
+	\end{itemize}
+	\item[{\includegraphics[width=15pt]{figures/explanation_E_full}}] A subset of previously derived facts ${E}$  \pause
+	\begin{itemize}
+		\item \emph{Precision-increasing !}
+	\end{itemize}
+	
+\end{itemize}		
+	
+	\end{minipage}
+		
+		
 				
 			\end{frame}
 			
@@ -894,14 +935,16 @@
 				\begin{figure}
 					\centering
 					\includegraphics[width=0.2\textwidth]{figures/i_want_you_ocus.png}
-				\end{figure}
+				\end{figure}\pause
 				\begin{itemize}
-					\item cost-optimal Constrained Unsatisfiable Subsets
-					\item Stepwise explaining unsatisfiability
-					\item Explaining Optimality for Constraint Optimization Problems
+					\item Cost-optimal Constrained Unsatisfiable Subsets \pause
+					\item Stepwise explaining unsatisfiability \pause
+				\item Explaining scheduling, configuration problems .... and puzzles  \Cooley
+					\item Explaining Optimality for Constraint Optimization Problems 
 					\begin{itemize}
 						\item Why is the objective value not better ? 
 					\end{itemize}
+
 
 				\end{itemize}
 			\end{frame}
@@ -912,7 +955,7 @@
 				\item[$\triangleright$] Learning the optimization function (from humans)
 				\item[$\triangleright$] Explaining optimization (different types of ``why'' queries); close relation to Explainable AI Planning \cite{fox2017explainable}
 				\item[$\triangleright$] Scaling up (approximate algorithms; decomposition of explanation search)
-				\item[$\triangleright$] Incremental algorithms over different ``why'' queries
+%				\item[$\triangleright$] Incremental algorithms over different ``why'' queries
 				% \item 
 			\end{itemize}	
 			

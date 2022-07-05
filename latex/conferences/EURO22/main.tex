@@ -14,6 +14,8 @@
 \usepackage{tikzsymbols}
 \usepackage{booktabs}
 \usepackage{calc}
+\usepackage{subcaption}
+\usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{tikz-qtree}
 
@@ -53,7 +55,7 @@
 \newcommand\Iend{\m{I_{\mathit{end}}}}
 \newcommand\Ipartial{\m{I}}
 \newcommand\factexpl{fact\xspace}
-\newcommand\LitsToExplain{FactsToExplain}
+\newcommand\LitsToExplain{DigitToExplain}
 
 \newcommand\nat{\m{\mathbb{N}}}
 \newcommand\subsetT{\m{\mathcal{S}}}
@@ -74,7 +76,7 @@
 \newcommand\sat{\call{SAT}}
 \newcommand\corrss{\call{Correction-Subsets}}
 \newcommand\comus{\call{ocus}}
-\newcommand\cohs{\call{cost-optimal-hittingset}}
+\newcommand\cohs{\call{optimal-hittingset}}
 % \renewcommand{\labelitemi}{$\triangleright$}
 \renewcommand{\thealgocf}{}
 
@@ -143,14 +145,14 @@
 		\begin{minipage}[t]{0.45\textwidth}
 			\begin{figure}[h]
 				\includegraphics[width=\textwidth]{figures/logic_puzzle.png}
-				\vspace{-8mm}
+%				\vspace{-8mm}
 				\caption{\small Logic Grid Puzzle}
 			\end{figure}
 			\vspace{-6mm}\pause
 			\begin{figure}[h]
 				\centering
 				\includegraphics[width=.5\textwidth]{figures/sudoku.jpg}
-				\vspace{-3mm}
+%				\vspace{-3mm}
 				\caption{\small Sudoku}
 			\end{figure}
 		\end{minipage}\pause
@@ -161,10 +163,10 @@
 				\vspace{-9mm}
 				\caption{\small Scheduling Problem}
 			\end{figure}
-			\vspace{-6mm}\pause
+			\pause
 			\begin{figure}[h]
 				\includegraphics[width=\textwidth]{figures/omus-presentation-car.png}
-				\vspace{-9mm}
+%				\vspace{-9mm}
 				\caption{\small Configuration problems}
 			\end{figure}
 		\end{minipage}
@@ -179,7 +181,7 @@
 	\begin{center}
 		\begin{tikzpicture}[node distance=1.5cm]
 			\node (problem) [startstop] {Problem};
-			
+			\pause
 			\node (model) [startstop, below of=problem] {Model}; 
 			\draw [arrow] (problem) -- (model);			
 %			\node (Essence) [right of=model, xshift=1cm] {CPMpy \cite{CPMpy}}; 
@@ -236,7 +238,7 @@
 	\end{minipage}
 	\begin{minipage}{0.59\textwidth}
 	
-	\textbf{How do you explain UNSAT ? }	
+	\textbf{How do you explain UNSAT ? }	\pause
 	\begin{itemize}
 		\item Enumerate \emph{Unsatisfiable Cores} / \emph{Minimum Unsatisfiable Subsets} (MUS) \pause
 		\item Extract \emph{Minimum Correction Subsets} (MCS)
@@ -276,8 +278,8 @@
 			\end{center}
 		\end{minipage}
 		\begin{minipage}{0.59\textwidth}
-			
-			\textbf{How do I explain SAT ? }	
+			\pause
+			\textbf{How do I explain SAT ? }	\pause
 			\begin{itemize}
 				\item What is an \textbf{\emph{explanation}}? \pause
 				\item What is a \emph{\textbf{good}} explanation ? 
@@ -365,6 +367,11 @@
 	\end{frame}
 	
 	
+	
+	
+	
+	
+	
 	\begin{frame}
 		\frametitle{Stepwise explanations for CSPs}
 		\framesubtitle{The best/easiest explanation step...}
@@ -381,9 +388,9 @@
 						\begin{algorithm}[H]
 
 							$X_{best} \gets \mathit{nil}$\;
-							\For{ n  $\in$ \texttt{propagate($S$)}}{
+							\For{\color{black} {\includegraphics[width=10pt]{figures/explanation_N}} $\in$ \texttt{propagate({\includegraphics[width=10pt]{figures/explanation_S_full}})}}{
 										
-										$X \gets \call{MUS}{(S \land E \land \neg n)}$\;
+										$X \gets \mathtt{{MUS}}($ \includegraphics[width=10pt]{figures/explanation_E_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_S_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $)$\;
 										\uIf{$f(X)<f(X_{best})$}{
 												$X_{best} \gets X$\;
 											}
@@ -412,7 +419,7 @@
 %\end{description}
 \emph{\textbf{Optimality}} w.r.t $\mathbf{f}$
 	\begin{itemize}
-		\item[$\triangleright$] MUS guarantees non-redundancy but ... not optimality.
+		\item[$\triangleright$] {\color{blue}MUS} guarantees non-redundancy but ... not optimality.
 		%				\item MUS-based heuristic
 		\item[$\triangleright$] Alternative: SMUS $\#$-minimal (\cite{ignatiev2015smallest})
 	\end{itemize} 
@@ -438,7 +445,7 @@
 				{\small $X_{best} \gets \mathit{nil}$\;
 				\For{\color{black}  n  $\in$ \texttt{propagate($S$)}}{
 					
-					$X \gets \call{MUS}{(S \land E \land \neg n)}$\;
+					$X \gets {\color{blue}\call{MUS}{(S \land E \land \neg n)}}$\;
 					\uIf{$f(X)<f(X_{best})$}{
 						\emph{$X_{best} \gets X$}\;
 					}
@@ -472,11 +479,11 @@
 		%	
 		%	\item[Efficiency] Explanation generation takes a lot of time: \pause
 			\begin{itemize}
-					\item[Q2] Can we \emph{avoid looping over the literals} when searching for the next best explanation ?\pause
+					\only<1->{\item[Q2] Can we \emph{avoid looping over the literals} when searching for the next best explanation ?}
 			%		%					\begin{itemize}
 				%			%						\item[$\triangleright$] \emph{Constrainedness}
 				%			%					\end{itemize}
-					\item[Q3] Can we \emph{reuse information} from an explanation call to another?
+					\only<2->{\item[Q3] Can we \emph{reuse information} from an explanation call to another?}
 			%		%				\begin{itemize}
 				%			%					\item[$\triangleright$] \emph{Incrementality}
 				%			%				\end{itemize}
@@ -489,14 +496,15 @@
 			\begin{algorithm}[H]
 				
 				{\small $X_{best} \gets \mathit{nil}$\;
-					\For{n  $\in$ \texttt{propagate($S$)}}{
+					\For{\only<2->{\color{black}} n  $\in$ \texttt{propagate($S$)}}{
 						
 						$X \gets \call{MUS}{(S \land E \land \neg n)}$\;
-						\uIf{\color{black} $f(X)<f(X_{best})$}{
+						\uIf{\only<2->{\color{black}} $f(X)<f(X_{best})$}{
 							$X_{best} \gets X$\;
 						}
 					}
-					\Return{$X_{best}$} }
+					\Return{\only<2->{\color{black}} $X_{best}$} }
+%				\caption{Explain 1 step}
 			\end{algorithm}
 		
 	\end{minipage}
@@ -522,8 +530,7 @@
 					\end{itemize}
 				\end{definition}
 				$^*$ = Optimal \emph{Constrained} Unsatisfiable Subset
-			\end{frame}
-			
+			\end{frame}		
 			
 			
 			\newcommand\onestepo{\ensuremath{\call{explain-One-Step-ocus}}\xspace}
@@ -533,25 +540,26 @@
 					\begin{minipage}{0.5\textwidth}
 					\begin{algorithm}[H]
 					$X_{best} \gets \mathit{nil}$\;
-						\For{n  $\in$ \texttt{propagate($S$)}}{
+						\For{\color{black}n  $\in$ \texttt{propagate($S$)}}{
 							
 							$X \gets \call{MUS}{(S \land E \land \neg n)}$\;
 							\uIf{\color{black} $f(X)<f(X_{best})$}{
 								$X_{best} \gets X$\;
 							}
 						}
-						\Return{$X_{best}$} 
+						\Return{\color{black}$X_{best}$} 
 				\end{algorithm}
 					\end{minipage} \pause
 
 			\[\downarrow\]
 
-				\hspace{0.17\textwidth}
-					\begin{minipage}{0.8\textwidth}				
+
+									\hspace{0.09\textwidth} \begin{minipage}{0.9\textwidth}				
 				\begin{algorithm}[H]
 					\DontPrintSemicolon
-					\emph{$p \leftarrow$ exactly one of $\{\lnot n \ | \ n \in \LitsToExplain\}$}\;
-					$\call{OCUS}(S \wedge E \wedge \{\lnot n \ | \ n \in \LitsToExplain\}, \emph{f, p})$\;
+					$p \leftarrow$ \texttt{exactly-one}$(\{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_N}} $ \in \LitsToExplain\})$\;
+					{\Large $\emph{\mathtt{{OCUS}}}($}{\large \includegraphics[width=10pt]{figures/explanation_S_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_E_full}} $\wedge \{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_N}} $ \in \LitsToExplain\}, \emph{\mathbf{f}}, \emph{\mathbf{p}})$ } \;
+%					$\call{OCUS}(S \wedge E \wedge \{\lnot n \ | \ n \in \LitsToExplain\}, \emph{f, p})$\;
 				\end{algorithm}
 								\end{minipage}
 
@@ -572,7 +580,7 @@
 			\section{An OCUS algorithm: A hitting set-based algorithm}
 			\subsection{Minimum hitting sets}
 		
-					\begin{frame}{Minimal Hitting set problem}
+					\begin{frame}{Minimum Hitting set problem}
 					\begin{itemize}
 						\item Set of elements $\{c_1,c_2,...,c_n\}$ \pause
 						\item Collection $\m{H}$ of sets-to-hit \pause
@@ -662,7 +670,7 @@
 			
 			\subsection{Optimal Hitting Sets}
 				
-				\begin{frame}{\emph{Cost-Optimal} Hitting set problem}
+				\begin{frame}{\emph{Optimal} Hitting set problem}
 					\begin{itemize}
 						\item Set of elements $\{c_1,c_2,...,c_n\}$
 						\item Collection $\m{H}$ of sets-to-hit\pause
@@ -722,8 +730,8 @@
 			
 			\begin{theorem}\label{prop:MCS-MUS-hittingset}
 				%     
-				A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimal hitting set} of \muses{\formula}. \pause \\
-				A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimal hitting set} of \mcses{\formula}.
+				A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimum hitting set} of \muses{\formula}. \pause \\
+				A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimum hitting set} of \mcses{\formula}.
 			\end{theorem} \pause
 			\begin{itemize}
 				\item[$\triangleright$] We extended this to OCUS: \pause
@@ -754,16 +762,17 @@
 		
 		
 			\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+				\framesubtitle{\cite{ijcai2021-191}}
 				
 
-
+				\pause
 					\begin{algorithm}[H]
 						\caption{$\comus(\formula,f,p)$ }
 						\label{alg:comus}
 						\DontPrintSemicolon
-						$\setstohit  \gets \emptyset$ \tcp*{ Collection of sets-to-hit} \pause %\label{omus-line1} 
+						$\setstohit  \gets \emptyset$ \tcp*{ Collection of sets-to-hit}  %\label{omus-line1} 
 						\While{\color{black} true}{
-							$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $ \; \pause%\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+							$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $ \; %\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
 								% f{optimal} solution}
 							% \tcp{\small set with all unique clauses from hitting set}
 							%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
@@ -771,20 +780,124 @@
 							% \tcp{IF UNSAT, $hs$ is the OUS }
 							\If{\color{black} $\lnot \sat(\subsetT)$}{
 								\Return{\color{teal}$\subsetT$} \tcp*{ OCUS found!}
-							}\pause
+							}
 							$\setstohit  \gets \setstohit \ \cup $ {\color{blue}$\corrss(\subsetT,\formula)$} 
 						}
 					\end{algorithm}
-	\pause \vfill
-	{\color{blue}$\corrss(\subsetT,\formula)$} 
-	\begin{itemize}
-		\item $\{  \formula \setminus \subsetT\}$ \pause
-		\item   $\{  \formula \setminus \grow(\subsetT, \formula)\}$  \pause $\rightarrow$ \textit{ {\color{blue} efficient vs qualitative grow ?}} \pause
-		\item Multiple correction subsets ? 
-	\end{itemize}
+
 				%\end{minipage}
 				
 			\end{frame}
+			
+			
+			\begin{frame}{OCUS: An efficient game of Ping-Pong}
+				\only<1>{
+					\begin{figure}
+						\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong_0.png}
+					\end{figure}
+				}
+				\only<2>{
+					\begin{figure}
+						\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+					\end{figure}
+				}
+				\only<3>{
+					\begin{figure}
+						\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong1.png}
+					\end{figure}
+				}
+				\only<4>{
+					\begin{figure}
+						\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+					\end{figure}
+				}
+				\only<5>{
+					\begin{figure}
+						\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2a.png}
+					\end{figure}
+				}
+				\only<6>{
+					\begin{figure}
+						\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2b.png}
+					\end{figure}
+				}
+				\only<7>{
+					\begin{figure}
+						\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+					\end{figure}
+				}
+			
+				\only<8>{
+					\begin{figure}
+						\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+					\end{figure}
+				}
+			\only<9>{
+				\begin{figure}
+					\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+				\end{figure}
+			}
+			
+			\only<10>{
+				\begin{figure}
+					\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+				\end{figure}
+			}
+				\only<11>{
+					\begin{figure}
+						\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong_2c.png}
+					\end{figure}
+				}
+				\only<12>{
+					\begin{figure}
+						\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong3.png}
+					\end{figure}
+				{\tiny \url{https://flyclipart.com/party-popper-emoji-on-apple-ios-celebration-emoji-png-610281}}
+				}
+				\newcommand\hitset{\m{\mathcal{H}}}
+				
+				%\begin{frame}{Correctness}
+				%	\begin{theorem}\label{thm:soundcomplete}
+					%		Let $\hitset$ be a set of correction subsets of \formula. 
+					%		If $\subsetT$ is a hitting set of \hitset that is $f$-optimal among the hitting sets of \hitset satisfying a predicate $p$, and  $\subsetT$ is unsatisfiable, then $\subsetT$ is an OCUS of \formula. 
+					%		
+					%		If  $\hitset$ has no hitting sets satisfying $p$, then $\formula$ has no OCUSs.
+					%	\end{theorem}
+			\end{frame}
+			
+				\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+				
+				
+
+				\begin{algorithm}[H]
+					\caption{$\comus(\formula,f,p)$ }
+					\label{alg:comus}
+					\DontPrintSemicolon
+					$\setstohit  \gets \emptyset$ \tcp*{ Collection of sets-to-hit}  %\label{omus-line1} 
+					\While{\color{black} true}{
+						$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $ \; %\tcp*{\small Find \textb    $\setstohit  \gets \setstohit  \cup \{  \formula \setminus \F''\}$ \;
+							% f{optimal} solution}
+						% \tcp{\small set with all unique clauses from hitting set}
+						%     (sat?, $\kappa$) $\gets$ \texttt{SatSolver}($hs$)\;
+						% \tcp{If SAT, $\kappa$ contains the satisfying truth assignment}
+						% \tcp{IF UNSAT, $hs$ is the OUS }
+						\If{\color{black} $\lnot \sat(\subsetT)$}{
+							\Return{\color{teal}$\subsetT$} \tcp*{ OCUS found!}
+						}
+						$\setstohit  \gets \setstohit \ \cup $ {\color{blue}$\corrss(\subsetT,\formula)$} 
+					}
+				\end{algorithm}
+				\pause \vfill
+				{\color{blue}$\corrss(\subsetT,\formula)$} 
+				\begin{itemize}
+					\item $\{  \formula \setminus \subsetT\}$ \pause
+					\item   $\{  \formula \setminus \grow(\subsetT, \formula)\}$  \pause $\rightarrow$ \textit{ {\color{blue} efficient vs qualitative grow ?}} \pause
+					\item Multiple correction subsets ? 
+				\end{itemize}
+				%\end{minipage}
+				
+			\end{frame}
+			
 			
 			%\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
 			%	
@@ -834,14 +947,14 @@
 					{\Large $\mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_S_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_E_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $)$ }
 				\end{center}				
 \begin{itemize}
-	\item[{\includegraphics[width=15pt]{figures/explanation_S_full}}] A minimal subset of model constraints \pause
-	\begin{itemize}
+	\item[{\includegraphics[width=15pt]{figures/explanation_S_full}}] Model constraints \pause
+%	\begin{itemize}
 		\item \emph{Does not change} from an explanation step to another \pause
-	\end{itemize}
-	\item[{\includegraphics[width=15pt]{figures/explanation_E_full}}] A subset of previously derived facts ${E}$  \pause
-	\begin{itemize}
+%	\end{itemize}
+	\item[{\includegraphics[width=15pt]{figures/explanation_E_full}}] Derived facts ${E}$  \pause
+%	\begin{itemize}
 		\item \emph{Precision-increasing !}
-	\end{itemize}
+%	\end{itemize}
 	
 \end{itemize}		
 	
@@ -850,7 +963,6 @@
 		
 				
 			\end{frame}
-			
 			
 			
 			
@@ -895,38 +1007,95 @@
 		
 		\begin{frame}{Results - Explanation quality}
 
-				\begin{figure}
-				\includegraphics[width=0.6\textwidth]{figures/heatmapcosts_ocus_mus_2022040412.pdf}
-					\end{figure}
+				\begin{minipage}{0.5\textwidth}
+					\begin{center}
+						{\Large $\mathtt{\mathbf{MUS}}($}{\large \includegraphics[width=10pt]{figures/explanation_S_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_E_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $)$ } \\ \pause
+						$\downarrow$\\
+						{\Large $\emph{\mathtt{\mathbf{OCUS}}}($}{\large \includegraphics[width=10pt]{figures/explanation_S_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_E_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $, \emph{\mathbf{f}}, \emph{\mathbf{p}})$ } 
+					\end{center}				
+				\end{minipage}
+				\begin{minipage}{0.49\textwidth}
+				\includegraphics[width=\textwidth]{figures/heatmapcosts_ocus_mus_2022040412.pdf}
+					\end{minipage}
 
 		\end{frame}
 		
 		\begin{frame}{Results - Correction Subset Enumeration}
-			\begin{minipage}{0.59\textwidth}
-				\begin{figure}[H]
-	\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_06_27_OUS_IterLit_Incr_HS.pdf}
-\end{figure}
+%			\begin{minipage}{0.59\textwidth}
+%				\begin{figure}[H]
+%	\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_06_27_OUS_IterLit_Incr_HS.pdf}
+%\end{figure}
+%
+%			\end{minipage}
+%			\begin{minipage}{0.4\textwidth}
+%				\begin{figure}[H]
+%	\includegraphics[width=0.9\textwidth]{figures/grow_types}
+%\end{figure}
+%\end{minipage}
 
-			\end{minipage}
-			\begin{minipage}{0.4\textwidth}
-				\begin{figure}[H]
-	\includegraphics[width=0.9\textwidth]{figures/grow_types}
-\end{figure}
+
+									\begin{minipage}{0.42\textwidth}
+	\begin{figure}
+	\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_06_27_OUS_IterLit_Incr_HS.pdf}
+	\end{figure}
+\end{minipage}\hfill
+\begin{minipage}{0.54\textwidth}
+	{\footnotesize
+		\begin{algorithm}[H]		
+			\DontPrintSemicolon
+			\vspace{10pt}
+			{\bf  $\setstohit  \gets \emptyset$} \;
+			\While{\color{gray} true}{
+				$\subsetT \gets \cohs({\setstohit},f,p) $  \;
+				\color{gray}
+				\If{\color{gray} $\lnot \sat(\subsetT)$}{
+					\Return{\color{gray}$\subsetT$} \; 
+				}
+				{\color{black}$\setstohit  \gets \setstohit  \cup \emph{ \corrss( \subsetT, \formula)}$ } \;
+			}
+			\caption{$\comus(\formula,f,p)$ }
+			\label{alg:comus}
+		\end{algorithm}
+	}
 \end{minipage}
+
 		\end{frame}
 		
 		
 		\begin{frame}{Results - Incrementality}
-			%	\framesubtitle{Explanation configurations compared}
-	\begin{figure}
-	\includegraphics[width=0.6\textwidth]{figures/incremental_vs_non_SAT_2022_06_22.pdf}
-\end{figure}
+			
+									\begin{minipage}{0.42\textwidth}
+				\begin{figure}
+					\includegraphics[width=\textwidth]{figures/incremental_vs_non_SAT_2022_06_22.pdf}
+				\end{figure}
+			\end{minipage}\hfill
+									\begin{minipage}{0.54\textwidth}
+							{\footnotesize
+								\begin{algorithm}[H]		
+			\DontPrintSemicolon
+			\emph{\bf  $\setstohit  \gets \dots$} \;
+			\While{\color{gray} true}{
+				$\subsetT \gets \cohs(\emph{\setstohit},f,p) $  \;
+				\color{gray}
+				\If{\color{gray} $\lnot \sat(\subsetT)$}{
+					\Return{\color{gray}$\subsetT$} \; 
+				}
+				{\color{black}$\setstohit  \gets \setstohit  \cup \emph{ \corrss( \subsetT, \formula)}$ } \;
+			}
+			\caption{$\comus(\formula,f,p)$ }
+			\label{alg:comus}
+		\end{algorithm}
+}
+	\end{minipage}
+
 		\end{frame}
+			
+
 		
 		
 		\section{Conclusion and Future work}
 		\begin{frame}{Conclusion}
-			In this paper, we introduce (cost-)\emph{\underline{O}ptimal \underline{C}onstrained} \underline{U}nsatisfiable \underline{S}ubsets (OCUS) problem and solved it using the \emph{implicit hitting set duality} between {\color{blue}MCSes} and {\color{teal}MUSes}.
+			In this paper, we introduce \emph{\underline{O}ptimal \underline{C}onstrained} \underline{U}nsatisfiable \underline{S}ubsets (OCUS) problem and solved it using the \emph{implicit hitting set duality} between {\color{blue}MCSes} and {\color{teal}MUSes}.
 			\vfill
 			\begin{description}
 				\item[Optimality] Cost-function quantifies explanation difficulty. \pause
@@ -951,7 +1120,7 @@
 					\includegraphics[width=0.2\textwidth]{figures/i_want_you_ocus.png}
 				\end{figure}\pause
 				\begin{itemize}
-					\item Cost-optimal Constrained Unsatisfiable Subsets \pause
+					\item Debugging unsatisfiable models with constraints or preferences \pause
 					\item Stepwise explaining unsatisfiability \pause
 				\item Explaining scheduling, configuration problems .... and puzzles  \Cooley
 					\item Explaining Optimality for Constraint Optimization Problems 
@@ -977,13 +1146,31 @@
 		\end{frame}
 		
 		
-		\begin{frame}
-			\vspace{3cm}
-			\begin{center}
-				{\huge Questions?}
-			\end{center}		
-		\vspace{3cm}
-				\begin{minipage}{0.45\textwidth}
+		\begin{frame}{This is joint work with ... }
+			
+%		\vfill			
+			\vspace{1.5cm}
+\begin{minipage}{0.315\textwidth}
+				\includegraphics[width=\textwidth]{figures/tias.jpg}
+		\end{minipage} \hfill
+		\begin{minipage}{0.29\textwidth}
+		\includegraphics[width=\textwidth]{figures/frame}
+	\end{minipage}\hfill
+		\begin{minipage}{0.29\textwidth}
+		\includegraphics[width=\textwidth]{figures/bart.jpg}
+	\end{minipage}	
+	\begin{center}
+		Emilio GAMBA \\
+		\url{emilio.gamba@vub.be} 
+%%		\\
+%		\url{https://www.linkedin.com/in/emilio-g-9b1318140/}\\
+	\end{center}
+%		\vfill
+		\vspace{0.5cm}
+				\begin{minipage}{0.1\textwidth}
+			\includegraphics[width=\textwidth]{figures/datalab_400x400.jpg}
+		\end{minipage}		\hfill
+				\begin{minipage}{0.35\textwidth}
 			\begin{flushleft}
 				\includegraphics[width=\textwidth]{template_vub/VUB-AI_RGB-1-800x223}
 			\end{flushleft}
@@ -992,11 +1179,7 @@
 			
 			\includegraphics[width=\textwidth]{figures/DTAI_Logo_2}
 		\end{minipage}
-		\hfill
-		\begin{minipage}{0.15\textwidth}
-			
-			\includegraphics[width=\textwidth]{figures/datalab_400x400.jpg}
-		\end{minipage}
+
 		\end{frame}
 		
 		
@@ -1006,6 +1189,58 @@
 			\bibliography{refs}
 		\end{frame}
 		
+		
+			\begin{frame}{Stepwise explanations for CSPs}
+			\framesubtitle{EXPLANATION STEP}
+			%		In, we introduce \emph{explanation} steps \pause
+			
+			\begin{example} (Sudoku) A traditional Constraint Satisfaction Problem (CSP) can be represented as a triple $CSP = ({\cal V},{\cal D},{\cal C})$ with variables ${\cal V}$, domain ${\cal D}$ and constraint set ${\cal C}$. Let $V_{(r, c)}$, ${\cal D}(V_{(r,c)}) = \{1,...,9\}$ be the decision variables of the 9x9 Sudoku CSP.\\ %. Let ${\cal C } $ be the alldiferent constraints such that: 
+				
+				
+				Let ${\cal C } $ be the alldiferent constraints such that: 
+				%				\begin{itemize}
+					%					\item all different digits on the same row $r$,  \\  
+					%					\item $\forall r \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | c \in 1 .. 9 \} )$; \\
+					$\forall r \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | c \in 1 .. 9 \} )$; \\
+					%					\item all different digits in the same column $c$  \\ 
+					%					\item $\forall c  \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | r \in {1 .. 9}\} )$ ; \\
+					$\forall c  \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | r \in {1 .. 9}\} )$ ; \\
+					%					\item all different digits in the same block   \\ 
+					%					\item $\forall b_r, b_c  \in 0 .. 2  : \mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | $ \\ $r_i  \in 3b_r+ 1$ $..$ $3b_r+3 ,  c_j \in 3b_c + 1$ $..$  $3b_c + 3 \} )$.
+					$\forall b_r, b_c  \in 0 .. 2  : \mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | r_i  \in 3b_r+ 1 .. 3b_r+3$,  $c_j \in 3b_c + 1$ $..$  $3b_c + 3 \} )$.
+					%				\end{itemize}
+			\end{example}
+		\end{frame}
+		\begin{frame}{Stepwise explanations for CSPs}
+			\framesubtitle{EXPLANATION STEP}
+			%		In, we introduce \emph{explanation} steps \pause
+			
+			\begin{example} (Sudoku)
+				Let $E$ contain the assigned variables at the current state of the grid (e.g. $I = \{V_{(3, 3)}  = 2, \dots \}$).
+				
+				\begin{minipage}{0.63\textwidth}
+					{\Large $\mathtt{\mathbf{MUS}}($}{\large \includegraphics[width=10pt]{figures/explanation_S_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_E_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_N}} $)$ } \\ 
+					
+					$\{\mathtt{alldifferent}(\{V_{(r,1)} | r \in {1 .. 9}\}), V_{(4, 1)}  = 2$,\\
+					$\mathtt{alldifferent}(\{V_{(r,3)} | r \in {1 .. 9}\}), V_{(3, 3)}  = 2$, \\  
+					$\mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | r_i  \in 7..9 ,  c_j \in 1..3 \})$,\\  
+					$V_{(7, 2)}  = 2,V_{(8, 2)}  = 2, 	 V_{(9, 2)}  \neq 2\} $
+				\end{minipage}
+				\begin{minipage}{0.36\textwidth}
+					\begin{figure}[H]
+						\centering
+						\includegraphics[width=\textwidth]{figures/sudoku3}
+						\caption{Example of a non-redundant explanation for $V_{(9, 2)}  = 2$}
+						%	\caption{Non-redundant explanation for $V_{(9, 2)}  = 2$}
+						\label{fig:example-explanation}
+					\end{figure}
+					
+				\end{minipage}
+				
+				
+			\end{example}
+			
+		\end{frame}
 		
 		
 	\end{document}

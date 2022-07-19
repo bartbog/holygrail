@@ -1,5 +1,5 @@
-%\documentclass[handout]{beamer}
-\documentclass{beamer}
+\documentclass[handout]{beamer}
+%\documentclass{beamer}
 \usepackage{algorithm2e}
 \usepackage{natbib}
 \usepackage{layouts}
@@ -117,7 +117,7 @@
 \hfill
 	\begin{minipage}{0.15\textwidth}
 		
-		\includegraphics[width=\textwidth]{figures/datalab_400x400.jpg}
+		\includegraphics[width=0.7\textwidth]{figures/datalab_400x400.jpg}
 	\end{minipage}
 	\end{frame}
 	
@@ -378,6 +378,9 @@
 \end{itemize}
 
 \end{frame}
+
+
+
 	\begin{frame}{Stepwise explanations for CSPs}
 		\framesubtitle{Explanation step - Formal definition}
 %		In, we introduce \emph{explanation} steps \pause
@@ -508,13 +511,12 @@
 				\end{definition}
 				
 				\vfill
-				Application to explanation generation:
+				Applied to explanation generation:
 				\begin{itemize}
-					\item[$f$] Ensure finding `best' explanation
-					\item[$p$] Formulate explaining 1 literal at a time using an extra constraint
+					\item[$f$] ensures finding `best' explanation
+					\item[$p$] allows formulating explaining 1 literal at a time using an extra constraint
 				\end{itemize}
-				
-				
+							
 			\end{frame}		
 			
 			
@@ -554,7 +556,7 @@
 		\begin{frame}
 		\begin{center}
 			\Large
-			\textbf{Q}: How do you \textit{efficiently} compute OCUSs?				
+			\textbf{Q}: How do I \textit{efficiently} compute OCUSs?				
 		\end{center}
 			
 			\end{frame}			
@@ -571,7 +573,7 @@
 				
 				\only<4>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2  \qquad c_3 := \lnot x_2  \qquad  \emph{   c_4 := x_1} \]}
 				\only<3->{	\begin{definition}
-						A set $C \subseteq \formula $ is a \only<3>{\emph{correction subset}}\only<4->{correction subset} of $\formula$ if \only<3>{{\color{blue} $ \formula \setminus \subsetT$}}\only<4->{ $ \formula \setminus \subsetT$} is satisfiable, a.k.a. \only<3>{{\color{blue}satisfiable subset.}} \\
+						A set $C \subseteq \formula $ is a \only<3>{\emph{correction subset}}\only<4->{correction subset} of $\formula$ if \only<3>{{\color{blue} $ \formula \setminus \subsetT$}}\only<4->{ $ \formula \setminus \subsetT$} is satisfiable, a.k.a. {\only<3>{\color{blue}} satisfiable subset.} \\
 						\only<4->{A correction set $\subsetT$ is a \emph{minimum correction subset} if no strict subset $\subsetT' \subset \subsetT$ is also a correction set.}
 				\end{definition} }
 			\end{frame}
@@ -582,9 +584,9 @@
 					\begin{itemize}
 						\item Set of elements $\{c_1,c_2,...,c_n\}$
 						\item Collection $\m{H}$ of sets-to-hit  (i.e.~subsets of the set of elements)\pause
-						\item cost associated for every element:
-						\[ w_1 =  \emph{3}, w_2= \emph{5}, w_3 = w_4 = ...= w_8 = 1\]\pause
-						\item \textbf{Goal}: Find the \emph{optimal} hitting set such that every set-to-hit is hit by at least once an element of the hitting set with \emph{minimal total cost}.
+						\item cost associated for every element:\\
+						 \hspace*{2cm}$w_1 =  \emph{3}, w_2= \emph{5}, w_3 = w_4 = ...= w_8 = 1$\pause
+						\item[\textbf{Goal}] Find an \emph{optimal} hitting set such that every set-to-hit is hit by at least once an element of the hitting set with \emph{minimal total cost}.
 					\end{itemize} \pause
 					\vfill
 					\begin{minipage}{0.48\textwidth}
@@ -599,15 +601,15 @@
 					\begin{minipage}{0.48\textwidth}
 						Optimal hitting sets:
 						\begin{itemize}
-%							\item \st{$\{c_1, c_2, c_3\}$}
-%							\begin{itemize}
-%								\item cost: \emph{7}
-%							\end{itemize}
 							\item $\{\only<4->{{\color{blue}c_3},} \only<5->{{\color{blue}c_4},} \only<6->{{\color{blue}c_6},} \only<7->{{\color{blue}c_8}}\}$ \only<8>{\emph{\checkmark}
 							\begin{itemize}
 								\item cost: \emph{4}
 							\end{itemize}}
-							\item \dots
+							\only<9>{\item {$\{c_1, c_2, c_3\}$}
+							\begin{itemize}
+								\item cost: \emph{7}
+							\end{itemize}
+							\item \dots}
 						\end{itemize}
 					\end{minipage}
 				\end{frame}
@@ -637,140 +639,169 @@
 			\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
 				\framesubtitle{\cite{ijcai2021-191}}
 					\begin{algorithm}[H]
-						\caption{$\comus(\formula,f,p)$ }
-						\label{alg:comus}
+						\caption{$\comus(\formula,f,p)$ } \label{alg:comus}\vspace*{-0.3cm}
 						\DontPrintSemicolon
 						$\setstohit  \gets \emptyset$ \tcp*{ Collection of sets-to-hit} \pause
 						\While{\color{black} true}{
 							$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $ \; \pause
 							\If{\color{black} $\lnot \sat(\subsetT)$}{
-								\Return{\color{blue}$\subsetT$} \tcp*{ OCUS found!}\pause
+								\Return{\color{black}$\subsetT$} \tcp*{ OCUS found!}\pause
 							}
-							$\setstohit  \gets \setstohit \ \cup $ {$\corrss(\subsetT,\formula)$} 
+							$\setstohit  \gets \setstohit \ \cup $ 				{\color{blue}$\corrss(\subsetT,\formula)$} 
 						}
-					\end{algorithm}\pause
-				
-				\begin{itemize}
-					\item[$\triangleright$] Most time is spent in computing opt. hitting sets \pause
-					\item[$\triangleright$] Calls to the hitting set solver become more difficult as the collection of hitting sets increases\pause
-					\item[$\triangleright$] Time spent in checking satisfiability is negligible \pause
-					\item[$\rightarrow$] Shift the computation towards extracting better correction subsets
-				\end{itemize}
-			
-			\end{frame}
+					\end{algorithm}
+				\end{frame}
+
 			
 
-				\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+				\begin{frame}
 	
-				\begin{algorithm}[H]
-%					\caption{$\comus(\formula,f,p)$ }
-%					\label{alg:comus}
-					\DontPrintSemicolon
-					$\setstohit  \gets \emptyset$ \tcp*{ Collection of sets-to-hit}  %\label{omus-line1} 
-					\While{\color{black} true}{
-						$\subsetT \gets {{\cohs(\setstohit,f,p)}} $ \; 
-						\If{\color{black} $\lnot \sat(\subsetT)$}{
-							\Return{\color{black}$\subsetT$} \tcp*{ OCUS found!}
-						}
-						$\setstohit  \gets \setstohit \ \cup $ {\color{blue}$\corrss(\subsetT,\formula)$} 
-					}
-				\end{algorithm}
-				\pause 
+
+			\textbf{OCUS}
+			\begin{itemize}
+				\item Take advantage of the strengths of each solver: 
+				\begin{itemize}
+					\item 				MIP vs SAT solver\pause
+				\end{itemize}
+				\item Time spent in checking satisfiability is negligible \pause
+				\item Most time is spent in computing opt.~hitting sets \pause
+				\item Calls to the hitting set solver become more difficult as the collection of sets-to-hit expands\pause
+				\begin{itemize}
+				\item[$\rightarrow$] Shift the computation towards extracting \emph{better} correction subsets
+				\end{itemize}
+			\end{itemize}
+
 				{\color{blue}$\corrss(\subsetT,\formula)$} 
 				\begin{itemize}
 					\item $\{  \formula \setminus \subsetT\}$ \pause
-					\item   $\{  \formula \setminus \grow(\subsetT, \formula)\}$  \pause $\rightarrow$ \textit{ {\color{blue} efficient vs qualitative grow ?}} \pause
-\begin{itemize}
-					\item MaxSAT vs SAT-based heuristic\pause
+					\item   $\{  \formula \setminus \grow(\subsetT, \formula)\}$  \pause 
+			\begin{itemize}
+				\item[$\rightarrow$] \textit{efficient} vs \textit{qualitative} grow ? \pause
+					\item[$\rightarrow$] MaxSAT vs SAT-based heuristic\pause
 				\end{itemize}
 					\item Multiple \textit{disjoint} correction subsets ? 
 				\end{itemize}
+
+			\end{frame}
+						\begin{frame}
+			\begin{itemize}
 				%\end{minipage}
-				
+				\item 	\textbf{Split-OCUS}				
+				\begin{itemize}
+					\item By making OCUS `generic' (1 OCUS-call to explain 1 literal), we introduce overhead. 
+					\begin{itemize}
+						\item At every explanation step, OCUS computes intermediate hitting sets containing literals that might not lead to an cost-optimal explanation.
+						\item Compute OCUS only for the most promising literal ?
+					\end{itemize}
+				\end{itemize}
+			\end{itemize}
 			\end{frame}
 			
 			
 			\section{Open questions and challenges}
 			
-						\begin{frame}{Improving efficiency of our OCUS algorithm..}
+						\begin{frame}{Improving efficiency of the OCUS algorithm..}
 				\framesubtitle{...in the context of explanation sequence generation}
-				\vfill 
-				\begin{center}
-					\large
-					Can we \emph{improve} OCUS-calls in the context of \\ explanation \emph{sequence} generation?
-				\end{center} \vfill \pause
+							\begin{center}
+	\large
+	Can we \emph{improve} OCUS-calls in the context of explanation \emph{sequence} generation?
+\end{center}
+			\end{frame}
+		
+						\begin{frame}{Improving efficiency of the OCUS algorithm..}
+			\framesubtitle{...in the context of explanation sequence generation}
+			
+			\textbf{Incrementality}
 			\begin{itemize}
-				\item 
-			\end{itemize}
+				\item Can we re-use of information between explanation calls ?
+			\end{itemize}\vfill
+		
+
 		\end{frame}
 	
 			\begin{frame}{Improving efficiency of our OCUS algorithm..}
 				\framesubtitle{...in the context of explanation sequence generation}
-				\vfill 
-				\begin{center}
-					\large
-					Can we \emph{improve} OCUS-calls in the context of \\ explanation \emph{sequence} generation?
-				\end{center} \vfill \pause
-				\begin{minipage}{0.5\textwidth}
+
+\begin{center}
+			{ $\mathtt{\mathbf{OCUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $, f, p)$ }
+\end{center}
+\vfill		
+				\begin{minipage}{0.095\textwidth}
+			\end{minipage}\hfill
+									\begin{minipage}{0.3\textwidth}
 				\begin{figure}[H]
 					\centering
 					\includegraphics[width=0.8\textwidth]{figures/sudoku_steps/sudoku3}
 				\end{figure}
 			\end{minipage}
-			\begin{minipage}{0.49\textwidth}
-				\begin{center}
-					{\Large $\mathtt{\mathbf{OCUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $, f, p)$ }
-				\end{center}				
-\begin{itemize}
-	\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_S_full}}] Model constraints \pause
-%	\begin{itemize}
-		\item \emph{Do not change} from an explanation step to another \pause
-%	\end{itemize}
-	\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_E_full}}] Derived facts ${E}$  \pause
-%	\begin{itemize}
-		\item \emph{Precision-increasing !}
-%	\end{itemize}
-	
-\end{itemize}		
-	
-	\end{minipage}
-		
-		
-				
+					\begin{minipage}{0.1\textwidth}
+			\begin{center}
+				$\rightarrow$
+			\end{center}
+		\end{minipage}
+			\begin{minipage}{0.3\textwidth}
+								\includegraphics[width=0.8\textwidth]{figures/sudoku_sequence/sudoku-step3.png}
+	\end{minipage}\hfill
+				\begin{minipage}{0.095\textwidth}
+\end{minipage}
+
+\vfill		
+		\begin{itemize}
+			\item[{\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}}] Model constraints \pause
+			%	\begin{itemize}
+				\item \emph{Do not change} from an explanation step to another \pause
+				%	\end{itemize}
+			\item[{\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}}] Derived facts ${E}$  \pause
+			%	\begin{itemize}
+				\item \emph{Precision-increasing !}
+				%	\end{itemize}
+			
+		\end{itemize}		
+				\vfill		
 			\end{frame}
 			
 			
 			
 			\begin{frame}{Incrementality}
 				
-					\begin{algorithm}[H]
-						
-						\DontPrintSemicolon
-						\emph{\bf  $\setstohit  \gets \dots$} \tcp*{\emph{Collection of sets to hit}}
-						\While{\color{gray} true}{
-							$\subsetT \gets \cohs(\emph{\setstohit},f,p) $  \;
-							\color{gray}
-							\If{\color{gray} $\lnot \sat(\subsetT)$}{
-								\Return{\color{gray}$\subsetT$} \tcp*{OCUS found!}
-							}
-							{\color{black}$\setstohit  \gets \setstohit  \cup \emph{ \corrss( \subsetT, \formula)}$ } \;
-						}
-						\caption{$\comus(\formula,f,p)$ }
-						\label{alg:comus}
-					\end{algorithm}
-				\pause
-				\vfill
+%					\begin{algorithm}[H]
+%						
+%						\DontPrintSemicolon
+%						\emph{\bf  $\setstohit  \gets \dots$} \tcp*{\emph{Collection of sets to hit}}
+%						\While{\color{gray} true}{
+%							$\subsetT \gets \cohs(\emph{\setstohit},f,p) $  \;
+%							\color{gray}
+%							\If{\color{gray} $\lnot \sat(\subsetT)$}{
+%								\Return{\color{gray}$\subsetT$} \tcp*{OCUS found!}
+%							}
+%							{\color{black}$\setstohit  \gets \setstohit  \cup \emph{ \corrss( \subsetT, \formula)}$ } \;
+%						}
+%						\caption{$\comus(\formula,f,p)$ }
+%						\label{alg:comus}
+%					\end{algorithm}
+%				\pause
+%				\vfill
+\textbf{Kick-start OCUS by bootstrapping $\m{H}$}
 				\begin{itemize}
 					\item[$\triangleright$] Keep track of collection of correction sets $\m{H}$ that need to be hit \pause
 					\item[$\triangleright$] Each set H in \m{H} is the complement (with respect to the formula at hand) of a \emph{satisfiable subset} \pause
 					\begin{itemize}
 						\item[$\rightarrow$] Keep track of \emph{set of Satisfiable Subsets \textbf{SSs}} \pause
 						\item[$\rightarrow$] Bootstrap $\m{H} \gets \{\m{F} \setminus \m{S} | \m{S}  \in  \mathbf{SSs} \}$ 
-					\end{itemize}
-					
-					
+					\end{itemize}					
 				\end{itemize}
-				
+				\textbf{In practice!}
+				\begin{itemize}
+					\item Incremental OCUS works with the full unsatisfiable formula of step 0
+					\begin{itemize}
+						\item $S \wedge E_{end} \wedge \{ \lnot n | n \in E_{end} \setminus E_{0}\}$
+					\end{itemize}
+					\item Initialize hitting set solver once and modify objective at every explanation step $i$ such that:
+					\begin{itemize}
+						\item Underived literal cannot be taken 
+						\item Negated literals already explained cannot selected
+					\end{itemize} 
+				\end{itemize}
 			\end{frame}
 			
 		\section{Results}
@@ -896,9 +927,9 @@
 					\includegraphics[width=0.2\textwidth]{figures/i_want_you_ocus.png}
 				\end{figure}\pause
 				\begin{itemize}
-					\item Debugging unsatisfiable models with constraints or preferences \pause
-					\item Stepwise explaining unsatisfiability \pause
-				\item Explaining scheduling, configuration problems .... and puzzles  \Cooley
+					\item Explaining scheduling, configuration problems .... and puzzles  \Cooley
+					\item Debugging unsatisfiable models with constraints \pause
+					\item Stepwise explaining unsatisfiability \pause	
 					\item Explaining Optimality for Constraint Optimization Problems 
 					\begin{itemize}
 						\item Why is the objective value not better ? 

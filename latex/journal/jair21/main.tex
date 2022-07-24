@@ -2347,13 +2347,16 @@ We notice that on average, \emph{\ousbiterincr} takes the least time to produce 
 This makes the iterated approach a viable candidate for explanation generating during interactive problem solving.
 %\emilio{Remark from Marjolein: is this a viable candidate because it is faster than the others?	But is it fast enough? What is the max acceptable time?}
 %Finally, 
-In the case of \emph{\ousbincr}, the time to the first explanation reflects how important the initial ordering of the literals to explain is for quickly finding a good bound on the cost of the next best explanation. In the long run, incrementality and the correction subset configuration compensates are able to compensate bringing the average time to explain much closer to \emph{\ousbiterincr}.
+In the case of \emph{\ousbincr}, the time to the first explanation reflects how important the initial ordering of the literals to explain is for quickly finding a good bound on the cost of the next best explanation. In the long run, incrementality and the correction subset configuration compensates are able to compensate bringing the average time to explain much closer to \emph{\ousbiterincr}
 
 
 \section{Conclusion and future work}
 
 
-In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function \emilio{something to remind the explanation generation context?, i.e for stepwise explaining solutions of Constraint Satisfaction Problems}. 
+In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function.,
+%
+%
+%\emilio{something to remind the explanation generation context?, i.e for stepwise explaining solutions of Constraint Satisfaction Problems}. 
 For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \cite{bogaerts2021framework}, by optimal constrained unsatisfiable subsets (\comus).
 Our algorithm for computing \comus{}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. 
 In this approach, the main bottleneck of this approach is having to repeatedly compute \emph{optimal} hitting sets followed by a cheap call to the \sat solver and computing a correction subset. 
@@ -2361,10 +2364,8 @@ To compensate, we developed methods for enumerating correction subset that balan
 
 %%%%% From 
 %\emilio{Say something the enumeration of corrections subsets that beats simply growing}
-With the observed impact of different `\corrsubsets' methods, an open question remains whether we can quantify precisely and in a generic way what a \textit{good} or even the best set-to-hit is in a hitting set approach. 
-
-For efficiently generating the whole explanation sequence, we introduced incrementality which allows the re-use of computed information. 
-Satisfiable subsets remain valid from one explanation call to another.
+%With the observed impact of different `\corrsubsets' methods, an open question remains whether we can quantify precisely and in a generic way what a \textit{good} or even the best set-to-hit is in a hitting set approach. 
+For efficiently generating the whole explanation sequence, we introduced incrementality which allows the re-use of computed information, i.e. satisfiable subsets remain valid from one explanation call to another.
 In the case of \comus for explanation-sequence generation, where the underlying hitting set solver is MIP-based, we instantiate the MIP-solver once for all explanation steps and keep track of computed sets-to-hit.
 By making use of a weighing strategy dependent on the explanation step, we guarantee that the MIP-solver selects only clauses in the sets-to-hit that are valid in the current explanation step.
 
@@ -2379,47 +2380,6 @@ The synergies of our approach with the more general problem of QMaxSAT \cite{DBL
 \appendix
 \section{}\label{apx:puzzledata}
 
-\emilio{Regenerate table with puzzle characteristics}
-\begin{table}[!h]\centering
-	\begin{tabular}{ll|r|r|r}
-		\toprule
-		&              &  n &  avg. $\#$ {clauses} &  avg. $\#$ lits-to-explain\\
-		\textbf{puzzle type} & \textbf{instance} &              &          &                      \\
-		\midrule
-%		\textbf{sudoku} & 4x4 &            9 &      544 &                   41 \\
-		\textbf{Sudoku} & 9x9 - simple  &          25 &    ..... & \dots\\
-		 & 9x9 - easy &          25 &  \dots  & \dots\\
-		 & 9x9 - medium &          25 & \dots    &      \dots\\
-		 & 9x9 - expert &          25 &   \dots  & \dots\\
-%		& 16x16 &           25 &   154624 &                 2246 \\
-%		& 25x25 &           25 &   940000 &                 9403 \\
-		\midrule
-		\textbf{logic} & pasta Puzzle &            1 &     4572 &                   96 \\
-		& 150 &            8 &     7535 &                  150 \\
-		& 250 &            1 &    17577 &                  250 \\
-		\midrule
-		\textbf{demystify} & kakurasu &            1 &      226 &                   16 \\
-		& thermometer &            1 &     1227 &                   36 \\
-%		& pasta &            1 &     2102 &                  156 \\
-		& kakuro &            6 &     6961 &                  240 \\
-		& star-battle &            5 &     7533 &                   82 \\
-		& nonogram &            1 &     9813 &                   36 \\
-		& garam &           10 &    14486 &                  756 \\
-%		& origin &            1 &    15919 &                 1620 \\
-		& binairo &          156 &    16759 &                   99 \\
-		& skyscrapers &           16 &    17991 &                  159 \\
-		& tents &            4 &    18644 &                  476 \\
-		& Sudoku &           76 &    34143 &                  729 \\
-		& miracle &            1 &    59331 &                  729 \\
-		& x-sums &            1 &   109717 &                  729 \\
-		& killersudoku &           13 &  3609685 &                  729 \\
-		\bottomrule
-	\end{tabular}
-	\caption{Characteristics of puzzle instances}
-	\label{tab:puzzle-composition-family}
-\end{table}
-
-\emilio{Regenerate table with puzzle characteristics}
 \begin{table}[!h]\centering
 \begin{tabular}{llrrr}
 		\toprule
@@ -2451,8 +2411,6 @@ The synergies of our approach with the more general problem of QMaxSAT \cite{DBL
 	\caption{Characteristics of puzzle instances}
 \label{tab:puzzle-composition-family}
 \end{table}
-
-
 
 \clearpage
 \bibliography{krrlib,ref}

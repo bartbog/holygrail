@@ -472,7 +472,7 @@ Consider the following examples to illustrate the concepts related to unsatisfia
 	%%%EMILIO: I see now the difference between `The' and `a'
 	Let $\formulac_2$ be the unsatisfiable CNF formula over atoms $x_1, x_2, x_3$ with the following clauses:
 	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3  \qquad c_3 := \lnot x_2 \vee \lnot x_3 \qquad  c_4 := x_1\]
-	\[ c_6 := \lnot x_1 \vee  x_2 \qquad  c_7 := \lnot x_1 \vee  \lnot x_3 \]
+	\[ c_5 := \lnot x_1 \vee  x_2 \qquad  c_6 := \lnot x_1 \vee  \lnot x_3 \]
 
 \end{example}
 In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an example of a Minimal Unsatisfiable Subset (MUS) and $ \{c_1\},\{c_4\}, \{c_2,c_5\},\{c_5, c_6\}, \{c_3, c_6\}$ are examples of a minimal correction subsets (MCSs). We observe that MUS $\{c_1, c_2, c_4, c_6\}$ hits at least one clause of each MCS. 
@@ -1774,7 +1774,7 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 \paragraph{Efficient correction subset enumeration}  Extending the observation that a call to an efficient \maxsat~solver helps in finding maximally satisfiable subsets, we propose two additional variants of \cref{alg:corr-subsets-grow-with-sat}:
 \begin{enumerate}
 	\item The first variant is \emph{Multi-\maxsat}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat~introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
-	\item \emilio{I propose to remove this one since it's difficult to motivate : The second approach, \emph{\domspecmaxsat+Multi-\sat} works similarly to \emph{Multi-\domspecmaxsat}, however only the first \grow is done with the domain specific \maxsat. Subsequent \grow calls extract a larger satisfiable using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. } \emilio{Do check the interpretation of results in experiments}
+%	\item \emilio{I propose to remove this one since it's difficult to motivate : The second approach, \emph{\domspecmaxsat+Multi-\sat} works similarly to \emph{Multi-\domspecmaxsat}, however only the first \grow is done with the domain specific \maxsat. Subsequent \grow calls extract a larger satisfiable using the model computed by the \sat solver in an effort to balance the trade-off between efficiency and quality. } \emilio{Do check the interpretation of results in experiments}
 	\item The second variant \emph{Multi-\subsetmaxsat} repeatedly grows using the \emph{\subsetmaxsat} to balance the trade-off between efficiency and quality.
 \end{enumerate}
 

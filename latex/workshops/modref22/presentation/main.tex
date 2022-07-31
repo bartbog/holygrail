@@ -1,11 +1,12 @@
-\documentclass[handout]{beamer}
-%\documentclass{beamer}
+%\documentclass[handout]{beamer}
+\documentclass{beamer}
 \usepackage{algorithm2e}
 \usepackage{natbib}
 \usepackage{layouts}
 %\usepackage{enumitem}
 %\usepackage[dvipsnames]{xcolor}
 \definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+\definecolor{forestgreen}{rgb}{0.13, 0.55, 0.13}
 \usetheme{Boadilla}
 \usepackage{color,soul}
 \usepackage{xcolor}
@@ -76,7 +77,7 @@
 \newcommand\sat{\call{SAT}}
 \newcommand\corrss{\call{Correction-Subsets}}
 \newcommand\comus{\call{ocus}}
-\newcommand\cohs{\call{optimal-hittingset}}
+\newcommand\cohs{\call{CondOptHittingSet}}
 % \renewcommand{\labelitemi}{$\triangleright$}
 \renewcommand{\thealgocf}{}
 
@@ -122,22 +123,27 @@
 	\end{frame}
 	
 	
-	\AtBeginSection[]
-	{
+%	\AtBeginSection[]
+%	{
+%		\begin{frame}
+%			\frametitle{Outline}
+%			\tableofcontents[currentsection]
+%		\end{frame}
+%	}
+%	
+%	\AtBeginSubsection[]
+%	{
+%		\begin{frame}
+%			\frametitle{Outline}
+%			\tableofcontents[currentsection,currentsubsection]
+%		\end{frame}
+%	}
+%	
+
 		\begin{frame}
-			\frametitle{Outline}
-			\tableofcontents[currentsection]
-		\end{frame}
-	}
+\tableofcontents
 	
-	\AtBeginSubsection[]
-	{
-		\begin{frame}
-			\frametitle{Outline}
-			\tableofcontents[currentsection,currentsubsection]
-		\end{frame}
-	}
-	
+\end{frame}			
 	\begin{frame}
 		
 		\setlength{\textfloatsep}{0pt}
@@ -169,7 +175,7 @@
 
 	\end{frame}
 	
-
+	\section{Motivation}
 \begin{frame}
 	\frametitle{Constraint Satisfaction Problems}
 	\framesubtitle{Solving}
@@ -181,7 +187,7 @@
 			\node (model) [startstop, below of=problem] {Model}; 
 			\draw [arrow] (problem) -- (model);			
 %			\node (Essence) [right of=model, xshift=1cm] {CPMpy \cite{CPMpy}}; 
-			\node (cpmpy) [align=center, right of=model, xshift=3cm] {\emph{CPMpy} (\cite{guns2019increasing}) \\ (numpy-based modelling Library) \\\texttt{pip install cpmpy}}; 
+			\node (cpmpy) [align=center, right of=model, xshift=3cm] {\emph{CPMpy} (\cite{guns2019increasing}) \\ (CP modelling Library) \\\texttt{pip install cpmpy}}; 
 %			\node (Essence) [right of=model, xshift=1cm] {CPMpy \cite{CPMpy}}; 
 			\draw [dashed] (model) -- (cpmpy);									
 			\pause
@@ -192,7 +198,7 @@
 			\node  (modelerror) [startstop, below of=solve, align=center] {\color{red} No solution\\ \Sadey}; %todo: add smiley face sad
 			\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {unsat?} (modelerror); 			
 			\pause
-			\node  (human) [startstop, below of=modelerror, xshift=-1.5cm, align=center] {\color{red} Human?\\\drWalley}; %todo: doodle human
+			\node  (human) [startstop, below of=modelerror, xshift=-1.5cm, align=center] {\color{red} Human-\\error?}; %todo: doodle human
 			\draw [dashed] (modelerror) --  (human); 
 			\pause
 			\node  (Infeasible) [startstop, below of=modelerror, xshift=1.5cm, align=center] {\color{red} Infeasible?}; 
@@ -224,7 +230,7 @@
 
 			\node  (modelerror) [startstop, below of=solve, align=center] {\color{red} No solution\\ \Sadey}; %todo: add smiley face sad
 			\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {\textbf{unsat?}} (modelerror); 			
-			\node  (human) [startstop, below of=modelerror, xshift=-1.25cm, align=center] {\color{red} Human?\\\drWalley}; %todo: doodle human
+			\node  (human) [startstop, below of=modelerror, xshift=-1.25cm, align=center] {\color{red} Human-\\error?}; %todo: doodle human
 			\draw [dashed] (modelerror) --  (human); 
 			\node  (Infeasible) [startstop, below of=modelerror, xshift=1.25cm, align=center] {\color{red} Infeasible?}; 
 			\draw [dashed] (modelerror) --  (Infeasible); 
@@ -233,24 +239,60 @@
 		\end{center}
 	\end{minipage}
 	\begin{minipage}{0.59\textwidth}
-	
-	\textbf{How do you explain UNSAT ? }	\pause
-	\begin{itemize}
-		\item Enumerate \emph{Unsatisfiable Cores} / \emph{Minimum Unsatisfiable Subsets} (MUS) \pause
-		\item Extract \emph{Minimum Correction Subsets} (MCS)
-		\begin{itemize}
-			\item \emph{Correct} your model by modifying a subset of the model constraints
-		\end{itemize}
-	\end{itemize}
+	\textbf{How do you explain UNSAT ? } \\	
+	\begin{figure}[H]
+		\centering
+	\includegraphics[width=0.3\textwidth]{figures/unsat/human.png}
+	\end{figure}
+
+%	\pause
+%	\begin{itemize}
+%		\item Extract a \emph{Minimum Unsatisfiable Subsets} (MUS) \pause
+%		\item Enumerate all \emph{Minimum Unsatisfiable Subsets} (MUS) \pause
+%		\item Extract a \emph{Minimum Correction Subsets} (MCS)
+%		\begin{itemize}
+%			\item \emph{Correct} your model by modifying a subset of the model constraints
+%		\end{itemize}
+%	\end{itemize}
 	\end{minipage}
 \end{frame}
+
+\begin{frame}
+	\frametitle{How do I debug my model}
+	\framesubtitle{Explanations of unsatisfiability}
 	
+
+\begin{minipage}{0.7\textwidth}
+	\only<1>{\hfill}
+	 \only<2->{
+\begin{enumerate}
+	\item Identify conflicting constraints as an explanation  \footnotesize{(\cite{DBLP:journals/jar/LiffitonS08,ignatiev2015smallest}...)}
+	\begin{itemize}
+		\item[$\rightarrow$] Extract a \textbf{\textit{\color{red}Minimum Unsatisfiable Subset}} (\textbf{\textit{\color{red}MUS}}) 
+		\item[=] Irreducible Inconsistent Subsystem (ISS) 
+	\end{itemize}
+ \only<3->{\item Identify a \textbf{\textit{\color{forestgreen}Maximal Satisfiable Subset}} (\textbf{\textit{\color{forestgreen}MSS}}) {\footnotesize{(\cite{ignatiev2019rc2,davies2013exploiting,hansen1990algorithms}...)}}} 
+\only<4->{\item ``Correct'' the infeasibility in the constraints \footnotesize{(\cite{liffiton2013enumerating}...)}
+	\begin{itemize}
+	\item[$\rightarrow$] Extract a \textbf{\textit{\color{blue}Minimum Correction Subset}} (\textbf{\textit{\color{blue}MCS}})
+	\item[=] Complement of some \textbf{\textit{\color{forestgreen}MSS}}, removal/correction leads to a satisfiable subset
+\end{itemize}}
+\end{enumerate}}
+
+		\end{minipage}
+	\begin{minipage}{0.28\textwidth}
+	\only<1>{\includegraphics[width=\textwidth]{figures/unsat/model.png}}
+	\only<2>{\includegraphics[width=\textwidth]{figures/unsat/mus.png}}
+	\only<3>{\includegraphics[width=\textwidth]{figures/unsat/mss.png}}
+	\only<4>{\includegraphics[width=\textwidth]{figures/unsat/msc.png}}
+	\end{minipage}
+\vfill
+\end{frame}
 	
+	\section{How do I explain Satisfiability?}
 	\begin{frame}
-		\frametitle{Motivation}
-		\framesubtitle{Explaining SAT problems}
-		
-		\begin{minipage}{0.4\textwidth}
+		\frametitle{Motivation - Explaining SAT problems}
+		\begin{minipage}{0.35\textwidth}
 			\begin{center}
 				\begin{tikzpicture}[node distance=1.5cm]
 					\node (problem) [startstop] {Problem}; 
@@ -273,13 +315,13 @@
 				\end{tikzpicture}
 			\end{center}
 		\end{minipage}
-		\begin{minipage}{0.59\textwidth}
+		\begin{minipage}{0.63\textwidth}
 			\pause
 			\textbf{How do I explain SAT ? }	\pause
 			\begin{itemize}
 				\item What is an \textbf{\emph{explanation}}? \pause
-				\item What is a \emph{\textbf{good}} explanation ? 
-				\item What is a \textbf{\emph{sequence of explanations}} ? \pause
+				\item What is a \emph{\textbf{good}} explanation ? \pause
+				\item What is a \textbf{\emph{sequence of explanations}} ? 
 			\end{itemize}
 		\end{minipage}
 		
@@ -291,9 +333,8 @@
 %		\tableofcontents
 %	\end{frame}
 %	
-	\section{Stepwise explanations for CSPs}
-	\begin{frame}{Stepwise explanations for CSPs}
-	\framesubtitle{EXPLANATION STEP}
+
+	\begin{frame}{What is an explanation ?}
 
 			\only<1>{
 				\begin{figure}[H]
@@ -329,11 +370,11 @@
 
 \begin{frame}
 	\frametitle{Stepwise explanations for CSPs}
-	\framesubtitle{Building the explanation sequence}
+	\frametitle{What is a \emph{sequence} of explanations ?}
 	
 	\begin{minipage}{0.28\textwidth}
 		\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step1}
-	\end{minipage}\hfill
+	\end{minipage}\hfill\pause
 	\begin{minipage}{0.045\textwidth}
 		\begin{center}
 			$\rightarrow$
@@ -368,13 +409,19 @@
 
 \begin{frame}
 	\frametitle{Stepwise explanations for CSPs}
-	\framesubtitle{Building the explanation sequence}
+	\framesubtitle{Goal}
 
-\textbf{Key Insights:}
+\textbf{Given}
 \begin{itemize}
-	\item[$\triangleright$] Generate a \textit{sequence} of explanations \pause
-	\item[$\triangleright$] Stepwise  explain the solution of a Constraint Satisfaction Problem \pause 
-	\item[$\triangleright$] Derive 1 digit at a time 
+	\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_S_full}}] Constraints 
+	\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_E_full}}] Facts, i.e. given sudoku numbers
+\end{itemize} \pause
+\vspace{20pt}
+\textbf{Goal:}
+\begin{itemize}
+	\item[$\triangleright$] Generate a \textit{\emph{sequence}} of \textit{\emph{simple}} explanations \pause
+	\item[$\triangleright$]  Explain step-by-step the solution of a Constraint Satisfaction Problem \pause 
+	\item[$\triangleright$] Explain 1 fact at a time 
 \end{itemize}
 
 \end{frame}
@@ -383,47 +430,117 @@
 
 	\begin{frame}{Stepwise explanations for CSPs}
 		\framesubtitle{Explanation step - Formal definition}
-%		In, we introduce \emph{explanation} steps \pause
-		
+
       	Let an \emph{EXPLANATION STEP} (\citet{bogaerts2020step})  be:
-      	
       	\begin{center}
       		{\Large {\includegraphics[width=15pt]{figures/explanation_steps/explanation_E}} $\&$ {\includegraphics[width=15pt]{figures/explanation_steps/explanation_S}} $\implies$ {\includegraphics[width=15pt]{figures/explanation_steps/explanation_N}}}
       	\end{center}
-      	\pause
+      	
       \begin{minipage}{0.65\textwidth}
+      	\only<1>{\hfill}
+      	\only<2->{
       	\begin{itemize}
       		\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_E}}] A subset of previously derived facts \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} 
       		\begin{itemize}
-				\item[\textit{(Sudoku)}] Given and derived digits in the grid \pause
+				\item[\textit{(Sudoku)}] Given and derived digits in the grid 
       		\end{itemize}
+      	\only<3->{
       		\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_S}}] A minimal subset of model constraints \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}
       		\begin{itemize}
-				\item[\textit{(Sudoku)}] Alldifferent column, row, box constraints \pause
-			\end{itemize}
-      		\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_N}}] A newly derived fact s.t.       		{ {\includegraphics[width=7pt]{figures/explanation_steps/explanation_E}} $\&$ {\includegraphics[width=7pt]{figures/explanation_steps/explanation_S}} $\implies$ {\includegraphics[width=7pt]{figures/explanation_steps/explanation_N}}}
-      	\end{itemize}
+				\item[\textit{(Sudoku)}] Alldifferent column, row, box constraints 
+			\end{itemize}}
+		\only<4->{
+      		\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_N}}] A newly derived fact s.t.       		{ {\includegraphics[width=7pt]{figures/explanation_steps/explanation_E}} $\&$ {\includegraphics[width=7pt]{figures/explanation_steps/explanation_S}} $\implies$ {\includegraphics[width=7pt]{figures/explanation_steps/explanation_N}}}}
+      	\end{itemize}}
+      \hfill
       \end{minipage}
         \begin{minipage}{0.34\textwidth}
 			\includegraphics[width=\textwidth]{figures/sudoku_steps/sudoku3}
   \end{minipage}
 
-\pause 
+      	\vfill
+\only<5->{
 \begin{center}
 {\Large \textbf{How ?} \pause \large $\mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$ \textbf{is a valid explanation step}}
 \end{center}
+\vfill
+}
 
 	\end{frame}
 	
 	
+%		\begin{frame}{Stepwise explanations for CSPs}
+%		\framesubtitle{EXPLANATION STEP}
+%		%		In, we introduce \emph{explanation} steps \pause
+%		
+%		\begin{example} (Sudoku) A traditional Constraint Satisfaction Problem (CSP) can be represented as a triple $CSP = ({\cal V},{\cal D},{\cal C})$ with variables ${\cal V}$, domain ${\cal D}$ and constraint set ${\cal C}$. Let $V_{(r, c)}$, ${\cal D}(V_{(r,c)}) = \{1,...,9\}$ be the decision variables of the 9x9 Sudoku CSP.\\ %. Let ${\cal C } $ be the alldiferent constraints such that: 
+%			
+%			
+%			Let ${\cal C } $ be the alldiferent constraints such that: 
+%			%				\begin{itemize}
+%				%					\item all different digits on the same row $r$,  \\  
+%				%					\item $\forall r \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | c \in 1 .. 9 \} )$; \\
+%				$\forall r \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | c \in 1 .. 9 \} )$; \\
+%				%					\item all different digits in the same column $c$  \\ 
+%				%					\item $\forall c  \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | r \in {1 .. 9}\} )$ ; \\
+%				$\forall c  \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | r \in {1 .. 9}\} )$ ; \\
+%				%					\item all different digits in the same block   \\ 
+%				%					\item $\forall b_r, b_c  \in 0 .. 2  : \mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | $ \\ $r_i  \in 3b_r+ 1$ $..$ $3b_r+3 ,  c_j \in 3b_c + 1$ $..$  $3b_c + 3 \} )$.
+%				$\forall b_r, b_c  \in 0 .. 2  : \mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | r_i  \in 3b_r+ 1 .. 3b_r+3$,  $c_j \in 3b_c + 1$ $..$  $3b_c + 3 \} )$.
+%				%				\end{itemize}
+%		\end{example}
+%	\end{frame}
+	\begin{frame}{Stepwise explanations for CSPs}
+		\framesubtitle{EXPLANATION STEP}
+		%		In, we introduce \emph{explanation} steps \pause
+		
+		\begin{example} (Sudoku)
+			Let $E$ contain the assigned variables at the current state of the grid (e.g. $I = \{V_{(3, 3)}  = 2, \dots \}$).
+			
+			\begin{minipage}{0.63\textwidth}
+				{\Large $\mathtt{\mathbf{MUS}}($}{\large \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$ } \\ 
+				
+				$\{\mathtt{alldifferent}(\{V_{(r,1)} | r \in {1 .. 9}\}), V_{(4, 1)}  = 2$,\\
+				$\mathtt{alldifferent}(\{V_{(r,3)} | r \in {1 .. 9}\}), V_{(3, 3)}  = 2$, \\  
+				$\mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | r_i  \in 7..9 ,  c_j \in 1..3 \})$,\\  
+				$V_{(7, 2)}  = 2,V_{(8, 2)}  = 2, 	 V_{(9, 2)}  \neq 2\} $
+			\end{minipage}
+			\begin{minipage}{0.36\textwidth}
+				\begin{figure}[H]
+					\centering
+					\includegraphics[width=\textwidth]{figures/sudoku_steps/sudoku3}
+					\caption{Example of a non-redundant explanation for $V_{(9, 2)}  = 2$}
+					%	\caption{Non-redundant explanation for $V_{(9, 2)}  = 2$}
+					\label{fig:example-explanation}
+				\end{figure}
+				
+			\end{minipage}
+			
+			
+		\end{example}
+		
+	\end{frame}
 	
-	
-	
+	\begin{frame}
+		\frametitle{What is a \emph{good} explanation ?}
+		
+%			\textbf{What is a \emph{good} explanation ?} \\ \vspace{20pt}
+					\begin{minipage}{0.25\textwidth}
+				\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step1.png}
+			\end{minipage} \pause $\rightarrow$
+		\begin{minipage}{0.28\textwidth}
+			\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step2}
+		\end{minipage}\hfill \pause
+		or \hfill
+		\begin{minipage}{0.30\textwidth}
+			\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step3bis}
+		\end{minipage}
+	\end{frame}	
 	
 	
 	\begin{frame}
-		\frametitle{Stepwise explanations for CSPs}
-		\framesubtitle{The best/easiest explanation step...}
+%		\frametitle{Stepwise explanations for CSPs}
+		\frametitle{The best/easiest explanation step...}
 %		\begin{center} 
 			\textbf{What is a \emph{good} explanation ?} \pause \\
 			
@@ -457,17 +574,19 @@
 		%\begin{description}%[font=\color{vuborange}\itshape]
 		%	\item[Optimality] Explanations not provably optimal, \emph{heuristically} found.
 		%\end{description}
-		\emph{\textbf{Optimality}} w.r.t $\mathbf{f}$
+
 		\begin{itemize}
+			\item[Q1] \emph{\textbf{Optimality}} w.r.t $\mathbf{f}$
 			\item[$\triangleright$] MUS guarantees non-redundancy but ... not optimality.
 			%				\item MUS-based heuristic
 			\item[$\triangleright$] Alternative: SMUS $\#$-minimal (\cite{ignatiev2015smallest})
 		\end{itemize} 
 		\only<2->{				Explanation generation takes a lot of time: 
+			\only<3->{
 		\begin{itemize}
 					\item[Q2] Can we \emph{avoid looping over the literals} when searching for the next best explanation ?
-					\only<3->{\item[Q3] Can we \emph{reuse information} from an explanation call to another?}
-				\end{itemize}}
+					\only<4->{\item[Q3] Can we \emph{reuse information} from an explanation call to another?}
+				\end{itemize}}}
 		%\end{description}
 	\end{minipage}
 \hfill
@@ -476,9 +595,9 @@
 			\begin{algorithm}[H]
 				
 				{\color{gray} \small $X_{best} \gets \mathit{nil}$\;
-					\For{\color{gray} \only<2>{\color{vuborange}} n  $\in$ \texttt{propagate($S$)}}{
+					\For{\color{gray} \only<3>{\color{vuborange}} n  $\in$ \texttt{propagate($C$)}}{
 						
-						{\color{gray}\only<1>{\color{vuborange}}$X \gets \call{MUS}{(S \land E \land \neg n)}$}\;
+						{\color{gray}\only<1>{\color{vuborange}}$X \gets \call{MUS}{(C \land E \land \neg n)}$}\;
 						\uIf{\color{gray}\only<1>{\color{vuborange}} $f(X)<f(X_{best})$}{
 							{\color{gray}\only<1>{\color{vuborange}}$X_{best} \gets X$}\;
 						}
@@ -498,6 +617,11 @@
 	
 	
 	\section{The OCUS Problem}
+	
+	 \begin{frame}
+		\tableofcontents[currentsection]
+	\end{frame}			
+	
 			\begin{frame}{OCUS-Based explanation generation}
 			\framesubtitle{The OCUS\footnote{Optimal \emph{Constrained} Unsatisfiable Subset} problem}
 			\begin{definition}
@@ -508,13 +632,13 @@
 						\item $p(\subsetT)$ is true
 						\item \emph{all other unsatisfiable $\subsetT'\subseteq \formula$ with $p(\subsetT')=\ltrue$ satisfy $f(\subsetT')\geq f(\subsetT)$}.
 					\end{itemize}
-				\end{definition}
+				\end{definition} \pause
 				
 				\vfill
-				Applied to explanation generation:
+				Applied to explanation generation: \pause
 				\begin{itemize}
-					\item[$f$] ensures finding `best' explanation
-					\item[$p$] allows formulating explaining 1 literal at a time using an extra constraint
+					\item[Q1] \textit{\emph{(Optimality)}} {\color{red}$f$} ensures finding `best' explanation \pause
+					\item[Q2] \textit{\emph{(Looping)}} {\color{red}$p$} allows formulating explaining 1 literal at a time using an extra constraint
 				\end{itemize}
 							
 			\end{frame}		
@@ -527,9 +651,9 @@
 					\begin{minipage}{0.5\textwidth}
 					\begin{algorithm}[H]
 					$X_{best} \gets \mathit{nil}$\;
-						\For{\color{black}n  $\in$ \texttt{propagate($S$)}}{
+						\For{\color{black}n  $\in$ \texttt{propagate($C$)}}{
 							
-							$X \gets \call{MUS}{(S \land E \land \neg n)}$\;
+							$X \gets \call{MUS}{(C \land E \land \neg n)}$\;
 							\uIf{\color{black} $f(X)<f(X_{best})$}{
 								$X_{best} \gets X$\;
 							}
@@ -553,59 +677,83 @@
 				
 			\end{frame}
 
-		\begin{frame}
-		\begin{center}
-			\Large
-			\textbf{Q}: How do I \textit{efficiently} compute OCUSs?				
-		\end{center}
-			
-			\end{frame}			
-							
-			\section{An OCUS algorithm: A hitting set-based algorithm}
 
-						\begin{frame}{Background and notation}
-				\framesubtitle{Minimum Correction Subset vs Satisfiable Subsets}
+%			\section{An OCUS algorithm: A hitting set-based algorithm}
+%
+%						\begin{frame}{Background and notation}
+%				\framesubtitle{Minimum Correction Subset vs Satisfiable Subsets}
+%				
+%				\only<1->{ Consider unsatisfiable  CNF $\formula$ over atoms $x_1, x_2$:}
+%				\only<2>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 \qquad c_3 := \lnot x_2  \qquad  c_4 := x_1\]}
+%				
+%				\only<3>{\[ \emph{c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 }  {\color{blue}\qquad c_3 := \lnot x_2  \qquad  c_4 := x_1}\]}
+%				
+%				\only<4>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2  \qquad c_3 := \lnot x_2  \qquad  \emph{   c_4 := x_1} \]}
+%				\only<3->{	\begin{definition}
+%						A set $C \subseteq \formula $ is a \only<3>{\emph{correction subset}}\only<4->{correction subset} of $\formula$ if \only<3>{{\color{blue} $ \formula \setminus \subsetT$}}\only<4->{ $ \formula \setminus \subsetT$} is satisfiable, a.k.a. {\only<3>{\color{blue}} satisfiable subset.} \\
+%						\only<4->{A correction set $\subsetT$ is a \emph{minimum correction subset} if no strict subset $\subsetT' \subset \subsetT$ is also a correction set.}
+%				\end{definition} }
+%			\end{frame}
+
+
+
+			
+					\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+				\framesubtitle{Implicit Hitting set duality}
 				
-				\only<1->{ Consider unsatisfiable  CNF $\formula$ over atoms $x_1, x_2$:}
-				\only<2>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 \qquad c_3 := \lnot x_2  \qquad  c_4 := x_1\]}
+				\begin{itemize}
+					\item[$\triangleright$] Exploit implicit hitting set--based duality between {\color{blue}MCSes} and {\color{teal}MUSes} (\cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87})
+				\end{itemize}\pause
 				
-				\only<3>{\[ \emph{c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 }  {\color{blue}\qquad c_3 := \lnot x_2  \qquad  c_4 := x_1}\]}
+				\begin{theorem}\label{prop:MCS-MUS-hittingset}
+					%     
+					A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimum hitting set} of \muses{\formula}. \\
+					A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimum hitting set} of \mcses{\formula}.
+				\end{theorem} \pause
+				\begin{itemize}
+					\item[$\triangleright$] Extend this to OCUS:
+				\begin{itemize}	
+				\item Compute \emph{optimal} hitting sets \pause
+				\item Impose \emph{constraint} on the hitting sets
+			\end{itemize}
+				\end{itemize}
 				
-				\only<4>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2  \qquad c_3 := \lnot x_2  \qquad  \emph{   c_4 := x_1} \]}
-				\only<3->{	\begin{definition}
-						A set $C \subseteq \formula $ is a \only<3>{\emph{correction subset}}\only<4->{correction subset} of $\formula$ if \only<3>{{\color{blue} $ \formula \setminus \subsetT$}}\only<4->{ $ \formula \setminus \subsetT$} is satisfiable, a.k.a. {\only<3>{\color{blue}} satisfiable subset.} \\
-						\only<4->{A correction set $\subsetT$ is a \emph{minimum correction subset} if no strict subset $\subsetT' \subset \subsetT$ is also a correction set.}
-				\end{definition} }
 			\end{frame}
+			
+			
 			
 			\subsection{Optimal Hitting set problem}
 				
+\begin{frame}
+	\tableofcontents[currentsubsection]
+\end{frame}			
 				\begin{frame}{\emph{Optimal} Hitting set problem}
+					\pause
 					\begin{itemize}
-						\item Set of elements $\{c_1,c_2,...,c_n\}$
+						\item Set of elements (i.e. constraints) $\{c_1,c_2,...,c_n\}$
 						\item Collection $\m{H}$ of sets-to-hit  (i.e.~subsets of the set of elements)\pause
 						\item cost associated for every element:\\
-						 \hspace*{2cm}$w_1 =  \emph{3}, w_2= \emph{5}, w_3 = w_4 = ...= w_8 = 1$\pause
+						 \hspace*{2cm}$w_1 =  \emph{3}, w_2= \emph{5}, w_3 = w_4 = ...= w_8 = 1$\pause \vfill
 						\item[\textbf{Goal}] Find an \emph{optimal} hitting set such that every set-to-hit is hit by at least once an element of the hitting set with \emph{minimal total cost}.
 					\end{itemize} \pause
 					\vfill
 					\begin{minipage}{0.48\textwidth}
 						For example: 
 						\begin{enumerate}
-							\item[$H_1$] = {\only<4>{\color{blue}}$\{c_3, c_5\}$}
-							\item[$H_2$] = {\only<5>{\color{blue}}$\{c_2, c_4, c_7\}$}
-							\item[$H_3$] = {\only<6>{\color{blue}}$\{c_2, c_6\}$}
-							\item[$H_4$] = {\only<7>{\color{blue}}$\{c_1, c_8\}$}
+							\item[$H_1$] = {\only<5>{\color{blue}}$\{c_3, c_5\}$}
+							\item[$H_2$] = {\only<6>{\color{blue}}$\{c_2, c_4, c_7\}$}
+							\item[$H_3$] = {\only<7>{\color{blue}}$\{c_2, c_6\}$}
+							\item[$H_4$] = {\only<8>{\color{blue}}$\{c_1, c_8\}$}
 						\end{enumerate}
 					\end{minipage}
 					\begin{minipage}{0.48\textwidth}
 						Optimal hitting sets:
 						\begin{itemize}
-							\item $\{\only<4->{{\color{blue}c_3},} \only<5->{{\color{blue}c_4},} \only<6->{{\color{blue}c_6},} \only<7->{{\color{blue}c_8}}\}$ \only<8>{\emph{\checkmark}
+							\item $\{\only<5->{{\color{blue}c_3},} \only<6->{{\color{blue}c_4},} \only<7->{{\color{blue}c_6},} \only<8->{{\color{blue}c_8}}\}$ \only<9>{\emph{\checkmark}
 							\begin{itemize}
 								\item cost: \emph{4}
 							\end{itemize}}
-							\only<9>{\item {$\{c_1, c_2, c_3\}$}
+							\only<10>{\item {$\{c_1, c_2, c_3\}$}
 							\begin{itemize}
 								\item cost: \emph{7}
 							\end{itemize}
@@ -615,61 +763,141 @@
 				\end{frame}
 			
 			
-			\subsection{Implicit Hitting Set Duality}
 
 %
-		\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
-			\framesubtitle{Implicit Hitting set duality}
-			
-			\begin{itemize}
-				\item[$\triangleright$] Exploit implicit hitting set--based duality between {\color{blue}MCSes} and {\color{teal}MUSes} (\cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87})
-			\end{itemize}\pause
-			
-			\begin{theorem}\label{prop:MCS-MUS-hittingset}
-				%     
-				A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimum hitting set} of \muses{\formula}. \\
-				A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimum hitting set} of \mcses{\formula}.
-			\end{theorem} \pause
-			\begin{itemize}
-				\item[$\triangleright$] We extended this to OCUS
-			\end{itemize}
 
-		\end{frame}
 		
-			\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
-				\framesubtitle{\cite{ijcai2021-191}}
-					\begin{algorithm}[H]
-						\caption{$\comus(\formula,f,p)$ } \label{alg:comus}\vspace*{-0.3cm}
-						\DontPrintSemicolon
-						$\setstohit  \gets \emptyset$ \tcp*{ Collection of sets-to-hit} \pause
-						\While{\color{black} true}{
-							$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $ \; \pause
-							\If{\color{black} $\lnot \sat(\subsetT)$}{
-								\Return{\color{black}$\subsetT$} \tcp*{ OCUS found!}\pause
-							}
-							$\setstohit  \gets \setstohit \ \cup $ 				{\color{blue}$\corrss(\subsetT,\formula)$} 
-						}
-					\end{algorithm}
-				\end{frame}
+%			\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+%				\framesubtitle{\cite{ijcai2021-191}}
+%				\pause
+%				
+%				
+%					\begin{algorithm}[H]
+%						\caption{$\comus(\formula,f,p)$ } \label{alg:comus}\vspace*{-0.3cm}
+%						\DontPrintSemicolon
+%						$\setstohit  \gets \emptyset$ \tcp*{ Collection of sets-to-hit} \pause
+%						\While{\color{black} true}{
+%							$\subsetT \gets \emph{\cohs(\setstohit,f,p)} $ \; \pause
+%							\If{\color{black} $\lnot \sat(\subsetT)$}{
+%								\Return{\color{black}$\subsetT$} \tcp*{ OCUS found!}\pause
+%							}
+%							$\setstohit  \gets \setstohit \ \cup $ 				{\color{blue}$\corrss(\subsetT,\formula)$} 
+%						}
+%					\end{algorithm}
+%				\end{frame}
 
-			
+\subsection{The algorithm}
+\begin{frame}
+	\tableofcontents[currentsubsection]
+\end{frame}			
+	\begin{frame}{OCUS: An efficient game of Ping-Pong}
+	\only<1>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong_0.png}
+		\end{figure}
+	}
+	\only<2>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+		\end{figure}
+	}
+	\only<3>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong1.png}
+		\end{figure}
+	}
+	\only<4>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+		\end{figure}
+	}
+	\only<5>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2a.png}
+		\end{figure}
+	}
+	\only<6>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2b.png}
+		\end{figure}
+	}
+	\only<7>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+		\end{figure}
+	}
+	
+	\only<8>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+		\end{figure}
+	}
+	\only<9>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+		\end{figure}
+	}
+	
+	\only<10>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+		\end{figure}
+	}
+	\only<11>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong_2c.png}
+		\end{figure}
+	}
+	\only<12>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong3.png}
+		\end{figure}
+		{\tiny \url{https://flyclipart.com/party-popper-emoji-on-apple-ios-celebration-emoji-png-610281}}
+	}
+	\newcommand\hitset{\m{\mathcal{H}}}
+	
+	%\begin{frame}{Correctness}
+	%	\begin{theorem}\label{thm:soundcomplete}
+		%		Let $\hitset$ be a set of correction subsets of \formula. 
+		%		If $\subsetT$ is a hitting set of \hitset that is $f$-optimal among the hitting sets of \hitset satisfying a predicate $p$, and  $\subsetT$ is unsatisfiable, then $\subsetT$ is an OCUS of \formula. 
+		%		
+		%		If  $\hitset$ has no hitting sets satisfying $p$, then $\formula$ has no OCUSs.
+		%	\end{theorem}
+\end{frame}
+
+%				\begin{frame}
+%				\begin{center}
+%				\Large
+%				\textbf{Q}: How do I \emph{efficiently} compute OCUSs?				
+%			\end{center}
+%\end{frame}
+
 
 				\begin{frame}
-	
-
-			\textbf{OCUS}
-			\begin{itemize}
-				\item Take advantage of the strengths of each solver: 
-				\begin{itemize}
-					\item 				MIP vs SAT solver\pause
-				\end{itemize}
-				\item Time spent in checking satisfiability is negligible \pause
-				\item Most time is spent in computing opt.~hitting sets \pause
-				\item Calls to the hitting set solver become more difficult as the collection of sets-to-hit expands\pause
-				\begin{itemize}
-				\item[$\rightarrow$] Shift the computation towards extracting \emph{better} correction subsets
-				\end{itemize}
-			\end{itemize}
+					\frametitle{How do I \emph{efficiently} compute OCUSs?}
+	\only<1>{
+		\begin{figure}
+		\includegraphics[width=0.7\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+	\end{figure}
+\vspace{90pt}}
+	\only<2->{
+		\begin{figure}
+			\includegraphics[width=0.7\textwidth]{figures/ping_pong/algo_with_ping_pong2b.png}
+		\end{figure}
+%			\textbf{OCUS}
+%			\begin{itemize}
+%				\item Take advantage of the strengths of each solver: 
+%				\begin{itemize}
+%					\item[MIP] Efficient at solving the hitting set problem \pause
+%					\item[SAT] Oracle for checking satisfiability \pause
+%				\end{itemize}
+%				\item Time spent in checking satisfiability is negligible \pause
+%				\item Most time (~96\%) is spent in computing opt.~hitting sets \pause
+%				\item Calls to the hitting set solver become more difficult as the collection of sets-to-hit expands\pause
+%				\begin{itemize}
+%				\item[$\rightarrow$] Shift the computation towards extracting \emph{better} correction subsets
+%				\end{itemize}
+%			\end{itemize}
 
 				{\color{blue}$\corrss(\subsetT,\formula)$} 
 				\begin{itemize}
@@ -680,25 +908,53 @@
 					\item[$\rightarrow$] MaxSAT vs SAT-based heuristic\pause
 				\end{itemize}
 					\item Multiple \textit{disjoint} correction subsets ? 
-				\end{itemize}
+				\end{itemize}}
 
 			\end{frame}
-						\begin{frame}
-			\begin{itemize}
-				%\end{minipage}
-				\item 	\textbf{Split-OCUS}				
-				\begin{itemize}
-					\item By making OCUS `generic' (1 OCUS-call to explain 1 literal), we introduce overhead. 
-					\begin{itemize}
-						\item At every explanation step, OCUS computes intermediate hitting sets containing literals that might not lead to an cost-optimal explanation.
-						\item Compute OCUS only for the most promising literal ?
-					\end{itemize}
-				\end{itemize}
-			\end{itemize}
-			\end{frame}
+%						\begin{frame}
+%		\frametitle{Splitting OCUS-calls}
+%				%\end{minipage}
+%							\vfill
+%				\begin{center}\Large
+%				Did we go too generic ?					
+%				\end{center}\pause
+%			\vfill
+%				By making OCUS `generic' (1 OCUS-call to explain 1 literal), we introduce \emph{overhead}.  \pause
+%					\begin{itemize}
+%						\item[$\rightarrow$] At every explanation step, OCUS computes intermediate hitting sets containing literals that might not lead to an cost-optimal explanation.
+%						\item[$\rightarrow$] Compute OCUS only for the most promising literal ?
+%					\end{itemize}
+%							\vfill
+%%				\end{itemize}
+%			\end{frame}
+%\begin{frame}
+%	\frametitle{Splitting OCUS-calls}
+%		\begin{figure}
+%	\includegraphics[width=0.5\textwidth]{figures/ping_pong/algo_with_ping_pong3.png}
+%\end{figure}
+%{\small
+%\begin{algorithm}[H]
+%	\DontPrintSemicolon
+%	$queue \gets$ \texttt{InitializePriorityQueue($(\ell, \emptyset,\emptyset): 0 \ | \ \forall \ell \in E_{end} \setminus E$)}\; \pause
+%	\While{$(\ell, \m{S}_\ell, \setstohit_{\ell}) \gets queue.pop()$}{\pause
+%			\If{\color{black}$\lnot \sat(\m{S}_\ell)$}{
+%				\Return{\color{black}$\m{S}_\ell$} 
+%			}
+%			$\m{K} \gets \corrss(\subsetT_\ell, (\formulac \land E \land \neg \ell))$\;
+%			$\setstohit_\ell  \gets \setstohit_\ell  \cup \m{K} $\;
+%			$\m{S}_\ell \gets OptHittingSet(\setstohit_\ell,f) $  \;
+%			\texttt{queue.push($(\ell, \m{S}_\ell, \setstohit_{\ell}): f(\m{S_\ell})$)}\;
+%		}
+%	\end{algorithm}}
+%
+%			\end{frame}
 			
 			
 			\section{Open questions and challenges}
+			
+			 \begin{frame}
+				\tableofcontents[currentsection]
+			\end{frame}			
 			
 						\begin{frame}{Improving efficiency of the OCUS algorithm..}
 				\framesubtitle{...in the context of explanation sequence generation}
@@ -805,7 +1061,9 @@
 			\end{frame}
 			
 		\section{Results}
-		
+		 \begin{frame}
+			\tableofcontents[currentsection]
+		\end{frame}			
 		\begin{frame}{Results - Explanation quality}
 
 				\begin{minipage}{0.5\textwidth}
@@ -826,6 +1084,8 @@
 					\end{minipage}
 
 		\end{frame}
+	
+	
 		
 		\begin{frame}{Results - Correction Subset Enumeration}
 %			\begin{minipage}{0.59\textwidth}
@@ -841,12 +1101,12 @@
 %\end{minipage}
 
 
-									\begin{minipage}{0.42\textwidth}
+									\begin{minipage}{0.45\textwidth}
 	\begin{figure}
 	\includegraphics[width=\textwidth]{figures/rq2_cactus_log_2022_06_27_OUS_IterLit_Incr_HS.pdf}
 	\end{figure}
 \end{minipage}\hfill
-\begin{minipage}{0.54\textwidth}
+\begin{minipage}{0.53\textwidth}
 	{\footnotesize
 		\begin{algorithm}[H]		
 			\DontPrintSemicolon
@@ -864,6 +1124,9 @@
 			\label{alg:comus}
 		\end{algorithm}
 	}
+%\begin{figure}
+%	\includegraphics[width=0.8\textwidth]{figures/ping_pong/algo_with_ping_pong2b.png}
+%\end{figure}
 \end{minipage}
 
 		\end{frame}
@@ -901,12 +1164,16 @@
 		
 		
 		\section{Conclusion and Future work}
+		 \begin{frame}
+			\tableofcontents[currentsection]
+		\end{frame}			
+		
 		\begin{frame}{Conclusion}
-			In this paper, we introduce \emph{\underline{O}ptimal \underline{C}onstrained} \underline{U}nsatisfiable \underline{S}ubsets (OCUS) problem and solved it using the \emph{implicit hitting set duality} between {\color{blue}MCSes} and {\color{teal}MUSes}.
+			We introduce \emph{\underline{O}ptimal \underline{C}onstrained} \underline{U}nsatisfiable \underline{S}ubsets (OCUS) problem and solved it using the \emph{implicit hitting set duality} between {\color{blue}MCSes} and {\color{teal}MUSes}.
 			\vfill
 			\begin{description}
 				\item[Optimality] Cost-function quantifies explanation difficulty. \pause
-				\item[Constrainedness] Analyze structural constraints on the form of the explanations.\pause
+				\item[Constrainedness] Impose structural constraints on the form of the explanations.\pause
 				\item[Incrementality] Reuse-information between successive explanation calls.
 				%		\item[Efficiency] 
 				%		\begin{enumerate}
@@ -918,7 +1185,7 @@
 		\end{frame}
 		
 		
-		\begin{frame}{Use cases}
+		\begin{frame}%{Use cases}
 				\begin{center}\Large
 					What can OCUS do for YOU ? 
 				\end{center}
@@ -928,30 +1195,67 @@
 				\end{figure}\pause
 				\begin{itemize}
 					\item Explaining scheduling, configuration problems .... and puzzles  \Cooley
-					\item Debugging unsatisfiable models with constraints \pause
+					\item Debugging \textit{unsatisfiable models} with \emph{preferences} on the constraints \pause
 					\item Stepwise explaining unsatisfiability \pause	
 					\item Explaining Optimality for Constraint Optimization Problems 
 					\begin{itemize}
 						\item Why is the objective value not better ? 
 					\end{itemize}
 
-
 				\end{itemize}
 			\end{frame}
-		
-		\begin{frame}{Future work}
+				\begin{frame}{Future work}
 			
 			\begin{itemize}
-				\item[$\triangleright$] Learning the optimization function (from humans)
+				\item[$\triangleright$] What is a good cost-function to quantify how difficult an explanation is ? (from humans)
 				\item[$\triangleright$] Explaining optimization (different types of ``why'' queries); close relation to Explainable AI Planning \cite{fox2017explainable}
 				\item[$\triangleright$] Scaling up (approximate algorithms; decomposition of explanation search)
-%				\item[$\triangleright$] Incremental algorithms over different ``why'' queries
+				%				\item[$\triangleright$] Incremental algorithms over different ``why'' queries
 				% \item 
 			\end{itemize}	
 			
 			
 		\end{frame}
 		
+		\begin{frame}
+			\frametitle{Future work}
+			
+			\begin{minipage}{0.28\textwidth}
+				\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step1}
+			\end{minipage}\hfill
+			\begin{minipage}{0.045\textwidth}
+				\begin{center}
+					$\rightarrow$
+				\end{center}
+			\end{minipage}\hfill
+			\begin{minipage}{0.28\textwidth}
+				\includegraphics[width=\textwidth]{figures/sudoku_steps/sudoku3}
+			\end{minipage}\hfill
+			\begin{minipage}{0.045\textwidth}
+				\begin{center}
+					$\rightarrow$
+				\end{center}
+			\end{minipage}\hfill
+			\begin{minipage}{0.28\textwidth}
+				\begin{center}
+					$\dots$
+				\end{center}
+			\end{minipage}\\\vfill 
+			\begin{minipage}{0.28\textwidth}
+				\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step3}
+			\end{minipage}
+			\hfill
+			\begin{minipage}{0.43\textwidth}
+				\begin{center}
+					$\rightarrow$ \hspace{0.5cm}\dots \hspace{0.5cm}$\rightarrow$
+				\end{center}
+			\end{minipage}\hfill
+			\begin{minipage}{0.28\textwidth}
+				\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-stepn}
+			\end{minipage}
+		\end{frame}
+		
+
 		
 		\begin{frame}{This is joint work with ... }
 			
@@ -993,61 +1297,11 @@
 		\begin{frame}[allowframebreaks]
 			\frametitle{References}
 			\bibliographystyle{named}
-			\bibliography{refs}
+			\bibliography{refs,references}
 		\end{frame}
 		
 		
-			\begin{frame}{Stepwise explanations for CSPs}
-			\framesubtitle{EXPLANATION STEP}
-			%		In, we introduce \emph{explanation} steps \pause
-			
-			\begin{example} (Sudoku) A traditional Constraint Satisfaction Problem (CSP) can be represented as a triple $CSP = ({\cal V},{\cal D},{\cal C})$ with variables ${\cal V}$, domain ${\cal D}$ and constraint set ${\cal C}$. Let $V_{(r, c)}$, ${\cal D}(V_{(r,c)}) = \{1,...,9\}$ be the decision variables of the 9x9 Sudoku CSP.\\ %. Let ${\cal C } $ be the alldiferent constraints such that: 
-				
-				
-				Let ${\cal C } $ be the alldiferent constraints such that: 
-				%				\begin{itemize}
-					%					\item all different digits on the same row $r$,  \\  
-					%					\item $\forall r \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | c \in 1 .. 9 \} )$; \\
-					$\forall r \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | c \in 1 .. 9 \} )$; \\
-					%					\item all different digits in the same column $c$  \\ 
-					%					\item $\forall c  \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | r \in {1 .. 9}\} )$ ; \\
-					$\forall c  \in 1 .. 9: \mathtt{alldifferent}(\{V_{(r,c)} | r \in {1 .. 9}\} )$ ; \\
-					%					\item all different digits in the same block   \\ 
-					%					\item $\forall b_r, b_c  \in 0 .. 2  : \mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | $ \\ $r_i  \in 3b_r+ 1$ $..$ $3b_r+3 ,  c_j \in 3b_c + 1$ $..$  $3b_c + 3 \} )$.
-					$\forall b_r, b_c  \in 0 .. 2  : \mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | r_i  \in 3b_r+ 1 .. 3b_r+3$,  $c_j \in 3b_c + 1$ $..$  $3b_c + 3 \} )$.
-					%				\end{itemize}
-			\end{example}
-		\end{frame}
-		\begin{frame}{Stepwise explanations for CSPs}
-			\framesubtitle{EXPLANATION STEP}
-			%		In, we introduce \emph{explanation} steps \pause
-			
-			\begin{example} (Sudoku)
-				Let $E$ contain the assigned variables at the current state of the grid (e.g. $I = \{V_{(3, 3)}  = 2, \dots \}$).
-				
-				\begin{minipage}{0.63\textwidth}
-					{\Large $\mathtt{\mathbf{MUS}}($}{\large \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$ } \\ 
-					
-					$\{\mathtt{alldifferent}(\{V_{(r,1)} | r \in {1 .. 9}\}), V_{(4, 1)}  = 2$,\\
-					$\mathtt{alldifferent}(\{V_{(r,3)} | r \in {1 .. 9}\}), V_{(3, 3)}  = 2$, \\  
-					$\mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | r_i  \in 7..9 ,  c_j \in 1..3 \})$,\\  
-					$V_{(7, 2)}  = 2,V_{(8, 2)}  = 2, 	 V_{(9, 2)}  \neq 2\} $
-				\end{minipage}
-				\begin{minipage}{0.36\textwidth}
-					\begin{figure}[H]
-						\centering
-						\includegraphics[width=\textwidth]{figures/sudoku_steps/sudoku3}
-						\caption{Example of a non-redundant explanation for $V_{(9, 2)}  = 2$}
-						%	\caption{Non-redundant explanation for $V_{(9, 2)}  = 2$}
-						\label{fig:example-explanation}
-					\end{figure}
-					
-				\end{minipage}
-				
-				
-			\end{example}
-			
-		\end{frame}
+		
 		
 		
 	\end{document}

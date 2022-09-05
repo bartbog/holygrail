@@ -141,7 +141,7 @@
 
 \begin{document}
 	
-	\title{Exploring alternative Explanation Sequences}
+	\title{Exploring and improving Explanation Sequences}
 	\date{}
 	\author{Emilio Gamba}
 		\maketitle
@@ -216,9 +216,9 @@ The generation of an explanation sequence can be modelled as a Travelling Salesm
 \end{itemize}
 
 The classical TSP is modelled with a distance matrix that quantifies the distance between the stops. 
-In the case of explanation generation we are interested in, the distance matrix represents the cost of explaining a literal from a given interpretation (previous stops visited). 
+In the case of explanation generation we are interested in, the distance between two stops is computed using the cost of explaining a literal from a given interpretation (previous stops visited). 
 For explanation sequence generation,the distance matrix is not given in advance. 
-However, using a call to an OCUS-oracle allows us to compute an explanation of the literal given a current state in the interpretation.
+However, using a call to an OCUS-oracle provides an explanation of the literal given an interpretation and its corresponding cost.
 
 \begin{observation}(\textbf{MIP-Incrementality})
 	The sets-to-hit maintained by the MIP remain valid for the full UNSAT formula used by OCUS. 
@@ -227,11 +227,14 @@ However, using a call to an OCUS-oracle allows us to compute an explanation of t
 \end{observation}
 
 
-	
-	\subsection{Ideas for improvements}
-	
-	
-	
+\subsection{Zone-preferences in TSP}
+
+In TSP of \cite{ROCS-and-co}, the stops are grouped into zones, where a driver prefers to first service the stations from the same zone, before transitioning to another zone.
+Locality of the explanations can be mapped to the concept of zones in the TSP.
+\begin{example}(Sudoku)
+	 Intuitively, when solving the Sudoku, when deriving a 6 in one place, one looks at deriving the same digit in other parts of the Sudoku. Even though, there might exist an explanation of similar cost for another digit, one will prefer an explanation of the same digit in another block.
+\end{example}
+
 	\clearpage
 	\bibliography{krrlib,ref}
 	\bibliographystyle{theapa}

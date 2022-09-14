@@ -146,7 +146,7 @@
 \SetKw{Break}{break}
 %%%%%%%
 
-\title{Efficiently Explaining Constraint Satisfaction Problems with Unsatisfiable Subset Optimization: Extended use-cases and improved algorithms}
+\title{Efficiently Explaining Constraint Satisfaction Problems with Unsatisfiable Subset Optimization: \\ Extended use-cases and improved algorithms}
 
 \author{\name Emilio Gamba \email emilio.gamba@vub.be \\
 \name Bart Bogaerts \email bart.bogaerts@vub.be \\
@@ -162,7 +162,7 @@
 %\researchnote
 
 \maketitle
-\tableofcontents
+%\tableofcontents
 
 
 \begin{abstract}
@@ -173,11 +173,11 @@
 	Therefore, we build on these formal foundations and tackle the main points of improvement, namely how to generate explanations \emph{efficiently} that are provably \emph{optimal} (with respect to the given cost metric). 
 	For that, we developed \begin{inparaenum}[1)]
 	(1) a hitting set-based algorithm for finding the optimal constrained unsatisfiable subsets;
-	(2) a method for re-using relevant information over multiple algorithm calls;
+	(2) a method for re-using relevant information over multiple algorithm calls; and
 	(3) methods exploiting domain-specific information to speed up the explanation sequence generation.
 \end{inparaenum}
-	We experimentally validated our algorithms on a large number of CSP instances. We found that our algorithms outperform the MUS approach in terms of explanation quality and computational time (on average up to 56 \% faster than a standard MUS approach).
-	Our approach can be used to efficiently generate sequences of optimal explanation steps for a large set of constraint satisfaction problems, such as scheduling, and configuration problems.
+	We experimentally validated our algorithms on a large number of CSP problems. We found that our algorithms outperform the MUS approach in terms of explanation quality and computational time (on average up to 56 \% faster than a standard MUS approach).
+	%Our approach can be used to efficiently generate sequences of optimal explanation steps for a large set of constraint satisfaction problems, such as scheduling, and configuration problems.
 	
 \end{abstract}
 
@@ -313,7 +313,7 @@ We formalize and generalize this observation by introducing the \emph{Optimal \t
 %\end{itemize}}
  
 
-\item Finally, we extensively \textbf{evaluate} our approaches on a large number of CSP instances.
+\item Finally, we extensively \textbf{evaluate} our approaches on a large number of CSP problems.
 
 \end{itemize}
 
@@ -339,6 +339,7 @@ Finally, we evaluate our approach on large set of puzzle instances in \cref{sec:
 
 \paragraph*{Publication history} This article is an extension of a previous paper presented at the International Joint Conference on Artificial Intelligence 2021 \cite{ijcai2021}. The current paper extends the previous paper with more detailed examples, extensive experiments on a large data set of puzzles, as well as a novel Constrained \omus algorithm for efficiently computing explanations.
 %\bart{Here, we might want to be more precise. Not ``a novel algorithm'', but say which one it is.}
+\tias{Do we call it 'Constrained OMUS" in the paper? Is it not Explain-one-step-ocus-split?? as bart said in a previous comment, name it precisely the way we name it later in the paper}
 
 \section{Related Work}\label{sec:related-works}
 %\bart{``Related Work'' (uncountable). 
@@ -366,10 +367,12 @@ Our current work is motivated by a concrete algorithmic need: to generate these 
 
 The closest related work can be found in the literature on generating or enumerating MUSs \cite{conf/sat/LynceM04,liffiton2016fast}.
 Different techniques are employed to find MUSs, including  manipulating resolution proofs produced by SAT solvers \cite{goldberg,DBLP:journals/fmsd/GershmanKS08,DBLP:conf/sat/DershowitzHN06}, incremental solving to enable/disable clauses and branch-and-bound search \cite{DBLP:conf/dac/OhMASM04}, or by BDD-manipulation methods \cite{huang}.
-Other methods work by means of translation into a so-called Quantified \maxsat~\cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressiveness of Quantified Boolean Formulas (QBF) \cite{QBF} with \maxsat~\cite{DBLP:series/faia/LiM09}, \emilio{MaxSAT not introduced proposed text:} a generalisation of SAT that maximises the number of satisfied constraints of a problem, or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest}.
+Other methods work by means of translation into a so-called Quantified \maxsat~\cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressiveness of Quantified Boolean Formulas (QBF) \cite{QBF} with techniques from Maximum Satisfiability (\maxsat)~\cite{DBLP:series/faia/LiM09}, 
+%\emilio{MaxSAT not introduced proposed text:} a generalisation of SAT that maximises the number of satisfied constraints of a problem % T: not needed, rephrased slightly
+or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest}.
 To the best of our knowledge, only few works have considered \emph{optimizing} MUSs: the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest}. 
 
-An \textit{abstract} framework for describing \hitsetbased algorithms, including optimization was developed by \citet{DBLP:conf/kr/SaikkoWJ16}. While our approach can be seen to fit the framework, the terminology is focused on \maxsat~rather than MUS and would complicate our exposition.
+An \textit{abstract} framework for describing \hitsetbased algorithms, including optimization, was developed by \citet{DBLP:conf/kr/SaikkoWJ16}. While our approach can be seen to fit the framework, the terminology is focused on \maxsat~rather than MUS and would complicate our exposition.
 
 %\begin{itemize}
 %	%\item XAI $\rightarrow$ CP
@@ -508,7 +511,7 @@ An explanation step is an implication $I' \wedge \formulac' \implies N$ where \b
 	\item $N$ is a set of literals entailed by $I'$ and $\formulac'$ which are not yet explained.
 \end{itemize} 
 
-The simplicity of an explanation step is measured by the total cost of the elements used in the explanation. 
+%The simplicity of an explanation step is measured by the total cost of the elements used in the explanation. 
 
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
@@ -551,12 +554,14 @@ The simplicity of an explanation step is measured by the total cost of the eleme
 %%% EMILIO :adapted
 
 
-The key part of the algorithm is the search for the best explanation step given an interpretation $I$ of literals derived so far.
-The \onestep procedure depicted in \cref{alg:oneStep} shows the gist of how this was done. 
-It takes as input the problem constraints \formulac, a cost function $f$ quantifying the quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
-Throughout the paper, we consider cost functions $f$ that map an input a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, for instance, a weighted sum on the constraints present in subset $\m{S}$.
-The subset returned by \onestep (line~\ref{alg:explanation-sequence:mus} of algorithm~\ref{alg:explanation-sequence}) is then mapped back to the set of derived literals $I'$ (line~\ref{alg:explanation-sequence:literals}) and constraints $C'$ (line~\ref{alg:explanation-sequence:constraints}). 
+Throughout the paper, we consider cost functions $f$ that map a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.
+The subset returned by \onestep (line~\ref{alg:explanation-sequence:mus} of Algorithm~\ref{alg:explanation-sequence}) is then mapped back to the set of derived literals $I'$ (line~\ref{alg:explanation-sequence:literals}) and constraints $C'$ (line~\ref{alg:explanation-sequence:constraints}). 
 Finally, at line~\ref{alg:explanation-sequence:propagation}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$ . 
+
+The key part of \onestep is the search for the best explanation step given an interpretation $I$ of literals derived so far.
+The procedure depicted in \cref{alg:oneStep} shows the gist of how this was done. 
+It takes as input the problem constraints \formulac, a cost function $f$ quantifying the quality of explanations, an interpretation $I$ containing all already derived literals in the sequence so far, and the interpretation-to-explain $\Iend$. 
+
 
 %\emilio{Check the following with modification to the cost function so that it fits the journal paper more}\tias{the input is C, Iend and I? Or rather I', C' and N? you wish to explain that it computes a cost of an explanation? $f(S)$ moeten definieren , waarbij $S \subseteq ...$} 
 
@@ -606,7 +611,7 @@ Consider the following four clauses as our running example:
 %\bart{This ``mulitple MUS calls'' is not clear here. Needs more detailed explanation. }
 %% EMILIO: HAS been clarified
 Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS. 
-Furthermore, MUS extraction algorithms do not provide any guarantee of $\subseteq$-minimality or optimality with respect to a given cost function. Therefore, in \citet{bogaerts2021framework}, we handle the absence of $\subseteq$-minimality and optimality guarantees by considering increasingly larger subsets of the unsatisfiable formula ($\formulac \land I \land \neg l$).
+Furthermore, MUS extraction algorithms do not provide any guarantee of $\subseteq$-minimality or optimality with respect to a given cost function. Therefore, in \citet{bogaerts2021framework}, we handle the absence of $\subseteq$-minimality and optimality guarantees by heuristically considering increasingly larger subsets of the unsatisfiable formula ($\formulac \land I \land \neg l$).
 %\bart{Do not write ``in Bogaerts, Gamba and Guns''. I would prefer to keep these unsatisfiable subsets out of my body. 
 %	But also/... this is a crappy reference: it is duplicate in the list and this specific one is from the wrong year, has no publicatoin data, ... }
 
@@ -666,7 +671,7 @@ $\m{S} \subseteq \formula$ an \emph{Optimal Constrained Unsatisfiable Subset (OC
 \end{proposition}
 \begin{proof}
 		If we assume that the predicate $p$ is specified itself as a CNF over (meta)-variables indicating inclusion of clauses of $\m{F}$, and $f$ is obtained by assigning a weight to each such meta-variable, then the complexity of the problem of finding an OCUS is the same as that of the SMUS (cardinality-minimal or `Smallest' MUS) problem  \cite{ignatiev2015smallest}: the associated decision problem is $\Sigma^P_2$-complete.
-		Hardness follows from the fact that SMUS is a special case of OCUS, containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
+		Hardness follows from the fact that SMUS is a special case of OCUS; containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
 \end{proof}
 
 %\bart{This one paragraph can be expanded to a proposition/theorem for the journal paper. In a conference paper, this handwaving is fine, in journal, it is better to make it formal}
@@ -706,10 +711,11 @@ $\m{S} , \mathit{status} \gets \call{OCUS}(\formula, f, p)$\label{alg:oneStepOCU
 %\tias{Idon't understand line 2, p:2f->{t,f} defines a function and its scope, so not sure it is appropriate inside the code, but what does the rest do?}
 %\bart{Also, a single line is a bit limited for an algorithm.}
 We define the exactly one constraint $p$ as the equality constraint shown on line \ref{alg:oneStepOCUS:exactlyone} of \cref{alg:oneStepOCUS}. $p$ evaluates to \textit{true} if the size of the intersection of the negated literals to explain $\Iend\setminus I$ with the subset $\m{S}$ of $\formula$ considered is equal to 1, otherwise $p$ evaluates to \textit{false}. 
-The call to \comus at line \ref{alg:oneStepOCUS:ocus-call} of \onestepo will never lead to the $\mathit{FAILURE}$ case, since an \comus is guaranteed to exist for the input cost function $f$, predicate $p$, and formula $\formula$ we consider. Consider predicate $p: (\m{S} \mapsto f(S) \leq v)$ of \cref{alg:oneStepBoundBart} that evaluates to true if a subset $\m{S}$ has a value lower than a given bound $v$. In that case, predicate $p$ might lead to the failure case if no \comus for given bound $v$ exists.  
+The call to \comus at line \ref{alg:oneStepOCUS:ocus-call} of \onestepo will never lead to the $\mathit{FAILURE}$ case, since an \comus is guaranteed to exist for the input cost function $f$, predicate $p$, and formula $\formula$ we consider. Failure can occur for a different predicate $p$; consider for example the predicate $p: (\m{S} \mapsto f(S) \leq v)$ of \cref{alg:oneStepBoundBart} that evaluates to true if a subset $\m{S}$ has a value lower than a given bound $v$. In this case, it might lead to the failure case if no \comus for given bound $v$ exists.  
 %\tias{Iets dat hoger algo niet gaat falen...}
 %For that, we associate a decision variable $d_{\ell}$ for every clause in order to count the occurrence of a clause in a subset of $\formulac\land I\land \overline{\Iend\setminus I}$, where $d_{\ell} = 1$ ($d_{\ell} = 0$) if it is (not) present in the subset.
-In the next section, we provide the details on how to compute an OCUS.
+
+In the next section, we provide the details on how to compute an OCUS on line~\ref{alg:oneStepOCUS:ocus-call}.
 %\emilio{Check explanation here for exactly one constraint}
 
 % \tias{Make sure it is on the same page as this line}. 
@@ -1170,8 +1176,8 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 %
 \end{example}
 %The main observation from the 
-Finally, observe from \cref{ex:onestep-ocus} that the \comus algorithm requires a lot of intermediate steps in order to find an \comus. Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
-This last observation suggests that a better targeted \corrsubsets procedure is required to lower the amount of iterations.   
+Finally, observe in \cref{tab:example-explanation-generation-not-incremental} that the \comus algorithm requires a lot of intermediate steps in order to find an \comus. Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
+%This last observation suggests that a better targeted \corrsubsets procedure could perhaps lower the amount of iterations.   
 
 
 \section{Multiple Optimal Unsatisfiable Subsets}\label{sec:OUS} %\emilio{Adapt title to fit narrative OCUS call with p set to true}
@@ -1180,8 +1186,9 @@ Preliminary experiments have shown that when generating an explanation step with
 The main reason for this is that the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially searching over an exponential number of literals and clauses.
 %In this section, we look at how to make the generation of one explanation step more efficient by splitting up the \comus-call into individual calls for every literal.
 Therefore, in this section, we analyze if instead of working \comus-based, we can also generate an explanation step by splitting up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal.
+
 Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$, i.e., 
-$\omus{}(\formula,f):=\comus{}(\formula,f,\ltrue) $ for each $\formula$ and $f$. 
+$\omus{}(\formula,f):=\comus{}(\formula,f,\ltrue) $ for each $\formula$ and~$f$. 
 % replacing the MUS call by an \omus{} \bart{Has this been introduced?} call at line~\ref{alg:onestep:mus-call} of \cref{alg:oneStep}. 
 
 
@@ -1230,7 +1237,7 @@ By keeping track of the best candidate explanation, its corresponding cost can b
 
 \paragraph{Lower bound} Every hitting set computed inside the \omus{} algorithm produces a lower bound on the best cost that can be obtained, even the satisfying ones. Indeed, the candidate hitting set returned on line~\ref{line:opt} of \cref{alg:comus} is guaranteed to be the lowest-cost one. Consequently, the cost of the best candidate explanation so far can be used as an early stopping criteria: if the cost of the current hitting set is larger than the cost of the best explanation so far, \omus{} will not be able to find a better (cheaper) unsatisfiable subset $\m{S}$ for that literal.
 
-In fact, such a `bounded \omus{}' call is naturally obtained by doing a \comus call with as constraint $p(S):= f(\m{S}) \leq f(\m{S}_{best})$.
+In fact, such a `bounded \omus{}' call is naturally obtained by doing am \comus call with as constraint $p(S):= f(\m{S}) \leq f(\m{S}_{best})$.
 
 
 %be guaranteed to be optimal \bart{Obviously, that is what the O in OUS stands for}, and therefore provides an upper bound $f(S_{best})$ \bart{What is $S_{best}$?} on the cost of the remaining literals to explain. \bart{It does not provide a bound on the cost of the remaining literals to explain. It provides an upper bound on the cost of the best explanation. That upper can be USED when considering other literals to explain. Namely, instead of doing a call to OUS, do a call to OCUS, where the constraint (the $p$) now is: \emph{cost is strictly better than the best-found-this-far} }.  
@@ -1354,8 +1361,8 @@ These are stored in a priority queue, sorted by the cost. % of the hitting set.
 
 %The \iterativeonestep algorithm works as follows. 
 \iterativeonestep repeatedly extracts the best literal-to-explain and corresponding hitting set out of the priority queue. Similar to Algorithm~\ref{alg:comus}, if the corresponding hitting set is unsatisfiable, it is guaranteed to be the cost-minimal \omus. 
-This is because the queue ensures that this hitting set is the lowest scoring hitting set across all literals, and because each hitting set is guaranteed to be an optimal hitting set of the collected sets-to-hit. 
-If the hitting set is satisfiable, a number of correction subsets are extracted from the literal-specific unsatisfiable formula and added to its respective collection of sets to hit $\setstohit_{\ell}$. 
+This is because the queue ensures that this hitting set is the lowest scoring hitting set across all literals, and because each hitting set is guaranteed to be an optimal hitting set of its collected sets-to-hit $\setstohit_\ell$. 
+If, on the other hand, the hitting set is satisfiable, a number of correction subsets are extracted from the literal-specific unsatisfiable formula and added to its respective collection of sets to hit. 
 Finally, a new hitting set is computed and this information is pushed back in the priority queue. 
 
 \section{Efficiently computing optimal explanations}\label{sec:efficient-ocus}
@@ -1379,8 +1386,8 @@ We now discuss optimizations applicable to the O(C)US algorithms that are specif
 \subsection{Incremental OCUS computation}\label{sec:ocusEx}
 Inherently, generating a sequence of explanations still requires many O(C)US calls. 
 Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
-calls \onestepo iteratively with a growing interpretation $I$ until $I=\Iend$.
-
+calls an \onestep variant repeatedly with a growing interpretation $I$ until $I=\Iend$.
+%
 All of these calls to \onestep, and hence O(C)US, are done with very similar input (the set of constraints does not change, and the $I$ slowly grows between two calls). For this reason, it makes sense that information computed during one of the earlier stages can be useful in later stages as well. 
 
 The main question is, suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$; how can we make use as much as possible of the data computations of the first call to speed-up the second call? The answer is surprisingly elegant. The most important data \comus keeps track of  is the collection \setstohit of correction subsets that need to be hit.
@@ -1395,12 +1402,13 @@ as the intermediate results of a call to \corrsubsets.
 When a second call to \comus is performed, we can then initialize $\setstohit$ as the complement of each of these satisfiable subsets with respect to $\formula_2$, i.e., \[\setstohit\gets \{\formula_2\setminus \m{S}\mid \m{S}\in \satsets\}.\]
 The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. 
 
-\subsubsection{Incrementality with MIP}\label{sec:mip-incrementality}  For hitting set solvers that natively implement incrementality, such as Mixed Integer Programming (MIP) solvers, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. 
+\subsubsection{Incrementality with MIP}\label{sec:mip-incrementality}  For hitting set solvers that natively implement incrementality, such as modern Mixed Integer Programming (MIP) solvers, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. 
 To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, we need to ensure that the hitting set solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$. 
 %% talk about the general case incremental hitting set solver 
 For incremental hitting set solvers, this means updating the constraint $p$ at every explanation step to include (1) only literals from interpretation $I$ at the current explanation step, and (2) the exactly one constraint for explaining one literal at a time.
 
-Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:background}), and we have this upper bound on the set of formulas to be used, we initialize the MIP solver once with all relevant decision variables of $\m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$. 
+Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:background}), and we know the entire formula from which elements must be chosen,% have this upper bound on the set of formulas to be used, 
+we initialize the MIP solver once with all relevant decision variables of $\m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$. 
 
 Bear in mind that retracting a constraint $p$ to replace it with an updated one (in the next explanation call) is non-trivial for MIP solvers. 
 Therefore, we assign an infinite weight in the cost function to all literals of $\Iend\setminus I$ and update their weights as soon as they have been derived according to the given cost function.
@@ -1577,7 +1585,8 @@ In this case, subset $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\l
 	Two sets $S_1$ and $S_2$ are $p$-disjoint if every set that hits both $S_1$ and $S_2$ and satisfies $p$ contains $s_1\in S_1$ and $s_2\in S_2$ with $s_1 \neq s_2$.
 \end{definition}
 
-In the next section, motivated by the effectiveness of a non-trivial \grow, we first analyze different \grow procedures. Next, in section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-disjoint} to enumerate multiple correction subsets that are $p$-disjoint of each other during the \corrsubsets procedure.
+In the next section, %motivated by the effectiveness of a non-trivial \corrsubsets, 
+we first analyze different possible procedures for computing a single correction subset. Next, in section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-disjoint} to enumerate multiple correction subsets that are $p$-disjoint of each other during the \corrsubsets procedure.
 
 %\bart{Hmm... disjoint from the incremental point of view... Not so sure about that. It really does not have anything to do with incrementality. It might have something to do with $p$ (and $f$). 
 %In terms of $p$ I would phrase it something like this: 
@@ -1595,9 +1604,9 @@ We first discuss how to efficiently grow the satisfiable subset capitalizing on 
 \subsubsection{Growing satisfiable subsets using domain-specific information.} \label{para:domainspecificgrow}
 
 
-The goal of the \grow phase of the \corrsubsets procedure is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence imposes stronger restrictions on the hitting sets.
+The goal of the \grow phase\tias{This sentence can not be used... there is no such thing introduced as a 'grow' phase? I don't think any pseudo code for corrsubsets has been shown yet} of the \corrsubsets procedure is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence imposes stronger restrictions on the hitting sets.
 
-There are multiple conflicting criteria that determine what makes an effective `grow' procedure:
+There are multiple conflicting criteria that determine what makes an effective `grow' procedure\tias{same again, unless I skimmed over it, the reader does not know 'grow' yet. If I skimmed over it, now would be a good place to remind the reader}:
 % Choosing an effective \grow procedure requires finding a difficult balance: 
 on the one hand, we want our subformula to be as large as possible (which ultimately would correspond to computing a maximal satisfiable subformula), %to derive the most precise information we can get, 
 but on the other hand we also want the procedure to be very efficient as it is called in every iteration. 
@@ -1634,7 +1643,7 @@ Furthermore, we can initialize this call as well as any call to a \sat solver wi
 
 %\paragraph{MaxSAT weighing scheme} The \maxsat~solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
 
-We evaluate different grow strategies as part of the $\corrsubsets(\m{S}, \formula)$ procedure in the experiments section including:
+We evaluate different grow strategies as part of the $\corrsubsets(\m{S}, \formula)$ procedure\tias{same, does it have pseudo-code, what/where is the procedure you are referring too?} in the experiments section including:
 \begin{description}
 	\item[\sat] extracts a satisfying model from the \sat solver to turn $\m{S}$ into a larger satisfiable subset. This grow will be considered the baseline for comparing the other grow-variants.
 	\item[\subsetmaxsat] extends the satisfiable subset computed by \sat by looping over every remaining clause $c \in \formula \setminus \m{S}$.  If $\m{S} \cup \{c\}$ is satisfiable, then clause $c$ is added to $\m{S}$ as well as any other clause from $c' \in \formula \setminus \m{S} \cup \{c\}$ that is satisfied in the model found by the SAT solver. 
@@ -1665,7 +1674,7 @@ The question is: can we cheaply find \textit{multiple}, ideally \emph{$p$-disjoi
 %\bart{I would propose to motivate this from the observation: MIP calls are much more expensive than the rest. Need to compensate}
 
 %Detail: how do we do it? 
-Inspired by \citet{marques2013computing}, the \corrsubsets procedure, depicted in \cref{alg:corr-subsets-grow-with-sat}, computes a collection of correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 
+Inspired by \citet{marques2013computing}, the \corrsubsets procedure \tias{This is tricky, to call it 'the' procedure... if tehere is only 'the' procedure, then 7.2.2 must be before 7.2.1, then you avoid my coments in 7.2.1}, depicted in \cref{alg:corr-subsets-grow-with-sat}, computes a collection of correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 
 The \corrsubsets procedure will repeatedly compute a satisfiable subset $\m{S}' \supseteq \m{S}$, and add its complement 
 to the collection of disjoint MCSes $\m{K}$ and to $\m{S}$, ensuring that the constraints in the correction subset cannot be present in the next correction subset (disjoint), until no more satisfiable subsets can be found. 
 
@@ -1724,7 +1733,7 @@ However, for more complicated $p$ constraints, this easily degrades into computi
 %Step 1 of \cref{tab:example-explanation-generation:incr:step1} illustrates this case where $x_1$ is present in the hitting set $\m{S}$ and $\lnot x_1$ in the correction subset $F \setminus \m{S}$ \tias{I dont see this in table 2, it does not explicitly name the correction subset F without S either; cut this sentence? or write S, F and the corr subset in full, without refering to table 2? if S is ... and F is .. then F without S is and hence ...}
 
 %\tias{I am unsure of the next paragraph, is it proposing an alternative to the above? If so, write that "An alternative we propose is... we will denote it as 'its name in the exps'}
-\paragraph{Correction subsets enumeration with incremental MIP} If \cref{alg:corr-subsets-grow-with-sat} is directly applied to the MIP incremental \comus variant that considers the whole formula $\formulac\land \textbf{\Iend} \land \overline{(\Iend\setminus I)}$, both the literal-to-explain and its negation will be present at line~\ref{alg:corr-subsets-grow-with-sat:mapping} leading to UNSAT. In  a given explanation step, only the base constraints $\formulac$, the current interpretation $I$ and the literals of $\overline{(\Iend\setminus I)}$ can be hit by the hitting set solver.  
+\paragraph{Correction subsets enumeration with incremental MIP} \tias{If you move 7.2.2 before 7.2.1 (which makes sense to me at this point), then probably this 'paragraph' should become 7.2.3?} If \cref{alg:corr-subsets-grow-with-sat} is directly applied to the MIP incremental \comus variant that considers the whole formula $\formulac\land \textbf{\Iend} \land \overline{(\Iend\setminus I)}$, both the literal-to-explain and its negation will be present at line~\ref{alg:corr-subsets-grow-with-sat:mapping} leading to UNSAT. In  a given explanation step, only the base constraints $\formulac$, the current interpretation $I$ and the literals of $\overline{(\Iend\setminus I)}$ can be hit by the hitting set solver.  
 Therefore, we project subset $\m{S'}$ onto the base constraints, the current interpretation and the negated literals to explain. This extra step is executed right after line~\ref{alg:corr-subsets-grow-with-sat:mapping} of \cref{alg:corr-subsets-grow-with-sat}:
 \[ \m{S}' \gets \m{S}'  \cap (\formulac\cup I \cup \overline{\Iend \setminus I}) \]
 By incorporating \emph{explanation-specific} information, we are able to enumerate extra correction subsets that are $p$-disjoint.
@@ -1800,7 +1809,7 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 
 \cref{ex:correction-subset-enum} depicts the effectiveness of enumerating multiple correction subset that are $p$-disjoint by projecting the correction subset onto the unsatisfiable formula for the current interpretation $(\formulac\cup I \cup \overline{\Iend \setminus I})$. In the rest of the paper, we consider correction subset enumeration with a \sat-based grow as the baseline approach. We refer to it as \emph{Multi-\sat}.
 
-\paragraph{Efficient correction subset enumeration}  Extending the observation that a call to an efficient \maxsat~solver helps in finding maximally satisfiable subsets, we propose three additional variants of \cref{alg:corr-subsets-grow-with-sat}:
+\paragraph{Efficient correction subset enumeration} \tias{Now I'm confused... isn't this entire subsection 'Multi'? WHy is this paragraph called 'efficient'? it just shows the different possible combinations of single/multi and grows? Could actually move to the experiment section...} Extending the observation that a call to an efficient \maxsat~solver helps in finding maximally satisfiable subsets, we propose three additional variants of \cref{alg:corr-subsets-grow-with-sat}:
 \begin{enumerate}
 	\item The first variant, \emph{Multi-\sat}, repeatedly grows with \sat and blocks the corresponding correction subset until no more correction susbets can be extracted.
 	\item The second variant is \emph{Multi-\maxsat}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat~introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
@@ -1917,7 +1926,7 @@ In this section, we validate the qualitative improvement of computing explanatio
 
 \subsection*{Experimental setup}
 
-Our experiments\footnote{The code for all experiments is made available at \texttt{https://github.com/ML-KULeuven/ocus-explain}.} were run on a compute cluster where each explanation sequence was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor with a time limit of 60 minutes and a memory-limit of 8GB. The code is written on top of PySAT 0.1.7.dev1.
+Our experiments\footnote{The code for all experiments is made available at \texttt{https://github.com/ML-KULeuven/ocus-explain}.} were run on a compute cluster where each explanation sequence was assigned a single core on a 10-core INTEL Xeon Gold 61482 (Skylake) processor with a time limit of 60 minutes and a memory-limit of 8GB. The code is written on top of PySAT 0.1.7.dev1\tias{does pysat have a reference? if so better include it}.
 For the MIP calls, we used Gurobi 9.1.2, for SAT calls MiniSat 2.2 and for \maxsat~calls RC2 as bundled with PySAT.
 In the MUS-based approach we used PySAT’s deletion-based MUS extractor MUSX~\cite{marques2010minimal}. 
 
@@ -1936,11 +1945,11 @@ In  \cref{tab:puzzle-composition-family} of \cref{apx:puzzledata}, we summarize 
 \paragraph{Research Questions} Our experiments are designed to answer the following research questions:  
 
 \begin{enumerate}[label={Q\arabic*}, ref={Q\arabic*}]
-\item  What is the effect of requiring optimality of MUSs on the \textbf{quality} of the generated explanations ? \label{rq:q1}
+\item  What is the effect of using \textit{optimal} unsatisfiable subset, on the quality of the generated step-wise explanations? \label{rq:q1}
 
-\item What is the impact of information \textbf{re-use} on the efficiency of OCUS ? \label{rq:information-reuse}
+\item What is the impact of information \textbf{re-use} on the efficiency of OCUS? \label{rq:information-reuse}
 
-\item What are the time-critical components of \comus~?\label{rq:time-critical}
+\item What are the time-critical components of \comus?\label{rq:time-critical}
 %\item   Does \textbf{re-use} of information across the different iterations improve efficiency? \label{rq:q2} \emilio{Give name to incrementality with MIP-Solver and adapt rq for that.}
 
 %\item \emilio{Generating some ideas for reformulation:
@@ -1950,26 +1959,27 @@ In  \cref{tab:puzzle-composition-family} of \cref{apx:puzzledata}, we summarize 
 %		\item ...
 %	\end{itemize}}
 
-\item  How does extraction of \emph{multiple} correction subsets affect performance ?\label{rq:q3}
+\item  How does more advanced extraction of correction subsets and extraction of multiple correction subsets affect performance?\label{rq:q3}
 %\begin{enumerate}
 %	\item How does extraction of multiple correction subsets affect runtime ?  \label{rq:q3}
 %\end{enumerate} %\tias{just the 'a' one is fine?}
 \item   What is the efficiency of a single step O(C)US
 \begin{enumerate}
-\item from an incremental (random explanation) solving point of view ?
-\item from an instantaneous (time-to-first) explanation  point of view ?
+	\item from an instantaneous (time-to-first) explanation  point of view?
+    \item from a step-wise (single next explanation) solving point of view?
 \end{enumerate} \label{rq:q4}% \tias{revisit after reading exps}
 \end{enumerate}
 
 \subsection{Explanation quality}
 To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on \cref{alg:oneStep}. 
-Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there -- in order to avoid the quality problems we will illustrate below --  an extra inner loop was used that employs \emph{even more} calls to \call{MUS} for a selected set of subsets of \formulac of increasing size. % (this is their Algorithm~3). 
-While this yields better explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle. 
+Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there -- in order to avoid the quality problems we will illustrate below --  an extra inner loop was used that employs \emph{even more} calls to \call{MUS} for subsets of \formulac of increasing size. % (this is their Algorithm~3). 
+While this would yield better explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle. 
 
 To answer \textbf{Q1}, we ran the \call{OCUS}-based algorithm as described in \cref{alg:oneStepOCUS} and compared 
 at every step the cost of the produced explanation with the cost of \call{MUS}-based explanation of \cref{alg:oneStep}.
 These costs are plotted on a heatmap in Figure \ref{fig:rq1_heatmap}, where the darkness represents the number of occurrences of the combination at hand. 
-We see that the difference in quality is striking in many cases, with the MUS-based solution often missing very cheap explanations (as seen by the darkest squares in the column around cost 60), thereby confirming the need for a cost-based \omus/\comus approach.
+
+We see that the difference in quality is striking in many cases, with the MUS-based solution often missing very cheap explanations (as seen by the darkest squares in the column above cost 60), thereby confirming the need for a cost-based \omus/\comus approach.
 %\emilio{This has only been tested on logic grid puzzles, ideally, I would ahve to extend this to all puzzles. To reimplemnt!}
 
 %\begin{figure}[!h]
@@ -1995,8 +2005,12 @@ Next to \begin{inparaenum}[(1)]
 	\item the \emph{split} OCUS (\ousbiter) approach, where we split up the computations by iteratively selecting the most promising literal and expanding only one hitting set for it, then re-evaluating the most promising literal and so forth.
 \end{inparaenum}
 
-\subsubsection{Bootstrapping Satisfiable Subsets vs MIP-Incrementality } Preliminary experiments have shown that keeping track of the hitting sets using the MIP solver significantly outperforms bootstrapping satisfiable subsets. Therefore, in the experiments, we omit results where incrementality is implemented by bootstrapping $\m{H}$ with satisfiable subsets.
 %\emilio{Not sure what the best way is to refer to these 3 approaches, do send some suggestions. I will adapt the graph as soon as I have the final legends.}\tias{Done, following the algo names}
+
+\subsubsection{Incremental versus non-incremental explanation generation}
+%\subsubsection{Bootstrapping Satisfiable Subsets vs MIP-Incrementality } 
+Preliminary experiments have shown that incrementality by keeping track of the hitting sets using the MIP solver significantly outperforms bootstrapping satisfiable subsets. Therefore, in the experiments, we only show results on incrementality using MIP solvers.%omit results where incrementality is implemented by bootstrapping $\m{H}$ with satisfiable subsets.
+
 
 For \comus, incrementality (\emph{+Incr}) is achieved by reusing the same MIP hitting set solver throughout the explanation calls, as explained in \cref{sec:ocusEx}. 
 Methods \ousb and \ousbiter use a separate hitting set solver for every literal to explain. Each hitting set solver can similarly be made incremental (with respect to its own literal) across the explanation calls (\emph{+Incr.}), or not.% Once the literal is explained, the hitting set solver is discarded.
@@ -2004,7 +2018,7 @@ Methods \ousb and \ousbiter use a separate hitting set solver for every literal 
 %\bart{formatting: avoid things like \comusincr\emph{+Incr} (format consistently)}
 
 %Figure \ref{fig:rq2_cactus_incrementality_log} depicts the average (over all the puzzles) cumulative explanation time to derive a number of literals. Note that all puzzles contain the same number of literals. When a method times out for a puzzle at one step, a runtime value of 3600 is used in computing the averages for all future steps. In case, the number of literals in a puzzle is less than the maximum number of literals to explain, then the cumulative time to derive the last literal is used for computing the average. 
-Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances fully explained through time before the given 1 hour timeout. In each configuration depicted, we use the \sat-based \grow within the \corrsubsets procedure. The same color is used for the same \comus algorithms, however draw a full line for the incremental version and a dashed line for the non-incremental one.
+Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances fully explained through time before the given 1 hour timeout. In each configuration depicted, we use a single \sat-based \grow in the \corrsubsets procedure. The same color is used for the same \comus algorithms, with a full line for the incremental version and a dashed line for the non-incremental one.
 
 %\begin{inparaenum}[(1)]
 %	\item grow satisfiable subset $\m{S}$ of the \comus algorithm by extracting a satisfiable model from the \sat solver
@@ -2036,7 +2050,7 @@ Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances f
 %\tias{Should we go for cactusplots instead? nr of puzzles explained per time (full explanation, not cut up into steps)}
 %\emilio{is the time to explain linked to the "difficulty" of the instance, i.e. sum of the explanation costs/ $\#$ of explanations ?}
 
-\subsubsection{General speed-up of incrementality} If we compare all configurations, we see that \comus is faster than the plain \mus-based implementation for simpler instances. \mus is able to explain more instances than all \emph{OCUS} versions, as it solves a simpler problem (with worse quality results as shown in \textbf{Q1}).
+If we compare all configurations, we see that \comus is faster than the plain \mus-based implementation for simpler instances. \mus is able to explain more instances than all \emph{OCUS} versions, as it solves a simpler problem (with worse quality results as shown in \textbf{Q1}).
 \comusbound is faster than \comus for easier instances but explains about same number of instances, and \comussplit is considerably faster and solves the most instances out of all \comus algorithms.
  %, especially since the \emph{MUS}-based implementation does not take weights into consideration, .% \emilio{Hypothesis: Most of the puzzles (instances 250+) are harder to explain, 
 %\tias{First explain OCUS versus OUS-Bound/OUS-split (dashed lines, can have exactly the same color as the incr ones actually): OCUS a bit faster than MUS but only in for simple instances, OCUS-Bound faster than OCUS for easier instances but solves about same number of instances, OCUS-Split considerably faster and more instances than the other}
@@ -2044,9 +2058,9 @@ Figure \ref{fig:rq2_cactus_incrementality_log} depicts the number of instances f
 
 The effect of introducing incrementality produces a speed-up in \comus. For \comusbound it is negligible and for \comussplit there is a speed-up in all but its most difficult instances.
 In general, we see that the curves of the incremental variants are located somewhat lower.
-The best runtimes are obtained with \ousbiterincr, that is, using an incremental hitting set solver \emph{for every individual literal-to-explain} and only expanding the literal that is most likely to provide a cost-minimal \comus.
+The best runtimes are obtained with \ousbiterincr, that is, using an incremental hitting set solver \emph{for every individual literal-to-explain separately} and only expanding the literal that is most likely to provide a cost-minimal \comus.
 
-\subsubsection{Instance-level speed-up with incrementality} Next, we analyze the speed-up of introducing incrementality at the instance level. \cref{fig:rq2_runtime_incr_non_incr} compares the time to generate a full sequence for the incremental variant with the non-incremental version for each puzzle of every \comus configuration. Results in the upper triangle signify an improvement using incrementality, and the lower triangle indicates worse performance with incrementality.
+\subsubsection{Instance-level speed-up with incrementality} Next, we analyze the speed-up of introducing incrementality per instance. \cref{fig:rq2_runtime_incr_non_incr} compares the time to generate a full sequence for the incremental variant with the non-incremental version for each puzzle of every \comus configuration. Results in the upper triangle signify an improvement using incrementality, and the lower triangle indicates worse performance with incrementality.
 
 	\begin{figure}
 	\centering
@@ -2055,10 +2069,12 @@ The best runtimes are obtained with \ousbiterincr, that is, using an incremental
 	\label{fig:rq2_runtime_incr_non_incr}
 \end{figure}
 
-Taking a closer look at the results for \comus, the story is similar to the results of \cref{fig:rq2_cactus_incrementality_log}. Many of the instances that are explained quickly (around 10 to 20 seconds) by \comusincr, whereas non-incremental \comus takes much longer to explain some instances, even leading to a timeout.
-Incrementality with \comussplit and \comusbound produce only marginal improvements on the runtime. Most of the instances lie close to the black line.
-Only for a few instances are present in the lower triangle mostly for the incremental variant of \comusbound. For these instances, \ousbincr takes on average double the time to generate the first explanation step due to the overhead associated with introducing incrementality. The story is similar for the very few instances \ousbiterincr is slower than \comussplit.
-To summarize, the first explanation step for \ousbiterincr and \ousbincr is critical in generating the sequence efficiently. Especially since all solvers are initialised and a good ordering for the remaining literals to explain is constructed. 
+Taking a closer look at the results for \comus, the story is similar to the results of \cref{fig:rq2_cactus_incrementality_log}. Many of the instances are explained quickly (around 10 to 20 seconds) by \comusincr, whereas non-incremental \comus takes much longer to explain some instances, even leading to a timeout.
+
+Incrementality with \comussplit and \comusbound produce marginal improvements on the runtime. Most of the instances lie close to the black line.
+Only a few instances are present in the lower triangle, for the incremental variant of \comusbound. For these instances, \ousbincr takes on average double the time to generate the first explanation step due to the overhead associated with introducing incrementality. The story is similar for the few instances where \ousbiterincr is slower than \comussplit.
+
+To summarize, the first explanation step for \ousbiterincr and \ousbincr is critical in generating the sequence efficiently. Especially since all solvers are initialised and a good ordering for the remaining literals to explain is constructed. \tias{This paragraph... I think I oppose. Fig 3 does not show anything about 'the first explanation step'? I think you are drawing a conclusion/summary based on additional information. I think this paragraph can go and it is still fine: you describe the results in the paragraphs before}
 
 %Finally, \comussplit has the most instances on the left side of upper-right triangle, meaning it is 
 %When introducing incrementality,OCUS there is a speed-up, for OUS-bound it is neglegible 
@@ -2155,17 +2171,17 @@ To summarize, the first explanation step for \ousbiterincr and \ousbincr is crit
 %\end{tabular}
 %\end{adjustbox}
 %\end{figure}
-\subsection{Runtime decomposition} To evaluate the time critical components of \comus, we decompose the time spent in each core part of the \call{O(C)US} algorithms in \cref{tab:runtime-decomposition}. We only included the runtimes of instances that do not timeout, to allow a fair comparison. 
+\subsection{Runtime decomposition} To evaluate the time critical components of \comus (Q3), we decompose the time spent in each part of the \call{O(C)US} algorithms in \cref{tab:runtime-decomposition}. We only included the runtimes of instances that do not timeout \tias{for all methods? specify, only then fair imho}, to allow a fair comparison. 
 %\emilio{Add this or remove fair comparison ?} 
 %\emilio{
-	If we did, the average \% of time would not be representative as it would be biased by, for instance, the expensive \texttt{CorrSS} or \texttt{OPT} call. 
+	%If we did, the average \% of time would not be representative as it would be biased by, for instance, the expensive \texttt{CorrSubSet} or \texttt{OPT} call. 
 	
 	The table depicts for each configuration 
 \begin{inparaenum}[(1)]
 	\item the number of instances \emph{explained};
 	\item \%\texttt{OPT} the percentage of time spent in the hitting set solver;
 	\item \%\sat the percentage of time spent in the sat solver:
-	\item \%\texttt{CorrSS} the percentage of time spent in the grow procedure; and
+	\item \%\texttt{CorrSS} the percentage of time spent in the \corrsubsets procedure; and
 	\item $N_{sth}$ the average total number of sets-to-hit computed.
 \end{inparaenum}
 Each version of the \comus algorithm uses the \sat-based grow in the \corrsubsets procedure (see \cref{tab:correction-subset-proc-description}).
@@ -2213,8 +2229,8 @@ Each version of the \comus algorithm uses the \sat-based grow in the \corrsubset
 %	\label{tab:runtime-decomposition}
 %\end{table}
 
-Looking closer at the runtime decomposition, we observe that most of the time in all the \comus algorithms is spent in computing optimal hitting sets.
-The results in the $N_{sth}$ column, highlight the decrease in the amount of sets-to-hit that need to be computed when adding incrementality, in our case, re-using the MIP solver between explanation steps. 
+Looking closer at the runtime decomposition, we observe that most of the time in all the \comus algorithms is spent in computing the optimal hitting sets.
+The results in the $N_{sth}$ column (top 3 rows versus incremental bottom 3 rows), highlight the decrease in the amount of sets-to-hit that need to be computed when adding incrementality, in our case, re-using the MIP solver between explanation steps. 
 Indeed, similar to the results of \cref{ex:ocus-incr:expl-seq}, the \comus algorithms do not need to recompute the previously derived sets-to-hit, and will therefore start with a good candidate hitting set at the beginning of an explanation step.
 %The same trend is observed when adding incrementality in \cref{tab:runtime-decomposition},   is translated in the number of instances on one side, as well as the average number of computed hitting sets on the other side. 
 
@@ -2240,9 +2256,9 @@ Indeed, similar to the results of \cref{ex:ocus-incr:expl-seq}, the \comus algor
 \end{table}
 
 
-\subsection{Improving correction subset extraction}
+\subsection{Correction subset extraction}
 %\tias{Alt: 
-	As \cref{tab:runtime-decomposition} table shows, most time is spent in the hitting set computation. Hence, there is potential in reducing its effort by computing better or more correction subsets, thereby having better collections of sets-to-hit.
+	As \cref{tab:runtime-decomposition} table shows, most time is spent computing the optimal hitting sets. Hence, there is potential in reducing its effort by computing better or more correction subsets, thereby having better collections of sets-to-hit.
 %}
 %In our O(C)US algorithm, we do not just aim to find any correction subsets, but we prefer small correction subsets: subsets that impose strong restrictions on the assignments the optimal hitting set solver can find. 
 This induces a trade-off between the \emph{efficiency} of the \grow strategy, the \emph{quality} of the produced \emph{satisfiable subset} as well as the corresponding \emph{sets-to-hit} generated by the \corrsubsets procedure. 
@@ -2250,7 +2266,7 @@ This induces a trade-off between the \emph{efficiency} of the \grow strategy, th
 
 %In our O(C)US algorithm, we do not just aim to find any satisfiable subsets, but we prefer \emph{high quality} satisfiable subsets: subsets that impose strong restrictions on the assignments the optimal hitting set solver can find. This induces a trade-off between \emph{efficiency} of the \grow strategy and \emph{quality} of the produced satisfiable subset.
 
-\subsubsection{Domain-specific correction subset enumeration}\label{sec:experiments:domain-specific-grow}
+%\subsubsection{Domain-specific correction subset extraction}\label{sec:experiments:domain-specific-grow}
 
 In this section, we evaluate whether an efficient \grow-call is able to balance efficiency and quality of the produced satisfiable subset. Second, we analyze whether the enumeration of multiple, ideally $p$-disjoint, correction subsets 
 %evens the computation between the hitting set solver and the \corrsubsets procedure.
@@ -2260,7 +2276,7 @@ reduces the time spent in the hitting set solver.
 %sets-to-hit using \maxsat~grow, and correction subset enumeration strategies introduced in \cref{sec:correction_subset_enum}. 
 %\tias{This sentence rather complicated}
 Thus, to answer \textbf{\ref{rq:q3}}, we compare the incremental variants of \comus, \emph{bounded} \comus, \emph{split} \comus, and only change the \corrsubsets strategy they use.  
-In \cref{tab:correction-subset-proc-description}, we summarize the different \corrsubsets configurations compared.
+In \cref{tab:correction-subset-proc-description}, we summarize the different \corrsubsets configurations compared. \tias{Yes so, I think you can just move that table over here, it was awkward there}
 %\begin{itemize}%[(a)]
 %	\item \sat refers to using a model computed by \sat solver to grow the input satisfiable subset;
 %	\item Dom.-spec.~\maxsat~refers to growing with a \maxsat~solver using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). In this case, \maxsat-based \grow uses only the previously derived facts and the original constraints;
@@ -2333,7 +2349,7 @@ To summarize, the best explanation sequence configuration corresponds to the ite
 
 \paragraph{Runtime decomposition} We now look at the runtime decomposition in \cref{tab:runtime-decomposition-corr-susbet-enum} for the best performing \corrsubsets configuration, i.e.~\multisubsetmaxsat, also for the non-incremental OCUS variants. 
 For the non-incremental variants, we observe that shift in computation from the hitting set solver to correction subset enumeration clearly reaps its benefits. 
-Compared to \cref{tab:runtime-decomposition}, more instances are explained, and the computation is more balanced both for incremental and non-incremental \comus algorithms.
+
 
 \begin{table}[!h]
 	\centering
@@ -2354,16 +2370,21 @@ Compared to \cref{tab:runtime-decomposition}, more instances are explained, and 
 	\label{tab:runtime-decomposition-corr-susbet-enum}
 \end{table}
 
-\subsection{Single step O(C)US for interactive explanations}
+Compared to \cref{tab:runtime-decomposition}, more instances are explained, and the computation is more balanced both for incremental and non-incremental \comus algorithms.
+\tias{Maybe some more on the comparison to Tab 7? That it leads to many more Ns in the non-incrmental case, and somewhat fewer in the incremental case, but that the number of instances explained is substantially larger?}
 
-In this section, we analyze whether the algorithms we developed are fit for an interactive context. By an interactive context, we consider two types of settings. First, the user wants an immediate explanation step for the given CSP and second, the user is incrementally solving the puzzle and in the background explanations are being computed. \cref{tab:indiv-explanations-all} depicts the two best performing \corrsubsets procedures. For each procedure, we compute the average time to generate an explanation  step $\overline{t_{expl}}$, average time to produce the first explanation step $\overline{t_{1}}$, and the explanation time quantiles 25 up to 100, where quantile 100 $q_{100}$ symbols the most expensive step to generate.
+\subsection{Efficiency of single step O(C)US, instantaneous and step-wise}
+
+In this section, we analyze whether the algorithms we developed could be fit for an interactive context. By an interactive context, we consider two types of settings. First, a user may want an immediate explanation step for the given CSP, and second a user is asking for the next step, and the next, and so forth. 
+
+\cref{tab:indiv-explanations-all} depicts the two best performing \corrsubsets procedures. \tias{No it doesn/t? its on the best, Mulit-subsetmax-sat, this is probably an old sentence} For each procedure, we compute the average time to produce the first explanation step $\overline{t_{1}}$ (instantaneous), average time to generate one step-wise explanation $\overline{t_{step}}$, and the explanation time quantiles 25 up to 100, where quantile 100 $q_{100}$ symbols the most expensive step to generate over all problem instances.
 
 \begin{table}[!h]
 	\centering
 	\begin{adjustbox}{max width=\textwidth}
 		\begin{tabular}{r|c|c|cccccc}
 			& \multicolumn{8}{c}{\textbf{\emph{Multi}-\subsetmaxsat}}\\[1ex]
-			\textbf{config}          & $\mathbf{\overline{t_{1}}}$  & $\mathbf{\overline{t_{expl}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ \\ \midrule
+			\textbf{config}          & $\mathbf{\overline{t_{1}}}$  & $\mathbf{\overline{t_{step}}}$ &  $\mathbf{q_{25}}$ &  $\mathbf{q_{50}}$ &  $\mathbf{q_{75}}$  & $\mathbf{q_{95}}$ &  $\mathbf{q_{98}}$ & $\mathbf{q_{100}}$ \\ \midrule
 			\comus          &        7.10 &        4.94 &  0.53 &  0.77 &  1.26 &  9.96 & 36.69 & 1594   \\
 			\comusbound     &        4.07 &        1.89 &  0.66 &  1.20 &  2.72 &  5.00 &  6.16 &  491   \\
 			\ousbiter       &        1.15 &        1.80 &  0.62 &  1.17 &  2.61 &  4.86 &  5.94 &   25   \\ \hline
@@ -2376,36 +2397,41 @@ In this section, we analyze whether the algorithms we developed are fit for an i
 	\label{tab:indiv-explanations-all}
 \end{table}
 
-We notice that on average, \emph{\ousbiterincr} takes the least time to produce the first explanation, and is on average significantly faster to generate an explanation, especially combined with Multi-\sat. 
-This makes the iterated approach a viable candidate for explanation generating during interactive problem solving.
-%\emilio{Remark from Marjolein: is this a viable candidate because it is faster than the others?	But is it fast enough? What is the max acceptable time?}
 %Finally, 
-In the case of \emph{\ousbincr}, the time to the first explanation reflects how important the initial ordering of the literals to explain is for quickly finding a good bound on the cost of the next best explanation. In the long run, incrementality and the correction subset configuration compensates are able to compensate bringing the average time to explain much closer to \emph{\ousbiterincr}
+In the case of \emph{\ousbincr}, the time to the first explanation reflects how important the initial ordering of the literals to explain is for quickly finding a good bound on the cost of the next best explanation. In the long run, incrementality and the correction subset configuration are able to bring the average time to explain much closer to \emph{\ousbiterincr}
+
+We notice that on average, \emph{\ousbiterincr} takes the least time to produce the first explanation, and is on average significantly faster to generate an explanation step. The average time to the first explanation, and the worst-case runtime $q_100$ are still substantial though.%, especially combined with Multi-\sat. 
+\tias{Is this table correct?  Loot at T1 and Q100... it is only 1.15 and 25 for OCUS\_Split? For me this would mean that in the interactive setting, the non-incremental variant is preferred! Tab8 also shows they solve the same number of instances... At least that OCUSsplit offers a better trade-off between time to first and worst-case time... although, the Q98 and below is then again more interesting for incr... Could it be that that Q100 for splitIncr is actually an outlier, an error? it might actually be a T1 and drive that up too...}
+%This makes the iterated approach a viable candidate for explanation generating during interactive problem solving.
+%\emilio{Remark from Marjolein: is this a viable candidate because it is faster than the others?	But is it fast enough? What is the max acceptable time?}
+% T: I agree that you can not make the 'viable' claim without answering that question. So I removed the sentence.
+
 
 
 \section{Conclusion and future work}
 
 
-In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function.,
+In this paper, we tackled the problem of efficiently generating explanations that are optimal with respect to a cost function.
 %
 %
 %\emilio{something to remind the explanation generation context?, i.e for stepwise explaining solutions of Constraint Satisfaction Problems}. 
 For that, we introduced algorithms that replace the many calls to a unsatisfiable core extractor of \citet{bogaerts2021framework}, by a single call for an optimal constrained unsatisfiable subsets (\comus).
 Our algorithm for computing \comus{}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. 
-The main bottleneck of this approach is having to repeatedly compute \emph{optimal} hitting sets. 
-To compensate, we developed methods for enumerating correction subset that balance the trade-off between efficiency and quality of generated subsets. 
+We propose two additional variants for the exactly-one-of constraint used in step-wise explanation generation.
+The main bottleneck of these approaches is having to repeatedly compute \emph{optimal} hitting sets.
+To compensate, we developed methods for enumerating correction subset that explore the trade-off between efficiency and quality of generated subsets. 
 
 %%%%% From 
 %\emilio{Say something the enumeration of corrections subsets that beats simply growing}
 %With the observed impact of different `\corrsubsets' methods, an open question remains whether we can quantify precisely and in a generic way what a \textit{good} or even the best set-to-hit is in a hitting set approach. 
 For efficiently generating the whole explanation sequence, we introduced \emph{incrementality} which allows the re-use of computed information, i.e. satisfiable subsets remain valid from one explanation call to another.
 In the case of \comus for explanation-sequence generation, where the underlying hitting set solver is MIP-based, we instantiate the MIP-solver once for all explanation steps and keep track of computed sets-to-hit.
-By making use of a weighing strategy dependent on the explanation step, we guarantee that the MIP-solver selects only clauses in the sets-to-hit that are valid in the current explanation step.
+%By making use of a weighing strategy dependent on the explanation step, we guarantee that the MIP-solver selects only clauses in the sets-to-hit that are valid in the current explanation step. -- T: too detailed
 
-The concept of bounded (incremental) \comus is not limited to explanations of satisfaction problems and we are keen to explore other applications too.
+The concept of (incremental) \comus is not limited to explanations of satisfaction problems and we are keen to explore other applications too.
 %A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
 One potential avenue for future work is how these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
-The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question.
+The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question. \tias{This is a very bleak future work section... Other correction subset methods may exist... improvements to time-to-first and average expl time within an interactive setting (open Q5), O(c)US on other US/explanation applications, e.g. in configuration, machine learning, ... difficulty of estimating the cost function, and e.g. supporting non-linear cost functions, ...}
 
 \acks{This research received partial funding from the Flemish Government (AI Research Program); the FWO Flanders project G070521N; and funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (Grant No. 101002802, CHAT-Opt).}
 \clearpage

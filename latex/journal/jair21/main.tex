@@ -165,7 +165,7 @@
 
 
 \begin{abstract}
-	We build on a recently proposed method a method for stepwise explaining solutions of Constraint Satisfaction Problems (CSP) in a human-understandable way. 
+	We build on a recently proposed method for stepwise explaining solutions of Constraint Satisfaction Problems (CSP) in a human-understandable way. 
 	An explanation here is a sequence of simple inference steps where simplicity is quantified using a cost function. 
 	The algorithms for explanation generation rely on extracting Minimal Unsatisfiable Subsets (MUS) of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
 	However, MUS extraction algorithms do not provide any guarantee of subset minimality or optimality with respect to a given cost function. 
@@ -177,14 +177,13 @@
 \end{inparaenum}
 	We experimentally validated our algorithms on a large number of CSP problems. We found that our algorithms outperform the MUS approach in terms of explanation quality and computational time (on average up to 56 \% faster than a standard MUS approach).
 	%Our approach can be used to efficiently generate sequences of optimal explanation steps for a large set of constraint satisfaction problems, such as scheduling, and configuration problems.
-	
 \end{abstract}
 
 
 %%% OLD ABSTRACT
 %\begin{abstract}
 %	We build on a recently proposed method for explaining solutions of constraint satisfaction problems.
-%	An explanation here is a \textit{sequence} of simple inference steps, where the simplicity of an inference step is measured by the number and types of constraints and facts used, and where the sequence explains all logical consequences of the problem. 
+%	An explanation here is a \textit{sequence} of simple inference steps, where the simplicity of an inference step is measured by the number and types of constraints and facts used, and where the sequence explains all logical consequences of the problem. \textbf{}
 %	The explanation-generation algorithms presented in that work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. However, for an example problem such as logic grid puzzles, the generation of an explanation sequence with existing methods ranges from a few minutes to a few hours, which is more than a human would take.
 %	Therefore, we build on the formal foundations of the problem and tackle %the main point of improvement 
 %	%\bart{emerging means they are still ``coming into existence''. I think the questions have already emerged, no?}, 
@@ -278,9 +277,9 @@ However, using multiple MUS calls per literal in each iteration quickly triggers
 %      \end{itemize}
 %}
 
-In this paper, we tackle the limitations discussed above. The main contributions of this paper are as follows:
+In this paper, we tackle the limitations discussed above. %The main contributions of this paper are as follows:
 %Motivated by these \\
-s, we develop algorithms that aid explaining CSPs and improve the state-of-the-art in the following ways: 
+We develop algorithms that aid explaining in Constraint Satisfaction Problems and improve the state-of-the-art in the following ways: 
 %\bart{What follows are not really ``ways'' in which we improve the SOA. I would rather say these are our contributions. I would rephrase to something of the style: ``In this paper, we tackle the limitations discussed above. The main contributions of this paper are as follows:''}
 %% Emilio: Adapted
 \begin{itemize}
@@ -1608,7 +1607,76 @@ we first analyze different possible procedures for computing a single correction
 
 \subsection{Computing correction subsets}\label{sec:computing-correction-subsets}
 
+The \corrsubsets procedure generates a set of correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
+However, calling \onestepo on our running example has shown that a naive `No grow'
+\begin{equation}\label{corrsubsets-no-grow}
+	\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \subsetT \}
+\end{equation}
+drastically increases the number of sets-to-hit required compared to using the model provided by the \sat solver. 
+This last observation suggests that the satisfiable subset $\m{S}$ should be efficiently grown into a larger satisfiable subset before computing the complement:
+\begin{equation}\label{corrsubsets-with-grow}
+	\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \grow(\subsetT, \formula) \}
+\end{equation}
 
+%\bart{Het zit hier nog vol met verwijzingen naar GROW. Ik denk dat je eerder in de tekst (in de algoritmes) de GROW hebtt vervangen. Heel de paper moet analoog aangepast worden}
+
+\subsubsection{Growing satisfiable subsets using domain-specific information.} \label{para:domainspecificgrow}
+
+The goal of the \grow phase
+%\tias{This sentence can not be used... there is no such thing introduced as a 'grow' phase? I don't think any pseudo code for corrsubsets has been shown yet\emilio{Added some equations about for clarity.}}
+of the \corrsubsets procedure (see \cref{corrsubsets-with-grow}) is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence imposes stronger restrictions on the hitting sets.
+
+There are multiple conflicting criteria that determine what makes an effective `grow' procedure.
+%\tias{same again, unless I skimmed over it, the reader does not know 'grow' yet. If I skimmed over it, now would be a good place to remind the reader}
+% Choosing an effective \grow procedure requires finding a difficult balance: 
+On the one hand, we want our subformula to be as large as possible (which ultimately would correspond to computing a maximal satisfiable subformula), %to derive the most precise information we can get, 
+but on the other hand we also want the procedure to be very efficient as it is called in every iteration. 
+
+For the case of explanations, we make the following observations: 
+\begin{itemize}
+	\item Our formula at hand (using the notation from the \onestepo algorithm) consists of three types of clauses: 
+	\begin{inparaenum}[(1)]
+		\item (translations of) the problem constraints (this is \formulac) 
+		\item literals representing the assignment found (this is $I$), and 
+		\item the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). 
+	\end{inparaenum}
+	\item $\formulac$ and $I$ together are satisfiable, with assignment $I_{end}$, and \emph{mutually supportive}, by this we mean that making more clauses in \formulac true, more literals in $I$ will automatically become true and vice versa. 
+	\item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
+\end{itemize}
+
+Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense %to use the \grow{($\m{S}$, $\F$)} procedure 
+to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient (partial) \maxsat~solver. 
+Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
+
+%The following configurations are compared:
+%\begin{description}
+%%	\item[No grow.] does not grow and returns the complement .
+%%	\item[SAT] refers to using the model computed by \sat solver when checking for satisfiability.
+%	\item[{Dom.-spec. \maxsat}] refers to growing with a \maxsat~solver using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). In this case, \maxsat-based \grow uses only the previously derived facts and the original constraints. 
+%	\item[{MaxSAT Full}] refers to growing with a \maxsat~solver using the full unsatisfiable formula $\mathcal{F}$.
+%	\item[{\maxsat~Corr.}] refers to repeatedly calling a \emph{Dom.-spec. \maxsat} and blocking the corresponding correction subset until no more correction subsets can be extracted.
+%	\item[{\maxsat~Corr.+\sat}] works similarly to \emph{\maxsat~Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
+%\end{description}
+
+
+%OLD: Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow{($\m{S}$, $\F$)} procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat~solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
+%This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 
+
+%\paragraph{MaxSAT weighing scheme} The \maxsat~solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
+
+We evaluate different grow strategies as part of the $\corrsubsets(\m{S}, \formula)$ procedure
+%\tias{same, does it have pseudo-code, what/where is the procedure you are referring too?}
+in the experiments section including:
+\begin{description}
+	\item[\sat] extracts a satisfying model from the \sat solver to turn $\m{S}$ into a larger satisfiable subset. This grow will be considered the baseline for comparing the other grow-variants.
+	\item[\subsetmaxsat] extends the satisfiable subset computed by \sat by looping over every remaining clause $c \in \formula \setminus \m{S}$.  If $\m{S} \cup \{c\}$ is satisfiable, then clause $c$ is added to $\m{S}$ as well as any other clause from $c' \in \formula \setminus \m{S} \cup \{c\}$ that is satisfied in the model found by the SAT solver. 
+	\item[\domspecmaxsat] grows satisfiable subset $\m{S}$ with a \maxsat~solver using only the previously derived facts and the original constraints. % The \maxsat-based \grow uses only the previously derived facts and the original constraints.
+	\item[\maxsatfull] grows satisfiable subset $\m{S}$ with a \maxsat~solver using the full unsatisfiable formula $\mathcal{F}$.
+\end{description} 
+In the experiments, we omit the `No grow' procedure where the complement $\{\formula \setminus \m{S}\}$ is returned by \corrsubsets. Not growing produces large sets-to-hit as seen in \cref{tab:example-explanation-generation-not-incremental} of the running example.
+Additional experiments comparing the effectiveness of the naive `No grow' to growing with the \sat solver procedure show that `No grow' leads to significantly longer \comus runtimes.
+
+\subsubsection{Correction subsets enumeration}\label{sec:correction_subset_enum}
 %Observation: A lot of time is spent in ... 
 Our \comus algorithm repeatedly alternates between computing hitting sets and correction subsets. 
 %Ideally, \comus should distribute computation evenly between the hitting set solver and the \corrsubsets procedure.
@@ -1619,11 +1687,11 @@ The question is: can we cheaply find \textit{multiple}, ideally \emph{$p$-disjoi
 % \emph{can we find non-overlapping correction subsets to impose independent constraints on the sets-to-hit?} \tias{is that the question? I think the question is: can we cheaply find \textit{multiple}, ideally diverse, correction subsets and thereby add multiple sets-to-hit in one go?}
 %\bart{I would propose to motivate this from the observation: MIP calls are much more expensive than the rest. Need to compensate}
 
-\subsubsection{Correction subsets enumeration}\label{sec:correction_subset_enum}
+
 %Detail: how do we do it? 
-Inspired by \citet{marques2013computing}, a \corrsubsets procedure
+Inspired by \citet{marques2013computing}, we depict a \corrsubsets procedure
 % \tias{This is tricky, to call it 'the' procedure... if tehere is only 'the' procedure, then 7.2.2 must be before 7.2.1, then you avoid my coments in 7.2.1} 
-is depicted in \cref{alg:corr-subsets-grow-with-sat}, computes a collection of correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 
+in \cref{alg:corr-subsets-grow-with-sat} that computes a collection of correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 
 The \corrsubsets procedure will repeatedly compute a satisfiable subset $\m{S}' \supseteq \m{S}$, and add its complement 
 to the collection of disjoint MCSes $\m{K}$ and to $\m{S}$, ensuring that the constraints in the correction subset cannot be present in the next correction subset (disjoint), until no more satisfiable subsets can be found. 
 
@@ -1664,77 +1732,9 @@ to the collection of disjoint MCSes $\m{K}$ and to $\m{S}$, ensuring that the co
 For simple constraints $p$, \cref{alg:corr-subsets-grow-with-sat} is directly applicable and will be able to compute \emph{disjoint} correction subsets.
 However, for more complicated $p$ constraints, this easily degrades into computing only a single correction subset. 
 
-Next, we discuss how to efficiently grow the satisfiable subset capitalizing on the domain-specific context of explanation generation.
-
-\subsubsection{Growing satisfiable subsets using domain-specific information.} \label{para:domainspecificgrow}
-The \corrsubsets procedure generates a set of correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
-However, calling \onestepo on our running example has shown that a naive `No grow'
-\begin{equation}\label{corrsubsets-no-grow}
-	\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \subsetT \}
-\end{equation}
-drastically increases the number of sets-to-hit required compared to using the model provided by the \sat solver. 
-This last observation suggests that the satisfiable subset $\m{S}$ should be efficiently grown into a larger satisfiable subset before computing the complement:
-\begin{equation}\label{corrsubsets-with-grow}
-	\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \grow(\subsetT, \formula) \}
-\end{equation}
-
-%\bart{Het zit hier nog vol met verwijzingen naar GROW. Ik denk dat je eerder in de tekst (in de algoritmes) de GROW hebtt vervangen. Heel de paper moet analoog aangepast worden}
+%Next, we discuss how to efficiently grow the satisfiable subset capitalizing on the domain-specific context of explanation generation.
 
 
-
-The goal of the \grow phase
-%\tias{This sentence can not be used... there is no such thing introduced as a 'grow' phase? I don't think any pseudo code for corrsubsets has been shown yet\emilio{Added some equations about for clarity.}}
- of the \corrsubsets procedure (see \cref{corrsubsets-with-grow}) is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. The effect of this is that the complement added to \setstohit will be smaller, and hence imposes stronger restrictions on the hitting sets.
-
-There are multiple conflicting criteria that determine what makes an effective `grow' procedure.
-%\tias{same again, unless I skimmed over it, the reader does not know 'grow' yet. If I skimmed over it, now would be a good place to remind the reader}
-% Choosing an effective \grow procedure requires finding a difficult balance: 
-On the one hand, we want our subformula to be as large as possible (which ultimately would correspond to computing a maximal satisfiable subformula), %to derive the most precise information we can get, 
-but on the other hand we also want the procedure to be very efficient as it is called in every iteration. 
-
-For the case of explanations, we make the following observations: 
-\begin{itemize}
-\item Our formula at hand (using the notation from the \onestepo algorithm) consists of three types of clauses: 
-	\begin{inparaenum}[(1)]
-		\item (translations of) the problem constraints (this is \formulac) 
-		\item literals representing the assignment found (this is $I$), and 
-		\item the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). 
-	\end{inparaenum}
-\item $\formulac$ and $I$ together are satisfiable, with assignment $I_{end}$, and \emph{mutually supportive}, by this we mean that making more clauses in \formulac true, more literals in $I$ will automatically become true and vice versa. 
-\item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
-\end{itemize}
-
-Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense %to use the \grow{($\m{S}$, $\F$)} procedure 
-to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient (partial) \maxsat~solver. 
-Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
-
-%The following configurations are compared:
-%\begin{description}
-%%	\item[No grow.] does not grow and returns the complement .
-%%	\item[SAT] refers to using the model computed by \sat solver when checking for satisfiability.
-%	\item[{Dom.-spec. \maxsat}] refers to growing with a \maxsat~solver using only the constraints that hold in the final interpretation (see Section~\ref{sec:ocusEx}). In this case, \maxsat-based \grow uses only the previously derived facts and the original constraints. 
-%	\item[{MaxSAT Full}] refers to growing with a \maxsat~solver using the full unsatisfiable formula $\mathcal{F}$.
-%	\item[{\maxsat~Corr.}] refers to repeatedly calling a \emph{Dom.-spec. \maxsat} and blocking the corresponding correction subset until no more correction subsets can be extracted.
-%	\item[{\maxsat~Corr.+\sat}] works similarly to \emph{\maxsat~Corr} once, except the first call corresponds to a \emph{Dom.-spec. \maxsat} and consequent \grow calls use the model found by the \sat solver.
-%\end{description}
-
-
-%OLD: Since the restriction on the third type of elements of $\formula$ are already strong, it makes sense to use the \grow{($\m{S}$, $\F$)} procedure to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient  (partial) \maxsat~solver. Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
-%This is likely to lead to a fairly large satisfiable subset and hence a good correction set. 
-
-%\paragraph{MaxSAT weighing scheme} The \maxsat~solver (\emph{Max}) can combined with different weighing schemes: uniform weights (\emph{unif}), cost-function weights (\emph{pos}) (equal to the weights in $f$), or the inverse of these costs (\emph{inv}) defined as $\max_j(w_j) + 1 - w_i$. For both \emph{Dom.-spec. \maxsat} and \emph{MaxSAT Full}, uniform weights provided the best results.
-
-We evaluate different grow strategies as part of the $\corrsubsets(\m{S}, \formula)$ procedure
-%\tias{same, does it have pseudo-code, what/where is the procedure you are referring too?}
-in the experiments section including:
-\begin{description}
-	\item[\sat] extracts a satisfying model from the \sat solver to turn $\m{S}$ into a larger satisfiable subset. This grow will be considered the baseline for comparing the other grow-variants.
-	\item[\subsetmaxsat] extends the satisfiable subset computed by \sat by looping over every remaining clause $c \in \formula \setminus \m{S}$.  If $\m{S} \cup \{c\}$ is satisfiable, then clause $c$ is added to $\m{S}$ as well as any other clause from $c' \in \formula \setminus \m{S} \cup \{c\}$ that is satisfied in the model found by the SAT solver. 
-	\item[\domspecmaxsat] grows satisfiable subset $\m{S}$ with a \maxsat~solver using only the previously derived facts and the original constraints. % The \maxsat-based \grow uses only the previously derived facts and the original constraints.
-	\item[\maxsatfull] grows satisfiable subset $\m{S}$ with a \maxsat~solver using the full unsatisfiable formula $\mathcal{F}$.
-\end{description} 
-In the experiments, we omit the `No grow' procedure where the complement $\{\formula \setminus \m{S}\}$ is returned by \corrsubsets. Not growing produces large sets-to-hit as seen in \cref{tab:example-explanation-generation-not-incremental} of the running example.
-Additional experiments comparing the effectiveness of the naive `No grow' to growing with the \sat solver procedure show that `No grow' leads to significantly longer \comus runtimes.
 
 % Since not growing subset $\m{S}$ leads to  has shown  does not improve satisfiable subset $\m{S}$ and returns $\{\formula \setminus \m{S}\}$.
 %not growing, using the sat model to grow, and the use of partial \maxsat~as well as weighted partial \maxsat~based on the weights in the cost function $f$.
@@ -2245,7 +2245,7 @@ Thus, to answer \textbf{\ref{rq:q3}}, we compare the incremental variants of \co
 
 \paragraph{Efficient correction subset enumeration} 
 %\tias{Now I'm confused... isn't this entire subsection 'Multi'? WHy is this paragraph called 'efficient'? it just shows the different possible combinations of single/multi and grows? Could actually move to the experiment section...} 
-Extending the observation that a call to an efficient \maxsat~solver helps in finding maximally satisfiable subsets, we propose three additional variants of \cref{alg:corr-subsets-grow-with-sat}:
+Extending the observation of \cref{para:domainspecificgrow} that a call to an efficient \maxsat~solver helps in finding maximally satisfiable subsets, we propose three additional variants of \cref{alg:corr-subsets-grow-with-sat}:
 \begin{enumerate}
 	\item The first variant, \emph{Multi-\sat}, repeatedly grows with \sat and blocks the corresponding correction subset until no more correction susbets can be extracted.
 	\item The second variant is \emph{Multi-\maxsat}. This correction subset enumerator repeatedly grows using the domain-specific \maxsat~introduced in \cref{para:domainspecificgrow} until the updated subset $\m{S}'$ is no longer satisfiable. 
@@ -2382,7 +2382,7 @@ The story for \ousbiterincr and \ousbincr is different. The best method for enum
 To summarize, the best explanation sequence configuration corresponds to the iterated MIP-incremental approach of \ousbiterincr combined with \emph{Multi}-\subsetmaxsat .
 
 \paragraph{Runtime decomposition} We now look at the runtime decomposition in \cref{tab:runtime-decomposition-corr-susbet-enum} for the best performing \corrsubsets configuration, i.e.~\multisubsetmaxsat, also for the non-incremental OCUS variants. 
-For the non-incremental variants, we observe that shift in computation from the hitting set solver to correction subset enumeration clearly reaps its benefits. 
+For the non-incremental variants, we observe that the shift in computation from the hitting set solver to correction subset enumeration clearly reaps its benefits. 
 
 
 \begin{table}[!h]
@@ -2435,12 +2435,16 @@ In this section, we analyze whether the algorithms we developed could be fit for
 \end{table}
 
 %Finally, 
-For \comus(\texttt{+Incr.}), generating explanations takes much longer compared to the other configurations, especially for some explanation steps where the timeout is almost reached ($q_{100} = 3452.20$).
+For the non-incremental variants, in the upper part of \cref{tab:indiv-explanations-all}, \comus is able to compute part of the explanations faster than the other \comus configurations. We see however, that both incremental and non-incremental \comus still take a lot of time for some explanations compared to the other \comus-based algorithms.
 
-In the case of \emph{\ousbincr}, the time to the first explanation reflects how important the ordering of literals to explain is for quickly finding a good bound on the cost of the next best explanation. 
-In the long run, incrementality and the correction subset configuration are able to bring the average time to explain much closer to \emph{\ousbiterincr}.
+%For \comus(\texttt{+Incr.}), generating explanations takes much longer compared to the other configurations, especially for some explanation steps where the timeout is almost reached ($q_{100} = 3452.20$).
 
-On average, \emph{\comussplit} takes the least time to produce the first explanation. However, its incremental version  \emph{\ousbiterincr} is on average the fastest at generating explanations. 
+In the case of \emph{\comusbound}, the time to the first explanation reflects how important the ordering of literals to explain is for quickly finding a good bound on the cost of the next best explanation. 
+
+For an interactive context where the user asks for an immediate explanation, \emph{\comussplit} will be the fastest at computing the explanations. 
+If the user is exploring the sequence of explanations and repeatedly asks for additional explanations, \ousbiterincr will be able to capitilize on incrementality to bring the average time close to real time.
+
+%On average, \emph{\comussplit} takes the least time to produce the first explanation. However, its incremental version  \emph{\ousbiterincr} is on average the fastest at generating explanations. 
 %\tias{Is this table correct?  Loot at T1 and Q100... it is only 1.15 and 25 for OCUS\_Split? For me this would mean that in the interactive setting, the non-incremental variant is preferred! Tab8 also shows they solve the same number of instances... At least that OCUSsplit offers a better trade-off between time to first and worst-case time... although, the Q98 and below is then again more interesting for incr... Could it be that that Q100 for splitIncr is actually an outlier, an error? it might actually be a T1 and drive that up too...}
 %This makes the iterated approach a viable candidate for explanation generating during interactive problem solving.
 %\emilio{Remark from Marjolein: is this a viable candidate because it is faster than the others?	But is it fast enough? What is the max acceptable time?}
@@ -2461,21 +2465,22 @@ We propose two additional variants for the exactly-one-of constraint used in ste
 The main bottleneck of these approaches is having to repeatedly compute \emph{optimal} hitting sets.
 To compensate, we developed methods for enumerating correction subset that explore the trade-off between efficiency and quality of generated subsets. 
 %In an interactive setting 
-An open question within an interactive setting is whether other correction subset enumeration are more suitable in order to reduce the time-to-first explanation and the average explanation time.
+An open question within an interactive setting is whether other correction subset enumeration methods exist that are more suitable in order to reduce the time-to-first explanation and the average explanation time.
 
 %%%%% From 
 %\emilio{Say something the enumeration of corrections subsets that beats simply growing}
 %With the observed impact of different `\corrsubsets' methods, an open question remains whether we can quantify precisely and in a generic way what a \textit{good} or even the best set-to-hit is in a hitting set approach. 
-For efficiently generating the whole explanation sequence, we introduced \emph{incrementality} which allows the re-use of computed information, i.e. satisfiable subsets remain valid from one explanation call to another.
+For efficiently generating the \emph{whole} explanation sequence, we introduced \emph{incrementality} which allows the re-use of computed information, i.e. satisfiable subsets remain valid from one explanation call to another.
 In the case of \comus for explanation-sequence generation, where the underlying hitting set solver is MIP-based, we instantiate the MIP-solver once for all explanation steps and keep track of computed sets-to-hit.
-However MIP solver do not natively support non-linear cost functions. Therefore, we might not be able to fully capture the complexity of what a good explanation is.
+However MIP solver do not natively support non-linear cost functions. Therefore, the current implementation of \comus might not be able to fully capture the complexity of what a good explanation is due to the limitations on the cost-functions we can encode.
 Furthermore, the question of which interpretability metric for characterizing understandable explanation remains open.  
 %By making use of a weighing strategy dependent on the explanation step, we guarantee that the MIP-solver selects only clauses in the sets-to-hit that are valid in the current explanation step. -- T: too detailed
 
-The concept of (incremental) \comus is not limited to explanations of satisfaction problems. We are also keen to explore other applications that require computing (Optimal) Unsatisfiable subsets such as configuration, machine learning, ...
-One potential avenue for future work is how these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
+The concept of (incremental) \comus is not limited to explanations of satisfaction problems. We are also keen to explore other applications that require computing minimal as well as Optimal Unsatisfiable subsets such as configuration, machine learning, ...
+For instance, one potential avenue for future work is how these explanation generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
 The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question. 
 
+Finally, for interactive settings such as interactive tutoring systems, we are able to generate explanations near real-time (less than one second) using \comussplit. Another question there is how to distribute computation over multiple cores to parallelize computation to speed-up the generation of explanations even further.
 %A general direction here are explanations of \textit{optimisation} problems and the role of the objective function in explanations.
 
 
@@ -2494,11 +2499,7 @@ The synergies of our approach with the more general problem of QMaxSAT \cite{DBL
 %\tias{This is a very bleak future work section... Other correction subset methods may exist... improvements to time-to-first and average expl time within an interactive setting (open Q5), O(c)US on other US/explanation applications, e.g. in configuration, machine learning, ... difficulty of estimating the cost function, and e.g. supporting non-linear cost functions, ...}
 
 \acks{This research received partial funding from the Flemish Government (AI Research Program); the FWO Flanders project G070521N; and funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (Grant No. 101002802, CHAT-Opt).}
-\clearpage
-\bibliography{krrlib,ref}
-\bibliographystyle{theapa}
 
-\clearpage
 \appendix
 \section{}\label{apx:puzzledata}
 
@@ -2534,7 +2535,8 @@ The synergies of our approach with the more general problem of QMaxSAT \cite{DBL
 	\caption{Characteristics of puzzle instances}
 \label{tab:puzzle-composition-family}
 \end{table}
-
+\bibliography{krrlib,ref}
+\bibliographystyle{theapa}
 
 \end{document}
 

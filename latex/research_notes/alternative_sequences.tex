@@ -10,9 +10,16 @@
 \usepackage{subcaption}
 \usepackage{fullpage}
 
+\usepackage[round]{natbib}  % bibliography package
+\usepackage{bibentry} 
+
+\nobibliography*                   % no bib at the end
 \usepackage{graphicx}
 \usepackage{adjustbox}
 \usepackage{multirow,array}
+\usepackage{lscape}
+\usepackage{tabularx}
+
 \usepackage[normalem]{ulem}
 \usepackage{enumitem}
 %\usepackage{hyperref}
@@ -22,7 +29,7 @@
 %\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
 
 %%%%%%
-\newcommand\citet[1]{\citeauthor{#1}~\citeyear{#1}}
+%\newcommand\citet[1]{\citeauthor{#1}~\citeyear{#1}}
 
 \newcommand\m[1]{\mathcal{#1}}
 
@@ -139,6 +146,17 @@
 \SetKw{Break}{break}
 %%%%%%%
 
+
+\renewcommand{\tabularxcolumn}[1]{m{#1}}%
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+
+\usepackage{makecell}
+
+\usepackage{cellspace}
+\setlength\cellspacetoplimit{4pt}
+\setlength\cellspacebottomlimit{4pt}
+\addparagraphcolumntypes{X}
+
 \begin{document}
 	
 	\title{Exploring and improving Explanation Sequences}
@@ -148,13 +166,112 @@
 	
 %The baseline explanation sequence is built by iteratively extracting OCUSs until all the literals of the problem are explained.
 
+\newpage
+\begin{landscape}
+\section{Related Works}
+\begin{table}[!h]
+\begin{tabularx}{\linewidth}{|l|S{X}|S{X}|}
+\Xhline{1.5pt}
+	Reference & Description (and properties) & Hint \\
+	\Xhline{1.5pt}
+	\cite{reeson2007interactive} & \textbf{\textit{Solver}} Goal is to improve understanding of the game and underlying CP concepts. 
+	\begin{itemize}
+		\item Hint System
+		\item Consistency algorithms
+		\item Visual software
+	\end{itemize} & Increasingly complex propagation algorithms in a controlled manner to guide and train the users to play the game. 
+	\textbf{Hint} \textbf{records the total number of cellls that exhibit a given condition at the current consistency level} and displays this number to the users. Users can switch between conditions:
+	\begin{enumerate}
+		\item \textbf{Singleton} (cell single value)
+		\item \textbf{Vital} Value does not appear in the domain of any other variable in same row, col or block.
+	\end{enumerate}
+	Hints are \textbf{organized by level of consistency} required for guessing the hint: 
+		\begin{inparaenum}[(1)]
+			\item \textbf{FC} Forward checking
+			\item \textbf{AC} Arc consistency
+			\item \textbf{GAC }on each individual constraint
+			\item \textbf{GAC }on all constraints
+			\item \textbf{SAC }on each individual variable
+			\item \textbf{SAC }on all constraints
+			\item \textbf{SGAC }on each individual constraint
+			\item \textbf{SGAC }on all constraints
+		\end{inparaenum}\\
+	\hline
+\end{tabularx}
+\end{table}
+\newpage
+\begin{table}[!h]
+	\begin{tabularx}{\linewidth}{|l|S{X}|}
+		\Xhline{1.5pt}
+		Reference & Description (and properties)  \\		\Xhline{1.5pt}
+  	\cite{simonis2005sudoku} & Difficulty of the Sudoku is quantified by the preset values. If the number of redundants hints are high, the Sudoku is easier. It means the Sudoku can be further reduced. \textbf{Local Minimality} if no restriction of the assignment is a well-posed (unique sol) Sudoku problem. \begin{itemize}
+  	\item Characterizing Sudoku grid difficulty using 
+  	\begin{enumerate}
+  		\item \textbf{ \# redundant hints}
+  		\item \textbf{consistency propagation algorithms enhanced with additional constraints}
+  	\end{enumerate}
+  \end{itemize} 
+Propagation schemes:\begin{enumerate}[leftmargin=*]
+  	\item \textbf{Shaving} test values to remove them from the domain of they fail
+  	\item Adding \textbf{redundant constraint} (Cardinality constraints on row/block interactions and col/block interactions)
+  	\item \textbf{Colored-matrix constraints} express constraints on the number of occurences of the values  in rows and columns of a matrix:
+  \end{enumerate} \\	\hline
+				\cite{kvrivanek2011difficulty} & Difficulty of the sudoku is related:
+		\begin{description}[leftmargin=*]
+		\item[Refutation Score] number of simple steps what are needed to demonstrate inconsistency of assignment of a particular value to this cell.
+		\item[Serate metric] maximal difficulty of a used technique (maximal of all minimal refutation scores in each step)
+		\item[Refutation sum] Mean sum of refutation scores.
+		\end{description} \\ \hline
+				\Xhline{1.5pt}
+	\end{tabularx}
+\end{table}
+
+
+\newpage
+\begin{table}[!h]
+	\begin{tabularx}{\linewidth}{|l|S{X}|}
+		\Xhline{1.5pt}
+		Reference & Description (and properties)  \\		\Xhline{1.5pt}
+		\cite{jussien2007z}  &  \textbf{Rating of Sudoku}: Difficulty level of a Grid is defined by the minimal required level of rules (based on the hierarchy of rules defined in book) that is maximally needed to solve the grid. \\ \hline
+		\cite{fatemi2014rating}  &  \textbf{Rating Sudoku}: Count the number of times Arc Consistency function is called by each puzzle.
+			\begin{tabular}{|r|c|}
+				\hline
+			\textbf{Level} & \textbf{Average \# calls to ARC consistency} \\  \hline
+			Easy & 6\\
+			Medium & 29\\
+			Difficult & 98\\
+			Evil & 	527	\\				\hline
+		\end{tabular}
+		 \\ \hline
+		\cite{maji2016comprehensive}& Difficulty metric:\begin{enumerate}
+			\item The total \textbf{number of given cells} 
+			\item The \textbf{lower bound of given cells} in each row, column and block
+		\end{enumerate} 
+		The amount ranges of givens and the Lower bound on the number of givens in each row, col and block for each difficulty level:
+		\begin{tabular}{|r|c|c|}
+			\hline
+			\textbf{Level} & \textbf{\# clues}  & \textbf{LB \# clues}\\ \hline
+			Extremely easy & $> 46$ & 5\\
+			Easy & $36 - 46$ & 4\\
+			Medium & $32 - 35$ & 3\\
+			Difficult & $28-31$ & 2\\
+			Evil & $17-27$&0 \\	\hline
+		\end{tabular}
+		\\ \hline
+		\Xhline{1.5pt}
+	\end{tabularx}
+\end{table}
+\end{landscape}
+
+\section{Improving the explanation sequence}
+
 \begin{example}
 	(Sudoku) The Sudoku puzzle requires filling in numbers (1...9) in a grid, where the numbers can only appear: Once in every row \textbf{i} (\textbf{row-alldifferent});
 	once in every column \textbf{j} (\textbf{col-alldifferent} ); and once every block \textbf{(i, j)} of row i, and column j (\textbf{block-alldifferent}).
 \end{example}
 
+\subsection{Cost-function}
 
-\section{Improving the explanation sequence}
 
 \subsection{Alternative explanations}
 
@@ -207,36 +324,7 @@
 	\item[Breadth-first search] Explore the whole explanation search tree O(n!) to find the least cost explanation sequence, where the cost of the explanation sequence can be used as a bound .
 \end{description}
 
-\section{Modelling Explanation sequence generation as a Travelling Salesman Problem}
-The generation of an explanation sequence can be modelled as a Travelling Salesman problem (TSP) where: 
-\begin{itemize}
-	\item the \emph{start} is the initial interpretation of the problem;
-	\item the \emph{depot} is the maximal consequence we want to explain; and
-	\item and the \emph{stops} are the literals to derive.
-\end{itemize}
-
-The classical TSP is modelled with a distance matrix that quantifies the distance between the stops. 
-In the case of explanation generation we are interested in, the distance between two stops is computed using the cost of explaining a literal from a given interpretation (previous stops visited). 
-For explanation sequence generation,the distance matrix is not given in advance. 
-However, using a call to an OCUS-oracle provides an explanation of the literal given an interpretation and its corresponding cost.
-
-\begin{observation}(\textbf{MIP-Incrementality})
-	The sets-to-hit maintained by the MIP remain valid for the full UNSAT formula used by OCUS. 
-	Furthermore, in the case of the MIP-based incremental hitting set solver, the ``activation'' and ``deactivation'' of literals already explained only requires a small change to the objective of the MIP solver.
-%	Keeping track of the sets-to-hit will therefore provide a better starting hitting set and consequentially the number of iterations required to find an OCUS. 
-\end{observation}
-
-\subsection{Zone-preferences in TSP}
-
-In TSP of \cite{ROCS-and-co}, the stops are grouped into zones, where a driver prefers to first service the stations from the same zone, before transitioning to another zone.
-Locality of the explanations can be mapped to the concept of zones in the TSP.
-\begin{example}(Sudoku)
-	 Intuitively, when solving the Sudoku, when deriving a 6 in one place, one looks at deriving the same digit in other parts of the Sudoku. Even though, there might exist an explanation of similar cost for another digit, one will prefer an explanation of the same digit in another block.
-\end{example}
-
-
-
 	\clearpage
 	\bibliography{krrlib,ref}
-	\bibliographystyle{theapa}
+	\bibliographystyle{apalike}
 \end{document}

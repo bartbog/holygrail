@@ -164,25 +164,75 @@
 	\author{Emilio Gamba}
 		\maketitle
 	
+	\section{Open things to consider}
+	\begin{enumerate}
+		\item Don't focus only on (Sudoku) puzzle, try other problems such as optimisation problems where we fix part of the domain to ensure there is a unique solution
+		\item .....
+	\end{enumerate}
+	
 \section{Experiments}
-\subsection{Explanation quality}
+The experiments are run on a laptop with a  2,6 GHz 6-Core Intel Core i7 processor, and 16 GB of RAM.
+The whole pipeline is implemented using CPMpy (\textit{write version here!}), with PySAT (\textit{write version here!}), as the default SAT solver, Gurobi (\textit{write version here!}) for the MIP solver. The benchmark instances consist of the Sudoku scanned by the Sudoku Assistant that have been corrected to make sure they are satisfiable and have a unique solution.
 
-\paragraph{Cost-function} The cost-function is defined as a linear sum over the problem constraints:
+\begin{example}
+	(Sudoku) The 9 x 9 Sudoku puzzle requires filling in numbers (1...9) in a grid, where the numbers can only appear: Once in every row \textbf{i} ($\mathbf{row_{i}}$);
+	once in every column \textbf{j} ($\mathbf{col_{i}}$); and once every block \textbf{k} ([$\mathbf{block_{k}}$). The blocks of a given Sudoku are numbered starting from the top left to the bottom right. Typical solving processes use two types of notations: 
+	\begin{itemize}
+			\item $\mathbf{cell[1, 4] = 2}$ meaning  cell at row 1 and column 4 takes value 2;
+			\item $\mathbf{cell[1, 4] \neq 7}$ meaning cell at row 1 and column 4 cannot take value 7 (domain reductions).
+	\end{itemize}
+\end{example}
+
+\subsection{Explanations}
+
+An explanation is the context of the Sudoku corresponds to a combination of constraints with a certain number of assignments in the interpretation. For instances in \cref{explanations:example} depicts two equivalent explanations for explaining why a 6 can be written at the puzzle piece. 
+
+\begin{figure}[!h]
+	\begin{subfigure}{0.45\textwidth}\centering
+		\includegraphics[width=0.8\textwidth]{figures/sudoku_hint_1.png}
+		\caption{Using the highlighted digits, and all different values on row3, and all different values on block (1, 2), we can derive a 6 at the puzzle piece.}
+		\label{alternative-explanation:same-block}
+	\end{subfigure}\hfill
+	\begin{subfigure}{0.45\textwidth}\centering
+		\includegraphics[width=0.8\textwidth]{figures/sudoku_hint_2.png}
+		\caption{Using the highlighted digits, and all different values on row3, and 6 cannot be in block (1, 3), we can derive a 6 at the puzzle piece.}
+		\label{alternative-explanation:other-block}
+	\end{subfigure}
+\caption{Example of explanations for Sudoku.}
+\label{explanations:example}
+\end{figure}
+
+\subsubsection{Explanation quality} The quality of an explanation relates to the difficulty of understanding it. Therefore, the cognitive complexity of an explanation is approximated using a cost-function $f$. To the best of our knowledge there does not exist a good metric yet of what is and what is not a good cost function. Intuitively such a cost-function should at least take into account the type and the number of constraints as well the number of assignments in the interpretation.
+
 \begin{description}
-	\item[$\mathbf{row_{i}}$] Alldifferent variable values in row i;
-	\item[$\mathbf{col_{i}}$]  Alldifferent variable values in column j;
-	\item[$\mathbf{block_{k}}$]  The sub-blocks of a given Sudoku are numbered starting from the top left to the bottom right. Alldifferent variable values in block k;
+\item[baseline] We define the baseline cost-function as a weighted sum where the \texttt{row, block} and \texttt{col} constraints are assigned a weight of 20, and assignments have a unit weight.
+\item[\citet{master-thesis-sudoku}]  use the following equation as a cost-function with $N$, the number of assignments, $R$ the number of rows constraints, $C$ the number of column constraints, $B$ the number of block constraints used in the explanation.
+\begin{equation}
+	N \cdot (R + 1) \cdot (C + 1) \cdot (B + 1) 
+\end{equation} 
 \end{description}
- and the interpretation:
-\begin{description}
- \item[$\mathbf{cell[i, j] == val}$] Cell at row i and column j takes value \textit{val};
- \item[$\mathbf{cell[i, j] != val}$] Cell at row i and column j cannot take value \textit{val}.
-\end{description}
-
-
-The baseline explanation sequence is built by iteratively extracting OCUSs until all the literals of the problem are explained.
+The above mentioned cost-function do not take into account several elements worthy of improvement:
+\begin{itemize}
+	\item Previously derived facts:
+	\item The cost of the explanation sequence
+	\item The length of the nested explanation sequence
+	\item ....
+\end{itemize}
 
 \subsubsection{Baseline explanation sequence}
+
+To compare potential improvements on the explanation sequence, we compute an explanation sequence where only \textit{positive} assignments to the problem variables are considered. In this experiment, we focus on 2 elements: 
+\begin{inparaenum}
+	\item The efficiency of generating a sequence
+\end{inparaenum}
+The following graphs presents the cost and the time for generating an explanation sequence using calls to \texttt{split-OCUS}. 
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/baseline_cost_occurrences.pdf}
+	\caption{Baseline: Max explanation cost of Sudoku instances}
+	\label{fig:baseline:histogram:expl-cost}
+\end{figure}
 
 \subsection{RQ1: How does the extraction of negated assignment (domain reductions) affect the cost of the parent explanation ?}
 

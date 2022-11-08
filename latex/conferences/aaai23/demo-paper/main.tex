@@ -1,0 +1,31 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\title{AAAI demo track submission}
+\author{\{Tias, Maxime, Igance, Emilio, Senne, Milan\}}
+\date{July 2022}
+
+\begin{document}
+
+\maketitle
+
+\textbf{Old text from 1-pager app competition}
+
+Installation instructions: search for “Sudoku Assistant” on the google play store and verify that the logo matches the above.
+	WARNING: at the time this document is written, the app is still under review by Google. It may take a few more days to be available on the play store…
+
+Workings and role of CP:
+The app uses a combination of machine learning and constraint programming techniques to:
+1) use a neural network to estimate the digit written in each square
+2) use constraint programming to verify that the digit estimates make up a valid sudoku, and if not search for an interpretation that does
+
+Use the app to take a picture of a pen-and-paper sudoku. It can contain both printed and hand-written digits. The app will analyze the image and split it into 81 cells, and for each them a prediction will be made using an SVHN trained neural network. The app visualises the probabilities of each of the possible values (numbers 1-9 or an empty cell).
+
+Any neural network can make errors, due to the quality of the image or the network itself, and so we use constraint programming techniques to find the combination of predictions that leads to a valid, unique sudoku. In this way, the constraint reasoning can correct some of the errors that the network makes. With the same technique, it will also correct mistakes that you may have made during solving!
+
+This constraint-based reasoning happens when the app shows 'solving sudoku'. For efficiency reasons, it only considers the most likely predictions of each cell, so you might see "No Sudoku's Found". Usually this happens when the grid was insufficiently well aligned when taking the picture (we are working on improving this).
+
+Future work: we are working on a ‘Hint’ button that will show what the easiest next move is, based on computing the smallest explanation for every undiscovered value. This uses a constraint solver to find a Minimal Unsatisfiable Subset for (the negation of) each of these values. This explanation technology is expected to be integrated into the app by the end of July.
+We also plan to improve the visual appeal and the usage speed of the app once the above functionality is completed.
+
+\end{document}

@@ -1,0 +1,191 @@
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{xspace}
+
+% \newcommand\advice[2][]{\par {\color{OliveGreen} \textsc{ADVICE:} #1} \par} 
+
+\def \ifempty#1{\def\temp{#1} \ifx\temp\empty }
+
+\usepackage{xparse}
+
+\NewDocumentCommand{\advice}{om}{%
+\par {\color{OliveGreen} \textsc{ADVICE:} #2  
+\ifempty{#1} {} \else {\bf In this case: #1} \fi 
+} \par
+}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% GIT
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\TIPnoartefactsingit}[1][]{\advice[#1]{Do not add files produced by latex (aux, pdf, log, ...) to your git repository. If for some reason, you wish to include a pdf in your git repo, e.g., for archival reasons, give it another name, e.g., ``version-submitted-to-ICLP21.pdf''}}
+\newcommand{\TIPnoforcedpushes}[1][]{\advice[#1]{Never use forced pushes in git}}
+\newcommand{\TIPgitmergetool}[1][]{\advice[#1]{p4merge is an excellent merge tool for git. Solves lots of your problems}}
+\newcommand{\TIPglobalgitignore}[1][]{\advice[#1]{You can make a global gitignore file. So that you don't have to ignore them in each repository: \url{https://gist.github.com/subfuzion/db7f57fff2fb6998a16c}, e.g., with ``git config --global core.excludesFile 'path_to_global_gitignore_file'''}} 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% LaTeX + GIT
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\TIPonelinesentence}[1][]{\advice[#1]{When using git with LaTeX, in my experience, the best way to go is:
+\begin{itemize}
+ \item Put a newline after every sentence
+ \item Disable any forms of (hard) line wrapping in your editor
+\end{itemize}
+The reason for this is the way git handles conflicts. Git will detect a conflict when two lines close to each other change. 
+When viewing this from a LaTeX perspective: changes in a sentence are probably only related to the sentences close to it. 
+Hard line wrapping is terrible in this respect. 
+}}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% CITATIONS 
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\TIPspacebeforecite}[1][]{\advice[#1]{Do not let your citations stick to the previous word. Leave a space before it, as in ``he did this \cite{something}'' or ``he did this~\cite{something}'', the latter in case you do not want a line break to happen between the sentence and the citation (often, this is best)}}
+\newcommand{\TIPcitemultiple}[1][]{\advice[#1]{When citing multiple papers, use \cite{one,two}, not \cite{one}\cite{two}}}
+\newcommand{\TIPcitet}[1][]{\advice[#1]{In general, I prefer the practice where everything between brackets can be dropped and still yield a sentence. 
+This also means: do not use citations as objects. Do not say: 
+``(Bogaerts 2021) showed that \dots'' or ``[1] showed that \dots'', but write ``Bogaerts (2018) showed that \dots'' or ``Bogaerts [1] showed that \dots''. 
+Depending on your latex styles and citation styles, you can use \texttt{$\backslash$citet} (or \texttt{citeauthor} or ...) to get this for free}}
+\newcommand{\TIPcitetINperson}[1][]{\advice[#1]{When using \texttt{$\backslash$citet}, make sure to get your prepositions right. Author-names refer to persons. Not a lot has been done ``in Bogaerts'', so never write ``in \texttt{$\backslash$citet$\{\dots\}$}'', but ``by  \texttt{$\backslash$citet$\{\dots\}$}''.}}
+\newcommand{\TIPcitetDoNotOveruse}[1][]{\advice[#1]{While it is good to use commands such as \texttt{$\backslash$citet}, do not overuse them. For instance do not write ``it is well-known that $P$ according to \citet{X}''. Instead simply write: ``it is well-known that $P$ \cite{X}'' (or \texttt{pcite} or ... (depending on the style/packages used)). The property ``everything between brackets can be dropped and we still ahve a sentence'' is still satisfied}}
+\newcommand{\TIPcitetAuthorCount}[1][]{\advice[#1]{When using commands such as \texttt{$\backslash$citet}, mind your author count: ``\citet{X} proposes that'' (single author) vs ``\citet{X} propose that'' (but in this case, past tense might be better).}}
+\newcommand{\TIPreferenceInSentence}[1][]{\advice[#1]{Put your references in the sentence not after. ``This is good \cite{}.'' ``This is not good. \cite{}''}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% TEXT
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\TIPusequotes}[1][]{\advice[#1]{Use the right quotes: Never use "this is a quote", but always ``this is a quote''}}
+\newcommand{\TIPspacingafterabbreviation}[1][]{\advice[#1]{After a full stop, LaTeX leaves more than the standard spacing. If the dot comes from an abbreviation, you should take care of getting back normal spacing: write ``pigeons (resp.\ holes)'' and not ``pigeons (resp. holes)''. }}
+\newcommand{\TIPspacingOrCommaAfterIEorEG}[1][]{\advice[#1]{After a full stop, LaTeX leaves more than the standard spacing. When this is not desired, some manual fix is needed. In the case of ``i.e.'' and ``e.g.'', there are two options: either write ``i.e.\ something'' or write ``i.e., something'' (I prefer the comma variant). }}
+\newcommand{\TIPemphasizeDefinedConcept}[1][]{\advice[#1]{Emphasize every concept you define, e.g., a \emph{literal} is an atom $x$ or its negation $\neg x$}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% SPACING
+%%%%%%%%%%%%%%%%%%%%%%%%
+%TODO  Do not put {} around text. Example.
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% DASHES
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\TIPrangeEnDash}{For (page) ranges, use an En-dash: write: 1--10 instead of 1-10.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% MATH MODE
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\TIPnonamesinmathmode}[1][]{\advice[#1]{Do not use names of things longer than one character in math mode. By this I mean: do not write 
+\[ force = mass \cdot acceleration\]
+because this looks HORRIBLE. The formattig Latex applies is as if you want 
+\[f\cdot o\cdot r \cdot c \cdot e = \dots\]
+What you should do is: 
+\[ \mathit{force} = \mathit{mass}\cdot \mathit{acceleration}\]
+(or mathrm depending on what you like). 
+Of course... even better: do not repeat this mathit all over your document, but make a command out of it!} }
+\newcommand{\TIPmathit}[1][]{\TIPnonamesinmathmode[#1]}
+\newcommand{\TIPmathalwaysindollars}[1][]{\advice[#1]{\textbf{Always} write your math in a math environment. \textbf{Never} mimick it, e.g., by using \textit{k} in text instead of $k$, even if you think it looks similar. It might look very different in another style (and also things like $k-1$ are not the same as \textit{k-1})}}
+\newcommand{\TIPstrictNonstrictInclusion}[1][]{\advice[#1]{I prefer to only use $\subseteq$ and $\subsetneq$ since $\subset$ is ambiguous (depending on which book you use it means strict or non-strict inclusion}}
+\newcommand{\TIPspacingOfOperators}[1][]{\advice[#1]{Be careful when using an operator as an ``object''. For instance if you say $\bowtie\in\{\leq, \geq\}$ notice that the spacing is off (compare to $x\in \{y,z\}$). You can trick LaTeX into thinking that bowtie is not an operator in this formula as follows:  ${\bowtie}\in\{\leq, \geq\}$.}}
+\newcommand{\TIPdoubledollar}[1][]{\advice[#1]{Never use double dollars for math displays. See \url{https://tex.stackexchange.com/questions/503/why-is-preferable-to}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% CAPITALS  
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\TIPcapitalboolean}[1][]{\advice[#1]{I prefer Boolean to be written with a capital letter (refers to George Boole). But some people use lowercase}}
+\newcommand{\TIPcapitalTitles}[1][]{\advice[#1]{Use consistent capitalization of section titles. Either always ``every'' word capitalized, or always only the first word... It might be that the venue (conference/journal) has guidelines about this}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% FORMATTING
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newsavebox\VerbTIPcommandforconsistentformatting
+\begin{lrbox}{\VerbTIPcommandforconsistentformatting}
+\begin{minipage}{\textwidth}
+\begin{verbatim}
+\newcommand\uriname[1]{\texttt{#1}\xspace}
+\end{verbatim}
+\end{minipage}
+\end{lrbox}
+\newcommand{\TIPcommandforconsistentformatting}[1][]{\advice[#1]{If your paper contains a lot of objects that have to be formatted in a similar way, e.g., lots of symbols for Boolean variables, or lots of URIs (in a semantic web context), make a command for this, to easily allow changing the formatting later, e.g., as follows:}
+\usebox{\VerbTIPcommandforconsistentformatting}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% NAMES & Symbols 
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% DEFINITIONS  (MACROS)
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newsavebox\VerbTIPnobracketsarounddefinitionsWRONG
+\begin{lrbox}{\VerbTIPnobracketsarounddefinitionsWRONG}
+\begin{minipage}{\textwidth}
+\begin{verbatim}
+ \newcommand{\leqp}{{\leq_p}}
+ \end{verbatim}
+\end{minipage}
+\end{lrbox}
+\newsavebox\VerbTIPnobracketsarounddefinitionsRIGHT
+\begin{lrbox}{\VerbTIPnobracketsarounddefinitionsRIGHT}
+\begin{minipage}{\textwidth}
+\begin{verbatim}
+ \newcommand{\leqp}{\leq_p}
+\end{verbatim}
+\end{minipage}
+\end{lrbox}
+\newcommand{\TIPnobracketsarounddefinitions}[1][]{\advice[#1]{When defining a command, do not put the thing you defin in between brackets, i.e., do not write
+ \usebox{\VerbTIPnobracketsarounddefinitionsWRONG}
+but write
+ \usebox{\VerbTIPnobracketsarounddefinitionsRIGHT}
+The reason is: these brackets mess up spacing}}
+
+\newcommand{\TIPmakeMacroForConcepts}[1][]{
+\advice[#1]{If you have an often-occurring concept, make a macro for it. For instance: do not write, ``Let $\Sigma$ be a set of Boolean variables'' but make a command, e.g. $\\$\texttt{voc} for a ``vocabulary''. That way, if it turns out later that you have used $\Sigma$ for two different things, you can easily replace it}}
+
+\newcommand{\TIPconsistentNames}[1][]{
+\advice[#1]{Try to use consistent names for the same symbols. Do not call interpretations $I$ and later $J$ (unless you need to distsinguish between two interpretations)}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% WRITING
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\TIPavoidWeakVerbs}[1][]{\advice[#1]{Avoid writing weak verbs such as ``tries'' ``attempts to'', unless you really want to emphasize that this is an attempt, but probably not succesful. For instance when referring to other papers, do not write ``AUTHOR tries to solve the problem by \dots'' but write ``AUTHOR proposes an algorithm to \dots''. }}
+\newcommand{\TIPnoContractions}[1][]{\advice[#1]{Avoid contractions such as ``it's'', ``isn't'', ``We'll'',... }} 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% ENGLISH
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\TIPbothInEnglish}[1][]{\advice[#1]{In English, the sentence ``both x and y satisfy z'' mean ``x satisfies z and y satisfies z''. 
+If you write for instance ``both conditions guarantee that ...'', you mean: ``just one of them suffices to guarantee that''. 
+Also: writing things such as ``Both $x$ and $y$ are related'' does not really make sense. 
+If you mean to say that $x$ is related to $y$, drop the ``both''.}}
+\newcommand{\TIPcongruenceSubjectVerb}[1][]{\advice[#1]{Watch out for subject-verb congruence or verb-object congruence (plural vs singular). While not technically incorrect, sentences such as ```$x$ and $y$ are an important part of ...'' are sometimes hard to read. If both of them are an important part, this is wrong, but in some cases, such a sentence could be acceptable. However, even in such cases it is often possible to avoid the problem alltogether, here e.g., by writing ```$x$ and $y$ are imporant in...''.}}
+\newcommand{\TIPLetThen}[1][]{\advice[#1]{I don't really like the construction ``Let x be a variable. Then [...]''. Some sources claim this is not gramatically correct, but... others accept it. In any case, I find it more clear if you can link your ```then''s with ``If''s. For instance instead of writing ```Let $x$ be a special  $A$ and $y$ a $B$. Then $x$ is greater than $y$.'', you can write ``Let $x$ be an $A$ and $y$ a $B$. If $x$ is special, then $x$ is greater than $y$.''}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% WRITING MATH 
+%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\TIPdefVSchoice}[1][]{\advice[#1]{Definitions should be deterministic. There is a big difference between ``Let $x$ be \textbf{a} [...]'' and ``Let $x$ be \textbf{the}''. The former cases chooses an $x$ with a certain property arbitrarily (this can be useful in case you wish to prove something to hold for all such $x$s). The second can be used to \emph{define} $x$ (uniquely)}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% POINTERS
+%%%%%%%%%%%%%%%%%%%%%%%%
+% FOR MATHEMATICAL WRITING, SEE
+% https://faculty.math.illinois.edu/~west/grammar.html#definitions
+% 
+
+
+
+

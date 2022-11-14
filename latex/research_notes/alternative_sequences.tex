@@ -1,5 +1,67 @@
-\documentclass[11pt]{article}
-\usepackage{rawfonts}
+
+\documentclass[a4paper,UKenglish,cleveref, autoref, thm-restate]{lipics-v2021}
+%This is a template for producing LIPIcs articles. 
+%See lipics-v2021-authors-guidelines.pdf for further information.
+%for A4 paper format use option "a4paper", for US-letter use option "letterpaper"
+%for british hyphenation rules use option "UKenglish", for american hyphenation rules use option "USenglish"
+%for section-numbered lemmas etc., use "numberwithinsect"
+%for enabling cleveref support, use "cleveref"
+%for enabling autoref support, use "autoref"
+%for anonymousing the authors (e.g. for double-blind review), add "anonymous"
+%for enabling thm-restate support, use "thm-restate"
+%for enabling a two-column layout for the author/affilation part (only applicable for > 6 authors), use "authorcolumns"
+%for producing a PDF according the PDF/A standard, add "pdfa"
+
+%\graphicspath{{./graphics/}}%helpful if your graphic files are in another directory
+
+\bibliographystyle{plainurl}% the mandatory bibstyle
+
+\title{Dummy title} %TODO Please add
+
+\titlerunning{Dummy short title} %TODO optional, please use if title is longer than one line
+
+\author{John Q. Public}{Dummy University Computing Laboratory, [optional: Address], Country \and My second affiliation, Country \and \url{http://www.myhomepage.edu} }{johnqpublic@dummyuni.org}{https://orcid.org/0000-0002-1825-0097}{(Optional) author-specific funding acknowledgements}%TODO mandatory, please use full name; only 1 author per \author macro; first two parameters are mandatory, other parameters can be empty. Please provide at least the name of the affiliation and the country. The full address is optional
+
+\author{Emilio Gamba}{Data Analytics Lab, VUB, Belgium}{emilio.gamba@vub.be}{[0000-0003-1720-9428]}{}
+
+%\authorrunning{J.\,Q. Public and J.\,R. Public} %TODO mandatory. First: Use abbreviated first/middle names. Second (only in severe cases): Use first author plus 'et al.'
+
+%\Copyright{John Q. Public and Joan R. Public} %TODO mandatory, please use full first names. LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
+
+%\ccsdesc[100]{\textcolor{red}{Replace ccsdesc macro with valid one}} %TODO mandatory: Please choose ACM 2012 classifications from https://dl.acm.org/ccs/ccs_flat.cfm 
+
+%\keywords{Dummy keyword} %TODO mandatory; please add comma-separated list of keywords
+
+%\category{} %optional, e.g. invited paper
+
+\relatedversion{} %optional, e.g. full version hosted on arXiv, HAL, or other respository/website
+%\relatedversiondetails[linktext={opt. text shown instead of the URL}, cite=DBLP:books/mk/GrayR93]{Classification (e.g. Full Version, Extended Version, Previous Version}{URL to related version} %linktext and cite are optional
+
+%\supplement{}%optional, e.g. related research data, source code, ... hosted on a repository like zenodo, figshare, GitHub, ...
+%\supplementdetails[linktext={opt. text shown instead of the URL}, cite=DBLP:books/mk/GrayR93, subcategory={Description, Subcategory}, swhid={Software Heritage Identifier}]{General Classification (e.g. Software, Dataset, Model, ...)}{URL to related version} %linktext, cite, and subcategory are optional
+
+%\funding{(Optional) general funding statement \dots}%optional, to capture a funding statement, which applies to all authors. Please enter author specific funding statements as fifth argument of the \author macro.
+
+\acknowledgements{This research received partial funding from the Flemish Government (AI Research Program); and funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (Grant No. 101002802, CHAT-Opt).}%optional
+
+%\nolinenumbers %uncomment to disable line numbering
+
+\hideLIPIcs  %uncomment to remove references to LIPIcs series (logo, DOI, ...), e.g. when preparing a pre-final version to be uploaded to arXiv or another public repository
+
+%Editor-only macros:: begin (do not touch as author)%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\EventEditors{John Q. Open and Joan R. Access}
+\EventNoEds{2}
+\EventLongTitle{42nd Conference on Very Important Topics (CVIT 2016)}
+\EventShortTitle{CVIT 2016}
+\EventAcronym{CVIT}
+\EventYear{2016}
+\EventDate{December 24--27, 2016}
+\EventLocation{Little Whinging, United Kingdom}
+\EventLogo{}
+\SeriesVolume{42}
+\ArticleNo{23}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \usepackage[usenames,dvipsnames]{xcolor}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage[ruled,linesnumbered]{algorithm2e}
@@ -8,32 +70,29 @@
 \usepackage{paralist}
 \usepackage{caption}
 \usepackage{subcaption}
-\usepackage{fullpage}
-
 \usepackage[round]{natbib}  % bibliography package
 \usepackage{bibentry} 
-
-\nobibliography*                   % no bib at the end
 \usepackage{graphicx}
 \usepackage{adjustbox}
 \usepackage{multirow,array}
 \usepackage{lscape}
 \usepackage{tabularx}
-
-\usepackage[normalem]{ulem}
 \usepackage{enumitem}
-%\usepackage{hyperref}
 \usepackage[capitalise]{cleveref}
 
 \usepackage{cancel}
-%\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+\usepackage{makecell}
+\usepackage{cellspace}
+
+\setlength\cellspacetoplimit{4pt}
+\setlength\cellspacebottomlimit{4pt}
+\addparagraphcolumntypes{X}
 
 %%%%%%
-%\newcommand\citet[1]{\citeauthor{#1}~\citeyear{#1}}
 
+\newlist{RQ}{enumerate}{1}
+\setlist[RQ]{label=\bfseries{}RQ\arabic*:}
 \newcommand\m[1]{\mathcal{#1}}
-
-\DeclareMathOperator*{\mini}{minimize}
 
 %% Theorems/Theory
 \newtheorem{thm}{Theorem}
@@ -66,72 +125,14 @@
 \newcommand{\removed}[1]{\sout{#1}}
 
 %% Factoring
-\newcommand\setstohit{\ensuremath{\m{H} }\xspace}
-\newcommand\decisionvariables{{D}}
-\newcommand\decisionvariable{{d}}
-\newcommand\settohit{H}
-\newcommand\hittingset{h}
-\newcommand\F{\ensuremath{\m{F} }\xspace}
-\newcommand\subsetT{\ensuremath{\m{S} }\xspace}
-\newcommand\bestsubsetT{\ensuremath{\m{S}_{best}}\xspace}
-\newcommand\corrsetT{\ensuremath{\m{K} }\xspace}
-\newcommand\setstohitall{\ensuremath{\m{H}_\mathit{all} }\xspace}
-\newcommand\Iend{\ensuremath{I_\mathit{end} }\xspace}
-\newcommand\formula{\ensuremath{\m{F} }\xspace}
-\newcommand\formulac{\ensuremath{\m{C} }\xspace}
-\newcommand\formularunning{\ensuremath{C }\xspace}
-\newcommand\formulag{\ensuremath{\m{G} }\xspace}
-\newcommand\mm[1]{\ensuremath{#1}\xspace}
-\newcommand\nat{\mm{\mathbb{N}}}
-\newcommand\ltrue{\mm{\textbf{t}}}
-\newcommand\lfalse{\mm{\textbf{f}}}
-\newcommand\uservars{\ensuremath{\m{U} }\xspace}
+
 \newcommand\call[1]{\mm{\texttt{#1}}}
-\newcommand\cohs{\mm{\call{CondOptHittingSet}}}
-%\newcommand\cohs{\texttt{CondOptHittingSet}\xspace}
-\newcommand\ohs{\mm{\call{OptHittingSet}}}
-\newcommand\disjcorr{\mm{\call{DisjCorrSets}}}
-\newcommand\disjcorrincr{\mm{\call{DisjCorrSetsIncremental}}}
-\newcommand\disjcorrconstrained{\mm{\call{DisjCorrSetsConstrained}}}
-\newcommand\sat{\texttt{{SAT}}\xspace}
-\newcommand\grow{\mm{\call{Grow}}}
-\newcommand\omus{\mm{\call{OUS}}}
-\newcommand\comus{\mm{\call{OCUS}}}
-\newcommand\comusincr{\mm{\call{OCUS+Incr.~HS}}}
-\newcommand\ousb{\mm{\call{OCUS\_Bound}}}
-\newcommand\ousbiter{\mm{\call{OCUS\_Split}}}
-\newcommand\ousbincr{\mm{\call{OCUSb+Lit.~Incr.~HS}}}
-\newcommand\ousbiterincr{\mm{\call{OCUSIter+Lit.~Incr.~HS}}}
-\newcommand\corrss{\mm{\call{CorrSS}}}
-\newcommand\corrsubsets{\mm{\call{CorrSubsets}}}
-%\newcommand\corrsubsets{\texttt{CorrSubsets}\xspace}
-\newcommand\comusdisj{\mm{\call{OCUSConstrainedDisjMCSes}}}
-\newcommand\disjmcs{\mm{\call{DisjointMCSes}\xspace}}
-\newcommand\disjmcsconstrained{\mm{\call{DisjointMCSesConstrained}\xspace}}
-\newcommand\omusinc{\mm{\call{OUS-Inc}}}
-\newcommand\hitsetbased{hitting set--based\xspace} %en-dash!
-\newcommand\satsets{\mm{\mathbf{SSs}}}
-\newcommand\fall{\mm{\formula_{\mathit{all}}}}
-\newcommand\algemilio[1]{\emilio{#1}\;}
-\newcommand\UB{ub}
-\newcommand\LB{lb}
-\newcommand\maxsat{MaxSAT\xspace}
-\newcommand\voc{\ensuremath{\Sigma}\xspace}
-\newcommand\negset[1]{\mm{\overline{#1}}}
+\newcommand\mm[1]{\ensuremath{#1}\xspace}
+
 
 \newcommand{\algorithmicbreak}{\textbf{break}}
+
 %%%%%
-\newcommand\muses[1]{\ensuremath{\mathit{MUSs}(#1)}\xspace}
-\newcommand\mcses[1]{\ensuremath{\mathit{MCSs}(#1)}\xspace}
-
-%%%%%%%
-\newcommand\onestep{\ensuremath{\call{Explain-One-Step}}\xspace}
-\newcommand\onestepomus{\ensuremath{\call{Explain-One-Step-OUS}}\xspace}
-\newcommand\onestepomusbounded{\ensuremath{\call{Explain-One-Step-OCUS-Bounded}}\xspace}
-
-%\newcommand\onestepo{\texttt{Explain-One-Step-OCUS}\xspace}
-\newcommand\onestepo{\ensuremath{\call{Explain-One-Step-OCUS}}\xspace}
-\newcommand\iterativeonestep{\ensuremath{\call{Explain-One-Step-OCUS-Split}}\xspace}
 %%%%%%
 \input{latextips.tex}
 
@@ -146,31 +147,116 @@
 \SetKw{Break}{break}
 %%%%%%%
 
-
 \renewcommand{\tabularxcolumn}[1]{m{#1}}%
 \newcolumntype{C}{>{\centering\arraybackslash}X}
 
-\usepackage{makecell}
-
-\usepackage{cellspace}
-\setlength\cellspacetoplimit{4pt}
-\setlength\cellspacebottomlimit{4pt}
-\addparagraphcolumntypes{X}
 
 \begin{document}
 	
-	\title{Exploring and improving Explanation Sequences}
+	\title{Research note: Towards better explanations for Constraint Satisfaction and Optimisation problems}
 	\date{}
 	\author{Emilio Gamba}
 		\maketitle
+	\thispagestyle{empty}
+	\section{Introduction}
+%\vspace*{2cm}	
+
 	
-	\section{Open things to consider}
+
+	\subsection{Contributions}
 	\begin{enumerate}
-		\item Don't focus only on (Sudoku) puzzle, try other problems such as optimisation problems where we fix part of the domain to ensure there is a unique solution
-		\item .....
+		\item Correlation between explanation difficulty measured by cost-function and the perceived difficulty of a Sudoku
+		\item 
+		\item 
 	\end{enumerate}
-	
-\section{Experiments}
+%\vspace*{2cm}	
+
+
+%	\section{Background}
+
+
+	\section{Research questions}
+	\begin{RQ}
+		\item How do we learn the explanation preferences of the user based on the features we have extracted for a good explanation?
+		\item What are the features of a good explanation?
+		\begin{itemize}
+			\item How do we encode that in the cost-function and optimize over given weights ?
+		\end{itemize}
+		\item How to reconcile auto-generated sequences with human generated sequences ? 
+		\item Is it always possible to generate a ``meaningful'' nested explanation sequence? 
+		
+\end{RQ}
+
+
+\section{Improving the explanation sequence}
+
+\begin{example}
+	(Sudoku) The Sudoku puzzle requires filling in numbers (1...9) in a grid, where the numbers can only appear: Once in every row \textbf{i} (\textbf{row-alldifferent});
+	once in every column \textbf{j} (\textbf{col-alldifferent} ); and once every block \textbf{(i, j)} of row i, and column j (\textbf{block-alldifferent}).
+\end{example}
+
+\subsection{Cost-function}
+
+
+\subsection{Alternative explanations}
+
+\begin{problem}\label{problem-statement:alternative-explanations}
+	At every explanation step, there potentially exist numerous alternative explanation steps of equal cost: 
+	\begin{enumerate}
+		\item Explanation steps where different combinations of constraints can be used to explain the same literal;
+		\item Explanation steps of same cost that explain different literals.
+	\end{enumerate}
+\end{problem}	
+
+\begin{figure}[!h]
+	\begin{subfigure}{0.45\textwidth}\centering
+		\includegraphics[width=0.8\textwidth]{figures/sudoku_hint_1.png}
+		\caption{Using the highlighted digits, and all different values on row3, and all different values on block (1, 2), we can derive a 6 at the puzzle piece.}
+		\label{alternative-explanation:same-block}
+	\end{subfigure}\hfill
+	\begin{subfigure}{0.45\textwidth}\centering
+		\includegraphics[width=0.8\textwidth]{figures/sudoku_hint_2.png}
+		\caption{Using the highlighted digits, and all different values on row3, and 6 cannot be in block (1, 3), we can derive a 6 at the puzzle piece.}
+		\label{alternative-explanation:other-block}
+	\end{subfigure}
+\end{figure}
+
+
+\subsection{Temporality of the explanations} 
+\begin{problem}\label{problem-statement:locality-explanations}
+	One strategy to solve the Sudoku is to look at a specific number, for instance, the one that appear the most in the grid and try to fill in that same number in other blocks of the grid.
+\end{problem}
+
+
+\subsection{Optimizing the sequence}
+\begin{problem}\label{problem-statement:sequence-optimisation}
+	The sequence generation is greedily optimized.	At every explanation step of sequence, the cost-optimal explanation step is computed. However, there is \emph{no guarantee of optimality at the sequence level} with respect to a global metric.
+\end{problem}
+
+\begin{itemize}
+	\item[Q1] What are the global metrics for quantifying the quality of an explanation sequence, i.e. optimizing the explanation sequence such that
+	\begin{description}
+		\item[Maximum] the cost of the most difficult explanation is as low as possible;
+		\item[Average]  the average cost of the sequence is as low as possible.
+	\end{description}	
+\end{itemize}	
+
+
+\subsection*{Naive and greedy approaches to improve explanation sequence}
+
+\begin{description}
+	\item[Least-cost] Select least cost explanation step at every step of the sequence.
+	\item[Breadth-first search] Explore the whole explanation search tree O(n!) to find the least cost explanation sequence, where the cost of the explanation sequence can be used as a bound .
+\end{description}
+
+	\section{Work Packages}
+%TODO: Insert gantt chart here!
+
+\thispagestyle{empty}
+\clearpage
+\thispagestyle{empty}
+	\section{Experiments}
+
 The experiments are run on a laptop with a  2,6 GHz 6-Core Intel Core i7 processor, and 16 GB of RAM.
 The whole pipeline is implemented using CPMpy (\textit{write version here!}), with PySAT (\textit{write version here!}), as the default SAT solver, Gurobi (\textit{write version here!}) for the MIP solver. The benchmark instances consist of the Sudoku scanned by the Sudoku Assistant that have been corrected to make sure they are satisfiable and have a unique solution.
 
@@ -178,8 +264,8 @@ The whole pipeline is implemented using CPMpy (\textit{write version here!}), wi
 	(Sudoku) The 9 x 9 Sudoku puzzle requires filling in numbers (1...9) in a grid, where the numbers can only appear: Once in every row \textbf{i} ($\mathbf{row_{i}}$);
 	once in every column \textbf{j} ($\mathbf{col_{i}}$); and once every block \textbf{k} ([$\mathbf{block_{k}}$). The blocks of a given Sudoku are numbered starting from the top left to the bottom right. Typical solving processes use two types of notations: 
 	\begin{itemize}
-			\item $\mathbf{cell[1, 4] = 2}$ meaning  cell at row 1 and column 4 takes value 2;
-			\item $\mathbf{cell[1, 4] \neq 7}$ meaning cell at row 1 and column 4 cannot take value 7 (domain reductions).
+		\item $\mathbf{cell[1, 4] = 2}$ meaning  cell at row 1 and column 4 takes value 2;
+		\item $\mathbf{cell[1, 4] \neq 7}$ meaning cell at row 1 and column 4 cannot take value 7 (domain reductions).
 	\end{itemize}
 \end{example}
 
@@ -198,18 +284,18 @@ An explanation is the context of the Sudoku corresponds to a combination of cons
 		\caption{Using the highlighted digits, and all different values on row3, and 6 cannot be in block (1, 3), we can derive a 6 at the puzzle piece.}
 		\label{alternative-explanation:other-block}
 	\end{subfigure}
-\caption{Example of explanations for Sudoku.}
-\label{explanations:example}
+	\caption{Example of explanations for Sudoku.}
+	\label{explanations:example}
 \end{figure}
 
 \subsubsection{Explanation quality} The quality of an explanation relates to the difficulty of understanding it. Therefore, the cognitive complexity of an explanation is approximated using a cost-function $f$. To the best of our knowledge there does not exist a good metric yet of what is and what is not a good cost function. Intuitively such a cost-function should at least take into account the type and the number of constraints as well the number of assignments in the interpretation.
 
 \begin{description}
-\item[baseline] We define the baseline cost-function as a weighted sum where the \texttt{row, block} and \texttt{col} constraints are assigned a weight of 20, and assignments have a unit weight.
-\item[\citet{master-thesis-sudoku}]  use the following equation as a cost-function with $N$, the number of assignments, $R$ the number of rows constraints, $C$ the number of column constraints, $B$ the number of block constraints used in the explanation.
-\begin{equation}
-	N \cdot (R + 1) \cdot (C + 1) \cdot (B + 1) 
-\end{equation} 
+	\item[baseline] We define the baseline cost-function as a weighted sum where the \texttt{row, block} and \texttt{col} constraints are assigned a weight of 20, and assignments have a unit weight.
+	\item[\citet{master-thesis-sudoku}]  use the following equation as a cost-function with $N$, the number of assignments, $R$ the number of rows constraints, $C$ the number of column constraints, $B$ the number of block constraints used in the explanation.
+	\begin{equation}
+		N \cdot (R + 1) \cdot (C + 1) \cdot (B + 1) 
+	\end{equation} 
 \end{description}
 The above mentioned cost-function do not take into account several elements worthy of improvement:
 \begin{itemize}
@@ -234,6 +320,10 @@ The following graphs presents the cost and the time for generating an explanatio
 	\label{fig:baseline:histogram:expl-cost}
 \end{figure}
 
+	
+	
+\section{Experiments}
+
 \subsection{RQ1: How does the extraction of negated assignment (domain reductions) affect the cost of the parent explanation ?}
 
 \subsubsection{Nested explanations to explain parent}
@@ -247,6 +337,7 @@ The following graphs presents the cost and the time for generating an explanatio
 \newpage
 \begin{landscape}
 \section{Related Works}
+
 \begin{table}[!h]
 \begin{tabularx}{\linewidth}{|l|S{X}|S{X}|}
 \Xhline{1.5pt}
@@ -281,6 +372,7 @@ The following graphs presents the cost and the time for generating an explanatio
 %		\end{enumerate}  &  \\ \hline
 \end{tabularx}
 \end{table}
+
 \newpage
 \begin{table}[!h]
 	\begin{tabularx}{\linewidth}{|l|S{X}|}
@@ -346,66 +438,7 @@ Propagation schemes:\begin{enumerate}[leftmargin=*]
 \end{table}
 \end{landscape}
 
-\section{Improving the explanation sequence}
 
-\begin{example}
-	(Sudoku) The Sudoku puzzle requires filling in numbers (1...9) in a grid, where the numbers can only appear: Once in every row \textbf{i} (\textbf{row-alldifferent});
-	once in every column \textbf{j} (\textbf{col-alldifferent} ); and once every block \textbf{(i, j)} of row i, and column j (\textbf{block-alldifferent}).
-\end{example}
-
-\subsection{Cost-function}
-
-
-\subsection{Alternative explanations}
-
-\begin{problem}\label{problem-statement:alternative-explanations}
-	At every explanation step, there potentially exist numerous alternative explanation steps of equal cost: 
-	\begin{enumerate}
-		\item Explanation steps where different combinations of constraints can be used to explain the same literal;
-		\item Explanation steps of same cost that explain different literals.
-	\end{enumerate}
-\end{problem}	
-
-\begin{figure}[!h]
-	\begin{subfigure}{0.45\textwidth}\centering
-		\includegraphics[width=0.8\textwidth]{figures/sudoku_hint_1.png}
-		\caption{Using the highlighted digits, and all different values on row3, and all different values on block (1, 2), we can derive a 6 at the puzzle piece.}
-		\label{alternative-explanation:same-block}
-	\end{subfigure}\hfill
-	\begin{subfigure}{0.45\textwidth}\centering
-		\includegraphics[width=0.8\textwidth]{figures/sudoku_hint_2.png}
-		\caption{Using the highlighted digits, and all different values on row3, and 6 cannot be in block (1, 3), we can derive a 6 at the puzzle piece.}
-		\label{alternative-explanation:other-block}
-	\end{subfigure}
-\end{figure}
-
-
-\subsection{Temporality of the explanations} 
-\begin{problem}\label{problem-statement:locality-explanations}
-	One strategy to solve the Sudoku is to look at a specific number, for instance, the one that appear the most in the grid and try to fill in that same number in other blocks of the grid.
-\end{problem}
-
-
-\subsection{Optimizing the sequence}
-\begin{problem}\label{problem-statement:sequence-optimisation}
-	The sequence generation is greedily optimized.	At every explanation step of sequence, the cost-optimal explanation step is computed. However, there is \emph{no guarantee of optimality at the sequence level} with respect to a global metric.
-\end{problem}
-
-\begin{itemize}
-	\item[Q1] What are the global metrics for quantifying the quality of an explanation sequence, i.e. optimizing the explanation sequence such that
-	\begin{description}
-		\item[Maximum] the cost of the most difficult explanation is as low as possible;
-		\item[Average]  the average cost of the sequence is as low as possible.
-	\end{description}	
-\end{itemize}	
-
-
-\subsection*{Naive and greedy approaches to improve explanation sequence}
-
-\begin{description}
-	\item[Least-cost] Select least cost explanation step at every step of the sequence.
-	\item[Breadth-first search] Explore the whole explanation search tree O(n!) to find the least cost explanation sequence, where the cost of the explanation sequence can be used as a bound .
-\end{description}
 
 	\clearpage
 	\bibliography{krrlib,ref}

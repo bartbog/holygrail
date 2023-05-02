@@ -1,6 +1,6 @@
 %\documentclass[handout]{beamer}
 \documentclass{beamer}
-\usepackage{algorithm2e}
+\usepackage[ruled,noend]{algorithm2e}
 \usepackage{natbib}
 \usepackage{layouts}
 %\usepackage{enumitem}
@@ -20,6 +20,8 @@
 \usepackage{tikz}
 \usepackage{tikz-qtree}
 \usepackage[framemethod=tikz]{mdframed}
+
+
 
 \definecolor{mycolor}{rgb}{0.122, 0.435, 0.698}
 %\newcommand\citet[1]{\citeauthor{#1}~\citeyear{#1}}
@@ -277,7 +279,7 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 		\item[=] Irreducible Inconsistent Subsystem (ISS) 
 	\end{itemize}
  \only<3->{\item Identify a \textbf{\textit{\color{forestgreen}Maximal Satisfiable Subset}} (\textbf{\textit{\color{forestgreen}MSS}}) {\footnotesize{(\cite{ignatiev2019rc2,davies2013exploiting,hansen1990algorithms}...)}}} 
-\only<4->{\item ``Correct'' the infeasibility in the constraints \footnotesize{(\cite{liffiton2013enumerating}...)}
+\only<4->{\item ``Correct'' the infeasibility in the constraints \footnotesize{(\cite{liffiton2013enumerating,senthooran2021human}...)}
 	\begin{itemize}
 	\item[$\rightarrow$] Extract a \textbf{\textit{\color{blue}Minimum Correction Subset}} (\textbf{\textit{\color{blue}MCS}})
 	\item[=] Complement of some \textbf{\textit{\color{forestgreen}MSS}}, removal/correction leads to a satisfiable subset
@@ -444,12 +446,18 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 	\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_S_full}}] Constraints 
 	\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_E_full}}] Facts: variable assignments ($\mathtt{cells[4,1] = 2}$), domain-reduction $\mathtt{cells[4,1] \neq 3}$
 \end{itemize} \pause
-\vspace{20pt}
+
+\vspace{10pt}
 \textbf{Goal:}
 \begin{itemize}
-	\item[$\triangleright$] Generate a \textit{\emph{sequence}} of \textit{\emph{simple}} explanations \pause
+	\item Explain the unique solution or the maximal consequence of a problem
+\end{itemize}
+\vspace{10pt}\pause
+\textbf{How?}
+\begin{itemize}
+	\item[$\triangleright$]  Explain step-by-step the solution of a Constraint Satisfaction Problem  
+	\item[$\triangleright$] Generate a \textit{\emph{sequence}} of \textit{\emph{simple}} explanations 
 	\item[$\triangleright$] Explain 1 fact at a time 
-	\item[$\triangleright$]  Explain step-by-step the solution of a Constraint Satisfaction Problem \pause 
 \end{itemize}
 
 \end{frame}
@@ -499,6 +507,31 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 
 	\end{frame}
 	
+
+	
+	\begin{frame}%{Use cases}
+		\begin{center}\Large
+			What are use-cases of step-wise explanations ? 
+		\end{center}
+		\begin{figure}
+			\centering
+			\includegraphics[width=0.2\textwidth]{figures/i_want_you_ocus.png}
+		\end{figure}\pause
+		\begin{itemize}
+			\item Step-wise explaining solutions of scheduling, configuration problems .... and puzzles  \Cooley
+			\begin{itemize}
+				\item Explain why nurse A is assigned to monday morning;
+				\item ...
+			\end{itemize}
+%			\item Debugging \textit{unsatisfiable models} with \emph{preferences} on the constraints \pause
+			%		\item Stepwise explaining unsatisfiability \pause	
+			\item Explaining Optimality for Constraint Optimization Problems 
+			\begin{itemize}
+				\item Why is the objective value not better ? 
+			\end{itemize}
+			
+		\end{itemize}
+	\end{frame}
 	
 
 %	\begin{frame}{Stepwise explanations for CSPs}
@@ -535,17 +568,16 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 	\frametitle{How to find a \emph{good} explanation ?}
 	
 	%			\textbf{What is a \emph{good} explanation ?} \\ \vspace{20pt}
-	\begin{minipage}{0.25\textwidth}
-		\includegraphics[width=0.9\textwidth]{figures/sudoku_sequence/sudoku-step1.png}
-	\end{minipage} \pause  $\rightarrow$
-	\begin{minipage}{0.28\textwidth}
-		\includegraphics[width=0.9\textwidth]{figures/sudoku_sequence/sudoku-step2}
-	\end{minipage}\hfill \pause
+	\begin{minipage}{0.38\textwidth}
+		\includegraphics[width=0.9\textwidth]{figures/explaining_2.png}
+	\end{minipage}\hfill 
 	or \hfill
-	\begin{minipage}{0.30\textwidth}
-		\includegraphics[width=0.9\textwidth]{figures/sudoku_sequence/sudoku-step3bis}
-	\end{minipage}\pause 
-	
+	\begin{minipage}{0.38\textwidth}
+		\includegraphics[width=0.9\textwidth]{figures/explaining_2_bis.png}
+	\end{minipage} 
+		\end{frame}
+\begin{frame}
+		\frametitle{How to find a \emph{good} explanation ?}
 	%\setbeamertemplate{block begin}[default]
 	%\setbeamertemplate{block end}[default]
 
@@ -558,11 +590,12 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 	
 	\vfill
 	
-	\textbf{What is the \emph{best/easiest} explanation step? }\pause
+	\textbf{What is the \textbf{next} \emph{best/easiest} explanation step? }\pause
+	
 	\begin{algorithm}[H]
-		
+
 		$\mathtt{expl}_{\text{best}} \gets \mathit{nil}$\;\pause
-		\For{remaining assignment {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} to explain}{
+		\For{{\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $\in$ to\_explain}{
 			
 			expl $\gets \mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\wedge \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$\; \pause
 			\uIf{$f(\mathtt{expl})<f(\mathtt{expl}_{\text{best}})$}{
@@ -570,6 +603,8 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 			}
 		}
 		\Return{$\mathtt{expl}_{\text{best}}$} 
+  \caption{explain\_mus(C, E, f, to\_explain)}
+\label{alg:mus-explain}
 	\end{algorithm}
 \end{frame}
 
@@ -579,11 +614,27 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 \begin{frame}{Motivation}
 	\framesubtitle{Challenges and open questions from \cite{bogaerts2020step}}
 	
-	\begin{minipage}{0.43\textwidth}
+%	\begin{minipage}{0.36\textwidth}
 		%\begin{description}%[font=\color{vuborange}\itshape]
 		%	\item[Optimality] Explanations not provably optimal, \emph{heuristically} found.
 		%\end{description}
 		
+			\begin{algorithm}[H]
+			
+			{\color{gray} \small $\mathtt{expl}_{best} \gets \mathit{nil}$\;
+				\For{\small\color{gray} \only<3>{\color{vuborange}} {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $\in$ to\_explain}{
+					
+					{\color{gray}\only<1>{\color{vuborange}} expl $\gets \mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\wedge \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$}\;
+					\uIf{\color{gray}\only<1>{\color{vuborange}} $f(\mathtt{expl})<f(\mathtt{expl}_{\text{best}})$}{
+						{\color{gray}\only<1>{\color{vuborange}}$\mathtt{expl}_{\text{best}} \gets \mathtt{expl}$}\;
+					}
+				}
+				\Return{\color{gray}\only<1>{\color{vuborange}} $\mathtt{expl}_{\text{best}}$} }
+			%				\caption{Explain 1 step}
+			\caption{\small explain\_mus(C, E, f, to\_explain)}
+			\label{alg:mus-explain}
+		\end{algorithm}
+		\vfill
 		\begin{itemize}
 			\item[Q1] {\only<1>{\color{vuborange}} \textbf{Optimality}} w.r.t $\mathbf{f}$
 			\item[$\triangleright$] MUS guarantees non-redundancy but ... not optimality.
@@ -596,26 +647,14 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 					\item[Q2] Can we \emph{avoid looping over the literals} when searching for the next best explanation ?
 		\end{itemize}}}
 		%\end{description}
-	\end{minipage}
+%	\end{minipage}
 	\hfill
-	\begin{minipage}{0.52\textwidth}
+%	\begin{minipage}{0.59\textwidth}
 		
-		\begin{algorithm}[H]
-			
-			{\color{gray} \small $\mathtt{expl}_{best} \gets \mathit{nil}$\;
-				\For{\color{gray} \only<3>{\color{vuborange}}remaining assignment {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} to explain}{
-					
-					{\color{gray}\only<1>{\color{vuborange}} expl $\gets \mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\wedge \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$}\;
-					\uIf{\color{gray}\only<1>{\color{vuborange}} $f(\mathtt{expl})<f(\mathtt{expl}_{\text{best}})$}{
-						{\color{gray}\only<1>{\color{vuborange}}$\mathtt{expl}_{\text{best}} \gets \mathtt{expl}$}\;
-					}
-				}
-				\Return{\color{gray}\only<1>{\color{vuborange}} $\mathtt{expl}_{\text{best}}$} }
-			%				\caption{Explain 1 step}
-		\end{algorithm}
+	
 		
 		
-	\end{minipage}
+%	\end{minipage}
 \end{frame}
 
 
@@ -652,10 +691,10 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 \begin{frame}{OCUS-Based explanation generation}
 	
 	\hspace{0.3\textwidth}
-	\begin{minipage}{0.6\textwidth}
+%	\begin{minipage}{0.6\textwidth}
 		\begin{algorithm}[H]
 			$\mathtt{expl}_{best} \gets \mathit{nil}$\;
-			\For{\color{black}  assignment n to explain }{
+			\For{\color{black}   {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $\in$ to\_explain }{
 				
 							$\mathtt{expl} \gets \call{MUS}{(C \land E \land \neg n)}$\;
 				\uIf{\color{black} $f(\mathtt{expl})<f(\mathtt{expl}_{best})$}{
@@ -663,22 +702,27 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 				}
 			}
 			\Return{\color{black}$\mathtt{expl}_{best}$} 
+			  \caption{explain\_mus(C, E, f, to\_explain)}
+			\label{alg:mus-explain}
 		\end{algorithm}
-	\end{minipage} \pause
+%	\end{minipage} 
+\pause
 	
 	\[\downarrow\]
 	
 	
 	\hspace{0.09\textwidth} 
-	\begin{minipage}{0.9\textwidth}				
+%	\begin{minipage}{0.9\textwidth}				
 		\begin{algorithm}[H]
 			\DontPrintSemicolon
-			$p \leftarrow$ \texttt{exactly-one}$(\{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ \in \LitsToExplain\})$\;
-			{\Large $\emph{\mathtt{{OCUS}}}($}{\large \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}} $\wedge \{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ \in \LitsToExplain\}, \emph{\mathbf{f}}, \emph{\mathbf{p}})$ } \;
+			$p \leftarrow$ \texttt{exactly-one}$(\{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ \in$ to\_explain\}$)$\;
+			\Return{\Large $\emph{\mathtt{{OCUS}}} ($}{\large \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}} $\wedge \{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ \in $ to\_explain$\}, \emph{\mathbf{f}}, \emph{\mathbf{p}})$ } \;
 			%					$\call{OCUS}(S \wedge E \wedge \{\lnot n \ | \ n \in \LitsToExplain\}, \emph{f, p})$\;
+			  \caption{explain\_ocus(C, E, f, to\_explain)}
+			\label{alg:mus-explain}
 		\end{algorithm}
-	\end{minipage}
-	
+%	\end{minipage}
+%	
 	
 \end{frame}
 
@@ -736,7 +780,7 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 	\pause
 	\begin{itemize}
 		\item Set of elements (i.e. constraints) $\{c_1,c_2,...,c_n\}$
-		\item Collection $\m{H}$ of sets-to-hit  (i.e.~subsets of the set of elements)\pause
+		\item Collection $\m{H}$ of sets-to-hit  (i.e.~subsets of the set of elements)
 		\item cost associated for every element:\\
 		\hspace*{2cm}$w_1 =  \emph{3}, w_2= \emph{5}, w_3 = w_4 = ...= w_8 = 1$\pause \vfill
 		\item[\textbf{Goal}] Find an \emph{optimal} hitting set such that every set-to-hit is hit by at least once an element of the hitting set with \emph{minimal total cost}.
@@ -745,24 +789,20 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 	\begin{minipage}{0.48\textwidth}
 		For example: 
 		\begin{enumerate}
-			\item[$H_1$] = {\only<5>{\color{blue}}$\{c_3, c_5\}$}
-			\item[$H_2$] = {\only<6>{\color{blue}}$\{c_2, c_4, c_7\}$}
-			\item[$H_3$] = {\only<7>{\color{blue}}$\{c_2, c_6\}$}
-			\item[$H_4$] = {\only<8>{\color{blue}}$\{c_1, c_8\}$}
+			\item[$H_1$] = $\{c_3, c_5\}$
+			\item[$H_2$] =$\{c_2, c_4, c_7\}$
+			\item[$H_3$] = $\{c_2, c_6\}$
+			\item[$H_4$] = $\{c_1, c_8\}$
 		\end{enumerate}
 	\end{minipage}
 	\begin{minipage}{0.48\textwidth}
-		Optimal hitting sets:
+		Optimal hitting sets:\pause
 		\begin{itemize}
-			\item $\{\only<5->{{\color{blue}c_3},} \only<6->{{\color{blue}c_4},} \only<7->{{\color{blue}c_6},} \only<8->{{\color{blue}c_8}}\}$ \only<9>{\emph{\checkmark}
+			\item $\{{{\color{blue}c_3},} {{\color{blue}c_4},} {{\color{blue}c_6},} {{\color{blue}c_8}}\}$ \emph{\checkmark}
 				\begin{itemize}
 					\item cost: \emph{4}
-			\end{itemize}}
-			\only<10>{\item {$\{c_1, c_2, c_3\}$}
-				\begin{itemize}
-					\item cost: \emph{7}
-				\end{itemize}
-				\item \dots}
+			\end{itemize}
+				\item \dots
 		\end{itemize}
 	\end{minipage}
 \end{frame}
@@ -834,32 +874,14 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 		\begin{figure}
 			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong3.png}
 		\end{figure}
-		{\tiny \url{https://flyclipart.com/party-popper-emoji-on-apple-ios-celebration-emoji-png-610281}}
-	}
-	\newcommand\hitset{\m{\mathcal{H}}}
+}
 	
+%	\newcommand\hitset{\m{\mathcal{H}}}
+		\only<12>{\vfill
+	{\tiny (1) Image source: \url{https://flyclipart.com/party-popper-emoji-on-apple-ios-celebration-emoji-png-610281}}}
 \end{frame}
 
 
-					\begin{frame}%{Use cases}
-	\begin{center}\Large
-		What are use-cases of step-wise explanations ? 
-	\end{center}
-	\begin{figure}
-		\centering
-		\includegraphics[width=0.2\textwidth]{figures/i_want_you_ocus.png}
-	\end{figure}\pause
-	\begin{itemize}
-		\item Explaining solutions of scheduling, configuration problems .... and puzzles  \Cooley
-		\item Debugging \textit{unsatisfiable models} with \emph{preferences} on the constraints \pause
-%		\item Stepwise explaining unsatisfiability \pause	
-		\item Explaining Optimality for Constraint Optimization Problems 
-		\begin{itemize}
-			\item Why is the objective value not better ? 
-		\end{itemize}
-		
-	\end{itemize}
-\end{frame}
 
 				\section{Toward human-interpretable explanations using Machine Learning}
 
@@ -934,8 +956,8 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 
 \begin{frame}
 \begin{figure}
-	\only<1>{	\includegraphics[height=0.85\textheight]{figures/cp23_2_choices.png}}
-		\only<2>{	\includegraphics[height=0.85\textheight]{figures/cp23_2_choices_with_digits.png}}
+		\only<1>{	\includegraphics[height=0.85\textheight]{figures/cp23_2_choices_with_digits.png}}
+	\only<2>{	\includegraphics[height=0.85\textheight]{figures/cp23_2_choices.png}}
 \end{figure}	
 
 \end{frame}
@@ -960,7 +982,7 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 		XGBoostRanker                      &  75.05  &  ----- \\
 		%\bottomrule
 	\end{tabular}}
-	\caption{Classifier accuracy in predicting preferred explanation out of an explanation sample pair.}
+	\caption{Classifier accuracy in predicting the preferred explanation out of an explanation sample pair.}
 	\label{table:classifier-accuracy}
 \end{table}
 \end{frame}
@@ -977,7 +999,7 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 	\begin{itemize}
 		\item Step-wise explanations of CSPs
 		\item How to compute explanations efficiently with OCUS
-		\item Data-centric methodology for learning preferences
+		\item Data-centric methodology for learning explanation preferences
 	\end{itemize}
 	
 \end{frame}
@@ -1002,6 +1024,8 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 		\begin{itemize}
 			\item How to integrate the trained ML model into OCUS generation to \emph{efficiently} compute preferred explanation?
 			\item Learning to rank approaches for ranking explanations and selecting the best one.
+			\item User-preferences: take into account user information, i.e. experience, ...?
+%			\item Inverse optimisation?
 			\item Inverse optimization where given a set of preferred explanations, we want to compute a cost-function.
 		\end{itemize}
 	\end{frame}

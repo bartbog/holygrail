@@ -530,96 +530,118 @@
 	\tableofcontents[currentsection]
 \end{frame}			
 
-\begin{frame}{Remaining challenges}
-	
-	\begin{center}
-		What is a \textit{\emph{good}} cost-function to quantify how difficult an explanation is ? Can we learn from humans?
-	\end{center}										
-\end{frame}
-\begin{frame}
-	\begin{itemize}
-		\item 
-		\item 
-		\item 
-		\item 
-	\end{itemize}
-	
-\end{frame}
-
-
-\begin{frame}
-	\begin{itemize}
-		\item 
-		\item 
-		\item 
-		\item 
-	\end{itemize}
-	
-\end{frame}
-
-\begin{frame}
-	\begin{itemize}
-		\item 
-		\item 
-		\item 
-		\item 
-	\end{itemize}
-	
-\end{frame}
-	
 	\begin{frame}
-		\frametitle{What is a \emph{good} explanation ?}
+	\frametitle{What is a \emph{good} explanation ?}
+	
+	%			\textbf{What is a \emph{good} explanation ?} \\ \vspace{20pt}
+	\begin{minipage}{0.25\textwidth}
+		\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step1.png}
+	\end{minipage} \pause $\rightarrow$
+	\begin{minipage}{0.28\textwidth}
+		\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step2}
+	\end{minipage}\hfill \pause
+	or \hfill
+	\begin{minipage}{0.30\textwidth}
+		\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step3bis}
+	\end{minipage}
+\end{frame}	
+
+
+	\begin{frame}
+	\frametitle{The best/easiest explanation step...}
+	%		\begin{center} 
+		\textbf{What is a \emph{good} explanation ?} \pause \\
 		
-%			\textbf{What is a \emph{good} explanation ?} \\ \vspace{20pt}
-					\begin{minipage}{0.25\textwidth}
-				\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step1.png}
-			\end{minipage} \pause $\rightarrow$
-		\begin{minipage}{0.28\textwidth}
-			\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step2}
-		\end{minipage}\hfill \pause
-		or \hfill
-		\begin{minipage}{0.30\textwidth}
-			\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step3bis}
-		\end{minipage}
-	\end{frame}	
-	
-	
-	\begin{frame}
-		\frametitle{The best/easiest explanation step...}
-%		\begin{center} 
-			\textbf{What is a \emph{good} explanation ?} \pause \\
-			
-			Let $\mathbf{f}  ($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E}, {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S}}, {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$ be a cost-function that quantifies how good (e.g. easy to understand) an explanation step is.
-			\pause 
+		Let $\mathbf{f}  ($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E}, {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S}}, {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$ be a cost-function that quantifies how good (e.g. easy to understand) an explanation step is.
+		\pause 
 		
 		\vspace*{1cm}
 		
-\textbf{What is the \emph{best/easiest} explanation step? }\pause
-				\begin{algorithm}[H]
+		\textbf{What is the \emph{best/easiest} explanation step? }\pause
+		\begin{algorithm}[H]
+			
+			$\mathtt{expl}_{\text{best}} \gets \mathit{nil}$\;\pause
+			\For{remaining assignment {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} to explain}{
+				
+				expl $\gets \mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\wedge \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $, f)$\; \pause
+				\uIf{$f(\mathtt{expl})<f(\mathtt{expl}_{\text{best}})$}{
+					$\mathtt{expl}_{\text{best}} \gets \mathtt{expl}$\;
+				}
+			}
+			\Return{$\mathtt{expl}_{\text{best}}$} 
+		\end{algorithm}
+\end{frame}
 
-							$X_{best} \gets \mathit{nil}$\;\pause
-							\For{\color{black} {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $\in$ \texttt{propagate({\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}})}}{
-										
-										$X \gets \mathtt{{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$\;\pause
-										\uIf{$f(X)<f(X_{best})$}{
-												$X_{best} \gets X$\;
-											}
-									}
-								\Return{$X_{best}$} 
-							\end{algorithm}
-			
+\begin{frame}
+	\frametitle{Preference scoring function}
+		\begin{minipage}{.45\textwidth}
+			\centering
+			\only<1-2>{			\includegraphics[width=\textwidth]{figures/overly_complicated.png}}
+			\only<3>{			\includegraphics[width=\textwidth]{figures/explaining_7.png}}
+			\only<4>{			\includegraphics[width=\textwidth]{figures/explaining_7_better.png}}
+		\end{minipage}\hfill	
+		\begin{minipage}{.45\textwidth}
+			\only<2->{
+			Previous work:
+			\begin{itemize}
+				\item Number of constraints
+				\item Number of facts
+			\end{itemize}
+		}
+					\only<3->{New:
+			\begin{itemize}
+				\item Value explained
+				\only<4>{
+				\item Constraint graph distance
+				\item Manhattan distance
+				\item ... ?}
+			\end{itemize}}
+		\end{minipage}
+\end{frame}
 
-%		\end{center}
-	\end{frame}
-			
 
-			
-			
-			
 
-			
+\begin{frame}
+\frametitle{Preference learning methodology}
+\begin{figure}
+\includegraphics[width=\textwidth]{figures/cp23_preference_learning_pipeline.png}
+\end{figure}
+\end{frame}
 
-			
+
+\begin{frame}
+\begin{table}[!h]
+	\resizebox{\textwidth}{!}{
+	\begin{tabular}{r|cc}
+		%\toprule
+		%& \multicolumn{2}{c}{\textbf{All Features}} & \multicolumn{2}{c}{\textbf{Constraints and Facts}} \\
+		&  \textbf{Strict preferences} &   \textbf{All preferences} \\
+		\textbf{Classifier}                   &        &        \\
+		\midrule
+		Hard-coded ($20*c + f$)              &    \multicolumn{2}{c}{60.58}   \\
+		Logistic Regression ($w_1*c + w_2*f$) &  65.62 & \textbf{66.11}  \\
+		Logistic Regression (linear features) &  63.73      &   62.10     \\ \hline
+		Logistic Regression (all features) &  66.25 &  62.52 \\
+		Naive Bayes                        &  59.96 &  63.21 \\
+		Support Vector Machine Classifier  &  {81.76} &  79.53 \\
+		Random Forest                      &  83.44 &  82.02 \\
+		XGBoost                            &  \textbf{86.16} &  83.13 \\
+		XGBoostRanker                      &  75.05  &  ----- \\
+		%\bottomrule
+	\end{tabular}}
+	\caption{Classifier accuracy in predicting preferred explanation out of an explanation sample pair.}
+	\label{table:classifier-accuracy}
+\end{table}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Observations}
+	\begin{itemize}
+		\item A simple cost-function is better for small explanations that involve 1 constraint
+		\item 
+		\item 
+	\end{itemize}
+\end{frame}
 			
 		\section{Conclusion and Future work}
 		 \begin{frame}
@@ -627,6 +649,7 @@
 		\end{frame}			
 %		
 \begin{frame}
+	\frametitle{Conclusion and Future work}
 	\begin{itemize}
 		\item 
 		\item 
@@ -639,10 +662,13 @@
 		
 
 		
-		\begin{frame}
-			\frametitle{Future work}
-			
-		\end{frame}
+	\begin{frame}
+		\frametitle{Future work}
+		\begin{itemize}
+			\item How to integrate the trained ML model into MUS generation to compute preferred explanation?
+			\item 
+		\end{itemize}
+	\end{frame}
 		
 		
 		
@@ -650,9 +676,7 @@
 			\frametitle{References}
 			\bibliographystyle{named}
 			\bibliography{refs,references}
-		\end{frame}
-		
-		
+		\end{frame}		
 		
 		
 		

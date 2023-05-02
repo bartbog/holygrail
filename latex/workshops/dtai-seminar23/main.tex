@@ -19,7 +19,9 @@
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{tikz-qtree}
+\usepackage[framemethod=tikz]{mdframed}
 
+\definecolor{mycolor}{rgb}{0.122, 0.435, 0.698}
 %\newcommand\citet[1]{\citeauthor{#1}~\citeyear{#1}}
 \usepackage[bordercolor=white,backgroundcolor=gray!30,linecolor=black,colorinlistoftodos]{todonotes}
 \newcommand{\rework}[1]{%
@@ -28,7 +30,7 @@
 
 \usetikzlibrary{shapes.geometric, arrows}
 
-\title{Toward human-interpretable explanations using Machine Learning for explanation generation}
+\title{Toward human-interpretable explanations of CSPs using Machine Learning}
 \institute[shortinst]
 {\inst{1} DataLab, Vrije Universiteit Brussel, Belgium \\ % Your institution for the title page
 	\inst{2} DTAI, KULeuven, Belgium \\ % Your institution for the title page
@@ -102,6 +104,9 @@
 }
 \makeatother
 
+	\newmdenv[innerlinewidth=0.5pt, roundcorner=4pt,linecolor=mycolor,innerleftmargin=6pt,
+innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
+
 \begin{document}
 	
 	\begin{frame}
@@ -147,28 +152,28 @@
 	\begin{frame}
 		
 		\setlength{\textfloatsep}{0pt}
-		\frametitle{Examples of Constraint Satisfaction Problems}
+		\frametitle{Examples of Constraint Satisfaction Problems\footnote{\tiny \url{https://blogs.sap.com/2022/05/25/sap-s-4hana-advanced-variant-configuration/}}}
 		\begin{minipage}[t]{0.45\textwidth}
 			\begin{figure}[h]
-				\includegraphics[width=\textwidth]{figures/logic_puzzle.png}
+				\includegraphics[width=0.9\textwidth]{figures/logic_puzzle.png}
 				\caption{\small Logic Grid Puzzle}
 			\end{figure}
 				\vspace{-8mm}
 			\begin{figure}[h]
 				\centering
-				\includegraphics[width=.6\textwidth]{figures/sudoku_steps/sudoku.jpg}
+				\includegraphics[width=.5\textwidth]{figures/sudoku_steps/sudoku.jpg}
 				\caption{\small Sudoku}
 			\end{figure}
 		\end{minipage}
 		\hfill
 		\begin{minipage}[t]{0.52\textwidth}
 			\begin{figure}[h]
-				\includegraphics[width=\textwidth]{figures/scheduling.png}
+				\includegraphics[width=0.9\textwidth]{figures/scheduling.png}
 				\caption{\small (Room) Scheduling Problem}
 			\end{figure}
 				\vspace{-8mm}
 			\begin{figure}[h]
-				\includegraphics[width=\textwidth]{figures/omus-presentation-car.png}
+				\includegraphics[width=0.9\textwidth]{figures/car-configuraiton-problem.png}
 				\caption{\small (Car) configuration problems}
 			\end{figure}
 		\end{minipage}
@@ -184,12 +189,12 @@
 		\begin{tikzpicture}[node distance=1.5cm]
 			\node (problem) [startstop] {Problem};
 			\pause
-			\node (model) [startstop, below of=problem] {Model}; 
+				\node (model) [startstop, below of=problem,align=center] {Model \\ (\emph{CPMpy})}; 
 			\draw [arrow] (problem) -- (model);			
 %			\node (Essence) [right of=model, xshift=1cm] {CPMpy \cite{CPMpy}}; 
-			\node (cpmpy) [align=center, right of=model, xshift=3cm] {\emph{CPMpy} (\cite{guns2019increasing}) \\ (CP modelling Library) \\\texttt{pip install cpmpy}}; 
+%			\node (cpmpy) [align=center, right of=model, xshift=3cm] 
 %			\node (Essence) [right of=model, xshift=1cm] {CPMpy \cite{CPMpy}}; 
-			\draw [dashed] (model) -- (cpmpy);									
+%			\draw [dashed] (model) -- (cpmpy);									
 			\pause
 			
 			\node (solve) [startstop, below of=model] {SOLVE};
@@ -320,8 +325,8 @@
 			\textbf{How do I explain SAT ? }	\pause
 			\begin{itemize}
 				\item What is an \textbf{\emph{explanation}}? \pause
-				\item What is a \emph{\textbf{good}} explanation ? \pause
-				\item What is a \textbf{\emph{sequence of explanations}} ? 
+				\item What is a \textbf{\emph{sequence of explanations}} ? \pause
+				\item How to find \emph{\textbf{good}} explanations ? 
 			\end{itemize}
 		\end{minipage}
 		
@@ -335,6 +340,9 @@
 %	
 
 	\begin{frame}{What is an explanation ?}
+		
+			\begin{minipage}{0.7\textwidth}
+
 
 			\only<1>{
 				\begin{figure}[H]
@@ -366,6 +374,26 @@
 	\includegraphics[width=0.7\textwidth]{figures/sudoku_steps/sudoku-step5}
 \end{figure}
 }
+		\end{minipage}
+	\begin{minipage}{0.29\textwidth}
+	\begin{figure}[H]
+		\centering
+		\only<1-4>{
+		\includegraphics[width=0.9\textwidth]{figures/unsat/human.png}
+	}
+\only<5>{		\includegraphics[width=0.9\textwidth]{figures/unsat/happy_human.png}}
+	\end{figure}
+	
+	%	\pause
+	%	\begin{itemize}
+		%		\item Extract a \emph{Minimum Unsatisfiable Subsets} (MUS) \pause
+		%		\item Enumerate all \emph{Minimum Unsatisfiable Subsets} (MUS) \pause
+		%		\item Extract a \emph{Minimum Correction Subsets} (MCS)
+		%		\begin{itemize}
+			%			\item \emph{Correct} your model by modifying a subset of the model constraints
+			%		\end{itemize}
+		%	\end{itemize}
+\end{minipage}
 	\end{frame}
 
 \begin{frame}
@@ -471,6 +499,8 @@
 
 	\end{frame}
 	
+	
+
 %	\begin{frame}{Stepwise explanations for CSPs}
 %		\framesubtitle{EXPLANATION STEP}
 %		%		In, we introduce \emph{explanation} steps \pause
@@ -501,6 +531,314 @@
 %		\end{example}
 %		
 %	\end{frame}
+	\begin{frame}
+	\frametitle{How to find a \emph{good} explanation ?}
+	
+	%			\textbf{What is a \emph{good} explanation ?} \\ \vspace{20pt}
+	\begin{minipage}{0.25\textwidth}
+		\includegraphics[width=0.9\textwidth]{figures/sudoku_sequence/sudoku-step1.png}
+	\end{minipage} \pause  $\rightarrow$
+	\begin{minipage}{0.28\textwidth}
+		\includegraphics[width=0.9\textwidth]{figures/sudoku_sequence/sudoku-step2}
+	\end{minipage}\hfill \pause
+	or \hfill
+	\begin{minipage}{0.30\textwidth}
+		\includegraphics[width=0.9\textwidth]{figures/sudoku_sequence/sudoku-step3bis}
+	\end{minipage}\pause 
+	
+	%\setbeamertemplate{block begin}[default]
+	%\setbeamertemplate{block end}[default]
+
+	\begin{mybox}
+	%	The \texttt{beamercolorbox} environment!
+	Let $\mathbf{f}(\mathtt{expl}): \mathtt{expl} \rightarrow \mathbb{R}$ be a cost-function that quantifies how good an explanation step is (e.g. easy to understand).
+\end{mybox}
+
+	\pause 
+	
+	\vfill
+	
+	\textbf{What is the \emph{best/easiest} explanation step? }\pause
+	\begin{algorithm}[H]
+		
+		$\mathtt{expl}_{\text{best}} \gets \mathit{nil}$\;\pause
+		\For{remaining assignment {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} to explain}{
+			
+			expl $\gets \mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\wedge \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$\; \pause
+			\uIf{$f(\mathtt{expl})<f(\mathtt{expl}_{\text{best}})$}{
+				$\mathtt{expl}_{\text{best}} \gets \mathtt{expl}$\;
+			}
+		}
+		\Return{$\mathtt{expl}_{\text{best}}$} 
+	\end{algorithm}
+\end{frame}
+
+
+
+
+\begin{frame}{Motivation}
+	\framesubtitle{Challenges and open questions from \cite{bogaerts2020step}}
+	
+	\begin{minipage}{0.43\textwidth}
+		%\begin{description}%[font=\color{vuborange}\itshape]
+		%	\item[Optimality] Explanations not provably optimal, \emph{heuristically} found.
+		%\end{description}
+		
+		\begin{itemize}
+			\item[Q1] {\only<1>{\color{vuborange}} \textbf{Optimality}} w.r.t $\mathbf{f}$
+			\item[$\triangleright$] MUS guarantees non-redundancy but ... not optimality.
+			%				\item MUS-based heuristic
+%			\item[$\triangleright$] Alternative: SMUS $\#$-minimal (\cite{ignatiev2015smallest})
+		\end{itemize} 
+		\only<2->{				Explanation generation takes a lot of time: 
+			\only<3->{
+				\begin{itemize}
+					\item[Q2] Can we \emph{avoid looping over the literals} when searching for the next best explanation ?
+		\end{itemize}}}
+		%\end{description}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.52\textwidth}
+		
+		\begin{algorithm}[H]
+			
+			{\color{gray} \small $\mathtt{expl}_{best} \gets \mathit{nil}$\;
+				\For{\color{gray} \only<3>{\color{vuborange}}remaining assignment {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} to explain}{
+					
+					{\color{gray}\only<1>{\color{vuborange}} expl $\gets \mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\wedge \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$}\;
+					\uIf{\color{gray}\only<1>{\color{vuborange}} $f(\mathtt{expl})<f(\mathtt{expl}_{\text{best}})$}{
+						{\color{gray}\only<1>{\color{vuborange}}$\mathtt{expl}_{\text{best}} \gets \mathtt{expl}$}\;
+					}
+				}
+				\Return{\color{gray}\only<1>{\color{vuborange}} $\mathtt{expl}_{\text{best}}$} }
+			%				\caption{Explain 1 step}
+		\end{algorithm}
+		
+		
+	\end{minipage}
+\end{frame}
+
+
+
+\section{The OCUS Problem}
+
+\begin{frame}
+\tableofcontents[currentsection]
+\end{frame}			
+
+\begin{frame}{OCUS-Based explanation generation}
+\framesubtitle{The OCUS\footnote{Optimal \emph{Constrained} Unsatisfiable Subset} problem}
+\begin{definition}
+	\small
+	Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula}\to \{\ltrue,\lfalse\}$. We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
+		$\subsetT \subseteq \formula$ an \emph{OCUS}  of \formula (with respect to $f$ and $p$) if \begin{itemize}                                      
+			\item $\subsetT$ is unsatisfiable,
+			\item $p(\subsetT)$ is true
+			\item \emph{all other unsatisfiable $\subsetT'\subseteq \formula$ with $p(\subsetT')=\ltrue$ satisfy $f(\subsetT')\geq f(\subsetT)$}.
+		\end{itemize}
+	\end{definition} \pause
+	
+	\vfill
+	Applied to explanation generation: \pause
+	\begin{itemize}
+		\item[Q1] \textit{\emph{(Optimality)}} {\color{red}$f$} ensures finding `best' explanation w.r.t. $f$\pause
+		\item[Q2] \textit{\emph{(Looping)}} {\color{red}$p$} allows formulating explaining 1 literal at a time using an extra constraint
+	\end{itemize}
+	
+\end{frame}		
+
+
+\newcommand\onestepo{\ensuremath{\call{explain-One-Step-ocus}}\xspace}
+\begin{frame}{OCUS-Based explanation generation}
+	
+	\hspace{0.3\textwidth}
+	\begin{minipage}{0.6\textwidth}
+		\begin{algorithm}[H]
+			$\mathtt{expl}_{best} \gets \mathit{nil}$\;
+			\For{\color{black}  assignment n to explain }{
+				
+							$\mathtt{expl} \gets \call{MUS}{(C \land E \land \neg n)}$\;
+				\uIf{\color{black} $f(\mathtt{expl})<f(\mathtt{expl}_{best})$}{
+					$\mathtt{expl}_{best} \gets \mathtt{expl}$\;
+				}
+			}
+			\Return{\color{black}$\mathtt{expl}_{best}$} 
+		\end{algorithm}
+	\end{minipage} \pause
+	
+	\[\downarrow\]
+	
+	
+	\hspace{0.09\textwidth} 
+	\begin{minipage}{0.9\textwidth}				
+		\begin{algorithm}[H]
+			\DontPrintSemicolon
+			$p \leftarrow$ \texttt{exactly-one}$(\{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ \in \LitsToExplain\})$\;
+			{\Large $\emph{\mathtt{{OCUS}}}($}{\large \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}} $\wedge \{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ \in \LitsToExplain\}, \emph{\mathbf{f}}, \emph{\mathbf{p}})$ } \;
+			%					$\call{OCUS}(S \wedge E \wedge \{\lnot n \ | \ n \in \LitsToExplain\}, \emph{f, p})$\;
+		\end{algorithm}
+	\end{minipage}
+	
+	
+\end{frame}
+
+
+%			\section{An OCUS algorithm: A hitting set-based algorithm}
+%
+%						\begin{frame}{Background and notation}
+	%				\framesubtitle{Minimum Correction Subset vs Satisfiable Subsets}
+	%				
+	%				\only<1->{ Consider unsatisfiable  CNF $\formula$ over atoms $x_1, x_2$:}
+	%				\only<2>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 \qquad c_3 := \lnot x_2  \qquad  c_4 := x_1\]}
+	%				
+	%				\only<3>{\[ \emph{c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 }  {\color{blue}\qquad c_3 := \lnot x_2  \qquad  c_4 := x_1}\]}
+	%				
+	%				\only<4>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2  \qquad c_3 := \lnot x_2  \qquad  \emph{   c_4 := x_1} \]}
+	%				\only<3->{	\begin{definition}
+			%						A set $C \subseteq \formula $ is a \only<3>{\emph{correction subset}}\only<4->{correction subset} of $\formula$ if \only<3>{{\color{blue} $ \formula \setminus \subsetT$}}\only<4->{ $ \formula \setminus \subsetT$} is satisfiable, a.k.a. {\only<3>{\color{blue}} satisfiable subset.} \\
+			%						\only<4->{A correction set $\subsetT$ is a \emph{minimum correction subset} if no strict subset $\subsetT' \subset \subsetT$ is also a correction set.}
+			%				\end{definition} }
+	%			\end{frame}
+
+
+
+
+\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+	\framesubtitle{Implicit Hitting set duality}
+	
+	\begin{itemize}
+		\item[$\triangleright$] Exploit implicit hitting set--based duality between {\color{blue}MCSes} and {\color{teal}MUSes} (\cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87})
+	\end{itemize}\pause
+	
+	\begin{theorem}\label{prop:MCS-MUS-hittingset}
+		%     
+		A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimum hitting set} of \muses{\formula}. \\
+		A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimum hitting set} of \mcses{\formula}.
+	\end{theorem} \pause
+	\begin{itemize}
+		\item[$\triangleright$] Extend this to OCUS:
+		\begin{itemize}	
+			\item Compute \emph{optimal} hitting sets \pause
+			\item Impose \emph{constraint} on the hitting sets
+		\end{itemize}
+	\end{itemize}
+	
+\end{frame}
+
+
+
+\subsection{Optimal Hitting set problem}
+
+\begin{frame}
+	\tableofcontents[currentsubsection]
+\end{frame}			
+\begin{frame}{\emph{Optimal} Hitting set problem}
+	\pause
+	\begin{itemize}
+		\item Set of elements (i.e. constraints) $\{c_1,c_2,...,c_n\}$
+		\item Collection $\m{H}$ of sets-to-hit  (i.e.~subsets of the set of elements)\pause
+		\item cost associated for every element:\\
+		\hspace*{2cm}$w_1 =  \emph{3}, w_2= \emph{5}, w_3 = w_4 = ...= w_8 = 1$\pause \vfill
+		\item[\textbf{Goal}] Find an \emph{optimal} hitting set such that every set-to-hit is hit by at least once an element of the hitting set with \emph{minimal total cost}.
+	\end{itemize} \pause
+	\vfill
+	\begin{minipage}{0.48\textwidth}
+		For example: 
+		\begin{enumerate}
+			\item[$H_1$] = {\only<5>{\color{blue}}$\{c_3, c_5\}$}
+			\item[$H_2$] = {\only<6>{\color{blue}}$\{c_2, c_4, c_7\}$}
+			\item[$H_3$] = {\only<7>{\color{blue}}$\{c_2, c_6\}$}
+			\item[$H_4$] = {\only<8>{\color{blue}}$\{c_1, c_8\}$}
+		\end{enumerate}
+	\end{minipage}
+	\begin{minipage}{0.48\textwidth}
+		Optimal hitting sets:
+		\begin{itemize}
+			\item $\{\only<5->{{\color{blue}c_3},} \only<6->{{\color{blue}c_4},} \only<7->{{\color{blue}c_6},} \only<8->{{\color{blue}c_8}}\}$ \only<9>{\emph{\checkmark}
+				\begin{itemize}
+					\item cost: \emph{4}
+			\end{itemize}}
+			\only<10>{\item {$\{c_1, c_2, c_3\}$}
+				\begin{itemize}
+					\item cost: \emph{7}
+				\end{itemize}
+				\item \dots}
+		\end{itemize}
+	\end{minipage}
+\end{frame}
+
+
+\subsection{The algorithm}
+\begin{frame}
+	\tableofcontents[currentsubsection]
+\end{frame}			
+\begin{frame}{OCUS: An efficient game of Ping-Pong}
+	\only<1>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong_0.png}
+		\end{figure}
+	}
+	\only<2>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+		\end{figure}
+	}
+	\only<3>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong1.png}
+		\end{figure}
+	}
+	\only<4>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+		\end{figure}
+	}
+	\only<5>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2a.png}
+		\end{figure}
+	}
+	\only<6>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2b.png}
+		\end{figure}
+	}
+	\only<7>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+		\end{figure}
+	}
+	
+	\only<8>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+		\end{figure}
+	}
+	\only<9>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+		\end{figure}
+	}
+	
+	\only<10>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+		\end{figure}
+	}
+	\only<11>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong_2c.png}
+		\end{figure}
+	}
+	\only<12>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong3.png}
+		\end{figure}
+		{\tiny \url{https://flyclipart.com/party-popper-emoji-on-apple-ios-celebration-emoji-png-610281}}
+	}
+	\newcommand\hitset{\m{\mathcal{H}}}
+	
+\end{frame}
 
 
 					\begin{frame}%{Use cases}
@@ -513,8 +851,8 @@
 	\end{figure}\pause
 	\begin{itemize}
 		\item Explaining solutions of scheduling, configuration problems .... and puzzles  \Cooley
-%		\item Debugging \textit{unsatisfiable models} with \emph{preferences} on the constraints \pause
-		\item Stepwise explaining unsatisfiability \pause	
+		\item Debugging \textit{unsatisfiable models} with \emph{preferences} on the constraints \pause
+%		\item Stepwise explaining unsatisfiability \pause	
 		\item Explaining Optimality for Constraint Optimization Problems 
 		\begin{itemize}
 			\item Why is the objective value not better ? 
@@ -530,50 +868,35 @@
 	\tableofcontents[currentsection]
 \end{frame}			
 
-	\begin{frame}
-	\frametitle{What is a \emph{good} explanation ?}
-	
-	%			\textbf{What is a \emph{good} explanation ?} \\ \vspace{20pt}
-	\begin{minipage}{0.25\textwidth}
-		\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step1.png}
-	\end{minipage} \pause $\rightarrow$
-	\begin{minipage}{0.28\textwidth}
-		\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step2}
-	\end{minipage}\hfill \pause
-	or \hfill
-	\begin{minipage}{0.30\textwidth}
-		\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step3bis}
-	\end{minipage}
-\end{frame}	
 
+\begin{frame}
 
-	\begin{frame}
-	\frametitle{The best/easiest explanation step...}
-	%		\begin{center} 
-		\textbf{What is a \emph{good} explanation ?} \pause \\
-		
-		Let $\mathbf{f}  ($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E}, {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S}}, {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$ be a cost-function that quantifies how good (e.g. easy to understand) an explanation step is.
-		\pause 
-		
-		\vspace*{1cm}
-		
-		\textbf{What is the \emph{best/easiest} explanation step? }\pause
-		\begin{algorithm}[H]
-			
-			$\mathtt{expl}_{\text{best}} \gets \mathit{nil}$\;\pause
-			\For{remaining assignment {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} to explain}{
-				
-				expl $\gets \mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\wedge \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $, f)$\; \pause
-				\uIf{$f(\mathtt{expl})<f(\mathtt{expl}_{\text{best}})$}{
-					$\mathtt{expl}_{\text{best}} \gets \mathtt{expl}$\;
-				}
-			}
-			\Return{$\mathtt{expl}_{\text{best}}$} 
-		\end{algorithm}
+	\begin{mybox}
+	Let $\mathbf{f}(\mathtt{expl}): \mathtt{expl} \rightarrow \mathbb{R}$ be a cost-function that quantifies how good an explanation step is (e.g. easy to understand).
+\end{mybox}\pause
+
+\begin{center}
+	What if we don't know what a \textit{\emph{good}} cost function is? \pause \\
+	Maybe, we can \textit{\emph{learn}} it form user interaction! \Cooley 
+\end{center}
 \end{frame}
 
 \begin{frame}
-	\frametitle{Preference scoring function}
+	\frametitle{(Machine) Learning explanation preferences from users}
+	\begin{itemize}
+		\item $S$ Explanation step 
+		\item $\phi(S)$ a (normalized) feature representation
+		\item Learn a function $M: \phi(S) \rightarrow \mathbb{R}$ that returns a real-valued number, a preference score:
+		\begin{itemize}
+			\item Likelihood of $S$ being the most preferred explanation
+		\end{itemize}
+		%				We can evaluate the quality of a function $M$ by presenting it two explanations $S_1$ and $S_2$ and verifying that the one that is scored highest by $M$ is also the one preferred by the user.
+	\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Good features of explanations?}
 		\begin{minipage}{.45\textwidth}
 			\centering
 			\only<1-2>{			\includegraphics[width=\textwidth]{figures/overly_complicated.png}}
@@ -582,13 +905,13 @@
 		\end{minipage}\hfill	
 		\begin{minipage}{.45\textwidth}
 			\only<2->{
-			Previous work:
+			\textit{Previous work:}
 			\begin{itemize}
 				\item Number of constraints
 				\item Number of facts
 			\end{itemize}
 		}
-					\only<3->{New:
+					\only<3->{\textit{New:}
 			\begin{itemize}
 				\item Value explained
 				\only<4>{
@@ -601,6 +924,7 @@
 
 
 
+
 \begin{frame}
 \frametitle{Preference learning methodology}
 \begin{figure}
@@ -608,6 +932,13 @@
 \end{figure}
 \end{frame}
 
+\begin{frame}
+\begin{figure}
+	\only<1>{	\includegraphics[height=0.85\textheight]{figures/cp23_2_choices.png}}
+		\only<2>{	\includegraphics[height=0.85\textheight]{figures/cp23_2_choices_with_digits.png}}
+\end{figure}	
+
+\end{frame}
 
 \begin{frame}
 \begin{table}[!h]
@@ -634,14 +965,7 @@
 \end{table}
 \end{frame}
 
-\begin{frame}
-	\frametitle{Observations}
-	\begin{itemize}
-		\item A simple cost-function is better for small explanations that involve 1 constraint
-		\item 
-		\item 
-	\end{itemize}
-\end{frame}
+
 			
 		\section{Conclusion and Future work}
 		 \begin{frame}
@@ -651,42 +975,42 @@
 \begin{frame}
 	\frametitle{Conclusion and Future work}
 	\begin{itemize}
-		\item 
-		\item 
-		\item 
-		\item 
+		\item Step-wise explanations of CSPs
+		\item How to compute explanations efficiently with OCUS
+		\item Data-centric methodology for learning preferences
 	\end{itemize}
 	
 \end{frame}
 %		
-		
-
-		
+\begin{frame}
+	\frametitle{Observations and remaining challenges}
+	\begin{itemize}
+		\item The cost-function that can be used for computing the hitting set problem in OCUS is dependent on the solver used.
+		\begin{itemize}
+			\item Typically we use MIP solver for their efficiency and incremental properties.
+			\item Only linear cost-functions can be used $\rightarrow$ linear features
+			\item 65\% accuracy
+			\item Doesn't capture full extent of interactions between constraints and variables
+		\end{itemize}\pause
+		\item A simple cost-function is better for small explanations that involve 1 constraint \pause
+		\item \cite{akutsu2019mixed}: Formulating NN into MIP  is slow and not tractable to compute preferred explanations ...
+	\end{itemize}
+\end{frame}
+				
 	\begin{frame}
 		\frametitle{Future work}
 		\begin{itemize}
-			\item How to integrate the trained ML model into MUS generation to compute preferred explanation?
-			\item 
+			\item How to integrate the trained ML model into OCUS generation to \emph{efficiently} compute preferred explanation?
+			\item Learning to rank approaches for ranking explanations and selecting the best one.
+			\item Inverse optimization where given a set of preferred explanations, we want to compute a cost-function.
 		\end{itemize}
 	\end{frame}
-		
-		
-		
+			
 		\begin{frame}[allowframebreaks]
 			\frametitle{References}
 			\bibliographystyle{named}
 			\bibliography{refs,references}
 		\end{frame}		
-		
-		
-		
+	
 	\end{document}
-	
-	
-	
-	
-	
-	
-	
-	
 	

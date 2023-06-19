@@ -48,8 +48,8 @@
 \renewcommand\comment[1]{#1}
 %\renewcommand\comment[1]{}
 \newcommand{\tias}[1]{{\comment{\color{blue}Tias:#1}}}
-\newcommand{\emilio}[1]{{\comment{\color{red}Emilio: #1}}}
-\newcommand{\checkthis}[1]{{\comment{\color{red}CheckRephrasing: #1}}}
+\newcommand{\emilio}[1]{{\comment{\color{Violet}Emilio: #1}}}
+\newcommand{\reviewercomment}[1]{{\comment{\color{DarkOrchid}Reviewer: #1}}}
 \newcommand{\bart}[1]{{\comment{\color{OliveGreen}Bart: #1}}}
 \newcommand{\newtext}[1]{{\comment{{\color{blue} #1}}}}
 \newcommand{\removed}[1]{\sout{#1}}
@@ -244,7 +244,7 @@ An \textit{abstract} framework for describing \hitsetbased algorithms, including
 
 \section{Background}\label{sec:background}
 
-We present all methods using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics is given in terms of a satisfaction relation between expressions in the language and possible states of affairs (assignments of values to variables).
+We present all methods using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics is given in terms of a satisfaction relation between expressions in the language and possible states of affairs (assignments of values to variables). 
 
 Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. 
 A clause is a disjunction of literals, i.e. $c_1 = x_1 \vee \lnot x_2 $. A formula $\formula$ in conjunctive normal form (CNF) is a conjunction of clauses. 
@@ -313,6 +313,8 @@ Consider the following examples to illustrate the concepts related to unsatisfia
 \end{example}
 In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an example of a Minimal Unsatisfiable Subset (MUS) and $ \{c_1\},\{c_4\}, \{c_2,c_5\},\{c_5, c_6\}, \{c_3, c_6\}$ are examples of minimal correction subsets (MCSs). We observe that MUS $\{c_1, c_2, c_4, c_6\}$ hits at least one clause of each MCS. 
 
+
+
 \section{Motivation}\label{sec:motivation}
 
 Our work is motivated by the problem of explaining the solution to satisfaction problems, or how to explain the information entailed from it, through a sequence of simple explanation steps. This can be used to teach people problem-solving skills; to search for mistakes in the problem formulation that lead to undesired models; to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed) and in systems that provide interactive tutoring.  
@@ -349,7 +351,9 @@ An explanation step is an implication $I' \wedge \formulac' \implies N$ where \b
 	
 \end{algorithm}
 
-Throughout the paper, we consider cost functions $f$ that map a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.
+\removed{Throughout the paper, we consider cost functions $f$ that map a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.}
+\newtext{Throughout the paper, we consider cost functions $f$ that map a subset $\m{S}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.}
+\emilio{Comment of the reviewer: `$\bar{I_{end} \ I}$ is not explained before the first example. Moreover, it is not intuitive: it is the set that contains the negation of every literal in $I_{end }\ I$, where I would expect that it is the complement of that set (with respect to $I_{end}$, I guess, making it equal to I, so all the more confusing).}
 The subset returned by \onestep (line~\ref{alg:explanation-sequence:mus} of Algorithm~\ref{alg:explanation-sequence}) is then mapped back to the set of derived literals $I'$ (line~\ref{alg:explanation-sequence:literals}) and constraints $C'$ (line~\ref{alg:explanation-sequence:constraints}). 
 Finally, at line~\ref{alg:explanation-sequence:propagation}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$ . 
 
@@ -380,8 +384,15 @@ Consider the following four clauses as our running example:
 	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
 	
 	Let $I = \{\lnot x_2\}$ be the given \emph{interpretation} with corresponding maximal consequence $\Iend = \{x_1, \lnot x_2,  x_3\}$.
-  $\Iend \setminus I = \{x_1, x_3\}$ represents the set of remaining literals to explain, and its complement is denoted by $\negset{\Iend \setminus I} = \{\lnot x_1, \lnot x_3\}$. For computing a non-redundant explanation of $x_3$, we simply extract a $MUS(\formulac \land I \land \neg l)$ = $MUS(\formulac \wedge \{\lnot x_2\} \wedge \{\lnot x_3\}) = \{ c_2 , c_3, \{\lnot x_2\}, \{x_3\} \}$, also written as $\lnot x_2 \wedge c_2 \wedge c_3 \implies x_3 $.
+  $\Iend \setminus I = \{x_1, x_3\}$ represents the set of remaining literals to explain\removed{ and its complement is denoted by $\negset{\Iend \setminus I} = \{\lnot x_1, \lnot x_3\}$}\emilio{$\negset{\Iend \setminus I} $ removed due to the reviewer's comment and is indeed not used before.}. For computing a non-redundant explanation of $x_3$, we simply extract a $MUS(\formulac \land I \land \neg l)$ = $MUS(\formulac \wedge \{\lnot x_2\} \wedge \{\lnot x_3\}) = \{ c_2 , c_3, \{\lnot x_2\}, \{x_3\} \}$, also written as $\lnot x_2 \wedge c_2 \wedge c_3 \implies x_3 $.
+  
 \end{example}
+  \reviewercomment{``1. While the detailed examples revolving around logical formulas and literals are very welcomed and clearly described, since the paper states (from the abstract) to provide "human-readable explanations" of CSPs, a reader could expect to have more "practical" example, that is a step-by-step explanation of an actual CSP (not simply a logical formula equivalent to a CSP).''}
+  \emilio{@Bart/Tias: I don't know if here is the best place to add this or in the Background section or somewhere else, but a tentaitive comment is:}
+  \newtext{Note that all explanations in the examples are expressed in terms of this logical representation, however, the explanations can be translated back to the original input (e.g. natural language clues,, alldifferent constraints, ...).}
+
+
+
 
 Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS. 
 Furthermore, MUS extraction algorithms do not provide any guarantee of $\subseteq$-minimality or optimality with respect to a given cost function. Therefore, in \citet{bogaerts2021framework}, we handle the absence of $\subseteq$-minimality and optimality guarantees by heuristically considering increasingly larger subsets of the unsatisfiable formula ($\formulac \land I \land \neg l$).
@@ -393,7 +404,7 @@ We see three main points of improvement, all of which will be tackled by our gen
 	
 \item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the explanation found is indeed optimal (with respect to the given cost function). Performing multiple MUS calls is only a heuristic that is used to circumvent the restriction that \textit{there are no algorithms for cost-based unsatisfiable subset \textbf{optimization}}. 
 
-\item Second, this algorithm uses \call{MUS} calls for every literal to explain separately. The goal of all these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains exactly one literal from $\overline{(\Iend\setminus I)}$. This begs the question of whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
+\item Second, this algorithm uses \call{MUS} calls for every literal \newtext{$ \ell \in \Iend \setminus I$} to explain separately. The goal of all these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains \emph{exactly one literal} from $\overline{(\Iend\setminus I)}= \newtext{\{ \lnot \ell \ | \ \ell \in \Iend \setminus I\}}$. This begs the question of whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
 
 \item Third, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}
 
@@ -989,8 +1000,11 @@ In  \cref{tab:puzzle-composition-family} of \cref{apx:puzzledata}, we summarize 
 
 \subsection{Explanation quality}
 To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on \cref{alg:oneStep}. 
-Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there -- in order to avoid the quality problems we will illustrate below --  an extra inner loop was used that employs \emph{even more} calls to \call{MUS} for subsets of \formulac of increasing size. % (this is their Algorithm~3). 
-While this would yield better explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle. 
+\emilio{OLD: Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there -- in order to avoid the quality problems we will illustrate below --  an extra inner loop was used that employs \emph{even more} calls to \call{MUS} for subsets of \formulac of increasing size.} % (this is their Algorithm~3). 
+% \newtext{A similar observation can be done for  where a heuristic is used to try finding small explanations.}
+\newtext{Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementations of \citet{ecai/BogaertsGCG20} and \citet{schotten}, where a heuristic is used that relies on \emph{even more} calls to \call{MUS} in order to avoid the quality problems we will illustrate below.}
+%	, whereas we want to efficiently compute explanations that are optimal with respect to a cost function. Figure 1 algready shows that sometimes the MUS expalnation has a similar cost to the OCUS explanation, but there are times where OCUS find the optimal one compared to a MUS extractor or a MUS heuristic.}
+While in both cases this would yield better explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle. 
 
 To answer \textbf{Q1}, we ran the \call{OCUS}-based algorithm as described in \cref{alg:oneStepOCUS} and compared 
 at every step the cost of the produced explanation with the cost of \call{MUS}-based explanation of \cref{alg:oneStep}.

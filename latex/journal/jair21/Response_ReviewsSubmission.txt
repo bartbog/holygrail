@@ -1,0 +1,193 @@
+We thank the reviewers for their detailed feedback and discuss in detail how we have addressed their comments.
+In addition to addressing the reviewer's comments, we have polished the introduction of each section to improve the flow of the text.
+
+------------------------------------------------------
+
+> Reviewer E:
+
+> This paper works on the problem of how to explain the solution to satisfaction problems efficiently.
+> While the MUS extraction algorithms do not provide any guarantee of subset optimality, this paper proposed algorithms that are provably optimal.
+> This paper extends their conference paper with more detailed examples, extensive experiments, and a novel algorithm for efficiently computing explanations.
+
+> Compared to the conference version, this paper is more readable with the writing and additional examples.
+> The algorithms proposed in this paper improve the process of searching for hitting sets.
+> Experimental results show that the algorithms proposed in this paper outperform the MUS approach in terms of explanation quality and computational time.
+> Also, OCUS_Split and OCUS_Bounded are more efficient than OCUS.
+
+------------------------------------------------------
+> Reviewer F:
+
+> The paper tackles the problem of finding explanations for CP programs; such explanations aim at being human-understandable.
+> In the context of the paper, an explanation is a sequence of step-by-step inferences operations, which are, broadly speaking, interpretations of logic formulas.
+> The underlying idea is that an explanation is built by iteratively interpreting all literals in the final formula representing the solution to a CSP problem.
+
+> The paper is an extension of a previous paper published in 2021 (Gamba et al, "Efficiently explaining CSPs with unsatisfiable subset optimization")-obviously, this is duly noted by the authors together with the details concerning the changes added in the journal manuscript, so this is fine.
+> The original paper presented an algorithm to provide step-by-step explanations to CSP problems based on the computation of the best (i.e., the one with the minor cost) Minimal Unsatisfiable Subset (MUS) among the literals to be explained. 
+> This method has two drawbacks: 1) long computation times (due to the MUS computation) and 2) lack of optimality guarantee with respect to a cost function (the algorithm is heuristic).
+
+> In the current work, the authors propose a novel algorithm (or to be more precise multiple new algorithms) to overcome these limitations.
+> The kernel of the proposed approach is to move MUS to Optimal Constrained Unsatisfiable Subset (OCUS), which by definition is the optimal Unsatisfiable Set.
+> The computation of OCUS relies on hitting set duality, which states that a set of literals in a
+> logical formula is a Minimal Correction Subset (MCS) if it is the minimal hitting set for the MUS of that formula (and vice-versa).
+> To find the minimal hitting set, the authors encode it as a MIP.
+> In addition to the core algorithm to find OCUS, the authors provide as well a series of improvements aimed at increased computational efficiency (such as bound computation, literals sorting, etc.), and especially exploiting domain knowledge (the OCUS must be found for the sake of providing CSP explanations).
+
+> The paper is really well-written and easy to follow, as the key motivations behind the technical choices are well-presented.
+> There are just very few minor typos, listed under "Minor comments".
+
+> The presented approach is technically sound, albeit not entirely novel (e.g., alg. 4, the one devoted to finding OCUS, is a clever combination of already existing techniques).
+> Broadly speaking, I enjoyed the paper and I think it is a valuable contribution to the field of AI research.
+
+> However, I have some minor doubts. Here is a list of the "weak" points in the paper:
+
+> 1. While the detailed examples revolving around logical formulas and literals are very welcomed and clearly described, since the paper states (from the abstract) to provide "human-readable explanations" of CSPs, a reader could expect to have more "practical" example, that is a step-by-step explanation of an actual CSP (not simply a logical formula equivalent to a CSP).
+
+> 2. The experimental section considers exclusively puzzle games (or similar problems). 
+> Would it be possible to provide experiments on different types of CSP? For instance, CSPs with a more "direct" practical application? 
+> E.g., scheduling and/or allocation problems. 
+> If not, please explain why. 
+> This type of additional experiments would serve also to differentiate the current paper from its predecessors.
+
+
+
+> 3. The comparison summarized in Fig. 1 involves Alg. 2 (a previous work from the same authors) and Alg. 3 (the new proposed approach). 
+> Wouldn't it be possible to extend the comparison to another approach from the literature, namely Espasa et al, 2021 ("Using small muses to explain how to solve pen and paper puzzles")?
+
+> 4. I feel that some related works are missing. For instance, I'm thinking of:
+> - [Bendik and Cerna, 2020a] Jaroslav Bendik and Ivana Cerna. MUST: minimal unsatisfiable subsets enumeration tool. In Proceedings TACAS 2020, pages 135–152, 2020.
+> - [Bendik and Cerna, 2020b] Jaroslav Bendik and Ivanai Cerna. Replication-guided enumeration of minimal unsatisfiable subsets. In Proc. of CP, pages 37–54, 2020.
+> I'm wondering as well whether it would be possible to make a comparison between these approaches and the method proposed in this paper. 
+> A comparison with other methods from the state-of-the-art (or at least a justification about why it is not possible to have one) would greatly improve the strength of the paper.
+
+> Minor comments:
+> - "is naturally obtained by doing am OCUS call with as constraint" --> "is naturally obtained by doing an OCUS call with as constraint"
+> - "as well as (3) it’s corresponding cost" --> "as well as (3) its corresponding cost"
+> - "Since the restriction on the third type of elements of F are already strong" --> "Since the restriction on the third type of elements of F is already strong" (or "Since the restrictions on the third type of elements of F are already strong"
+
+------------------------------------------------------
+> Reviewer H:
+
+> SUMMARY: This paper builds on previous work in explaining the
+> inferences made in order to solve a CSP (a puzzle, in this case), with
+> the main aim to improve computational time and explanation
+> quality. Compared to the authors' previous work, this focuses on a
+> particular part of the system, which is the generation of
+> unsatisfiable subsets, which basically serve as the
+> explanations. Instead of computing subset-minimal unsatisfiable
+> subsets (MUSes), the paper proposes computing cost-minimum subsets
+> (OUSes), potentially subset to additional constraints (OCUSes). From
+> an algorithmic point of view, it adapts the implicit hitting set
+> approach used in MaxSAT and exploits MUS/correction set duality to use
+> it for finding OCUSes.
+
+> EVALUATION: On the technical side, the contribution is fair. The paper
+> correctly points out that adapting the implicit hitting set approach
+> to finding optimum USes is straightforward. The contribution of the
+> paper is rather in making it work well, especially in the specific
+> context of explaining puzzles. There are two avenues: preserving
+> information from generating one OCUS to the next in order to make
+> subsequent iterations faster; and improving performance of generating
+> a single OCUS.
+
+> For the first part (improving incrementality for many OCUS calls), the
+> approach is straightforward, and it consists in making sure that all
+> the correction sets generated are specified with respect to the entire
+> problem, so that they can be taken into account by later hitting set
+> calls.
+
+> Here, however, the paper mentions incrementality of MIP solvers, i.e.,
+> if a MIP solver optimizes a problem, then we add a constraint to it,
+> then call it again, then the runtime of the second call will be lower
+> than if we had not made the first call. This has not been my
+> experience with MIP solvers, although it has been 4-5 years since I
+> last used them. Has this changed with recent versions of cplex/gurobi?
+> If there are references documenting/explaining this behavior, I would
+> appreciate seeing them cited here.
+
+> For the second part (improving a single OCUS call), the main
+> suggestion is generating several correction sets from each optimum
+> hitting set. The idea is valid, and works, but it is just one of the
+> ideas used already in improving hitting set-based MaxSAT
+> solvers. There, they use delayed optimization (solving hitting set
+> suboptimally, either with a greedy algorithm, or by stopping the MIP
+> solver early, in order to get more cores in their case), abstract
+> cores (which could be translated to abstract CSes) and probably more
+> techniques. So, in light of these techniques, the contribution for
+> improving OCUS here seem weak.
+
+> There is a second contribution (for improving a single OCUS call),
+> which is more novel and which I liked: using MaxSAT to generate
+> smaller correction sets, which should be more effective constraints
+> for the hitting set subproblem. This exploits the fact that MaxSAT is
+> easier than OUS, both theoretically and in practice and it is
+> something that MaxSAT solvers cannot do, so it is uniquely applicable
+> to OUS/OCUS.
+
+> The experimental evaluation is well done. Importantly, it shows that
+> the ideas presented here work well and produce better explanations,
+> more quickly. I would have liked to see more information about
+> instances that timed out, especially in the interactive setting. Did
+> they time out in part because there were more literals to explain?
+> What was the delay for each explanation?
+
+> PRESENTATION: I did not enjoy reading the paper. There are some minor
+> issues which I point out below, but they can be easily fixed. But the
+> main point is that I felt lost most of the time. I did not understand
+> what was being presented until after I had finished reading each
+> section. This should not be a difficult fix, the paper just needs a
+> bit more of an introduction at each section, a moment to point out to
+> the reader which point in the algorithm we're dealing with and which
+> problem we're solving. Perhaps I am unfair here, but I am very
+> familiar with both MUSes and MaxSAT solving and it was not easy for me
+> to digest everything.
+
+> OVERALL: This is a good paper. There are parts that could have been
+> done better (using more ideas from maxsat hitting set solvers) and
+> there were some issues with presentation, but in the end there is
+> novelty, the ideas work, and the application is not interesting, both
+> in the context of explainable AI, and in the context of puzzles.
+
+> Low-level or otherwise minor comments
+> -------------------------------------
+
+> This paper is specific to explaining puzzles, or at least CSPs with a
+> unique solution. Therefore, the title is at least slightly misleading.
+
+> I do not understand why the _Split variant is faster. According to the
+> explanation provided in section 6.2, it should replicate what the MIP
+> solver already does. What have I misunderstood? What was the intuition
+> for introducing this variant?
+
+> The notation bar{I_end \ I} is not explained before the first
+> example. Moreover, it is not intuitive: it is the set that contains
+> the negation of every literal in I_end \ I, where I would expect that
+> it is the complement of that set (with respect to I_end, I guess,
+> making it equal to I, so all the more confusing).
+
+> The paper makes multiple references to 'grow', which is not explained
+> anywhere. It is part of the presentation of many MUS/CS papers, but
+> knowledge of these should not be necessary to get a basic
+> understanding of this paper.
+
+> pg 4, interpretations: the sentence stating "An interpretation calI
+> satisfies..." should go before "A model of F ..."
+
+> maximal consequence: this denotes *all* consequences that hold in all
+> models, right? Also, this does not seem to have been used elsewhere,
+> except to define I_end.
+
+> Algorithm 1: Unless I misunderstood the entire paper, the first line
+> should be 'solve', not 'propagate'.
+
+> page 19 "Since the restriction...": This sentence is too hand-wavy for
+> me. Also maximal->maximum. (There are a few more instances of such
+> hand-wavy sentences, but I did not keep track. It is not a huge
+> problem, but I would encourage the authors to reread with a critical
+> eye and rewrite or remove those).
+
+> Minisat 2.2: There's always a reviewer that complains about not using
+> minisat and one that complains about using it. I will be the second
+> kind this time. Glucose tends to be much better for MUS applications,
+> and probably lingeling too.
+
+------------------------------------------------------

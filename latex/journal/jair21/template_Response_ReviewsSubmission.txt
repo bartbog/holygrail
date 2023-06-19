@@ -1,0 +1,197 @@
+We thank the reviewers for their detailed feedback and discuss in detail below how we have addressed their comments.
+In addition to addressing the reviewers comments, we have also generally polished the exposition of the paper, to improve the flow of the text. 
+
+
+> ------------------------------------------------------
+> Reviewer A:
+> 
+> -p8 "If the resulting states only weakly" -> state is?
+
+Thanks! Fixed.
+
+> -p11 "Proof. First assume that (C ;D;O ; ~z; v) is (F; f)-valid." 
+>  - shouldn't it be "weakly (F; f)-valid," first? 
+
+Thanks! Fixed.
+
+> -p17 the reflexive aspect of the defined lexicographic order looks wrong
+> ("alpha(x_j) = beta(x_j)" is only stipulated "for all j < i" which
+> cannot cover $x_m$ as $i \leq m$) 
+
+Thanks! Fixed.
+
+> -sect6 uses both "coloring" and "colouring"
+
+We have replaced all "color" by "colour".
+
+> -p24 "The algorithm produces a colouring ... It is clear that any
+> -clique extending C_curr can contain at most one vertex from every
+>  colour class Si." - nothing is said about the colouring here. Please
+>  expand or explain that this is only clear when we know the details of
+>  the colouring, which have been omitted.
+
+We have clarified that we are discussing the standard graph colouring
+problem, where adjacent vertices with an edge between them must have
+different colours. 
+
+> -p25 "Hence, also in this case u will be considered before v. subtle"
+
+Thanks! Fixed.
+
+> -p26 "in the code and data repository.^5" - a footnote to page 21 is
+>  confusing. Couldn't you "cite" your url (twice) instead? 
+
+We have changed this.
+
+> -p28 the last paragraph of 6.3 - especially interesting insights here, nice!
+> 
+> ------------------------------------------------------
+> 
+> Reviewer B:
+> 
+> The story of the paper is that existing certification techniques
+> (mostly DRAT, really) are inadequate to express symmetry (and
+> dominance) breaking, and therefore a new approach is needed, and this
+> new approach should be based on PB formulas and cutting planes. My
+> main questions are: 
+> 1. Can you explain in more detail why DRAT cannot do what your system
+> can? Maybe give at least a small example? Is it intractable to express
+> symmetry breaking in DRAT? Is it merely impractical?
+
+It is unknown whether general symmetry breaking can be done
+efficiently using the DRAT proof system (as we try to explain already
+in the introduction of the paper). To the best of our knowledge, there
+is no method (impractical or not) for fully general symmetry breaking
+using DRAT. Proving that DRAT *cannot* do this, however, would require
+monumental breakthroughs in computational complexity theory, since it
+would simultaneously establish impossibility results that seem
+completely beyond reach given the current state of the art.
+
+We have added a discussion about this.
+
+> 2. Your redundance and dominance rule are inspired by the propagation
+> redundancy (PR) SAT proof system. It seems that PR should readily be
+> able to express the SAT equivalent of your redundance rule. Is it true
+> that it cannot express the SAT equivalent of your dominance rule? What
+> would even be the SAT equivalent of the dominance rule? Can you do a
+> SAT (clausal) version of your proof system (perhaps based on PR), or
+> is it essential to use cutting planes?
+
+Yes, the redundance rule works also in clausal proof systems, and is quite
+similar to rules that have been suggested for proof systems extending DRAT.
+
+It is not so clear how to implement the dominance rule in a strictly
+clausal proof system, however. In our proof system, we crucially use that
+with 0-1 linear inequalities we can reason about potential functions and
+how such functions decrease, and can use this to obtain an order which we
+can reason about inside the proof system. The fact that we have
+inequalities in the proof system makes this really convenient. Implementing
+this in strictly clausal form would be more complicated, since it would
+require us to prove that sets of clauses encode and enforce the type of
+order relations that we need (and this would also involve taking care of
+extension variables, which would be necessitated by the clausal format).
+
+
+> 3. Clearly, the redundance and dominance rule are similar. Can you
+> provide some intuitive explanation where the difference lies? In
+> particular, can you p-simulate one with the other, and if not can you
+> prove a separation? 
+
+We have not studied this in depth, but the question of how cutting planes
+with redundance-based strengthening on the one hand and cutting planes with
+dominance-based strengthening on the other are related seems quite
+nontrivial. In particular, it seems quite conveivable that cutting planes
+with dominance *cannot* be polynomially simulated by cutting planes with
+redundance, but proving such a result would involve major research
+breakthroughs in computational complexity theory.
+
+We now mention this open question in the conclusion. 
+
+> minor:
+> page 7: "The intended semantics of $f$ and $v$ is ..." f here is part
+> of the input, wouldn't it make more sense to say just "the intended
+> semantics of v?"
+
+We have rephrased this to "the intended relation between $f$ and $v$ is".
+
+> Def 1, condition 3: you could rephrase this to "F ∪ {f <= v} is
+> satisfiable" to emphasize the similarity to cond. 1 and 4
+
+We have updated this to make the presentation more uniform.
+
+> subsection 3.9
+> "The the"
+
+Thanks! Fixed.
+
+> equation (23): should y_j be something else? (y_i perhaps?)
+
+Thanks! Fixed.
+
+> conclusion: perhaps use a different symbol than \pi for the
+> derivation, because it was previously used for permutations? 
+
+We are now using \pi for derivations and \sigma for permutations.
+
+> ------------------------------------------------------
+> 
+> Reviewer C:
+> 
+> The core contribution of the paper is the proof system in Section 3,
+> which is also dense and technical at the first glance. I have the
+> following comments regarding the presentation: 
+> 
+>     The pseudo-Boolean formula that encodes a preorder is important in
+>     defining the dominance-based strengthening rule. The formal
+>     definition of this pseudo-Boolean formula may not be easily
+>     understandable at its first appearance. I was only able to
+>     understand the formula once I reached Example 8 and equation
+>     (14). Even though the formula can be assumed to be \emptyset for
+>     the first several rules, some example after equation (4) would be
+>     helpful.
+
+We feel that ading a discussion of this early on in Section 3 would break
+the flow of the exposition.
+
+
+>     Each subsection defines a derivation rule in the proof system but
+>     the description of derivation rules does not have a uniform and
+>     formal format. It may not be easy to identify all the details of a
+>     derivation rule and verify the desired (F, f)-validity property. I
+>     would suggest using the definition environment of latex to
+>     formally define each derivation rule.
+
+We implemented this suggestion. 
+
+
+>     Could you please give more explanations on why “any preorder
+>     \preceq induces a strict order \prec defined by \alpha \prec \beta
+>     if \alpha \preceq \beta and \beta \not\preceq \alpha”? Is this
+>     induced strict order unique? What if \alpha \preceq \beta and
+>     \beta \preceq \alpha at the same time? In particular, what is the
+>     strict order defined by the pseudo-Boolean formula “v + \bar{u}
+>     \geq 1” in Example 8? It seems to me that both \alpha \prec \beta
+>     and \beta \prec \alpha can be induced in this case, where \alpha =
+>     {p -> 0} and \beta = {p -> 1}.
+
+In this case, neither \alpha \prec \beta nor \beta \prec \alpha will be induced. 
+We added a remark to stress this fact in Section 3.6. 
+
+> Minor comments:
+> 
+>     “linear combination of these conditions“ -> “linear combination of
+>     $C$ and $D$“ to be specific.
+
+We have edited this.
+
+>     “Or under which some constraint $C$ would propagate a literal had
+>     it not already been assigned to the opposite value” -> “Or under
+>     which some constraint $C$ would propagate a literal that has been
+>     assigned to the opposite value”? 
+
+We have clarified these definitions in the preliminaries. 
+
+
+
+
+

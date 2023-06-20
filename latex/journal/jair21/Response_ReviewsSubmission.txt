@@ -8,13 +8,13 @@ In addition to addressing the reviewer's comments, we have polished the introduc
 > This paper works on the problem of how to explain the solution to satisfaction problems efficiently.
 > While the MUS extraction algorithms do not provide any guarantee of subset optimality, this paper proposed algorithms that are provably optimal.
 > This paper extends their conference paper with more detailed examples, extensive experiments, and a novel algorithm for efficiently computing explanations.
-
+> 
 > Compared to the conference version, this paper is more readable with the writing and additional examples.
 > The algorithms proposed in this paper improve the process of searching for hitting sets.
 > Experimental results show that the algorithms proposed in this paper outperform the MUS approach in terms of explanation quality and computational time.
 > Also, OCUS_Split and OCUS_Bounded are more efficient than OCUS.
 
-------------------------------------------------------
+> ------------------------------------------------------
 > Reviewer F:
 
 > The paper tackles the problem of finding explanations for CP programs; such explanations aim at being human-understandable.
@@ -42,7 +42,11 @@ In addition to addressing the reviewer's comments, we have polished the introduc
 
 > 1. While the detailed examples revolving around logical formulas and literals are very welcomed and clearly described, since the paper states (from the abstract) to provide "human-readable explanations" of CSPs, a reader could expect to have more "practical" example, that is a step-by-step explanation of an actual CSP (not simply a logical formula equivalent to a CSP).
 
-We have added a discussion on 
+ 
+Similar to [1], all explanations in the examples are expressed in terms of this logical representation, however, the explanations can be translated back to the original input (e.g. natural language clues,, alldifferent constraints, ...). 
+We added a remark on this in the background section.
+
+[1] Bogaerts, Bart, Emilio Gamba, and Tias Guns. "A framework for step-wise explaining how to solve constraint satisfaction problems." Artificial Intelligence 300 (2021): 103550.
 
 > 2. The experimental section considers exclusively puzzle games (or similar problems). 
 > Would it be possible to provide experiments on different types of CSP? For instance, CSPs with a more "direct" practical application? 
@@ -50,10 +54,15 @@ We have added a discussion on
 > If not, please explain why. 
 > This type of additional experiments would serve also to differentiate the current paper from its predecessors.
 
-
+The focus of this work is on investigating methods for efficiently computing OCUSs and less about applications of the explanation framework. We prefer to focus on a single application for simplicity of preseentation.
 
 > 3. The comparison summarized in Fig. 1 involves Alg. 2 (a previous work from the same authors) and Alg. 3 (the new proposed approach). 
 > Wouldn't it be possible to extend the comparison to another approach from the literature, namely Espasa et al, 2021 ("Using small muses to explain how to solve pen and paper puzzles")?
+
+In Espasa, the goall is to provide small explanations using MUS ectraction, where a heuristic is used to try finding the the smallest one, but there is no guarantee of it being a smallest one. 
+Whereas we want to efficiently compute expalnations that are optimal wrt to a cost function. Figure 1 algready shows that sometimes the MUS expalnation has a similar cost to the OCUS explanation, but there are times where OCUS find the optimal one compared to a MUS extractor or a MUS heuristic.
+
+We have added a remark on this in 8.1 Explanation Quality where Fig 1 is introduced.
 
 > 4. I feel that some related works are missing. For instance, I'm thinking of:
 > - [Bendik and Cerna, 2020a] Jaroslav Bendik and Ivana Cerna. MUST: minimal unsatisfiable subsets enumeration tool. In Proceedings TACAS 2020, pages 135–152, 2020.
@@ -64,7 +73,7 @@ We have added these 2 references to the related work section.
 > I'm wondering as well whether it would be possible to make a comparison between these approaches and the method proposed in this paper. 
 > A comparison with other methods from the state-of-the-art (or at least a justification about why it is not possible to have one) would greatly improve the strength of the paper.
 
-
+Similar to the reviewer's previous comment. This paper is about efficient computation of optimal MUSs and that there are many approaches to generate non-optimal but small ones. We compare against one of those.
 
 > Minor comments:
 > - "is naturally obtained by doing am OCUS call with as constraint" --> "is naturally obtained by doing an OCUS call with as constraint"
@@ -174,31 +183,42 @@ Thanks! Fixed.
 > for introducing this variant?
 
 > The notation bar{I_end \ I} is not explained before the first
-> example. Moreover, it is not intuitive: it is the set that contains
+> example. 
+> Moreover, it is not intuitive: it is the set that contains
 > the negation of every literal in I_end \ I, where I would expect that
 > it is the complement of that set (with respect to I_end, I guess,
 > making it equal to I, so all the more confusing).
+
+Since it was not introduced before, we introduce the concept at the end of the section.
 
 > The paper makes multiple references to 'grow', which is not explained
 > anywhere. It is part of the presentation of many MUS/CS papers, but
 > knowledge of these should not be necessary to get a basic
 > understanding of this paper.
 
+The "grow" procedure is introduced together with Algorithm 4, i.e. "the purpose of grow is to expand a satisfiable subset $\m{S}$ of $\m{F}$ further such that its complement, a correction subset, is as small as possible."
+
 > pg 4, interpretations: the sentence stating "An interpretation calI
 > satisfies..." should go before "A model of F ..."
 
 > maximal consequence: this denotes *all* consequences that hold in all
 > models, right? Also, this does not seem to have been used elsewhere,
-> except to define I_end.
+> except to define I_end
+
+The propagate call computes the maximal consequence. Since it was not explained in the paper, we explained this in 4. Motivation where the maximal consequence is first introduced.
 
 > Algorithm 1: Unless I misunderstood the entire paper, the first line
 > should be 'solve', not 'propagate'.
+
+A call to the "solve" procedure would generate a model of F, however algorithm 1 explains the maximal consequence that is represented here by the propagate call.
 
 > page 19 "Since the restriction...": This sentence is too hand-wavy for
 > me. Also maximal->maximum. (There are a few more instances of such
 > hand-wavy sentences, but I did not keep track. It is not a huge
 > problem, but I would encourage the authors to reread with a critical
 > eye and rewrite or remove those).
+
+We have also generally polished the exposition of the paper, to improve the flow of the text. 
 
 > Minisat 2.2: There's always a reviewer that complains about not using
 > minisat and one that complains about using it. I will be the second

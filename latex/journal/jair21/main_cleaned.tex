@@ -318,11 +318,11 @@ In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an ex
 \section{Motivation}\label{sec:motivation}
 
 Our work is motivated by the problem of explaining the solution to satisfaction problems, or how to explain the information entailed from it, through a sequence of simple explanation steps. This can be used to teach people problem-solving skills; to search for mistakes in the problem formulation that lead to undesired models; to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed) and in systems that provide interactive tutoring.  
-
+\newtext{\subsection{Step-wise Explanation Generation}}
 Our original explanation generation algorithm \cite{ecai/BogaertsGCG20}, depicted in \cref{alg:explanation-sequence}, starts from a formula $\formulac$ (in the application it is coming from a high-level CSP), an initial interpretation $I_0$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, e.g. by means of a weight for every clause. 
 The goal is to find a sequence of \emph{simple} explanation steps that explain the maximal consequence \Iend, a.k.a. the end interpretation, entailed by the given initial interpretation $I_0$ (line~\ref{alg:explanation-sequence:prop}).
 In each explanation step, some literals from \Iend will be explained which gives rise to a precision-increasing sequence of interpretations $I_0 \preceq I_1 \preceq \dots I_{end}$.
-Therefore, the intermediate interpretation $I$ at a given step in this sequence will consist of all the literals ``derived so far''. 
+Therefore, the intermediate interpretation $I$ at a given step in this sequence will consist of all the literals ``derived so far'' \newtext{and the remaining literals to explain correspond to the $\Iend \setminus I$.}
 
 An explanation step is an implication $I' \wedge \formulac' \implies N$ where \begin{itemize}
 	\item $I'$ is a subset of already derived literals I;
@@ -351,11 +351,17 @@ An explanation step is an implication $I' \wedge \formulac' \implies N$ where \b
 	
 \end{algorithm}
 
-\removed{Throughout the paper, we consider cost functions $f$ that map a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.}
-\newtext{Throughout the paper, we consider cost functions $f$ that map a subset $\m{S}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.}
-\emilio{Comment of the reviewer: `$\bar{I_{end} \ I}$ is not explained before the first example. Moreover, it is not intuitive: it is the set that contains the negation of every literal in $I_{end }\ I$, where I would expect that it is the complement of that set (with respect to $I_{end}$, I guess, making it equal to I, so all the more confusing).}
+
+%\newtext{Throughout the paper, we consider cost functions $f$ that map a subset $\m{S}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.}
+
+\reviewercomment{`$\bar{I_{end} \ I}$ is not explained before the first example. Moreover, it is not intuitive: it is the set that contains the negation of every literal in $I_{end }\ I$, where I would expect that it is the complement of that set (with respect to $I_{end}$, I guess, making it equal to I, so all the more confusing).}
+
+\emilio{I thought it would be better to move it later where we introduce the correspondence between non-redundant explanations of $\lnot \ell$ with MUSs of $\formulac \wedge I \wedge \lnot \ell$}
+
 The subset returned by \onestep (line~\ref{alg:explanation-sequence:mus} of Algorithm~\ref{alg:explanation-sequence}) is then mapped back to the set of derived literals $I'$ (line~\ref{alg:explanation-sequence:literals}) and constraints $C'$ (line~\ref{alg:explanation-sequence:constraints}). 
 Finally, at line~\ref{alg:explanation-sequence:propagation}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$ . 
+
+\newtext{\subsection{Explanation Step}}
 
 The key part of \onestep is the search for the best explanation step given an interpretation $I$ of literals derived so far.
 The procedure depicted in \cref{alg:oneStep} shows the gist of how this was done. 
@@ -363,6 +369,8 @@ It takes as input the problem constraints \formulac, a cost function $f$ quantif
 
 To compute an explanation step, this procedure iterates over the literals that are still left to explain (line \ref{alg:onestep:repetition:mus-call} of \cref{alg:oneStep}), computes for each of them an associated MUS (line \ref{alg:onestep:mus-call}), and subsequently selects the lowest cost one from the found MUSs (line \ref{alg:oneStep:ifcheck}).
 The reason this works is a one-to-one correspondence between MUSs of $\formulac \land I \land \neg \ell$ and so-called \emph{non-redundant explanation} of $\ell$ in terms of (subsets of) $\formulac$ and $I$~\cite{ecai/BogaertsGCG20}. 
+
+
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
 	\caption{$\onestep(\formulac,f,I,\Iend)$}
@@ -377,6 +385,7 @@ The reason this works is a one-to-one correspondence between MUSs of $\formulac 
 	\Return{${\cal S}_{best}$} \;
 
 \end{algorithm}
+\newtext{Throughout the paper, we consider cost functions $f$ that map a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$. Note that $\overline{\Iend \setminus I} $ refers to the negation of all remaining literals to explain $\{\lnot \ell \ | \ \ell \in \Iend \setminus I\}$ that are introduced for computing non-redundant explanation steps with MUSs.}
 
 Consider the following four clauses as our running example:
 \begin{example}\label{example:intro2}%\TIPdefVSchoice
@@ -392,7 +401,7 @@ Consider the following four clauses as our running example:
   \newtext{Note that all explanations in the examples are expressed in terms of this logical representation, however, the explanations can be translated back to the original input (e.g. natural language clues,, alldifferent constraints, ...).}
 
 
-
+\newtext{\subsection{Concluding Remarks}\label{sec:motivation:conluding-remarks}}
 
 Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS. 
 Furthermore, MUS extraction algorithms do not provide any guarantee of $\subseteq$-minimality or optimality with respect to a given cost function. Therefore, in \citet{bogaerts2021framework}, we handle the absence of $\subseteq$-minimality and optimality guarantees by heuristically considering increasingly larger subsets of the unsatisfiable formula ($\formulac \land I \land \neg l$).
@@ -414,7 +423,8 @@ In the next section, we will introduce the concept of \emph{Optimal Constrained 
 
 \section{Optimal Constrained Unsatisfiable Subsets}\label{sec:OCUS}
 
-The first two considerations, i.e., the lack of optimality guarantees and the fact that we want to explain one literal at a time, from the previous section (\cref{sec:motivation}) lead to the following definition.
+\newtext{
+	In this section, we first tackle the two challenges of \newtext{\cref{sec:motivation:conluding-remarks}}, i.e. the \emph{lack of optimality guarantees} with respect to a given cost-function \newtext{when relying on MUSs} to compute \textit{simple} explanation steps, and the fact that we want to \emph{explain one literal at a time} by introducing the concept of \emph{Optimal Constrained Unsatisfiable Subsets} (\comus).}
 
 \begin{definition}\label{definition:ocus}
 Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula} \to \{\mathit{true}, \mathit{false} \}$. 
@@ -434,6 +444,8 @@ $\m{S} \subseteq \formula$ an \emph{Optimal Constrained Unsatisfiable Subset (OC
 		If we assume that the predicate $p$ is specified itself as a CNF over (meta)-variables indicating the inclusion of clauses of $\m{F}$, and $f$ is obtained by assigning a weight to each such meta-variable, then the complexity of the problem of finding an OCUS is the same as that of the SMUS (cardinality-minimal or `Smallest' MUS) problem  \cite{ignatiev2015smallest}: the associated decision problem is $\Sigma^P_2$-complete.
 		Hardness follows from the fact that SMUS is a special case of OCUS; containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
 \end{proof}
+
+\newtext{In the next sections, we first explain how \comus fits in the context of explanation step generation and an algorithm for computing OCUSs using the well-known hitting set duality between MUSs and MCSs \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}.}
 
 \subsection{\onestep with OCUS}
 
@@ -499,11 +511,15 @@ In the case of \comus, every set-to-hit corresponds to a correction subset of $\
 	\label{alg:comus}
 \end{algorithm}
 
+\emilio{Should the differences with the SMUS paper be highlighted more in a seperate section ?}
 The algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
 In case the \sat oracle returns true, i.e., subset $\m{S}$ is satisfiable, $\m{K}$ a set of subsets of $F\setminus S$ is returned by \corrsubsets and added to the collection of sets-to-hit \setstohit. 
+
+\paragraph{\newtext{Smallest MUS of \citet{ignatiev2015smallest}}}
 The key differences with the SMUS algorithm are the calls to a \cohs solver (resp. \texttt{MinimumHS}) and the \corrsubsets (resp. \texttt{grow}) procedure.
 In the SMUS algorithm, the purpose of \texttt{grow} is to expand a satisfiable subset $\m{S}$ of $\m{F}$ further such that its complement, a correction subset, is as small as possible.
 Shrinking the correction subset as a result of the \texttt{grow} finds stronger constraints on the sets-to-hit, since it restricts the choice on the clauses that need to be selected. 
+
 In our algorithm, we make use of \corrsubsets which returns a non-empty \emph{set} of correction subsets. 
 In the case of \comus, the calls for hitting sets will also take into account the cost ($f$), as well as the meta-level constraints ($p$); as such, it is not clear a priori which properties a good \corrsubsets function should have here.
 In \cref{sec:correction_subset_enum}, we propose different domain-specific methods for enumerating multiple correction subsets. 

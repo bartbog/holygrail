@@ -182,6 +182,16 @@ Thanks! Fixed.
 > solver already does. What have I misunderstood? What was the intuition
 > for introducing this variant?
 
+It is true that the _Split variant mimics to some extent what the MIP solver already does. 
+However, _Split improves the efficiency of the computation in several ways:
+- Reducing the input unsatisfiable formula for each literal implies the computed subsets only contain relevant information (hitting sets and corrections) regarding the literal to explain e.g. no negations of other literals to explain. 
+	- For instance, the CorrSubsets procedure needs to reason over less information, meaning less time is spent in grow and giving smaller and better corrections only relevant to the literal explained.
+	- Every iteration in the OCUS algorithm increases the number of sets to hit and makes the finding an optimal hitting harder.
+	- _SPlit doesn't require adding the exactly one constraint  to the MIP solver.
+- Finally, only the most promising literal is expanded, other literals with a higher cost hitting set are pushed to the back of the priority queue.
+
+We have clarified this further in section 6.2.
+
 > The notation bar{I_end \ I} is not explained before the first
 > example. 
 > Moreover, it is not intuitive: it is the set that contains
@@ -189,7 +199,7 @@ Thanks! Fixed.
 > it is the complement of that set (with respect to I_end, I guess,
 > making it equal to I, so all the more confusing).
 
-Since it was not introduced before, we introduce the concept at the end of the section.
+We have clarified this in text.
 
 > The paper makes multiple references to 'grow', which is not explained
 > anywhere. It is part of the presentation of many MUS/CS papers, but

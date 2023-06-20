@@ -244,6 +244,7 @@ An \textit{abstract} framework for describing \hitsetbased algorithms, including
 
 \section{Background}\label{sec:background}
 
+\newtext{In this section, we introduce the terminology and concepts related to explanation generation.}
 We present all methods using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics is given in terms of a satisfaction relation between expressions in the language and possible states of affairs (assignments of values to variables). 
 
 Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. 
@@ -251,10 +252,10 @@ A clause is a disjunction of literals, i.e. $c_1 = x_1 \vee \lnot x_2 $. A formu
 Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. 
 
 A (partial) interpretation $\m{I}$ is a consistent (not containing both $p$ and $\lnot p$) set of literals. 
-A \emph{model} of \formula is an interpretation that satisfies \formula; $\formula$ is said to be \emph{unsatisfiable} if it has no models.
 Satisfaction of a formula \formula by an interpretation is defined as usual~\cite{faia/2009-185}.
 %\bart{The sentence that satisfaction is defined as usual is as long as just deifning it:
 An interpretation $\m{I}$ \emph{satisfies} \formula if $\m{I}$ contains at least one literal from each clause in $\formula$.
+A \emph{model} of \formula is an interpretation that satisfies \formula; $\formula$ is said to be \emph{unsatisfiable} if it has no models.
 %only AFTER this sentence, should the sentence about models come: 
 An interpretation that satisfies $\formula$ is also called a \emph{model} of \formula. 
 A formula \formula is \emph{satisfiable} if it has at least one model and \emph{unsatisfiable} otherwise. 
@@ -320,7 +321,7 @@ In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an ex
 Our work is motivated by the problem of explaining the solution to satisfaction problems, or how to explain the information entailed from it, through a sequence of simple explanation steps. This can be used to teach people problem-solving skills; to search for mistakes in the problem formulation that lead to undesired models; to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed) and in systems that provide interactive tutoring.  
 \newtext{\subsection{Step-wise Explanation Generation}}
 Our original explanation generation algorithm \cite{ecai/BogaertsGCG20}, depicted in \cref{alg:explanation-sequence}, starts from a formula $\formulac$ (in the application it is coming from a high-level CSP), an initial interpretation $I_0$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, e.g. by means of a weight for every clause. 
-The goal is to find a sequence of \emph{simple} explanation steps that explain the maximal consequence \Iend, a.k.a. the end interpretation, entailed by the given initial interpretation $I_0$ (line~\ref{alg:explanation-sequence:prop}).
+The goal is to find a sequence of \emph{simple} explanation steps that explain the \emph{maximal consequence} \Iend, \removed{a.k.a.} \newtext{also referred to as} the end interpretation, entailed by the given initial interpretation $I_0$ (line~\ref{alg:explanation-sequence:prop-init-interpretation}).
 In each explanation step, some literals from \Iend will be explained which gives rise to a precision-increasing sequence of interpretations $I_0 \preceq I_1 \preceq \dots I_{end}$.
 Therefore, the intermediate interpretation $I$ at a given step in this sequence will consist of all the literals ``derived so far'' \newtext{and the remaining literals to explain correspond to the $\Iend \setminus I$.}
 
@@ -336,14 +337,14 @@ An explanation step is an implication $I' \wedge \formulac' \implies N$ where \b
 	\DontPrintSemicolon
 	\caption{$\mathtt{explain}(\formulac,f,I_0)$}
 		\label{alg:explanation-sequence}
-	$\Iend \gets \mathtt{propagate}(I \wedge \formulac) $\label{alg:explanation-sequence:prop}\;
+	$\Iend \gets \mathtt{propagate}(I \wedge \formulac) $\label{alg:explanation-sequence:prop-init-interpretation}\;
 	Seq $\gets$ empty sequence\;
 	$	I \gets I_0$\;
 	\While{$I \neq Iend$}{
 		$S \gets \onestep(\formulac, f, I , \Iend)$\label{alg:explanation-sequence:mus}\;
 		$I' \gets I \cap S$ \label{alg:explanation-sequence:literals}\;
 		$\formulac' \gets C \cap S $  \label{alg:explanation-sequence:constraints}\;
-		$N \gets \mathtt{propagate}(I' \wedge \formulac')$ \label{alg:explanation-sequence:propagation}\;
+		$N \gets \mathtt{propagate}(I' \wedge \formulac')$ \label{alg:explanation-sequence:prop-expl}\;
 		append $(I', \formulac', N)$ to Seq\;
 		$I \gets I \cup N$\;
 	}
@@ -359,7 +360,11 @@ An explanation step is an implication $I' \wedge \formulac' \implies N$ where \b
 \emilio{I thought it would be better to move it later where we introduce the correspondence between non-redundant explanations of $\lnot \ell$ with MUSs of $\formulac \wedge I \wedge \lnot \ell$}
 
 The subset returned by \onestep (line~\ref{alg:explanation-sequence:mus} of Algorithm~\ref{alg:explanation-sequence}) is then mapped back to the set of derived literals $I'$ (line~\ref{alg:explanation-sequence:literals}) and constraints $C'$ (line~\ref{alg:explanation-sequence:constraints}). 
-Finally, at line~\ref{alg:explanation-sequence:propagation}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$ . 
+Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$\newtext{, i.e.~the maximal consequence of $I' \wedge C'$.}
+
+\emilio{Alternative 1: Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate $I'$ and constraints $C'$ to derive new information $N'$ present in the maximal consequence of $I' \wedge C'$.}
+
+\emilio{Alternative 2: Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ in the maximal consequence, i.e. that holds at the intersection of all models of $I' \wedge C'$.}
 
 \newtext{\subsection{Explanation Step}}
 

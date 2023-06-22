@@ -48,7 +48,7 @@
 \renewcommand\comment[1]{#1}
 %\renewcommand\comment[1]{}
 \newcommand{\tias}[1]{{\comment{\color{blue}Tias:#1}}}
-\newcommand{\emilio}[1]{{\comment{\color{Violet}Emilio: #1}}}
+\newcommand{\emilio}[1]{{\comment{\color{red}Emilio: #1}}}
 \newcommand{\reviewercomment}[1]{{\comment{\color{DarkOrchid}Reviewer: #1}}}
 \newcommand{\bart}[1]{{\comment{\color{OliveGreen}Bart: #1}}}
 \newcommand{\newtext}[1]{{\comment{{\color{blue} #1}}}}
@@ -454,12 +454,13 @@ $\m{S} \subseteq \formula$ an \emph{Optimal Constrained Unsatisfiable Subset (OC
 		Hardness follows from the fact that SMUS is a special case of OCUS; containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
 \end{proof}
 
-\newtext{In the next sections, we first explain how \comus fits in the context of explanation step generation and an algorithm for computing OCUSs using the well-known hitting set duality between MUSs and MCSs \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}.}
+\newtext{In the next sections, we first explain how \comus fits in the context of explanation step generation and then propose an algorithm for computing OCUSs using the well-known hitting set duality between MUSs and MCSs \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}.}
 
 \subsection{\onestep with OCUS}
 
-\onestep implicitly uses an ``exactly one of'' constraint on the set of literals to explain, and the way this is done is by considering each literal from that set separately. It searches for a good, but not necessarily \emph{optimal} CUS (an \underline{U}nsatisfiable \underline{S}ubset that satisfies the \underline{C}onstraint in question). The goal is however to find an optimal one.
-Therefore, when considering the procedure \onestep from the perspective of OCUS defined above, the task of the procedure is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets that contain exactly one literal of $\overline{\Iend\setminus I}$. The pseudo-code for this is shown in \cref{alg:oneStepOCUS}.
+\onestep implicitly uses an ``exactly one of'' constraint on the set of literals to explain \newtext{$ \{\ell \in \Iend \setminus I\}$}, and the way this is done is by considering each literal from that set separately. It searches for a good, but not necessarily \emph{optimal} CUS (an \underline{U}nsatisfiable \underline{S}ubset that satisfies the \underline{C}onstraint in question). The goal is however to find an optimal one.
+Therefore, when considering the procedure \onestep from the perspective of OCUS defined above the task of the procedure is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets that contain exactly one literal of $\overline{\Iend\setminus I}$. 
+The pseudo-code for this is shown in \cref{alg:oneStepOCUS}.
 
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
@@ -473,12 +474,12 @@ $\m{S} , \mathit{status} \gets \call{OCUS}(\formula, f, p)$\label{alg:oneStepOCU
 \lElse{\Return{$\emptyset$}}
 \end{algorithm}
 
-We define the `exactly one' constraint $p$ as the equality constraint shown on line \ref{alg:oneStepOCUS:exactlyone} of \cref{alg:oneStepOCUS}. $p$ evaluates to \textit{true} if the size of the intersection of the negated literals to explain $\Iend\setminus I$ with the subset $\m{S}$ of $\formula$ considered is equal to 1, otherwise $p$ evaluates to \textit{false}. 
+We define the `exactly one' constraint $p$ as the equality constraint shown on line \ref{alg:oneStepOCUS:exactlyone} of \cref{alg:oneStepOCUS} \newtext{to encode that we want to \emph{explain one literal at a time}}. $p$ evaluates to \textit{true} if the size of the intersection of the negated literals to explain $\Iend\setminus I$ with the subset $\m{S}$ of $\formula$ considered is equal to 1, otherwise $p$ evaluates to \textit{false}. 
 The call to \comus at line \ref{alg:oneStepOCUS:ocus-call} of \onestepo will never lead to the $\mathit{FAILURE}$ case, since an \comus is guaranteed to exist for the input cost function $f$, predicate $p$, and formula $\formula$ we consider. Failure can occur for a different predicate $p$; consider for example the predicate $p: (\m{S} \mapsto f(S) \leq v)$ of \cref{alg:oneStepBoundBart} that evaluates to true if a subset $\m{S}$ has a value lower than a given bound $v$. In this case, it might lead to the failure case if no \comus for given bound $v$ exists.  
 
 In the next section, we provide the details on how to compute an OCUS on line~\ref{alg:oneStepOCUS:ocus-call}.
 
-\subsection{Computing an \comus}\label{sec:computing_an_ocus}
+\subsection{Computing an OCUS}\label{sec:computing_an_ocus}
 
 In order to compute an OCUS of a given formula, we propose to build on the hitting set duality of \cref{prop:MCS-MUS-hittingset}. 
 For this, we will assume to have access to a solver \cohs that can compute hitting sets of a given collection of sets that are \emph{optimal} (w.r.t.\ a given cost function $f$) among all hitting sets \emph{satisfying a condition $p$}. 
@@ -487,6 +488,7 @@ In our implementation, we use a cost function $f$ that is encoded as a linear te
 For example, (unit) clauses representing previously derived facts can be given small weights, and regular clauses can be given large weights, such that explanations are penalized for including clauses when previously derived facts can be used instead. %relevant facts are directly available.
 Condition $p$ can easily be encoded as a linear constraint (see \cref{eq:exactly-one-constraint} for an example), 
 thus allowing the use of highly optimized mixed integer programming (MIP) solvers for computing optimal hitting sets. 
+% Something for the reviewer that asked aout incrementality
 
 \paragraph{Hitting set problem} Given $\formula$, we define a MIP decision variable $d_c$ for every clause $c\in \formula$ and write  $\decisionvariables = \{d_c \ | \ c \in \formula\}$ for the set of all such variables. We assume a given collection of sets-to-hit $\setstohit$.
 The goal is to find a hitting set $\hittingset \subseteq D$ that hits every set-to-hit at least once (\cref{eq:set-to-hit}), that satisfies predicate $p$ (\cref{eq:constraint}) and minimizes $f(D)$ (\cref{eq:minimization}).
@@ -501,7 +503,8 @@ s.t. \quad & p(\hittingset) \label{eq:constraint}\\
 
 In the case of \comus, every set-to-hit corresponds to a correction subset of $\formula$. % encoded in the MIP formulation with its corresponding decision variables. 
 
-\paragraph{OCUS algorithm} Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}. It combines the hitting set-based approach for MUSs of \citet{ignatiev2015smallest} with the use of a MIP solver for (weighted) hitting sets as proposed for maximum satisfiability by \citet{DBLP:conf/sat/DaviesB13}. The key novelty is the ability to add structural constraints to the hitting set solver, without impacting the duality principles of \cref{prop:MCS-MUS-hittingset}, as we will show.
+\paragraph{OCUS algorithm} Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}. It combines the hitting set-based approach for MUSs of \citet{ignatiev2015smallest} with the use of a MIP solver for (weighted) hitting sets as proposed for maximum satisfiability by \citet{DBLP:conf/sat/DaviesB13}. 
+The key novelty is the ability to add structural constraints to the hitting set solver, without impacting the duality principles of \cref{prop:MCS-MUS-hittingset}, as we will show.
 
 \begin{algorithm}[!h]
 	\DontPrintSemicolon
@@ -520,20 +523,21 @@ In the case of \comus, every set-to-hit corresponds to a correction subset of $\
 	\label{alg:comus}
 \end{algorithm}
 
-\emilio{Should the differences with the SMUS paper be highlighted more in a seperate section ?}
 The algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
 In case the \sat oracle returns true, i.e., subset $\m{S}$ is satisfiable, $\m{K}$ a set of subsets of $F\setminus S$ is returned by \corrsubsets and added to the collection of sets-to-hit \setstohit. 
 
+\emilio{Should the differences with the SMUS paper be highlighted more in a seperate paragraph like here  ?}
 \paragraph{\newtext{Smallest MUS of \citet{ignatiev2015smallest}}}
 The key differences with the SMUS algorithm are the calls to a \cohs solver (resp. \texttt{MinimumHS}) and the \corrsubsets (resp. \texttt{grow}) procedure.
 In the SMUS algorithm, the purpose of \texttt{grow} is to expand a satisfiable subset $\m{S}$ of $\m{F}$ further such that its complement, a correction subset, is as small as possible.
 Shrinking the correction subset as a result of the \texttt{grow} finds stronger constraints on the sets-to-hit, since it restricts the choice on the clauses that need to be selected. 
 
+%\paragraph{\newtext{Correction Subset Enumeration}} 
 In our algorithm, we make use of \corrsubsets which returns a non-empty \emph{set} of correction subsets. 
 In the case of \comus, the calls for hitting sets will also take into account the cost ($f$), as well as the meta-level constraints ($p$); as such, it is not clear a priori which properties a good \corrsubsets function should have here.
 In \cref{sec:correction_subset_enum}, we propose different domain-specific methods for enumerating multiple correction subsets. 
 
-For \emph{correctness} of the algorithm, all we need to know is that for a given satisfiable subset $\m{S}$, \corrsubsets returns a \emph{non-empty} set of correction subsets~$\m{K}$ where $\forall \m{C} \in \m{K} : \m{C} \subseteq (F \setminus S)$. %, such that of $\m{F}$ with $\m{S}\subseteq\m{S}'$.  \bart{Statement is missing: what are we proving?}
+For \emph{correctness} of the algorithm, all we need to know is that for a given satisfiable subset $\m{S}$, \corrsubsets returns a \emph{non-empty} set of correction subsets~$\m{K}$ where $\forall \ \m{C} \in \m{K} : \m{C} \subseteq (F \setminus S)$. %, such that of $\m{F}$ with $\m{S}\subseteq\m{S}'$.  \bart{Statement is missing: what are we proving?}
 At any given step, if $\m{S}$ is satisfiable, $\setstohit$ is guaranteed to grow, since a non-empty set of correction subsets $\m{K}$ is returned that is disjoint from $\m{S}$. Therefore $\m{K}$ cannot be present in $\setstohit$. 
 %	Soundness of the \comus algorithm follows from the fact that the algorithm
 \emph{Completeness} and \emph{soundness} of the algorithm follow from the fact that the algorithm is guaranteed to terminate since there is a countable number of correction subsets of $\formula$, and from %the fact that \corrsubsets returns a \emph{non-empty} all sets returned by to \setstohit are non-empty \bart{Are all sets non-empty? Probably yes, but is the clue not that the set returned by \corrsubsets is non-empty?} correction subsets, and 
@@ -553,6 +557,7 @@ The second claim immediately follows from \cref{prop:MCS-MUS-hittingset} and the
 \end{proof}
 
 Perhaps surprisingly, the correctness of the proposed algorithm does \emph{not} depend on the monotonicity properties of $f$ nor $p$. In principle, any (computable) cost function and condition on the unsatisfiable subsets can be used. In practice, however, one is bound by the limitations of the chosen hitting set solver.
+
 	
 As an illustration, we provide an example of one call to \onestepo (\cref{alg:oneStepOCUS}) and the corresponding \comus-call in detail (\cref{alg:comus}) for our running example:
 \begin{example}[\textit{continued}]\label{ex:onestep-ocus}
@@ -641,20 +646,22 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
   Finally, step 12 of \cref{tab:example-explanation-generation-not-incremental} signifies that using clause $c_3$ we can derive $x_1$, and more formally $c_3 \implies x_1$.
 
 \end{example}
-Finally, observe in \cref{tab:example-explanation-generation-not-incremental} that the \comus algorithm requires a lot of intermediate steps in order to find an \comus. Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
+Observe in \cref{tab:example-explanation-generation-not-incremental} that the \comus algorithm requires a lot of intermediate steps in order to find an \comus. Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
 
+
+\newtext{In the following section, we investigate how to improve \comus given that we are in the context of explanation sequence generation.}
 
 \section{Multiple Optimal Unsatisfiable Subsets}\label{sec:OUS} %\emilio{Adapt title to fit narrative OCUS call with p set to true}
 
 Preliminary experiments have shown that when generating an explanation step with \comus, most of the time is spent searching for hitting sets. 
-The main reason for this is that the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially searching over an exponential number of literals and clauses.
-%In this section, we look at how to make the generation of one explanation step more efficient by splitting up the \comus-call into individual calls for every literal.
-Therefore, in this section, we analyze if instead of working \comus-based, we can also generate an explanation step by splitting up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal.
+	The main reason for this is that the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially searching over an exponential number of literals and clauses.
 
-Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$, i.e., 
-$\omus{}(\formula,f):=\comus{}(\formula,f,\ltrue) $ for each $\formula$ and~$f$. 
+In this section, we analyze if instead of working \comus-based, we can also generate an explanation step by splitting up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal.
+
 
 \subsection{Bounded OCUS}
+Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$, i.e., 
+$\omus{}(\formula,f):=\comus{}(\formula,f,\ltrue) $ for each $\formula$ and~$f$. 
 However, the switch from MUS to \omus{} in \cref{alg:oneStep} still requires looping over every literal and computing the \omus{}, potentially introducing overhead compared to the single \comus call. %\bart{compared to what?} 
 However, we can use the \omus{} obtained in one iteration, to infer a bound on the score that must be achieved in subsequent \omus{} calls.
 
@@ -753,7 +760,9 @@ When a second call to \comus is performed, we can then initialize $\setstohit$ a
  	\end{equation}
 The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. 
 
-\subsubsection{Incrementality with MIP}\label{sec:mip-incrementality}  For hitting set solvers that natively implement incrementality, such as modern Mixed Integer Programming (MIP) solvers, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. 
+\subsubsection{Incrementality with MIP}\label{sec:mip-incrementality} 
+
+For hitting set solvers that natively implement incrementality, such as modern Mixed Integer Programming (MIP) solvers, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. 
 To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, we need to ensure that the hitting set solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$. 
 %% talk about the general case incremental hitting set solver 
 For incremental hitting set solvers, this means updating the constraint $p$ at every explanation step to include (1) only literals from interpretation $I$ at the current explanation step, and (2) the `exactly-one' constraint for explaining one literal at a time.

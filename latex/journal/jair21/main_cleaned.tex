@@ -1246,7 +1246,7 @@ However, the number of instances explained is substantially higher for all \comu
 
 \subsection{Efficiency of single step O(C)US, instantaneous and step-wise}
 
-In this section, we analyze whether the algorithms we developed could be fit for an interactive context. By an interactive context, we consider two types of settings. First, a user may want an immediate explanation step for the given CSP, and second, a user is asking for the next step, and the next, and so forth. 
+In this section, we analyze whether the algorithms we developed could be fit for an interactive context. By an interactive context, we consider two types of settings. First, a user may want an \emph{immediate explanation step} for the given CSP, and second, a user is asking for the next step, and the next, and so forth. 
 
 \cref{tab:indiv-explanations-all} depicts \emph{Multi}-\subsetmaxsat~the best performing \corrsubsets procedure of \cref{fig:q3:grow_configurations}. For each \comus algorithm, we compute the average time to produce the first explanation step $\overline{t_{1}}$ (instantaneous), the average time to generate one step-wise explanation $\overline{t_{step}}$, and the explanation time quantiles 25 up to 100, where quantile 100 $q_{100}$ symbols the most expensive step to generate over all the problem instances.
 
@@ -1274,6 +1274,29 @@ In the case of \emph{\comusbound}, the time to the first explanation reflects ho
 
 For an interactive context where the user asks for an immediate explanation, \emph{\comussplit} will be the fastest at computing the explanations. 
 If the user is exploring the sequence of explanations and repeatedly asks for additional explanations, \ousbiterincr will be able to capitalize on incrementality to bring the average time close to real-time.
+
+
+
+\newtext{\paragraph{Instance timeout} Instances that timed out before the full explanation sequence was generated, had on average more literals to explain. The different configurations were }
+
+\newtext{
+\begin{table}[!h]
+	\centering
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{r|c}
+			\textbf{config}          &  \\ \midrule
+						\comus          &             \\
+			\comusbound     &             \\
+			\ousbiter       &            \\
+			\comusincr     &             \\
+			\ousbincr       &             \\
+			\ousbiterincr   &             \\
+		\end{tabular}
+	\end{adjustbox}
+	\caption{\textbf{Timedout instances:} .}
+	\label{tab:indiv-explanations-all}
+\end{table}
+} 
 
 \section{Conclusion and future work}
 

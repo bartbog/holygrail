@@ -655,16 +655,21 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 Observe in \cref{tab:example-explanation-generation-not-incremental} that the \comus algorithm requires a lot of intermediate steps in order to find an \comus. Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
 
 \newtext{
-	\paragraph{MIP incrementality} The \comus algorithm requires computing repeatedly computing hitting sets over an increasing collection of sets-to-hit. Initializing the MIP solver once and keeping it warm throughout the OCUS iterations allows it to reuse information from solver calls to solve the current hitting set problem. Similar to the results of \cite{DBLP:conf/sat/DaviesB13}, we notice an average speed-up between 3 to 5 times by keeping the solver warm compared to initializing a new MIP solver instance at every iteration.}
+	\paragraph{MIP incrementality} The \comus algorithm requires computing repeatedly computing hitting sets over an increasing collection of sets-to-hit. Initializing the MIP solver once and keeping it warm throughout the OCUS iterations allows it to reuse information from solver calls to solve the current hitting set problem. Similar to the results of \cite{DBLP:conf/sat/DaviesB13}, we notice an average speed-up between 3 to 5 times by keeping the solver warm compared to initializing a new MIP solver instance at every iteration.
 
-\newtext{In the following section, we investigate how to speed-up explanation generation using \comus given that we not only want to generate a \emph{single} explanation step, but a whole \emph{sequence} of explanations.}
+}
 
-\section{Multiple Optimal Unsatisfiable Subsets}\label{sec:OUS} %\emilio{Adapt title to fit narrative OCUS call with p set to true}
+\newtext{
+	Preliminary experiments have shown that when generating an explanation step with \comus, most of the time is spent searching for hitting sets. 
+	The main reason for this is that the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially searching over an exponential number of literals and clauses (see Table~\ref{tab:example-explanation-generation-not-incremental}).
+	
+	In following section, we analyze if instead of working \comus-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal.
+%	In the following section, we investigate how to speed-up explanation generation 
+%	 using \comus given that we not only want to generate a \emph{single} explanation step, but a whole \emph{sequence} of explanations.
+	 }
 
-Preliminary experiments have shown that when generating an explanation step with \comus, most of the time is spent searching for hitting sets. 
-	The main reason for this is that the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially searching over an exponential number of literals and clauses.
+\section{Multiple Optimal Unsatisfiable Subsets}\label{sec:OUS}
 
-In this section, we analyze if instead of working \comus-based, we can also generate an explanation step by splitting up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal.
 
 
 \subsection{Bounded OCUS}

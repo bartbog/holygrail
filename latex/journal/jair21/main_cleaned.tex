@@ -323,8 +323,8 @@ In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an ex
 
 Our work is motivated by the problem of explaining the solution to constraint satisfaction problems, or how to explain the information entailed from it, through a sequence of simple explanation steps. This can be used to teach people problem-solving skills; to search for mistakes in the problem formulation that lead to undesired models; to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed) and in systems that provide interactive tutoring.  
 \newtext{\subsection{Step-wise Explanation Generation}}
-Our original explanation generation algorithm \cite{ecai/BogaertsGCG20}, depicted in \cref{alg:explanation-sequence}, starts from a formula $\formulac$ (in the application it is coming from a high-level CSP), an initial interpretation $I_0$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, e.g. by means of a weight for every clause. 
-The goal is to find a sequence of \emph{simple} explanation steps that explain the \emph{maximal consequence} \Iend, \removed{a.k.a.} \newtext{also referred to as} the end interpretation, entailed by the given initial interpretation $I_0$ (line~\ref{alg:explanation-sequence:prop-init-interpretation}).
+Our original explanation generation algorithm \cite{ecai/BogaertsGCG20}, depicted in \cref{alg:explanation-sequence}, starts from a formula $\formulac$ (in the application it is coming from a high-level CSP), an \emph{initial interpretation} $I_0$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, e.g. by means of a weight for every clause. 
+The goal is to find a sequence of \emph{simple} explanation steps that explain the \emph{maximal consequence} \Iend, also referred to as the \emph{end interpretation}, entailed by the given initial interpretation $I_0$ (line~\ref{alg:explanation-sequence:prop-init-interpretation}).
 In each explanation step, some literals from \Iend will be explained which gives rise to a precision-increasing sequence of interpretations $I_0 \preceq I_1 \preceq \dots I_{end}$.
 Therefore, the intermediate interpretation $I$ at a given step in this sequence will consist of all the literals ``derived so far'' \newtext{and the remaining literals to explain correspond to the $\Iend \setminus I$.}
 
@@ -358,9 +358,9 @@ An \emph{explanation step} is an implication $I' \wedge \formulac' \implies N$ w
 
 %\newtext{Throughout the paper, we consider cost functions $f$ that map a subset $\m{S}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.}
 
-\reviewercomment{`$\bar{I_{end} \ I}$ is not explained before the first example. Moreover, it is not intuitive: it is the set that contains the negation of every literal in $I_{end }\ I$, where I would expect that it is the complement of that set (with respect to $I_{end}$, I guess, making it equal to I, so all the more confusing).}
+%\reviewercomment{`$\bar{I_{end} \ I}$ is not explained before the first example. Moreover, it is not intuitive: it is the set that contains the negation of every literal in $I_{end }\ I$, where I would expect that it is the complement of that set (with respect to $I_{end}$, I guess, making it equal to I, so all the more confusing).}
 
-\emilio{I thought it would be better to move it later where we introduce the correspondence between non-redundant explanations of $\lnot \ell$ with MUSs of $\formulac \wedge I \wedge \lnot \ell$}
+%\emilio{I thought it would be better to move it later where we introduce the correspondence between non-redundant explanations of $\lnot \ell$ with MUSs of $\formulac \wedge I \wedge \lnot \ell$}
 
 The subset returned by \onestep (line~\ref{alg:explanation-sequence:mus} of Algorithm~\ref{alg:explanation-sequence}) is then mapped back to the set of derived literals $I'$ (line~\ref{alg:explanation-sequence:literals}) and constraints $C'$ (line~\ref{alg:explanation-sequence:constraints}). 
 Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$\newtext{, i.e.~the maximal consequence of $I' \wedge C'$.}
@@ -393,7 +393,7 @@ The reason this works is a one-to-one correspondence between MUSs of $\formulac 
 	\Return{${\cal S}_{best}$} \;
 
 \end{algorithm}
-\newtext{Throughout the paper, we consider cost functions $f$ that map a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.  $\overline{\Iend \setminus I} $ refers to the negation of the remaining literals to explain $\{\lnot \ell \ | \ \ell \in \Iend \setminus I\}$ that are introduced for computing non-redundant explanation steps with MUSs.}
+\newtext{MOVED from 4.1: Throughout the paper, we consider cost functions $f$ that map a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.  $\overline{\Iend \setminus I} $ refers to the negation of the remaining literals to explain $\{\lnot \ell \ | \ \ell \in \Iend \setminus I\}$ that are introduced for computing non-redundant explanation steps with MUSs.}
 
 Consider the following four clauses as our running example:
 \begin{example}\label{example:intro2}%\TIPdefVSchoice
@@ -412,7 +412,7 @@ Consider the following four clauses as our running example:
 
 \newtext{\subsection{Concluding Remarks}\label{sec:motivation:conluding-remarks}}
 
-Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS\newtext{, i.e. one that is small or evaluates to a small cost}. 
+Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS\newtext{, for instance one that is small or evaluates to a small cost}. 
 Furthermore, MUS extraction algorithms do not provide any guarantee of $\subseteq$-minimality or optimality with respect to a given cost function $f$. Therefore, in \citet{bogaerts2021framework}, we handle the absence of $\subseteq$-minimality and optimality guarantees by heuristically considering increasingly larger subsets of the unsatisfiable formula ($\formulac \land I \land \neg l$).
 
 Hence, there is a need for algorithmic improvements to make it more practical.
@@ -433,12 +433,13 @@ In the next section, we will introduce the concept of \emph{Optimal Constrained 
 \section{Optimal Constrained Unsatisfiable Subsets}\label{sec:OCUS}
 
 \newtext{
-	In this section, we first tackle the first two challenges related to explanation generation with MUSs:
-	% \newtext{\cref{sec:motivation:conluding-remarks}}:
+	In this section, we address the first two challenges highlighted at the end of \cref{sec:motivation:conluding-remarks}, namely 
 	\begin{inparaenum}[(1)]
-		\item  the \emph{lack of optimality guarantees} with respect to a given cost-function \newtext{when relying on MUS extraction methods (and heuristics)} to compute a \textit{simple} explanation step, and 
-		\item the fact that we want to \emph{explain one literal at a time} by introducing the concept of \emph{Optimal Constrained Unsatisfiable Subsets} (\comus).
-	\end{inparaenum}}
+		\item  the \emph{lack of optimality guarantees} when relying on MUS extraction methods (and heuristics) to compute a \textit{optimal} explanation step with respect to a given cost-function, and 
+		\item the fact that we want to \emph{explain one literal at a time}.
+	\end{inparaenum}
+	 To tackle this, we introduce the concept of an Optimal Constrained Unsatisfiable Subset (OCUS) and propose an algorithm for computing one.
+	}
 
 \begin{definition}\label{definition:ocus}
 Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula} \to \{\mathit{true}, \mathit{false} \}$. 
@@ -494,8 +495,7 @@ In our implementation, we use a cost function $f$ that is encoded as a linear te
 For example, (unit) clauses representing previously derived facts can be given small weights, and regular clauses can be given large weights, such that explanations are penalized for including clauses when previously derived facts can be used instead. %relevant facts are directly available.
 Condition $p$ can easily be encoded as a linear constraint (see \cref{eq:exactly-one-constraint} for an example), 
 thus allowing the use of highly optimized mixed integer programming (MIP) solvers for computing optimal hitting sets. 
-
-\newtext{In the following, we first define how }
+\newtext{In the following, we formalize the hitting set problem and how it can be encoded into MIP.}
 
 \paragraph{Hitting set problem} Given $\formula$, we define a MIP decision variable $d_c$ for every clause $c\in \formula$ and write  $\decisionvariables = \{d_c \ | \ c \in \formula\}$ for the set of all such variables. We assume a given collection of sets-to-hit $\setstohit$.
 The goal is to find a hitting set $\hittingset \subseteq D$ that hits every set-to-hit at least once (\cref{eq:set-to-hit}), that satisfies predicate $p$ (\cref{eq:constraint}) and minimizes $f(D)$ (\cref{eq:minimization}).

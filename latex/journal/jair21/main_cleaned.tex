@@ -231,14 +231,17 @@ In the CP and SAT communities, there has been a strong focus on explaining \text
 We recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} for explaining the solution of satisfiable instances exploiting a one-to-one correspondence between so-called non-redundant explanations and MUSs of a derived program. The focus of \citet{ecai/BogaertsGCG20} has been on explaining Zebra puzzles; building on this work, \citet{schotten} investigated interpretable explanations using MUSs for a wide range of puzzles.  
 Our current work is motivated by a concrete algorithmic need: to generate these explanations \emph{efficiently}, we need algorithms that can find MUSs that are optimal with respect to a given cost function, where the cost function approximates human-understandability of the corresponding explanation step. 
 
-The closest related work can be found in the literature on generating or enumerating MUSs \cite{conf/sat/LynceM04,liffiton2016fast}. \newtext{e.g. \cite{conf/sat/LynceM04,bacchus2016finding,bacchus2015using,liffiton2016fast} where part of these algorithms can be classified as seed-shrink algorithms \cite{bendik2020must}. A \emph{seed-shrink} algorithm repeatedly starts from unsatisfiable \emph{seed}, i.e. a subset of the original unsatisfiable formula, and \emph{shrinks} the seed using a MUS extraction routine to explore the search space of MUSs. 
-	Finding an unsatisfiable seed quickly is crucial for the efficient enumeration of MUSs \cite{bendik2020replication}.}
-\emilio{I don't know to which extent these references need to be added, so I added a few extra from bendik and cerna's references and one of 2 of their paper citations as well. The first is about their tool (not added), and the second one about a new enumeration method.}
-Different techniques are employed to find MUSs, including manipulating resolution proofs produced by SAT solvers \cite{goldberg,DBLP:journals/fmsd/GershmanKS08,DBLP:conf/sat/DershowitzHN06}, incremental solving to enable/disable clauses and branch-and-bound search \cite{DBLP:conf/dac/OhMASM04}, or by BDD-manipulation methods \cite{huang}.
+The closest related work can be found in the literature on generating or enumerating MUSs %\cite{conf/sat/LynceM04,liffiton2016fast}. 
+\newtext{\cite{conf/sat/LynceM04,bacchus2016finding,bacchus2015using,liffiton2016fast}. 
+%\emilio{I don't know to which extent these references need to be added, so I added a few extra from bendik and cerna's references and one of 2 of their paper citations as well. The first is about their tool (not added), and the second one about a new enumeration method.}
+Most of these techniques that can be categorised `seed-shrink' algorithms \cite{bendik2020must}. A seed-shrink algorithm repeatedly starts from unsatisfiable \emph{seed}, i.e. a subset of the original unsatisfiable formula, and \emph{shrinks} the seed using a MUS extraction routine in order to explore the search space of MUSs. 
+Finding an unsatisfiable seed quickly is crucial for the efficient enumeration of MUSs \cite{bendik2020replication}.
+
+Different techniques are employed to find MUSs include manipulating resolution proofs produced by SAT solvers \cite{goldberg,DBLP:journals/fmsd/GershmanKS08,DBLP:conf/sat/DershowitzHN06}, incremental solving to enable/disable clauses and branch-and-bound search \cite{DBLP:conf/dac/OhMASM04}, or by BDD-manipulation methods \cite{huang}.
 Other methods work by means of translation into a so-called Quantified \maxsat~\cite{DBLP:journals/constraints/IgnatievJM16}, a field that combines the expressiveness of Quantified Boolean Formulas (QBF) \cite{QBF} with techniques from Maximum Satisfiability (\maxsat)~\cite{DBLP:series/faia/LiM09}, 
 %\emilio{MaxSAT not introduced proposed text:} a generalisation of SAT that maximises the number of satisfied constraints of a problem % T: not needed, rephrased slightly
 or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest}.
-To the best of our knowledge, only few works have considered \emph{optimizing} MUSs: the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest}. 
+To the best of our knowledge, only few works have considered \emph{optimizing} MUSs: the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest}. }
 
 An \textit{abstract} framework for describing \hitsetbased algorithms, including optimization, was developed by \citet{DBLP:conf/kr/SaikkoWJ16}. While our approach can be seen to fit the framework, the terminology is focused on \maxsat~rather than MUS and would complicate our exposition.
 
@@ -666,8 +669,10 @@ Observe in \cref{tab:example-explanation-generation-not-incremental} that the \c
 \section{Multiple Optimal Unsatisfiable Subsets}\label{sec:OUS}
 
 Preliminary experiments have shown that when generating an explanation step with \comus, most of the time is spent searching for hitting sets. 
-The main reason for this is that the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially searching over an exponential number of literals and clauses (see Table~\ref{tab:example-explanation-generation-not-incremental}).
+The main reason for this is that the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially searching over an exponential number of literals and clauses. 
+In Table~\ref{tab:example-explanation-generation-not-incremental}) of \cref{ex:onestep-ocus}, we see that 
 
+%% So splitting the ocuss for each literal falls a bit out of the sky can we add a little more context ?
 In this section, we analyze if instead of working \comus-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal.
 
 \subsection{Bounded OCUS}

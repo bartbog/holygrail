@@ -495,7 +495,7 @@ In our implementation, we use a cost function $f$ that is encoded as a linear te
 For example, (unit) clauses representing previously derived facts can be given small weights, and regular clauses can be given large weights, such that explanations are penalized for including clauses when previously derived facts can be used instead. %relevant facts are directly available.
 Condition $p$ can easily be encoded as a linear constraint (see \cref{eq:exactly-one-constraint} for an example), 
 thus allowing the use of highly optimized mixed integer programming (MIP) solvers for computing optimal hitting sets. 
-\newtext{In the following, we formalize the hitting set problem and how it can be encoded into MIP.}
+\newtext{In the following, we explain how the hitting set problem can be encoded into MIP.}
 
 \paragraph{Hitting set problem} Given $\formula$, we define a MIP decision variable $d_c$ for every clause $c\in \formula$ and write  $\decisionvariables = \{d_c \ | \ c \in \formula\}$ for the set of all such variables. We assume a given collection of sets-to-hit $\setstohit$.
 The goal is to find a hitting set $\hittingset \subseteq D$ that hits every set-to-hit at least once (\cref{eq:set-to-hit}), that satisfies predicate $p$ (\cref{eq:constraint}) and minimizes $f(D)$ (\cref{eq:minimization}).
@@ -509,8 +509,6 @@ s.t. \quad & p(\hittingset) \label{eq:constraint}\\
 \end{align}
 
 In the case of \comus, every set-to-hit corresponds to a correction subset of $\formula$. % encoded in the MIP formulation with its corresponding decision variables. 
-
-
 
 \paragraph{OCUS algorithm} Our generic algorithm for computing OCUSs is depicted in \cref{alg:comus}. It combines the hitting set-based approach for MUSs of \citet{ignatiev2015smallest} with the use of a MIP solver for (weighted) hitting sets as proposed for maximum satisfiability by \citet{DBLP:conf/sat/DaviesB13}. 
 The key novelty is the ability to add structural constraints to the hitting set solver, without impacting the duality principles of \cref{prop:MCS-MUS-hittingset}, as we will show.
@@ -657,23 +655,36 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 
 \end{example}
 
-Observe in \cref{tab:example-explanation-generation-not-incremental} that the \comus algorithm requires a lot of intermediate steps in order to find an \comus. Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
+
 \newtext{
 	\paragraph{MIP incrementality} The \comus algorithm requires computing repeatedly computing hitting sets over an increasing collection of sets-to-hit. Initializing the MIP solver once and keeping it warm throughout the OCUS iterations allows it to reuse information from solver calls to solve the current hitting set problem. Similar to the results of \cite{DBLP:conf/sat/DaviesB13}, we notice an average speed-up between 3 to 5 times by keeping the solver warm compared to initializing a new MIP solver instance at every iteration.
-	
+
+	As can be seen in \cref{tab:example-explanation-generation-not-incremental}, \comus algorithm requires a lot of intermediate steps in order to find an \comus. 
+	Notice for instance that the computed correction subsets contain more than 1 literal to explain that are not relevant for explaining a literal. Taking step 2 as an example, if$\{\lnot x_1\}$ is a hitting set, its corresponding correction subset $ \{ c_1, c_2, c_3, c_4, x_2, \lnot x_3 \}$ contains $\{x_2, \lnot x_3\}$ which cannot be taken. 
+	Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
+
+	In the next section, we investigate how to speed-up \comus in the context of explanation generation.
 %	Preliminary experiments show that most of the time is spent searching for hitting sets over an increasingly large collection of sets-to hit.
-	In the following section, we investigate how to speed-up \comus in the context of explanation generation such as: 
-	Can we quickly figure out which literal will most likely (not) be a good candidate explanation step? 
+	
+	% such as 
+	%	Can we quickly figure out which literal will most likely (not) be a good candidate explanation step? 
 	 }
 
 \section{Multiple Optimal Unsatisfiable Subsets}\label{sec:OUS}
 
 Preliminary experiments have shown that when generating an explanation step with \comus, most of the time is spent searching for hitting sets. 
-The main reason for this is that the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially searching over an exponential number of literals and clauses. 
-In Table~\ref{tab:example-explanation-generation-not-incremental}) of \cref{ex:onestep-ocus}, we see that 
+The main reason for this is that the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially searching over an exponential number of literals and clauses (see Table~\ref{tab:example-explanation-generation-not-incremental} of \cref{ex:onestep-ocus}).
 
-%% So splitting the ocuss for each literal falls a bit out of the sky can we add a little more context ?
-In this section, we analyze if instead of working \comus-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal.
+\emilio{Splitting the ocuss for each literal falls a bit out of the sky here, I tried adding add a little more context.
+%\begin{enumerate}
+%		\item OCUS is generalized  over all literals
+%		\item similar to looping over the literals in MUS
+%		\item Explanation context, one literal at a time
+%		\item sets to hit contain irrelevant information over literals to explain , focus only on the information that is relevant for a given literal
+%\end{enumerate}
+}
+%\newtext{}
+In this section, we analyze if instead of working \comus-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal \newtext{with the hope of reducing the number and the size of the sets-to-hit to only include information relevant for that literal}.
 
 \subsection{Bounded OCUS}
 Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$, i.e., 

@@ -725,7 +725,7 @@ We can heuristically aid this by keeping track of $S^l_{best}$ across explanatio
 The case to avoid for \onestepomusbounded{} is that an \comus call for a literal takes many hitting set iterations, and returns an `expensive' \comus with lower-cost \comus{s} to be found for other literals. 
 
 Conceptually, one should only do hitting set iterations for the most promising literal, one that is most likely to produce an \comus with the lowest cost. 
-Indeed, this is what the original \comus algorithm with an 'exactly one of' constraint is built for: to choose freely among all possible hitting sets across the different literals in order to find the globally optimal next candidate \omus. 
+Indeed, this is what the original \comus algorithm with an `exactly one of' constraint is built for: to choose freely among all possible hitting sets across the different literals in order to find the globally optimal next candidate \omus. 
 
 For this special case, where the constraint $p$ is that exactly one of a set of literals must be chosen, we can manually decompose the problem to iteratively search for the best hitting set across the independent problems.
 In such an approach, we do not repeatedly call (bounded) \comus until optimality, but do one hitting-set iteration at a time; each time continuing with one hitting-set iteration of the most promising literal. 
@@ -763,9 +763,59 @@ This is because the queue ensures that this hitting set is the lowest scoring hi
 If, on the other hand, the hitting set is satisfiable, a number of correction subsets are extracted from the literal-specific unsatisfiable formula and added to its respective collection of sets to hit. 
 Finally, a new hitting set is computed and this information is pushed back into the priority queue. 
 
+\newtext{Up until now, we have investigated how to speed-up the generation of an explanation step by taking as much as advantage from the information computed by \comus. \cref{sec:efficient-ocus} dissects the main components of the \comus algorithm }
+
 \section{Efficiently computing optimal explanations}\label{sec:efficient-ocus}
 
 We now discuss optimizations applicable to the O(C)US algorithms that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
+
+\subsection{Computing correction subsets}\label{sec:computing-correction-subsets}
+
+The \corrsubsets procedure generates a set of correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
+However, calling \onestepo on our running example has shown that a naive `No grow'
+\begin{equation}\label{corrsubsets-no-grow}
+	\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \subsetT \}
+\end{equation}
+drastically increases the number of sets-to-hit required compared to using the model provided by the \sat solver. 
+This last observation suggests that the satisfiable subset $\m{S}$ should be efficiently grown into a larger satisfiable subset before computing the complement:
+\begin{equation}\label{corrsubsets-with-grow}
+	\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \grow(\subsetT, \formula) \}
+\end{equation}
+
+\subsubsection{Growing satisfiable subsets using domain-specific information.} \label{para:domainspecificgrow}
+
+The goal of the \grow phase of the \corrsubsets procedure (see \cref{corrsubsets-with-grow}) is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. 
+The effect of this is that the complement added to \setstohit will be smaller, and hence imposes stronger restrictions on the hitting sets.
+
+There are multiple conflicting criteria that determine what makes an effective `grow' procedure.
+On the one hand, we want our subformula to be as large as possible (which ultimately would correspond to computing a maximal satisfiable subformula), %to derive the most precise information we can get, 
+but on the other hand, we also want the procedure to be very efficient as it is called in every iteration. 
+
+For the case of explanations, we make the following observations: 
+\begin{itemize}
+	\item Our formula at hand (using the notation from the \onestepo algorithm) consists of three types of clauses: 
+	\begin{inparaenum}[(1)]
+		\item (translations of) the problem constraints (this is \formulac) 
+		\item literals representing the assignment found (this is $I$), and 
+		\item the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). 
+	\end{inparaenum}
+	\item $\formulac$ and $I$ together are satisfiable, with assignment $I_{end}$, and \emph{mutually supportive}, by this we mean that making more clauses in \formulac true, more literals in $I$ will automatically become true and vice versa. 
+	\item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
+\end{itemize}
+
+Since the restrictions on the third type of elements of $\formula$ are already strong, it makes sense %to use the \grow{($\m{S}$, $\F$)} procedure 
+to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient (partial) \maxsat~solver. 
+Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
+
+We evaluate different grow strategies as part of the $\corrsubsets(\m{S}, \formula)$ procedure in the experiments section including:
+\begin{description}
+	\item[\sat] extracts a satisfying model from the \sat solver to turn $\m{S}$ into a larger satisfiable subset. This grow will be considered the baseline for comparing the other grow-variants.
+	\item[\subsetmaxsat] extends the satisfiable subset computed by \sat by looping over every remaining clause $c \in \formula \setminus \m{S}$.  If $\m{S} \cup \{c\}$ is satisfiable, then clause $c$ is added to $\m{S}$ as well as any other clause from $c' \in \formula \setminus \m{S} \cup \{c\}$ that is satisfied in the model found by the SAT solver. 
+	\item[\domspecmaxsat] grows satisfiable subset $\m{S}$ with a \maxsat~solver using only the previously derived facts and the original constraints. % The \maxsat-based \grow uses only the previously derived facts and the original constraints.
+	\item[\maxsatfull] grows satisfiable subset $\m{S}$ with a \maxsat~solver using the full unsatisfiable formula $\mathcal{F}$.
+\end{description} 
+In the experiments, we omit the `No grow' procedure where the complement $\{\formula \setminus \m{S}\}$ is returned by \corrsubsets. Not growing produces large sets-to-hit as seen in \cref{tab:example-explanation-generation-not-incremental} of the running example.
+Additional experiments comparing the effectiveness of the naive `No grow' to growing with the \sat solver procedure shows that `No grow' leads to significantly longer \comus runtimes.
 
 \subsection{Incremental OCUS computation}\label{sec:ocusEx}
 Inherently, generating a sequence of explanations still requires many O(C)US calls. 
@@ -774,8 +824,7 @@ calls an \onestep variant repeatedly with a growing interpretation $I$ until $I=
 %
 All of these calls to \onestep, and hence O(C)US, are done with very similar input (the set of constraints does not change, and the $I$ slowly grows between two calls). For this reason, it makes sense that information computed during one of the earlier stages can be useful in later stages as well. 
 
-The main question is, suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$; how can we make use as much as possible of the data computations of the first call to speed-up the second call? The answer is surprisingly elegant. The most important data \comus keeps track of is the collection \setstohit of correction subsets that need to be hit.
-%\tias{Add two apragraphs: one satisfiable subset-based, one MIP-specific}
+The main question is, suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$; \emph{how can we make use as much as possible of the data computations of the first call to speed-up the second call?} The answer is surprisingly elegant. The most important data \comus keeps track of is the collection \setstohit of correction subsets that need to be hit.
 
 \subsubsection{Bootstrapping $\setstohit$ with satisfiable subsets}\label{sec:bootstrapping-sat-subsets} This collection in itself is not useful for transfer between two calls, since -- unless we assume that $\formula_2$ is a subset of $\formula_1$ -- there is no reason to assume that a set in $\setstohit_1$ is also a correction subset of $\formula_2$ in the second call. 
 However, each set $H$ in $\setstohit$ is the complement (with respect to the formula at hand) of a \emph{satisfiable subset} of constraints, and each subset of a satisfiable subset is satisfiable as well.
@@ -919,54 +968,6 @@ In this case, subset $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\l
 
 In the next section, we first analyze different possible procedures for computing a single correction subset. Next, in section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-disjoint} to enumerate multiple correction subsets that are $p$-disjoint of each other during the \corrsubsets procedure.
 
-\subsection{Computing correction subsets}\label{sec:computing-correction-subsets}
-
-The \corrsubsets procedure generates a set of correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
-However, calling \onestepo on our running example has shown that a naive `No grow'
-\begin{equation}\label{corrsubsets-no-grow}
-	\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \subsetT \}
-\end{equation}
-drastically increases the number of sets-to-hit required compared to using the model provided by the \sat solver. 
-This last observation suggests that the satisfiable subset $\m{S}$ should be efficiently grown into a larger satisfiable subset before computing the complement:
-\begin{equation}\label{corrsubsets-with-grow}
-	\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \grow(\subsetT, \formula) \}
-\end{equation}
-
-\subsubsection{Growing satisfiable subsets using domain-specific information.} \label{para:domainspecificgrow}
-
-The goal of the \grow phase of the \corrsubsets procedure (see \cref{corrsubsets-with-grow}) is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. 
-The effect of this is that the complement added to \setstohit will be smaller, and hence imposes stronger restrictions on the hitting sets.
-
-There are multiple conflicting criteria that determine what makes an effective `grow' procedure.
-On the one hand, we want our subformula to be as large as possible (which ultimately would correspond to computing a maximal satisfiable subformula), %to derive the most precise information we can get, 
-but on the other hand, we also want the procedure to be very efficient as it is called in every iteration. 
-
-For the case of explanations, we make the following observations: 
-\begin{itemize}
-	\item Our formula at hand (using the notation from the \onestepo algorithm) consists of three types of clauses: 
-	\begin{inparaenum}[(1)]
-		\item (translations of) the problem constraints (this is \formulac) 
-		\item literals representing the assignment found (this is $I$), and 
-		\item the negations of literals not-yet-derived (this is $\overline{\Iend\setminus I}$). 
-	\end{inparaenum}
-	\item $\formulac$ and $I$ together are satisfiable, with assignment $I_{end}$, and \emph{mutually supportive}, by this we mean that making more clauses in \formulac true, more literals in $I$ will automatically become true and vice versa. 
-	\item The constraint $p$ enforces that each hitting set will contain \textbf{exactly} one literal of  $\overline{\Iend\setminus I}$
-\end{itemize}
-
-Since the restrictions on the third type of elements of $\formula$ are already strong, it makes sense %to use the \grow{($\m{S}$, $\F$)} procedure 
-to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient (partial) \maxsat~solver. 
-Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
-
-We evaluate different grow strategies as part of the $\corrsubsets(\m{S}, \formula)$ procedure in the experiments section including:
-\begin{description}
-	\item[\sat] extracts a satisfying model from the \sat solver to turn $\m{S}$ into a larger satisfiable subset. This grow will be considered the baseline for comparing the other grow-variants.
-	\item[\subsetmaxsat] extends the satisfiable subset computed by \sat by looping over every remaining clause $c \in \formula \setminus \m{S}$.  If $\m{S} \cup \{c\}$ is satisfiable, then clause $c$ is added to $\m{S}$ as well as any other clause from $c' \in \formula \setminus \m{S} \cup \{c\}$ that is satisfied in the model found by the SAT solver. 
-	\item[\domspecmaxsat] grows satisfiable subset $\m{S}$ with a \maxsat~solver using only the previously derived facts and the original constraints. % The \maxsat-based \grow uses only the previously derived facts and the original constraints.
-	\item[\maxsatfull] grows satisfiable subset $\m{S}$ with a \maxsat~solver using the full unsatisfiable formula $\mathcal{F}$.
-\end{description} 
-In the experiments, we omit the `No grow' procedure where the complement $\{\formula \setminus \m{S}\}$ is returned by \corrsubsets. Not growing produces large sets-to-hit as seen in \cref{tab:example-explanation-generation-not-incremental} of the running example.
-Additional experiments comparing the effectiveness of the naive `No grow' to growing with the \sat solver procedure shows that `No grow' leads to significantly longer \comus runtimes.
-
 \subsubsection{Correction subsets enumeration}\label{sec:correction_subset_enum}
 
 Our \comus algorithm repeatedly alternates between computing hitting sets and correction subsets. 
@@ -996,6 +997,8 @@ to the collection of disjoint MCSes $\m{K}$ and to $\m{S}$, ensuring that the co
 
 For simple constraints $p$, \cref{alg:corr-subsets-grow-with-sat} is directly applicable and will be able to compute \emph{disjoint} correction subsets.
 However, for more complicated $p$ constraints, this easily degrades into computing only a single correction subset. 
+
+
 
 \subsubsection{Correction subsets enumeration with incremental MIP} If \cref{alg:corr-subsets-grow-with-sat} is directly applied to the MIP incremental \comus variant that considers the whole formula $\formulac\land \textbf{\Iend} \land \overline{(\Iend\setminus I)}$, both the literal-to-explain and its negation will be present at line~\ref{alg:corr-subsets-grow-with-sat:mapping} leading to UNSAT. In a given explanation step, only the base constraints $\formulac$, the current interpretation $I$, and the literals of $\overline{(\Iend\setminus I)}$ can be hit by the hitting set solver.  
 Therefore, we project subset $\m{S'}$ onto the base constraints, the current interpretation, and the negated literals to explain. This extra step is executed right after line~\ref{alg:corr-subsets-grow-with-sat:mapping} of \cref{alg:corr-subsets-grow-with-sat}:
@@ -1027,6 +1030,8 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 \end{example}
 
 \cref{ex:correction-subset-enum} depicts the effectiveness of enumerating multiple correction subsets that are $p$-disjoint by projecting the correction subset onto the unsatisfiable formula for the current interpretation $(\formulac\cup I \cup \overline{\Iend \setminus I})$. In the rest of the paper, we consider correction subset enumeration with a \sat-based grow as the baseline approach. We refer to it as \emph{Multi-\sat}.
+
+
 
 \section{Experiments}\label{sec:experiments}
 
@@ -1082,7 +1087,7 @@ We see that the difference in quality is striking in many cases, with the MUS-ba
 
 \subsection{Information re-use}\label{sec:experiments:incrementality}
 
-To answer \textbf{\ref{rq:information-reuse}}, we compare the effect of incrementality in the search for explanations. 
+To answer \textbf{\ref{rq:information-reuse}}, we compare the effect of incrementality when generating a sequence of explanations. 
 Next to \begin{inparaenum}[(1)]
 	\item \textbf{\comus}, we also include
 	\item the \emph{bounded} \comus (\ousb) algorithm, where we call the \comus algorithm for every literal in every step, but we reuse information by giving it the current best bound $f(S_{best})$ and iterating over the literals that performed best in the previous call first; and

@@ -763,11 +763,46 @@ This is because the queue ensures that this hitting set is the lowest scoring hi
 If, on the other hand, the hitting set is satisfiable, a number of correction subsets are extracted from the literal-specific unsatisfiable formula and added to its respective collection of sets to hit. 
 Finally, a new hitting set is computed and this information is pushed back into the priority queue. 
 
-\newtext{Up until now, we have investigated how to speed-up the generation of an explanation step by taking as much as advantage from the information computed by \comus. \cref{sec:efficient-ocus} dissects the main components of the \comus algorithm }
-
+%\newtext{Up until now, we have investigated how to speed-up the generation of an explanation step by taking as much as advantage from the information computed by \comus. \cref{sec:efficient-ocus} dissects the main components of the \comus algorithm }
+\clearpage
 \section{Efficiently computing optimal explanations}\label{sec:efficient-ocus}
 
 We now discuss optimizations applicable to the O(C)US algorithms that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
+
+
+
+\subsection{Incremental OCUS computation}\label{sec:ocusEx}
+Inherently, generating a sequence of explanations still requires many O(C)US calls. 
+Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
+calls an \onestep variant repeatedly with a growing interpretation $I$ until $I=\Iend$.
+%
+All of these calls to \onestep, and hence O(C)US, are done with very similar input (the set of constraints does not change, and the $I$ slowly grows between two calls). For this reason, it makes sense that information computed during one of the earlier stages can be useful in later stages as well. 
+
+The main question is, suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$; \emph{how can we make use as much as possible of the data computations of the first call to speed-up the second call?} The answer is surprisingly elegant. The most important data \comus keeps track of is the collection \setstohit of correction subsets that need to be hit.
+
+\subsubsection{Bootstrapping $\setstohit$ with satisfiable subsets}\label{sec:bootstrapping-sat-subsets} This collection in itself is not useful for transfer between two calls, since -- unless we assume that $\formula_2$ is a subset of $\formula_1$ -- there is no reason to assume that a set in $\setstohit_1$ is also a correction subset of $\formula_2$ in the second call. 
+However, each set $H$ in $\setstohit$ is the complement (with respect to the formula at hand) of a \emph{satisfiable subset} of constraints, and each subset of a satisfiable subset is satisfiable as well.
+Thus, instead of storing $\setstohit$, we can keep track of a set \satsets of \emph{satisfiable subsets}; as the intermediate results of a call to \corrsubsets.
+
+When a second call to \comus is performed, we can then initialize $\setstohit$ as the complement of each of these satisfiable subsets with respect to $\formula_2$, i.e.,
+ \begin{equation}
+ \setstohit\gets \{\formula_2\setminus \m{S}\mid \m{S}\in \satsets\}.
+ 	\end{equation}
+The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. 
+
+\subsubsection{Incrementality with MIP}\label{sec:mip-incrementality} 
+
+For hitting set solvers that natively implement incrementality, such as modern Mixed Integer Programming (MIP) solvers, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. 
+To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, we need to ensure that the hitting set solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$. 
+%% talk about the general case incremental hitting set solver 
+For incremental hitting set solvers, this means updating the constraint $p$ at every explanation step to include (1) only literals from interpretation $I$ at the current explanation step, and (2) the `exactly-one' constraint for explaining one literal at a time.
+
+Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:background}), and we know the entire formula from which elements must be chosen,% have this upper bound on the set of formulas to be used, 
+we initialize the MIP solver once with all relevant decision variables of $\m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$. 
+
+Bear in mind that retracting a constraint $p$ to replace it with an updated one (in the next explanation call) is non-trivial for MIP solvers. 
+Therefore, we assign an infinite weight in the cost function to all literals of $\Iend\setminus I$ and update their weights as soon as they have been derived according to the given cost function.
+In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 
 \subsection{Computing correction subsets}\label{sec:computing-correction-subsets}
 
@@ -777,7 +812,7 @@ However, calling \onestepo on our running example has shown that a naive `No gro
 	\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \subsetT \}
 \end{equation}
 drastically increases the number of sets-to-hit required compared to using the model provided by the \sat solver. 
-This last observation suggests that the satisfiable subset $\m{S}$ should be efficiently grown into a larger satisfiable subset before computing the complement:
+This last observation suggests that the satisfiable subset $\m{S}$ should be \emph{efficiently grown} into a \emph{larger satisfiable subset} before computing the complement:
 \begin{equation}\label{corrsubsets-with-grow}
 	\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \grow(\subsetT, \formula) \}
 \end{equation}
@@ -817,41 +852,8 @@ We evaluate different grow strategies as part of the $\corrsubsets(\m{S}, \formu
 In the experiments, we omit the `No grow' procedure where the complement $\{\formula \setminus \m{S}\}$ is returned by \corrsubsets. Not growing produces large sets-to-hit as seen in \cref{tab:example-explanation-generation-not-incremental} of the running example.
 Additional experiments comparing the effectiveness of the naive `No grow' to growing with the \sat solver procedure shows that `No grow' leads to significantly longer \comus runtimes.
 
-\subsection{Incremental OCUS computation}\label{sec:ocusEx}
-Inherently, generating a sequence of explanations still requires many O(C)US calls. 
-Indeed, a greedy sequence construction algorithm %high-level algorithm, not explicitly portrayed in the current paper, 
-calls an \onestep variant repeatedly with a growing interpretation $I$ until $I=\Iend$.
-%
-All of these calls to \onestep, and hence O(C)US, are done with very similar input (the set of constraints does not change, and the $I$ slowly grows between two calls). For this reason, it makes sense that information computed during one of the earlier stages can be useful in later stages as well. 
-
-The main question is, suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$; \emph{how can we make use as much as possible of the data computations of the first call to speed-up the second call?} The answer is surprisingly elegant. The most important data \comus keeps track of is the collection \setstohit of correction subsets that need to be hit.
-
-\subsubsection{Bootstrapping $\setstohit$ with satisfiable subsets}\label{sec:bootstrapping-sat-subsets} This collection in itself is not useful for transfer between two calls, since -- unless we assume that $\formula_2$ is a subset of $\formula_1$ -- there is no reason to assume that a set in $\setstohit_1$ is also a correction subset of $\formula_2$ in the second call. 
-However, each set $H$ in $\setstohit$ is the complement (with respect to the formula at hand) of a \emph{satisfiable subset} of constraints, and each subset of a satisfiable subset is satisfiable as well.
-Thus, instead of storing $\setstohit$, we can keep track of a set \satsets of \emph{satisfiable subsets}; as the intermediate results of a call to \corrsubsets.
-
-When a second call to \comus is performed, we can then initialize $\setstohit$ as the complement of each of these satisfiable subsets with respect to $\formula_2$, i.e.,
- \begin{equation}
- \setstohit\gets \{\formula_2\setminus \m{S}\mid \m{S}\in \satsets\}.
- 	\end{equation}
-The effect of this is that we \textit{bootstrap} the hitting set solver with an initial set $\setstohit$. 
-
-\subsubsection{Incrementality with MIP}\label{sec:mip-incrementality} 
-
-For hitting set solvers that natively implement incrementality, such as modern Mixed Integer Programming (MIP) solvers, we can generalize this idea further: we know that all calls to $\comus(\formula,f,p)$ will be cast with $\formula \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, where $I_0$ is the start interpretation. 
-To compute the conditional hitting set for a specific $\formulac\cup I\cup \overline{\Iend\setminus I} \subseteq \m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$, we need to ensure that the hitting set solver only uses literals in $\formulac\cup I\cup \overline{\Iend\setminus I}$. 
-%% talk about the general case incremental hitting set solver 
-For incremental hitting set solvers, this means updating the constraint $p$ at every explanation step to include (1) only literals from interpretation $I$ at the current explanation step, and (2) the `exactly-one' constraint for explaining one literal at a time.
-
-Since our implementation uses a MIP solver for computing hitting sets (see Section~\ref{sec:background}), and we know the entire formula from which elements must be chosen,% have this upper bound on the set of formulas to be used, 
-we initialize the MIP solver once with all relevant decision variables of $\m{C}\cup \Iend \cup \overline{\Iend \setminus I_0}$. 
-
-Bear in mind that retracting a constraint $p$ to replace it with an updated one (in the next explanation call) is non-trivial for MIP solvers. 
-Therefore, we assign an infinite weight in the cost function to all literals of $\Iend\setminus I$ and update their weights as soon as they have been derived according to the given cost function.
-In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
-
 \subsubsection{Efficiently generating an explanation sequence with Incremental OCUS} \label{sec:ocus-incr}
-In the following example, we illustrate the efficiency of incrementality with MIP to speed up generating an \comus-based explanation sequence.
+In the following example, we illustrate the efficiency of incrementality with MIP together with the \sat grow to speed up generating an \comus-based explanation sequence.
 
 \begin{example}[\textit{continued}]\label{ex:ocus-incr:expl-seq} 
 	Consider the previously introduced clauses of our running example $\formularunning$: 
@@ -956,6 +958,7 @@ Finally, for the last explanation step, we adapt the weights to reflect the curr
 	\caption{\textit{Example (continued)}. Explanation step 3 ($\mathbf{c_4 \wedge x_3 \implies \lnot x_2}$) of the explanation sequence generated with \onestepo \emph{incremental}. }
 	\label{tab:example-explanation-generation:incr:step3}
 \end{table}
+
 Observe set-to-hit $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ in the collection of previously compute sets-to-hit of \cref{tab:example-explanation-generation:incr:step3}. Given the current interpretation and the literal $\lnot x_2$ to explain, only $c_4$ can \underline{and} has to be taken. 
 The phenomenon of a set being disjoint from another with respect to $p$ is what we call in \cref{prop:p-disjoint} $p$-disjointness.
 In this case, subset $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ is $p$-disjoint from the other sets-to-hit for the hitting set solver. Therefore, it poses a stronger restriction on the sets-to-hit. 
@@ -966,14 +969,18 @@ In this case, subset $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\l
 	Two sets $S_1$ and $S_2$ are $p$-disjoint if every set that hits both $S_1$ and $S_2$ and satisfies $p$ contains $s_1\in S_1$ and $s_2\in S_2$ with $s_1 \neq s_2$.
 \end{definition}
 
-In the next section, we first analyze different possible procedures for computing a single correction subset. Next, in section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-disjoint} to enumerate multiple correction subsets that are $p$-disjoint of each other during the \corrsubsets procedure.
+\cref{ex:ocus-incr:expl-seq} showed that growing the satisfiable subset $\m{S}$ is effective to reduce the size and the number of sets-to-hit. 
+Next, in section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-disjoint} to enumerate multiple correction subsets that are $p$-disjoint of each other during the \corrsubsets procedure.
 
 \subsubsection{Correction subsets enumeration}\label{sec:correction_subset_enum}
 
 Our \comus algorithm repeatedly alternates between computing hitting sets and correction subsets. 
 The increasingly large collection of sets-to-hit makes finding optimal hitting sets much more expensive compared to the \corrsubsets procedure, which solely relies on finding correction subsets from a given satisfiable subset.
 Additionally, in the last explanation step of \cref{ex:ocus-incr:expl-seq}, we saw that one of the sets-to-hit ($\{c_4, \cancel{\lnot x_1} ,\cancel{\lnot x_2} , \cancel{\lnot x_3}\}$) was $p$-disjoint to the others, imposing a strong restriction on the hitting set solver. 
-The question is: can we cheaply find \textit{multiple}, ideally \emph{$p$-disjoint}, correction subsets and thereby add multiple sets-to-hit in one go?
+The question is: 
+\begin{quote}
+Can we cheaply find \textit{multiple}, ideally \emph{$p$-disjoint}, correction subsets and thereby add multiple sets-to-hit in one go?
+\end{quote}
 
 Inspired by \citet{marques2013computing}, we depict a \corrsubsets procedure
 in \cref{alg:corr-subsets-grow-with-sat} that computes a collection of correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 
@@ -1031,7 +1038,7 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 
 \cref{ex:correction-subset-enum} depicts the effectiveness of enumerating multiple correction subsets that are $p$-disjoint by projecting the correction subset onto the unsatisfiable formula for the current interpretation $(\formulac\cup I \cup \overline{\Iend \setminus I})$. In the rest of the paper, we consider correction subset enumeration with a \sat-based grow as the baseline approach. We refer to it as \emph{Multi-\sat}.
 
-
+\clearpage
 
 \section{Experiments}\label{sec:experiments}
 

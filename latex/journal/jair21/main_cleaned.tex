@@ -764,12 +764,10 @@ If, on the other hand, the hitting set is satisfiable, a number of correction su
 Finally, a new hitting set is computed and this information is pushed back into the priority queue. 
 
 %\newtext{Up until now, we have investigated how to speed-up the generation of an explanation step by taking as much as advantage from the information computed by \comus. \cref{sec:efficient-ocus} dissects the main components of the \comus algorithm }
-\clearpage
+%\clearpage
 \section{Efficiently computing optimal explanations}\label{sec:efficient-ocus}
 
 We now discuss optimizations applicable to the O(C)US algorithms that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
-
-
 
 \subsection{Incremental OCUS computation}\label{sec:ocusEx}
 Inherently, generating a sequence of explanations still requires many O(C)US calls. 
@@ -853,12 +851,12 @@ In the experiments, we omit the `No grow' procedure where the complement $\{\for
 Additional experiments comparing the effectiveness of the naive `No grow' to growing with the \sat solver procedure shows that `No grow' leads to significantly longer \comus runtimes.
 
 \subsubsection{Efficiently generating an explanation sequence with Incremental OCUS} \label{sec:ocus-incr}
-In the following example, we illustrate the efficiency of incrementality with MIP together with the \sat grow to speed up generating an \comus-based explanation sequence.
+In the following example, we illustrate the efficiency of \textit{incrementality with MIP} together with the \emph{\sat grow} to speed up generating an \comus-based explanation sequence.
 
 \begin{example}[\textit{continued}]\label{ex:ocus-incr:expl-seq} 
 	Consider the previously introduced clauses of our running example $\formularunning$: 
 	 \[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
-	To define the input for the MIP-incremental \comus with initial interpretation $\m{I}=\emptyset$, we extend $\formularunning$ with the new clauses representing the final interpretation $\Iend =  \{ \{ x_1\},\  \{\lnot x_2\},\ \{ x_3\}\}$ and the complement thereof $\overline{\Iend \setminus \m{I}} =  \{ \{\lnot x_1\},\    \{ x_2\}, \   \{\lnot x_3\}\}$.
+	To define the input for the MIP-incremental \comus with initial interpretation $\m{I}=\emptyset$, we extend~ $\formularunning$ with the new clauses representing the final interpretation $\Iend =  \{ \{ x_1\},\  \{\lnot x_2\},\ \{ x_3\}\}$ and the complement thereof $\overline{\Iend \setminus \m{I}} =  \{ \{\lnot x_1\},\    \{ x_2\}, \   \{\lnot x_3\}\}$.
 	For the MIP-incremental variant of OCUS, $p$ remains the same. The cost function $f_I $ is defined as a weighted sum over the following weights:
 	\begin{align*}
 	\text{\textbf{\emph{Clause weights:}}} & \ w_1 = 60 \  \qquad w_2=60  \qquad  \ \ \ w_3=100 \qquad w_4=100 \\
@@ -959,17 +957,17 @@ Finally, for the last explanation step, we adapt the weights to reflect the curr
 	\label{tab:example-explanation-generation:incr:step3}
 \end{table}
 
-Observe set-to-hit $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ in the collection of previously compute sets-to-hit of \cref{tab:example-explanation-generation:incr:step3}. Given the current interpretation and the literal $\lnot x_2$ to explain, only $c_4$ can \underline{and} has to be taken. 
+\begin{observation}\textbf{(Disjoint Correction Subsets)} Observe set-to-hit $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ in the collection of previously compute sets-to-hit of \cref{tab:example-explanation-generation:incr:step3}. Given the current interpretation and the literal $\lnot x_2$ to explain, only $c_4$ can \underline{and} has to be taken. 
 The phenomenon of a set being disjoint from another with respect to $p$ is what we call in \cref{prop:p-disjoint} $p$-disjointness.
 In this case, subset $\{ c_4, \cancel{\lnot x_1}, \cancel{\lnot x_2}, \cancel{\lnot x_3}\}$ is $p$-disjoint from the other sets-to-hit for the hitting set solver. Therefore, it poses a stronger restriction on the sets-to-hit. 
-
+\end{observation}
 \end{example}
 
 \begin{definition}\label{prop:p-disjoint}
 	Two sets $S_1$ and $S_2$ are $p$-disjoint if every set that hits both $S_1$ and $S_2$ and satisfies $p$ contains $s_1\in S_1$ and $s_2\in S_2$ with $s_1 \neq s_2$.
 \end{definition}
 
-\cref{ex:ocus-incr:expl-seq} showed that growing the satisfiable subset $\m{S}$ is effective to reduce the size and the number of sets-to-hit. 
+\cref{ex:ocus-incr:expl-seq} shows that \emph{incrementality with MIP} and \emph{growing the satisfiable subset} $\m{S}$ are effective at reducing the size and the number of sets-to-hit when computing a sequence of explanations using \onestepo. 
 Next, in section \ref{sec:correction_subset_enum}, we take advantage of \cref{prop:p-disjoint} to enumerate multiple correction subsets that are $p$-disjoint of each other during the \corrsubsets procedure.
 
 \subsubsection{Correction subsets enumeration}\label{sec:correction_subset_enum}
@@ -982,7 +980,7 @@ The question is:
 Can we cheaply find \textit{multiple}, ideally \emph{$p$-disjoint}, correction subsets and thereby add multiple sets-to-hit in one go?
 \end{quote}
 
-Inspired by \citet{marques2013computing}, we depict a \corrsubsets procedure
+Inspired by \citet{marques2013computing}, we depict a \texttt{CorrSubsets} procedure
 in \cref{alg:corr-subsets-grow-with-sat} that computes a collection of correction subsets $\m{K}$ starting from a given subset of constraints $\m{S}$ (either the empty set or a computed hitting set). 
 The \corrsubsets procedure will repeatedly compute a satisfiable subset $\m{S}' \supseteq \m{S}$, and add its complement 
 to the collection of disjoint MCSes $\m{K}$ and to $\m{S}$, ensuring that the constraints in the correction subset cannot be present in the next correction subset (disjoint), until no more satisfiable subsets can be found. 
@@ -1036,9 +1034,10 @@ By incorporating \emph{explanation-specific} information, we are able to enumera
 	By adding only the clauses from $\{\formula \setminus \m{S}\}$ projected onto $ (\formulac\cup I \cup \overline{\Iend \setminus I})$, i.e.~$c_3$ and $x_2$, we are able to enumerate \textbf{multiple} correction subsets that are $p$-disjoint for the hitting set solver. %\tias{in the eye? reword}
 \end{example}
 
-\cref{ex:correction-subset-enum} depicts the effectiveness of enumerating multiple correction subsets that are $p$-disjoint by projecting the correction subset onto the unsatisfiable formula for the current interpretation $(\formulac\cup I \cup \overline{\Iend \setminus I})$. In the rest of the paper, we consider correction subset enumeration with a \sat-based grow as the baseline approach. We refer to it as \emph{Multi-\sat}.
+\cref{ex:correction-subset-enum} depicts the effectiveness of enumerating multiple correction subsets that are $p$-disjoint by projecting the correction subset onto the unsatisfiable formula for the current interpretation $(\formulac\cup I \cup \overline{\Iend \setminus I})$. 
+In the rest of the paper, we consider correction subset enumeration with a \sat-based grow as the baseline approach. We refer to it as \emph{Multi-\sat}.
 
-\clearpage
+%\clearpage
 
 \section{Experiments}\label{sec:experiments}
 
@@ -1103,7 +1102,9 @@ Next to \begin{inparaenum}[(1)]
 
 \subsubsection{Incremental versus non-incremental explanation generation}
 
-Preliminary experiments have shown that incrementality by keeping track of the hitting sets using the MIP solver significantly outperforms bootstrapping satisfiable subsets. Therefore, in the experiments, we only show results on incrementality using MIP solvers.%omit results where incrementality is implemented by bootstrapping $\m{H}$ with satisfiable subsets.
+Preliminary experiments have shown that incrementality by keeping track of the hitting sets using the MIP solver significantly outperforms bootstrapping satisfiable subsets. 
+% \newtext{Not only throughout the explanation calls, but }
+Therefore, in the experiments, we only show results on incrementality using MIP solvers.%omit results where incrementality is implemented by bootstrapping $\m{H}$ with satisfiable subsets.
 
 For \comus, incrementality (\emph{+Incr}) is achieved by reusing the same MIP hitting set solver throughout the explanation calls, as explained in \cref{sec:ocusEx}. 
 Methods \ousb and \ousbiter use a separate hitting set solver for every literal to explain. Each hitting set solver can similarly be made incremental (with respect to its own literal) across the explanation calls (\emph{+Incr.}), or not.% Once the literal is explained, the hitting set solver is discarded.
@@ -1306,28 +1307,41 @@ In the case of \emph{\comusbound}, the time to the first explanation reflects ho
 For an interactive context where the user asks for an immediate explanation, \emph{\comussplit} will be the fastest at computing the explanations. 
 If the user is exploring the sequence of explanations and repeatedly asks for additional explanations, \ousbiterincr will be able to capitalize on incrementality to bring the average time close to real-time.
 
+\newtext{\paragraph{Timedout instances} Instances that timed out before the full explanation sequence was generated, had on average more literals to explain such as binairo, garam, the killer sudoku, kakuro, skyscrapers, x-sums. \cref{tab:timed-out-instances-indiv-explanations-all} provides some further context on the timed out instanced: 
+	\begin{itemize}
+		\item 	\emph{\#no expl} represents the ratio of the number instances where no explanation was found before the timeout over the number of timed out instances, 
+		\item 	\emph{$\overline{t_1}$} represents the time to first explanation, 
+		\item 	$\mathbf{\overline{ \raisebox{0pt}[1.2\height]{{\text{\small \%}} expl}}}$ is the average percentage of literals explained before the instance timed out, 
+		\item 	and the quantiles $q_{xx}$ of the percentages of literals explained.
+	\end{itemize}
 
 
-\newtext{\paragraph{Instance timeout} Instances that timed out before the full explanation sequence was generated, had on average more literals to explain. The different configurations were }
 
-\newtext{
+
+Adding incrementality to all \comus configurations has a high impact on the time to a first explanation, and it leads to more instances with no explanations found. However, incrementality also leads to a higher percentage of the literals explained for the instances that did not time out before a first explanation. 
+
 \begin{table}[!h]
 	\centering
 	\begin{adjustbox}{max width=\textwidth}
-		\begin{tabular}{r|c}
-			\textbf{config}          &  \\ \midrule
-						\comus          &             \\
-			\comusbound     &             \\
-			\ousbiter       &            \\
-			\comusincr     &             \\
-			\ousbincr       &             \\
-			\ousbiterincr   &             \\
+		\begin{tabular}{r|c|c|c|ccccc}
+			\toprule
+			\textbf{config} & $\#$no expl &        $\mathbf{ \overline{ t_{1}} }$ &      $\mathbf{\overline{ \raisebox{0pt}[1.2\height]{{\text{\small \%}} expl}}}$ &     $q_{25} [\%]$  &    $q_{50}[\%]$ &    $q_{75}[\%]$ &        $ q_{98}[\%]$ &  $q_{100}[\%]$ \\
+			\midrule
+				\comus &   3 / 112 & $322 \pm 820$ & 44.57 & 34.64 & 51.03 & 60.31 &  78.24 & 86.01 \\
+				\comusbound &   32 / 92 & $454 \pm 516$ & 35.21 &  0.00 & 44.72 & 58.47 & 71.88 & 80.38 \\
+				\ousbiter &   15 / 92 &   $88 \pm 23$ & 43.43 & 36.31 & 48.97 & 58.47 &  72.67 & 80.11 \\\hline
+				\comusincr &   4 / 158 & $265 \pm 800$ & 52.94 & 47.00 & 58.85 & 67.22 & 84.59 & 93.28 \\
+		          \ousbincr &   44 / 94 & $690 \pm 570$ & 31.98 &  0.00 & 37.86 & 62.14 & 79.16 & 86.56 \\
+				\ousbiterincr &   15 / 92 & $653 \pm 484$ & 49.45 & 44.86 & 56.59 & 67.08 &  79.24 & 84.50 \\
+			\bottomrule
 		\end{tabular}
 	\end{adjustbox}
-	\caption{\textbf{Timedout instances:} .}
-	\label{tab:indiv-explanations-all}
+	\caption{\textbf{Timed-out instances:} Decomposition of runtime for individual explanations into time to generate the first explanation step ($t_1$), the average time to produce an additional explanation step $\overline{t_{expl}}$ and the quantiles of the completion percentage.}
+	\label{tab:timed-out-instances-indiv-explanations-all}
 \end{table}
-} 
+
+
+}
 
 \section{Conclusion and future work}
 
@@ -1354,8 +1368,12 @@ Finally, for interactive settings such as interactive tutoring systems, we are a
 
 \acks{This research received partial funding from the Flemish Government (AI Research Program); the FWO Flanders project G070521N; and funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (Grant No. 101002802, CHAT-Opt).}
 
+\bibliography{krrlib,ref}
+\bibliographystyle{theapa}
+
 \appendix
-\section{}\label{apx:puzzledata}
+\newpage
+\section{Puzzle Data}\label{apx:puzzledata}
 
 \begin{table}[!h]\centering
 \begin{tabular}{llrrr}
@@ -1386,10 +1404,9 @@ Finally, for interactive settings such as interactive tutoring systems, we are a
 	& x-sums &    1 &         109717 &                   729 \\
 	\bottomrule
 \end{tabular}
-n{Characteristics of puzzle instances}
+\caption{Characteristics of puzzle instances}
 \label{tab:puzzle-composition-family}
 \end{table}
-\bibliography{krrlib,ref}
-\bibliographystyle{theapa}
+
 
 \end{document}

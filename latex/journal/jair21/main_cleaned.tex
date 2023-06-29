@@ -412,7 +412,7 @@ Consider the following four clauses as our running example:
 
 \newtext{\subsection{Concluding Remarks}\label{sec:motivation:conluding-remarks}}
 
-Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS\newtext{, for instance one that is small or evaluates to a small cost}. 
+Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS\newtext{, for instance, one that evaluates to a small cost}. 
 Furthermore, MUS extraction algorithms do not provide any guarantee of $\subseteq$-minimality or optimality with respect to a given cost function $f$. Therefore, in \citet{bogaerts2021framework}, we handle the absence of $\subseteq$-minimality and optimality guarantees by heuristically considering increasingly larger subsets of the unsatisfiable formula ($\formulac \land I \land \neg l$).
 
 Hence, there is a need for algorithmic improvements to make it more practical.
@@ -657,13 +657,14 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 
 
 \newtext{
-	\paragraph{MIP incrementality} The \comus algorithm requires computing repeatedly computing hitting sets over an increasing collection of sets-to-hit. Initializing the MIP solver once and keeping it warm throughout the OCUS iterations allows it to reuse information from solver calls to solve the current hitting set problem. Similar to the results of \cite{DBLP:conf/sat/DaviesB13}, we notice an average speed-up between 3 to 5 times by keeping the solver warm compared to initializing a new MIP solver instance at every iteration.
+	\paragraph{MIP incrementality} The \comus algorithm requires repeatedly computing hitting sets over an increasing collection of sets-to-hit. Initializing the MIP solver once and keeping it warm throughout the OCUS iterations allows it to reuse information from previous solver calls to solve the current hitting set problem. Similar to the results of \cite{DBLP:conf/sat/DaviesB13}, we notice a speed-up between 3 to 5 times by keeping the solver warm\footnote{We use the same setup as in the experiment section: a single core on a 10-core INTEL Xeon Gold 61482 (Skylake), a memory-limit of 8GB. The code is written on top of PySAT 0.1.7.dev1 \cite{pysat}, for MIP calls, we used Gurobi 9.1.2, and for the SAT calls MiniSat 2.2.} compared to initializing a new MIP solver instance at every iteration.
 
-	As can be seen in \cref{tab:example-explanation-generation-not-incremental}, \comus algorithm requires a lot of intermediate steps in order to find an \comus. 
-	Notice for instance that the computed correction subsets contain more than 1 literal to explain that are not relevant for explaining a literal. Taking step 2 as an example, if$\{\lnot x_1\}$ is a hitting set, its corresponding correction subset $ \{ c_1, c_2, c_3, c_4, x_2, \lnot x_3 \}$ contains $\{x_2, \lnot x_3\}$ which cannot be taken. 
+	As can be seen in \cref{tab:example-explanation-generation-not-incremental}, the \comus algorithm requires a lot of intermediate steps in order to find an \comus. 
+	Notice for instance that the computed correction subsets contain more than 1 literal to explain that are not relevant for explaining the literal in the current hitting set. 
+	Taking step 2 as an example, if$\{\lnot x_1\}$ is a hitting set, its corresponding correction subset $ \{ c_1, c_2, c_3, c_4, x_2, \lnot x_3 \}$ contains $\{x_2, \lnot x_3\}$ which cannot be taken. 
 	Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
 
-	In the next section, we investigate how to speed-up \comus in the context of explanation generation.
+	Starting from these observations, we investigate how to speed-up \comus in the context of explanation generation in the next section.
 %	Preliminary experiments show that most of the time is spent searching for hitting sets over an increasingly large collection of sets-to hit.
 	
 	% such as 
@@ -684,7 +685,7 @@ The main reason for this is that the hitting set solver needs to consider an inc
 %\end{enumerate}
 }
 %\newtext{}
-In this section, we analyze if instead of working \comus-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal \newtext{with the hope of reducing the number and the size of the sets-to-hit to only include information relevant for that literal}.
+In this section, we analyze if instead of working \comus-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal.
 
 \subsection{Bounded OCUS}
 Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$, i.e., 
@@ -763,9 +764,15 @@ This is because the queue ensures that this hitting set is the lowest scoring hi
 If, on the other hand, the hitting set is satisfiable, a number of correction subsets are extracted from the literal-specific unsatisfiable formula and added to its respective collection of sets to hit. 
 Finally, a new hitting set is computed and this information is pushed back into the priority queue. 
 
-%\newtext{Up until now, we have investigated how to speed-up the generation of an explanation step by taking as much as advantage from the information computed by \comus. \cref{sec:efficient-ocus} dissects the main components of the \comus algorithm }
+ \newtext{
+ 	\newtext{Up until now, we have investigated how to speed-up the generation of an explanation step from the perspective of \comus as an oracle.
+ 	In the next section, we The goal is to reduce the number and the size of the sets-to-hit, for example to only include information relevant for every literal}.
+
+ \cref{sec:efficient-ocus} dissects the main components of the \comus algorithm }
 %\clearpage
 \section{Efficiently computing optimal explanations}\label{sec:efficient-ocus}
+\emilio{I have re-oredered the text here because grow was not introduced before as the reviewer mentioned, so I tried to make it somewhat consistent.}
+
 
 We now discuss optimizations applicable to the O(C)US algorithms that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 
@@ -1307,18 +1314,16 @@ In the case of \emph{\comusbound}, the time to the first explanation reflects ho
 For an interactive context where the user asks for an immediate explanation, \emph{\comussplit} will be the fastest at computing the explanations. 
 If the user is exploring the sequence of explanations and repeatedly asks for additional explanations, \ousbiterincr will be able to capitalize on incrementality to bring the average time close to real-time.
 
-\newtext{\paragraph{Timedout instances} Instances that timed out before the full explanation sequence was generated, had on average more literals to explain such as binairo, garam, the killer sudoku, kakuro, skyscrapers, x-sums. \cref{tab:timed-out-instances-indiv-explanations-all} provides some further context on the timed out instanced: 
+\newtext{\paragraph{Timedout instances}  Most of the instances that timed out before the full explanation sequence was generated, had on average more literals to explain such as binairo, garam, the killer sudoku, kakuro, skyscrapers, x-sums. \cref{tab:timed-out-instances-indiv-explanations-all} provides some further context on the timed out instances: 
 	\begin{itemize}
-		\item 	\emph{\#no expl} represents the ratio of the number instances where no explanation was found before the timeout over the number of timed out instances, 
-		\item 	\emph{$\overline{t_1}$} represents the time to first explanation, 
+		\item 	\emph{\#no expl} represents the ratio on the number instances where no explanation was found before the timeout over the number of timed out instances, 
+		\item 	\emph{$\overline{t_1}$} represents the time to a first explanation, 
 		\item 	$\mathbf{\overline{ \raisebox{0pt}[1.2\height]{{\text{\small \%}} expl}}}$ is the average percentage of literals explained before the instance timed out, 
 		\item 	and the quantiles $q_{xx}$ of the percentages of literals explained.
 	\end{itemize}
 
-
-
-
-Adding incrementality to all \comus configurations has a high impact on the time to a first explanation, and it leads to more instances with no explanations found. However, incrementality also leads to a higher percentage of the literals explained for the instances that did not time out before a first explanation. 
+Adding incrementality to all \comus configurations has a high impact on the time to a first explanation, and it leads to more instances with no explanations found. 
+However, incrementality also leads to a higher percentage of the literals explained for the instances that did not time out before a first explanation. 
 
 \begin{table}[!h]
 	\centering
@@ -1336,7 +1341,7 @@ Adding incrementality to all \comus configurations has a high impact on the time
 			\bottomrule
 		\end{tabular}
 	\end{adjustbox}
-	\caption{\textbf{Timed-out instances:} Decomposition of runtime for individual explanations into time to generate the first explanation step ($t_1$), the average time to produce an additional explanation step $\overline{t_{expl}}$ and the quantiles of the completion percentage.}
+	\caption{\textbf{Timed-out instances:} the number of instances where no explanations was found before the time out ($\#$ no expl) , the time to generate the first explanation step ($t_1$), the average time to produce an additional explanation step $\overline{t_{expl}}$ and the quantiles of the completion percentage ($q_{xx}$).}
 	\label{tab:timed-out-instances-indiv-explanations-all}
 \end{table}
 

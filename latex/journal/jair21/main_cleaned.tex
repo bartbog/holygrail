@@ -670,14 +670,14 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 
 
 \newtext{
-	\paragraph{MIP incrementality} The \comus algorithm requires repeatedly computing hitting sets over an increasing collection of sets-to-hit. Initializing the MIP solver once and keeping it warm throughout the OCUS iterations allows it to reuse information from previous solver calls to solve the current hitting set problem. Similar to the results of \cite{DBLP:conf/sat/DaviesB13}, we notice a speed-up between 3 to 5 times by keeping the solver warm\footnote{We use the same setup as in the experiment section: a single core on a 10-core INTEL Xeon Gold 61482 (Skylake), a memory-limit of 8GB. The code is written on top of PySAT 0.1.7.dev1 \cite{pysat}, for MIP calls, we used Gurobi 9.1.2, and for the SAT calls MiniSat 2.2.} compared to initializing a new MIP solver instance at every iteration.
+	\paragraph{Incremental MIP solver} The \comus algorithm requires repeatedly computing hitting sets over an increasing collection of sets-to-hit. Initializing the MIP solver once and keeping it warm throughout the OCUS iterations allows it to reuse information from previous solver calls to solve the current hitting set problem. Similar to the results of \cite{DBLP:conf/sat/DaviesB13}, we notice a speed-up between 3 to 5 times by keeping the solver warm\footnote{We use the same setup as in the experiment section: a single core on a 10-core INTEL Xeon Gold 61482 (Skylake), a memory-limit of 8GB. The code is written on top of PySAT 0.1.7.dev1 \cite{pysat}, for MIP calls, we used Gurobi 9.1.2, and for the SAT calls MiniSat 2.2.} compared to initializing a new MIP solver instance at every iteration.
 
 	As can be seen in \cref{tab:example-explanation-generation-not-incremental}, the \comus algorithm requires a lot of intermediate steps in order to find an \comus. 
 	Notice for instance that the computed correction subsets contain more than 1 literal to explain that are not relevant for explaining the literal in the current hitting set. 
 	Taking step 2 as an example, if$\{\lnot x_1\}$ is a hitting set, its corresponding correction subset $ \{ c_1, c_2, c_3, c_4, x_2, \lnot x_3 \}$ contains $\{x_2, \lnot x_3\}$ which cannot be taken. 
 	Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
 
-	Starting from these observations, we investigate how to speed-up \comus in the context of explanation generation in the next section.
+	Next, we start from these observations to investigate how to speed-up explanation generation with \comus. In \cref{sec:efficient-ocus}, we analyze how to take advantage of \emph{domain-specific information} in the \emph{\corrsubsets} procedure to compute better sets-to-hit, as well as which computed data structures can be re-used throughout explanation calls.
 %	Preliminary experiments show that most of the time is spent searching for hitting sets over an increasingly large collection of sets-to hit.
 	
 	% such as 
@@ -686,7 +686,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 
 \section{Multiple Optimal Unsatisfiable Subsets}\label{sec:OUS}
 
-Preliminary experiments have shown that when generating an explanation step with \comus, most of the time is spent searching for hitting sets. 
+Preliminary experiments have shown that when generating an explanation step with \comus, most of the time ($\sim90\%$ of the time) is spent searching for hitting sets. 
 The main reason for this is that the hitting set solver needs to consider an increasingly large collection of sets-to-hit, potentially searching over an exponential number of literals and clauses (see Table~\ref{tab:example-explanation-generation-not-incremental} of \cref{ex:onestep-ocus}).
 
 \emilio{Splitting the ocuss for each literal falls a bit out of the sky here, I tried adding add a little more context.
@@ -698,10 +698,11 @@ The main reason for this is that the hitting set solver needs to consider an inc
 %\end{enumerate}
 }
 %\newtext{}
-In this section, we analyze if instead of working \comus-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal.
+In this section, we analyze if instead of working \comus-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal \newtext{by replacing a MUS call to \omus in \cref{alg:oneStep}}.
 
 \subsection{Bounded OCUS}
-Since \omus{} is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$, i.e., 
+
+Since \omus{}, without an additional predicate, is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$, i.e., 
 $\omus{}(\formula,f):=\comus{}(\formula,f,\ltrue) $ for each $\formula$ and~$f$. 
 However, the switch from MUS to \omus{} in \cref{alg:oneStep} still requires looping over every literal and computing the \omus{}, potentially introducing overhead compared to the single \comus call. %\bart{compared to what?} 
 However, we can use the \omus{} obtained in one iteration, to infer a bound on the score that must be achieved in subsequent \omus{} calls.
@@ -713,7 +714,7 @@ By keeping track of the best candidate explanation, its corresponding cost can b
 
 In fact, such a `bounded \omus{}' call is naturally obtained by doing an \comus call with as constraint $p(S):= f(\m{S}) \leq f(\m{S}_{best})$.
 
-\paragraph{Bounded \comus-based explanations} \onestepomusbounded{} in \cref{alg:oneStepBoundBart} uses calls to the \comus algorithm for every individual literal to compute the next best explanation step. The algorithm keeps track of the current best \comus candidate $\m{S}_{best}$.% and the cost associated with it $v_{best}$.  
+\paragraph{Bounded \comus-based explanations} \onestepomusbounded{} in \cref{alg:oneStepBoundBart} uses calls to the \comus algorithm for every individual literal to compute the next best explanation step. The algorithm keeps track of the current best \comus candidate $\m{S}_{best}$.
 This $\m{S}_{best}$ is only updated if the \comus algorithm is able to find an \comus that is cheaper than the current upper bound $f(\m{S}_{best})$. 
 Predicate $f(\m{S}) \leq f(\m{S}_{best})$ of the \comus-call at line \ref{alg:oneStepBound:cost_check} of \cref{alg:oneStepBoundBart} allows us to ensure that the cost of the hitting set does not exceed the upper bound. In case it does happen, the hitting set solver will return a failure message meaning that a better candidate explanation cannot be computed for that literal given the current interpretation $I$.
 
@@ -779,9 +780,9 @@ If, on the other hand, the hitting set is satisfiable, a number of correction su
 Finally, a new hitting set is computed and this information is pushed back into the priority queue. 
 
 \newtext{
-	The intermediate steps of \comus depicted in Table~\ref{tab:example-explanation-generation-not-incremental} of \cref{ex:onestep-ocus} have shown that \comus needs to consider \emph{many combinations of clauses and literals} for \emph{all literals to explain}. 
-	Whereas the \comussplit reasons over a smaller unsatisfiable formula containing literals relevant for the literal to explain, and only expands the most promising literal.
-	
+	The intermediate steps of \comus depicted in Table~\ref{tab:example-explanation-generation-not-incremental} of \cref{ex:onestep-ocus} shows that \comus needs to consider \emph{many combinations of clauses and literals} for \emph{all literals to explain}. 
+	Whereas \comussplit reasons over a smaller unsatisfiable formula containing literals relevant for the literal to explain, and only expands the most promising literal.
+	In the experiments, we compare which \onestep-* configuration  (\comus, \comusbound, or \comussplit) is the fastest for computing explanations.
 
  	In the next section, we dissect the different components of the \comus algorithm in the context of explanation sequence generation, where \comus and its variants are called repeatedly over an unsatisfiable formula that is extended incrementally. 
  	Next, we look at how to reduce the number and the size of the sets-to-hit, for example to include only information that is relevant for every literal-to-explain and to how to generate small correction subsets from a given hitting set.
@@ -845,7 +846,7 @@ Bear in mind that retracting a constraint $p$ to replace it with an updated one 
 Therefore, we assign an infinite weight in the cost function to all literals of $\Iend\setminus I$ and update their weights as soon as they have been derived according to the given cost function.
 In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 
-\newtext{In the next section, we investigate how to speed-up the generation of an \comus using an appropriate \corrsubsets method when domain-specific information is available. Through our running example we will look at the impact of incremetality and a better \corrsubsets procedure.}
+\newtext{Next, we investigate how to speed-up the generation of an \comus using an appropriate \corrsubsets method when domain-specific information is available. Through our running example we will look at the impact of incremetality and a better \corrsubsets procedure.}
 
 \subsection{Computing correction subsets}\label{sec:computing-correction-subsets}
 

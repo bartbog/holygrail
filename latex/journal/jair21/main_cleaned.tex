@@ -255,7 +255,7 @@ A clause is a disjunction of literals, i.e. $c_1 = x_1 \vee \lnot x_2 $. A formu
 Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. 
 
 A (partial) interpretation $\m{I}$ is a consistent (not containing both $p$ and $\lnot p$) set of literals. 
-Satisfaction of a formula \formula by an interpretation is defined as usual~\cite{faia/2009-185}.
+Satisfaction of a formula \formula by an interpretation is defined as usual~\cite{faia/2009-185}.\emilio{Isn't this too handwavy ? Is there a better way to define that?}
 %\bart{The sentence that satisfaction is defined as usual is as long as just deifning it:
 An interpretation $\m{I}$ \emph{satisfies} \formula if $\m{I}$ contains at least one literal from each clause in $\formula$.
 A \emph{model} of \formula is an interpretation that satisfies \formula; $\formula$ is said to be \emph{unsatisfiable} if it has no models.
@@ -264,7 +264,7 @@ An interpretation that satisfies $\formula$ is also called a \emph{model} of \fo
 A formula \formula is \emph{satisfiable} if it has at least one model and \emph{unsatisfiable} otherwise. 
 
 A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models. The \emph{maximal consequence} of a formula \formula, denotes a consequence that holds in all models.
-If $I$ is a set of literals, we write $\negset{I}$ for the set of negated literals $\{\lnot l\mid l\in I\}$.
+If $I$ is a set of literals, we write $\mathbf{\overline{ \raisebox{0pt}[1.1\height]{\textit{I}}}}$  for the set of negated literals $\{\lnot l\mid l\in I\}$.
 
 \begin{example}\label{example:intro1}
 	Let $\formulac_1$ be the CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
@@ -315,7 +315,7 @@ Consider the following examples to illustrate the concepts related to unsatisfia
 	\[ c_5 := \lnot x_1 \vee  x_2 \qquad  c_6 := \lnot x_1 \vee  \lnot x_3 \]
 
 \end{example}
-In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an example of a Minimal Unsatisfiable Subset (MUS) and $ \{c_1\},\{c_4\}, \{c_2,c_5\},\{c_5, c_6\}, \{c_3, c_6\}$ are examples of minimal correction subsets (MCSs). We observe that MUS $\{c_1, c_2, c_4, c_6\}$ hits at least one clause of each MCS. 
+In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an example of a Minimal Unsatisfiable Subset (MUS) and $ \{\underline{c_1}\},\{\underline{c_4}\}, \{\underline{c_2},c_5\},\{c_5, \underline{c_6}\}, \{c_3, \underline{c_6}\}$ are examples of minimal correction subsets (MCSs). We observe that MUS $\{c_1, c_2, c_4, c_6\}$ hits at least one clause of each MCS. 
 
 
 
@@ -323,16 +323,23 @@ In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an ex
 
 Our work is motivated by the problem of explaining the solution to constraint satisfaction problems, or how to explain the information entailed from it, through a sequence of simple explanation steps. This can be used to teach people problem-solving skills; to search for mistakes in the problem formulation that lead to undesired models; to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed) and in systems that provide interactive tutoring.  
 \newtext{\subsection{Step-wise Explanation Generation}}
-Our original explanation generation algorithm \cite{ecai/BogaertsGCG20}, depicted in \cref{alg:explanation-sequence}, starts from a formula $\formulac$ (in the application it is coming from a high-level CSP), an \emph{initial interpretation} $I_0$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, e.g. by means of a weight for every clause. 
-The goal is to find a sequence of \emph{simple} explanation steps that explain the \emph{maximal consequence} \Iend, also referred to as the \emph{end interpretation}, entailed by the given initial interpretation $I_0$ (line~\ref{alg:explanation-sequence:prop-init-interpretation}).
-In each explanation step, some literals from \Iend will be explained which gives rise to a precision-increasing sequence of interpretations $I_0 \preceq I_1 \preceq \dots I_{end}$.
-Therefore, the intermediate interpretation $I$ at a given step in this sequence will consist of all the literals ``derived so far'' \newtext{and the remaining literals to explain correspond to the $\Iend \setminus I$.}
+Our original explanation generation algorithm \cite{ecai/BogaertsGCG20}, depicted in \cref{alg:explanation-sequence}, starts from a formula $\formulac$ (in the application it is coming from a high-level CSP), an \emph{initial interpretation} $I_0$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, e.g.~by means of a weight for every clause. 
 
-An \emph{explanation step} is an implication $I' \wedge \formulac' \implies N$ where \begin{itemize}
+An \emph{explanation step} is an implication $I' \wedge \formulac' \implies N$ where 
+\begin{itemize}
 	\item $I'$ is a subset of already derived literals I;
 	\item $\formulac'$ is a subset of constraints of the input formula $\formulac$; and
 	\item $N$ is a set of literals entailed by $I'$ and $\formulac'$ which are not yet explained.
 \end{itemize} 
+
+%For instance, if the variables $v_1, v_2, v_3 $ have domain $\{1,2, 3\}$, then using %c1 = 
+%$\mathtt{alldiff(v_1, v_2, v_3)}$ and facts $\mathtt{(v_1 = 1)}$, $\mathtt{(v_2 = 2)}$, we can derive that $\mathtt{(v_3 = 3)}$; we will write this
+%\[\mathtt{alldiff(v_1, v_2, v_3) \wedge (v_1 = 1) \wedge (v_2 = 2) \implies (v_3 = 3)}.\]
+
+The goal is to find a sequence of \emph{simple} explanation steps that explain the \emph{maximal consequence} \Iend, also referred to as the \emph{end interpretation}, entailed by the given initial interpretation $I_0$ (line~\ref{alg:explanation-sequence:prop-init-interpretation}).
+In each explanation step, some literals from \Iend will be explained which gives rise to a precision-increasing sequence of interpretations $I_0 \preceq I_1 \preceq \dots I_{end}$.
+Therefore, the intermediate interpretation $I$ at a given step in this sequence will consist of all the literals ``derived so far'' \newtext{and the remaining literals to explain correspond to the $\Iend \setminus I$.}
+
 
 %The simplicity of an explanation step is measured by the total cost of the elements used in the explanation. 
 
@@ -365,6 +372,16 @@ An \emph{explanation step} is an implication $I' \wedge \formulac' \implies N$ w
 The subset returned by \onestep (line~\ref{alg:explanation-sequence:mus} of Algorithm~\ref{alg:explanation-sequence}) is then mapped back to the set of derived literals $I'$ (line~\ref{alg:explanation-sequence:literals}) and constraints $C'$ (line~\ref{alg:explanation-sequence:constraints}). 
 Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$\newtext{, i.e.~the maximal consequence of $I' \wedge C'$.}
 
+\begin{example}\label{example:intro2}%\TIPdefVSchoice
+	Let $\formularunning$ 	be the CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
+	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
+	
+	Let $I = \{\lnot x_2\}$ be the given \emph{interpretation} with corresponding maximal consequence $\Iend = \{x_1, \lnot x_2,  x_3\}$.
+	$\Iend \setminus I = \{x_1, x_3\}$ represents the set of remaining literals to explain and its negation is denoted by $\negset{\Iend \setminus I} = \{\lnot x_1, \lnot x_3\}$. 
+	An example of an explanation step is \[\lnot x_2 \wedge c_2 \wedge c_3 \implies x_3 \] where we use derived literal $\lnot x_2$ and constraint $ c_2$ and $ c_3$ to infer $x_3$.
+	
+\end{example}
+
 %\emilio{Alternative 1: Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate $I'$ and constraints $C'$ to derive new information $N'$ present in the maximal consequence of $I' \wedge C'$.}
 
 % \emilio{Alternative 2: Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ in the maximal consequence, i.e. that holds at the intersection of all models of $I' \wedge C'$.}
@@ -393,18 +410,13 @@ The reason this works is a one-to-one correspondence between MUSs of $\formulac 
 	\Return{${\cal S}_{best}$} \;
 
 \end{algorithm}
+\begin{example}[\textit{\cref{example:intro2} continued}]\label{example:intro3}%\TIPdefVSchoice
+	For computing a non-redundant explanation of $x_3$, we simply extract a \[MUS(\formulac \land I \land \neg l) = MUS(\formulac \wedge \{\lnot x_2\} \wedge \{\lnot x_3\}) = \{ c_2 , c_3, \{\lnot x_2\}, \{x_3\} \}\] also written as \[\lnot x_2 \wedge c_2 \wedge c_3 \implies x_3 \].
+	
+\end{example}
+
 \newtext{MOVED from 4.1: Throughout the paper, we consider cost functions $f$ that map a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.  $\overline{\Iend \setminus I} $ refers to the negation of the remaining literals to explain $\{\lnot \ell \ | \ \ell \in \Iend \setminus I\}$ that are introduced for computing non-redundant explanation steps with MUSs.}
 
-Consider the following four clauses as our running example:
-\begin{example}\label{example:intro2}%\TIPdefVSchoice
-	Let $\formularunning$ 	be the CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
-	\[ c_1 := \lnot x_1 \vee \lnot x_2 \vee x_3 \qquad  c_2 := \lnot x_1 \vee  x_2 \vee x_3 \qquad  c_3 := x_1 \qquad c_4 := \lnot x_2 \vee \lnot x_3 \]
-	
-	Let $I = \{\lnot x_2\}$ be the given \emph{interpretation} with corresponding maximal consequence $\Iend = \{x_1, \lnot x_2,  x_3\}$.
-  $\Iend \setminus I = \{x_1, x_3\}$ represents the set of remaining literals to explain and its negation is denoted by $\negset{\Iend \setminus I} = \{\lnot x_1, \lnot x_3\}$. 
-  For computing a non-redundant explanation of $x_3$, we simply extract a $MUS(\formulac \land I \land \neg l)$ = $MUS(\formulac \wedge \{\lnot x_2\} \wedge \{\lnot x_3\}) = \{ c_2 , c_3, \{\lnot x_2\}, \{x_3\} \}$, also written as $\lnot x_2 \wedge c_2 \wedge c_3 \implies x_3 $.
-  
-\end{example}
   \reviewercomment{``1. While the detailed examples revolving around logical formulas and literals are very welcomed and clearly described, since the paper states (from the abstract) to provide "human-readable explanations" of CSPs, a reader could expect to have more "practical" example, that is a step-by-step explanation of an actual CSP (not simply a logical formula equivalent to a CSP).''}
   \emilio{@Bart/Tias: I don't know if here is the best place to add this or in the Background section or somewhere else, but a tentaitive comment is:}
   \newtext{Note that all explanations in the examples are expressed in terms of this logical representation, however, the explanations can be translated back to the original input (e.g. natural language clues,, alldifferent constraints, ...).}
@@ -730,6 +742,7 @@ Indeed, this is what the original \comus algorithm with an `exactly one of' cons
 
 For this special case, where the constraint $p$ is that exactly one of a set of literals must be chosen, we can manually decompose the problem to iteratively search for the best hitting set across the independent problems.
 In such an approach, we do not repeatedly call (bounded) \comus until optimality, but do one hitting-set iteration at a time; each time continuing with one hitting-set iteration of the most promising literal. 
+% Reducing the size of the formula
 
 This is shown in \cref{alg:oneStepIter}. Every literal to explain $\ell$ is associated with:~\begin{inparaenum}[(1)]
 	\item its current \emph{collection of sets to hit} ${\setstohit_{\ell}}$; and
@@ -764,17 +777,36 @@ This is because the queue ensures that this hitting set is the lowest scoring hi
 If, on the other hand, the hitting set is satisfiable, a number of correction subsets are extracted from the literal-specific unsatisfiable formula and added to its respective collection of sets to hit. 
 Finally, a new hitting set is computed and this information is pushed back into the priority queue. 
 
- \newtext{
- 	\newtext{Up until now, we have investigated how to speed-up the generation of an explanation step from the perspective of \comus as an oracle.
- 	In the next section, we The goal is to reduce the number and the size of the sets-to-hit, for example to only include information relevant for every literal}.
+\newtext{
+	The intermediate steps of \comus depicted in Table~\ref{tab:example-explanation-generation-not-incremental} of \cref{ex:onestep-ocus} have shown that \comus needs to consider \emph{many combinations of clauses and literals} for \emph{all literals to explain}. 
+	Whereas the \comussplit reasons over a smaller unsatisfiable formula containing literals relevant for the literal to explain, and only expands the most promising literal.
+	
 
- \cref{sec:efficient-ocus} dissects the main components of the \comus algorithm }
+ 	In the next section, we dissect the different components of the \comus algorithm in the context of explanation sequence generation, where \comus and its variants are called repeatedly over an unsatisfiable formula that is extended incrementally. 
+ 	Next, we look at how to reduce the number and the size of the sets-to-hit, for example to include only information that is relevant for every literal-to-explain and to how to generate small correction subsets from a given hitting set.
+ }
 %\clearpage
 \section{Efficiently computing optimal explanations}\label{sec:efficient-ocus}
-\emilio{I have re-oredered the text here because grow was not introduced before as the reviewer mentioned, so I tried to make it somewhat consistent.}
+\emilio{@Bart \& @Tias: I have re-oredered the text here because grow was not introduced before as the reviewer mentioned, so I tried to make it somewhat consistent.}
 
+\emilio{The flow here seems a bit off, but I didn't want to remove any examples.
+Other proposal: 
+\begin{enumerate}
+	\item Correction Subsets (grows variants)
+	\item incrementality
+	\begin{enumerate}
+		\item Example generation of sequence with grow and  incrementality
+	\end{enumerate}
+		\item Correction Subset Enumeration
+	\begin{enumerate}
+		\item Correction Subset enumeration with incremetnal MIP
+			\end{enumerate}
+\end{enumerate}
 
-We now discuss optimizations applicable to the O(C)US algorithms that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
+}
+
+	\newtext{Up until now, we have investigated how to speed-up the generation of an explanation step from the perspective of \comus as an oracle.}
+	In the following, we discuss optimizations applicable to the O(C)US algorithms that are specific to explanation sequence generation, though they can also be used when other forms of domain knowledge are present. 
 
 \subsection{Incremental OCUS computation}\label{sec:ocusEx}
 Inherently, generating a sequence of explanations still requires many O(C)US calls. 
@@ -782,8 +814,11 @@ Indeed, a greedy sequence construction algorithm %high-level algorithm, not expl
 calls an \onestep variant repeatedly with a growing interpretation $I$ until $I=\Iend$.
 %
 All of these calls to \onestep, and hence O(C)US, are done with very similar input (the set of constraints does not change, and the $I$ slowly grows between two calls). For this reason, it makes sense that information computed during one of the earlier stages can be useful in later stages as well. 
-
-The main question is, suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$; \emph{how can we make use as much as possible of the data computations of the first call to speed-up the second call?} The answer is surprisingly elegant. The most important data \comus keeps track of is the collection \setstohit of correction subsets that need to be hit.
+The main question is: 
+\begin{quote}
+	Suppose two \comus calls are done, first with inputs $\formula_1$, $f_1$, and $p_1$, and later with $\formula_2$, $f_2$, and $p_2$; \emph{how can we make use as much as possible of the data computations of the first call to speed-up the second call?}
+\end{quote}
+ The answer is surprisingly elegant. The most important data \comus keeps track of is the collection \setstohit of correction subsets that need to be hit.
 
 \subsubsection{Bootstrapping $\setstohit$ with satisfiable subsets}\label{sec:bootstrapping-sat-subsets} This collection in itself is not useful for transfer between two calls, since -- unless we assume that $\formula_2$ is a subset of $\formula_1$ -- there is no reason to assume that a set in $\setstohit_1$ is also a correction subset of $\formula_2$ in the second call. 
 However, each set $H$ in $\setstohit$ is the complement (with respect to the formula at hand) of a \emph{satisfiable subset} of constraints, and each subset of a satisfiable subset is satisfiable as well.
@@ -808,6 +843,8 @@ we initialize the MIP solver once with all relevant decision variables of $\m{C}
 Bear in mind that retracting a constraint $p$ to replace it with an updated one (in the next explanation call) is non-trivial for MIP solvers. 
 Therefore, we assign an infinite weight in the cost function to all literals of $\Iend\setminus I$ and update their weights as soon as they have been derived according to the given cost function.
 In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
+
+\newtext{In the next section, we investigate how to speed-up the generation of an \comus using an appropriate \corrsubsets method when domain-specific information is available. Through our running example we will look at the impact of incremetality and a better \corrsubsets procedure.}
 
 \subsection{Computing correction subsets}\label{sec:computing-correction-subsets}
 
@@ -1311,17 +1348,16 @@ For the non-incremental variants, in the upper part of \cref{tab:indiv-explanati
 
 In the case of \emph{\comusbound}, the time to the first explanation reflects how important the ordering of literals to explain is for quickly finding a good bound on the cost of the next best explanation. 
 
-For an interactive context where the user asks for an immediate explanation, \emph{\comussplit} will be the fastest at computing the explanations. 
-If the user is exploring the sequence of explanations and repeatedly asks for additional explanations, \ousbiterincr will be able to capitalize on incrementality to bring the average time close to real-time.
+
 
 \newtext{\paragraph{Timedout instances}  Most of the instances that timed out before the full explanation sequence was generated, had on average more literals to explain such as binairo, garam, the killer sudoku, kakuro, skyscrapers, x-sums. \cref{tab:timed-out-instances-indiv-explanations-all} provides some further context on the timed out instances: 
 	\begin{itemize}
-		\item 	\emph{\#no expl} represents the ratio on the number instances where no explanation was found before the timeout over the number of timed out instances, 
-		\item 	\emph{$\overline{t_1}$} represents the time to a first explanation, 
+		\item \emph{\#no expl} represents the ratio on the number instances where no explanation was found before the timeout over the number of timed out instances, 
+		\item \emph{$\overline{t_1}$} represents the time to a first explanation, 
 		\item 	$\mathbf{\overline{ \raisebox{0pt}[1.2\height]{{\text{\small \%}} expl}}}$ is the average percentage of literals explained before the instance timed out, 
-		\item 	and the quantiles $q_{xx}$ of the percentages of literals explained.
+		\item and the quantiles $q_{xx}$ of the percentages of literals explained.
 	\end{itemize}
-
+ 
 Adding incrementality to all \comus configurations has a high impact on the time to a first explanation, and it leads to more instances with no explanations found. 
 However, incrementality also leads to a higher percentage of the literals explained for the instances that did not time out before a first explanation. 
 
@@ -1345,6 +1381,8 @@ However, incrementality also leads to a higher percentage of the literals explai
 	\label{tab:timed-out-instances-indiv-explanations-all}
 \end{table}
 
+To conclude, for an interactive context where the user asks for an immediate explanation, \emph{\comussplit} will be the fastest at computing the explanations. 
+If the user is exploring the sequence of explanations and repeatedly asks for additional explanations, \ousbiterincr will be able to capitalize on incrementality to bring the average time close to real-time.
 
 }
 

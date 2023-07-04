@@ -234,7 +234,7 @@ Our current work is motivated by a concrete algorithmic need: to generate these 
 The closest related work can be found in the literature on generating or enumerating MUSs %\cite{conf/sat/LynceM04,liffiton2016fast}. 
 \newtext{\cite{conf/sat/LynceM04,bacchus2016finding,bacchus2015using,liffiton2016fast}. 
 %\emilio{I don't know to which extent these references need to be added, so I added a few extra from bendik and cerna's references and one of 2 of their paper citations as well. The first is about their tool (not added), and the second one about a new enumeration method.}
-Most of these techniques that can be categorised `seed-shrink' algorithms \cite{bendik2020must}. A seed-shrink algorithm repeatedly starts from unsatisfiable \emph{seed}, i.e. a subset of the original unsatisfiable formula, and \emph{shrinks} the seed using a MUS extraction routine in order to explore the search space of MUSs. 
+Most of these techniques can be categorised as \emph{seed-shrink} algorithms \cite{bendik2020must}. A seed-shrink algorithm repeatedly starts from unsatisfiable \emph{seed}, i.e., a subset of the original unsatisfiable formula, and \emph{shrinks} the seed using a MUS extraction routine in order to explore the search space of MUSs. 
 Finding an unsatisfiable seed quickly is crucial for the efficient enumeration of MUSs \cite{bendik2020replication}.
 
 Different techniques are employed to find MUSs include manipulating resolution proofs produced by SAT solvers \cite{goldberg,DBLP:journals/fmsd/GershmanKS08,DBLP:conf/sat/DershowitzHN06}, incremental solving to enable/disable clauses and branch-and-bound search \cite{DBLP:conf/dac/OhMASM04}, or by BDD-manipulation methods \cite{huang}.
@@ -242,6 +242,11 @@ Other methods work by means of translation into a so-called Quantified \maxsat~\
 %\emilio{MaxSAT not introduced proposed text:} a generalisation of SAT that maximises the number of satisfied constraints of a problem % T: not needed, rephrased slightly
 or by exploiting the so-called hitting set duality \cite{ignatiev2015smallest}.
 To the best of our knowledge, only few works have considered \emph{optimizing} MUSs: the only criterion considered yet is cardinality-minimality \cite{conf/sat/LynceM04,ignatiev2015smallest}. }
+
+\bart{I don't understand the above two paragraphs: 
+	THe first one says: ``the closest related work is work on generating MUSs [citations]. All the work done for this works by seed-shrink''. 
+	
+	The second paragraph says, seamingly without being related to the previous one ``There are many different techniques for generating MUSs. Allow me to explain them'' }
 
 An \textit{abstract} framework for describing \hitsetbased algorithms, including optimization, was developed by \citet{DBLP:conf/kr/SaikkoWJ16}. While our approach can be seen to fit the framework, the terminology is focused on \maxsat~rather than MUS and would complicate our exposition.
 
@@ -255,9 +260,10 @@ A clause is a disjunction of literals, i.e. $c_1 = x_1 \vee \lnot x_2 $. A formu
 Slightly abusing notation, a clause is also viewed as a set of literals and a formula as a set of clauses. 
 
 A (partial) interpretation $\m{I}$ is a consistent (not containing both $p$ and $\lnot p$) set of literals. 
-Satisfaction of a formula \formula by an interpretation is defined as usual~\cite{faia/2009-185}.\emilio{Isn't this too handwavy ? Is there a better way to define that?}
+Satisfaction of a formula \formula by an interpretation is defined as usual~\cite{faia/2009-185}: 
+%.\emilio{Isn't this too handwavy ? Is there a better way to define that?} Not at all, the sentence that follows is extremely precise and correct
 %\bart{The sentence that satisfaction is defined as usual is as long as just deifning it:
-An interpretation $\m{I}$ \emph{satisfies} \formula if $\m{I}$ contains at least one literal from each clause in $\formula$.
+an interpretation $\m{I}$ \emph{satisfies} \formula if $\m{I}$ contains at least one literal from each clause in $\formula$.
 A \emph{model} of \formula is an interpretation that satisfies \formula; $\formula$ is said to be \emph{unsatisfiable} if it has no models.
 %only AFTER this sentence, should the sentence about models come: 
 An interpretation that satisfies $\formula$ is also called a \emph{model} of \formula. 
@@ -370,7 +376,7 @@ Therefore, the intermediate interpretation $I$ at a given step in this sequence 
 %\emilio{I thought it would be better to move it later where we introduce the correspondence between non-redundant explanations of $\lnot \ell$ with MUSs of $\formulac \wedge I \wedge \lnot \ell$}
 
 The subset returned by \onestep (line~\ref{alg:explanation-sequence:mus} of Algorithm~\ref{alg:explanation-sequence}) is then mapped back to the set of derived literals $I'$ (line~\ref{alg:explanation-sequence:literals}) and constraints $C'$ (line~\ref{alg:explanation-sequence:constraints}). 
-Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$\newtext{, i.e.~the maximal consequence of $I' \wedge C'$.}
+Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$\newtext{, i.e., we compute the maximal consequence of $I' \wedge C'$.}
 
 \begin{example}\label{example:intro2}%\TIPdefVSchoice
 	Let $\formularunning$ 	be the CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
@@ -420,11 +426,12 @@ The reason this works is a one-to-one correspondence between MUSs of $\formulac 
   \reviewercomment{``1. While the detailed examples revolving around logical formulas and literals are very welcomed and clearly described, since the paper states (from the abstract) to provide "human-readable explanations" of CSPs, a reader could expect to have more "practical" example, that is a step-by-step explanation of an actual CSP (not simply a logical formula equivalent to a CSP).''}
   \emilio{@Bart/Tias: I don't know if here is the best place to add this or in the Background section or somewhere else, but a tentaitive comment is:}
   \newtext{Note that all explanations in the examples are expressed in terms of this logical representation, however, the explanations can be translated back to the original input (e.g. natural language clues,, alldifferent constraints, ...).}
+  \bart{I would do it earlier: in, or even before, 4.1. When we formally define WHAT an explanation is, not when we define HOW they can be computed. } 
 
 
 \newtext{\subsection{Concluding Remarks}\label{sec:motivation:conluding-remarks}}
 
-Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS\newtext{, for instance, one that evaluates to a small cost}. 
+Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS\newtext{, for instance, one that evaluates to a small cost}. \bart{Why the addition? It is not ``for instance''... If you watn to change something, replace the word ``good'' by ``low-cost'', but do not add the blue thing} 
 Furthermore, MUS extraction algorithms do not provide any guarantee of $\subseteq$-minimality or optimality with respect to a given cost function $f$. Therefore, in \citet{bogaerts2021framework}, we handle the absence of $\subseteq$-minimality and optimality guarantees by heuristically considering increasingly larger subsets of the unsatisfiable formula ($\formulac \land I \land \neg l$).
 
 Hence, there is a need for algorithmic improvements to make it more practical.
@@ -434,7 +441,8 @@ We see three main points of improvement, all of which will be tackled by our gen
 	
 \item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the explanation found is indeed optimal (with respect to the given cost function). Performing multiple MUS calls is only a heuristic that is used to circumvent the restriction that \textit{there are no algorithms for cost-based unsatisfiable subset \textbf{optimization}}. 
 
-\item Second, this algorithm uses \call{MUS} calls for every literal \newtext{$ \ell \in \Iend \setminus I$} to explain separately. The goal of all these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains \emph{exactly one literal} from $\overline{(\Iend\setminus I)}= \newtext{\{ \lnot \ell \ | \ \ell \in \Iend \setminus I\}}$. This begs the question of whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
+\item Second, this algorithm uses \call{MUS} calls for every literal \newtext{$ \ell \in \Iend \setminus I$} to explain separately. The goal of all these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains \emph{exactly one literal} from $\overline{(\Iend\setminus I)}= \newtext{\{ \lnot \ell \mid \ell \in \Iend \setminus I\}}$. This begs the question of whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
+\bart{note to Emilio: the bar in $\{x\mid bla\}$ is ``mid'' in latex, not $|$ with manual spacing (I already replaced it here)}
 
 \item Third, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}
 
@@ -447,8 +455,8 @@ In the next section, we introduce the concept of \emph{Optimal Constrained Unsat
 \newtext{
 	In this section, we address the first two challenges highlighted at the end of \cref{sec:motivation:conluding-remarks}, namely 
 	\begin{inparaenum}[(1)]
-		\item  the \emph{lack of optimality guarantees} when relying on MUS extraction methods (and heuristics) to compute a \textit{optimal} explanation step with respect to a given cost-function, and 
-		\item the fact that we want to \emph{explain one literal at a time}.
+		\item  the \emph{lack of optimality guarantees} when relying on MUS extraction methods (and heuristics) to compute an explanation step, and 
+		\item the fact that we want to \emph{explain one literal at a time}. \bart{What is the second challenge? The fact that we want to explain one literal at a time; how is that a challenge (I don't get it). If you want a second challenge it might be that: while the optimal explanation of a single literal can be formalized as an optimal MUS (wrt a given objective), the optimal next explanation step overall cannot be formalized as such. }
 	\end{inparaenum}
 	 To tackle these, we introduce the concept of an Optimal Constrained Unsatisfiable Subset (OCUS) and propose an algorithm for computing one.
 	}
@@ -670,11 +678,11 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 
 
 \newtext{
-	\paragraph{Incremental MIP solver} The \comus algorithm requires repeatedly computing hitting sets over an increasing collection of sets-to-hit. Initializing the MIP solver once and keeping it warm throughout the OCUS iterations allows it to reuse information from previous solver calls to solve the current hitting set problem. Similar to the results of \cite{DBLP:conf/sat/DaviesB13}, we notice a speed-up between 3 to 5 times by keeping the solver warm\footnote{We use the same setup as in the experiment section: a single core on a 10-core INTEL Xeon Gold 61482 (Skylake), a memory-limit of 8GB. The code is written on top of PySAT 0.1.7.dev1 \cite{pysat}, for MIP calls, we used Gurobi 9.1.2, and for the SAT calls MiniSat 2.2.} compared to initializing a new MIP solver instance at every iteration.
+	\paragraph{Incremental MIP solver} The \comus algorithm requires repeatedly computing hitting sets over an increasing collection of sets-to-hit. Initializing the MIP solver once and keeping it warm throughout the OCUS iterations allows it to reuse information from previous solver calls to solve the current hitting set problem. Similar to \citet{DBLP:conf/sat/DaviesB13}, we notice a speed-up between 3 to 5 times by keeping the solver warm\footnote{We use the same setup as in the experiment section: a single core on a 10-core INTEL Xeon Gold 61482 (Skylake), a memory-limit of 8GB. The code is written on top of PySAT 0.1.7.dev1 \cite{pysat}, for MIP calls, we used Gurobi 9.1.2, and for the SAT calls MiniSat 2.2.} compared to initializing a new MIP solver instance at every iteration.
 
 	As can be seen in \cref{tab:example-explanation-generation-not-incremental}, the \comus algorithm requires a lot of intermediate steps in order to find an \comus. 
 	Notice for instance that the computed correction subsets contain more than 1 literal to explain that are not relevant for explaining the literal in the current hitting set. 
-	Taking step 2 as an example, if$\{\lnot x_1\}$ is a hitting set, its corresponding correction subset $ \{ c_1, c_2, c_3, c_4, x_2, \lnot x_3 \}$ contains $\{x_2, \lnot x_3\}$ which cannot be taken. 
+	Taking step 2 as an example, if $\{\lnot x_1\}$ is a hitting set, its corresponding correction subset $ \{ c_1, c_2, c_3, c_4, x_2, \lnot x_3 \}$ contains $\{x_2, \lnot x_3\}$ which cannot be taken. 
 	Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an \comus. 
 
 	Next, we start from these observations to investigate how to speed-up explanation generation with \comus. In \cref{sec:efficient-ocus}, we analyze how to take advantage of \emph{domain-specific information} in the \emph{\corrsubsets} procedure to compute better sets-to-hit, as well as which computed data structures can be re-used throughout explanation calls.
@@ -702,6 +710,9 @@ In this section, we analyze if instead of working \comus-based, we can split up 
 
 \subsection{Bounded OCUS}
 
+\bart{NOTATION: When talking about the PROBLEM (the OCUS problem) or the solution to that problem (an OCUS), earlier we simply write OCUS. Wen talking about the ALGORITHM to compute it, we use \comus. I would try to keep it like this. Go over the entire paper and check all occurrences: do OUS/OCUS/... refer to the algorithm, then \comus is ok. Otherwise not. 
+So, concretely below, \omus is not a specal case of \comus; OUS is a special case of OCUS. Do not talk about ``Every MUS and \omus'', but ``Every MUS and OUS''.}
+
 Since \omus{}, without an additional predicate, is a special case of \comus{}, we can take advantage of \cref{prop:MCS-MUS-hittingset} and reuse the \comus algorithm with a trivially true $p$, i.e., 
 $\omus{}(\formula,f):=\comus{}(\formula,f,\ltrue) $ for each $\formula$ and~$f$. 
 However, the switch from MUS to \omus{} in \cref{alg:oneStep} still requires looping over every literal and computing the \omus{}, potentially introducing overhead compared to the single \comus call. %\bart{compared to what?} 
@@ -712,8 +723,9 @@ By keeping track of the best candidate explanation, its corresponding cost can b
 
 \paragraph{Lower bound} Every hitting set computed inside the \omus{} algorithm produces a lower bound on the best cost that can be obtained, even the satisfying ones. Indeed, the candidate hitting set returned on line~\ref{line:opt} of \cref{alg:comus} is guaranteed to be the lowest-cost one. Consequently, the cost of the best candidate explanation so far can be used as an early stopping criterion: if the cost of the current hitting set is larger than the cost of the best explanation so far, \omus{} will not be able to find a better (cheaper) unsatisfiable subset $\m{S}$ for that literal.
 
-In fact, such a `bounded \omus{}' call is naturally obtained by doing an \comus call with as constraint $p(S):= f(\m{S}) \leq f(\m{S}_{best})$.
+In fact, such a \emph{bounded \omus{}} call is naturally obtained by doing an \comus call with as constraint $p(S):= f(\m{S}) \leq f(\m{S}_{best})$.
 
+\bart{Is it ``Bounded OUS'' or ``Bounded OCUS''? Inconsistent use}
 \paragraph{Bounded \comus-based explanations} \onestepomusbounded{} in \cref{alg:oneStepBoundBart} uses calls to the \comus algorithm for every individual literal to compute the next best explanation step. The algorithm keeps track of the current best \comus candidate $\m{S}_{best}$.
 This $\m{S}_{best}$ is only updated if the \comus algorithm is able to find an \comus that is cheaper than the current upper bound $f(\m{S}_{best})$. 
 Predicate $f(\m{S}) \leq f(\m{S}_{best})$ of the \comus-call at line \ref{alg:oneStepBound:cost_check} of \cref{alg:oneStepBoundBart} allows us to ensure that the cost of the hitting set does not exceed the upper bound. In case it does happen, the hitting set solver will return a failure message meaning that a better candidate explanation cannot be computed for that literal given the current interpretation $I$.
@@ -789,7 +801,7 @@ Finally, a new hitting set is computed and this information is pushed back into 
  }
 %\clearpage
 \section{Efficiently computing optimal explanations}\label{sec:efficient-ocus}
-\emilio{@Bart \& @Tias: I have re-oredered the text here because grow was not introduced before as the reviewer mentioned, so I tried to make it somewhat consistent.}
+\emilio{@Bart \& @Tias: I have re-oredered the text here because grow was not introduced before as the reviewer mentioned, so I tried to make it somewhat consistent.}\bart{You already talk a lot about ``grouw'' five pages ago. If you want to solve the reviewer's problem, that is probably where you want to introduce it, no?}
 
 \emilio{The flow here seems a bit off, but I didn't want to remove any examples.
 Other proposal: 
@@ -1351,13 +1363,19 @@ For the non-incremental variants, in the upper part of \cref{tab:indiv-explanati
 In the case of \emph{\comusbound}, the time to the first explanation reflects how important the ordering of literals to explain is for quickly finding a good bound on the cost of the next best explanation. 
 
 
-
-\newtext{\paragraph{Timedout instances}  Most of the instances that timed out before the full explanation sequence was generated, had on average more literals to explain such as binairo, garam, the killer sudoku, kakuro, skyscrapers, x-sums. \cref{tab:timed-out-instances-indiv-explanations-all} provides some further context on the timed out instances: 
+\bart{Is Timedout the correct writing? Sounds suspicious (Egnlish does not glue together often). I would go for 
+	Timed-out instances
+	or 
+	Timed out instances 
+	
+	Check how to use this as an adjective. Also: the paper is not consistent. Please find all occurrences
+}
+\newtext{\paragraph{Timedout instances}  Most of the instances that timed out before the full explanation sequence was generated, had on average more literals \bart{more than what?} to explain such as binairo, garam, the killer sudoku, kakuro, skyscrapers, x-sums. \bart{THe ``such as'' part does not fit with the rest of the sentence} \cref{tab:timed-out-instances-indiv-explanations-all} provides some further context on the timed out instances: 
 	\begin{itemize}
-		\item \emph{\#no expl} represents the ratio on the number instances where no explanation was found before the timeout over the number of timed out instances, 
-		\item \emph{$\overline{t_1}$} represents the time to a first explanation, 
+		\item \emph{\#no expl} represents the ratio on the number instances where no explanation was found before the timeout over the number of timed out instances,  \bart{ratio on the number of instances over the number of timed out instances. Wow! Can you simplify? ONE column $\#TO$ number of timedout instances. $\#$none column with number of instances where no explanation STEP was generated. Check this description (and rest of paper?) for consistent use of explanation STEP when referring to a single step} 
+		\item \emph{$\overline{t_1}$} represents the time to a first explanation \bart{step}, 
 		\item 	$\mathbf{\overline{ \raisebox{0pt}[1.2\height]{{\text{\small \%}} expl}}}$ is the average percentage of literals explained before the instance timed out, 
-		\item and the quantiles $q_{xx}$ of the percentages of literals explained.
+		\item and the quantiles $q_{xx}$ of the percentages of literals explained. \bart{quantiles of the percentages of literals? HMm, what precisely is this? }
 	\end{itemize}
  
 Adding incrementality to all \comus configurations has a high impact on the time to a first explanation, and it leads to more instances with no explanations found. 
@@ -1379,11 +1397,11 @@ However, incrementality also leads to a higher percentage of the literals explai
 			\bottomrule
 		\end{tabular}
 	\end{adjustbox}
-	\caption{\textbf{Timed-out instances:} the number of instances where no explanations was found before the time out ($\#$ no expl) , the time to generate the first explanation step ($t_1$), the average time to produce an additional explanation step $\overline{t_{expl}}$ and the quantiles of the completion percentage ($q_{xx}$).}
+	\caption{\textbf{Timed-out instances:} the number of instances where no explanations was found before the time out ($\#$ no expl) , the time to generate the first explanation step ($t_1$), the average time to produce an additional explanation step $\overline{t_{expl}}$ and the quantiles of the completion percentage ($q_{xx}$). \bart{what does 322$\pm$820 mean? is 820 stdev? 2times stdev? }}
 	\label{tab:timed-out-instances-indiv-explanations-all}
 \end{table}
 
-To conclude, for an interactive context where the user asks for an immediate explanation, \emph{\comussplit} will be the fastest at computing the explanations. 
+To conclude, for an interactive context where the user asks for an immediate explanation, \comussplit will be the fastest at computing the explanations. 
 If the user is exploring the sequence of explanations and repeatedly asks for additional explanations, \ousbiterincr will be able to capitalize on incrementality to bring the average time close to real-time.
 
 }

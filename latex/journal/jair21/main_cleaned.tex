@@ -440,7 +440,7 @@ We see three main points of improvement, all of which will be tackled by our gen
 
 \end{itemize}
 
-In the next section, we will introduce the concept of \emph{Optimal Constrained Unsatisfiable Subsets} to address the first two main points of improvement. We tackle the third point in \cref{sec:efficient-ocus} together with other optimizations to speed up explanation \emph{sequence} generation. %For an explanation of how we address the third issue of repeated similar calls to \onestep, we refer to 
+In the next section, we introduce the concept of \emph{Optimal Constrained Unsatisfiable Subsets} to address the first two main points of improvement. We tackle the third point in \cref{sec:efficient-ocus} together with other optimizations to speed up explanation \emph{sequence} generation. %For an explanation of how we address the third issue of repeated similar calls to \onestep, we refer to 
 
 \section{Optimal Constrained Unsatisfiable Subsets}\label{sec:OCUS}
 
@@ -450,7 +450,7 @@ In the next section, we will introduce the concept of \emph{Optimal Constrained 
 		\item  the \emph{lack of optimality guarantees} when relying on MUS extraction methods (and heuristics) to compute a \textit{optimal} explanation step with respect to a given cost-function, and 
 		\item the fact that we want to \emph{explain one literal at a time}.
 	\end{inparaenum}
-	 To tackle this, we introduce the concept of an Optimal Constrained Unsatisfiable Subset (OCUS) and propose an algorithm for computing one.
+	 To tackle these, we introduce the concept of an Optimal Constrained Unsatisfiable Subset (OCUS) and propose an algorithm for computing one.
 	}
 
 \begin{definition}\label{definition:ocus}
@@ -472,7 +472,7 @@ $\m{S} \subseteq \formula$ an \emph{Optimal Constrained Unsatisfiable Subset (OC
 		Hardness follows from the fact that SMUS is a special case of OCUS; containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
 \end{proof}
 
-\newtext{In the next sections, we first explain how \comus fits in the context of explanation step generation and then propose an algorithm for computing OCUSs using the well-known hitting set duality between MUSs and MCSs \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}.}
+\newtext{In the next sections, we first explain how \comus can be used to compute an explanation step and then propose an algorithm for computing OCUSs using the well-known hitting set duality between MUSs and MCSs \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}.}
 
 \subsection{\onestep with OCUS}
 
@@ -493,6 +493,7 @@ $\m{S} , \mathit{status} \gets \call{OCUS}(\formula, f, p)$\label{alg:oneStepOCU
 \end{algorithm}
 
 \paragraph{Explaining 1 literal per step} We define the `exactly one' constraint $p$ as the equality constraint shown on line \ref{alg:oneStepOCUS:exactlyone} of \cref{alg:oneStepOCUS}. $p$ evaluates to \textit{true} if the size of the intersection of the negated literals to explain $\Iend\setminus I$ with the subset $\m{S}$ of $\formula$ considered is equal to 1, otherwise $p$ evaluates to \textit{false}. 
+
 The call to \comus at line \ref{alg:oneStepOCUS:ocus-call} of \onestepo will never lead to the $\mathit{FAILURE}$ case, since an \comus is guaranteed to exist for the input cost function $f$, predicate $p$, and formula $\formula$ we consider. Failure can occur for a different predicate $p$; consider for example the predicate $p: (\m{S} \mapsto f(S) \leq v)$ of \cref{alg:oneStepBoundBart} that evaluates to true if a subset $\m{S}$ has a value lower than a given bound $v$. In this case, it might lead to the failure case if no \comus for given bound $v$ exists.  
 
 In the next section, we provide the details on how to compute an OCUS on line~\ref{alg:oneStepOCUS:ocus-call}.
@@ -507,7 +508,7 @@ In our implementation, we use a cost function $f$ that is encoded as a linear te
 For example, (unit) clauses representing previously derived facts can be given small weights, and regular clauses can be given large weights, such that explanations are penalized for including clauses when previously derived facts can be used instead. %relevant facts are directly available.
 Condition $p$ can easily be encoded as a linear constraint (see \cref{eq:exactly-one-constraint} for an example), 
 thus allowing the use of highly optimized mixed integer programming (MIP) solvers for computing optimal hitting sets. 
-\newtext{In the following, we explain how the hitting set problem can be encoded into MIP.}
+\newtext{In the following, we explain how the conditional optimal hitting set problem \cohs can be encoded into MIP to reason over combinations of clauses and literals (hitting sets) of the unsatisfiable formula.}
 
 \paragraph{Hitting set problem} Given $\formula$, we define a MIP decision variable $d_c$ for every clause $c\in \formula$ and write  $\decisionvariables = \{d_c \ | \ c \in \formula\}$ for the set of all such variables. We assume a given collection of sets-to-hit $\setstohit$.
 The goal is to find a hitting set $\hittingset \subseteq D$ that hits every set-to-hit at least once (\cref{eq:set-to-hit}), that satisfies predicate $p$ (\cref{eq:constraint}) and minimizes $f(D)$ (\cref{eq:minimization}).

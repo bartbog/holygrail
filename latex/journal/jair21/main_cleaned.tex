@@ -189,7 +189,7 @@ First, it provides \emph{no guarantees on the quality} of the produced explanati
 Second, it suffers from \emph{performance problems}: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate fact to explain.
 However, using multiple MUS calls per literal in each iteration quickly triggers efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
 
-\paragraph{\newtext{Contributions}} In this paper, we tackle the limitations discussed above. %The main contributions of this paper are as follows:
+\paragraph{Contributions} In this paper, we tackle the limitations discussed above. %The main contributions of this paper are as follows:
 We develop algorithms that aid explaining in Constraint Satisfaction Problems and improve the state-of-the-art in the following ways: 
 
 \begin{itemize}
@@ -208,7 +208,7 @@ We formalize and generalize this observation by introducing the \emph{Optimal \t
 
 \end{itemize}
 
-\paragraph{\newtext{Paper Structure}} The rest of this paper is structured as follows. 
+\paragraph{Paper Structure} The rest of this paper is structured as follows. 
 In \cref{sec:related-works}, we discuss work related to efficiently computing unsatisfiable subsets. \cref{sec:background} introduces the theoretic foundations on our implicit hitting set approach. \cref{sec:motivation} motivates our work, and \cref{sec:OCUS} introduces the OCUS problem as well as a hitting-set-based algorithm to compute OCUSs. Next, in \cref{sec:OUS}, we look at 2 other methods for computing the next best explanation in the explanation sequence. In \cref{sec:efficient-ocus}, we present methods to improve the efficiency of our algorithms, e.g by making them incremental or using different methods to extract multiple correction subsets.
 Finally, we evaluate our approach on a large set of puzzle instances in \cref{sec:experiments} and conclude with some future prospects.
 
@@ -252,7 +252,7 @@ An \textit{abstract} framework for describing \hitsetbased algorithms, including
 
 \section{Background}\label{sec:background}
 
-\newtext{In this section, we introduce the terminology and concepts related to explanation generation.}
+In this section, we introduce the terminology and concepts related to explanation generation.
 We present all methods using propositional logic but our results easily generalize to richer languages, such as constraint languages, as long as the semantics is given in terms of a satisfaction relation between expressions in the language and possible states of affairs (assignments of values to variables). 
 
 Let \voc be a set of propositional symbols, also called \emph{atoms}; this set is implicit in the rest of the paper. A \emph{literal} is an atom $p$ or its negation $\lnot p$. 
@@ -270,7 +270,7 @@ An interpretation that satisfies $\formula$ is also called a \emph{model} of \fo
 A formula \formula is \emph{satisfiable} if it has at least one model and \emph{unsatisfiable} otherwise. 
 
 A literal $l$ is a \emph{consequence} of a formula \formula if $l$ holds in all $\formula$'s models. The \emph{maximal consequence} of a formula \formula, denotes a consequence that holds in all models.
-If $I$ is a set of literals, we write $\mathbf{\overline{ \raisebox{0pt}[1.1\height]{\textit{I}}}}$  for the set of negated literals $\{\lnot l\mid l\in I\}$.
+If $I$ is a set of literals, we write $\mathbf{\overline{ \raisebox{0pt}[1.1\height]{\textit{I}}}}$  for the set of negated literals $\{\lnot \ell \mid \ell \in I\}$.
 
 \begin{example}\label{example:intro1}
 	Let $\formulac_1$ be the CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
@@ -328,7 +328,7 @@ In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an ex
 \section{Motivation}\label{sec:motivation}
 
 Our work is motivated by the problem of explaining the solution to constraint satisfaction problems, or how to explain the information entailed from it, through a sequence of simple explanation steps. This can be used to teach people problem-solving skills; to search for mistakes in the problem formulation that lead to undesired models; to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed) and in systems that provide interactive tutoring.  
-\newtext{\subsection{Step-wise Explanation Generation}}
+\subsection{Step-wise Explanation Generation}
 Our original explanation generation algorithm \cite{ecai/BogaertsGCG20}, depicted in \cref{alg:explanation-sequence}, starts from a formula $\formulac$ (in the application it is coming from a high-level CSP), an \emph{initial interpretation} $I_0$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, e.g.~by means of a weight for every clause. 
 
 An \emph{explanation step} is an implication $I' \wedge \formulac' \implies N$ where 
@@ -344,7 +344,7 @@ An \emph{explanation step} is an implication $I' \wedge \formulac' \implies N$ w
 
 The goal is to find a sequence of \emph{simple} explanation steps that explain the \emph{maximal consequence} \Iend, also referred to as the \emph{end interpretation}, entailed by the given initial interpretation $I_0$ (line~\ref{alg:explanation-sequence:prop-init-interpretation}).
 In each explanation step, some literals from \Iend will be explained which gives rise to a precision-increasing sequence of interpretations $I_0 \preceq I_1 \preceq \dots I_{end}$.
-Therefore, the intermediate interpretation $I$ at a given step in this sequence will consist of all the literals ``derived so far'' \newtext{and the remaining literals to explain correspond to the $\Iend \setminus I$.}
+Therefore, the intermediate interpretation $I$ at a given step in this sequence will consist of all the literals ``derived so far'' and the remaining literals to explain correspond to the $\Iend \setminus I$.
 
 
 %The simplicity of an explanation step is measured by the total cost of the elements used in the explanation. 
@@ -376,7 +376,7 @@ Therefore, the intermediate interpretation $I$ at a given step in this sequence 
 %\emilio{I thought it would be better to move it later where we introduce the correspondence between non-redundant explanations of $\lnot \ell$ with MUSs of $\formulac \wedge I \wedge \lnot \ell$}
 
 The subset returned by \onestep (line~\ref{alg:explanation-sequence:mus} of Algorithm~\ref{alg:explanation-sequence}) is then mapped back to the set of derived literals $I'$ (line~\ref{alg:explanation-sequence:literals}) and constraints $C'$ (line~\ref{alg:explanation-sequence:constraints}). 
-Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$\newtext{, i.e., we compute the maximal consequence of $I' \wedge C'$.}
+Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ that holds at the intersection of all models of $I' \wedge C'$, i.e., we compute the maximal consequence of $I' \wedge C'$.
 
 \begin{example}\label{example:intro2}%\TIPdefVSchoice
 	Let $\formularunning$ 	be the CNF formula over atoms $x_1, x_2, x_3$ with the following four clauses:
@@ -388,11 +388,16 @@ Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used
 	
 \end{example}
 
+Note that all explanations in the examples are expressed in terms of this logical representation, however, the explanations can be translated back to the original input (e.g. natural language clues,, alldifferent constraints, ...).
+
+%  \reviewercomment{``1. While the detailed examples revolving around logical formulas and literals are very welcomed and clearly described, since the paper states (from the abstract) to provide "human-readable explanations" of CSPs, a reader could expect to have more "practical" example, that is a step-by-step explanation of an actual CSP (not simply a logical formula equivalent to a CSP).''}
+%\emilio{@Bart/Tias: I don't know if here is the best place to add this or in the Background section or somewhere else, but a tentaitive comment is:}
+%\bart{I would do it earlier: in, or even before, 4.1. When we formally define WHAT an explanation is, not when we define HOW they can be computed. } 
 %\emilio{Alternative 1: Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate $I'$ and constraints $C'$ to derive new information $N'$ present in the maximal consequence of $I' \wedge C'$.}
 
 % \emilio{Alternative 2: Finally, at line~\ref{alg:explanation-sequence:prop-expl}, we propagate the used literals $I'$ and constraints $C'$ present in the found subset to derive new information $N'$ in the maximal consequence, i.e. that holds at the intersection of all models of $I' \wedge C'$.}
 
-\newtext{\subsection{Explanation Step}}
+\subsection{Explanation Step}
 
 The key part of \onestep is the search for the best explanation step given an interpretation $I$ of literals derived so far.
 The procedure depicted in \cref{alg:oneStep} shows the gist of how this was done. 
@@ -421,17 +426,14 @@ The reason this works is a one-to-one correspondence between MUSs of $\formulac 
 	
 \end{example}
 
-\newtext{MOVED from 4.1: Throughout the paper, we consider cost functions $f$ that map a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.  $\overline{\Iend \setminus I} $ refers to the negation of the remaining literals to explain $\{\lnot \ell \ | \ \ell \in \Iend \setminus I\}$ that are introduced for computing non-redundant explanation steps with MUSs.}
-
-  \reviewercomment{``1. While the detailed examples revolving around logical formulas and literals are very welcomed and clearly described, since the paper states (from the abstract) to provide "human-readable explanations" of CSPs, a reader could expect to have more "practical" example, that is a step-by-step explanation of an actual CSP (not simply a logical formula equivalent to a CSP).''}
-  \emilio{@Bart/Tias: I don't know if here is the best place to add this or in the Background section or somewhere else, but a tentaitive comment is:}
-  \newtext{Note that all explanations in the examples are expressed in terms of this logical representation, however, the explanations can be translated back to the original input (e.g. natural language clues,, alldifferent constraints, ...).}
-  \bart{I would do it earlier: in, or even before, 4.1. When we formally define WHAT an explanation is, not when we define HOW they can be computed. } 
+Throughout the paper, we consider cost functions $f$ that map a subset $\m{S} \subseteq \formulac \wedge \Iend \wedge \overline{\Iend \setminus I}$ to a numeric value $f(\m{S})$, namely, a weighted sum on the constraints present in subset $\m{S}$.  $\overline{\Iend \setminus I} $ refers to the negation of the remaining literals to explain $\{\lnot \ell \mid \ell \in \Iend \setminus I\}$ that are introduced for computing non-redundant explanation steps with MUSs.
 
 
-\newtext{\subsection{Concluding Remarks}\label{sec:motivation:conluding-remarks}}
 
-Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a good MUS\newtext{, for instance, one that evaluates to a small cost}. \bart{Why the addition? It is not ``for instance''... If you watn to change something, replace the word ``good'' by ``low-cost'', but do not add the blue thing} 
+
+\subsection{Concluding Remarks}\label{sec:motivation:conluding-remarks}
+
+Experiments have shown that such a MUS-based approach can easily take hours, especially when, at every explanation step, repeated MUS calls are performed for each remaining literal to explain (lines \ref{alg:onestep:repetition:mus-call}-\ref{alg:onestep:mus-call} of \cref{alg:oneStep}) to increase the chance of finding a low-cost MUS.%\newtext{, for instance, one that evaluates to a small cost}. \bart{Why the addition? It is not ``for instance''... If you watn to change something, replace the word ``good'' by ``low-cost'', but do not add the blue thing} 
 Furthermore, MUS extraction algorithms do not provide any guarantee of $\subseteq$-minimality or optimality with respect to a given cost function $f$. Therefore, in \citet{bogaerts2021framework}, we handle the absence of $\subseteq$-minimality and optimality guarantees by heuristically considering increasingly larger subsets of the unsatisfiable formula ($\formulac \land I \land \neg l$).
 
 Hence, there is a need for algorithmic improvements to make it more practical.
@@ -441,8 +443,8 @@ We see three main points of improvement, all of which will be tackled by our gen
 	
 \item First of all, since the algorithm is based on \call{MUS} calls, there is no guarantee that the explanation found is indeed optimal (with respect to the given cost function). Performing multiple MUS calls is only a heuristic that is used to circumvent the restriction that \textit{there are no algorithms for cost-based unsatisfiable subset \textbf{optimization}}. 
 
-\item Second, this algorithm uses \call{MUS} calls for every literal \newtext{$ \ell \in \Iend \setminus I$} to explain separately. The goal of all these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains \emph{exactly one literal} from $\overline{(\Iend\setminus I)}= \newtext{\{ \lnot \ell \mid \ell \in \Iend \setminus I\}}$. This begs the question of whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
-\bart{note to Emilio: the bar in $\{x\mid bla\}$ is ``mid'' in latex, not $|$ with manual spacing (I already replaced it here)}
+\item Second, this algorithm uses \call{MUS} calls for every literal $ \ell \in \Iend \setminus I$ to explain separately. The goal of all these calls is to find a single unsatisfiable subset of $\formulac \land I \land \overline{(\Iend\setminus I)}$ that contains \emph{exactly one literal} from $\overline{(\Iend\setminus I)}= \{ \lnot \ell \mid \ell \in \Iend \setminus I\}$. This begs the question of whether it is possible \textit{to compute a single (optimal) unsatisfiable subset \textbf{subject to constraints}}, where in our case, the constraint is to include exactly one literal from $\overline{(\Iend\setminus I)}$. 
+%\bart{note to Emilio: the bar in $\{x\mid bla\}$ is ``mid'' in latex, not $|$ with manual spacing (I already replaced it here)}
 
 \item Third, the algorithm that computes an entire explanation sequence makes use of repeated calls to \onestep and hence will solve many similar problems. This raises the issue of \textit{\textbf{incrementality}: can we re-use the computed data structures to achieve speed-ups in later calls?}
 
@@ -480,11 +482,11 @@ $\m{S} \subseteq \formula$ an \emph{Optimal Constrained Unsatisfiable Subset (OC
 		Hardness follows from the fact that SMUS is a special case of OCUS; containment follows - intuitively - from the fact that this can be encoded as an $\exists\forall$-QBF using a Boolean circuit encoding of the costs. 
 \end{proof}
 
-\newtext{In the next sections, we first explain how \comus can be used to compute an explanation step and then propose an algorithm for computing OCUSs using the well-known hitting set duality between MUSs and MCSs \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}.}
+In the next sections, we first explain how \comus can be used to compute an explanation step and then propose an algorithm for computing OCUSs using the well-known hitting set duality between MUSs and MCSs \cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87}.
 
 \subsection{\onestep with OCUS}
 
-\onestep implicitly uses an ``exactly one of'' constraint on the set of literals to explain \newtext{$ \{\ell \in \Iend \setminus I\}$}, and the way this is done is by considering each literal $\ell$ from that set separately. It searches for a good, but not necessarily \emph{optimal} CUS (an \underline{U}nsatisfiable \underline{S}ubset that satisfies the \underline{C}onstraint in question). The goal is however to find an optimal one.
+\onestep implicitly uses an ``exactly one of'' constraint on the set of literals to explain $ \{\ell \in \Iend \setminus I\}$, and the way this is done is by considering each literal $\ell$ from that set separately. It searches for a good, but not necessarily \emph{optimal} CUS (an \underline{U}nsatisfiable \underline{S}ubset that satisfies the \underline{C}onstraint in question). The goal is however to find an optimal one.
 Therefore, when considering the procedure \onestep from the perspective of OCUS defined above, the task of the procedure is to compute an OCUS of the formula $\formula := \formulac\land I\land \overline{\Iend\setminus I}$ with $p$ the predicate that holds for subsets that contain \emph{exactly one} literal of $\overline{\Iend\setminus I}$. 
 The pseudo-code for this is shown in \cref{alg:oneStepOCUS}.
 
@@ -516,9 +518,9 @@ In our implementation, we use a cost function $f$ that is encoded as a linear te
 For example, (unit) clauses representing previously derived facts can be given small weights, and regular clauses can be given large weights, such that explanations are penalized for including clauses when previously derived facts can be used instead. %relevant facts are directly available.
 Condition $p$ can easily be encoded as a linear constraint (see \cref{eq:exactly-one-constraint} for an example), 
 thus allowing the use of highly optimized mixed integer programming (MIP) solvers for computing optimal hitting sets. 
-\newtext{In the following, we explain how the conditional optimal hitting set problem \cohs can be encoded into MIP to reason over combinations of clauses and literals (hitting sets) of the unsatisfiable formula.}
+In the following, we explain how the conditional optimal hitting set problem \cohs can be encoded into MIP to reason over combinations of clauses and literals (hitting sets) of the unsatisfiable formula.
 
-\paragraph{Hitting set problem} Given $\formula$, we define a MIP decision variable $d_c$ for every clause $c\in \formula$ and write  $\decisionvariables = \{d_c \ | \ c \in \formula\}$ for the set of all such variables. We assume a given collection of sets-to-hit $\setstohit$.
+\paragraph{Hitting set problem} Given $\formula$, we define a MIP decision variable $d_c$ for every clause $c\in \formula$ and write  $\decisionvariables = \{d_c \mid c \in \formula\}$ for the set of all such variables. We assume a given collection of sets-to-hit $\setstohit$.
 The goal is to find a hitting set $\hittingset \subseteq D$ that hits every set-to-hit at least once (\cref{eq:set-to-hit}), that satisfies predicate $p$ (\cref{eq:constraint}) and minimizes $f(D)$ (\cref{eq:minimization}).
 The \cohs formulation is as follows:
 \begin{align}
@@ -555,8 +557,8 @@ The key novelty is the ability to add structural constraints to the hitting set 
 The algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
 In case the \sat oracle returns true, i.e., subset $\m{S}$ is satisfiable, $\m{K}$ a set of subsets of $F\setminus S$ is returned by \corrsubsets and added to the collection of sets-to-hit \setstohit. 
 
-\emilio{Should the differences with the SMUS paper be highlighted more in a seperate paragraph like here  ?}
-\paragraph{\newtext{Smallest MUS of \citet{ignatiev2015smallest}}}
+%\emilio{Should the differences with the SMUS paper be highlighted more in a seperate paragraph like here  ?}
+\paragraph{Smallest MUS of \citet{ignatiev2015smallest}}
 The key differences with the SMUS algorithm are the calls to a \cohs solver (resp. \texttt{MinimumHS}) and the \corrsubsets (resp. \texttt{grow}) procedure.
 In the SMUS algorithm, the purpose of \texttt{grow} is to expand a satisfiable subset $\m{S}$ of $\m{F}$ further such that its complement, a correction subset, is as small as possible.
 Shrinking the correction subset as a result of the \texttt{grow} finds stronger constraints on the sets-to-hit, since it restricts the choice on the clauses that need to be selected. 
@@ -677,7 +679,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 \end{example}
 
 
-\newtext{
+
 	\paragraph{Incremental MIP solver} The \comus algorithm requires repeatedly computing hitting sets over an increasing collection of sets-to-hit. Initializing the MIP solver once and keeping it warm throughout the OCUS iterations allows it to reuse information from previous solver calls to solve the current hitting set problem. Similar to \citet{DBLP:conf/sat/DaviesB13}, we notice a speed-up between 3 to 5 times by keeping the solver warm\footnote{We use the same setup as in the experiment section: a single core on a 10-core INTEL Xeon Gold 61482 (Skylake), a memory-limit of 8GB. The code is written on top of PySAT 0.1.7.dev1 \cite{pysat}, for MIP calls, we used Gurobi 9.1.2, and for the SAT calls MiniSat 2.2.} compared to initializing a new MIP solver instance at every iteration.
 
 	As can be seen in \cref{tab:example-explanation-generation-not-incremental}, the \comus algorithm requires a lot of intermediate steps in order to find an \comus. 
@@ -690,7 +692,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	
 	% such as 
 	%	Can we quickly figure out which literal will most likely (not) be a good candidate explanation step? 
-	 }
+	
 
 \section{Multiple Optimal Unsatisfiable Subsets}\label{sec:OUS}
 
@@ -706,7 +708,7 @@ The main reason for this is that the hitting set solver needs to consider an inc
 %\end{enumerate}
 }
 %\newtext{}
-In this section, we analyze if instead of working \comus-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal \newtext{by replacing a MUS call to \omus in \cref{alg:oneStep}}.
+In this section, we analyze if instead of working \comus-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal \newtext87{by replacing a MUS call to \omus in \cref{alg:oneStep}}.
 
 \subsection{Bounded OCUS}
 
@@ -771,7 +773,7 @@ These are stored in a priority queue, sorted by the cost. % of the hitting set.
 	\caption{$\iterativeonestep(\formulac,f,I,\Iend)$ %\bart{I would not call this ``explain-one-step-interleaved''. Actually, this is ani mplementation of OCUS (it does not explain oen step, it produces an ocus). But... It is an OCUS call for a specific $p$ with $p$ being an exactly-one constraint. In that case, it makes different hitting set solvers for each of the literals of which you want exactly one. The argument (in text) why we want to do this is: OCUS spends 96\% of its time in OPT-calls. We suspect this is because the theory gets too large and want to decouple it into largely indpendent pieces. } 
 	}
 	\label{alg:oneStepIter}
-	$queue \gets$ \texttt{InitializePriorityQueue($(\ell, \emptyset,\emptyset): 0 \ | \ \forall \ell \in \Iend \setminus I$)}\; %// init with $(l, \emptyset): 0$ for each $l$, or from previous iteration \;
+	$queue \gets$ \texttt{InitializePriorityQueue($(\ell, \emptyset,\emptyset): 0 \mid \forall \ell \in \Iend \setminus I$)}\; %// init with $(l, \emptyset): 0$ for each $l$, or from previous iteration \;
 	\While{$(\ell, \m{S}_\ell, \setstohit_{\ell}) \gets queue.pop()$}{
 		%\For{$l \in \{\Iend \setminus I\}$ sorted by $f({\cal S}^l_{best})$}{
 			\If{ $\lnot \sat(\m{S}_\ell)$}{\label{alg:onestepIter-sat-check}
@@ -858,7 +860,7 @@ Bear in mind that retracting a constraint $p$ to replace it with an updated one 
 Therefore, we assign an infinite weight in the cost function to all literals of $\Iend\setminus I$ and update their weights as soon as they have been derived according to the given cost function.
 In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 
-\newtext{Next, we investigate how to speed-up the generation of an \comus using an appropriate \corrsubsets method when domain-specific information is available. Through our running example we will look at the impact of incremetality and a better \corrsubsets procedure.}
+Next, we investigate how to speed-up the generation of an \comus using an appropriate \corrsubsets method when domain-specific information is available. Through our running example we will look at the impact of incremetality and a better \corrsubsets procedure.
 
 \subsection{Computing correction subsets}\label{sec:computing-correction-subsets}
 
@@ -1130,9 +1132,9 @@ In  \cref{tab:puzzle-composition-family} of \cref{apx:puzzledata}, we summarize 
 
 \subsection{Explanation quality}
 To evaluate the effect of optimality on the quality of the generated explanations, we reimplemented a MUS-based explanation generator based on \cref{alg:oneStep}. 
-\emilio{OLD: Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there -- in order to avoid the quality problems we will illustrate below --  an extra inner loop was used that employs \emph{even more} calls to \call{MUS} for subsets of \formulac of increasing size.} % (this is their Algorithm~3). 
+%\emilio{OLD: Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementation of \citet{ecai/BogaertsGCG20}, since there -- in order to avoid the quality problems we will illustrate below --  an extra inner loop was used that employs \emph{even more} calls to \call{MUS} for subsets of \formulac of increasing size.} % (this is their Algorithm~3). 
 % \newtext{A similar observation can be done for  where a heuristic is used to try finding small explanations.}
-\newtext{Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementations of \citet{ecai/BogaertsGCG20} and \citet{schotten}, where a heuristic is used that relies on \emph{even more} calls to \call{MUS} in order to avoid the quality problems we will illustrate below.}
+Before presenting the results, we want to stress that this is \emph{not} a fair comparison with the implementations of \citet{ecai/BogaertsGCG20} and \citet{schotten}, where a heuristic is used that relies on \emph{even more} calls to \call{MUS} in order to avoid the quality problems we will illustrate below.
 %	, whereas we want to efficiently compute explanations that are optimal with respect to a cost function. Figure 1 algready shows that sometimes the MUS expalnation has a similar cost to the OCUS explanation, but there are times where OCUS find the optimal one compared to a MUS extractor or a MUS heuristic.}
 While in both cases this would yield better explanations, it comes at the expense of computation time, thereby leading to several hours to generate the explanation of a single puzzle. 
 

@@ -113,27 +113,8 @@ While our experiments focus on CSPs with a unique solution, this is by no means 
 > solver already does. What have I misunderstood? What was the intuition
 > for introducing this variant?
 
-It is true that the _Split variant mimics to some extent what the MIP solver already does.
-
-However, _Split improves the efficiency of the computation in several ways:
-	- First OUS is highly dependent on the ordering of the literals to explain. For instance, if the first few literals are very costly to explain, then the focus of computation will be completely on the wrong literals while the cheaper literals are not yet explored.
-	- Reducing the input unsatisfiable formula for each literal implies the computed subsets only contain relevant information (hitting sets and corrections) regarding the literal to explain e.g. no negations of other literals to explain. 
-	- For instance, the CorrSubsets procedure needs to reason over less information, meaning less time is spent in grow and giving smaller and better corrections only relevant to the literal explained.
-	- Every iteration in the OCUS algorithm increases the number of sets to hit and makes the finding an optimal hitting harder. 
-	- _SPlit doesn't require adding the exactly one constraint  to the MIP solver.
-	- Finally, only the most promising literal is expanded, other literals with a higher cost hitting set are pushed to the back of the priority queue.
-	
-BART: 
-  I do not find this very convincing. To me it is also surprising that OUS_Split would be better than OCUS. The argument about the "order of literals" is not really relevant: OCUS could choose its own order. 
-  However, I still don't really understand this.  
-  I think 
-    1. your list above is too detailed. Too many claims difficult to make hard that they answer the question
-    2. Do we add something to the paper about this?  
-	
-  If I had to explain this, I would go for the following. 
-  The reviewer is right in noting that the _Split variant in a certain sense mimics something a MIP solver in OCUS *could* in principle do. The input to our MIP calls contains an explicit exactly-one call and we are simply splitting up this problem in independent problems among all options mentioned in this exactly-one constraint. Apparently, the MIP solver does not "discover" or at least does not "exploit" this independence. 
-  Additionally, by splitting up the problem we have the possibility (which we use) to develop heurstics about the order in which literals are considered. 
-  
+The reviewer is right to point out that the _Split variant in a sense mimics something that a MIP solver in OCUS *could* in principle do. The input to our MIP calls contains an explicit exactly-one call, and we simply split that problem into independent problems among all the options mentioned in that exactly-one constraint. Obviously, the MIP solver does not "discover" or at least does not "exploit" this independence. 
+Furthermore, by splitting the problem we have the possibility (which we use) to develop heurstics about the order in which literals are considered.   
 
 > The notation bar{I_end \ I} is not explained before the first
 > example. 

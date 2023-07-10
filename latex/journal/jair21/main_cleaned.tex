@@ -695,6 +695,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	In the next section, we investigate how to grow a given satisfiable subset efficiently to reduce the size of the corresponding correction subset. 
 	
 	\subsection{Computing correction subsets}\label{sec:computing-correction-subsets}
+	\emilio{Moved the correction subset enumeration section here.}
 	
 	The \corrsubsets procedure generates a set of correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
 	However, calling \onestepo on our running example has shown that a naive `No grow'
@@ -1456,20 +1457,20 @@ For that, we introduced algorithms that replace the many calls to an unsatisfiab
 Our algorithm for computing \comus{}s uses the implicit hitting set duality between Minimum Correction Subsets and Minimal Unsatisfiable Subsets. 
 We propose two additional variants for the `exactly one of' constraint used in step-wise explanation generation.
 The main bottleneck of these approaches is having to repeatedly compute \emph{optimal} hitting sets.
-To compensate, we developed methods for enumerating correction subsets that explore the trade-off between the efficiency and the quality of the generated subsets.
-An open question within an interactive setting is whether other correction subset enumeration methods exist that are more suitable in order to reduce the time-to-first explanation and the average explanation time.
+To compensate, we have developed methods for enumerating correction subsets that explore the trade-off between efficiency and quality of the subsets generated.
+An open question in an interactive setting is whether there are other methods of enumerating correction subsets that are better suited to reducing the time to first explanation and the average explanation time.
 
-For efficiently generating the \emph{whole} explanation sequence, we introduced \emph{incrementality} which allows the re-use of computed information, i.e. satisfiable subsets remain valid from one explanation call to another.
-In the case of \comus for explanation-sequence generation, where the underlying hitting set solver is MIP-based, we instantiate the MIP-solver once for all explanation steps and keep track of computed sets-to-hit.
-However, MIP solvers do not natively support non-linear cost functions. Therefore, the current implementation of \comus might not be able to fully capture the complexity of what a good explanation is due to the limitations on the cost functions we can encode.
-Furthermore, the question of which interpretability metric for characterizing understandable explanation remains open.  
+To efficiently generate the \emph{whole} explanation sequence, we introduced \emph{incrementality}, which allows the reuse of computed information, i.e. satisfiable subsets remain valid from one explanation call to another.
+In the case of \comus for explanation sequence generation, where the underlying hitting set solver is MIP-based, we instantiate the MIP solver once for all explanation steps and keep track of computed sets-to-hit.
+However, MIP solvers do not natively support non-linear cost functions. T
+herefore, the current implementation of \comus may not be able to fully capture the complexity of what constitutes a good explanation due to the limitations of the cost functions we can encode.
+Furthermore, the question of which interpretability metric to use to characterise understandable explanations remains open.  
 
-
-The concept of (incremental) \comus is not limited to explanations of satisfaction problems. We are also keen to explore other applications that require computing minimal as well as Optimal Unsatisfiable subsets such as configuration, machine learning, ...
-For instance, one potential avenue for future work is how these explanation-generating methods map to a constraint optimization setting where branching or searching is required for solving the problem at hand. 
+The concept of (incremental) \comus is not limited to explaining satisfaction problems. We are also interested in exploring other applications, such as configuration and machine learning, where it is necessary to compute not only minimal but also optimal unsatisfiable subsets.
+For example, a potential avenue for future work is how these explanation generation methods map to a constraint optimisation setting where branching or searching is required to solve the problem at hand. 
 The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question. 
 
-Finally, for interactive settings such as interactive tutoring systems, we are able to generate explanations near real-time (less than one second) using \comussplit. Another question there is how to distribute computation over multiple cores to parallelize computation to speed up the generation of explanations even further.
+Finally, for interactive settings such as interactive tutoring systems, we are able to generate explanations in near real time (less than a second) using \comussplit. A further question is how to distribute the computation across multiple cores to parallelize the computation to further speed up the generation of explanations.
 
 \acks{This research received partial funding from the Flemish Government (AI Research Program); the FWO Flanders project G070521N; and funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (Grant No. 101002802, CHAT-Opt).}
 

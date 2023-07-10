@@ -1,5 +1,5 @@
 We thank the reviewers for their detailed feedback and discuss in detail how we have addressed their comments.
-In addition to addressing the reviewer's comments, we have polished the manuscript to improve the flow of the text.
+In addition to addressing the reviewers' comments, we have polished the manuscript to improve the flow of the text.
 
 > ------------------------------------------------------
 > Reviewer F:
@@ -9,7 +9,7 @@ In addition to addressing the reviewer's comments, we have polished the manuscri
 > 1. While the detailed examples revolving around logical formulas and literals are very welcomed and clearly described, since the paper states (from the abstract) to provide "human-readable explanations" of CSPs, a reader could expect to have more "practical" example, that is a step-by-step explanation of an actual CSP (not simply a logical formula equivalent to a CSP).
  
 Similar to [1], all explanations in the examples are expressed in terms of this logical representation, however, the explanations can be translated back to the original input (e.g. natural language clues, alldifferent constraints, ...). 
-We added a remark on this in the background section.
+We have added a note on this in the Background section.
 
 [1] Bogaerts, Bart, Emilio Gamba, and Tias Guns. "A framework for step-wise explaining how to solve constraint satisfaction problems." Artificial Intelligence 300 (2021): 103550.
 
@@ -19,16 +19,16 @@ We added a remark on this in the background section.
 > If not, please explain why. 
 > This type of additional experiments would serve also to differentiate the current paper from its predecessors.
 
-The focus of this work is on investigating methods for efficiently computing OCUSs and less about applications of the explanation framework. We prefer to focus on a single application for simplicity of presentation.
+The focus of this work is on investigating methods for efficiently computing OCUSs rather than about applications of the explanation framework. We prefer to focus on a single application for simplicity of presentation.
 
 > 3. The comparison summarized in Fig. 1 involves Alg. 2 (a previous work from the same authors) and Alg. 3 (the new proposed approach). 
 > Wouldn't it be possible to extend the comparison to another approach from the literature, namely  ("Using small muses to explain how to solve pen and paper puzzles")?
 
-The goal of Espasa et al (2021) is to provide small explanations using MUS ectraction, where a heuristic is used to try finding the the smallest one, but there is no guarantee of it being a smallest one. 
-We, on the other hand want to efficiently compute explanations that are optimal with respect to a cost function. Figure 1 already shows that sometimes the MUS explanation has a similar cost to the OCUS explanation, but there are times where OCUS can find the optimal one while a MUS extractor or a MUS heuristic cannot.
-We want to stress here that the main contribution of our paper is on the algorithmic aspect, tackling the question how to generate OCUSs efficiently. 
-Espasa et al do not tackle this goal, which is why we do not include an explicit experimental comparison with their work. 
-We have added a remark on this in 8.1 Explanation Quality where Fig 1 is introduced.
+The goal of Espasa et al (2021) is to provide small explanations using MUS ectraction, where a heuristic is used to try to find the smallest one, but there is no guarantee that it is a smallest one. 
+We, on the other hand, want to efficiently compute explanations that are optimal with respect to a cost function. Figure 1 already shows that sometimes the MUS explanation has a similar cost to the OCUS explanation, but there are times when OCUS can find the optimal one, while a MUS extractor or a MUS heuristic cannot.
+We would like to emphasise here that the main contribution of our paper is the algorithmic aspect, addressing the question of how to generate OCUSs efficiently. 
+Espasa et al. do not address this goal, which is why we do not include an explicit experimental comparison with their work. 
+We have added a note to this effect in 8.1 Explanation quality, where Fig. 1 is introduced.
 
 > 4. I feel that some related works are missing. For instance, I'm thinking of:
 > - [Bendik and Cerna, 2020a] Jaroslav Bendik and Ivana Cerna. MUST: minimal unsatisfiable subsets enumeration tool. In Proceedings TACAS 2020, pages 135–152, 2020.
@@ -39,7 +39,7 @@ We thank the reviewer for the pointers and now discuss these 2 references in the
 > I'm wondering as well whether it would be possible to make a comparison between these approaches and the method proposed in this paper. 
 > A comparison with other methods from the state-of-the-art (or at least a justification about why it is not possible to have one) would greatly improve the strength of the paper.
 
-Similar to the reviewer's previous comment. This paper is about efficient computation of optimal MUSs and that there are many approaches to generate non-optimal but small ones. We compare against one of those.
+Similar to the reviewer's previous comment. This paper is about efficient computation of optimal MUSs and that there are many approaches to generating non-optimal but small ones. We compare against one of those.
 
 > Minor comments:
 > - "is naturally obtained by doing am OCUS call with as constraint" --> "is naturally obtained by doing an OCUS call with as constraint"
@@ -67,8 +67,8 @@ Thanks! Fixed.
 > If there are references documenting/explaining this behavior, I would
 > appreciate seeing them cited here.
 
-We have further clarified this in the paper by adding an experiment comparing initilisation of a solver at every iteration and keeping the MIP solver warm throughout the OCUS interations.
-Our observations are that keeping the solver warm is indeed beneficial for overall runtime. This is in line with previous findings in the context of MaxSAT with the hitting set duality where a MIP hitting set solver is called incrementally instead of reinitializing it at every iteration:
+We have further clarified this in the paper by adding an experiment comparing initialising a solver at each iteration and keeping the MIP solver warm throughout the OCUS iterations.
+Our observations are that keeping the solver warm is indeed beneficial for the overall runtime. This is consistent with previous findings in the context of MaxSAT with hitting set duality, where a MIP hitting set solver is called incrementally rather than being reinitialised at each iteration:
 
 Davies, Jessica, and Fahiem Bacchus. "Exploiting the power of MIP solvers in MAXSAT." Theory and Applications of Satisfiability Testing–SAT 2013: 16th International Conference, Helsinki, Finland, July 8-12, 2013. Proceedings 16. Springer Berlin Heidelberg, 2013.
 
@@ -81,8 +81,8 @@ Davies, Jessica, and Fahiem Bacchus. "Postponing optimization to speed up MAXSAT
 > they time out in part because there were more literals to explain?
 > What was the delay for each explanation?
 
-Indeed, instances that timed out, had on average more literals to explain. 
-We have added an extra discussion in the experiments section about this. We see a very high time to a first explanation compared to the non-timedout instances, for the instances where the configuration was able to generate an explanation step before the timetout.
+In fact, instances that timed out had on average more literals to explain. 
+We have added an extra discussion of this in the experiments section. We see a very high time to first explanation compared to the non-timed out instances for those instances where the configuration was able to generate an explanation step before the timeout.
 
 > PRESENTATION: I did not enjoy reading the paper. There are some minor
 > issues which I point out below, but they can be easily fixed. But the
@@ -95,7 +95,7 @@ We have added an extra discussion in the experiments section about this. We see 
 > familiar with both MUSes and MaxSAT solving and it was not easy for me
 > to digest everything.
 
-We have added an introduction to the end and to the start of sections to improve the flow of the text.
+We have added introductions at the end and beginning of sections to improve the flow of the text.
 
 
 > Low-level or otherwise minor comments
@@ -104,8 +104,8 @@ We have added an introduction to the end and to the start of sections to improve
 > This paper is specific to explaining puzzles, or at least CSPs with a
 > unique solution. Therefore, the title is at least slightly misleading.
 
-We disagree with this assessment. Our work focusses on algorithmic aspects for generating explanations efficiently. 
-While our experiments indeed focus on CSPs with a unique solution, this is by no means the only possible application: our techniques can generate explanations of *all the consequences* of *any CSP*. In fact, in currently-under-review work, we use this kind of explanations to explain optimality in an optimization problems and unsatisfiability of decision problems. 
+We disagree with this assessment. Our work focuses on algorithmic aspects to efficiently generate explanations. 
+While our experiments focus on CSPs with a unique solution, this is by no means the only possible application: our techniques can generate explanations for *all consequences* of *any CSP*. In fact, in work currently under review, we use such explanations to explain optimality in an optimisation problem and unsatisfiability of decision problems. 
 
 
 > I do not understand why the _Split variant is faster. According to the
@@ -160,12 +160,12 @@ Thanks! Fixed.
 > models, right? Also, this does not seem to have been used elsewhere,
 > except to define I_end
 
-The propagate call computes the maximal consequence. We clarified this in text.
+The propagate call computes the maximal consequence. We have clarified this in the text.
 
 > Algorithm 1: Unless I misunderstood the entire paper, the first line	
 > should be 'solve', not 'propagate'.
 
-For CSPs that have a unique solution, the reviewer is right to note that this call could be replaced by solve (in fact, solve and our maximal propagation would in this case return the same thing). However, as explained above, our techniques work in highger generality and in the more general setting this should be propagate. 
+For CSPs that have a unique solution, the reviewer is right to point out that this call could be replaced by solve (in fact, solve and our maximal propagation would return the same thing in this case). However, as explained above, our techniques work in higher generality, and in the more general setting this should be propagated. 
 
 > page 19 "Since the restriction...": This sentence is too hand-wavy for
 > me. Also maximal->maximum. (There are a few more instances of such
@@ -173,7 +173,7 @@ For CSPs that have a unique solution, the reviewer is right to note that this ca
 > problem, but I would encourage the authors to reread with a critical
 > eye and rewrite or remove those).
 
-We have also generally polished the exposition of the paper to improve the flow of the text. 
+We have also generally polished up the presentation of the paper to improve the flow of the text. 
 
 > Minisat 2.2: There's always a reviewer that complains about not using
 > minisat and one that complains about using it. I will be the second

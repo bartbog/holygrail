@@ -1197,7 +1197,7 @@ The effect of introducing incrementality produces a speed-up in \comus. For \com
 In general, we see that the curves of the incremental variants are located somewhat lower.
 The best runtimes are obtained with \ousbiterincr, that is, using an incremental hitting set solver \emph{for every individual literal-to-explain separately} and only expanding the literal that is most likely to provide a cost-minimal OCUS.
 
-\subsubsection{Instance-level speed-up with incrementality} Next, we analyze the speed-up of introducing incrementality per instance. \cref{fig:rq2_runtime_incr_non_incr} compares the time to generate a full sequence for the incremental variant with the non-incremental version for each puzzle of every \comus configuration. Results in the upper triangle signify an improvement using incrementality, and the lower triangle indicates worse performance with incrementality.
+\subsubsection{Instance-level speed-up with incrementality}\label{sec:Instance-level speed-up with incrementality} Next, we analyze the speed-up of introducing incrementality per instance. \cref{fig:rq2_runtime_incr_non_incr} compares the time to generate a full sequence for the incremental variant with the non-incremental version for each puzzle of every \comus configuration. Results in the upper triangle signify an improvement using incrementality, and the lower triangle indicates worse performance with incrementality.
 
 	\begin{figure}
 	\centering
@@ -1405,7 +1405,7 @@ In the case of \emph{\comusbound}, the time to the first explanation reflects ho
 		\caption{\textbf{Timed-out instances:} \emph{$\#$none} the number of instances where no explanations step was found before the time out, \emph{$\#$timed-out} the number of instances that timed out, $\%$ average percentage of literals explained.}
 		\label{tab:timed-out-instances-indiv-explanations-all}
 	\end{table}
-The next step is to find out what causes instances to timeout before the full explanation sequence was generated with \emph{Multi}-\subsetmaxsat for all \comus configurations. 
+The next step is to find out what causes instances to timeout before the full explanation sequence was generated with \emph{Multi}-\subsetmaxsat~for all \comus configurations. 
 
 \paragraph{Timed-out instances} Most of the instances that timed out had on average more literals to explain than the non-timed-out ones. \cref{tab:timed-out-instances-indiv-explanations-all} provides some further context on the timed-out instances: 
 	\begin{itemize}
@@ -1415,12 +1415,19 @@ The next step is to find out what causes instances to timeout before the full ex
 %		\item \emph{$\overline{t_1}$} represents the time to a first explanation step, 
 		\item 	$\mathbf{\overline{ \raisebox{0pt}[1.2\height]{{\text{\small \%}} expl}}}$ is the average percentage of literals explained before the instance timed out.
 	\end{itemize}
+In \cref{fig:timedout-instances} we report the average time taken to generate a first explaining step ($\mathbf{\overline{t_{1}}}$)  for all configurations
 
-Similarly to the previous results, incrementality has a high impact on the time to explain an instances for all \comus configurations. 
-Adding incrementality to all \comus configurations will lead to more instances with no explanations found as well as than non-incremental. 
-However, incrementality leads to a higher percentage of the literals explained for the instances that did not time out before a first explanation except for \comusbound.
-\comusbound is highly dependent on the ordering of the literals it tries to explain and will need to compute many OUSs in order to have a good bound on the cost of the next explanation step.
+Note from \cref{tab:timed-out-instances-indiv-explanations-all} that \comus{(+Incr.)}~has the smallest number of instances where no explanation was found. Unlike \comusbound{(+Incr.)}~and \comussplit{(+Incr.)}, \comus{(+Incr.)}~does not need to iterate over the many literals to explain in order to find a good bound on the cost of the next best explanation step. 
+Furthermore, we observe that \comus{(+Incr.)}~is the fastest at generating a first explanation step.
 
+Similar to the observations in \cref{sec:Instance-level speed-up with incrementality}, incrementality has a high impact on the time to explain an instance for all \comus configurations. 
+Adding incrementality to all \comus configurations will result in more instances with no explanation found than non-incremental. 
+However, incrementality helps to explain more literals, except for \comusbound, which first requires computing many OUSs, which are not guaranteed to be the next optimal explanation step. Second, \comusbound depends on a good ordering of the literals, which can change at any explanation step in the sequence.
+A similar trend can be seen in \cref{fig:timedout-instances}, where the introduction of incrementality increases the time to generate a first explanation step.
+
+
+
+% is highly dependent on the ordering of the literals it tries to explain and 
 
 \begin{figure}[!h]
 	\centering
@@ -1430,7 +1437,10 @@ However, incrementality leads to a higher percentage of the literals explained f
 \end{figure}
 
 
-\cref{fig:timedout-instances} depicts the average time it takes to generate a first explanation step ($\mathbf{\overline{t_{1}}}$) for all configurations. 
+
+%\comusbound{(+Incr.)}.
+
+
 }
 
 To conclude, for an interactive context where the user asks for an immediate explanation, \comussplit will be the fastest at computing the explanations. 

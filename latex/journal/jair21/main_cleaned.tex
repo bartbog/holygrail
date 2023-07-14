@@ -159,33 +159,32 @@
 \maketitle
 
 \begin{abstract}
-	We build on a recently proposed method for stepwise explaining solutions of Constraint Satisfaction Problems (CSP) in a human-understandable way. 
-	An explanation here is a sequence of simple inference steps where simplicity is quantified using a cost function. 
-	The algorithms for explanation generation rely on extracting Minimal Unsatisfiable Subsets (MUS) of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
-	However, MUS extraction algorithms do not provide any guarantee of subset minimality or optimality with respect to a given cost function. 
-	Therefore, we build on these formal foundations and tackle the main points of improvement, namely how to generate explanations \emph{efficiently} that are provably \emph{optimal} (with respect to the given cost metric). 
-	For that, we developed \begin{inparaenum}[1)]
-	(1) a hitting set-based algorithm for finding the optimal constrained unsatisfiable subsets;
-	(2) a method for re-using relevant information over multiple algorithm calls; and
-	(3) methods exploiting domain-specific information to speed up the explanation sequence generation.
-\end{inparaenum}
-	We experimentally validated our algorithms on a large number of CSP problems. We found that our algorithms outperform the MUS approach in terms of \emph{explanation quality} and \emph{computational time} (on average up to 56 \% faster than a standard MUS approach).
+	We build on a recently proposed method for stepwise explaining the solutions to Constraint Satisfaction Problems (CSPs) in a human understandable way. 
+An explanation here is a sequence of simple inference steps where simplicity is quantified using a cost function. 
+Explanation generation algorithms rely on extracting Minimal Unsatisfiable Subsets (MUSs) of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
+However, MUS extraction algorithms do not provide any guarantee of subset minimality or optimality with respect to a given cost function. 
+Therefore, we build on these formal foundations and address the main points of improvement, namely how to generate explanations \emph{efficiently} that are provably \emph{optimal} (with respect to the given cost metric). 
+For that, we developed
+(1) a hitting set-based algorithm for finding the optimal constrained unsatisfiable subsets;
+(2) a method for reusing relevant information across multiple algorithm calls; and
+(3) methods for exploiting domain-specific information to speed up the generation of explanation sequences.
+We have experimentally validated our algorithms on a large number of CSP problems. We found that our algorithms outperform the MUS approach in terms of \emph{explanation quality} and \emph{computational time} (on average up to 56 \% faster than a standard MUS approach).
 \end{abstract}
 
 \section{Introduction}
 \label{sec:introduction}
 
-Building on old ideas to explain domain-specific propagations performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} set of constraints
+Building on old ideas to explain domain-specific propagation performed by constraint solvers \cite{sqalli1996inference,freuder2001explanation}, we recently introduced a method that takes as input a \emph{satisfiable} set of constraints
 and explains the solution-finding process in a human-understandable way \cite{ecai/BogaertsGCG20}. 
-Explanations in that work are sequences of simple inference steps, involving as few constraints and previously-derived facts as possible. Every explanation step derives at least one new fact, implied by a combination of constraints and already derived facts.
+Explanations in this work are sequences of simple inference steps that involve as few constraints and previously derived facts as possible. Each explanation step derives at least one new fact, implied by a combination of constraints and previously derived facts.
 
-The explanation steps of \cite{ecai/BogaertsGCG20} are heuristically optimized with respect to a given cost function that should approximate human understandability, e.g., taking the number of constraints and facts into account, as well as an estimate of their cognitive complexity.
-For example, in the evaluation of explanations for logic grid puzzles, the given clues of the puzzle are considered more difficult than simpler reasoning tricks, that are present in all instances of such puzzles and therefore have a higher cost.
+The explanation steps of \cite{ecai/BogaertsGCG20} are heuristically optimised with respect to a given cost function that should approximate human understandability, e.g., taking into account the number of constraints and facts considered, as well as an estimate of their cognitive complexity.
+For example, when evaluating explanations for logic grid puzzles, the given clues of the puzzle are considered more difficult than simpler reasoning tricks, that are present in all instances of such puzzles and therefore have a higher cost.
 
-In practice, the explanation-generation algorithms presented in \citet{ecai/BogaertsGCG20} work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
+In practice, the explanation generation algorithms presented in \citet{ecai/BogaertsGCG20} work rely heavily on calls for \emph{Minimal Unsatisfiable Subsets} (MUS) \cite{marques2010minimal} of a derived unsatisfiable formula, exploiting a one-to-one correspondence between so-called \emph{non-redundant explanations} and MUSs. 
 
 However, the algorithm of \citet{ecai/BogaertsGCG20} has two main weaknesses.
-First, it provides \emph{no guarantees on the quality} of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often sub-optimal with respect to the given cost function. 
+First, it provides \emph{no guarantees on the quality} of the produced explanations due to internally relying on the computation of $\subseteq$-minimal unsatisfiable subsets, which are often suboptimal with respect to the given cost function. 
 Second, it suffers from \emph{performance problems}: the lack of optimality is partly overcome by calling a MUS algorithm on increasingly larger subsets of constraints for each candidate fact to explain.
 However, using multiple MUS calls per literal in each iteration quickly triggers efficiency problems, causing the explanation generation process to take several hours, even for simple puzzles that are designed to be solvable by humans.
 
@@ -209,8 +208,8 @@ We formalize and generalize this observation by introducing the \emph{Optimal \t
 \end{itemize}
 
 \paragraph{Paper Structure} The rest of this paper is structured as follows. 
-In \cref{sec:related-works}, we discuss work related to efficiently computing unsatisfiable subsets. \cref{sec:background} introduces the theoretic foundations on our implicit hitting set approach. \cref{sec:motivation} motivates our work, and \cref{sec:OCUS} introduces the OCUS problem as well as a hitting-set-based algorithm to compute OCUSs. Next, in \cref{sec:OUS}, we look at 2 other methods for computing the next best explanation in the explanation sequence. In \cref{sec:efficient-ocus}, we present methods to improve the efficiency of our algorithms, e.g by making them incremental or using different methods to extract multiple correction subsets.
-Finally, we evaluate our approach on a large set of puzzle instances in \cref{sec:experiments} and conclude with some future prospects.
+In \cref{sec:related-works}, we discuss work related to efficiently computing unsatisfiable subsets. \cref{sec:background} introduces the theoretical foundations of our implicit hitting set approach. \cref{sec:motivation} motivates our work, and \cref{sec:OCUS} introduces the OCUS problem as well as a hitting set-based algorithm for computing OCUSs. Then, in \cref{sec:OUS}, we look at 2 other methods for computing the next best explanation in the explanation sequence. In \cref{sec:efficient-ocus} we present methods to improve the efficiency of our algorithms, e.g. by making them incremental or by using different methods to extract multiple correction subsets.
+Finally, in \cref{sec:experiments} we evaluate our approach on a large set of puzzle instances and conclude with some future perspectives.
 
 \paragraph*{Publication history} This article is an extension of a previous paper presented at the International Joint Conference on Artificial Intelligence 2021 \cite{ijcai2021}. The current paper extends the previous paper with more detailed examples, extensive experiments on a large data set of puzzles, as well as the novel \iterativeonestep algorithm for efficiently computing explanations.
 
@@ -325,7 +324,7 @@ In \cref{example:unsat}, the subset of clauses $\{c_1, c_2, c_4, c_6\}$ is an ex
 
 \section{Motivation}\label{sec:motivation}
 
-Our work is motivated by the problem of explaining the solution to constraint satisfaction problems, or how to explain the information entailed from it, through a sequence of simple explanation steps. This can be used to teach people problem-solving skills; to search for mistakes in the problem formulation that lead to undesired models; to compare the difficulty of related satisfaction problems (through the number and complexity of steps needed) and in systems that provide interactive tutoring.  
+Our work is motivated by the problem of explaining the solution to constraint satisfaction problems, or how to explain the information entailed from it, through a sequence of simple explanation steps. This can be used to teach people problem solving skills; to search for mistakes in the problem formulation that lead to undesired models; to compare the difficulty of related satisfaction problems (through the number and complexity of steps required) and in systems that provide interactive tutoring.  
 \subsection{Step-wise Explanation Generation}
 Our original explanation generation algorithm \cite{ecai/BogaertsGCG20}, depicted in \cref{alg:explanation-sequence}, starts from a formula $\formulac$ (in the application it is coming from a high-level CSP), an \emph{initial interpretation} $I_0$ (here also viewed as a conjunction of literals) and a cost function $f$ quantifying the difficulty of an explanation step, e.g.~by means of a weight for every clause. 
 
@@ -692,13 +691,13 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	Taking step 2 as an example, if $\{\lnot x_1\}$ is a hitting set, its corresponding correction subset $ \{ c_1, c_2, c_3, c_4, x_2, \lnot x_3 \}$ contains $\{x_2, \lnot x_3\}$ which cannot be taken. 
 
 	Even though our running example has a rather small number of clauses, \comus needs to combine an increasingly large number of literals and clauses in order to find an OCUS. 
-	In the next section, we investigate how to grow a given satisfiable subset efficiently to reduce the size of the corresponding correction subset. 
+	Next, we investigate how to grow a given satisfiable subset efficiently in order to reduce the size of the corresponding correction subset. By imposing stronger restrictions on the hitting sets, we will be able to reduce the number of sets-to-hit.
 	
 	\subsection{Computing correction subsets}\label{sec:computing-correction-subsets}
 %	\emilio{Moved the correction subset enumeration section here.}
 	
 	The \corrsubsets procedure generates a set of correction subsets starting from a given satisfiable subset $\subsetT$ of an unsatisfiable formula $\formula$. 
-	However, calling \onestepo on our running example has shown that a naive `No grow'
+	However, calling \onestepo on our running example has shown that a naive `No grow':
 	\begin{equation}\label{corrsubsets-no-grow}
 		\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \subsetT \}
 	\end{equation}
@@ -707,8 +706,9 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	\begin{equation}\label{corrsubsets-with-grow}
 		\corrsubsets(\subsetT, \formula) \gets \{\formula \setminus  \grow(\subsetT, \formula) \}
 	\end{equation}
+%	We first explore how to grow satisfiable subsets using observations from the 
 	
-	\subsubsection{Growing satisfiable subsets using domain-specific information.} \label{para:domainspecificgrow}
+	\subsubsection{Growing satisfiable subsets using domain-specific information} \label{para:domainspecificgrow}
 	
 	The goal of the \grow phase of the \corrsubsets procedure (see \cref{corrsubsets-with-grow}) is to turn $\m{S}$ into a larger satisfiable subformula of $\formula$. 
 	The effect of this is that the complement added to \setstohit will be smaller, and hence imposes stronger restrictions on the hitting sets.
@@ -731,6 +731,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	
 	Since the restrictions on the third type of elements of $\formula$ are already strong, it makes sense %to use the \grow{($\m{S}$, $\F$)} procedure 
 	to search for a \emph{maximal} satisfiable subset of $\formulac\cup I$ with hard constraints that $\m{S}$ should be satisfied, using a call to an efficient (partial) \maxsat~solver. 
+	
 	Furthermore, we can initialize this call as well as any call to a \sat solver with the polarities for all variables set to the value they take in $\Iend$. 
 	
 	We evaluate different grow strategies as part of the $\corrsubsets(\m{S}, \formula)$ procedure in the experiments section including:
@@ -743,9 +744,10 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	In the experiments, we omit the `No grow' procedure where the complement $\{\formula \setminus \m{S}\}$ is returned by \corrsubsets. Not growing produces large sets-to-hit as seen in \cref{tab:example-explanation-generation-not-incremental} of the running example.
 	Additional experiments comparing the effectiveness of the naive `No grow' to growing with the \sat solver procedure shows that `No grow' leads to significantly longer \comus runtimes.
 
+	Finally, \cref{tab:example-explanation-generation-not-incremental} showed that \comus has to combine an increasingly large number of literals and clauses. In the next section, we analyse whether we can break the more general OCUS problem into smaller subproblems, similar to \cref{alg:oneStep}, where instead of searching for a MUS, we search for an \emph{Optimal Unsatisfiable Subset} (OUS) and select the best one.
 
-	Next, we start from these observations to investigate how to speed-up explanation generation with \comus. In \cref{sec:efficient-ocus}, we analyze how to take advantage of \emph{domain-specific information} in the \emph{\corrsubsets} procedure to compute better sets-to-hit, as well as which computed data structures can be re-used throughout explanation calls.
-%	Preliminary experiments show that most of the time is spent searching for hitting sets over an increasingly large collection of sets-to hit.
+%	Next, we start from these observations to investigate how to speed-up explanation generation with \comus. In \cref{sec:efficient-ocus}, we analyze how to take advantage of \emph{domain-specific information} in the \emph{\corrsubsets} procedure to compute better sets-to-hit, as well as which computed data structures can be re-used throughout explanation calls.
+%%	Preliminary experiments show that most of the time is spent searching for hitting sets over an increasingly large collection of sets-to hit.
 	
 	% such as 
 	%	Can we quickly figure out which literal will most likely (not) be a good candidate explanation step? 
@@ -765,7 +767,7 @@ The main reason for this is that the hitting set solver needs to consider an inc
 %\end{enumerate}
 %}()
 %\newtext{}
-In this section, we analyze if instead of working OCUS-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal by replacing a MUS call to OUS in \cref{alg:oneStep}.
+In this section, we first analyze if instead of working OCUS-based, we can split up the \comus-call into individual calls that compute Optimal Unsatisfiable Subsets (OUSs) for every literal by replacing a MUS call to OUS in \cref{alg:oneStep}.
 
 \subsection{Bounded OCUS}
 
@@ -920,7 +922,6 @@ Therefore, we assign an infinite weight in the cost function to all literals of 
 In this way, the MIP solver will automatically maintain and reuse previously found sets-to-hit in each of its computations. 
 
 Next, we investigate how to speed-up the generation of an OCUS using an appropriate \corrsubsets method when domain-specific information is available. Through our running example we will look at the impact of incremetality and a better \corrsubsets procedure.
-
 
 
 \subsubsection{Efficiently generating an explanation sequence with Incremental OCUS} \label{sec:ocus-incr}
@@ -1405,29 +1406,25 @@ In the case of \emph{\comusbound}, the time to the first explanation reflects ho
 		\caption{\textbf{Timed-out instances:} \emph{$\#$none} the number of instances where no explanations step was found before the time out, \emph{$\#$timed-out} the number of instances that timed out, $\%$ average percentage of literals explained.}
 		\label{tab:timed-out-instances-indiv-explanations-all}
 	\end{table}
-The next step is to find out what causes instances to timeout before the full explanation sequence was generated with \emph{Multi}-\subsetmaxsat~for all \comus configurations. 
+	
+The next step is to find out what causes instances to timeout before the full explanation sequence has been generated with \emph{Multi}-\subsetmaxsat~for all \comus configurations. 
 
-\paragraph{Timed-out instances} Most of the instances that timed out had on average more literals to explain than the non-timed-out ones. \cref{tab:timed-out-instances-indiv-explanations-all} provides some further context on the timed-out instances: 
-	\begin{itemize}
-		\item \emph{$\#$timed-out} is the number of instances that timed out.
-		\item \emph{$\#$none} corresponds to the number of instances where no explanation step was generated.
-%		\item \emph{\#no expl} represents the ratio on the number instances where no explanation was found before the timeout over the number of timed-out instances,  \bart{ratio on the number of instances over the number of timed-out instances. Wow! Can you simplify? ONE column $\#TO$ number of timedout instances. $\#$none column with number of instances where no explanation STEP was generated. Check this description (and rest of paper?) for consistent use of explanation STEP when referring to a single step} 
-%		\item \emph{$\overline{t_1}$} represents the time to a first explanation step, 
-		\item 	$\mathbf{\overline{ \raisebox{0pt}[1.2\height]{{\text{\small \%}} expl}}}$ is the average percentage of literals explained before the instance timed out.
-	\end{itemize}
-In \cref{fig:timedout-instances} we report the average time taken to generate a first explaining step ($\mathbf{\overline{t_{1}}}$)  for all configurations
+\paragraph{Timed out instances} Most of the instances that timed out had on average more literals to explain than those that did not.
+\cref{tab:timed-out-instances-indiv-explanations-all} provides more context about the timed-out instances: 
+\begin{itemize}
+	\item \emph{$\#$timed-out} is the number of instances that have timed out.
+	\item \emph{$\#$none} is to the number of instances where no explanation step was generated.
+	\item 	$\mathbf{\overline{ \raisebox{0pt}[1.2\height]{{\text{\small \%}} expl}}}$ is the average percentage of literals that were explained before the instance timed out.
+\end{itemize}
+In \cref{fig:timedout-instances} we specifically report the average time taken to generate a first explaining step ($\mathbf{\overline{t_{1}}}$) for all configurations. 
 
 Note from \cref{tab:timed-out-instances-indiv-explanations-all} that \comus{(+Incr.)}~has the smallest number of instances where no explanation was found. Unlike \comusbound{(+Incr.)}~and \comussplit{(+Incr.)}, \comus{(+Incr.)}~does not need to iterate over the many literals to explain in order to find a good bound on the cost of the next best explanation step. 
 Furthermore, we observe that \comus{(+Incr.)}~is the fastest at generating a first explanation step.
 
 Similar to the observations in \cref{sec:Instance-level speed-up with incrementality}, incrementality has a high impact on the time to explain an instance for all \comus configurations. 
-Adding incrementality to all \comus configurations will result in more instances with no explanation found than non-incremental. 
+Adding incrementality to all \comus configurations results in more instances with no explanation found than without incrementality. 
 However, incrementality helps to explain more literals, except for \comusbound, which first requires computing many OUSs, which are not guaranteed to be the next optimal explanation step. Second, \comusbound depends on a good ordering of the literals, which can change at any explanation step in the sequence.
 A similar trend can be seen in \cref{fig:timedout-instances}, where the introduction of incrementality increases the time to generate a first explanation step.
-
-
-
-% is highly dependent on the ordering of the literals it tries to explain and 
 
 \begin{figure}[!h]
 	\centering
@@ -1436,17 +1433,8 @@ A similar trend can be seen in \cref{fig:timedout-instances}, where the introduc
 	\label{fig:timedout-instances}
 \end{figure}
 
-
-
-%\comusbound{(+Incr.)}.
-
-
-
-
-To conclude, for an interactive context where the user asks for an immediate explanation, \comussplit will be the fastest at computing the explanations. 
-If the user is exploring the sequence of explanations and repeatedly asks for additional explanations, \ousbiterincr will be able to capitalize on incrementality to bring the average time close to real-time.
-
-%}
+To conclude, for an interactive context where the user asks for an immediate explanation, \comussplit will be the fastest to compute explanations. 
+If the user explores the sequence of explanations and repeatedly asks for additional explanations, \ousbiterincr will be able to capitalise on incrementality to bring the average time close to real time.
 
 \section{Conclusion and future work}
 
@@ -1461,15 +1449,14 @@ An open question in an interactive setting is whether there are other methods of
 
 To efficiently generate the \emph{whole} explanation sequence, we introduced \emph{incrementality}, which allows the reuse of computed information, i.e. satisfiable subsets remain valid from one explanation call to another.
 In the case of \comus for explanation sequence generation, where the underlying hitting set solver is MIP-based, we instantiate the MIP solver once for all explanation steps and keep track of computed sets-to-hit.
-However, MIP solvers do not natively support non-linear cost functions. T
-herefore, the current implementation of \comus may not be able to fully capture the complexity of what constitutes a good explanation due to the limitations of the cost functions we can encode.
+However, MIP solvers do not natively support non-linear cost functions. The current implementation of \comus may therefore not be able to fully capture the complexity of what constitutes a good explanation due to the limitations of the cost functions we can encode.
 Furthermore, the question of which interpretability metric to use to characterise understandable explanations remains open.  
 
 The concept of (incremental) \comus is not limited to explaining satisfaction problems. We are also interested in exploring other applications, such as configuration and machine learning, where it is necessary to compute not only minimal but also optimal unsatisfiable subsets.
 For example, a potential avenue for future work is how these explanation generation methods map to a constraint optimisation setting where branching or searching is required to solve the problem at hand. 
 The synergies of our approach with the more general problem of QMaxSAT \cite{DBLP:journals/constraints/IgnatievJM16} is another open question. 
 
-Finally, for interactive settings such as interactive tutoring systems, we are able to generate explanations in near real time (less than a second) using \comussplit. A further question is how to distribute the computation across multiple cores to parallelize the computation to further speed up the generation of explanations.
+Finally, for interactive settings such as interactive tutoring systems, we are able to generate explanations in near real time (less than a second) using \comussplit. Another question is how to distribute the computation across multiple cores to parallelize the computation to further speed up the generation of explanations.
 
 \acks{This research received partial funding from the Flemish Government (AI Research Program); the FWO Flanders project G070521N; and funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program (Grant No. 101002802, CHAT-Opt).}
 

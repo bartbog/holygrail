@@ -19,7 +19,11 @@ We have added a note on this in the Background section.
 > If not, please explain why. 
 > This type of additional experiments would serve also to differentiate the current paper from its predecessors.
 
-The focus of this work is on investigating methods for efficiently computing OCUSs rather than about applications of the explanation framework. We prefer to focus on a single application for simplicity of presentation.
+Indeed the technique for explaining the solution of a CSP is independent of the actual CSP considered since we focus on explaining the maximal consequence. 
+In the case of puzzles, this amounts to explaining unique solutions. 
+For scheduling problems with non-unique solutions, our technique explains up to a point where a branching decision has to be made. 
+Since the focus of this work is on investigating methods for efficiently computing OCUSs rather than on about applications of the explanation framework. 
+We prefer to focus on a single application for simplicity of presentation.
 
 > 3. The comparison summarized in Fig. 1 involves Alg. 2 (a previous work from the same authors) and Alg. 3 (the new proposed approach). 
 > Wouldn't it be possible to extend the comparison to another approach from the literature, namely  ("Using small muses to explain how to solve pen and paper puzzles")?
@@ -34,25 +38,25 @@ We have added a note to this effect in 8.1 Explanation quality, where Fig. 1 is 
 > - [Bendik and Cerna, 2020a] Jaroslav Bendik and Ivana Cerna. MUST: minimal unsatisfiable subsets enumeration tool. In Proceedings TACAS 2020, pages 135–152, 2020.
 > - [Bendik and Cerna, 2020b] Jaroslav Bendik and Ivanai Cerna. Replication-guided enumeration of minimal unsatisfiable subsets. In Proc. of CP, pages 37–54, 2020.
 
-We thank the reviewer for the pointers and now discuss these 2 references in the related work section.
+We thank the reviewer for the pointers. 
+Indeed these 2 references propose new techniques for efficiently enumerating Minimal Unsatisfiable Subsets. 
+We discuss these 2 references in the related work section.
 
 > I'm wondering as well whether it would be possible to make a comparison between these approaches and the method proposed in this paper. 
 > A comparison with other methods from the state-of-the-art (or at least a justification about why it is not possible to have one) would greatly improve the strength of the paper.
 
-Similar to the reviewer's previous comment. This paper is about efficient computation of optimal MUSs and that there are many approaches to generating non-optimal but small ones. We compare against one of those.
+Similar to the reviewer's previous comment. 
+This paper is about efficient computation of optimal MUSs and that there are many approaches to generating non-optimal but small ones.
+We compare against one of those, namely a deletion-based MUS extractor.
+
+	 Joao Marques-Silva. Minimal Unsatisfiability: Models, Algorithms and Applications. ISMVL 2010. pp. 9-14
 
 > Minor comments:
 > - "is naturally obtained by doing am OCUS call with as constraint" --> "is naturally obtained by doing an OCUS call with as constraint"
-
-Thanks! Fixed.
-
 > - "as well as (3) it’s corresponding cost" --> "as well as (3) its corresponding cost"
-
-Thanks! Fixed.
-
 > - "Since the restriction on the third type of elements of F are already strong" --> "Since the restriction on the third type of elements of F is already strong" (or "Since the restrictions on the third type of elements of F are already strong"
 
-Thanks! Fixed.
+Thanks, fixed.
 
 ------------------------------------------------------
 > Reviewer H:
@@ -67,8 +71,9 @@ Thanks! Fixed.
 > If there are references documenting/explaining this behavior, I would
 > appreciate seeing them cited here.
 
-We have further clarified this in the paper by adding an experiment comparing initialising a solver at each iteration and keeping the MIP solver warm throughout the OCUS iterations.
-Our observations are that keeping the solver warm is indeed beneficial for the overall runtime. This is consistent with previous findings in the context of MaxSAT with hitting set duality, where a MIP hitting set solver is called incrementally rather than being reinitialised at each iteration:
+We have further clarified this in the paper by adding an experiment comparing initialising a solver at each iteration and reusing the same MIP solver throughout the OCUS iterations.
+Our observations are that reusing the same MIP solver throughout the OCUS iterations is indeed beneficial for the overall runtime.
+This is consistent with previous findings in the context of MaxSAT with hitting set duality, where a MIP hitting set solver is called incrementally rather than being reinitialised at each iteration:
 
 Davies, Jessica, and Fahiem Bacchus. "Exploiting the power of MIP solvers in MAXSAT." Theory and Applications of Satisfiability Testing–SAT 2013: 16th International Conference, Helsinki, Finland, July 8-12, 2013. Proceedings 16. Springer Berlin Heidelberg, 2013.
 
@@ -105,8 +110,10 @@ We have added introductions at the end and beginning of sections to improve the 
 > This paper is specific to explaining puzzles, or at least CSPs with a
 > unique solution. Therefore, the title is at least slightly misleading.
 
-We disagree with this assessment. Our work focuses on algorithmic aspects to efficiently generate explanations. 
-While our experiments focus on CSPs with a unique solution, this is by no means the only possible application: our techniques can generate explanations for *all consequences* of *any CSP*. In fact, in work currently under review, we use such explanations to explain optimality in an optimisation problem and unsatisfiability of decision problems. 
+
+Our work focuses on algorithmic aspects to efficiently generate explanations. 
+While our experiments focus on CSPs with a unique solution, but this is by no means the only possible application: our techniques can generate explanations for *all consequences* of *any CSP*. 
+In fact, in work currently under review, we use such explanations to explain optimality in an optimisation problem and unsatisfiability of decision problems. 
 
 
 > I do not understand why the _Split variant is faster. According to the
@@ -136,7 +143,7 @@ We have changed the ordering to present the 'grow' method before introducing it.
 > pg 4, interpretations: the sentence stating "An interpretation calI
 > satisfies..." should go before "A model of F ..."
 
-Thanks! Fixed.
+Thanks, fixed.
 
 > maximal consequence: this denotes *all* consequences that hold in all
 > models, right? Also, this does not seem to have been used elsewhere,
@@ -147,7 +154,7 @@ The propagate call computes the maximal consequence. We have clarified this in t
 > Algorithm 1: Unless I misunderstood the entire paper, the first line	
 > should be 'solve', not 'propagate'.
 
-For CSPs that have a unique solution, the reviewer is right to point out that this call could be replaced by solve (in fact, solve and our maximal propagation would return the same thing in this case). However, as explained above, our techniques work in higher generality, and in the more general setting this should be propagated. 
+For CSPs that have a unique solution, the reviewer is right to point out that this call could be replaced by solve (in fact, solve and our maximal propagation would return the same thing in this case). However, as explained above, our techniques work to problems that do not have a unique solution, where we explain up to the maximal consequence, and in the more general setting this should be propagated. 
 
 > page 19 "Since the restriction...": This sentence is too hand-wavy for
 > me. Also maximal->maximum. (There are a few more instances of such
@@ -162,6 +169,6 @@ We have also generally polished up the presentation of the paper to improve the 
 > kind this time. Glucose tends to be much better for MUS applications,
 > and probably lingeling too.
 
-Thanks! We will keep this in mind for future applications. 
+We also did experiments with glucose and lingeling (as available in PySAT) and saw no significant difference in runtime on our experiments.
 
 ------------------------------------------------------

@@ -732,7 +732,7 @@ At \cref{alg:oneStepOCUS:ocus-call} of \onestepo, $\m{F}$ is constructed, consis
 	\begin{description}
 		\item[\sat] extracts a satisfying model from the \sat solver to turn $\m{S}$ into a larger satisfiable subset. This grow will be considered the baseline for comparing the other grow-variants.
 		\item[\subsetmaxsat] extends the satisfiable subset computed by \sat by looping over every remaining clause $c \in \formula \setminus \m{S}$.  If $\m{S} \cup \{c\}$ is satisfiable, then clause $c$ is added to $\m{S}$ as well as any other clause from $c' \in \formula \setminus \m{S} \cup \{c\}$ that is satisfied in the model found by the SAT solver. 
-		\item[\domspecmaxsat] grows satisfiable subset $\m{S}$ with a \maxsat~solver using only the previously derived facts and the original constraints. % The \maxsat-based \grow uses only the previously derived facts and the original constraints.
+		\item[\domspecmaxsat] grows a satisfiable subset $\m{S}$ with a \maxsat~solver using only the previously derived facts and the original constraints. % The \maxsat-based \grow uses only the previously derived facts and the original constraints.
 		\item[\maxsatfull] grows satisfiable subset $\m{S}$ with a \maxsat~solver using the full unsatisfiable formula $\mathcal{F}$.
 	\end{description} 
 	In the experiments, we omit the `No grow' procedure where the complement $\{\formula \setminus \m{S}\}$ is returned by \corrsubsets. Not growing produces large sets-to-hit as seen in \cref{tab:example-explanation-generation-not-incremental} of the running example.

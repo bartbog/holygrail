@@ -229,13 +229,12 @@ The main focus of our work lies in providing explainable agency \cite{langley201
 Advances in solving, as well as hardware improvements, allow for such systems now easily consider millions of alternatives in short amounts of time.
 Because of this complexity, the question arises of how to generate human-interpretable explanations of the conclusions they make. 
 Explanations have seen a rejuvenation in various subdomains of constraint reasoning \cite{fox2017explainable,vcyras2019argumentation,chakraborti2017plan,ecai/BogaertsGCG20}.
-In the CP and SAT communities, there has been a strong focus on explaining \textit{unsatisfiable} problem instances~\cite{junker2001quickxplain}, for instance by extracting a minimal unsatisfiable subset (MUSs) from the problem constraints \cite{DBLP:journals/jar/LiffitonS08}. %MUSs help in explaining which part of the problem constraints makes the instance unsolvable.
+In the CP and SAT communities, there has been a strong focus on explaining \textit{unsatisfiable} problem instances~\cite{junker2001quickxplain}, for instance by extracting a minimal unsatisfiable subset (MUSs) from the problem constraints \cite{DBLP:journals/jar/LiffitonS08}. 
 
 We recently introduced \emph{step-wise explanations} \cite{ecai/BogaertsGCG20} for explaining the solution of satisfiable instances exploiting a one-to-one correspondence between so-called non-redundant explanations and MUSs of a derived program. The focus of \citet{ecai/BogaertsGCG20} has been on explaining Zebra puzzles; building on this work, \citet{schotten} investigated interpretable explanations using MUSs for a wide range of puzzles.  
 Our current work is motivated by a concrete algorithmic need: to generate these explanations \emph{efficiently}, we need algorithms that can find MUSs that are optimal with respect to a given cost function, where the cost function approximates human-understandability of the corresponding explanation step. 
 
-The closest related work can be found in the literature on generating or enumerating MUSs %\cite{conf/sat/LynceM04,liffiton2016fast}. 
-\cite{conf/sat/LynceM04,bacchus2016finding,bacchus2015using,liffiton2016fast}. 
+The closest related work can be found in the literature on generating or enumerating MUSs \cite{conf/sat/LynceM04,bacchus2016finding,bacchus2015using,liffiton2016fast}. 
 %\emilio{I don't know to which extent these references need to be added, so I added a few extra from bendik and cerna's references and one of 2 of their paper citations as well. The first is about their tool (not added), and the second one about a new enumeration method.}
 Different techniques are employed to find MUSs include manipulating resolution proofs produced by SAT solvers \cite{goldberg,DBLP:journals/fmsd/GershmanKS08,DBLP:conf/sat/DershowitzHN06}, incremental solving to enable/disable clauses and branch-and-bound search \cite{DBLP:conf/dac/OhMASM04}, by BDD-manipulation methods \cite{huang}. 
 Some methods rely on using \emph{seed-shrink} algorithms \cite{bendik2020must,bendik2020replication} that repeatedly start from unsatisfiable \emph{seed} (an unsatisfiable core), and \emph{shrink} the seed to a MUS.

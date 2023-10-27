@@ -558,22 +558,18 @@ The key novelty is the ability to add structural constraints to the hitting set 
 The algorithm alternates calls to a hitting set solver with calls to a \sat oracle on a subset $\m{S}$ of $\formula$. 
 In case the \sat oracle returns true, i.e., subset $\m{S}$ is satisfiable, $\m{K}$ a set of subsets of $F\setminus S$ is returned by \corrsubsets and added to the collection of sets-to-hit \setstohit. 
 
-%\emilio{Should the differences with the SMUS paper be highlighted more in a seperate paragraph like here  ?}
 \paragraph{Smallest MUS of \citet{ignatiev2015smallest}}
-The key differences with the SMUS algorithm are the calls to a \cohs solver (resp. \texttt{MinimumHS}) and the \corrsubsets (resp. \texttt{grow}) procedure.
+The key differences with the SMUS algorithm are the calls to a \cohs solver (resp.~\texttt{MinimumHS}) and the \corrsubsets (resp.~\texttt{grow}) procedure.
 In the SMUS algorithm, the purpose of \texttt{grow} is to expand a satisfiable subset $\m{S}$ of $\m{F}$ further such that its complement, a correction subset, is as small as possible.
 Shrinking the correction subset as a result of the \texttt{grow} finds stronger constraints on the sets-to-hit, since it restricts the choice on the clauses that need to be selected. 
 
-%\paragraph{\newtext{Correction Subset Enumeration}} 
 In our algorithm, we make use of the \corrsubsets procedure which returns a non-empty \emph{set} of correction subsets. 
 In the case of \comus, the calls for hitting sets will also take into account the cost ($f$), as well as the meta-level constraints ($p$); as such, it is not clear a priori which properties a good \corrsubsets function should have here.
 In \cref{sec:computing-correction-subsets}, we propose different domain-specific methods for enumerating multiple correction subsets. 
 
-For \emph{correctness} of the algorithm, all we need to know is that for a given satisfiable subset $\m{S}$, \corrsubsets returns a \emph{non-empty} set of correction subsets~$\m{K}$ where $\forall \ \m{C} \in \m{K} : \m{C} \subseteq (F \setminus S)$. %, such that of $\m{F}$ with $\m{S}\subseteq\m{S}'$.  \bart{Statement is missing: what are we proving?}
+For \emph{correctness} of the algorithm, all we need to know is that for a given satisfiable subset $\m{S}$, \corrsubsets returns a \emph{non-empty} set of correction subsets~$\m{K}$ where $\forall \ \m{C} \in \m{K} : \m{C} \subseteq (F \setminus S)$.
 At any given step, if $\m{S}$ is satisfiable, $\setstohit$ is guaranteed to grow, since a non-empty set of correction subsets $\m{K}$ is returned that is disjoint from $\m{S}$. Therefore $\m{K}$ cannot be present in $\setstohit$. 
-%	Soundness of the \comus algorithm follows from the fact that the algorithm
-\emph{Completeness} and \emph{soundness} of the algorithm follow from the fact that the algorithm is guaranteed to terminate since there is a countable number of correction subsets of $\formula$, and from %the fact that \corrsubsets returns a \emph{non-empty} all sets returned by to \setstohit are non-empty \bart{Are all sets non-empty? Probably yes, but is the clue not that the set returned by \corrsubsets is non-empty?} correction subsets, and 
-\cref{thm:soundcomplete}, which states that what is returned is indeed a solution and that a solution will be found if it exists.  
+\emph{Completeness} and \emph{soundness} of the algorithm follow from the fact that the algorithm is guaranteed to terminate since there is a countable number of correction subsets of $\formula$, and from \cref{thm:soundcomplete}, which states that what is returned is indeed a solution and that a solution will be found if it exists.  
 
 \begin{theorem}\label{thm:soundcomplete}
 	Let $\m{H}$ be a set of correction subsets of \formula. 

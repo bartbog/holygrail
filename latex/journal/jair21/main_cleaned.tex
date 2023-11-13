@@ -1077,7 +1077,7 @@ However, for more complicated $p$ constraints, this easily degrades into computi
 
 
 
-\subsubsection{Correction subsets enumeration with incremental MIP} If \cref{alg:corr-subsets-grow-with-sat} is directly applied to the MIP incremental \comus variant that considers the whole formula $\formulac\land \textbf{\Iend} \land \overline{(\Iend\setminus I)}$, both the literal-to-explain and its negation will be present at line~\ref{alg:corr-subsets-grow-with-sat:mapping} leading to UNSAT. In a given explanation step, only the base constraints $\formulac$, the current interpretation $I$, and the literals of $\overline{(\Iend\setminus I)}$ can be hit by the hitting set solver.  
+\subsubsection{Correction Subsets Enumeration with Incremental MIP} If \cref{alg:corr-subsets-grow-with-sat} is directly applied to the MIP incremental \comus variant that considers the whole formula $\formulac\land \textbf{\Iend} \land \overline{(\Iend\setminus I)}$, both the literal-to-explain and its negation will be present at line~\ref{alg:corr-subsets-grow-with-sat:mapping} leading to UNSAT. In a given explanation step, only the base constraints $\formulac$, the current interpretation $I$, and the literals of $\overline{(\Iend\setminus I)}$ can be hit by the hitting set solver.  
 Therefore, we project subset $\m{S'}$ onto the base constraints, the current interpretation, and the negated literals to explain. This extra step is executed right after line~\ref{alg:corr-subsets-grow-with-sat:mapping} of \cref{alg:corr-subsets-grow-with-sat}:
 \[ \m{S}' \gets \m{S}'  \cap (\formulac \cup I \cup \overline{\Iend \setminus I}) \]
 By incorporating \emph{explanation-specific} information, we are able to enumerate extra correction subsets that are $p$-disjoint.

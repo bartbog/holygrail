@@ -662,64 +662,6 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 \end{frame}		
 
 
-\newcommand\onestepo{\ensuremath{\call{explain-One-Step-ocus}}\xspace}
-\begin{frame}{OCUS-Based explanation generation}
-	
-	\hspace{0.3\textwidth}
-%	\begin{minipage}{0.6\textwidth}
-		\begin{algorithm}[H]
-			$\mathtt{expl}_{best} \gets \mathit{nil}$\;
-			\For{\color{black}   {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $\in$ to\_explain }{
-				
-							$\mathtt{expl} \gets \call{MUS}{(C \land E \land \neg n)}$\;
-				\uIf{\color{black} $f(\mathtt{expl})<f(\mathtt{expl}_{best})$}{
-					$\mathtt{expl}_{best} \gets \mathtt{expl}$\;
-				}
-			}
-			\Return{\color{black}$\mathtt{expl}_{best}$} 
-			  \caption{explain\_mus(C, E, f, to\_explain)}
-			\label{alg:mus-explain}
-		\end{algorithm}
-%	\end{minipage} 
-\pause
-	
-	\[\downarrow\]
-	
-	
-	\hspace{0.09\textwidth} 
-%	\begin{minipage}{0.9\textwidth}				
-		\begin{algorithm}[H]
-			\DontPrintSemicolon
-			$p \leftarrow$ \texttt{exactly-one}$(\{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ \in$ to\_explain\}$)$\;
-			\Return{\Large $\emph{\mathtt{{OCUS}}} ($}{\large \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}} $\wedge \{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ \in $ to\_explain$\}, \emph{\mathbf{f}}, \emph{\mathbf{p}})$ } \;
-			%					$\call{OCUS}(S \wedge E \wedge \{\lnot n \ | \ n \in \LitsToExplain\}, \emph{f, p})$\;
-			  \caption{explain\_ocus(C, E, f, to\_explain)}
-			\label{alg:mus-explain}
-		\end{algorithm}
-%	\end{minipage}
-%	
-	
-\end{frame}
-
-
-%			\section{An OCUS algorithm: A hitting set-based algorithm}
-%
-%						\begin{frame}{Background and notation}
-	%				\framesubtitle{Minimum Correction Subset vs Satisfiable Subsets}
-	%				
-	%				\only<1->{ Consider unsatisfiable  CNF $\formula$ over atoms $x_1, x_2$:}
-	%				\only<2>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 \qquad c_3 := \lnot x_2  \qquad  c_4 := x_1\]}
-	%				
-	%				\only<3>{\[ \emph{c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 }  {\color{blue}\qquad c_3 := \lnot x_2  \qquad  c_4 := x_1}\]}
-	%				
-	%				\only<4>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2  \qquad c_3 := \lnot x_2  \qquad  \emph{   c_4 := x_1} \]}
-	%				\only<3->{	\begin{definition}
-			%						A set $C \subseteq \formula $ is a \only<3>{\emph{correction subset}}\only<4->{correction subset} of $\formula$ if \only<3>{{\color{blue} $ \formula \setminus \subsetT$}}\only<4->{ $ \formula \setminus \subsetT$} is satisfiable, a.k.a. {\only<3>{\color{blue}} satisfiable subset.} \\
-			%						\only<4->{A correction set $\subsetT$ is a \emph{minimum correction subset} if no strict subset $\subsetT' \subset \subsetT$ is also a correction set.}
-			%				\end{definition} }
-	%			\end{frame}
-
-
 
 
 \begin{frame}{An OCUS algorithm: A hitting set-based algorithm}

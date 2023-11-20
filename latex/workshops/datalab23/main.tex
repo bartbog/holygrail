@@ -1,0 +1,1040 @@
+%\documentclass[handout]{beamer}
+\documentclass{beamer}
+\usepackage[ruled,noend]{algorithm2e}
+\usepackage{natbib}
+\usepackage{layouts}
+%\usepackage{enumitem}
+%\usepackage[dvipsnames]{xcolor}
+\definecolor{vuborange}{rgb}{1.0,0.40,0.0}
+\definecolor{forestgreen}{rgb}{0.13, 0.55, 0.13}
+\usetheme{Boadilla}
+\usepackage{color,soul}
+\usepackage{xcolor}
+\usepackage{adjustbox}
+\usepackage{amsmath,amssymb}
+\usepackage{tikzsymbols}
+\usepackage{booktabs}
+\usepackage{calc}
+\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{tikz-qtree}
+\usepackage[framemethod=tikz]{mdframed}
+
+
+
+\definecolor{mycolor}{rgb}{0.122, 0.435, 0.698}
+%\newcommand\citet[1]{\citeauthor{#1}~\citeyear{#1}}
+\usepackage[bordercolor=white,backgroundcolor=gray!30,linecolor=black,colorinlistoftodos]{todonotes}
+\newcommand{\rework}[1]{%
+	\todo[color=yellow,inline]{Rework: {#1}}%
+}
+
+\usetikzlibrary{shapes.geometric, arrows}
+
+\title{Toward human-interpretable explanations of CSPs using Machine Learning}
+\institute[shortinst]
+{\inst{1} DataLab, Vrije Universiteit Brussel, Belgium \\ % Your institution for the title page
+	\inst{2} DTAI, KULeuven, Belgium \\ % Your institution for the title page
+	\inst{1}\{firstname.lastname\}@vub.be, \inst{2}\{firstname.lastname\}@kuleuven.be
+}
+\date{DTAI Seminar 2023}
+\author{\underline{Emilio Gamba}\inst{1, 2} \and Ignace Bleukx \inst{2} \and  Jo Devriendt\inst{2} \and Dimos Tsouros\inst{2} \and  Bart Bogaerts\inst{1} \and   Tias Guns\inst{1,2}}
+
+\newcommand\hlyellow[1]{\hl{ {\sethlcolor{yellow}#1}}}
+\newcommand\hlgreen[1]{\sethlcolor{green}\hl{#1}}
+
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=2cm, minimum height=0.5cm,text centered, draw=black]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
+\tikzstyle{decision} = [diamond, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
+
+\newcommand\m[1]{\ensuremath{\mathcal{#1}}\xspace}
+\newcommand\allconstraints{\m{T_P}}
+\newcommand\theory{\ensuremath{\m{F} }\xspace}
+\newcommand\formula{\ensuremath{\m{F} }\xspace}
+\newcommand\formulac{\ensuremath{\m{C} }\xspace}
+\renewcommand\emph[1]{{\color{vuborange}#1}}
+\newcommand\Iend{\m{I_{\mathit{end}}}}
+\newcommand\Ipartial{\m{I}}
+\newcommand\factexpl{fact\xspace}
+\newcommand\LitsToExplain{DigitToExplain}
+
+\newcommand\nat{\m{\mathbb{N}}}
+\newcommand\subsetT{\m{\mathcal{S}}}
+\newcommand\ltrue{\m{\textbf{t}}}
+\newcommand\lfalse{\m{\textbf{f}}}
+\newcommand\call[1]{\m{\textsc{#1}}}
+\newcommand\onestep{\call{OneStep}}
+
+\newcommand\muses[1]{\textsc{mus}s(\m{#1})}
+\newcommand\mcses[1]{\textsc{mcs}s(\m{#1})}
+%\begin{frame}{How to find OCUSs?}
+%
+%	
+%\end{frame}
+
+\newcommand\setstohit{\m{\mathcal{H}}}
+\newcommand\grow{\call{Grow}}
+\newcommand\sat{\call{SAT}}
+\newcommand\corrss{\call{Correction-Subsets}}
+\newcommand\comus{\call{ocus}}
+\newcommand\cohs{\call{CondOptHittingSet}}
+% \renewcommand{\labelitemi}{$\triangleright$}
+\renewcommand{\thealgocf}{}
+
+
+\makeatletter
+\renewcommand{\@algocf@capt@plain}{above}% formerly {bottom}
+\setbeamertemplate{footline}
+{
+	\leavevmode%
+	\hbox{%
+		\begin{beamercolorbox}[wd=.2\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+			\usebeamerfont{author in head/foot}Emilio Gamba (VUB - KU Leuven)
+		\end{beamercolorbox}%
+		\begin{beamercolorbox}[wd=.5\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+			\usebeamerfont{title in head/foot}Step-wise explaining CSPs
+		\end{beamercolorbox}%
+		\begin{beamercolorbox}[wd=.3\paperwidth,ht=2.25ex,dp=1ex,center]{date in head/foot}%
+			\usebeamerfont{date in head/foot}DTAI Seminar 2023\hspace*{1em}
+			\insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
+	\end{beamercolorbox}}%
+	\vskip0pt%
+}
+\makeatother
+
+	\newmdenv[innerlinewidth=0.5pt, roundcorner=4pt,linecolor=mycolor,innerleftmargin=6pt,
+innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
+
+\begin{document}
+	
+	\begin{frame}
+		\maketitle
+		\begin{minipage}{0.45\textwidth}
+			\begin{flushleft}
+				\includegraphics[width=\textwidth]{template_vub/VUB-AI_RGB-1-800x223}
+			\end{flushleft}
+		\end{minipage}		\hfill
+	\begin{minipage}{0.15\textwidth}
+	
+	\includegraphics[width=\textwidth]{figures/DTAI_Logo_2}
+\end{minipage}
+\hfill
+	\begin{minipage}{0.15\textwidth}
+		
+		\includegraphics[width=0.7\textwidth]{figures/datalab_400x400.jpg}
+	\end{minipage}
+	\end{frame}
+	
+	
+%	\AtBeginSection[]
+%	{
+%		\begin{frame}
+%			\frametitle{Outline}
+%			\tableofcontents[currentsection]
+%		\end{frame}
+%	}
+%	
+%	\AtBeginSubsection[]
+%	{
+%		\begin{frame}
+%			\frametitle{Outline}
+%			\tableofcontents[currentsection,currentsubsection]
+%		\end{frame}
+%	}
+%	
+
+		\begin{frame}
+\tableofcontents
+	
+\end{frame}			
+	\begin{frame}
+		
+		\setlength{\textfloatsep}{0pt}
+		\frametitle{Examples of Constraint Satisfaction Problems\footnote{\tiny \url{https://blogs.sap.com/2022/05/25/sap-s-4hana-advanced-variant-configuration/}}}
+		\begin{minipage}[t]{0.45\textwidth}
+			\begin{figure}[h]
+				\includegraphics[width=0.9\textwidth]{figures/logic_puzzle.png}
+				\caption{\small Logic Grid Puzzle}
+			\end{figure}
+				\vspace{-8mm}
+			\begin{figure}[h]
+				\centering
+				\includegraphics[width=.5\textwidth]{figures/sudoku_steps/sudoku.jpg}
+				\caption{\small Sudoku}
+			\end{figure}
+		\end{minipage}
+		\hfill
+		\begin{minipage}[t]{0.52\textwidth}
+			\begin{figure}[h]
+				\includegraphics[width=0.9\textwidth]{figures/scheduling.png}
+				\caption{\small (Room) Scheduling Problem}
+			\end{figure}
+				\vspace{-8mm}
+			\begin{figure}[h]
+				\includegraphics[width=0.9\textwidth]{figures/car-configuraiton-problem.png}
+				\caption{\small (Car) configuration problems}
+			\end{figure}
+		\end{minipage}
+
+	\end{frame}
+	
+	\section{Motivation}
+\begin{frame}
+	\frametitle{Constraint Satisfaction Problems}
+	\framesubtitle{Solving}
+	
+	\begin{center}
+		\begin{tikzpicture}[node distance=1.5cm]
+			\node (problem) [startstop] {Problem};
+			\pause
+				\node (model) [startstop, below of=problem,align=center] {Model \\ (\emph{CPMpy})}; 
+			\draw [arrow] (problem) -- (model);			
+%			\node (Essence) [right of=model, xshift=1cm] {CPMpy \cite{CPMpy}}; 
+%			\node (cpmpy) [align=center, right of=model, xshift=3cm] 
+%			\node (Essence) [right of=model, xshift=1cm] {CPMpy \cite{CPMpy}}; 
+%			\draw [dashed] (model) -- (cpmpy);									
+			\pause
+			
+			\node (solve) [startstop, below of=model] {SOLVE};
+			\draw [arrow] (model) -- (solve); \pause
+			
+			\node  (modelerror) [startstop, below of=solve, align=center] {\color{red} No solution\\ \Sadey}; %todo: add smiley face sad
+			\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {unsat?} (modelerror); 			
+			\pause
+			\node  (human) [startstop, below of=modelerror, xshift=-1.5cm, align=center] {\color{red} Human-\\error?}; %todo: doodle human
+			\draw [dashed] (modelerror) --  (human); 
+			\pause
+			\node  (Infeasible) [startstop, below of=modelerror, xshift=1.5cm, align=center] {\color{red} Infeasible?}; 
+			\draw [dashed] (modelerror) --  (Infeasible); 
+
+		\end{tikzpicture}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Constraint Satisfaction Problems}
+	\framesubtitle{Solving}
+			\begin{minipage}{0.4\textwidth}
+		\begin{center}
+			\begin{tikzpicture}[node distance=1.5cm]
+				\node (problem) [startstop] {Problem}; 
+				
+				\node (model) [startstop, below of=problem,align=center] {Model \\ (\emph{CPMpy})}; 
+				\draw [arrow] (problem) -- (model);			
+				
+%				\node (cpmpy) [right of=model, xshift=0.75cm] {CPMpy}; 
+%				\draw [dashed] (model) -- (cpmpy);									
+				
+				\node (solve) [startstop, below of=model] {SOLVE};
+				\draw [arrow] (model) -- (solve); 
+			
+			\node (solve) [startstop, below of=model] {SOLVE};
+			\draw [arrow] (model) -- (solve); 
+
+			\node  (modelerror) [startstop, below of=solve, align=center] {\color{red} No solution\\ \Sadey}; %todo: add smiley face sad
+			\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {\textbf{unsat?}} (modelerror); 			
+			\node  (human) [startstop, below of=modelerror, xshift=-1.25cm, align=center] {\color{red} Human-\\error?}; %todo: doodle human
+			\draw [dashed] (modelerror) --  (human); 
+			\node  (Infeasible) [startstop, below of=modelerror, xshift=1.25cm, align=center] {\color{red} Infeasible?}; 
+			\draw [dashed] (modelerror) --  (Infeasible); 
+
+				\end{tikzpicture}
+		\end{center}
+	\end{minipage}
+	\begin{minipage}{0.59\textwidth}
+	\textbf{How do you explain UNSAT ? } \\	
+	\begin{figure}[H]
+		\centering
+	\includegraphics[width=0.3\textwidth]{figures/unsat/human.png}
+	\end{figure}
+
+%	\pause
+%	\begin{itemize}
+%		\item Extract a \emph{Minimum Unsatisfiable Subsets} (MUS) \pause
+%		\item Enumerate all \emph{Minimum Unsatisfiable Subsets} (MUS) \pause
+%		\item Extract a \emph{Minimum Correction Subsets} (MCS)
+%		\begin{itemize}
+%			\item \emph{Correct} your model by modifying a subset of the model constraints
+%		\end{itemize}
+%	\end{itemize}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}
+	\frametitle{How do I debug my model}
+	\framesubtitle{Explanations of unsatisfiability}
+	
+
+\begin{minipage}{0.7\textwidth}
+	\only<1>{\hfill}
+	 \only<2->{
+\begin{enumerate}
+	\item Identify conflicting constraints as an explanation  \footnotesize{(\cite{DBLP:journals/jar/LiffitonS08,ignatiev2015smallest}...)}
+	\begin{itemize}
+		\item[$\rightarrow$] Extract a \textbf{\textit{\color{red}Minimum Unsatisfiable Subset}} (\textbf{\textit{\color{red}MUS}}) 
+		\item[=] Irreducible Inconsistent Subsystem (ISS) 
+	\end{itemize}
+ \only<3->{\item Identify a \textbf{\textit{\color{forestgreen}Maximal Satisfiable Subset}} (\textbf{\textit{\color{forestgreen}MSS}}) {\footnotesize{(\cite{ignatiev2019rc2,davies2013exploiting,hansen1990algorithms}...)}}} 
+\only<4->{\item ``Correct'' the infeasibility in the constraints \footnotesize{(\cite{liffiton2013enumerating,senthooran2021human}...)}
+	\begin{itemize}
+	\item[$\rightarrow$] Extract a \textbf{\textit{\color{blue}Minimum Correction Subset}} (\textbf{\textit{\color{blue}MCS}})
+	\item[=] Complement of some \textbf{\textit{\color{forestgreen}MSS}}, removal/correction leads to a satisfiable subset
+\end{itemize}}
+\end{enumerate}}
+
+		\end{minipage}
+	\begin{minipage}{0.28\textwidth}
+	\only<1>{\includegraphics[width=\textwidth]{figures/unsat/model.png}}
+	\only<2>{\includegraphics[width=\textwidth]{figures/unsat/mus.png}}
+	\only<3>{\includegraphics[width=\textwidth]{figures/unsat/mss.png}}
+	\only<4>{\includegraphics[width=\textwidth]{figures/unsat/msc.png}}
+	\end{minipage}
+\vfill
+\end{frame}
+	
+	\section{How do I explain Satisfiability?}
+	\begin{frame}
+		\frametitle{Motivation - Explaining SAT problems}
+		\begin{minipage}{0.35\textwidth}
+			\begin{center}
+				\begin{tikzpicture}[node distance=1.5cm]
+					\node (problem) [startstop] {Problem}; 
+					
+				\node (model) [startstop, below of=problem,align=center] {Model \\ (\emph{CPMpy})}; 
+				\draw [arrow] (problem) -- (model);								
+					
+					\node (solve) [startstop, below of=model] {SOLVE};
+					\draw [arrow] (model) -- (solve); 
+					
+					%					\node  (modelerror) [startstop, below of=solve] {\color{red} modeling error?};
+					%					\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {unsat?} (modelerror); 
+					\node  (solution) [startstop, below of=solve,align=center]  {\color{green} solution\\ \Smiley};
+					%						\node  (solution) [startstop, below of=sat] {\color{green} solution};
+					%	
+					\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {\textbf{sat?}} (solution);
+					
+					%						\draw [arrow] (sat) -- (solution);			
+					
+				\end{tikzpicture}
+			\end{center}
+		\end{minipage}
+		\begin{minipage}{0.63\textwidth}
+			\pause
+			\textbf{How do I explain SAT ? }	\pause
+			\begin{itemize}
+				\item What is an \textbf{\emph{explanation}}? \pause
+				\item What is a \textbf{\emph{sequence of explanations}} ? \pause
+				\item How to find \emph{\textbf{good}} explanations ? 
+			\end{itemize}
+		\end{minipage}
+		
+	\end{frame}
+	
+	
+%	\begin{frame}
+%		\frametitle{Outline}
+%		\tableofcontents
+%	\end{frame}
+%	
+
+	\begin{frame}{What is an explanation ?}
+		
+			\begin{minipage}{0.7\textwidth}
+
+
+			\only<1>{
+				\begin{figure}[H]
+					\centering
+				\includegraphics[width=0.7\textwidth]{figures/sudoku_steps/sudoku-step1}
+				\end{figure}
+			}
+					\only<2>{
+				\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/sudoku_steps/sudoku-step2}
+\end{figure}
+		}
+				\only<3>{
+				\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/sudoku_steps/sudoku-step3}
+\end{figure}
+	}
+			\only<4>{
+				\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/sudoku_steps/sudoku-step4}
+\end{figure}
+}
+			\only<5>{
+				\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/sudoku_steps/sudoku-step5}
+\end{figure}
+}
+		\end{minipage}
+	\begin{minipage}{0.29\textwidth}
+	\begin{figure}[H]
+		\centering
+		\only<1-4>{
+		\includegraphics[width=0.9\textwidth]{figures/unsat/human.png}
+	}
+\only<5>{		\includegraphics[width=0.9\textwidth]{figures/unsat/happy_human.png}}
+	\end{figure}
+	
+	%	\pause
+	%	\begin{itemize}
+		%		\item Extract a \emph{Minimum Unsatisfiable Subsets} (MUS) \pause
+		%		\item Enumerate all \emph{Minimum Unsatisfiable Subsets} (MUS) \pause
+		%		\item Extract a \emph{Minimum Correction Subsets} (MCS)
+		%		\begin{itemize}
+			%			\item \emph{Correct} your model by modifying a subset of the model constraints
+			%		\end{itemize}
+		%	\end{itemize}
+\end{minipage}
+	\end{frame}
+
+\begin{frame}
+	\frametitle{Stepwise explanations for CSPs}
+	\frametitle{What is a \emph{sequence} of explanations ?}
+	
+	\begin{minipage}{0.28\textwidth}
+		\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step1}
+	\end{minipage}\hfill\pause
+	\begin{minipage}{0.045\textwidth}
+		\begin{center}
+			$\rightarrow$
+		\end{center}
+	\end{minipage}\hfill
+	\begin{minipage}{0.28\textwidth}
+		\includegraphics[width=\textwidth]{figures/sudoku_steps/sudoku3}
+	\end{minipage}\hfill
+	\begin{minipage}{0.045\textwidth}
+		\begin{center}
+			$\rightarrow$
+		\end{center}
+	\end{minipage}\hfill
+	\begin{minipage}{0.28\textwidth}
+		\begin{center}
+			$\dots$
+		\end{center}
+	\end{minipage}\\\vfill \pause
+	\begin{minipage}{0.28\textwidth}
+		\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-step3}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.43\textwidth}
+		\begin{center}
+			$\rightarrow$ \hspace{0.5cm}\dots \hspace{0.5cm}$\rightarrow$
+		\end{center}
+	\end{minipage}\hfill\pause
+	\begin{minipage}{0.28\textwidth}
+		\includegraphics[width=\textwidth]{figures/sudoku_sequence/sudoku-stepn}
+	\end{minipage}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Stepwise explanations for CSPs}
+	\framesubtitle{Goal}
+
+\textbf{Given}
+\begin{itemize}
+	\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_S_full}}] Constraints 
+	\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_E_full}}] Facts: variable assignments ($\mathtt{cells[4,1] = 2}$), domain-reduction $\mathtt{cells[4,1] \neq 3}$
+\end{itemize} \pause
+
+\vspace{10pt}
+\textbf{Goal:}
+\begin{itemize}
+	\item Explain the unique solution or the maximal consequence of a problem
+\end{itemize}
+\vspace{10pt}\pause
+\textbf{How?}
+\begin{itemize}
+	\item[$\triangleright$]  Explain step-by-step the solution of a Constraint Satisfaction Problem  
+	\item[$\triangleright$] Generate a \textit{\emph{sequence}} of \textit{\emph{simple}} explanations 
+	\item[$\triangleright$] Explain 1 fact at a time 
+\end{itemize}
+
+\end{frame}
+
+	\begin{frame}{Stepwise explanations for CSPs}
+		\framesubtitle{Explanation step - Formal definition}
+
+      	Let an \emph{EXPLANATION STEP} (\citet{bogaerts2020step})  be:
+      	\begin{center}
+      		{\Large {\includegraphics[width=15pt]{figures/explanation_steps/explanation_E}} $\wedge$ {\includegraphics[width=15pt]{figures/explanation_steps/explanation_S}} $\implies$ {\includegraphics[width=15pt]{figures/explanation_steps/explanation_N}}}
+      	\end{center}
+      	
+      \begin{minipage}{0.65\textwidth}
+      	\only<1>{\hfill}
+      	\only<2->{
+      	\begin{itemize}
+      		\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_E}}] A subset of previously derived facts \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} 
+      		\begin{itemize}
+				\item[\textit{(Sudoku)}] $V_{(4, 1)}  = 2, V_{(3, 3)}  = 2, V_{(7, 2)}  = 2,V_{(8, 2)}  = 2$
+      		\end{itemize}
+      	\only<3->{
+      		\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_S}}] A minimal subset of the problem constraints \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}
+      		\begin{itemize}
+				\item[\textit{(Sudoku)}] $\{\mathtt{alldifferent(cells[:, 1])}$, $\mathtt{alldifferent(cells[:, 3])}$, $\mathtt{alldifferent(cells[7:9, 1:3])}$ 
+			\end{itemize}}
+		\only<4->{
+      		\item[{\includegraphics[width=15pt]{figures/explanation_steps/explanation_N}}] A newly derived fact s.t.       		{ {\includegraphics[width=7pt]{figures/explanation_steps/explanation_E}} $\wedge$ {\includegraphics[width=7pt]{figures/explanation_steps/explanation_S}} $\implies$ {\includegraphics[width=7pt]{figures/explanation_steps/explanation_N}}}
+      	      	\begin{itemize}
+      		\item[\textit{(Sudoku)}]  $V_{(9, 2)}  = 2$
+      	\end{itemize}
+      }
+
+      	\end{itemize}}
+      \hfill
+      \end{minipage}
+        \begin{minipage}{0.3\textwidth}
+			\includegraphics[width=\textwidth]{figures/sudoku_steps/sudoku3}
+  \end{minipage}
+
+      	\vfill
+\only<5->{
+\begin{center}
+{\Large \textbf{How ?} \pause \large $\mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\wedge \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$ \textbf{is a valid explanation step}}
+\end{center}
+\vfill
+}
+
+	\end{frame}
+	
+
+	
+	\begin{frame}%{Use cases}
+		\begin{center}\Large
+			What are use-cases of step-wise explanations ? 
+		\end{center}
+		\begin{figure}
+			\centering
+			\includegraphics[width=0.2\textwidth]{figures/i_want_you_ocus.png}
+		\end{figure}\pause
+		\begin{itemize}
+			\item Step-wise explaining solutions of scheduling, configuration problems .... and puzzles  \Cooley
+			\begin{itemize}
+				\item Explain why nurse A is assigned to monday morning;
+				\item ...
+			\end{itemize}
+%			\item Debugging \textit{unsatisfiable models} with \emph{preferences} on the constraints \pause
+			%		\item Stepwise explaining unsatisfiability \pause	
+			\item Explaining Optimality for Constraint Optimization Problems 
+			\begin{itemize}
+				\item Why is the objective value not better ? 
+			\end{itemize}
+			
+		\end{itemize}
+	\end{frame}
+	
+
+%	\begin{frame}{Stepwise explanations for CSPs}
+%		\framesubtitle{EXPLANATION STEP}
+%		%		In, we introduce \emph{explanation} steps \pause
+%		
+%		\begin{example} (Sudoku)
+%			Let $E$ contain the assigned variables at the current state of the grid (e.g. $I = \{V_{(3, 3)}  = 2, \dots \}$).
+%			
+%			\begin{minipage}{0.63\textwidth}
+%				{\Large $\mathtt{\mathbf{MUS}}($}{\large \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full} $\&$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}} $\& \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$ } \\ 
+%				
+%				$\{\mathtt{alldifferent}(\{V_{(r,1)} | r \in {1 .. 9}\}), V_{(4, 1)}  = 2$,\\
+%				$\mathtt{alldifferent}(\{V_{(r,3)} | r \in {1 .. 9}\}), V_{(3, 3)}  = 2$, \\  
+%				$\mathtt{alldifferent}(\{ V_{(r_i ,c_j)} | r_i  \in 7..9 ,  c_j \in 1..3 \})$,\\  
+%				$V_{(7, 2)}  = 2,V_{(8, 2)}  = 2, 	 V_{(9, 2)}  \neq 2\} $
+%			\end{minipage}
+%			\begin{minipage}{0.36\textwidth}
+%				\begin{figure}[H]
+%					\centering
+%					\includegraphics[width=\textwidth]{figures/sudoku_steps/sudoku3}
+%					\caption{Example of a non-redundant explanation for $V_{(9, 2)}  = 2$}
+%					%	\caption{Non-redundant explanation for $V_{(9, 2)}  = 2$}
+%					\label{fig:example-explanation}
+%				\end{figure}
+%				
+%			\end{minipage}
+%			
+%			
+%		\end{example}
+%		
+%	\end{frame}
+	\begin{frame}
+	\frametitle{How to find a \emph{good} explanation ?}
+	
+	%			\textbf{What is a \emph{good} explanation ?} \\ \vspace{20pt}
+	\begin{minipage}{0.38\textwidth}
+		\includegraphics[width=0.9\textwidth]{figures/explaining_2.png}
+	\end{minipage}\hfill 
+	or \hfill
+	\begin{minipage}{0.38\textwidth}
+		\includegraphics[width=0.9\textwidth]{figures/explaining_2_bis.png}
+	\end{minipage} 
+		\end{frame}
+\begin{frame}
+		\frametitle{How to find a \emph{good} explanation ?}
+	%\setbeamertemplate{block begin}[default]
+	%\setbeamertemplate{block end}[default]
+
+	\begin{mybox}
+	%	The \texttt{beamercolorbox} environment!
+	Let $\mathbf{f}(\mathtt{expl}): \mathtt{expl} \rightarrow \mathbb{R}$ be a cost-function that quantifies how good an explanation step is (e.g. easy to understand).
+\end{mybox}
+
+	\pause 
+	
+	\vfill
+	
+	\textbf{What is the \textbf{next} \emph{best/easiest} explanation step? }\pause
+	
+	\begin{algorithm}[H]
+
+		$\mathtt{expl}_{\text{best}} \gets \mathit{nil}$\;\pause
+		\For{{\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $\in$ to\_explain}{
+			
+			expl $\gets \mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\wedge \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$\; \pause
+			\uIf{$f(\mathtt{expl})<f(\mathtt{expl}_{\text{best}})$}{
+				$\mathtt{expl}_{\text{best}} \gets \mathtt{expl}$\;
+			}
+		}
+		\Return{$\mathtt{expl}_{\text{best}}$} 
+  \caption{explain\_mus(C, E, f, to\_explain)}
+\label{alg:mus-explain}
+	\end{algorithm}
+\end{frame}
+
+
+
+
+\begin{frame}{Motivation}
+	\framesubtitle{Challenges and open questions from \cite{bogaerts2020step}}
+	
+%	\begin{minipage}{0.36\textwidth}
+		%\begin{description}%[font=\color{vuborange}\itshape]
+		%	\item[Optimality] Explanations not provably optimal, \emph{heuristically} found.
+		%\end{description}
+		
+			\begin{algorithm}[H]
+			
+			{\color{gray} \small $\mathtt{expl}_{best} \gets \mathit{nil}$\;
+				\For{\small\color{gray} \only<3>{\color{vuborange}} {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $\in$ to\_explain}{
+					
+					{\color{gray}\only<1>{\color{vuborange}} expl $\gets \mathtt{\mathbf{MUS}}($ \includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full}} $\wedge \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $)$}\;
+					\uIf{\color{gray}\only<1>{\color{vuborange}} $f(\mathtt{expl})<f(\mathtt{expl}_{\text{best}})$}{
+						{\color{gray}\only<1>{\color{vuborange}}$\mathtt{expl}_{\text{best}} \gets \mathtt{expl}$}\;
+					}
+				}
+				\Return{\color{gray}\only<1>{\color{vuborange}} $\mathtt{expl}_{\text{best}}$} }
+			%				\caption{Explain 1 step}
+			\caption{\small explain\_mus(C, E, f, to\_explain)}
+			\label{alg:mus-explain}
+		\end{algorithm}
+		\vfill
+		\begin{itemize}
+			\item[Q1] {\only<1>{\color{vuborange}} \textbf{Optimality}} w.r.t $\mathbf{f}$
+			\item[$\triangleright$] MUS guarantees non-redundancy but ... not optimality.
+			%				\item MUS-based heuristic
+%			\item[$\triangleright$] Alternative: SMUS $\#$-minimal (\cite{ignatiev2015smallest})
+		\end{itemize} 
+		\only<2->{				Explanation generation takes a lot of time: 
+			\only<3->{
+				\begin{itemize}
+					\item[Q2] Can we \emph{avoid looping over the literals} when searching for the next best explanation ?
+		\end{itemize}}}
+		%\end{description}
+%	\end{minipage}
+	\hfill
+%	\begin{minipage}{0.59\textwidth}
+		
+	
+		
+		
+%	\end{minipage}
+\end{frame}
+
+
+
+\section{The OCUS Problem}
+
+\begin{frame}
+\tableofcontents[currentsection]
+\end{frame}			
+
+\begin{frame}{OCUS-Based explanation generation}
+\framesubtitle{The OCUS\footnote{Optimal \emph{Constrained} Unsatisfiable Subset} problem}
+\begin{definition}
+	\small
+	Let $\formula$ be a formula, $f:2^{\formula} \to \nat$ a cost function and  $p$ a predicate $p: 2^{\formula}\to \{\ltrue,\lfalse\}$. We call %a set $U\subseteq \formulag$ a \emph{$p$-constrained $f$-OUS} of \formulag ($(p,f)$-OUS) \tias{what with the OCUS name here?} \bart{I propsoe to say. We call 
+		$\subsetT \subseteq \formula$ an \emph{OCUS}  of \formula (with respect to $f$ and $p$) if \begin{itemize}                                      
+			\item $\subsetT$ is unsatisfiable,
+			\item $p(\subsetT)$ is true
+			\item \emph{all other unsatisfiable $\subsetT'\subseteq \formula$ with $p(\subsetT')=\ltrue$ satisfy $f(\subsetT')\geq f(\subsetT)$}.
+		\end{itemize}
+	\end{definition} \pause
+	
+	\vfill
+	Applied to explanation generation: \pause
+	\begin{itemize}
+		\item[Q1] \textit{\emph{(Optimality)}} {\color{red}$f$} ensures finding `best' explanation w.r.t. $f$\pause
+		\item[Q2] \textit{\emph{(Looping)}} {\color{red}$p$} allows formulating explaining 1 literal at a time using an extra constraint
+	\end{itemize}
+	
+\end{frame}		
+
+
+\newcommand\onestepo{\ensuremath{\call{explain-One-Step-ocus}}\xspace}
+\begin{frame}{OCUS-Based explanation generation}
+	
+	\hspace{0.3\textwidth}
+%	\begin{minipage}{0.6\textwidth}
+		\begin{algorithm}[H]
+			$\mathtt{expl}_{best} \gets \mathit{nil}$\;
+			\For{\color{black}   {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $\in$ to\_explain }{
+				
+							$\mathtt{expl} \gets \call{MUS}{(C \land E \land \neg n)}$\;
+				\uIf{\color{black} $f(\mathtt{expl})<f(\mathtt{expl}_{best})$}{
+					$\mathtt{expl}_{best} \gets \mathtt{expl}$\;
+				}
+			}
+			\Return{\color{black}$\mathtt{expl}_{best}$} 
+			  \caption{explain\_mus(C, E, f, to\_explain)}
+			\label{alg:mus-explain}
+		\end{algorithm}
+%	\end{minipage} 
+\pause
+	
+	\[\downarrow\]
+	
+	
+	\hspace{0.09\textwidth} 
+%	\begin{minipage}{0.9\textwidth}				
+		\begin{algorithm}[H]
+			\DontPrintSemicolon
+			$p \leftarrow$ \texttt{exactly-one}$(\{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ \in$ to\_explain\}$)$\;
+			\Return{\Large $\emph{\mathtt{{OCUS}}} ($}{\large \includegraphics[width=10pt]{figures/explanation_steps/explanation_S_full} $\wedge$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_E_full}} $\wedge \{ \lnot$ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ | $ {\includegraphics[width=10pt]{figures/explanation_steps/explanation_N}} $ \in $ to\_explain$\}, \emph{\mathbf{f}}, \emph{\mathbf{p}})$ } \;
+			%					$\call{OCUS}(S \wedge E \wedge \{\lnot n \ | \ n \in \LitsToExplain\}, \emph{f, p})$\;
+			  \caption{explain\_ocus(C, E, f, to\_explain)}
+			\label{alg:mus-explain}
+		\end{algorithm}
+%	\end{minipage}
+%	
+	
+\end{frame}
+
+
+%			\section{An OCUS algorithm: A hitting set-based algorithm}
+%
+%						\begin{frame}{Background and notation}
+	%				\framesubtitle{Minimum Correction Subset vs Satisfiable Subsets}
+	%				
+	%				\only<1->{ Consider unsatisfiable  CNF $\formula$ over atoms $x_1, x_2$:}
+	%				\only<2>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 \qquad c_3 := \lnot x_2  \qquad  c_4 := x_1\]}
+	%				
+	%				\only<3>{\[ \emph{c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2 }  {\color{blue}\qquad c_3 := \lnot x_2  \qquad  c_4 := x_1}\]}
+	%				
+	%				\only<4>{\[ c_1 := \lnot x_1 \vee \lnot x_2  \qquad  c_2 := \lnot x_1 \vee  x_2  \qquad c_3 := \lnot x_2  \qquad  \emph{   c_4 := x_1} \]}
+	%				\only<3->{	\begin{definition}
+			%						A set $C \subseteq \formula $ is a \only<3>{\emph{correction subset}}\only<4->{correction subset} of $\formula$ if \only<3>{{\color{blue} $ \formula \setminus \subsetT$}}\only<4->{ $ \formula \setminus \subsetT$} is satisfiable, a.k.a. {\only<3>{\color{blue}} satisfiable subset.} \\
+			%						\only<4->{A correction set $\subsetT$ is a \emph{minimum correction subset} if no strict subset $\subsetT' \subset \subsetT$ is also a correction set.}
+			%				\end{definition} }
+	%			\end{frame}
+
+
+
+
+\begin{frame}{An OCUS algorithm: A hitting set-based algorithm}
+	\framesubtitle{Implicit Hitting set duality}
+	
+	\begin{itemize}
+		\item[$\triangleright$] Exploit implicit hitting set--based duality between {\color{blue}MCSes} and {\color{teal}MUSes} (\cite{DBLP:journals/jar/LiffitonS08,ai/Reiter87})
+	\end{itemize}\pause
+	
+	\begin{theorem}\label{prop:MCS-MUS-hittingset}
+		%     
+		A set  $\subsetT \subseteq \formula$ is a MCS of $ \formula$ iff  it is a \emph{minimum hitting set} of \muses{\formula}. \\
+		A set  $\subsetT \subseteq \formula$ is a MUS of $ \formula$ iff  it is a \emph{minimum hitting set} of \mcses{\formula}.
+	\end{theorem} \pause
+	\begin{itemize}
+		\item[$\triangleright$] Extend this to OCUS:
+		\begin{itemize}	
+			\item Compute \emph{optimal} hitting sets \pause
+			\item Impose \emph{constraint} on the hitting sets
+		\end{itemize}
+	\end{itemize}
+	
+\end{frame}
+
+
+
+\subsection{Optimal Hitting set problem}
+
+\begin{frame}
+	\tableofcontents[currentsubsection]
+\end{frame}			
+\begin{frame}{\emph{Optimal} Hitting set problem}
+	\pause
+	\begin{itemize}
+		\item Set of elements (i.e. constraints) $\{c_1,c_2,...,c_n\}$
+		\item Collection $\m{H}$ of sets-to-hit  (i.e.~subsets of the set of elements)
+		\item cost associated for every element:\\
+		\hspace*{2cm}$w_1 =  \emph{3}, w_2= \emph{5}, w_3 = w_4 = ...= w_8 = 1$\pause \vfill
+		\item[\textbf{Goal}] Find an \emph{optimal} hitting set such that every set-to-hit is hit by at least once an element of the hitting set with \emph{minimal total cost}.
+	\end{itemize} \pause
+	\vfill
+	\begin{minipage}{0.48\textwidth}
+		For example: 
+		\begin{enumerate}
+			\item[$H_1$] = $\{c_3, c_5\}$
+			\item[$H_2$] =$\{c_2, c_4, c_7\}$
+			\item[$H_3$] = $\{c_2, c_6\}$
+			\item[$H_4$] = $\{c_1, c_8\}$
+		\end{enumerate}
+	\end{minipage}
+	\begin{minipage}{0.48\textwidth}
+		Optimal hitting sets:\pause
+		\begin{itemize}
+			\item $\{{{\color{blue}c_3},} {{\color{blue}c_4},} {{\color{blue}c_6},} {{\color{blue}c_8}}\}$ \emph{\checkmark}
+				\begin{itemize}
+					\item cost: \emph{4}
+			\end{itemize}
+				\item \dots
+		\end{itemize}
+	\end{minipage}
+\end{frame}
+
+
+\subsection{The algorithm}
+\begin{frame}
+	\tableofcontents[currentsubsection]
+\end{frame}			
+\begin{frame}{OCUS: An efficient game of Ping-Pong}
+	\only<1>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong_0.png}
+		\end{figure}
+	}
+	\only<2>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+		\end{figure}
+	}
+	\only<3>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong1.png}
+		\end{figure}
+	}
+	\only<4>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+		\end{figure}
+	}
+	\only<5>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2a.png}
+		\end{figure}
+	}
+	\only<6>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2b.png}
+		\end{figure}
+	}
+	\only<7>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+		\end{figure}
+	}
+	
+	\only<8>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+		\end{figure}
+	}
+	\only<9>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong.png}
+		\end{figure}
+	}
+	
+	\only<10>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong2.png}
+		\end{figure}
+	}
+	\only<11>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong_2c.png}
+		\end{figure}
+	}
+	\only<12>{
+		\begin{figure}
+			\includegraphics[width=\textwidth]{figures/ping_pong/algo_with_ping_pong3.png}
+		\end{figure}
+}
+	
+%	\newcommand\hitset{\m{\mathcal{H}}}
+		\only<12>{\vfill
+	{\tiny (1) Image source: \url{https://flyclipart.com/party-popper-emoji-on-apple-ios-celebration-emoji-png-610281}}}
+\end{frame}
+
+
+
+				\section{Toward human-interpretable explanations using Machine Learning}
+
+
+		 \begin{frame}
+	\tableofcontents[currentsection]
+\end{frame}			
+
+
+\begin{frame}
+
+	\begin{mybox}
+	Let $\mathbf{f}(\mathtt{expl}): \mathtt{expl} \rightarrow \mathbb{R}$ be a cost-function that quantifies how good an explanation step is (e.g. easy to understand).
+\end{mybox}\pause
+
+\begin{center}
+	What if we don't know what a \textit{\emph{good}} cost function is? \pause \\
+	Maybe, we can \textit{\emph{learn}} it form user interaction! \Cooley 
+\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{(Machine) Learning explanation preferences from users}
+	\begin{itemize}
+		\item $S$ Explanation step 
+		\item $\phi(S)$ a (normalized) feature representation
+		\item Learn a function $M: \phi(S) \rightarrow \mathbb{R}$ that returns a real-valued number, a preference score:
+		\begin{itemize}
+			\item Likelihood of $S$ being the most preferred explanation
+		\end{itemize}
+		%				We can evaluate the quality of a function $M$ by presenting it two explanations $S_1$ and $S_2$ and verifying that the one that is scored highest by $M$ is also the one preferred by the user.
+	\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Good features of explanations?}
+		\begin{minipage}{.45\textwidth}
+			\centering
+			\only<1-2>{			\includegraphics[width=\textwidth]{figures/overly_complicated.png}}
+			\only<3>{			\includegraphics[width=\textwidth]{figures/explaining_7.png}}
+			\only<4>{			\includegraphics[width=\textwidth]{figures/explaining_7_better.png}}
+		\end{minipage}\hfill	
+		\begin{minipage}{.45\textwidth}
+			\only<2->{
+			\textit{Previous work:}
+			\begin{itemize}
+				\item Number of constraints
+				\item Number of facts
+			\end{itemize}
+		}
+					\only<3->{\textit{New:}
+			\begin{itemize}
+				\item Value explained
+				\only<4>{
+				\item Constraint graph distance
+				\item Manhattan distance
+				\item ... ?}
+			\end{itemize}}
+		\end{minipage}
+\end{frame}
+
+
+
+
+\begin{frame}
+\frametitle{Preference learning methodology}
+\begin{figure}
+\includegraphics[width=\textwidth]{figures/cp23_preference_learning_pipeline.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\begin{figure}
+		\only<1>{	\includegraphics[height=0.85\textheight]{figures/cp23_2_choices_with_digits.png}}
+	\only<2>{	\includegraphics[height=0.85\textheight]{figures/cp23_2_choices.png}}
+\end{figure}	
+
+\end{frame}
+
+\begin{frame}
+\begin{table}[!h]
+	\resizebox{\textwidth}{!}{
+	\begin{tabular}{r|cc}
+		%\toprule
+		%& \multicolumn{2}{c}{\textbf{All Features}} & \multicolumn{2}{c}{\textbf{Constraints and Facts}} \\
+		&  \textbf{Strict preferences} &   \textbf{All preferences} \\
+		\textbf{Classifier}                   &        &        \\
+		\midrule
+		Hard-coded ($20*c + f$)              &    \multicolumn{2}{c}{60.58}   \\
+		Logistic Regression ($w_1*c + w_2*f$) &  65.62 & \textbf{66.11}  \\
+		Logistic Regression (linear features) &  63.73      &   62.10     \\ \hline
+		Logistic Regression (all features) &  66.25 &  62.52 \\
+		Naive Bayes                        &  59.96 &  63.21 \\
+		Support Vector Machine Classifier  &  {81.76} &  79.53 \\
+		Random Forest                      &  83.44 &  82.02 \\
+		XGBoost                            &  \textbf{86.16} &  83.13 \\
+		XGBoostRanker                      &  75.05  &  ----- \\
+		%\bottomrule
+	\end{tabular}}
+	\caption{Classifier accuracy in predicting the preferred explanation out of an explanation sample pair.}
+	\label{table:classifier-accuracy}
+\end{table}
+\end{frame}
+
+
+			
+		\section{Conclusion and Future work}
+		 \begin{frame}
+			\tableofcontents[currentsection]
+		\end{frame}			
+%		
+\begin{frame}
+	\frametitle{Conclusion and Future work}
+	\begin{itemize}
+		\item Step-wise explanations of CSPs
+		\item How to compute explanations efficiently with OCUS
+		\item Data-centric methodology for learning explanation preferences
+	\end{itemize}
+	
+\end{frame}
+%		
+\begin{frame}
+	\frametitle{Observations and remaining challenges}
+	\begin{itemize}
+		\item The cost-function that can be used for computing the hitting set problem in OCUS is dependent on the solver used.
+		\begin{itemize}
+			\item Typically we use MIP solver for their efficiency and incremental properties.
+			\item Only linear cost-functions can be used $\rightarrow$ linear features
+			\item 65\% accuracy
+			\item Doesn't capture full extent of interactions between constraints and variables
+		\end{itemize}\pause
+		\item A simple cost-function is better for small explanations that involve 1 constraint \pause
+		\item \cite{akutsu2019mixed}: Formulating NN into MIP  is slow and not tractable to compute preferred explanations ...
+	\end{itemize}
+\end{frame}
+				
+	\begin{frame}
+		\frametitle{Future work}
+		\begin{itemize}
+			\item How to integrate the trained ML model into OCUS generation to \emph{efficiently} compute preferred explanation?
+			\item Learning to rank approaches for ranking explanations and selecting the best one.
+			\item User-preferences: take into account user information, i.e. experience, ...?
+%			\item Inverse optimisation?
+			\item Inverse optimization where given a set of preferred explanations, we want to compute a cost-function.
+		\end{itemize}
+	\end{frame}
+			
+		\begin{frame}[allowframebreaks]
+			\frametitle{References}
+			\bibliographystyle{named}
+			\bibliography{refs,references}
+		\end{frame}		
+	
+	\end{document}
+	

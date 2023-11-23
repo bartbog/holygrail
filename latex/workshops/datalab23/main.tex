@@ -292,8 +292,10 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 			\node (solve) [startstop, below of=model] {SOLVE};
 			\draw [arrow] (model) -- (solve); 
 			
-			\node (inferencebacktrack) [startstop, right of=solve, xshift=1.75cm] {Inference +  Search};
-			\draw [arrow] (solve) -- (inferencebacktrack); 
+			\node (inference) [startstop, right of=solve, xshift=1.25cm,yshift=-0.5cm] {Inference};
+			\node (search) [startstop, right of=solve, xshift=1.25cm,yshift=0.5cm] {Search};
+			\draw [arrow] (solve) -- (inference); 
+			\draw [arrow] (solve) -- (search); 
 
 			\node  (modelerror) [startstop, below of=solve, align=center] {\color{red} No solution\\ \Sadey}; %todo: add smiley face sad
 			\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {\textbf{unsat?}} (modelerror); 			

@@ -392,6 +392,7 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 		\begin{minipage}{0.63\textwidth}
 			\pause
 			\textbf{Why explain SAT?}	\pause
+			
 			\begin{itemize}
 				\item Constraint Solvers consider millions alternatives 
 				\item Model cannot be called an explanation any more
@@ -403,6 +404,43 @@ innerrightmargin=6pt,innertopmargin=6pt,innerbottommargin=6pt]{mybox}
 %				\item What is a \textbf{\emph{sequence of explanations}} ? \pause
 %				\item How to find \emph{\textbf{good}} explanations ? 
 %			\end{itemize}
+		\end{minipage}
+		
+	\end{frame}
+	
+		\begin{frame}
+		\frametitle{Motivation - Explaining SAT problems}
+		\begin{minipage}{0.35\textwidth}
+			\begin{center}
+				\begin{tikzpicture}[node distance=1.5cm]
+					\node (problem) [startstop] {Problem}; 
+					
+					\node (model) [startstop, below of=problem,align=center] {Model \\ (\emph{CPMpy})}; 
+					\draw [arrow] (problem) -- (model);								
+					
+					\node (solve) [startstop, below of=model] {SOLVE};
+					\draw [arrow] (model) -- (solve); 
+					
+					%					\node  (modelerror) [startstop, below of=solve] {\color{red} modeling error?};
+					%					\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {unsat?} (modelerror); 
+					\node  (solution) [startstop, below of=solve,align=center]  {\color{green} solution\\ \Smiley};
+					%						\node  (solution) [startstop, below of=sat] {\color{green} solution};
+					%	
+					\draw [arrow] (solve) --node[anchor=east,xshift=-0.2cm] {\textbf{sat?}} (solution);
+					
+					%						\draw [arrow] (sat) -- (solution);			
+					
+				\end{tikzpicture}
+			\end{center}
+		\end{minipage}
+		\begin{minipage}{0.63\textwidth}
+			\textbf{How to  explain SAT?}	\pause
+
+					\begin{itemize}
+							\item What is an \textbf{\emph{explanation}}? \pause
+							\item What is a \textbf{\emph{sequence of explanations}} ? \pause
+							\item How to find \emph{\textbf{good}} explanations ? 
+						\end{itemize}
 		\end{minipage}
 		
 	\end{frame}
